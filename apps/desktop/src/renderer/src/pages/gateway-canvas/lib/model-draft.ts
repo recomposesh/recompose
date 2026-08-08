@@ -1,4 +1,4 @@
-import type { GatewayConfig, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, Target, VirtualModel } from '@recompose/contracts';
 
 import { modelAliasFromName, modelAliasSchema } from '@recompose/contracts';
 
@@ -102,6 +102,41 @@ export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefiniti
         target: { accountId: settled.accountId, providerModel: settled.providerModel },
       },
     ],
+  };
+}
+
+/**
+ * The gateway as it stands once one of its virtual models reaches a different target.
+ *
+ * @summary A virtual model answers with one target, so a cable dragged onto another card replaces
+ * the binding rather than joining it. The definition keeps its id and its name, because a person
+ * rebinding is repointing the model they already named rather than composing a second one.
+ */
+export function gatewayRebinding(
+  gateway: GatewayConfig,
+  modelId: string,
+  target: Target,
+): GatewayConfig {
+  return {
+    ...gateway,
+    virtualModels: gateway.virtualModels.map((model) =>
+      model.id === modelId ? { ...model, target } : model,
+    ),
+  };
+}
+
+/**
+ * The gateway as it stands once one of its virtual models holds no target at all.
+ *
+ * @summary The stored shape carries no virtual model without a target, so letting a binding go
+ * takes the whole definition with it and the canvas holds the name, the id, and the seat as a
+ * draft card. Rebinding the draft writes the definition back, which is why unbinding costs one
+ * gesture rather than a confirmation.
+ */
+export function gatewayReleasing(gateway: GatewayConfig, modelId: string): GatewayConfig {
+  return {
+    ...gateway,
+    virtualModels: gateway.virtualModels.filter((model) => model.id !== modelId),
   };
 }
 
