@@ -5,9 +5,9 @@ import { ipcChannels, ipcEvents, type IpcEvent } from './ipc';
 const runningState = { status: 'running' };
 
 describe('the lifecycle push', () => {
-  const eventNames: IpcEvent[] = ['engine:state', 'accounts:changed'];
+  const eventNames: IpcEvent[] = ['engine:state', 'accounts:changed', 'canvas:command'];
 
-  test('exactly the state and account-change pushes exist', () => {
+  test('exactly the state, account-change, and canvas pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -29,6 +29,16 @@ describe('the lifecycle push', () => {
 
   test('the push rides beside the invoke surface rather than inside it', () => {
     expect(Object.keys(ipcChannels)).not.toContain('engine:state');
+  });
+
+  test('a canvas push carries one of the four acts the Canvas menu offers', () => {
+    const acts = ['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy'];
+
+    expect(acts.map((act) => ipcEvents['canvas:command'].payload.parse(act))).toEqual(acts);
+  });
+
+  test('a canvas push refuses an act no menu item names', () => {
+    expect(() => ipcEvents['canvas:command'].payload.parse('zoom')).toThrow();
   });
 
   test('an account change carries no stale registry snapshot', () => {

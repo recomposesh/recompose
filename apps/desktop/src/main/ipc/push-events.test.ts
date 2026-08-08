@@ -2,16 +2,22 @@ import type { EngineStates } from '@recompose/contracts';
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { pushAccountsChanged, pushEngineStates } from './push-events';
+import { pushAccountsChanged, pushCanvasCommand, pushEngineStates } from './push-events';
 
 type Delivery = { channel: string; payload: unknown };
 
 type OpenWindow = { webContents: { send: (channel: string, payload: unknown) => void } };
 
-const desktop = vi.hoisted((): { open: OpenWindow[] } => ({ open: [] }));
+const desktop = vi.hoisted((): { open: OpenWindow[]; focused: OpenWindow | null } => ({
+  open: [],
+  focused: null,
+}));
 
 vi.mock('electron', () => ({
-  BrowserWindow: { getAllWindows: (): OpenWindow[] => desktop.open },
+  BrowserWindow: {
+    getAllWindows: (): OpenWindow[] => desktop.open,
+    getFocusedWindow: (): OpenWindow | null => desktop.focused,
+  },
 }));
 
 function openWindow(): Delivery[] {
@@ -28,8 +34,17 @@ function openWindow(): Delivery[] {
   return delivered;
 }
 
+function focusWindow(): Delivery[] {
+  const delivered = openWindow();
+
+  desktop.focused = desktop.open.at(-1) ?? null;
+
+  return delivered;
+}
+
 beforeEach(() => {
   desktop.open = [];
+  desktop.focused = null;
 });
 
 describe('telling the open windows what changed', () => {
@@ -52,5 +67,25 @@ describe('telling the open windows what changed', () => {
 
     expect(first).toEqual([{ channel: 'accounts:changed', payload: 'changed' }]);
     expect(second).toEqual([{ channel: 'accounts:changed', payload: 'changed' }]);
+  });
+});
+
+describe('driving the canvas from the menu bar', () => {
+  test('a canvas command reaches the window in front and no other', () => {
+    const background = openWindow();
+    const inFront = focusWindow();
+
+    pushCanvasCommand('zoom-to-fit');
+
+    expect(inFront).toEqual([{ channel: 'canvas:command', payload: 'zoom-to-fit' }]);
+    expect(background).toEqual([]);
+  });
+
+  test('a canvas command with no window in front reaches nobody', () => {
+    const background = openWindow();
+
+    pushCanvasCommand('tidy');
+
+    expect(background).toEqual([]);
   });
 });

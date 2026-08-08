@@ -84,6 +84,7 @@ function eventBridge(): RecomposeIpcEvents {
   return {
     'engine:state': (listener) => listenForEngineStates(listener),
     'accounts:changed': () => () => undefined,
+    'canvas:command': () => () => undefined,
   };
 }
 

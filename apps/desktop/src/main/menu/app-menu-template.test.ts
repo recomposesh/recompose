@@ -31,6 +31,9 @@ function recordingHandlers(taken: string[]): AppMenuHandlers {
     onShowGetStarted: () => {
       taken.push('show-get-started');
     },
+    onCanvasCommand: (command) => {
+      taken.push(command);
+    },
   };
 }
 
@@ -105,6 +108,35 @@ describe('bringing the get-started card back', () => {
   });
 });
 
+describe('driving the canvas from the menu bar', () => {
+  test('every platform gathers the canvas acts under Canvas, on the shortcuts zoom means here', () => {
+    for (const platform of everyPlatform) {
+      const canvasMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers), 'Canvas');
+
+      expect(
+        (canvasMenu?.submenu ?? []).map((item) => [item.label ?? item.type, item.accelerator]),
+      ).toEqual([
+        ['Zoom In', 'CmdOrCtrl+='],
+        ['Zoom Out', 'CmdOrCtrl+-'],
+        ['Zoom to Fit', 'CmdOrCtrl+0'],
+        ['separator', undefined],
+        ['Tidy', undefined],
+      ]);
+    }
+  });
+
+  test('choosing an act carries its command to the canvas', () => {
+    const taken: string[] = [];
+    const template = buildAppMenuTemplate('darwin', recordingHandlers(taken));
+
+    for (const label of ['Zoom In', 'Zoom Out', 'Zoom to Fit', 'Tidy']) {
+      itemLabelled(template, label)?.click?.();
+    }
+
+    expect(taken).toEqual(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']);
+  });
+});
+
 describe('the order the menus stand in', () => {
   test('macOS orders its menus the way every Mac app does', () => {
     expect(shapeOf(buildAppMenuTemplate('darwin', idleHandlers))).toEqual([
@@ -112,6 +144,7 @@ describe('the order the menus stand in', () => {
       'File',
       'editMenu',
       'View',
+      'Canvas',
       'windowMenu',
     ]);
   });
@@ -122,6 +155,7 @@ describe('the order the menus stand in', () => {
         'File',
         'editMenu',
         'View',
+        'Canvas',
         'windowMenu',
       ]);
     }
@@ -166,7 +200,7 @@ describe('what a custom application menu must not drop', () => {
     ]);
   });
 
-  test('the View menu keeps reloading, zooming, and full screen beside the new item', () => {
+  test('the View menu keeps reloading and full screen, and page zoom leaves for the canvas', () => {
     const viewMenu = menuLabelled(buildAppMenuTemplate('darwin', idleHandlers), 'View');
 
     expect(shapeOf(viewMenu?.submenu ?? [])).toEqual([
@@ -175,10 +209,6 @@ describe('what a custom application menu must not drop', () => {
       'reload',
       'forceReload',
       'toggleDevTools',
-      'separator',
-      'resetZoom',
-      'zoomIn',
-      'zoomOut',
       'separator',
       'togglefullscreen',
     ]);

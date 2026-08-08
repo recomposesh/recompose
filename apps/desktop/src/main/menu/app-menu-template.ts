@@ -1,3 +1,4 @@
+import type { IpcEventPayload } from '@recompose/contracts';
 import type { MenuItemConstructorOptions } from 'electron';
 
 export type AppMenuItem = {
@@ -13,6 +14,7 @@ export type AppMenuHandlers = {
   onOpenSettings: () => void;
   onNewGateway: () => void;
   onShowGetStarted: () => void;
+  onCanvasCommand: (command: IpcEventPayload<'canvas:command'>) => void;
 };
 
 function settingsItem(handlers: AppMenuHandlers): AppMenuItem {
@@ -72,11 +74,41 @@ function viewMenu(handlers: AppMenuHandlers): AppMenuItem {
       { role: 'forceReload' },
       { role: 'toggleDevTools' },
       { type: 'separator' },
-      { role: 'resetZoom' },
-      { role: 'zoomIn' },
-      { role: 'zoomOut' },
-      { type: 'separator' },
       { role: 'togglefullscreen' },
+    ],
+  };
+}
+
+function canvasCommandClick(
+  handlers: AppMenuHandlers,
+  command: IpcEventPayload<'canvas:command'>,
+): () => void {
+  return () => {
+    handlers.onCanvasCommand(command);
+  };
+}
+
+function canvasMenu(handlers: AppMenuHandlers): AppMenuItem {
+  return {
+    label: 'Canvas',
+    submenu: [
+      {
+        label: 'Zoom In',
+        accelerator: 'CmdOrCtrl+=',
+        click: canvasCommandClick(handlers, 'zoom-in'),
+      },
+      {
+        label: 'Zoom Out',
+        accelerator: 'CmdOrCtrl+-',
+        click: canvasCommandClick(handlers, 'zoom-out'),
+      },
+      {
+        label: 'Zoom to Fit',
+        accelerator: 'CmdOrCtrl+0',
+        click: canvasCommandClick(handlers, 'zoom-to-fit'),
+      },
+      { type: 'separator' },
+      { label: 'Tidy', click: canvasCommandClick(handlers, 'tidy') },
     ],
   };
 }
@@ -97,6 +129,7 @@ export function buildAppMenuTemplate(
     ...leadingMenus(platform, handlers),
     { role: 'editMenu' },
     viewMenu(handlers),
+    canvasMenu(handlers),
     { role: 'windowMenu' },
   ];
 }

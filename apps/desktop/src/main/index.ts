@@ -25,7 +25,7 @@ import { createEngineIpcHandlers } from './ipc/engine-ipc';
 import { createKeyCheckIpcHandlers } from './ipc/key-check-ipc';
 import { createLocalRuntimesIpcHandlers } from './ipc/local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/provider-models-ipc';
-import { pushAccountsChanged, pushEngineStates } from './ipc/push-events';
+import { pushAccountsChanged, pushCanvasCommand, pushEngineStates } from './ipc/push-events';
 import { registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { createStorageIpcHandlers } from './ipc/storage-ipc';
@@ -270,7 +270,7 @@ async function startRecompose(): Promise<void> {
   electronApp.setAppUserModelId('sh.recompose.app');
 
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window);
+    optimizer.watchWindowShortcuts(window, { zoom: true });
   });
 
   registerPermissionHandlers();
@@ -279,6 +279,7 @@ async function startRecompose(): Promise<void> {
     onOpenSettings: openSettingsSurface,
     onNewGateway: openNewGatewaySurface,
     onShowGetStarted: openGetStartedSurface,
+    onCanvasCommand: pushCanvasCommand,
   });
 
   applyBootSettingsOrComplain(settingsEffects, boot.settings);
