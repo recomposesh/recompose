@@ -15,7 +15,7 @@ The gateway detail screen MUST render the gateway's composition as nodes on a ca
 
 ### Requirement: A cable dragged between nodes creates a binding
 
-A person MUST be able to drag a cable out of a node's port and drop it on a compatible node to create the binding. The gesture reads the way Excalidraw pulls an arrow. A drop outside a compatible node MUST leave the composition unchanged.
+A person MUST be able to drag a cable out of a node's port and drop it on a compatible node to create the binding. The gesture reads the way Excalidraw pulls an arrow. A drop on empty canvas MUST open the grouped picker of stored accounts, and the picked account MUST materialize as a wired target node at the drop point. Esc MUST cancel a drag in flight and leave the composition unchanged.
 
 #### Scenario: a person wires a virtual model by cable
 
@@ -24,12 +24,33 @@ A person MUST be able to drag a cable out of a node's port and drop it on a comp
 - Then the virtual model stands bound to that target
 - And the canvas renders the new cable
 
-### Requirement: A gateway node never starts bare
+#### Scenario: a drop on empty canvas becomes an add
 
-A gateway node with nothing wired MUST draw an automatic wire ending in a plus affordance that serves as the add-here entry point, instead of presenting a bare canvas.
+- Given a virtual model node with no target bound
+- When a person drags a cable from its port and drops it on empty canvas
+- Then the picker of stored accounts opens
+- And picking an account materializes a wired target node at the drop point
+
+#### Scenario: Esc cancels the drag
+
+- Given a cable drag in flight
+- When the person presses Esc
+- Then the drag cancels
+- And the composition stands unchanged
+
+### Requirement: The plus affordance persists on every source port
+
+Every source port MUST carry a persistent plus affordance, whether the node stands wired or bare. The gateway node's plus MUST drop a connected draft virtual model and open the inspector. A virtual model's plus MUST open the picker of stored accounts. A gateway with nothing wired MUST still draw its automatic wire ending in a plus, instead of presenting a bare canvas.
 
 #### Scenario: an empty gateway offers the plus affordance
 
 - Given a gateway with no virtual models defined
 - When a person opens the gateway detail
 - Then the gateway node shows a wire ending in a plus affordance
+
+#### Scenario: a wired gateway keeps its plus
+
+- Given a gateway holding a virtual model bound to a stored target
+- When a person opens the gateway detail
+- Then the gateway node's port offers a plus affordance
+- And the virtual model's port offers a plus affordance
