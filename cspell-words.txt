@@ -25,6 +25,7 @@ DeepSeek
 Electrobun
 Electrobun's
 Electronegativity
+Excalidraw
 Fibery
 Firecrawl
 Flathub
