@@ -1,0 +1,58 @@
+import type { Decorator } from '@storybook/react-vite';
+import type { Node, NodeProps, Viewport } from '@xyflow/react';
+
+import { ReactFlow } from '@xyflow/react';
+
+import type { XY } from '../lib/canvas-positions';
+import type { CanvasNodeKind } from '../lib/node-graph';
+
+function Card({ data }: NodeProps) {
+  return (
+    <span className="flex size-full items-center justify-center rounded-canvas-card border border-line-subtle bg-surface-card text-card-title">
+      {String(data['name'])}
+    </span>
+  );
+}
+
+const cards = {
+  gateway: Card,
+  'virtual-model': Card,
+  target: Card,
+  'draft-model': Card,
+  'ghost-target': Card,
+  'pending-target': Card,
+} satisfies Record<CanvasNodeKind, typeof Card>;
+
+/**
+ * One card standing at a fixed seat, sized as every canvas node declares itself.
+ *
+ * @summary Reach for it in a canvas story that needs something on the pane to measure, so the seats
+ * stay pinned and no story depends on a layout pass it never asked for.
+ */
+export function seat(id: string, kind: CanvasNodeKind, name: string, at: XY): Node {
+  return { id, type: kind, position: at, data: { name }, width: 180, height: 76 };
+}
+
+/**
+ * A pane holding the canvas furniture, with pinned seats and a viewport that never animates.
+ *
+ * @summary Reach for it in any story of a component the flow provides context to. The cards stand
+ * where the story put them, so a measurement reads the same on every run.
+ */
+export function inCanvasFlow(seats: readonly Node[], viewport: Viewport): Decorator {
+  return function CanvasPane(Story) {
+    return (
+      <div className="h-96 w-160 bg-surface-content dot-grid">
+        <ReactFlow
+          defaultViewport={viewport}
+          nodeTypes={cards}
+          nodes={[...seats]}
+          nodesDraggable={false}
+          nodesFocusable={false}
+        >
+          <Story />
+        </ReactFlow>
+      </div>
+    );
+  };
+}
