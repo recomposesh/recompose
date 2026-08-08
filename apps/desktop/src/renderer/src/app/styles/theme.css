@@ -50,6 +50,18 @@
   --color-danger: light-dark(var(--red-700), var(--red-500));
   --color-danger-ink: light-dark(var(--red-700), var(--red-400));
 
+  --color-gateway: light-dark(var(--teal-700), var(--teal-500));
+  --color-virtual-model: light-dark(var(--blue-600), var(--blue-500));
+  --color-target: light-dark(var(--purple-600), var(--purple-500));
+  --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
+  --color-cable-live: light-dark(var(--green-600), var(--green-500));
+  --color-cable-broken: light-dark(var(--red-700), var(--red-500));
+  --color-cable-draft: light-dark(var(--orange-600), var(--orange-500));
+  --color-cable-pending: var(--color-cable-draft);
+  --color-port: light-dark(var(--black-a56), var(--white-a55));
+  --color-canvas-card: light-dark(var(--white-a92), var(--gray-925-a92));
+  --color-minimap-mask: light-dark(var(--black-a06), var(--white-a06));
+
   --text-title: 22px;
   --text-title--font-weight: 600;
   --text-title--letter-spacing: -0.4px;
@@ -66,6 +78,7 @@
   --text-detail: 12px;
   --text-detail--line-height: 1.5;
   --text-mono-value: 12px;
+  --text-mono-caption: 11px;
   --text-caption: 11px;
   --text-footnote: 10px;
 
@@ -81,6 +94,13 @@
   --spacing-chip: 18px;
   --spacing-thumb: 18px;
   --spacing-port: 76px;
+  --spacing-port-dot: 9px;
+  --spacing-port-offset: 34px;
+  --spacing-hit-target: 24px;
+  --spacing-cable-stroke: 1.8px;
+  --spacing-minimap-width: 172px;
+  --spacing-minimap-height: 112px;
+  --spacing-zoom-tools: 3px;
   --spacing-sheet: 404px;
   --spacing-sheet-wide: 640px;
   --spacing-sheet-row: 38px;
@@ -100,6 +120,7 @@
   --radius-chip: 4px;
   --radius-control: 6px;
   --radius-field-group: 9px;
+  --radius-canvas-card: 9px;
   --radius-card: 10px;
   --radius-panel: 11px;
   --radius-sheet: 13px;
@@ -109,6 +130,7 @@
 
   --shadow-thumb: 0 1px 2px rgb(0 0 0 / 22%), 0 0 0 0.5px rgb(0 0 0 / 8%);
   --shadow-raised: 0 12px 32px rgb(0 0 0 / 18%), 0 2px 8px rgb(0 0 0 / 10%);
+  --shadow-canvas-card: 0 4px 14px rgb(0 0 0 / 40%);
 }
 
 @utility focus-ring {
@@ -366,8 +388,41 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
+@utility node-tint-* {
+  --node-tint: --value(--color-*);
+}
+
+@utility port-dot {
+  width: var(--spacing-port-dot);
+  height: var(--spacing-port-dot);
+  border: 1.5px solid var(--color-port);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-card);
+
+  &[data-bound] {
+    border-color: var(--node-tint, var(--color-accent));
+    background-color: var(--node-tint, var(--color-accent));
+  }
+}
+
+@utility binding-cable {
+  fill: none;
+  stroke-width: var(--spacing-cable-stroke);
+}
+
+@utility minimap-node {
+  fill: color-mix(in srgb, var(--node-tint, var(--color-accent)) 85%, transparent);
+}
+
+@utility minimap-node-dim {
+  fill: color-mix(in srgb, var(--node-tint, var(--color-accent)) 45%, transparent);
+}
+
 @utility node-card {
-  border: 1.5px solid var(--color-accent-ink);
+  --node-card-border: var(--node-tint, var(--color-accent-ink));
+  --node-card-emphasis: var(--node-tint, var(--color-accent));
+
+  border: 1.5px solid var(--node-card-border);
   border-radius: var(--radius-card);
   background-color: var(--color-surface-card);
   box-shadow: var(--shadow-raised);
@@ -381,25 +436,25 @@
 
   &:hover,
   &[data-hovered] {
-    border-color: var(--color-accent);
-    background-color: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface-card));
+    border-color: var(--node-card-emphasis);
+    background-color: color-mix(in srgb, var(--node-card-emphasis) 8%, var(--color-surface-card));
   }
 
   &:active {
-    background-color: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-card));
+    background-color: color-mix(in srgb, var(--node-card-emphasis) 14%, var(--color-surface-card));
   }
 
   &[aria-pressed='true'] {
-    border-color: var(--color-accent);
-    background-color: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-card));
+    border-color: var(--node-card-emphasis);
+    background-color: color-mix(in srgb, var(--node-card-emphasis) 12%, var(--color-surface-card));
     box-shadow:
-      0 0 0 3.5px color-mix(in srgb, var(--color-accent) 55%, transparent),
-      0 0 22px color-mix(in srgb, var(--color-accent) 45%, transparent),
+      0 0 0 3.5px color-mix(in srgb, var(--node-card-emphasis) 55%, transparent),
+      0 0 22px color-mix(in srgb, var(--node-card-emphasis) 45%, transparent),
       var(--shadow-raised);
   }
 
   &[aria-pressed='true']:hover {
-    background-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-card));
+    background-color: color-mix(in srgb, var(--node-card-emphasis) 18%, var(--color-surface-card));
   }
 }
 
