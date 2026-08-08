@@ -79,6 +79,7 @@ Unmarshal
 VBOR
 Vapi
 Veed
+WCAG
 WHATWG
 WWDC
 Weavy
@@ -109,6 +110,7 @@ ccproxy
 chatcmpl
 chromaui
 ciphertext
+classcat
 cliproxy
 cliproxyapi
 codegen
@@ -323,6 +325,7 @@ unstub
 untargeted
 untypes
 unvalidated
+unwired
 unwritable
 upserts
 useeffect
@@ -346,5 +349,6 @@ wreq
 wsrelay
 xAI
 xhigh
+xyflow
 zhipu
 zizmor
