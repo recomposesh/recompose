@@ -21,6 +21,23 @@ export function boundedCodexCallId(value: unknown): unknown {
   return typeof value === 'string' ? boundedId(value) : value;
 }
 
+const ITEM_ID_PREFIXES = new Map<unknown, string>([
+  ['message', 'msg'],
+  ['reasoning', 'rs'],
+  ['function_call', 'fc'],
+  ['custom_tool_call', 'ctc'],
+]);
+
+function prefixedItemId(type: unknown, id: string): string {
+  const prefix = ITEM_ID_PREFIXES.get(type);
+
+  if (prefix === undefined || id === '' || id.startsWith(prefix)) {
+    return id;
+  }
+
+  return `${prefix}_${id}`;
+}
+
 export function normalizedCodexItemId(entry: JsonObject): string | undefined {
   const id = entry['id'];
 
@@ -28,9 +45,7 @@ export function normalizedCodexItemId(entry: JsonObject): string | undefined {
     return undefined;
   }
 
-  const normalized = entry['type'] === 'message' && !id.startsWith('msg') ? `msg_${id}` : id;
-
-  return boundedId(normalized);
+  return boundedId(prefixedItemId(entry['type'], id));
 }
 
 export function dropsCodexEncryptedReasoning(entry: JsonObject): boolean {
