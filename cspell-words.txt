@@ -142,6 +142,7 @@ dorny
 dotless
 dyld
 dynamiclib
+edgeupdater
 electronjs
 ermes
 esac
