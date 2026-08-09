@@ -19,6 +19,7 @@ export type OpenAiCode =
   | 'tool_id_collision'
   | 'missing_target'
   | 'missing_credential'
+  | 'unstreamable_answer'
   | 'invalid_json';
 
 export type OpenAiRefusal = {
