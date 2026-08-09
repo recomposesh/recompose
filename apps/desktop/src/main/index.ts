@@ -6,7 +6,6 @@ import type { EngineHost } from './engine-host/engine-host';
 import type { SpendGrantFor } from './engine-host/engine-spend';
 import type { SpendGrantContext } from './engine-host/spend-grant';
 import type { IpcHandlers } from './ipc/dispatch';
-import type { KeyCheckIpcContext } from './ipc/key-check-ipc';
 import type { StorageIpcContext } from './ipc/storage-context';
 import type { StorageWatchers } from './storage/storage-watchers';
 import type { CredentialCustody } from './subscriptions/credential-custody';
@@ -20,7 +19,7 @@ import { spawnEngineChild } from './engine-host/spawn-engine';
 import { resolveSpendGrant } from './engine-host/spend-grant';
 import { serveRewrittenGateway, startStoredGateway } from './engine-host/stored-gateway-serving';
 import { createEngineIpcHandlers } from './ipc/engine-ipc';
-import { createKeyCheckIpcHandlers } from './ipc/key-check-ipc';
+import { createKeyCheckIpcHandlers, keyCheckReach } from './ipc/key-check-ipc';
 import { createLocalRuntimesIpcHandlers } from './ipc/local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/provider-models-ipc';
 import {
@@ -28,6 +27,7 @@ import {
   pushCanvasCommand,
   pushDevtoolsToggle,
   pushEngineStates,
+  pushEngineTraffic,
   pushSettingsChanged,
 } from './ipc/push-events';
 import { registerIpcHandlers } from './ipc/register-ipc';
@@ -164,10 +164,6 @@ function storageContext(
   };
 }
 
-function keyCheckContext(engineHost: EngineHost): KeyCheckIpcContext {
-  return { ...storageReach(), probe: async (provider, key) => engineHost.probe(provider, key) };
-}
-
 function assembleIpcHandlers(
   engineHost: EngineHost,
   custody: CredentialCustody | null,
@@ -187,7 +183,7 @@ function assembleIpcHandlers(
       probeFreePort,
     }),
     ...createStorageIpcHandlers(storageContext(engineHost, custody)),
-    ...createKeyCheckIpcHandlers(keyCheckContext(engineHost)),
+    ...createKeyCheckIpcHandlers(keyCheckReach(storageReach(), engineHost)),
     ...createProviderModelsIpcHandlers(providerModelsReach(storageReach(custody), engineHost)),
     ...createLocalRuntimesIpcHandlers({
       userDataPath,
@@ -257,6 +253,7 @@ async function startRecompose(): Promise<void> {
     spawnChild: () => spawnEngineChild(app.getPath('userData')),
     grantFor,
     storeSubscriptionCredential: subscriptionCredentials.write,
+    onTraffic: pushEngineTraffic,
   });
   engineHost.onStatesChanged(pushEngineStates);
   engineHost.onStatesChanged(repaintTray);

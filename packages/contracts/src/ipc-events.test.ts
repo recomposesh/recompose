@@ -7,13 +7,14 @@ const runningState = { status: 'running' };
 describe('the lifecycle push', () => {
   const eventNames: IpcEvent[] = [
     'engine:state',
+    'engine:traffic',
     'accounts:changed',
     'canvas:command',
     'settings:changed',
     'devtools:toggle',
   ];
 
-  test('exactly the state, account-change, canvas, settings, and devtools pushes exist', () => {
+  test('exactly the state, traffic, account-change, canvas, settings, and devtools pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -57,6 +58,28 @@ describe('the lifecycle push', () => {
     expect(() => {
       ipcEvents['accounts:changed'].payload.parse({ accounts: [] });
     }).toThrow();
+  });
+});
+
+describe('the traffic push', () => {
+  const flowed = { personal: { fast: { outcome: 'served', at: 1_754_600_000_000 } } };
+
+  test('it carries the whole snapshot, so a missed push heals on the next', () => {
+    expect(ipcEvents['engine:traffic'].payload.parse(flowed)).toEqual(flowed);
+  });
+
+  test('it refuses a single outcome a subscriber would have to merge', () => {
+    expect(() =>
+      ipcEvents['engine:traffic'].payload.parse({
+        slug: 'personal',
+        virtualModel: 'fast',
+        outcome: 'served',
+      }),
+    ).toThrow();
+  });
+
+  test('it rides beside the invoke surface, so no window asks for traffic', () => {
+    expect(Object.keys(ipcChannels)).not.toContain('engine:traffic');
   });
 });
 

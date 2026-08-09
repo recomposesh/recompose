@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { keyCheckVerdictSchema, keyProviderIdSchema } from './api-keys';
 import { gatewayEngineStateSchema } from './engine-state';
+import { requestOutcomeSchema } from './engine-traffic';
 import { gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import { loopbackAddressSchema, runtimeReachabilitySchema } from './local-runtimes';
 import { nonBlankString } from './non-blank';
@@ -133,6 +134,22 @@ export const engineReportSchema = z.discriminatedUnion('kind', [
 ]);
 
 export type EngineReport = z.infer<typeof engineReportSchema>;
+
+/**
+ * What the child says on its own once a request through one virtual model has finished.
+ *
+ * @summary It answers no directive, because nothing asked: the child speaks the moment a request
+ * lands, and the parent folds the latest word per virtual model into the snapshot the canvas paints
+ * its cables from.
+ */
+export const engineTrafficReportSchema = z.strictObject({
+  kind: z.literal('traffic'),
+  slug: gatewaySlugSchema,
+  virtualModel: gatewaySlugSchema,
+  request: requestOutcomeSchema,
+});
+
+export type EngineTrafficReport = z.infer<typeof engineTrafficReportSchema>;
 
 export const engineSpendRequestSchema = z.strictObject({
   kind: z.literal('spend-request'),

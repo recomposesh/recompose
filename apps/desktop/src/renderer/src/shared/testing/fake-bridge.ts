@@ -17,8 +17,10 @@ import { ACCOUNTS_VERSION, withSettingsPatch, defaultSettings } from '@recompose
 import { accountHandlers } from './fake-accounts';
 import {
   forgetEngineStateListeners,
+  forgetEngineTrafficListeners,
   gatewayHandlers,
   listenForEngineStates,
+  listenForEngineTraffic,
 } from './fake-gateways';
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
 import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
@@ -85,6 +87,7 @@ function systemHandlers(): SystemHandlers {
 function eventBridge(): RecomposeIpcEvents {
   return {
     'engine:state': (listener) => listenForEngineStates(listener),
+    'engine:traffic': (listener) => listenForEngineTraffic(listener),
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
     'settings:changed': (listener) => listenForSettingsChanges(listener),
@@ -116,6 +119,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   const seeds = seedsFrom(parameters);
 
   forgetEngineStateListeners();
+  forgetEngineTrafficListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(
     seeds.accounts,

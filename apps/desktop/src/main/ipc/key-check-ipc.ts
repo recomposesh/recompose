@@ -21,6 +21,13 @@ export type KeyCheckIpcContext = {
   probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport>;
 };
 
+export function keyCheckReach(
+  reach: Omit<KeyCheckIpcContext, 'probe'>,
+  engine: { probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport> },
+): KeyCheckIpcContext {
+  return { ...reach, probe: async (provider, key) => engine.probe(provider, key) };
+}
+
 type KeyCheckIpcHandlers = Pick<IpcHandlers, 'accounts:check-key'>;
 
 async function checkableRow(ctx: KeyCheckIpcContext, paths: StoragePaths, id: string) {
