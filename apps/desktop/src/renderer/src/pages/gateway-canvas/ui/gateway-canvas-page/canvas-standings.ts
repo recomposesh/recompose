@@ -1,4 +1,5 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
+import type { ReactFlowInstance } from '@xyflow/react';
 import type { RefObject } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
@@ -48,6 +49,7 @@ export type CanvasWorld = {
   seats: NodePositions;
   define: ReturnType<typeof useDefineVirtualModel>;
   dragging: RefObject<DragWatch>;
+  view: RefObject<ReactFlowInstance | null>;
 };
 
 /**

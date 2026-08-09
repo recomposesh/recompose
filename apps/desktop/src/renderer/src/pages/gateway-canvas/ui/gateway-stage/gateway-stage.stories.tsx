@@ -38,6 +38,7 @@ const restingFlow: CanvasFlowWiring = {
   onReconnectEnd: () => {},
   onBeforeDelete: async () => Promise.resolve(false),
   onEdgesDelete: () => {},
+  onInit: () => {},
   onTidy: () => {},
 };
 

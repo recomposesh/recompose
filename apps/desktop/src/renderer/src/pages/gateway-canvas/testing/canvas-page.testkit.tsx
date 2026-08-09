@@ -22,6 +22,10 @@ const CANVAS_FOOTING = `
 [data-canvas-footing] section { position: relative; display: flex; flex: 1 1 0%; min-width: 0; overflow: hidden; }
 [data-canvas-footing] .pointer-events-auto { pointer-events: auto; }
 [data-canvas-footing] .absolute { position: absolute; }
+[data-canvas-footing] .top-0 { top: 0; }
+[data-canvas-footing] .inset-s-0 { inset-inline-start: 0; }
+[data-canvas-footing] .z-20 { z-index: 20; }
+[data-canvas-footing] .origin-top-left { transform-origin: 0 0; }
 `;
 
 const footing = document.createElement('style');

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { notFound } from '@tanstack/react-router';
-import { ViewportPortal } from '@xyflow/react';
 import { useSyncExternalStore } from 'react';
 
 import type { PickerOnCanvas, RemovalAsked } from './use-gateway-canvas';
@@ -20,7 +19,7 @@ import {
 import { PanelSeparator } from '../../../../shared/ui';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { useInspectorReveal } from '../../lib/use-inspector-reveal';
-import { DropPicker } from '../drop-picker/drop-picker';
+import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
 import { useGatewayCanvas } from './use-gateway-canvas';
@@ -35,22 +34,14 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
   const { groups, stage, anchorSeat, onDismiss, onPickAccount, onPickProviderModel } = picker;
 
   return (
-    <ViewportPortal>
-      <div
-        className="pointer-events-auto absolute h-19.5 w-39.5"
-        style={{
-          transform: `translate(${String(anchorSeat.x)}px, ${String(anchorSeat.y)}px)`,
-        }}
-      >
-        <DropPicker
-          groups={groups}
-          onDismiss={onDismiss}
-          onPickAccount={onPickAccount}
-          onPickProviderModel={onPickProviderModel}
-          stage={stage}
-        />
-      </div>
-    </ViewportPortal>
+    <AnchoredPicker
+      groups={groups}
+      onDismiss={onDismiss}
+      onPickAccount={onPickAccount}
+      onPickProviderModel={onPickProviderModel}
+      seat={anchorSeat}
+      stage={stage}
+    />
   );
 }
 

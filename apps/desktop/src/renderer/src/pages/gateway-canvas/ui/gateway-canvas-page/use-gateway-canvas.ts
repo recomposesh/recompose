@@ -1,4 +1,5 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
+import type { ReactFlowInstance } from '@xyflow/react';
 
 import { useRef, useSyncExternalStore } from 'react';
 
@@ -34,7 +35,7 @@ import {
 } from './canvas-standings';
 import { modelIdOf, subjectOf } from './canvas-wiring';
 
-/** The picker as the page anchors it onto the canvas, ready for the portal to place. */
+/** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
 export type PickerOnCanvas = {
   stage: PickerStage;
   groups: readonly OptionGroup[];
@@ -174,6 +175,7 @@ export function useGatewayCanvas(
   const define = useDefineVirtualModel();
   const offered = usePickerModels(standings.picker);
   const dragging = useRef<DragWatch>({ inFlight: false, escaped: false });
+  const view = useRef<ReactFlowInstance | null>(null);
 
   useEscapeCancelledDrag(dragging);
 
@@ -184,7 +186,17 @@ export function useGatewayCanvas(
   const overlay = overlayOf(draft, standings.picker);
   const graph = canvasGraph(gateway, accounts, overlay);
   const seats = seatsOf(graph, stored, overlay);
-  const world: CanvasWorld = { slug, gateway, accounts, standings, graph, seats, define, dragging };
+  const world: CanvasWorld = {
+    slug,
+    gateway,
+    accounts,
+    standings,
+    graph,
+    seats,
+    define,
+    dragging,
+    view,
+  };
 
   return {
     flow: flowWiring(world),

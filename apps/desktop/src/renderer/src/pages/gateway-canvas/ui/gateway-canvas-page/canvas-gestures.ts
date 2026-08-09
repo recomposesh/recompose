@@ -10,6 +10,7 @@ import {
   keepCanvasPositions,
   setNodePosition,
 } from '../../lib/canvas-position-store';
+import { flowPointOf, viewportOf } from '../../lib/canvas-viewport';
 import { emptyDefinition } from '../../lib/model-draft';
 import { seatForNewNode, tidyPositions } from '../../lib/tidy-layout';
 import { heldDraft, moveDraftSeat, startDrafting } from '../../lib/use-held-draft';
@@ -87,7 +88,11 @@ function droppedCableLanding(world: CanvasWorld): OnConnectEnd {
       return;
     }
 
-    landedOnOpenCanvas(world, state.fromNode.id, state.to);
+    landedOnOpenCanvas(
+      world,
+      state.fromNode.id,
+      flowPointOf(state.to, viewportOf(world.view.current)),
+    );
   };
 }
 
@@ -284,6 +289,9 @@ export function flowWiring(world: CanvasWorld): CanvasFlowWiring {
     nodes: flowNodesOf(world.graph, world.seats, world.standings.selection, cardAsks(world)),
     edges: flowEdgesOf(world.graph.edges, world.standings.selection),
     onNodesChange: appliedSeatMoves(world),
+    onInit: (instance) => {
+      world.view.current = instance;
+    },
     ...selectionWiring(world),
     ...connectWiring(world),
     ...deletionWiring(world),

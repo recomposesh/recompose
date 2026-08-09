@@ -9,6 +9,7 @@ import type {
   OnConnectEnd,
   OnConnectStart,
   OnEdgesDelete,
+  OnInit,
   OnNodesChange,
   OnReconnect,
 } from '@xyflow/react';
@@ -21,6 +22,7 @@ import type { BindingOutcome } from '../../lib/cable-announcements';
 
 import { announcedOutcome, announcedUrgency } from '../../lib/cable-announcements';
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
+import { RESTING_VIEWPORT } from '../../lib/canvas-viewport';
 import { CanvasCommands } from '../../lib/use-canvas-commands';
 import { BindingCable } from '../binding-cable/binding-cable';
 import { CableConnectionLine } from '../cable-connection-line/cable-connection-line';
@@ -48,6 +50,7 @@ export type CanvasFlowWiring = {
   onReconnectEnd: () => void;
   onBeforeDelete: OnBeforeDelete;
   onEdgesDelete: OnEdgesDelete;
+  onInit: OnInit;
   onTidy: () => void;
 };
 
@@ -56,7 +59,7 @@ type GatewayStageProps = {
   flow: CanvasFlowWiring;
   /** What just became of a binding, which the live region says out loud. */
   announced: BindingOutcome | undefined;
-  /** Surfaces the page anchors into the flow's own coordinates, like the drop-picker. */
+  /** Surfaces the page stands on the canvas, above its furniture, like the drop-picker. */
   children?: ReactNode;
 };
 
@@ -71,22 +74,32 @@ const nodeTypes: NodeTypes = {
 
 const edgeTypes: EdgeTypes = { cable: BindingCable };
 
-const restingViewport = { x: 48, y: 48, zoom: 1 };
-
 const deleteKeys = ['Backspace', 'Delete'];
 
 const withoutTheCornerBadge = { hideAttribution: true };
 
-function attributionBadge(): ReactNode {
+/**
+ * What stands in the canvas corners beside the composition: the tools, the map, and the credit.
+ *
+ * @summary The attribution stands restyled at the bottom center, one furniture band above the
+ * corners, because at the narrowest pane the bottom row leaves no seat between the tools cluster
+ * and the map. The menu's ear stands here too, since the commands it answers drive this viewport.
+ */
+function canvasFurniture(onTidy: () => void): ReactNode {
   return (
-    <Panel className="m-4 mb-17" position="bottom-center">
-      <a
-        className="rounded-pill border border-line-subtle bg-canvas-card px-2.5 py-1 text-footnote font-medium text-ink-secondary shadow-canvas-card focus-ring"
-        href="https://reactflow.dev"
-      >
-        Built with React Flow
-      </a>
-    </Panel>
+    <>
+      <CanvasZoomControls onTidy={onTidy} />
+      <CanvasMinimap />
+      <CanvasCommands onTidy={onTidy} />
+      <Panel className="m-4 mb-17" position="bottom-center">
+        <a
+          className="rounded-pill border border-line-subtle bg-canvas-card px-2.5 py-1 text-footnote font-medium text-ink-secondary shadow-canvas-card focus-ring"
+          href="https://reactflow.dev"
+        >
+          Built with React Flow
+        </a>
+      </Panel>
+    </>
   );
 }
 
@@ -112,14 +125,14 @@ function liveRegions(announced: BindingOutcome | undefined): ReactNode {
  * @summary The stage owns no state: the page derives every node and edge from engine truth and
  * the stage hands every gesture straight back, so the library's store never grows a second copy
  * of the composition. The gestures read macOS-native, a scroll pans and a pinch zooms, and the
- * cards keep their own tab stops, so the flow adds none of its own. The attribution stands
- * restyled at the bottom center, one furniture band above the corners, because at the narrowest
- * pane the bottom row leaves no seat between the tools cluster and the map.
+ * cards keep their own tab stops, so the flow adds none of its own. Whatever the page anchors onto
+ * the canvas stands after the furniture, because a surface a gesture opened answers the pointer
+ * that opened it rather than falling under the corner the gesture happened to end over.
  */
 export function GatewayStage({ flow, announced, children }: GatewayStageProps) {
   const { nodes, edges, isValidConnection, onNodesChange, onNodeClick, onEdgeClick } = flow;
   const { onPaneClick, onConnect, onConnectStart, onConnectEnd, onReconnect, onTidy } = flow;
-  const { onReconnectStart, onReconnectEnd, onBeforeDelete, onEdgesDelete } = flow;
+  const { onReconnectStart, onReconnectEnd, onBeforeDelete, onEdgesDelete, onInit } = flow;
 
   return (
     <section className="relative flex min-w-0 flex-1 overflow-hidden bg-surface-content dot-grid">
@@ -127,7 +140,7 @@ export function GatewayStage({ flow, announced, children }: GatewayStageProps) {
         <ReactFlow
           connectionLineComponent={CableConnectionLine}
           connectionRadius={CABLE_GRAB_SPAN}
-          defaultViewport={restingViewport}
+          defaultViewport={RESTING_VIEWPORT}
           deleteKeyCode={deleteKeys}
           edgeTypes={edgeTypes}
           edges={edges}
@@ -144,6 +157,7 @@ export function GatewayStage({ flow, announced, children }: GatewayStageProps) {
           onConnectStart={onConnectStart}
           onEdgeClick={onEdgeClick}
           onEdgesDelete={onEdgesDelete}
+          onInit={onInit}
           onNodeClick={onNodeClick}
           onNodesChange={onNodesChange}
           onPaneClick={onPaneClick}
@@ -156,10 +170,7 @@ export function GatewayStage({ flow, announced, children }: GatewayStageProps) {
           zoomOnPinch
           zoomOnScroll={false}
         >
-          <CanvasZoomControls onTidy={onTidy} />
-          <CanvasMinimap />
-          <CanvasCommands onTidy={onTidy} />
-          {attributionBadge()}
+          {canvasFurniture(onTidy)}
           {children}
         </ReactFlow>
       </ReactFlowProvider>

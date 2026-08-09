@@ -4,6 +4,7 @@ import type { SettledDefinition } from '../../lib/model-draft';
 import type { CanvasWorld } from './canvas-standings';
 
 import { accountName } from '../../../../entities/account';
+import { keepCanvasPositions, setNodePosition } from '../../lib/canvas-position-store';
 import {
   emptyDefinition,
   gatewayDefining,
@@ -25,10 +26,43 @@ export function targetNameIn(accounts: readonly Account[], accountId: string): s
   return account === undefined ? accountId : accountName(account);
 }
 
-function committedPick(world: CanvasWorld, rewritten: GatewayConfig, landed: () => void): void {
+/**
+ * Hands back the seating a completed pick owes the target card it brings into being.
+ *
+ * @summary A cable let go on open canvas stands a pending card exactly where the pointer released,
+ * and the target that answers the pick takes that card's place, so what a person aimed at is where
+ * the composition grows. It seats nothing when the account already stands on the canvas, because
+ * a card a person can see is one they placed rather than one this pick is making, and nothing
+ * when the picker was opened on a card rather than by a drop, which named no spot at all.
+ */
+function seatedWhereTheCableLanded(world: CanvasWorld, accountId: string): () => void {
+  const picker = world.standings.picker;
+  const at = picker !== undefined && 'at' in picker ? picker.at : undefined;
+  const nodeId = `target:${accountId}`;
+  const alreadyStanding = world.graph.nodes.some((node) => node.id === nodeId);
+
+  return () => {
+    if (at === undefined || alreadyStanding) {
+      return;
+    }
+
+    setNodePosition(world.slug, nodeId, at);
+    keepCanvasPositions(world.slug);
+  };
+}
+
+function committedPick(
+  world: CanvasWorld,
+  accountId: string,
+  rewritten: GatewayConfig,
+  landed: () => void,
+): void {
+  const seatTheTarget = seatedWhereTheCableLanded(world, accountId);
+
   world.define.mutate(rewritten, {
     onSuccess: () => {
       world.standings.setPicker(undefined);
+      seatTheTarget();
       landed();
     },
     onError: (failure) => {
@@ -53,7 +87,7 @@ export function completedDraftPick(
   const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
   const settled = { ...definition, accountId, providerModel };
 
-  committedPick(world, gatewayDefining(world.gateway, settled), () => {
+  committedPick(world, accountId, gatewayDefining(world.gateway, settled), () => {
     leaveDrafting(world.slug);
     world.standings.select(`model:${settled.id}`);
     world.standings.announce({
@@ -88,6 +122,7 @@ export function completedRebindPick(
 
   committedPick(
     world,
+    accountId,
     gatewayRebinding(world.gateway, modelId, { accountId, providerModel }),
     () => {
       world.standings.announce({
