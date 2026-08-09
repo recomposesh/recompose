@@ -15,12 +15,12 @@ The gateway detail screen MUST render the gateway's composition as nodes on a ca
 
 ### Requirement: A cable dragged between nodes creates a binding
 
-A person MUST be able to drag a cable out of a node's port and drop it on a compatible node to create the binding. The gesture reads the way Excalidraw pulls an arrow. A drop on empty canvas MUST open the grouped picker of stored accounts, and the picked account MUST materialize as a wired target node at the drop point. Esc MUST cancel a drag in flight and leave the composition unchanged.
+A person MUST be able to drag a cable out of a node's port and drop it on a compatible node to create the binding. A stored binding always carries a provider model, so the drop MUST open the provider-model pick and the completed pick MUST write the binding. The gesture reads the way Excalidraw pulls an arrow. A drop on empty canvas MUST open the grouped picker of stored accounts. Picking an account and its provider model MUST materialize a wired target node at the drop point. Esc MUST cancel a drag in flight and leave the composition unchanged.
 
 #### Scenario: a person wires a virtual model by cable
 
 - Given a gateway node and an unbound virtual model node on the canvas
-- When a person drags a cable from the virtual model's port onto a stored target node
+- When a person drags a cable from the virtual model's port onto a stored target node and picks the provider model
 - Then the virtual model stands bound to that target
 - And the canvas renders the new cable
 
@@ -29,7 +29,7 @@ A person MUST be able to drag a cable out of a node's port and drop it on a comp
 - Given a virtual model node with no target bound
 - When a person drags a cable from its port and drops it on empty canvas
 - Then the picker of stored accounts opens
-- And picking an account materializes a wired target node at the drop point
+- And picking an account and its provider model materializes a wired target node at the drop point
 
 #### Scenario: Esc cancels the drag
 

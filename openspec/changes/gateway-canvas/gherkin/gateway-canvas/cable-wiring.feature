@@ -7,7 +7,7 @@ Feature: A dragged cable creates a binding
   Scenario: A cable dropped on a target binds the virtual model
     Given a virtual model "fast" holding no target
     And a stored Anthropic key account standing as a target node
-    When the person drags a cable from the port of "fast" onto the target node
+    When the person drags a cable from the port of "fast" onto the target node and picks the provider model "claude-sonnet-5"
     Then "fast" stands bound to that account
     And the canvas draws the new cable
 
@@ -19,7 +19,7 @@ Feature: A dragged cable creates a binding
 
   Scenario: Picking an account materializes the wired target
     Given the picker open from a cable dragged out of "fast" and dropped on empty canvas
-    When the person picks the stored Anthropic key account
+    When the person picks the stored Anthropic key account and the provider model "claude-sonnet-5"
     Then the account stands as a target node at the drop point
     And "fast" stands bound to it
 

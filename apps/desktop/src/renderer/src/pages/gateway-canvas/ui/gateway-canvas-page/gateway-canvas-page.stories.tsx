@@ -4,15 +4,15 @@ import preview from '#.storybook/preview';
 import { withShellSurface } from '#.storybook/shell-surface';
 
 import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
-import {
-  freshGateway,
-  runningGateway,
-  servingGateway,
-  storedAccounts,
-} from '../../testing/gateway-canvas.testkit';
+import { dropCanvasPositions } from '../../lib/canvas-position-store';
+import { leaveDrafting } from '../../lib/use-held-draft';
+import { servingBridgeWorld } from '../../testing/gateway-canvas.testkit';
 import { GatewayCanvasPage } from './gateway-canvas-page';
 
-function openTheInspector() {
+function freshCanvas() {
+  dropCanvasPositions('my-gateway');
+  leaveDrafting('my-gateway');
+
   if (!inspectorOpen()) {
     toggleInspector();
   }
@@ -22,56 +22,67 @@ const meta = preview.meta({
   component: GatewayCanvasPage,
   args: { slug: 'my-gateway' },
   beforeEach: () => {
-    openTheInspector();
+    freshCanvas();
 
-    return openTheInspector;
+    return freshCanvas;
   },
   decorators: [withShellSurface],
-  parameters: {
-    bridge: {
-      accounts: storedAccounts,
-      gateways: [servingGateway],
-      engineStates: runningGateway,
-    },
-  },
+  parameters: { bridge: servingBridgeWorld },
 });
 
 /**
- * The gateway surface: the stage it will be composed on, beside the inspector that changes it.
+ * The gateway surface: the composition standing as a canvas, beside the inspector reading it.
  *
- * @summary The split is the shape the screen keeps once the canvas grows nodes, so the drawer is
- * where a person works today and stays where it is tomorrow.
+ * @summary The canvas draws engine truth and the drawer reads whatever stands selected, which is
+ * the gateway itself until a person points at something.
  */
 export const Serving = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
-    await expect(await canvas.findByText('· 2 virtual models')).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: /Fast/ })).toBeVisible();
     await expect(await canvas.findByText('fast → work · claude-haiku-4-5')).toBeVisible();
   },
 });
 
-/** Asking for a virtual model takes the drawer over and leaves the stage standing. */
-export const DefiningAModel = meta.story({
-  parameters: {
-    bridge: { accounts: storedAccounts, gateways: [freshGateway], engineStates: runningGateway },
-  },
+/** The gateway plus births a draft card, and the inspector turns onto its fields. */
+export const DraftingAModel = meta.story({
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'Add virtual model' }));
+    await userEvent.click(await canvas.findByLabelText('Add a virtual model'));
 
+    await expect(
+      await canvas.findByRole('button', { name: /Unnamed virtual model/ }),
+    ).toBeVisible();
     await expect(await canvas.findByRole('textbox', { name: 'Name' })).toBeVisible();
+  },
+});
+
+/** A selected cable turns the inspector onto the binding it stands for. */
+export const ReadingACable = meta.story({
+  play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
+
+    canvasElement
+      .querySelector('[data-id="cable:fast"]')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await expect(await canvas.findByText('Binding', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('claude-haiku-4-5', { exact: true })).toBeVisible();
   },
 });
 
 /**
- * The node let go of, which hands the stage the whole window.
+ * A pane press lets the selection go and hands the canvas the whole width.
  *
- * @summary The inspector is something a person opens, so the screen has to read as finished without
- * it rather than as a panel that failed to load.
+ * @summary The inspector is something a person opens by pointing at a subject, so the screen has
+ * to read as finished without it rather than as a panel that failed to load.
  */
 export const InspectorClosed = meta.story({
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: /My Gateway/ }));
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
+
+    canvasElement
+      .querySelector('.react-flow__pane')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     await waitFor(async () => {
       await expect(canvas.queryByText('Endpoint')).toBeNull();
@@ -80,5 +91,5 @@ export const InspectorClosed = meta.story({
   },
 });
 
-/** The whole surface in the dark scheme, where the drawer has to separate from the stage. */
+/** The whole surface in the dark scheme, where the canvas has to separate from the drawer. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
