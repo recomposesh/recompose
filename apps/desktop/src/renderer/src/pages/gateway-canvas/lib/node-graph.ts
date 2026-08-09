@@ -24,8 +24,8 @@ export type CanvasNode =
 /** Which card a node stands as, which is what decides the column it seats in. */
 export type CanvasNodeKind = CanvasNode['kind'];
 
-/** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, or one of the two the overlay draws. */
-export type CableStanding = 'resting' | 'live' | 'broken' | 'draft' | 'pending';
+/** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
+export type CableStanding = 'resting' | 'live' | 'broken' | 'draft' | 'pending' | 'structural';
 
 /** A cable drawn between two cards standing on the canvas. */
 export type CanvasEdge = { id: string; source: string; target: string; standing: CableStanding };
@@ -67,6 +67,15 @@ function bindingCable(model: VirtualModel, target: CanvasNode): CanvasEdge {
   };
 }
 
+function structuralWire(servedNodeId: string): CanvasEdge {
+  return {
+    id: `wire:${servedNodeId}`,
+    source: GATEWAY_NODE_ID,
+    target: servedNodeId,
+    standing: 'structural',
+  };
+}
+
 function servedGraph(
   gateway: GatewayConfig,
   accounts: readonly Account[],
@@ -98,7 +107,7 @@ function servedGraph(
       nodes.push(target);
     }
 
-    edges.push(bindingCable(model, target));
+    edges.push(structuralWire(modelNodeId(model.id)), bindingCable(model, target));
   }
 
   return { nodes, edges };
@@ -121,11 +130,13 @@ function draftAppending(
  * @summary This is the only thing that writes graph shape, so what a person sees is the stored
  * composition rather than a second copy of it drifting beside one. A binding whose account left the
  * registry keeps its cable onto a ghost card, because a broken binding is what a person came back
- * to repair and a blank space says nothing about it. The overlay cards append last and a draft
- * naming a model the gateway already serves stands down, so nothing the renderer holds can shadow
- * a stored binding. The overlay cables carry their own `overlay:` namespace, because a person may
- * legally alias a virtual model `draft`, and two cables under one id would let a press, a
- * reconnect, or a delete land on the wrong one.
+ * to repair and a blank space says nothing about it. The gateway wires to every virtual model and
+ * draft it serves, so the template's spine reads on the canvas; a wire is structural, which no
+ * gesture selects, reconnects, or deletes. The overlay cards append last and a draft naming a
+ * model the gateway already serves stands down, so nothing the renderer holds can shadow a stored
+ * binding. The overlay cables carry their own `overlay:` namespace and every wire carries the node
+ * id it reaches, because a person may legally alias a virtual model `draft`, and two cables under
+ * one id would let a press, a reconnect, or a delete land on the wrong one.
  */
 export function canvasGraph(
   gateway: GatewayConfig,
@@ -142,7 +153,7 @@ export function canvasGraph(
       modelId: drafting.modelId,
       displayName: drafting.displayName,
     });
-    edges.push({
+    edges.push(structuralWire(DRAFT_NODE_ID), {
       id: 'overlay:draft',
       source: GATEWAY_NODE_ID,
       target: DRAFT_NODE_ID,

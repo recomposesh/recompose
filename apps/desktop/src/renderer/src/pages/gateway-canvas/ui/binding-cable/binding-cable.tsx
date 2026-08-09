@@ -34,6 +34,7 @@ function grabEnd(x: number, y: number, tint: string): ReactElement {
  */
 export function BindingCable({
   data,
+  interactionWidth,
   selected,
   sourcePosition,
   sourceX,
@@ -52,14 +53,11 @@ export function BindingCable({
   });
   const carried = data?.['standing'];
   const standing = strokeForStanding(carried);
+  const grabBand = interactionWidth ?? CABLE_GRAB_SPAN;
 
   if (selected !== true) {
     return (
-      <BaseEdge
-        className={`binding-cable ${standing}`}
-        interactionWidth={CABLE_GRAB_SPAN}
-        path={drawn}
-      />
+      <BaseEdge className={`binding-cable ${standing}`} interactionWidth={grabBand} path={drawn} />
     );
   }
 
@@ -71,7 +69,7 @@ export function BindingCable({
       <path className={`cable-halo-ring ${standing}`} d={drawn} />
       <BaseEdge
         className={`binding-cable-selected ${standing}`}
-        interactionWidth={CABLE_GRAB_SPAN}
+        interactionWidth={grabBand}
         path={drawn}
       />
       {grabEnd(sourceX, sourceY, tint)}

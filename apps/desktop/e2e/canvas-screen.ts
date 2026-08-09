@@ -53,6 +53,11 @@ export function cableId(modelId: string): string {
   return `cable:${modelId}`;
 }
 
+/** The structural wire joining the gateway to a virtual model it serves. */
+export function wireId(modelId: string): string {
+  return `wire:${modelNodeId(modelId)}`;
+}
+
 export function canvasNode(page: Page, nodeId: string): Locator {
   return page.locator(`.react-flow__node[data-id="${nodeId}"]`);
 }
@@ -61,9 +66,18 @@ export function canvasCable(page: Page, cable: string): Locator {
   return page.locator(`.react-flow__edge[data-id="${cable}"]`);
 }
 
-/** The cable running between two named cards, read off the name the canvas gives it. */
+/** The cable between two named cards, never the wire there: the two answer separately. */
 export function cableBetween(page: Page, source: string, target: string): Locator {
-  return page.locator(`.react-flow__edge[aria-label="Edge from ${source} to ${target}"]`);
+  return page.locator(
+    `.react-flow__edge:not([data-id^="wire:"])[aria-label="Edge from ${source} to ${target}"]`,
+  );
+}
+
+/** The structural wire between two named cards, which stands apart from any cable there. */
+export function wireBetween(page: Page, source: string, target: string): Locator {
+  return page.locator(
+    `.react-flow__edge[data-id^="wire:"][aria-label="Edge from ${source} to ${target}"]`,
+  );
 }
 
 /** Selects a gateway and waits for its composition to stand, which is the detail a person opens. */

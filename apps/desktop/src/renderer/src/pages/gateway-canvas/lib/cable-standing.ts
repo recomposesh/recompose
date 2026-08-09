@@ -9,6 +9,7 @@ const standingStroke: Record<CableStanding, string> = {
   broken: 'stroke-cable-broken',
   draft: 'stroke-cable-draft',
   pending: 'stroke-cable-pending',
+  structural: 'stroke-cable-resting',
 };
 
 const standingTint: Record<CableStanding, string> = {
@@ -17,6 +18,7 @@ const standingTint: Record<CableStanding, string> = {
   broken: 'node-tint-cable-broken',
   draft: 'node-tint-cable-draft',
   pending: 'node-tint-cable-pending',
+  structural: 'node-tint-cable-resting',
 };
 
 const strokeCarried: ReadonlyMap<unknown, string> = new Map(Object.entries(standingStroke));

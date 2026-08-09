@@ -5,6 +5,8 @@ import type { NodePositions, XY } from '../../lib/canvas-positions';
 import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 
+import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
+
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
   /** Receives the gateway plus, which births the draft virtual model. */
@@ -126,11 +128,14 @@ export function flowNodesOf(
 }
 
 /**
- * The edge objects the flow renders, one binding cable each plus the overlay pair.
+ * The edge objects the flow renders, one binding cable each plus the wires and the overlay pair.
  *
- * @summary The overlay cables take no selection and no reconnect drag, because they stand for
- * work in flight rather than stored bindings, and the gestures that rebind or release belong to
- * the bindings alone.
+ * @summary Only a binding cable answers anything: it keeps the wide grab band its reconnect drag
+ * is sized by, and the keyboard can stop on it to read and release the binding. A wire and an
+ * overlay cable answer no pointer and no keyboard at all, because they stand for the frame and
+ * for work in flight rather than for stored bindings: with a band of their own they would swallow
+ * every pane press along their corridor, and as tab stops they would stand one inert stop per
+ * model.
  */
 export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | undefined): Edge[] {
   return edges.map((edge) => ({
@@ -140,7 +145,9 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
     type: 'cable',
     data: { standing: edge.standing },
     selected: edge.id === selection,
-    ...(bindingCableId(edge.id) === undefined ? { selectable: false, reconnectable: false } : {}),
+    ...(bindingCableId(edge.id) === undefined
+      ? { selectable: false, reconnectable: false, focusable: false, interactionWidth: 0 }
+      : { interactionWidth: CABLE_GRAB_SPAN }),
   }));
 }
 

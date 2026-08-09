@@ -47,6 +47,13 @@ describe('what a cable paints for its standing', () => {
     expect(strokeForStanding(null)).toBe('stroke-cable-resting');
     expect(tintForStanding({ standing: 'live' })).toBe('node-tint-cable-resting');
   });
+
+  it('mutes a structural wire down to the resting treatment, so the frame never outshines a binding', () => {
+    const structural: CableStanding = 'structural';
+
+    expect(strokeForStanding(structural)).toBe('stroke-cable-resting');
+    expect(tintForStanding(structural)).toBe('node-tint-cable-resting');
+  });
 });
 
 describe('what a cable in flight paints for the release under the pointer', () => {

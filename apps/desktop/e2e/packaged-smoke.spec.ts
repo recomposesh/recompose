@@ -20,6 +20,7 @@ import {
   standingNodes,
   targetNodeId,
   viewportZoom,
+  wireId,
 } from './canvas-screen';
 import { seedGateway } from './gateway-screen';
 import {
@@ -147,8 +148,12 @@ test('the packaged canvas paints a wired gateway under the strict style policy',
       await expect
         .poll(async () => standingNodes(renderer))
         .toEqual([GATEWAY_NODE, modelNodeId(PACKAGED_MODEL), targetNodeId(accountId)]);
-      expect(await standingCables(renderer)).toEqual([cableId(PACKAGED_MODEL)]);
+      expect(await standingCables(renderer)).toEqual([
+        wireId(PACKAGED_MODEL),
+        cableId(PACKAGED_MODEL),
+      ]);
       expect(await cablePath(renderer, cableId(PACKAGED_MODEL))).not.toBe('');
+      expect(await cablePath(renderer, wireId(PACKAGED_MODEL))).not.toBe('');
       await expect(
         cableBetween(renderer, modelNodeId(PACKAGED_MODEL), targetNodeId(accountId)),
       ).toBeVisible();

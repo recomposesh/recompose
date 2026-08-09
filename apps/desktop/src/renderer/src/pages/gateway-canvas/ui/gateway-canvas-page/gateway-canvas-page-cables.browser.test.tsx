@@ -64,6 +64,34 @@ test('dragging a cable target endpoint onto another stored target rebinds throug
     .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
 });
 
+test('a click along the gateway wire reaches the pane, so it still dismisses the selection', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
+  await expect.poll(() => screen.container.querySelector('aside')).not.toBeNull();
+
+  const pane = screen.container.querySelector<HTMLElement>('.react-flow__pane');
+  const wire = screen.container.querySelector<SVGPathElement>(
+    '[data-id="wire:model:fast"] .react-flow__edge-path',
+  );
+
+  if (pane === null || wire === null) {
+    throw new Error('the canvas stands without its pane or the gateway wire');
+  }
+
+  const paneBox = pane.getBoundingClientRect();
+  const wireBox = wire.getBoundingClientRect();
+
+  await userEvent.click(pane, {
+    position: {
+      x: wireBox.left + wireBox.width / 2 - paneBox.left,
+      y: wireBox.top + wireBox.height / 2 + 6 - paneBox.top,
+    },
+  });
+
+  await expect.poll(() => screen.container.querySelector('aside')).toBeNull();
+});
+
 test('a cable dropped on empty canvas births the pending card and opens the picker', async () => {
   const screen = await canvasPageOn();
 

@@ -13,6 +13,7 @@ import {
 } from './canvas-gestures';
 import {
   accountPicker,
+  cableBetween,
   cableGrabEnd,
   cableId,
   canvasCable,
@@ -47,6 +48,7 @@ import {
   targetPort,
   urgentlySaid,
   viewportZoom,
+  wireBetween,
 } from './canvas-screen';
 import { test } from './fixtures';
 import {
@@ -90,6 +92,8 @@ test('the gateway plus births a draft card wired to the gateway', async ({ page 
   await expect.poll(async () => standingNodes(page)).toContain(DRAFT_NODE);
   expect(await nodeTreatment(page, DRAFT_NODE)).toBe('draft-model');
   expect(await standingCables(page)).toContain(DRAFT_CABLE);
+  await expect(cableBetween(page, GATEWAY_NODE, DRAFT_NODE)).toHaveCount(1);
+  await expect(wireBetween(page, GATEWAY_NODE, DRAFT_NODE)).toHaveCount(1);
 });
 
 test('the plus on a virtual model opens the picker and a completed pick binds it', async ({

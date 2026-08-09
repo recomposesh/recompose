@@ -79,7 +79,7 @@ const withoutTheCornerBadge = { hideAttribution: true };
 
 function attributionBadge(): ReactNode {
   return (
-    <Panel className="m-4" position="bottom-center">
+    <Panel className="m-4 mb-17" position="bottom-center">
       <a
         className="rounded-pill border border-line-subtle bg-canvas-card px-2.5 py-1 text-footnote font-medium text-ink-secondary shadow-canvas-card focus-ring"
         href="https://reactflow.dev"
@@ -113,7 +113,8 @@ function liveRegions(announced: BindingOutcome | undefined): ReactNode {
  * the stage hands every gesture straight back, so the library's store never grows a second copy
  * of the composition. The gestures read macOS-native, a scroll pans and a pinch zooms, and the
  * cards keep their own tab stops, so the flow adds none of its own. The attribution stands
- * restyled at the bottom edge, clear of the map in the corner.
+ * restyled at the bottom center, one furniture band above the corners, because at the narrowest
+ * pane the bottom row leaves no seat between the tools cluster and the map.
  */
 export function GatewayStage({ flow, announced, children }: GatewayStageProps) {
   const { nodes, edges, isValidConnection, onNodesChange, onNodeClick, onEdgeClick } = flow;

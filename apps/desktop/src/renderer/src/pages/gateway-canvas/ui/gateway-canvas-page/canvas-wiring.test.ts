@@ -2,8 +2,11 @@ import type { Connection, NodeChange } from '@xyflow/react';
 
 import { describe, expect, test } from 'vitest';
 
+import type { CanvasEdge } from '../../lib/node-graph';
+
 import { gatewaySeed } from '../../../../shared/testing';
-import { movedSeats, oneTargetRule, subjectOf } from './canvas-wiring';
+import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
+import { flowEdgesOf, movedSeats, oneTargetRule, subjectOf } from './canvas-wiring';
 
 function pulled(source: string, target: string): Connection {
   return { source, target, sourceHandle: null, targetHandle: null };
@@ -92,6 +95,38 @@ describe('the one-target rule during a drag', () => {
   test('nothing leaves the gateway or a target by cable', () => {
     expect(valid(pulled('gateway', 'target:k1'))).toBe(false);
     expect(valid(pulled('target:k1', 'target:g1'))).toBe(false);
+  });
+});
+
+describe('what the flow hands each cable to answer gestures by', () => {
+  const drawn: readonly CanvasEdge[] = [
+    { id: 'wire:model:fast', source: 'gateway', target: 'model:fast', standing: 'structural' },
+    { id: 'cable:fast', source: 'model:fast', target: 'target:k1', standing: 'resting' },
+    { id: 'wire:draft', source: 'gateway', target: 'draft', standing: 'structural' },
+    { id: 'overlay:draft', source: 'gateway', target: 'draft', standing: 'draft' },
+  ];
+
+  test('a binding cable keeps the wide grab band its reconnect drag is sized by', () => {
+    const cable = flowEdgesOf(drawn, undefined).find((edge) => edge.id === 'cable:fast');
+
+    expect(cable).toMatchObject({ interactionWidth: CABLE_GRAB_SPAN });
+    expect(cable?.selectable).toBeUndefined();
+    expect(cable?.focusable).toBeUndefined();
+  });
+
+  test('a wire and an overlay cable answer no pointer and no keyboard, so the pane keeps both', () => {
+    const inert = flowEdgesOf(drawn, undefined).filter((edge) => edge.id !== 'cable:fast');
+
+    expect(inert).toHaveLength(3);
+
+    for (const edge of inert) {
+      expect(edge).toMatchObject({
+        selectable: false,
+        reconnectable: false,
+        focusable: false,
+        interactionWidth: 0,
+      });
+    }
   });
 });
 

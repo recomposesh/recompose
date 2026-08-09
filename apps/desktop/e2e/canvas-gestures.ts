@@ -85,28 +85,71 @@ async function travel(page: Page, from: Point, to: Point): Promise<void> {
  * @operation The canvas opens at its resting viewport, which on a narrow window leaves the target
  * column beyond the right edge. A pointer cannot press what the window does not show, so a
  * gesture that must land on a card out there asks the canvas to fit first, the same way a person
- * reaches for the tool in the corner rather than guessing where the card went.
+ * reaches for the tool in the corner rather than guessing where the card went. The fit presses
+ * again until every card stands inside the pane itself rather than the window, because a fit
+ * taken while the inspector is still sliding in reads a pane that is about to shrink, and the
+ * target column settles under the inspector where no pointer can reach it.
  */
 export async function fitCanvasToView(page: Page): Promise<void> {
-  await canvasTool(page, 'Zoom to fit').click();
-
   await expect
-    .poll(async () =>
-      page
-        .locator('.react-flow__node')
-        .evaluateAll((cards) =>
-          cards.every((card) => card.getBoundingClientRect().right <= window.innerWidth),
-        ),
-    )
+    .poll(async () => {
+      await canvasTool(page, 'Zoom to fit').click();
+
+      return page.locator('.react-flow__pane').evaluate((pane) => {
+        const field = pane.getBoundingClientRect();
+
+        return [...document.querySelectorAll('.react-flow__node')].every((card) => {
+          const box = card.getBoundingClientRect();
+
+          return box.left >= field.left && box.right <= field.right;
+        });
+      });
+    })
     .toBe(true);
+}
+
+/** How many fresh presses a grip may take before the gesture is called lost. */
+const GRIP_ATTEMPTS = 4;
+
+/** What one press may spend waiting for the canvas to answer it with a line. */
+const LINE_WAIT_MS = 1200;
+
+/**
+ * Presses a port until the canvas answers with a connection line, off a fresh box every time.
+ *
+ * @operation Edges settle a beat after the cards, so right after a fit an anchor's box can read
+ * where the anchor stood rather than where it stands, and a press there starts nothing. Each
+ * attempt re-reads the box, presses, and travels the short first move a drag is read from; the
+ * pointer is let go only after a whole wait answered no line, because a release any earlier could
+ * land a started-but-unpainted drag as a real drop.
+ */
+async function grippedCable(page: Page, port: Locator, toward: Point): Promise<Point> {
+  for (let attempt = 0; attempt < GRIP_ATTEMPTS; attempt += 1) {
+    const start = await portGrip(port);
+    const nudged = partWay(start, toward, 0.1);
+
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(nudged.x, nudged.y);
+
+    try {
+      await expect(page.locator('.react-flow__connectionline')).toBeVisible({
+        timeout: LINE_WAIT_MS,
+      });
+
+      return start;
+    } catch {
+      await page.mouse.up();
+    }
+  }
+
+  throw new Error('no press took hold of the cable, so nothing was dragged');
 }
 
 /** Pulls a cable out of a port and holds it over a spot, leaving the drag in flight. */
 export async function pullCableTo(page: Page, port: Locator, toward: Point): Promise<void> {
-  const start = await portGrip(port);
+  const start = await grippedCable(page, port, toward);
 
-  await page.mouse.move(start.x, start.y);
-  await page.mouse.down();
   await travel(page, start, toward);
 }
 
