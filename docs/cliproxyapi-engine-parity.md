@@ -7,13 +7,32 @@ assumption that similarly named code is equivalent.
 
 ## Authority and scope
 
-- Upstream: CLIProxyAPI v7.2.121
-- Commit: `8392b180ce3789eba9fd06ebc812b4fc237876e1`
-- Local comparison date: 2026-08-07
-- Upstream internal tests: 329 files, 2,926 `Test*` functions, 16 benchmarks
-- Upstream translator tests: 767 `Test*` functions
-- Upstream Interactions translator tests: 136 `Test*` functions
-- Current Recompose gate: 360 test files, 2,768 passing tests
+- Upstream: CLIProxyAPI v7.2.125
+- Commit: `2e6b1d83`
+- Local comparison date: 2026-08-09
+- Full inventory audit baseline: v7.2.121 / `8392b180ce3789eba9fd06ebc812b4fc237876e1`
+  (2026-08-07), carried forward by the delta section below
+- Upstream internal tests at the audit baseline: 329 files, 2,926 `Test*` functions, 16 benchmarks
+- Upstream translator tests at the audit baseline: 767 `Test*` functions
+- Upstream Interactions translator tests at the audit baseline: 136 `Test*` functions
+- Current Recompose engine gate: 542 test files, 4,412 passing tests (2026-08-09)
+
+## Delta v7.2.121 → v7.2.125
+
+Twenty-seven upstream commits landed between the pinned audit baseline and `2e6b1d83`. The six
+behavior changes in scope were ported with local behavior tests on 2026-08-09; the remainder of
+the window carried no engine-scope behavior change.
+
+| Upstream commit | Upstream change                                                        | Status   | Local behavior evidence                                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `2e6b1d83`      | fix(claude): add Claude-compatible thinking replay persistence         | covered  | `claude-thinking-replay.test.ts`, `claude-thinking-replay-coverage.test.ts`, `claude-replay-runtime-coverage.test.ts`, `gateway-proxy-claude-replay.test.ts` |
+| `5e25566c`      | fix(codex): prefix reasoning and function_call item ids (`rs_`/`fc_`)  | covered  | `codex-identities-coverage.test.ts`                                                                                                                          |
+| `197f5204`      | fix(codex): prefix custom_tool_call item ids (`ctc_`)                  | covered  | `codex-identities-coverage.test.ts`                                                                                                                          |
+| `3522e481`      | fix(openai): emit response.failed stream errors for Codex requests     | covered  | `responses-stream-failed.test.ts`                                                                                                                            |
+| `37609fa1`      | fix(claude): synthesize belated tool_use starts for empty-name calls   | covered  | `chat-completions-stream-tools-coverage.test.ts` proves the `tool_<index>` opening                                                                           |
+| `dd67f56f`      | fix(xai): remap bad-credentials 403s to unauthorized                   | covered  | `xai-response.test.ts` remaps both bad-credentials shapes to 401                                                                                             |
+| `36936340`      | fix(kimi): canonicalize K2.7 Code model aliases                        | covered  | `kimi-request.test.ts` and `kimi-thinking-replay.test.ts` pin the `kimi-for-coding` family                                                                   |
+| `0a95fa62`      | feat(compat): preserve Claude thinking/tool-call content (`is-compat`) | deferred | product decision pending with the maintainer; no local `isCompat` capability until it lands                                                                  |
 
 The final multiplicity-aware inventory audit is published in
 `docs/cliproxyapi-parity/internal-completion-audit.md`: all 2,926 upstream `Test*` functions are
