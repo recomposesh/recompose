@@ -3,7 +3,6 @@ import { expect, waitFor } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { paintedStyle } from '../../../../shared/testing';
-import { BindingCable } from './binding-cable';
 import {
   REFUSED,
   cableSeats,
@@ -11,7 +10,8 @@ import {
   cablesDrawn,
   forScheme,
   pulseIn,
-} from './binding-cable.testkit';
+} from '../../testing/binding-cable.testkit';
+import { BindingCable } from './binding-cable';
 
 const meta = preview.meta({
   component: BindingCable,

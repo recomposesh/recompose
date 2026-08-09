@@ -4,9 +4,9 @@ import type { ReactElement } from 'react';
 import { Handle, Position, ReactFlow } from '@xyflow/react';
 import { expect, waitFor } from 'storybook/test';
 
-import type { CableFailure, CableStanding } from '../../lib/node-graph';
+import type { CableFailure, CableStanding } from '../lib/node-graph';
 
-import { BindingCable } from './binding-cable';
+import { BindingCable } from '../ui/binding-cable/binding-cable';
 
 /** A failure a cable carries in a story, which every scenario reads the same sentence off. */
 export const REFUSED: CableFailure = {
