@@ -5,7 +5,8 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { PROBE_TIMEOUT_MS } from '../engine-host/engine-host';
-import { createKeyCheckIpcHandlers } from './key-check-ipc';
+import { hostOver, nothing, scriptedChild } from '../engine-host/engine-host.testkit';
+import { createKeyCheckIpcHandlers, keyCheckReach } from './key-check-ipc';
 import {
   checkCodec,
   checkedSecret as secret,
@@ -242,6 +243,35 @@ describe('where the check stands in the vault queue', () => {
       ok: true,
       value: { verdict: 'could-not-check' },
     });
+  });
+});
+
+describe('the reach a check is given over the engine', () => {
+  test('the check probes through the engine it was reached to', async () => {
+    const userDataPath = await tempStorage();
+    const id = await connectKey(userDataPath);
+    const scripted = scriptedChild(nothing, () => ({ verdict: 'authenticates', status: 200 }));
+    const { host } = hostOver(scripted);
+    const handlers = createKeyCheckIpcHandlers(
+      keyCheckReach(
+        {
+          userDataPath,
+          homeFolder: '/Users/ada',
+          getCodec: () => checkCodec,
+          onCorrupt: () => undefined,
+        },
+        host,
+      ),
+    );
+
+    await expect(handlers['accounts:check-key']({ id })).resolves.toEqual({
+      ok: true,
+      value: { verdict: 'authenticates', status: 200 },
+    });
+
+    expect(scripted.directives).toMatchObject([
+      { kind: 'probe', provider: 'anthropic', key: secret },
+    ]);
   });
 });
 

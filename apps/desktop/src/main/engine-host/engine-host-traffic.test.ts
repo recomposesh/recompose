@@ -64,7 +64,8 @@ describe('traffic the child reports on its own', () => {
     expect(pushed).toEqual([{ codex: { fast: { outcome: 'served', at } } }]);
   });
 
-  test('a host nobody asked to report traffic still serves its gateways', async () => {
+  test('a host nobody asked to report traffic drops it and keeps serving', async () => {
+    vi.useFakeTimers();
     const scripted = scriptedChild(running);
     const host = createEngineHost({
       knownSlugs: ['codex'],
@@ -75,6 +76,9 @@ describe('traffic the child reports on its own', () => {
     await expect(host.start(aGatewayServing('fast'))).resolves.toEqual({ status: 'running' });
 
     scripted.send(servedThrough('fast'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+
+    await expect(host.start(aGatewayServing('fast'))).resolves.toEqual({ status: 'running' });
   });
 });
 

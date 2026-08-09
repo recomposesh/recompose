@@ -1,12 +1,15 @@
-import type { EngineStates, GatewayTraffic } from '@recompose/contracts';
+import type { EngineStates, GatewayTraffic, Settings } from '@recompose/contracts';
 
+import { defaultSettings } from '@recompose/contracts';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   pushAccountsChanged,
   pushCanvasCommand,
+  pushDevtoolsToggle,
   pushEngineStates,
   pushEngineTraffic,
+  pushSettingsChanged,
 } from './push-events';
 
 type Delivery = { channel: string; payload: unknown };
@@ -85,6 +88,29 @@ describe('telling the open windows what changed', () => {
 
     expect(first).toEqual([{ channel: 'accounts:changed', payload: 'changed' }]);
     expect(second).toEqual([{ channel: 'accounts:changed', payload: 'changed' }]);
+  });
+
+  test('a saved settings document reaches every open window', () => {
+    const first = openWindow();
+    const second = openWindow();
+    const settings: Settings = { ...defaultSettings(), theme: 'dark' };
+
+    pushSettingsChanged(settings);
+
+    expect(first).toEqual([{ channel: 'settings:changed', payload: settings }]);
+    expect(second).toEqual([{ channel: 'settings:changed', payload: settings }]);
+  });
+});
+
+describe('asking the renderer for its devtools', () => {
+  test('the ask reaches every open window', () => {
+    const first = openWindow();
+    const second = openWindow();
+
+    pushDevtoolsToggle();
+
+    expect(first).toEqual([{ channel: 'devtools:toggle', payload: 'asked' }]);
+    expect(second).toEqual([{ channel: 'devtools:toggle', payload: 'asked' }]);
   });
 });
 
