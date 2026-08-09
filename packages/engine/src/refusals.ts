@@ -20,6 +20,7 @@ export type TranslationRefusal =
   | { reason: 'tool-id-collision'; sanitizedId: string }
   | { reason: 'missing-target'; displayName: string; model: string }
   | { reason: 'missing-credential'; displayName: string; model: string }
+  | { reason: 'unstreamable-answer'; displayName: string; model: string; target: string }
   | { reason: 'invalid-json'; message: string };
 
 function missingModelMessage(displayName: string): string {
@@ -111,6 +112,14 @@ export function invalidJson(message: string): TranslationRefusal {
   return { reason: 'invalid-json', message };
 }
 
+export function unstreamableAnswer(
+  displayName: string,
+  model: string,
+  target: string,
+): TranslationRefusal {
+  return { reason: 'unstreamable-answer', displayName, model, target };
+}
+
 type RefusalFacts = {
   status: number;
   message: string;
@@ -164,7 +173,7 @@ function clientErrorFacts(refusal: ClientErrorRefusal): RefusalFacts {
 
 type ConfigFaultRefusal = Extract<
   TranslationRefusal,
-  { reason: 'missing-target' | 'missing-credential' }
+  { reason: 'missing-target' | 'missing-credential' | 'unstreamable-answer' }
 >;
 
 function configFaultFacts(refusal: ConfigFaultRefusal): RefusalFacts {
@@ -177,6 +186,15 @@ function configFaultFacts(refusal: ConfigFaultRefusal): RefusalFacts {
     };
   }
 
+  if (refusal.reason === 'unstreamable-answer') {
+    return {
+      status: 502,
+      message: `The gateway "${refusal.displayName}" could not stream the answer that the target "${refusal.target}" returned for the virtual model "${refusal.model}".`,
+      code: 'unstreamable_answer',
+      anthropicType: 'api_error',
+    };
+  }
+
   return {
     status: 502,
     message: `The gateway "${refusal.displayName}" holds no credential for the virtual model "${refusal.model}".`,
@@ -185,8 +203,10 @@ function configFaultFacts(refusal: ConfigFaultRefusal): RefusalFacts {
   };
 }
 
+const configFaultReasons = ['missing-target', 'missing-credential', 'unstreamable-answer'];
+
 function isConfigFault(refusal: TranslationRefusal): refusal is ConfigFaultRefusal {
-  return refusal.reason === 'missing-target' || refusal.reason === 'missing-credential';
+  return configFaultReasons.includes(refusal.reason);
 }
 
 function factsOf(refusal: TranslationRefusal): RefusalFacts {

@@ -149,7 +149,7 @@ const requestEncoders: RequestEncoders = {
   responses: responsesEncodeRequest,
 };
 
-const responseDecoders: ResponseDecoders = {
+export const responseDecoders: ResponseDecoders = {
   anthropic: anthropicDecodeResponse,
   'chat-completions': chatDecodeResponse,
   gemini: geminiDecodeResponse,
@@ -194,7 +194,7 @@ function decodeResponsesStreamForChat(
   return responsesDecodeStream(responsesStreamForChat(source));
 }
 
-const streamEncoders: StreamEncoders = {
+export const streamEncoders: StreamEncoders = {
   anthropic: anthropicEncodeStream,
   'chat-completions': chatEncodeStream,
   gemini: geminiEncodeStream,

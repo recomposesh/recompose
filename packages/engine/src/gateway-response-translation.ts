@@ -8,7 +8,7 @@ import { isGeminiResponse, translateResponseFromGemini } from './dialect/gemini-
 import { isResponsesAnswer } from './dialect/responses-answer-shape';
 import { isJsonObject } from './gateway-wire';
 
-function isChatAnswer(value: JsonObject): value is JsonObject & ChatCompletionsResponse {
+export function isChatAnswer(value: JsonObject): value is JsonObject & ChatCompletionsResponse {
   const choices = value['choices'];
 
   return (
@@ -33,7 +33,9 @@ function hasAnthropicPayload(value: JsonObject): boolean {
   return Array.isArray(value['content']) && (typeof stopReason === 'string' || stopReason === null);
 }
 
-function isInteractionsAnswer(value: JsonObject): value is JsonObject & InteractionsResponse {
+export function isInteractionsAnswer(
+  value: JsonObject,
+): value is JsonObject & InteractionsResponse {
   return typeof value['id'] === 'string' && Array.isArray(value['steps']);
 }
 
