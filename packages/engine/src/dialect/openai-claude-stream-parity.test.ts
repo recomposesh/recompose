@@ -6,15 +6,20 @@ import type { HubStreamEvent } from './hub';
 import { decodeStream } from './chat-completions-stream-decode';
 
 describe('Chat tool names crossing Claude streams', () => {
-  it.each([[''], [null], [123]])('should suppress an invalid tool name: %j', async (name) => {
-    const events = await decoded([
-      toolChunk([{ index: 0, id: 'call_a', function: { name, arguments: '{}' } }]),
-      finishChunk(),
-    ]);
+  it.each([[''], [null], [123]])(
+    'should carry a call the stream never named under tool_0: %j',
+    async (name) => {
+      const events = await decoded([
+        toolChunk([{ index: 0, id: 'call_a', function: { name, arguments: '{}' } }]),
+        finishChunk(),
+      ]);
 
-    expect(toolOpens(events)).toEqual([]);
-    expect(lastStop(events)).not.toBe('tool_use');
-  });
+      expect(toolOpens(events).map((event) => event.opening)).toEqual([
+        { kind: 'tool', id: 'call_a', name: 'tool_0' },
+      ]);
+      expect(lastStop(events)).toBe('tool_use');
+    },
+  );
 
   it('should ignore a null repeated name after a valid tool start', async () => {
     const events = await decoded([
@@ -38,7 +43,7 @@ describe('Chat tool names crossing Claude streams', () => {
     expect(events.filter((event) => event.type === 'block-close')).toHaveLength(1);
   });
 
-  it('should emit only the valid member of mixed tool deltas', async () => {
+  it('should emit the named member of mixed tool deltas first and the anonymous one last', async () => {
     const events = await decoded([
       toolChunk([
         { index: 0, id: 'call_skip', function: { name: '', arguments: '' } },
@@ -49,6 +54,7 @@ describe('Chat tool names crossing Claude streams', () => {
 
     expect(toolOpens(events).map((event) => event.opening)).toEqual([
       { kind: 'tool', id: 'call_real', name: 'do_it' },
+      { kind: 'tool', id: 'call_skip', name: 'tool_0' },
     ]);
     expect(lastStop(events)).toBe('tool_use');
   });
