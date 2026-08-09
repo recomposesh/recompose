@@ -11,13 +11,9 @@ const nodeRoles = [
   { name: 'Target', detail: 'claude-sonnet-4', tint: 'node-tint-target' },
 ];
 
-const cableStandings = [
-  'stroke-cable-resting',
-  'stroke-cable-live',
-  'stroke-cable-broken',
-  'stroke-cable-draft',
-  'stroke-cable-pending',
-];
+const cableStandings = ['resting', 'live', 'served', 'failed', 'broken', 'draft', 'pending'].map(
+  (standing) => `stroke-cable-${standing}`,
+);
 
 function NodeRoles() {
   return (
@@ -181,16 +177,19 @@ export const SubtitlesReadAsElevenPixelMono = meta.story({
 export const CablesPaintTheirStanding = meta.story({
   play: async ({ canvasElement }) => {
     const draft = forScheme('rgb(255, 149, 0)', 'rgb(255, 159, 10)');
+    const red = forScheme('rgb(215, 0, 21)', 'rgb(255, 69, 58)');
     const standings = [
       forScheme('rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.45)'),
       forScheme('rgb(40, 205, 65)', 'rgb(50, 215, 75)'),
-      forScheme('rgb(215, 0, 21)', 'rgb(255, 69, 58)'),
+      forScheme('rgb(26, 158, 51)', 'rgb(50, 215, 75)'),
+      red,
+      red,
       draft,
       draft,
     ];
     const cables = drawnCables(canvasElement);
 
-    await expect(cables).toHaveLength(5);
+    await expect(cables).toHaveLength(7);
 
     for (const [place, cable] of cables.entries()) {
       await expect(paintedStyle(cable).stroke).toBe(standings[place]);

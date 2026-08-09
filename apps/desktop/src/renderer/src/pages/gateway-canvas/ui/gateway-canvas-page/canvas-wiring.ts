@@ -143,7 +143,7 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
     source: edge.source,
     target: edge.target,
     type: 'cable',
-    data: { standing: edge.standing },
+    data: { standing: edge.standing, failure: edge.failure },
     selected: edge.id === selection,
     ...(bindingCableId(edge.id) === undefined
       ? { selectable: false, reconnectable: false, focusable: false, interactionWidth: 0 }

@@ -1,108 +1,23 @@
-import type { Node, NodeProps } from '@xyflow/react';
-
-import { Handle, Position, ReactFlow, useEdgesState, useNodesState } from '@xyflow/react';
 import { expect, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import type { CableStanding } from '../../lib/node-graph';
-
 import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { BindingCable } from './binding-cable';
-
-function Card({ data }: NodeProps) {
-  return (
-    <span className="flex size-full items-center justify-center rounded-canvas-card border border-line-subtle bg-surface-card text-card-title text-ink">
-      <Handle position={Position.Left} type="target" />
-      {String(data['name'])}
-      <Handle position={Position.Right} type="source" />
-    </span>
-  );
-}
-
-const cards = { card: Card };
-const cables = { binding: BindingCable };
-
-const seats: Node[] = [
-  {
-    id: 'model:fast',
-    type: 'card',
-    position: { x: 30, y: 110 },
-    data: { name: 'fast' },
-    width: 180,
-    height: 76,
-  },
-  {
-    id: 'target:work',
-    type: 'card',
-    position: { x: 390, y: 190 },
-    data: { name: 'work key' },
-    width: 180,
-    height: 76,
-  },
-];
-
-function CabledFlow({ standing }: { standing: CableStanding }) {
-  const [nodes, , onNodesChange] = useNodesState(seats);
-  const [edges, , onEdgesChange] = useEdgesState([
-    {
-      id: 'cable:fast',
-      type: 'binding',
-      source: 'model:fast',
-      target: 'target:work',
-      data: { standing },
-    },
-  ]);
-
-  return (
-    <div className="h-96 w-160 bg-surface-content dot-grid">
-      <ReactFlow
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        edgeTypes={cables}
-        edges={edges}
-        nodeTypes={cards}
-        nodes={nodes}
-        nodesDraggable={false}
-        onEdgesChange={onEdgesChange}
-        onNodesChange={onNodesChange}
-      />
-    </div>
-  );
-}
+import {
+  cabledFlow,
+  cableSeats,
+  cablesDrawn,
+  drawnCables,
+  forScheme,
+  grabEnds,
+} from './binding-cable.testkit';
 
 const meta = preview.meta({
   component: BindingCable,
-  args: {
-    id: 'cable:fast',
-    source: 'model:fast',
-    sourcePosition: Position.Right,
-    sourceX: 210,
-    sourceY: 148,
-    target: 'target:work',
-    targetPosition: Position.Left,
-    targetX: 390,
-    targetY: 228,
-  },
-  render: () => <CabledFlow standing="resting" />,
+  args: cableSeats,
+  render: () => cabledFlow('resting'),
 });
-
-function forScheme(light: string, dark: string): string {
-  return document.documentElement.classList.contains('scheme-dark') ? dark : light;
-}
-
-function drawnCables(canvasElement: HTMLElement): SVGPathElement[] {
-  return [...canvasElement.querySelectorAll<SVGPathElement>('.react-flow__edge > path')];
-}
-
-function grabEnds(canvasElement: HTMLElement): Element[] {
-  return [...canvasElement.querySelectorAll('.react-flow__edge foreignObject > *')];
-}
-
-async function cablesDrawn(canvasElement: HTMLElement): Promise<SVGPathElement[]> {
-  await waitFor(async () => expect(drawnCables(canvasElement).length).toBeGreaterThan(0));
-
-  return drawnCables(canvasElement);
-}
 
 async function pressTheCable(canvasElement: HTMLElement, press: (on: Element) => Promise<void>) {
   const [drawn] = await cablesDrawn(canvasElement);
@@ -131,7 +46,7 @@ export const TheCableTakesTheCanvasStroke = meta.story({
 
 /** A binding whose account left the registry reads broken, so a person can find it to repair. */
 export const ABrokenBindingPaintsItsStanding = meta.story({
-  render: () => <CabledFlow standing="broken" />,
+  render: () => cabledFlow('broken'),
   play: async ({ canvasElement }) => {
     const [cable] = await cablesDrawn(canvasElement);
 
@@ -141,7 +56,7 @@ export const ABrokenBindingPaintsItsStanding = meta.story({
 
 /** A cable the overlay draws for an unfinished definition reads as a draft rather than as truth. */
 export const ADraftCablePaintsItsStanding = meta.story({
-  render: () => <CabledFlow standing="draft" />,
+  render: () => cabledFlow('draft'),
   play: async ({ canvasElement }) => {
     const [cable] = await cablesDrawn(canvasElement);
 
@@ -208,7 +123,7 @@ export const ASelectedCableOffersAGrabHandleAtEachEnd = meta.story({
 
 /** A grab handle paints in its cable's own tint, so a broken binding stays broken to the hand. */
 export const AGrabHandleTakesTheCableTint = meta.story({
-  render: () => <CabledFlow standing="broken" />,
+  render: () => cabledFlow('broken'),
   play: async ({ canvasElement, userEvent }) => {
     await pressTheCable(canvasElement, userEvent.click);
     await waitFor(async () => expect(grabEnds(canvasElement)).toHaveLength(2));

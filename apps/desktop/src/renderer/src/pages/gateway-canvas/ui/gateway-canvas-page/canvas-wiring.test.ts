@@ -100,10 +100,34 @@ describe('the one-target rule during a drag', () => {
 
 describe('what the flow hands each cable to answer gestures by', () => {
   const drawn: readonly CanvasEdge[] = [
-    { id: 'wire:model:fast', source: 'gateway', target: 'model:fast', standing: 'structural' },
-    { id: 'cable:fast', source: 'model:fast', target: 'target:k1', standing: 'resting' },
-    { id: 'wire:draft', source: 'gateway', target: 'draft', standing: 'structural' },
-    { id: 'overlay:draft', source: 'gateway', target: 'draft', standing: 'draft' },
+    {
+      id: 'wire:model:fast',
+      source: 'gateway',
+      target: 'model:fast',
+      standing: 'structural',
+      failure: undefined,
+    },
+    {
+      id: 'cable:fast',
+      source: 'model:fast',
+      target: 'target:k1',
+      standing: 'resting',
+      failure: undefined,
+    },
+    {
+      id: 'wire:draft',
+      source: 'gateway',
+      target: 'draft',
+      standing: 'structural',
+      failure: undefined,
+    },
+    {
+      id: 'overlay:draft',
+      source: 'gateway',
+      target: 'draft',
+      standing: 'draft',
+      failure: undefined,
+    },
   ];
 
   test('a binding cable keeps the wide grab band its reconnect drag is sized by', () => {
@@ -127,6 +151,26 @@ describe('what the flow hands each cable to answer gestures by', () => {
         interactionWidth: 0,
       });
     }
+  });
+});
+
+describe('what a failed cable hands the flow to stand on the path', () => {
+  test('the error it carried travels with it, so a person can press it where it failed', () => {
+    const refused = { status: 502, detail: 'The gateway could not reach the target.' };
+    const failed: readonly CanvasEdge[] = [
+      {
+        id: 'cable:fast',
+        source: 'model:fast',
+        target: 'target:k1',
+        standing: 'failed',
+        failure: refused,
+      },
+    ];
+
+    expect(flowEdgesOf(failed, undefined)[0]?.data).toEqual({
+      standing: 'failed',
+      failure: refused,
+    });
   });
 });
 

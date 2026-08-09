@@ -9,6 +9,7 @@ import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../shared/testing';
 
+import { bindEngineTrafficToCache } from '../../../shared/api';
 import { inspectorOpen, toggleInspector } from '../../../shared/lib';
 import { installFakeBridge } from '../../../shared/testing';
 import { dropCanvasPositions } from '../lib/canvas-position-store';
@@ -65,6 +66,8 @@ function wrappedPage(strict: boolean): ReactElement {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+
+  bindEngineTrafficToCache(queryClient);
 
   const page = (
     <div data-canvas-footing="">

@@ -1,4 +1,10 @@
-import type { Account, GatewayConfig, VirtualModel } from '@recompose/contracts';
+import type {
+  Account,
+  GatewayConfig,
+  GatewayTraffic,
+  RequestOutcome,
+  VirtualModel,
+} from '@recompose/contracts';
 
 import type { XY } from './canvas-positions';
 
@@ -25,10 +31,27 @@ export type CanvasNode =
 export type CanvasNodeKind = CanvasNode['kind'];
 
 /** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
-export type CableStanding = 'resting' | 'live' | 'broken' | 'draft' | 'pending' | 'structural';
+export type CableStanding =
+  | 'resting'
+  | 'live'
+  | 'served'
+  | 'failed'
+  | 'broken'
+  | 'draft'
+  | 'pending'
+  | 'structural';
+
+/** What a request the gateway refused or could not finish came to, as a person reads it. */
+export type CableFailure = { status: number; detail: string };
 
 /** A cable drawn between two cards standing on the canvas. */
-export type CanvasEdge = { id: string; source: string; target: string; standing: CableStanding };
+export type CanvasEdge = {
+  id: string;
+  source: string;
+  target: string;
+  standing: CableStanding;
+  failure: CableFailure | undefined;
+};
 
 /** A definition a person began and has not finished, holding the seat its card stands at. */
 export type DraftStanding = { modelId: string; displayName: string; seat: XY };
@@ -58,27 +81,56 @@ function targetNode(model: VirtualModel, accounts: readonly Account[]): CanvasNo
     : { id: `target:${account.id}`, kind: 'target', account };
 }
 
-function bindingCable(model: VirtualModel, target: CanvasNode): CanvasEdge {
+type CarriedTraffic = Readonly<Record<string, RequestOutcome>>;
+
+function carriedBy(gateway: GatewayConfig, traffic: GatewayTraffic): CarriedTraffic {
+  return traffic[gateway.slug] ?? {};
+}
+
+function standingCarried(carried: RequestOutcome | undefined): CableStanding | undefined {
+  if (carried === undefined) {
+    return undefined;
+  }
+
+  return carried.outcome === 'served' ? 'served' : 'failed';
+}
+
+function failureCarried(carried: RequestOutcome | undefined): CableFailure | undefined {
+  return carried?.outcome === 'failed'
+    ? { status: carried.status, detail: carried.detail }
+    : undefined;
+}
+
+function bindingCable(
+  model: VirtualModel,
+  target: CanvasNode,
+  carried: RequestOutcome | undefined,
+): CanvasEdge {
+  const unserved: CableStanding = target.kind === 'target' ? 'resting' : 'broken';
+
   return {
     id: `cable:${model.id}`,
     source: modelNodeId(model.id),
     target: target.id,
-    standing: target.kind === 'target' ? 'resting' : 'broken',
+    standing: standingCarried(carried) ?? unserved,
+    failure: failureCarried(carried),
   };
 }
 
-function structuralWire(servedNodeId: string): CanvasEdge {
+function structuralWire(servedNodeId: string, carried: RequestOutcome | undefined): CanvasEdge {
   return {
     id: `wire:${servedNodeId}`,
     source: GATEWAY_NODE_ID,
     target: servedNodeId,
-    standing: 'structural',
+    standing: standingCarried(carried) ?? 'structural',
+    failure: undefined,
   };
 }
 
 function servedGraph(
   gateway: GatewayConfig,
   accounts: readonly Account[],
+  carried: CarriedTraffic,
 ): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
   const nodes: CanvasNode[] = [
     {
@@ -93,6 +145,7 @@ function servedGraph(
 
   for (const model of gateway.virtualModels) {
     const target = targetNode(model, accounts);
+    const flowed = target.kind === 'target' ? carried[model.id] : undefined;
 
     nodes.push({
       id: modelNodeId(model.id),
@@ -107,7 +160,7 @@ function servedGraph(
       nodes.push(target);
     }
 
-    edges.push(structuralWire(modelNodeId(model.id)), bindingCable(model, target));
+    edges.push(structuralWire(modelNodeId(model.id), flowed), bindingCable(model, target, flowed));
   }
 
   return { nodes, edges };
@@ -137,13 +190,21 @@ function draftAppending(
  * binding. The overlay cables carry their own `overlay:` namespace and every wire carries the node
  * id it reaches, because a person may legally alias a virtual model `draft`, and two cables under
  * one id would let a press, a reconnect, or a delete land on the wrong one.
+ *
+ * Traffic paints both cables of the virtual model it flowed through, and a virtual model nothing
+ * has flowed through yet stays at rest, so a cable reading served says a request truly came back.
+ * A binding whose account left the registry keeps reading broken whatever last flowed through it,
+ * because it cannot serve the next request and stale green would say it could. Only the binding
+ * cable carries the failure a person reads, so one failed request stands one error to press
+ * rather than repeating itself along the wire.
  */
 export function canvasGraph(
   gateway: GatewayConfig,
   accounts: readonly Account[],
   overlay: CanvasOverlay,
+  traffic: GatewayTraffic = {},
 ): CanvasGraph {
-  const { nodes, edges } = servedGraph(gateway, accounts);
+  const { nodes, edges } = servedGraph(gateway, accounts, carriedBy(gateway, traffic));
   const drafting = draftAppending(gateway, overlay.draft);
 
   if (drafting !== undefined) {
@@ -153,11 +214,12 @@ export function canvasGraph(
       modelId: drafting.modelId,
       displayName: drafting.displayName,
     });
-    edges.push(structuralWire(DRAFT_NODE_ID), {
+    edges.push(structuralWire(DRAFT_NODE_ID, undefined), {
       id: 'overlay:draft',
       source: GATEWAY_NODE_ID,
       target: DRAFT_NODE_ID,
       standing: 'draft',
+      failure: undefined,
     });
   }
 
@@ -172,6 +234,7 @@ export function canvasGraph(
         source: from,
         target: PENDING_NODE_ID,
         standing: 'pending',
+        failure: undefined,
       });
     }
   }

@@ -1,6 +1,7 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
 import type { ReactFlowInstance } from '@xyflow/react';
 
+import { useQuery } from '@tanstack/react-query';
 import { useRef, useSyncExternalStore } from 'react';
 
 import type { BindingOutcome } from '../../lib/cable-announcements';
@@ -12,7 +13,7 @@ import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { OptionGroup } from '../option-list/option-list';
 import type { CanvasWorld, DragWatch, PickerStanding } from './canvas-standings';
 
-import { useDefineVirtualModel } from '../../../../shared/api';
+import { engineTrafficQueryOptions, useDefineVirtualModel } from '../../../../shared/api';
 import { canvasPositions, subscribeToCanvasPositions } from '../../lib/canvas-position-store';
 import { emptyDefinition } from '../../lib/model-draft';
 import { canvasGraph } from '../../lib/node-graph';
@@ -174,6 +175,7 @@ export function useGatewayCanvas(
   const draft = useHeldDraft(slug);
   const define = useDefineVirtualModel();
   const offered = usePickerModels(standings.picker);
+  const { data: traffic } = useQuery(engineTrafficQueryOptions);
   const dragging = useRef<DragWatch>({ inFlight: false, escaped: false });
   const view = useRef<ReactFlowInstance | null>(null);
 
@@ -184,7 +186,7 @@ export function useGatewayCanvas(
   }
 
   const overlay = overlayOf(draft, standings.picker);
-  const graph = canvasGraph(gateway, accounts, overlay);
+  const graph = canvasGraph(gateway, accounts, overlay, traffic);
   const seats = seatsOf(graph, stored, overlay);
   const world: CanvasWorld = {
     slug,

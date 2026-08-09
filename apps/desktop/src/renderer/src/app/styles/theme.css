@@ -55,6 +55,8 @@
   --color-target: light-dark(var(--purple-600), var(--purple-500));
   --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
   --color-cable-live: light-dark(var(--green-600), var(--green-500));
+  --color-cable-served: light-dark(var(--green-700), var(--green-500));
+  --color-cable-failed: light-dark(var(--red-700), var(--red-500));
   --color-cable-broken: light-dark(var(--red-700), var(--red-500));
   --color-cable-draft: light-dark(var(--orange-600), var(--orange-500));
   --color-cable-pending: var(--color-cable-draft);
@@ -99,6 +101,9 @@
   --spacing-hit-target: 24px;
   --spacing-cable-stroke: 2.6px;
   --spacing-cable-stroke-selected: 3.6px;
+  --spacing-cable-dash: 7px;
+  --spacing-cable-dash-gap: 5px;
+  --spacing-cable-pulse-stroke: 5.4px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
   --spacing-zoom-tools: 3px;
@@ -419,6 +424,44 @@
 @utility binding-cable-selected {
   fill: none;
   stroke-width: var(--spacing-cable-stroke-selected);
+}
+
+@utility cable-march {
+  stroke-dasharray: var(--spacing-cable-dash) var(--spacing-cable-dash-gap);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: cable-flow 620ms linear infinite;
+  }
+}
+
+@keyframes cable-flow {
+  to {
+    stroke-dashoffset: calc((var(--spacing-cable-dash) + var(--spacing-cable-dash-gap)) * -1);
+  }
+}
+
+@utility cable-pulse {
+  pointer-events: none;
+  fill: none;
+  stroke-width: var(--spacing-cable-pulse-stroke);
+  stroke-linecap: round;
+  stroke-dasharray: 0.05 1;
+  opacity: 0;
+
+  @media (prefers-reduced-motion: no-preference) {
+    opacity: 1;
+    animation: cable-pulse-travel 1500ms linear infinite;
+  }
+}
+
+@keyframes cable-pulse-travel {
+  from {
+    stroke-dashoffset: 0.05;
+  }
+
+  to {
+    stroke-dashoffset: -1;
+  }
 }
 
 @utility cable-halo-ring {
