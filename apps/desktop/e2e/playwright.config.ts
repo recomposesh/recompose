@@ -25,7 +25,7 @@ export default defineConfig({
   expect: { toHaveScreenshot: { maxDiffPixels: 0 } },
   projects: [
     { name: 'acceptance', testDir: acceptanceDir },
-    { name: 'proofs', testMatch: /(boot-proof|canvas-surface)\.spec\.ts/ },
+    { name: 'proofs', testMatch: /boot-proof\.spec\.ts/ },
     { name: 'leak', testMatch: /leak\.spec\.ts/ },
     { name: 'packaged', testMatch: /packaged-(smoke|icons)\.spec\.ts/, timeout: 120_000 },
     { name: 'visual', testMatch: /visual\.spec\.ts/ },

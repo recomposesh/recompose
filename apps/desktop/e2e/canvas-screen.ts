@@ -17,9 +17,6 @@ export const PENDING_NODE = 'pending';
 /** The cable joining the gateway to a draft, namespaced away from any binding a person aliased. */
 export const DRAFT_CABLE = 'overlay:draft';
 
-/** The cable joining a source to the card a drop is waiting on. */
-export const PENDING_CABLE = 'overlay:pending';
-
 /** What the plus on the gateway's port asks for, which is also the name a keyboard reads. */
 const GATEWAY_ASK = 'Add a virtual model';
 
@@ -236,10 +233,6 @@ export function removalConfirmation(page: Page, name: string): Locator {
 
 export async function confirmRemoval(page: Page, name: string): Promise<void> {
   await removalConfirmation(page, name).getByRole('button', { name: 'Delete' }).click();
-}
-
-export async function cancelRemoval(page: Page, name: string): Promise<void> {
-  await removalConfirmation(page, name).getByRole('button', { name: 'Cancel' }).click();
 }
 
 /** One tool in the cluster the canvas keeps in its corner, named the way it reads. */
