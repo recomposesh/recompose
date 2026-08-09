@@ -16,12 +16,11 @@ import {
   standingNodes,
 } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
-import { seedGateway } from '../gateway-screen';
-import { focusedGateway, focusGateway } from '../scenario-memory';
+import { focusedGateway } from '../scenario-memory';
 import {
   accountHeldAs,
-  GATEWAY_A_SCENARIO_ACTS_ON,
   gatewayTargetingAKey,
+  theGatewayAScenarioActsOn,
 } from '../stored-target-accounts';
 import { bindingOf, seedVirtualModels } from '../stored-virtual-models';
 
@@ -92,8 +91,7 @@ async function tabOntoTheAsk(page: Page, nodeId: string): Promise<void> {
 }
 
 Given('a gateway with no virtual models defined', async ({ page }) => {
-  await seedGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
-  focusGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
+  await theGatewayAScenarioActsOn(page);
 });
 
 Given(

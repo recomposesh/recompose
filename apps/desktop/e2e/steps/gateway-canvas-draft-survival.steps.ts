@@ -24,12 +24,11 @@ import {
   inspectorModelOption,
   pickTargetInInspector,
 } from '../gateway-drawer';
-import { seedGateway } from '../gateway-screen';
-import { focusGateway, focusedGateway } from '../scenario-memory';
+import { focusedGateway } from '../scenario-memory';
 import {
-  GATEWAY_A_SCENARIO_ACTS_ON,
   gatewayTargetingAKey,
   KEY_ACCOUNT,
+  theGatewayAScenarioActsOn,
 } from '../stored-target-accounts';
 
 /** What the inspector's own foot offers, which is the press that settles a draft into a model. */
@@ -54,12 +53,6 @@ function theDraftSeatBeforeLeaving(page: Page): Seat {
 /** The name a card carries, read off the tooltip it holds the whole of that name in. */
 function cardNaming(page: Page, nodeId: string, name: string): Locator {
   return canvasNode(page, nodeId).getByTitle(name, { exact: true });
-}
-
-/** The gateway these scenarios draft on, put on disk rather than walked through the sheet. */
-async function theGatewayAScenarioActsOn(page: Page): Promise<void> {
-  await seedGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
-  focusGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
 }
 
 /** Stands a draft from the gateway's own ask, which is the one way a keyboard starts one. */

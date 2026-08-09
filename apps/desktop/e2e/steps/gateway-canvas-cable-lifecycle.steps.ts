@@ -28,7 +28,11 @@ import {
 import { Given, Then, When } from '../fixtures';
 import { storedGateway } from '../gateway-screen';
 import { focusedGateway } from '../scenario-memory';
-import { accountHeldAs, gatewayTargetingAKey } from '../stored-target-accounts';
+import {
+  accountHeldAs,
+  gatewayInFocusOrTargetingAKey,
+  gatewayTargetingAKey,
+} from '../stored-target-accounts';
 import { bindingOf, seedVirtualModels } from '../stored-virtual-models';
 import { connectSubscription } from '../subscription-sign-in';
 
@@ -40,9 +44,6 @@ const COMPANION = 'steady';
 
 /** An account id no registry holds, which is what leaves a binding standing on a ghost. */
 const GONE = 'nowhere';
-
-/** The plan a scenario signs into when it wants a subscription account to bind against. */
-const SUBSCRIPTION_PLAN = 'anthropic';
 
 /** The inspector while one subject holds it, which reads under that subject's own heading. */
 function inspectorOn(page: Page, heading: string): Locator {
@@ -100,7 +101,7 @@ Given(
   'a virtual model {string} bound to a subscription account',
   async ({ page, subscriptionTools }, name: string) => {
     await gatewayTargetingAKey(page);
-    await connectSubscription(page, subscriptionTools, SUBSCRIPTION_PLAN);
+    await connectSubscription(page, subscriptionTools, 'anthropic');
 
     const plan = await accountHeldAs(page, 'subscription');
 
@@ -114,7 +115,7 @@ Given(
 
 /** Only a binding seats a target card, so the account arrives behind a companion definition. */
 Given('a stored key account standing as a target node', async ({ page }) => {
-  const gateway = focusedGateway(page);
+  const gateway = await gatewayInFocusOrTargetingAKey(page);
   const key = await accountHeldAs(page, 'api-key');
   const held = (await storedGateway(page, gateway)).virtualModels;
 

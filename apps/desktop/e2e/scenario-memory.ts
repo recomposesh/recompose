@@ -10,6 +10,11 @@ export function focusGateway(page: Page, name: string): void {
   gatewaysInFocus.set(page, name);
 }
 
+/** The gateway in focus if any step named one, for a Given that seeds its own when none did. */
+export function gatewayInFocusIfAny(page: Page): string | undefined {
+  return gatewaysInFocus.get(page);
+}
+
 /** The gateway the scenario last acted on, which is the one its later steps talk about. */
 export function focusedGateway(page: Page): string {
   const name = gatewaysInFocus.get(page);

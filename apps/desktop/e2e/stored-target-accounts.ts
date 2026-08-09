@@ -8,7 +8,7 @@ import {
   openProviderScreen,
   runtimeStandsAdded,
 } from './provider-screen';
-import { focusGateway } from './scenario-memory';
+import { focusedGateway, focusGateway, gatewayInFocusIfAny } from './scenario-memory';
 
 /** The gateway every virtual-model scenario acts on, named once so its steps agree. */
 export const GATEWAY_A_SCENARIO_ACTS_ON = 'Codex';
@@ -62,11 +62,25 @@ async function keyStandsStoredOn(
   await keyStandsConnected(page, { entry, name, pasted: keyAScenarioPastes(entry) });
 }
 
-/** The gateway a scenario acts on, with the Anthropic key account its definitions target. */
-export async function gatewayTargetingAKey(page: Page): Promise<void> {
+/** The gateway a scenario acts on, put on disk and focused, with nothing else stored. */
+export async function theGatewayAScenarioActsOn(page: Page): Promise<void> {
   await seedGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
   focusGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
+}
+
+/** The gateway a scenario acts on, with the Anthropic key account its definitions target. */
+export async function gatewayTargetingAKey(page: Page): Promise<void> {
+  await theGatewayAScenarioActsOn(page);
   await keyStandsStoredOn(page, 'API Keys', ANTHROPIC_KEY_ENTRY, KEY_ACCOUNT);
+}
+
+/** The focused gateway if a step named one, otherwise the seeded gateway targeting a key. */
+export async function gatewayInFocusOrTargetingAKey(page: Page): Promise<string> {
+  if (gatewayInFocusIfAny(page) === undefined) {
+    await gatewayTargetingAKey(page);
+  }
+
+  return focusedGateway(page);
 }
 
 /** The aggregator and the local runtime, which stand as targets beside the key. */
