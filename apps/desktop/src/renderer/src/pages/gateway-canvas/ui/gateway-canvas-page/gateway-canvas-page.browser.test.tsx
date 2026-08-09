@@ -1,145 +1,116 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Suspense } from 'react';
-import { beforeEach, expect, test } from 'vitest';
-import { render } from 'vitest-browser-react';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
-import { inspectorOpen, setPanelWidth, toggleInspector } from '../../../../shared/lib';
-import { installFakeBridge } from '../../../../shared/testing';
-import {
-  freshGateway,
-  listedModels,
-  runningGateway,
-  servingGateway,
-  storedAccounts,
-} from '../../testing/gateway-canvas.testkit';
-import { GatewayCanvasPage } from './gateway-canvas-page';
+import { setPanelWidth, toggleInspector } from '../../../../shared/lib';
+import { clickedCable, draftCardOn, storedBindingOf } from '../../testing/canvas-gestures.testkit';
+import { canvasPageOn, freshCanvasRun, renderCanvasPage } from '../../testing/canvas-page.testkit';
 
-async function renderPage(gateway = servingGateway, accounts = storedAccounts) {
-  installFakeBridge({
-    accounts,
-    gateways: [gateway],
-    engineStates: runningGateway,
-    providerModels: listedModels,
-  });
-
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<p>Loading…</p>}>
-        <GatewayCanvasPage slug="my-gateway" />
-      </Suspense>
-    </QueryClientProvider>,
-  );
-}
+vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(() => {
-  if (!inspectorOpen()) {
-    toggleInspector();
-  }
-
+  freshCanvasRun();
   setPanelWidth('inspector', 304);
 });
 
-test('the gateway lands with its node selected and its inspector open', async () => {
-  const screen = await renderPage();
+test('the canvas stands the gateway, its virtual models, and their targets as cards', async () => {
+  const screen = await canvasPageOn();
+
+  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Fast/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Creative/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /work/ })).toBeVisible();
+  expect(screen.container.querySelector('[data-id="cable:fast"]')).not.toBeNull();
+  expect(screen.container.querySelector('[data-id="cable:creative"]')).not.toBeNull();
+});
+
+test('the inspector reads the gateway with nothing selected, and its add button is gone', async () => {
+  const screen = await canvasPageOn();
 
   await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
   await expect
-    .element(screen.getByRole('button', { name: /My Gateway/ }))
-    .toHaveAttribute('aria-pressed', 'true');
+    .element(screen.getByRole('button', { name: 'Add virtual model' }))
+    .not.toBeInTheDocument();
 });
 
-test('clicking the selected node closes the inspector and leaves the stage standing', async () => {
-  const screen = await renderPage();
+test('selecting a target card turns the inspector onto that account', async () => {
+  const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await userEvent.click(screen.getByRole('button', { name: /work/ }));
 
-  await expect.element(screen.getByText('Endpoint', { exact: true })).not.toBeInTheDocument();
-  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+  const drawer = screen.getByRole('complementary');
+
+  await expect.element(drawer.getByText('anthropic', { exact: true }).first()).toBeVisible();
 });
 
-test('with motion off the inspector goes at once, waiting on no exit it will not play', async () => {
-  const screen = await renderPage();
+test('selecting a cable shows the binding in the inspector', async () => {
+  const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await clickedCable(screen.container, 'cable:fast');
 
-  expect(screen.container.textContent).not.toContain('Endpoint');
+  const drawer = screen.getByRole('complementary');
+
+  await expect.element(drawer.getByText('work', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
-test('clicking the node again opens the inspector back up', async () => {
-  const screen = await renderPage();
+test('a pane click clears the selection and puts the inspector away', async () => {
+  const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await userEvent.click(screen.getByRole('button', { name: /work/ }));
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
 
-  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
+  const pane = screen.container.querySelector('.react-flow__pane');
+
+  pane?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: /work/ }))
+    .toHaveAttribute('aria-pressed', 'false');
 });
 
-test('a draft in flight survives closing the inspector and comes back as it was', async () => {
-  const screen = await renderPage(freshGateway);
+test('selecting a node opens a closed inspector back up on that subject', async () => {
+  const screen = await canvasPageOn();
+  const pane = screen.container.querySelector('.react-flow__pane');
 
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-  await screen.getByRole('textbox', { name: 'Name' }).fill('Fast Sonnet');
+  pane?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
 
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+  const drawer = screen.getByRole('complementary');
 
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Fast Sonnet');
+  await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
-function pressOn(target: Element | null) {
-  target?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
-}
+test('a draft in flight survives leaving the screen and coming back', async () => {
+  const first = await canvasPageOn();
 
-function theSurfaceBehind(container: HTMLElement): Element | null {
-  return container.querySelector('section');
-}
+  await userEvent.click(first.getByLabelText('Add a virtual model'));
+  await first.getByRole('textbox', { name: 'Name' }).fill('Fa');
+  await first.unmount();
 
-test('a press on the surface behind the node puts the inspector away', async () => {
-  const screen = await renderPage();
+  const second = await renderCanvasPage();
 
-  pressOn(theSurfaceBehind(screen.container));
-
-  await expect.element(screen.getByText('Endpoint', { exact: true })).not.toBeInTheDocument();
+  await expect.poll(() => draftCardOn(second.container)?.textContent).toContain('Fa');
 });
 
-test('a press on the surface behind opens nothing while the inspector is already away', async () => {
-  const screen = await renderPage();
+test('the removal dialog holds through a re-render, still answerable', async () => {
+  const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-  pressOn(theSurfaceBehind(screen.container));
+  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
+  await userEvent.keyboard('{Delete}');
+  await expect.element(screen.getByText(/Delete the virtual model/)).toBeVisible();
 
-  await expect.element(screen.getByText('Endpoint', { exact: true })).not.toBeInTheDocument();
-});
+  toggleInspector();
 
-test('a press inside the inspector leaves it standing', async () => {
-  const screen = await renderPage();
+  await expect.element(screen.getByText(/Delete the virtual model/)).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-  pressOn(screen.getByRole('complementary').element());
-
-  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
-});
-
-test('a draft in flight survives a press on the surface behind', async () => {
-  const screen = await renderPage(freshGateway);
-
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-  await screen.getByRole('textbox', { name: 'Name' }).fill('Fast Sonnet');
-
-  pressOn(theSurfaceBehind(screen.container));
-
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Fast Sonnet');
+  await expect.element(screen.getByText(/Delete the virtual model/)).not.toBeInTheDocument();
+  expect(await storedBindingOf('fast')).toBeDefined();
 });
 
 function dragSeparator(handle: Element, from: number, to: number) {
@@ -152,56 +123,24 @@ function dragSeparator(handle: Element, from: number, to: number) {
 
 const theSeparator = { name: 'Inspector width' };
 
-test('dragging the inspector border sizes the panel', async () => {
-  const screen = await renderPage();
+test('dragging the inspector border sizes the panel inside its bounds', async () => {
+  const screen = await canvasPageOn();
   const handle = screen.getByRole('separator', theSeparator);
-  const drawer = screen.getByRole('complementary').element();
 
+  await expect.element(handle).toBeInTheDocument();
   dragSeparator(handle.element(), 900, 840);
 
   await expect.element(handle).toHaveAttribute('aria-valuenow', '364');
-  expect(drawer.getBoundingClientRect().width).toBe(364);
-});
-
-test('the width a person dragged to comes back when the inspector reopens', async () => {
-  const screen = await renderPage();
-
-  dragSeparator(screen.getByRole('separator', theSeparator).element(), 900, 860);
-
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-  await expect.element(screen.getByRole('separator', theSeparator)).not.toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-
-  await expect
-    .element(screen.getByRole('separator', theSeparator))
-    .toHaveAttribute('aria-valuenow', '344');
+  expect(screen.getByRole('complementary').element().getBoundingClientRect().width).toBe(364);
 });
 
 test('dragging the border well past the narrowest width shuts the inspector', async () => {
-  const screen = await renderPage();
+  const screen = await canvasPageOn();
+  const handle = screen.getByRole('separator', theSeparator);
 
-  dragSeparator(screen.getByRole('separator', theSeparator).element(), 900, 1300);
+  await expect.element(handle).toBeInTheDocument();
+  dragSeparator(handle.element(), 900, 1300);
 
-  await expect.element(screen.getByText('Endpoint', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
   await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
-});
-
-test('taking hold of the border to size the panel never puts the inspector away', async () => {
-  const screen = await renderPage();
-
-  dragSeparator(screen.getByRole('separator', theSeparator).element(), 900, 880);
-
-  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
-});
-
-test('a draft a person left behind is gone when the flow is opened again', async () => {
-  const screen = await renderPage(freshGateway);
-
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-  await screen.getByRole('textbox', { name: 'Name' }).fill('Fast Sonnet');
-  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
 });

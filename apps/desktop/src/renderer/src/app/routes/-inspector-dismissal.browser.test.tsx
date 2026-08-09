@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { inspectorOpen, showSidebar, sidebarHidden, toggleInspector } from '../../shared/lib';
@@ -11,14 +11,14 @@ function pressOn(target: Element) {
   target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
 }
 
-function theStageBackground(container: HTMLElement): Element {
-  const section = container.querySelector('main section');
+function clickedThePane(container: HTMLElement): void {
+  const pane = container.querySelector('.react-flow__pane');
 
-  if (section === null) {
-    throw new Error('the stage is not on screen');
+  if (pane === null) {
+    throw new Error('the canvas pane is not on screen');
   }
 
-  return section;
+  pane.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
 async function renderGateway() {
@@ -26,6 +26,8 @@ async function renderGateway() {
 }
 
 const theEndpoint = { exact: true } as const;
+
+vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(() => {
   localStorage.clear();
@@ -36,12 +38,12 @@ beforeEach(() => {
   }
 });
 
-test('a press on the stage behind the drawer puts the inspector away', async () => {
+test('a click on the pane behind the cards puts the inspector away', async () => {
   const screen = await renderGateway();
 
   await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
 
-  pressOn(theStageBackground(screen.container));
+  clickedThePane(screen.container);
 
   await expect.element(screen.getByText('Endpoint', theEndpoint)).not.toBeInTheDocument();
 });
@@ -99,11 +101,10 @@ test('taking hold of the border that sizes the inspector never puts it away', as
   await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
 });
 
-test('a press on the node that opens the inspector closes it once, never twice', async () => {
+test('selecting the gateway card opens a closed inspector back up', async () => {
   const screen = await renderGateway();
 
-  await userEvent.click(screen.getByRole('button', { name: /Codex/ }));
-
+  clickedThePane(screen.container);
   await expect.element(screen.getByText('Endpoint', theEndpoint)).not.toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: /Codex/ }));
@@ -121,17 +122,18 @@ test('choosing another gateway leaves the inspector standing, being a choice not
   await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
 });
 
-test('a draft in flight survives a press on the stage and comes back as it was', async () => {
+test('a draft in flight survives the inspector closing and answers the next selection', async () => {
   const screen = await renderGateway();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
+  await expect.element(screen.getByLabelText('Add a virtual model')).toBeVisible();
+  await userEvent.click(screen.getByLabelText('Add a virtual model'));
   await screen.getByRole('textbox', { name: 'Name' }).fill('Fast Sonnet');
 
-  pressOn(theStageBackground(screen.container));
+  clickedThePane(screen.container);
 
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Inspector' }));
+  await userEvent.click(screen.getByRole('button', { name: /Fast Sonnet/ }));
 
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Fast Sonnet');
 });

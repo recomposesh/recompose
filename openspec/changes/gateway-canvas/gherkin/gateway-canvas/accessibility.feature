@@ -6,13 +6,13 @@ Feature: Binding without a drag
 
   Scenario: Single presses create a binding with no drag
     Given a virtual model "fast" holding no target
-    When the person presses the plus on the port of "fast" and picks the stored Anthropic key account
+    When the person presses the plus on the port of "fast", picking the stored Anthropic key account and the provider model "claude-sonnet-5"
     Then "fast" stands bound to that account
     And the account stands wired as a target node
 
   Scenario: The keyboard alone creates a binding
     Given a virtual model "fast" holding no target
-    When the person, with the keyboard alone, activates the plus of "fast" and picks the stored Anthropic key account
+    When the person, with the keyboard alone, activates the plus of "fast", picking the stored Anthropic key account and the provider model "claude-sonnet-5"
     Then "fast" stands bound to that account
 
   Scenario: The live region announces a new binding

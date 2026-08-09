@@ -117,6 +117,8 @@ codegen
 coderabbit
 collab
 componentwise
+connectingto
+connectionline
 conv
 cooldown
 covguard
@@ -242,6 +244,7 @@ rasterizes
 rasterizing
 recentering
 recomposesh
+reconnectable
 redactions
 redisqueue
 reimplementation

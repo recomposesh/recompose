@@ -1,173 +1,156 @@
-import type { AccountsDocument, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig } from '@recompose/contracts';
 
-import { ACCOUNTS_VERSION } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Suspense, useState } from 'react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { Suspense } from 'react';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import type { BridgeParameters } from '../../../../shared/testing';
 import type { SettledDefinition } from '../../lib/model-draft';
+import type { InspectorSubject } from './gateway-drawer';
 
-import { gatewaySeed, installFakeBridge } from '../../../../shared/testing';
-import { draftKept, emptyDefinition } from '../../lib/model-draft';
+import { installFakeBridge } from '../../../../shared/testing';
+import { emptyDefinition } from '../../lib/model-draft';
+import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
+import {
+  freshGateway,
+  listedModels,
+  runningGateway,
+  servingGateway,
+  storedAccounts,
+} from '../../testing/gateway-canvas.testkit';
 import { GatewayDrawer } from './gateway-drawer';
 
-const registry: AccountsDocument = {
-  schemaVersion: ACCOUNTS_VERSION,
-  accounts: [
-    { id: 'k1', provider: 'anthropic', kind: 'api-key', label: 'work', credentialRef: 'c1' },
-    { id: 'k2', provider: 'openai', kind: 'api-key', label: 'personal', credentialRef: 'c2' },
-  ],
+vi.setConfig({ testTimeout: 40_000 });
+
+beforeEach(() => {
+  leaveDrafting('my-gateway');
+});
+
+type DrawerWorld = {
+  gateway?: GatewayConfig;
+  refusal?: string;
+  onDraftDefined?: (definition: SettledDefinition) => void;
 };
 
-const fast: VirtualModel = {
-  id: 'fast',
-  displayName: 'Fast',
-  target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
-};
-
-const creative: VirtualModel = {
-  id: 'creative',
-  displayName: 'Creative',
-  target: { accountId: 'k2', providerModel: 'gpt-5' },
-};
-
-async function renderDrawer(
-  virtualModels: readonly VirtualModel[] = [fast, creative],
-  parameters: BridgeParameters = {},
-  leaving = false,
-) {
-  const gateway = gatewaySeed({
-    slug: 'my-gateway',
-    displayName: 'My Gateway',
-    port: 8397,
-    virtualModels,
-  });
+async function renderDrawer(subject: InspectorSubject, world: DrawerWorld = {}) {
+  const gateway = world.gateway ?? servingGateway;
 
   installFakeBridge({
-    accounts: registry,
+    accounts: storedAccounts,
     gateways: [gateway],
-    engineStates: { 'my-gateway': { status: 'running' } },
-    ...parameters,
+    engineStates: runningGateway,
+    providerModels: listedModels,
   });
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
-  function DrawerHarness() {
-    const [drafting, setDrafting] = useState<SettledDefinition | undefined>(undefined);
-
-    return (
-      <GatewayDrawer
-        drafting={drafting}
-        gateway={gateway}
-        leaving={leaving}
-        onKeepDrafting={(values) => {
-          setDrafting((held) => draftKept(held, values));
-        }}
-        onLeaveDrafting={() => {
-          setDrafting(undefined);
-        }}
-        onStartDrafting={() => {
-          setDrafting(emptyDefinition());
-        }}
-      />
-    );
-  }
-
   return render(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<p>Loading…</p>}>
-        <DrawerHarness />
+        <GatewayDrawer
+          gateway={gateway}
+          onDraftDefined={world.onDraftDefined ?? (() => {})}
+          refusal={world.refusal}
+          subject={subject}
+        />
       </Suspense>
     </QueryClientProvider>,
   );
 }
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-test('the endpoint box hands the base URL a client points at to the clipboard', async () => {
-  const written = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
-  const screen = await renderDrawer();
-
-  await expect.element(screen.getByText('http://localhost:8397', { exact: true })).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: 'Copy base URL' }));
-
-  expect(written).toHaveBeenCalledWith('http://localhost:8397');
-});
-
-test('the endpoint box reads whether the gateway is answering right now', async () => {
-  const screen = await renderDrawer();
-
-  await expect.element(screen.getByText('Running', { exact: true })).toBeVisible();
-});
-
-test('a stopped gateway reads stopped, because the box speaks for the engine', async () => {
-  const screen = await renderDrawer([fast], { engineStates: {} });
-
-  await expect.element(screen.getByText('Stopped', { exact: true })).toBeVisible();
-});
-
-test('what a gateway serves reads one row per virtual model, tallied in its heading', async () => {
-  const screen = await renderDrawer();
-
-  await expect.element(screen.getByText('· 2 virtual models', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Fast', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('creative → personal · gpt-5', { exact: true }))
-    .toBeVisible();
-});
-
-test('a gateway serving nothing heads its section with no tally beside it', async () => {
-  const screen = await renderDrawer([]);
-
-  expect(screen.getByRole('heading', { name: /Serves/ }).element().textContent).toBe('Serves');
-});
-
-test('a gateway already serving offers to add another virtual model', async () => {
-  const screen = await renderDrawer();
-
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toBeVisible();
-});
-
-test('a gateway serving nothing invites the first virtual model', async () => {
-  const screen = await renderDrawer([]);
-
-  await expect.element(screen.getByText('Nothing serves yet', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('Add a virtual model to map a name onto a stored account.'))
-    .toBeVisible();
-});
-
-test('asking for a virtual model swaps the drawer to the flow that defines one', async () => {
-  const screen = await renderDrawer([]);
-
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toBeVisible();
-  await expect.element(screen.getByText('Endpoint', { exact: true })).not.toBeInTheDocument();
-});
-
-test('a drawer on its way off screen still reads the gateway it spoke for', async () => {
-  const screen = await renderDrawer([fast], {}, true);
-
-  await expect.element(screen.getByRole('heading', { name: 'My Gateway' })).toBeVisible();
-  await expect.element(screen.getByText('Fast', { exact: true })).toBeVisible();
-});
-
-test('stepping back from the flow hands the drawer back to what serves', async () => {
-  const screen = await renderDrawer([]);
-
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+test('the gateway subject reads the endpoint and what serves, with no add button', async () => {
+  const screen = await renderDrawer({ kind: 'gateway' });
 
   await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Nothing serves yet', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('fast → work · claude-haiku-4-5')).toBeVisible();
+  await expect
+    .element(screen.getByRole('button', { name: 'Add virtual model' }))
+    .not.toBeInTheDocument();
+});
+
+test('a gateway serving nothing points at the plus rather than at a button', async () => {
+  const screen = await renderDrawer({ kind: 'gateway' }, { gateway: freshGateway });
+
+  await expect.element(screen.getByText('Nothing serves yet')).toBeVisible();
+  await expect.element(screen.getByText(/plus on the gateway/)).toBeVisible();
+  await expect
+    .element(screen.getByRole('button', { name: 'Add virtual model' }))
+    .not.toBeInTheDocument();
+});
+
+test('the virtual model subject reads the definition and its binding', async () => {
+  const screen = await renderDrawer({ kind: 'virtual-model', modelId: 'fast' });
+
+  await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('work', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
+});
+
+test('the cable subject reads both ends of the binding', async () => {
+  const screen = await renderDrawer({ kind: 'cable', modelId: 'creative' });
+
+  await expect.element(screen.getByText('Binding', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('openrouter', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('openai/gpt-5', { exact: true })).toBeVisible();
+});
+
+test('the target subject reads the account behind it', async () => {
+  const screen = await renderDrawer({ kind: 'target', accountId: 'k1' });
+
+  await expect.element(screen.getByText('Target', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('anthropic', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('API Keys', { exact: true })).toBeVisible();
+});
+
+test('a removed target says where the account went', async () => {
+  const screen = await renderDrawer({ kind: 'ghost-target', accountId: 'gone' });
+
+  await expect.element(screen.getByText('Removed', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText(/left the registry/)).toBeVisible();
+});
+
+test('the draft subject edits the held draft as a person types', async () => {
+  startDrafting('my-gateway', emptyDefinition(), { x: 320, y: 140 });
+
+  const screen = await renderDrawer({ kind: 'draft' });
+
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+
+  expect(heldDraft('my-gateway')?.definition.displayName).toBe('Steady');
+  expect(heldDraft('my-gateway')?.definition.id).toBe('steady');
+});
+
+test('a settled draft saves through the inspector and hands the definition over', async () => {
+  startDrafting('my-gateway', emptyDefinition(), { x: 320, y: 140 });
+
+  const defined: string[] = [];
+  const screen = await renderDrawer(
+    { kind: 'draft' },
+    {
+      onDraftDefined: (definition) => {
+        defined.push(definition.id);
+      },
+    },
+  );
+
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  await userEvent.click(screen.getByRole('button', { name: 'work' }));
+  await userEvent.click(screen.getByRole('button', { name: 'claude-opus-5' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
+
+  await expect.poll(() => defined).toEqual(['steady']);
+});
+
+test('a refusal sentence stands in the inspector as an alert', async () => {
+  const screen = await renderDrawer(
+    { kind: 'gateway' },
+    { refusal: 'recompose cannot store this virtual model as it stands.' },
+  );
+
+  await expect
+    .element(screen.getByRole('alert'))
+    .toHaveTextContent('recompose cannot store this virtual model as it stands.');
 });

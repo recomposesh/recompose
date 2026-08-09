@@ -2,28 +2,51 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { gatewaySeed, paintedBox, paintedStyle } from '../../../../shared/testing';
+import type { CanvasFlowWiring } from './gateway-stage';
+
+import { paintedBox, paintedStyle } from '../../../../shared/testing';
+import { canvasGraph } from '../../lib/node-graph';
+import { tidyPositions } from '../../lib/tidy-layout';
+import { inScheme } from '../../testing/canvas-flow.testkit';
+import { servingGateway, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import { flowEdgesOf, flowNodesOf } from '../gateway-canvas-page/canvas-wiring';
 import { GatewayStage } from './gateway-stage';
 
-const twoDefinitions = ['quick', 'deep'].map((name) => ({
-  id: name,
-  displayName: name,
-  target: { accountId: 'k1', providerModel: `claude-${name}` },
-}));
-
-const serving = gatewaySeed({
-  slug: 'my-gateway',
-  displayName: 'My Gateway',
-  port: 8397,
-  virtualModels: twoDefinitions,
+const graph = canvasGraph(servingGateway, storedAccounts.accounts, {
+  draft: undefined,
+  pending: undefined,
 });
+
+const seats = tidyPositions(graph.nodes);
+
+const restingFlow: CanvasFlowWiring = {
+  nodes: flowNodesOf(graph, seats, undefined, {
+    onAddVirtualModel: () => {},
+    onPickTargetFor: () => {},
+  }),
+  edges: flowEdgesOf(graph.edges, undefined),
+  onNodesChange: () => {},
+  onNodeClick: () => {},
+  onEdgeClick: () => {},
+  onPaneClick: () => {},
+  isValidConnection: () => false,
+  onConnect: () => {},
+  onConnectStart: () => {},
+  onConnectEnd: () => {},
+  onReconnect: () => {},
+  onReconnectStart: () => {},
+  onReconnectEnd: () => {},
+  onBeforeDelete: async () => Promise.resolve(false),
+  onEdgesDelete: () => {},
+  onTidy: () => {},
+};
 
 const meta = preview.meta({
   component: GatewayStage,
-  args: { gateway: serving, selected: true, onToggleSelected: () => {} },
+  args: { flow: restingFlow, announced: undefined },
   decorators: [
     (Story) => (
-      <div className="flex h-100 bg-surface-content">
+      <div className="flex h-150 bg-surface-content">
         <Story />
       </div>
     ),
@@ -31,115 +54,64 @@ const meta = preview.meta({
 });
 
 /**
- * The stage as it stands before the canvas exists: the dotted field and the gateway on it.
+ * The assembled stage: the composition as cards and cables, with its furniture in the corners.
  *
- * @summary The field carries the gateway and nothing else. Prose explaining that the canvas is
- * unfinished told a person nothing they could act on, so the surface says what it holds and stops.
+ * @summary This is the production wiring end to end, so what it proves is that the pieces the
+ * other surfaces tested one by one still agree once the stage mounts them together.
  */
-export const Standing = meta.story({
-  play: async ({ canvas }) => {
-    await expect(await canvas.findByText('My Gateway')).toBeVisible();
-    await expect(await canvas.findByText(':8397 · 2 virtual models')).toBeVisible();
-  },
-});
-
-/** A gateway serving nothing yet, whose node says so rather than counting to zero. */
-export const ServingNothing = meta.story({
-  args: {
-    gateway: gatewaySeed({ slug: 'my-gateway', displayName: 'My Gateway', port: 8397 }),
-  },
-  play: async ({ canvas }) => {
-    await expect(await canvas.findByText(':8397 · no virtual models yet')).toBeVisible();
-  },
-});
-
-/**
- * The node with its inspector open, wearing the selection glow.
- *
- * @summary The glow is the one thing on the stage that says which node the drawer is speaking for,
- * so it carries the tinted ring, the soft outer light and the tinted surface together rather than a
- * single hairline a person has to hunt for.
- */
-export const Selected = meta.story({
-  play: async ({ canvas }) => {
-    const node = await canvas.findByRole('button', { name: /My Gateway/ });
-
-    await expect(node).toHaveAttribute('aria-pressed', 'true');
-    await expect(paintedStyle(node).boxShadow).toContain('22px');
-  },
-});
-
-/**
- * The node a person let go of, which is the plain card.
- *
- * @summary With nothing selected the stage takes the whole width, so the deselected node has to
- * read as a control on its own rather than as the leftover of a selected one.
- */
-export const Deselected = meta.story({
-  args: { selected: false },
-  play: async ({ canvas }) => {
-    const node = await canvas.findByRole('button', { name: /My Gateway/ });
-
-    await expect(node).toHaveAttribute('aria-pressed', 'false');
-    await expect(paintedStyle(node).boxShadow).not.toContain('22px');
-  },
-});
-
-/**
- * The node under the pointer, which has to say it can be pressed.
- *
- * @summary A card that toggles a whole panel needs an answer to the pointer, so the border takes
- * the accent and the surface warms a little, well short of what the selected glow claims.
- */
-export const Hovered = meta.story({
-  args: { selected: false },
-  play: async ({ canvas }) => {
-    const node = await canvas.findByRole('button', { name: /My Gateway/ });
-    const resting = paintedStyle(node).borderColor;
-
-    node.setAttribute('data-hovered', '');
-
-    await expect(paintedStyle(node).borderColor).not.toBe(resting);
-  },
-});
-
-/**
- * The stage squeezed to the narrowest the window allows, where the node keeps the leading edge.
- *
- * @summary An empty field invites recentering the one thing on it, and that would move the node
- * every time a second one arrived. It stays where the field will fill from, so the reading measures
- * the node against the field's own leading edge rather than against the room around it.
- */
-export const NarrowStage = meta.story({
-  decorators: [
-    (Story) => (
-      <div className="flex h-100 w-105 bg-surface-content">
-        <Story />
-      </div>
-    ),
-  ],
+export const TheComposedCanvas = meta.story({
   play: async ({ canvas, canvasElement }) => {
-    const node = await canvas.findByRole('button', { name: /My Gateway/ });
-    const field = canvasElement.querySelector('section');
-
-    await expect(paintedBox(node).left - paintedBox(field).left).toBeLessThan(32);
+    await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: /Fast/ })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: /work/ })).toBeVisible();
+    await expect(canvasElement.querySelector('[data-id="cable:fast"]')).not.toBeNull();
+    await expect(canvasElement.querySelector('[data-id="cable:creative"]')).not.toBeNull();
+    await expect(await canvas.findByRole('img', { name: 'Canvas map' })).toBeVisible();
+    await expect(await canvas.findByLabelText('Canvas tools')).toBeVisible();
   },
 });
 
 /**
- * The dotted field the stage paints, which is what says nodes belong here.
+ * The map reads the real node types, so each card's tint survives the production wiring.
  *
- * @summary The grid moved out of the gateway page and into the stage when the drawer arrived, so
- * the reading that pinned its 22px pitch and its radial dot follows it rather than lapsing.
+ * @summary The minimap keys its tints off `node.type`, and the stage keys `nodeTypes` off each
+ * card's kind. One painted tint proves the two contracts meet: a gateway card drawn teal in the
+ * corner means the kind-to-type mapping held all the way through.
  */
-export const DottedCanvas = meta.story({
-  play: async ({ canvasElement }) => {
-    const surface = canvasElement.firstElementChild?.firstElementChild;
+export const TheMapKeepsTheRoleTints = meta.story({
+  play: async ({ canvas }) => {
+    const map = (await canvas.findByRole('img', { name: 'Canvas map' })).parentElement;
+    const drawn = map?.querySelector('rect.minimap-node');
 
-    await expect(paintedStyle(surface).backgroundSize).toBe('22px 22px');
-    await expect(paintedStyle(surface).backgroundImage).toContain('radial-gradient(circle,');
+    await expect(paintedStyle(drawn).fill).toBe(
+      `color(srgb ${inScheme('0.0901961 0.52549 0.607843', '0.25098 0.784314 0.878431')} / 0.85)`,
+    );
   },
 });
 
-/** The stage in the dark scheme, where the dotted field and the node edge both have to read. */
+/**
+ * The attribution badge, restyled onto the design system and clear of the map's corner.
+ *
+ * @summary The record that adopted the library keeps its badge, so it stands as a legible chip at
+ * the bottom edge rather than as the library's own wash, and it never slides under the map.
+ */
+export const TheAttributionReadsInItsCorner = meta.story({
+  play: async ({ canvas }) => {
+    const badge = await canvas.findByRole('link', { name: 'Built with React Flow' });
+    const map = (await canvas.findByRole('img', { name: 'Canvas map' })).parentElement;
+    const badgeBox = paintedBox(badge);
+    const mapBox = paintedBox(map);
+
+    await expect(badge).toHaveAttribute('href', 'https://reactflow.dev');
+    await expect(badgeBox.right).toBeLessThan(mapBox.left);
+    await expect(paintedStyle(badge).color).toBe(
+      inScheme('rgba(0, 0, 0, 0.56)', 'rgba(255, 255, 255, 0.55)'),
+    );
+    await expect(paintedStyle(badge).backgroundColor).toBe(
+      inScheme('rgba(255, 255, 255, 0.92)', 'rgba(30, 30, 33, 0.92)'),
+    );
+  },
+});
+
+/** The whole stage in the dark scheme, where the cards, cables, and furniture must all read. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
