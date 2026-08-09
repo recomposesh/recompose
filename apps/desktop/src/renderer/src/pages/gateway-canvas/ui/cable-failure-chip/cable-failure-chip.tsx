@@ -12,7 +12,7 @@ type CableFailureChipProps = {
 /**
  * The last error a binding answered with, standing on the cable that carried it.
  *
- * @summary Reach for it on a failed cable, where a person has seen the colour and now wants the
+ * @summary Reach for it on a failed cable, where a person has seen the color and now wants the
  * reason. It says only that an error stands until it is asked, because a sentence printed over
  * every failed cable would bury the canvas it explains. Pressing it again or Esc puts it away,
  * so reading an error costs a person nothing and leaves the composition where they left it.

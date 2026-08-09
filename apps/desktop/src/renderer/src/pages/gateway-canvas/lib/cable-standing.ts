@@ -81,8 +81,8 @@ export function tintForStanding(carried: unknown): string {
  * The march a cable runs along its own path for the standing it carries.
  *
  * @summary Only a failed binding marches, because a line broken into dashes is what a failure looks
- * like before any colour is read, which is what carries the standing to a person who cannot tell
- * the greens from the reds. It stands down under reduced motion, where the colour carries alone.
+ * like before any color is read, which is what carries the standing to a person who cannot tell
+ * the greens from the reds. It stands down under reduced motion, where the color carries alone.
  */
 export function marchForStanding(carried: unknown): string {
   return painted(marchCarried, carried, standingMarch.resting);

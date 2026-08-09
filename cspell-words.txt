@@ -82,6 +82,7 @@ DPLUGIN
 dragless
 dyld
 dynamiclib
+edgelabel
 edgeupdater
 Electrobun
 Electrobun's
@@ -172,6 +173,7 @@ multiset
 musistudio
 negotiables
 nizos
+nodrag
 nofilter
 nonblocking
 noninteractive
@@ -199,6 +201,7 @@ oxlintrc
 packfile
 packfiles
 paeth
+pannable
 panresponder
 pierrec
 pipx
@@ -225,6 +228,7 @@ redactions
 redisqueue
 reimplementation
 renderitem
+repainter
 replayable
 Replit
 rescans
@@ -320,6 +324,7 @@ unspaced
 unspawned
 unspelled
 unstored
+unstreamable
 unstub
 untargeted
 untypes
@@ -359,3 +364,4 @@ xyflow
 Ymll
 zhipu
 zizmor
+zoomable

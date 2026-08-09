@@ -40,16 +40,14 @@ export const AServedBindingPaintsItsStanding = meta.story({
 export const AServedBindingPulsesAlongAWholeLine = meta.story({
   play: async ({ canvasElement }) => {
     const [cable] = await cablesDrawn(canvasElement);
-    const travelling = pulseIn(canvasElement);
+    const traveling = pulseIn(canvasElement);
 
     await expect(paintedStyle(cable).strokeDasharray).toBe('none');
-    await expect(paintedStyle(travelling).stroke).toBe(
-      forScheme(SERVED_INK.light, SERVED_INK.dark),
-    );
-    await expect(paintedStyle(travelling).animationName).toBe(
+    await expect(paintedStyle(traveling).stroke).toBe(forScheme(SERVED_INK.light, SERVED_INK.dark));
+    await expect(paintedStyle(traveling).animationName).toBe(
       stilled() ? 'none' : 'cable-pulse-travel',
     );
-    await expect(paintedStyle(travelling).opacity).toBe(stilled() ? '0' : '1');
+    await expect(paintedStyle(traveling).opacity).toBe(stilled() ? '0' : '1');
   },
 });
 

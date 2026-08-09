@@ -89,7 +89,7 @@ export function cabledFlow(standing: CableStanding, failure?: CableFailure): Rea
   );
 }
 
-/** The colour the running scheme paints, so one assertion covers light and dark alike. */
+/** The color the running scheme paints, so one assertion covers light and dark alike. */
 export function forScheme(light: string, dark: string): string {
   return document.documentElement.classList.contains('scheme-dark') ? dark : light;
 }
@@ -99,15 +99,15 @@ export function drawnCables(canvasElement: HTMLElement): SVGPathElement[] {
   return [...canvasElement.querySelectorAll<SVGPathElement>('.react-flow__edge > path')];
 }
 
-/** The pulse travelling over a served cable, which rides above the line rather than breaking it. */
+/** The pulse traveling over a served cable, which rides above the line rather than breaking it. */
 export function pulseIn(canvasElement: HTMLElement): SVGPathElement {
-  const travelling = canvasElement.querySelector<SVGPathElement>('.cable-pulse');
+  const traveling = canvasElement.querySelector<SVGPathElement>('.cable-pulse');
 
-  if (travelling === null) {
+  if (traveling === null) {
     throw new Error('no pulse travels this cable');
   }
 
-  return travelling;
+  return traveling;
 }
 
 /** The handles standing at a selected cable's ends. */

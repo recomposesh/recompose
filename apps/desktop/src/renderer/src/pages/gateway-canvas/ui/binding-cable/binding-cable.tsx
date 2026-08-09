@@ -57,9 +57,9 @@ function halo(drawn: string, stroke: string): ReactNode {
   );
 }
 
-function pulse(drawn: string, stroke: string, travelling: string): ReactNode {
-  return travelling === '' ? null : (
-    <path className={`${travelling} ${stroke}`} d={drawn} pathLength={1} />
+function pulse(drawn: string, stroke: string, traveling: string): ReactNode {
+  return traveling === '' ? null : (
+    <path className={`${traveling} ${stroke}`} d={drawn} pathLength={1} />
   );
 }
 
@@ -90,7 +90,7 @@ function lastError(failure: CableFailure | undefined, x: number, y: number): Rea
  * @summary Register it as the canvas edge type, so every binding reads at a glance: at rest,
  * serving, failed, broken where its account left, or one of the two the overlay draws. A serving
  * binding sends a pulse down a line that stays whole, and a failed one breaks into a march and
- * stands its last error on the path, for the person who wants the reason rather than the colour;
+ * stands its last error on the path, for the person who wants the reason rather than the color;
  * either way the canvas reads as traffic moving rather than as a diagram tinted after the fact. A
  * selected cable widens and takes the halo the selected node card wears, a crisp ring inside a soft
  * bloom, so selection reads the same whichever a person pressed, and the halo neither marches nor
