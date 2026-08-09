@@ -71,7 +71,7 @@ function lastError(failure: CableFailure | undefined, x: number, y: number): Rea
   return (
     <EdgeLabelRenderer>
       <div
-        className="pointer-events-auto absolute"
+        className="pointer-events-auto absolute has-aria-expanded:z-cable-reading"
         onClick={(event) => {
           event.stopPropagation();
         }}

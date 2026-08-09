@@ -131,7 +131,7 @@ describe('a request the gateway could not carry through', () => {
     expect(noted.at(0)?.request).toMatchObject({
       outcome: 'failed',
       status: 502,
-      detail: 'The gateway could not reach the target.',
+      detail: 'The gateway "Codex" holds no target for the virtual model "fast".',
     });
   });
 

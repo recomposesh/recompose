@@ -202,11 +202,12 @@ describe('the spend a resolved grant authorizes', () => {
 
   test('a credentialed spend carries its provider, credential, and optional account identity', () => {
     expectTypeOf<keyof CredentialedSpend>().toEqualTypeOf<
-      'custody' | 'provider' | 'credential' | 'accountId'
+      'custody' | 'provider' | 'credential' | 'accountId' | 'isCompat'
     >();
     expectTypeOf<CredentialedSpend['provider']>().toEqualTypeOf<string>();
     expectTypeOf<CredentialedSpend['credential']>().toEqualTypeOf<string>();
     expectTypeOf<CredentialedSpend['accountId']>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<CredentialedSpend['isCompat']>().toEqualTypeOf<boolean | undefined>();
   });
 
   test('an open spend admits no credential key at all, rather than an absent one', () => {

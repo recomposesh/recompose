@@ -28,6 +28,13 @@ function answering(status: number): Response {
   return new Response('{}', { status });
 }
 
+function failingWith(body: unknown, status = 402): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
 function watching(note: NoteTraffic) {
   return watchingTraffic(grantsNothing, note, atTheSameMoment);
 }
@@ -84,6 +91,60 @@ describe('the sentence a red cable offers', () => {
 
   test('a status no sentence is written for still reads as the answer the target gave', async () => {
     expect(await outcomeOf(503)).toMatchObject({ status: 503, detail: 'The target answered 503.' });
+  });
+});
+
+describe('the words the target itself offered', () => {
+  test('a target that explained itself is quoted on the cable', async () => {
+    const answer = failingWith({
+      error: { message: 'This request requires more credits, or fewer max_tokens.' },
+    });
+
+    expect((await spendingOn('fast', answer)).at(0)?.request).toMatchObject({
+      status: 402,
+      detail: 'This request requires more credits, or fewer max_tokens.',
+    });
+  });
+
+  test('an explanation the target wrote as a bare string still reads', async () => {
+    const noted = await spendingOn('fast', failingWith({ error: 'quota exhausted' }));
+
+    expect(noted.at(0)?.request).toMatchObject({ detail: 'quota exhausted' });
+  });
+
+  test('a wordless error body falls back to the written sentence', async () => {
+    const noted = await spendingOn('fast', failingWith({ error: { code: 'over_limit' } }));
+
+    expect(noted.at(0)?.request).toMatchObject({ detail: 'The target answered 402.' });
+  });
+
+  test('an explanation longer than a card holds is cut to its span', async () => {
+    const noted = await spendingOn('fast', failingWith({ error: { message: 'w'.repeat(500) } }));
+
+    expect(noted.at(0)?.request).toMatchObject({ detail: 'w'.repeat(280) });
+  });
+
+  test('the answer still carries its whole body to the caller after the note', async () => {
+    const answer = failingWith({ error: { message: 'no credits' } });
+    const { noted, note } = noting();
+
+    const out = await watching(note)(async (spendGrantFor) => {
+      await spendGrantFor('personal', 'fast');
+
+      return answer;
+    });
+
+    expect(await out.json()).toEqual({ error: { message: 'no credits' } });
+    expect(noted).toHaveLength(1);
+  });
+
+  test('a served answer is never read for a quote', async () => {
+    const answer = failingWith({ error: { message: 'ignore me' } }, 200);
+
+    expect((await spendingOn('fast', answer)).at(0)?.request).toEqual({
+      outcome: 'served',
+      at: answeredAt,
+    });
   });
 
   test('nothing a request or an answer carried rides along with the note', async () => {

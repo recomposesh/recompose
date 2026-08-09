@@ -16,8 +16,8 @@ import type {
 import { defaultAccountsDocument, loadAccountsDocument } from './accounts';
 
 describe('the account row the document stores', () => {
-  test('the document pins itself to schema version 6', () => {
-    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<6>();
+  test('the document pins itself to schema version 7', () => {
+    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<7>();
   });
 
   test('a stored row is a subscription, a credentialed account, or a local runtime', () => {

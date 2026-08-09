@@ -101,6 +101,8 @@
   --spacing-hit-target: 24px;
   --spacing-cable-stroke: 2.6px;
   --spacing-cable-stroke-selected: 3.6px;
+  /* React Flow elevates a selected node to z-index 1000; an open error reading must clear it. */
+  --z-cable-reading: 1001;
   --spacing-cable-dash: 7px;
   --spacing-cable-dash-gap: 5px;
   --spacing-cable-pulse-stroke: 5.4px;
@@ -666,6 +668,10 @@
     translate: -28px 0;
     opacity: 0;
   }
+}
+
+@utility z-cable-reading {
+  z-index: var(--z-cable-reading);
 }
 
 @utility confetti-piece {

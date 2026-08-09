@@ -105,6 +105,10 @@ export const AFailedBindingCarriesItsLastError = meta.story({
 
     await waitFor(async () => expect(await canvas.findByText(REFUSED.detail)).toBeVisible());
     await waitFor(async () => expect(await canvas.findByText(/Status 502/)).toBeVisible());
+
+    const lifted = chip.closest('.react-flow__edgelabel-renderer > div');
+
+    await expect(getComputedStyle(lifted ?? chip).zIndex).toBe('1001');
   },
 });
 

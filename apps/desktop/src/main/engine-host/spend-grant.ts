@@ -1,4 +1,6 @@
-import type { LookCustody, SpendGrant, Target } from '@recompose/contracts';
+import type { LookCustody, ProviderModelPolicy, SpendGrant, Target } from '@recompose/contracts';
+
+import { providerModelIsCompat } from '@recompose/contracts';
 
 import type { StoragePaths } from '../ipc/storage-context';
 import type { TargetCustodyContext } from './target-custody';
@@ -30,7 +32,12 @@ type GrantedSpend = Extract<SpendGrant, { verdict: 'resolved' }>['spend'];
  * spend says only whether one is in hand. Which header a vendor reads is the model-list look's
  * business, and folding it away here keeps the serving wire as narrow as it always was.
  */
-function spendFrom(custody: LookCustody, accountId: string): GrantedSpend {
+function spendFrom(
+  custody: LookCustody,
+  accountId: string,
+  modelPolicy: ProviderModelPolicy | undefined,
+  providerModel: string,
+): GrantedSpend {
   if (custody.custody === 'open') {
     return { custody: 'open' };
   }
@@ -42,6 +49,7 @@ function spendFrom(custody: LookCustody, accountId: string): GrantedSpend {
         provider: custody.provider,
         credential: custody.credential,
         accountId,
+        ...(providerModelIsCompat(modelPolicy, providerModel) ? { isCompat: true } : {}),
       };
 }
 
@@ -71,7 +79,12 @@ export async function resolveSpendGrant(
     ? {
         verdict: 'resolved',
         providerOrigin: resolved.providerOrigin,
-        spend: spendFrom(resolved.custody, target.accountId),
+        spend: spendFrom(
+          resolved.custody,
+          target.accountId,
+          resolved.modelPolicy,
+          target.providerModel,
+        ),
       }
     : resolved;
 }

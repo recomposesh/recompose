@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 type CableFailureChipProps = {
   /** The status the gateway answered the last request through this binding with. */
@@ -20,9 +20,28 @@ type CableFailureChipProps = {
 export function CableFailureChip({ status, detail }: CableFailureChipProps) {
   const [shown, setShown] = useState(false);
   const readingId = useId();
+  const standing = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!shown) {
+      return undefined;
+    }
+
+    const pressedAway = (press: PointerEvent) => {
+      if (press.target instanceof Node && standing.current?.contains(press.target) !== true) {
+        setShown(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', pressedAway, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', pressedAway, true);
+    };
+  }, [shown]);
 
   return (
-    <span className="relative inline-flex">
+    <span className="relative inline-flex" ref={standing}>
       <button
         aria-controls={readingId}
         aria-expanded={shown}

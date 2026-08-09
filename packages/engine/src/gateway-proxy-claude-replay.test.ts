@@ -12,6 +12,7 @@ const grant = {
     custody: 'credentialed',
     provider: 'anthropic',
     credential: 'anthropic-replay-credential',
+    isCompat: true,
   },
 } as const;
 

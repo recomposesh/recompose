@@ -14,7 +14,12 @@ const applied = new WeakSet<Crossing>();
 function replaySession(crossing: Crossing): ReplaySession | undefined {
   const { callerFingerprint, dialect, providerModel, replayScopeId } = crossing;
 
-  if (dialect !== 'anthropic' || replayScopeId === undefined || callerFingerprint === undefined) {
+  if (
+    crossing.isCompat !== true ||
+    dialect !== 'anthropic' ||
+    replayScopeId === undefined ||
+    callerFingerprint === undefined
+  ) {
     return undefined;
   }
 

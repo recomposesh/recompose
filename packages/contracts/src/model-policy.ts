@@ -22,11 +22,13 @@ const providerModelAliasInputSchema = z.strictObject({
   name: policyText,
   alias: policyText,
   displayName: policyText.optional(),
+  isCompat: z.boolean().optional(),
 });
 
 type ProviderModelAliasValue = {
   alias: string;
   displayName?: string | undefined;
+  isCompat?: boolean | undefined;
   name: string;
 };
 
@@ -39,6 +41,7 @@ function normalizedAlias(alias: ProviderModelAliasValue): ProviderModelAliasValu
     name: alias.name.toLowerCase(),
     alias: alias.alias.toLowerCase(),
     ...(alias.displayName === undefined ? {} : { displayName: alias.displayName }),
+    ...(alias.isCompat === true ? { isCompat: true } : {}),
   };
 }
 
@@ -64,6 +67,29 @@ const providerModelPolicySchema = z
   }));
 
 export type ProviderModelPolicy = z.infer<typeof providerModelPolicySchema>;
+
+function modelPolicyName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\([^()]*\)\s*$/u, '')
+    .trim();
+}
+
+export function providerModelIsCompat(
+  policy: ProviderModelPolicy | undefined,
+  model: string,
+): boolean {
+  const requested = modelPolicyName(model);
+
+  if (requested === '') return false;
+
+  return (policy?.aliases ?? []).some(
+    (entry) =>
+      entry.isCompat === true &&
+      [entry.name, entry.alias].some((candidate) => modelPolicyName(candidate) === requested),
+  );
+}
 
 function normalizedPolicies(
   policies: Record<string, ProviderModelPolicy>,

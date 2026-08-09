@@ -37,6 +37,26 @@ test('pressing the chip again puts the error away, so the canvas comes back unco
   await expect.element(screen.getByText(REFUSED)).not.toBeVisible();
 });
 
+test('a press anywhere outside the reading puts the error away', async () => {
+  const screen = await renderChip();
+
+  await userEvent.click(screen.getByRole('button', { name: /last error/i }));
+  await expect.element(screen.getByText(REFUSED)).toBeVisible();
+
+  await userEvent.click(document.body);
+
+  await expect.element(screen.getByText(REFUSED)).not.toBeVisible();
+});
+
+test('a press inside the reading leaves it standing', async () => {
+  const screen = await renderChip();
+
+  await userEvent.click(screen.getByRole('button', { name: /last error/i }));
+  await userEvent.click(screen.getByText(REFUSED));
+
+  await expect.element(screen.getByText(REFUSED)).toBeVisible();
+});
+
 test('Escape puts the error away, which is the way out that changes nothing', async () => {
   const screen = await renderChip();
 

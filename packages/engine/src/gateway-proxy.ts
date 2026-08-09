@@ -105,6 +105,15 @@ async function forwardGranted(
   );
 }
 
+function crossingWithCompatibility(
+  crossing: Crossing,
+  grant: Extract<SpendGrant, { verdict: 'resolved' }>,
+): Crossing {
+  return grant.spend.custody === 'credentialed' && grant.spend.isCompat === true
+    ? { ...crossing, isCompat: true }
+    : crossing;
+}
+
 async function forwardResolved(
   crossing: Crossing,
   grant: Extract<SpendGrant, { verdict: 'resolved' }>,
@@ -114,12 +123,14 @@ async function forwardResolved(
   pluginTarget?: PluginGatewayTarget | null,
   plugins?: PluginHost,
 ): Promise<Response> {
+  const compatibleCrossing = crossingWithCompatibility(crossing, grant);
+
   if (pluginTarget?.kind === 'executor') {
-    return forwardPluginExecutor(crossing, grant, pluginTarget, plugins);
+    return forwardPluginExecutor(compatibleCrossing, grant, pluginTarget, plugins);
   }
 
   return forwardProviderResolved(
-    effectiveProviderCrossing(crossing, pluginTarget),
+    effectiveProviderCrossing(compatibleCrossing, pluginTarget),
     grant,
     fetchLike,
     subscriptions,

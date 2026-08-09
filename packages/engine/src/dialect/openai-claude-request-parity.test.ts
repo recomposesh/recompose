@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest';
 import type { AnthropicRequest } from './anthropic-wire';
 
 import { decodeRequestWithCompat } from './anthropic-request-decode';
-import { encodeRequestWithCompat } from './chat-completions-request-encode';
+import { encodeRequest } from './chat-completions-request-encode';
 import { translateRequest } from './dispatcher';
 
 describe('Claude thinking crossing Chat Completions', () => {
-  it('should carry unsigned assistant thinking while dropping redacted and user thinking', () => {
-    const value = translated({
+  it('should carry unsigned assistant thinking only in compatibility mode', () => {
+    const request: AnthropicRequest = {
       messages: [
         {
           role: 'assistant',
@@ -27,11 +27,14 @@ describe('Claude thinking crossing Chat Completions', () => {
           ],
         },
       ],
-    });
+    };
+    const native = translated(request);
+    const compatible = compatibleTranslated(request);
 
-    expect(value.messages[0]).toHaveProperty('reasoning_content', 'unsigned\n  \n ');
-    expect(value.messages[0]).toHaveProperty('content', 'visible');
-    expect(value.messages[1]).toHaveProperty('content', 'user text');
+    expect(native.messages[0]).not.toHaveProperty('reasoning_content');
+    expect(compatible.messages[0]).toHaveProperty('reasoning_content', 'unsigned\n  \n ');
+    expect(compatible.messages[0]).toHaveProperty('content', 'visible');
+    expect(compatible.messages[1]).toHaveProperty('content', 'user text');
   });
 
   it.each([
@@ -58,17 +61,24 @@ describe('Claude thinking crossing Chat Completions', () => {
 });
 
 describe('Claude thinking-only messages crossing Chat Completions', () => {
-  it('should preserve an unsigned thinking-only assistant message', () => {
-    const value = translated({
+  it('should preserve an unsigned thinking-only assistant message only in compatibility mode', () => {
+    const request: AnthropicRequest = {
       messages: [
         { role: 'user', content: 'question' },
         { role: 'assistant', content: [{ type: 'thinking', thinking: 'internal only' }] },
         { role: 'user', content: 'thanks' },
       ],
-    });
+    };
+    const native = translated(request);
+    const compatible = compatibleTranslated(request);
 
-    expect(value.messages.map((message) => message.role)).toEqual(['user', 'assistant', 'user']);
-    expect(value.messages[1]).toHaveProperty('reasoning_content', 'internal only');
+    expect(native.messages.map((message) => message.role)).toEqual(['user', 'user']);
+    expect(compatible.messages.map((message) => message.role)).toEqual([
+      'user',
+      'assistant',
+      'user',
+    ]);
+    expect(compatible.messages[1]).toHaveProperty('reasoning_content', 'internal only');
   });
 
   it('should preserve empty-signature thinking only in compat mode', () => {
@@ -86,7 +96,7 @@ describe('Claude thinking-only messages crossing Chat Completions', () => {
     if ('refusal' in decoded) throw new Error('expected compat decode');
 
     expect('refusal' in normal).toBe(true);
-    expect(encodeRequestWithCompat(decoded.value).value.messages[0]).toHaveProperty(
+    expect(encodeRequest(decoded.value).value.messages[0]).toHaveProperty(
       'reasoning_content',
       'reason',
     );
@@ -203,8 +213,8 @@ describe('Claude tool results crossing Chat Completions', () => {
 });
 
 describe('Claude assistant tool order crossing Chat Completions', () => {
-  it('should keep assistant text and unsigned thinking around a tool call', () => {
-    const value = translated({
+  it('should keep unsigned thinking around a tool call only in compatibility mode', () => {
+    const request: AnthropicRequest = {
       messages: [
         {
           role: 'assistant',
@@ -216,16 +226,28 @@ describe('Claude assistant tool order crossing Chat Completions', () => {
           ],
         },
       ],
-    });
+    };
+    const native = translated(request);
+    const compatible = compatibleTranslated(request);
 
-    expect(value.messages[0]).toHaveProperty('content', [
+    expect(native.messages[0]).toHaveProperty('content', [
       { type: 'text', text: 'pre' },
       { type: 'text', text: 'post' },
     ]);
-    expect(value.messages[0]).toHaveProperty('tool_calls.0.id', 'call_1');
-    expect(value.messages[0]).toHaveProperty('reasoning_content', 'drop');
+    expect(native.messages[0]).toHaveProperty('tool_calls.0.id', 'call_1');
+    expect(native.messages[0]).not.toHaveProperty('reasoning_content');
+    expect(compatible.messages[0]).toHaveProperty('reasoning_content', 'drop');
   });
 });
+
+function compatibleTranslated(request: AnthropicRequest) {
+  const result = translateRequest('anthropic', 'chat-completions', request, { isCompat: true });
+
+  if ('outcome' in result || 'refusal' in result)
+    throw new Error('expected compatible Chat request');
+
+  return result.value;
+}
 
 function translated(request: AnthropicRequest) {
   const result = translateRequest('anthropic', 'chat-completions', request);

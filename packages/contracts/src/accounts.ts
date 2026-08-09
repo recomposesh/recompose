@@ -8,7 +8,7 @@ import { nonBlankString } from './non-blank';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
-export const ACCOUNTS_VERSION = 6;
+export const ACCOUNTS_VERSION = 7;
 
 export const accountKindSchema = z.enum(['subscription', 'api-key', 'aggregator', 'local']);
 
@@ -111,12 +111,18 @@ const rowsPredateAccountTransportPolicy: Migration = {
   migrate: (doc) => ({ ...doc, schemaVersion: 6 }),
 };
 
+const rowsPredateModelCompatibility: Migration = {
+  from: 6,
+  migrate: (doc) => ({ ...doc, schemaVersion: 7 }),
+};
+
 const accountsMigrations: readonly Migration[] = [
   subscriptionRowsHeldPastedSecrets,
   rowsPredateTheMaskNoMigrationCanMint,
   rowsPredateTheRuntimeArmNoMigrationCanMint,
   rowsPredateProviderModelPolicy,
   rowsPredateAccountTransportPolicy,
+  rowsPredateModelCompatibility,
 ];
 
 export function loadAccountsDocument(doc: unknown): AccountsDocument {

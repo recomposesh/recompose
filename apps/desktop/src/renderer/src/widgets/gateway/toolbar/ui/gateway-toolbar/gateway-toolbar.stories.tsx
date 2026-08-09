@@ -111,7 +111,6 @@ export const EveryControl = meta.story({
       'Docs',
       'Copy address',
       'Tidy the canvas',
-      'View as JSON',
       'Request log',
       'Inspector',
     ]);
@@ -120,7 +119,6 @@ export const EveryControl = meta.story({
 
     await expect(waiting.map((control) => control.title)).toEqual([
       'Docs. Waits on the guide.',
-      'View as JSON. Waits on the config view.',
       'Request log. Waits on request logging.',
     ]);
   },

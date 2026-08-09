@@ -51,12 +51,6 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
         }}
         where="standing"
       />
-      <ToolbarButton
-        glyph="json"
-        label="View as JSON"
-        waitsFor="the config view"
-        where="standing"
-      />
       <span className={GROUP}>
         <ToolbarButton
           glyph="panel-bottom"

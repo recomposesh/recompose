@@ -7,32 +7,47 @@ assumption that similarly named code is equivalent.
 
 ## Authority and scope
 
-- Upstream: CLIProxyAPI v7.2.125
-- Commit: `2e6b1d83`
+- Upstream: CLIProxyAPI v7.2.125-6-ga6825fe9
+- Commit: `a6825fe9`
+- Completed parity checkpoint: v7.2.125 / `2e6b1d83`
 - Local comparison date: 2026-08-09
 - Full inventory audit baseline: v7.2.121 / `8392b180ce3789eba9fd06ebc812b4fc237876e1`
   (2026-08-07), carried forward by the delta section below
 - Upstream internal tests at the audit baseline: 329 files, 2,926 `Test*` functions, 16 benchmarks
 - Upstream translator tests at the audit baseline: 767 `Test*` functions
 - Upstream Interactions translator tests at the audit baseline: 136 `Test*` functions
-- Current Recompose engine gate: 542 test files, 4,412 passing tests (2026-08-09)
+- Current Recompose engine gate: 543 test files, 4,423 passing tests (2026-08-09)
 
 ## Delta v7.2.121 → v7.2.125
 
-Twenty-seven upstream commits landed between the pinned audit baseline and `2e6b1d83`. The six
-behavior changes in scope were ported with local behavior tests on 2026-08-09; the remainder of
+Twenty-seven upstream commits landed between the pinned audit baseline and `2e6b1d83`. The
+in-scope behavior changes were ported with local behavior tests on 2026-08-09; the remainder of
 the window carried no engine-scope behavior change.
 
-| Upstream commit | Upstream change                                                        | Status   | Local behavior evidence                                                                                                                                      |
-| --------------- | ---------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `2e6b1d83`      | fix(claude): add Claude-compatible thinking replay persistence         | covered  | `claude-thinking-replay.test.ts`, `claude-thinking-replay-coverage.test.ts`, `claude-replay-runtime-coverage.test.ts`, `gateway-proxy-claude-replay.test.ts` |
-| `5e25566c`      | fix(codex): prefix reasoning and function_call item ids (`rs_`/`fc_`)  | covered  | `codex-identities-coverage.test.ts`                                                                                                                          |
-| `197f5204`      | fix(codex): prefix custom_tool_call item ids (`ctc_`)                  | covered  | `codex-identities-coverage.test.ts`                                                                                                                          |
-| `3522e481`      | fix(openai): emit response.failed stream errors for Codex requests     | covered  | `responses-stream-failed.test.ts`                                                                                                                            |
-| `37609fa1`      | fix(claude): synthesize belated tool_use starts for empty-name calls   | covered  | `chat-completions-stream-tools-coverage.test.ts` proves the `tool_<index>` opening                                                                           |
-| `dd67f56f`      | fix(xai): remap bad-credentials 403s to unauthorized                   | covered  | `xai-response.test.ts` remaps both bad-credentials shapes to 401                                                                                             |
-| `36936340`      | fix(kimi): canonicalize K2.7 Code model aliases                        | covered  | `kimi-request.test.ts` and `kimi-thinking-replay.test.ts` pin the `kimi-for-coding` family                                                                   |
-| `0a95fa62`      | feat(compat): preserve Claude thinking/tool-call content (`is-compat`) | deferred | product decision pending with the maintainer; no local `isCompat` capability until it lands                                                                  |
+| Upstream commit | Upstream change                                                        | Status  | Local behavior evidence                                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `2e6b1d83`      | fix(claude): add Claude-compatible thinking replay persistence         | covered | `claude-thinking-replay.test.ts`, `claude-thinking-replay-coverage.test.ts`, `claude-replay-runtime-coverage.test.ts`, `gateway-proxy-claude-replay.test.ts` |
+| `5e25566c`      | fix(codex): prefix reasoning and function_call item ids (`rs_`/`fc_`)  | covered | `codex-identities-coverage.test.ts`                                                                                                                          |
+| `197f5204`      | fix(codex): prefix custom_tool_call item ids (`ctc_`)                  | covered | `codex-identities-coverage.test.ts`                                                                                                                          |
+| `3522e481`      | fix(openai): emit response.failed stream errors for Codex requests     | covered | `responses-stream-failed.test.ts`                                                                                                                            |
+| `37609fa1`      | fix(claude): synthesize belated tool_use starts for empty-name calls   | covered | `chat-completions-stream-tools-coverage.test.ts` proves the `tool_<index>` opening                                                                           |
+| `dd67f56f`      | fix(xai): remap bad-credentials 403s to unauthorized                   | covered | `xai-response.test.ts` remaps both bad-credentials shapes to 401                                                                                             |
+| `36936340`      | fix(kimi): canonicalize K2.7 Code model aliases                        | covered | `kimi-request.test.ts` and `kimi-thinking-replay.test.ts` pin the `kimi-for-coding` family                                                                   |
+| `0a95fa62`      | feat(compat): preserve Claude thinking/tool-call content (`is-compat`) | covered | provider model policy carries `isCompat` into the spend grant; `gateway-is-compat.test.ts` proves both translation directions and native-mode isolation      |
+
+## Delta v7.2.125 → `a6825fe9`
+
+Five behavior commits and one merge landed after the completed v7.2.125 checkpoint. The stream-end
+finalization already follows from the local hub lifecycle; four later changes remain open for the
+next parity pass.
+
+| Upstream commit | Upstream change                                                       | Status  | Local disposition                                                                                                   |
+| --------------- | --------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| `4906ead3`      | finalize open Responses items on `[DONE]` without `finish_reason`     | covered | Chat stream `done` closes open hub blocks; `openai-responses-chat-response-parity.test.ts` pins the terminal output |
+| `37411842`      | restore namespaced custom-tool identity through shared handling       | open    | namespace references do not yet retain whether the child was custom                                                 |
+| `5314b29d`      | forward `stream_options.reasoning_summary_delivery=sequential_cutoff` | open    | Codex request normalization still removes the complete `stream_options` object                                      |
+| `673bac5f`      | prefix `custom_tool_call_output` item IDs with `ctco_`                | open    | the sanitizer currently covers `msg_`, `rs_`, `fc_`, and `ctc_` only                                                |
+| `a6825fe9`      | normalize forced xAI web-search choice to required `allowed_tools`    | open    | xAI currently preserves a forced `{type: "web_search"}` choice                                                      |
 
 The final multiplicity-aware inventory audit is published in
 `docs/cliproxyapi-parity/internal-completion-audit.md`: all 2,926 upstream `Test*` functions are

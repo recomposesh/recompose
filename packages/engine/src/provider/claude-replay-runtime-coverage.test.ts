@@ -23,6 +23,7 @@ function aClaudeCrossing(overrides: Partial<Crossing> = {}): Crossing {
     providerModel: 'claude-sonnet-4-5',
     replayScopeId: 'scope-1',
     callerFingerprint: 'caller-1',
+    isCompat: true,
     ...overrides,
   };
 }
@@ -54,6 +55,14 @@ beforeEach(() => {
 });
 
 describe('the sessions a Claude replay is willing to serve', () => {
+  test('a native model without compatibility enabled is left alone', async () => {
+    const native = aClaudeCrossing({ isCompat: false });
+
+    await observeClaudeReplay(native, Response.json({ content: cachedContent }));
+
+    expect(prepareClaudeReplay(native, aCompactedBody())).toEqual(aCompactedBody());
+  });
+
   test('a crossing outside the anthropic dialect is left alone', async () => {
     await observeClaudeReplay(
       aClaudeCrossing({ dialect: 'chat-completions' }),

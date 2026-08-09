@@ -39,6 +39,17 @@ describe('watcher diff for a provider that stayed the same', () => {
     expect(result.changes).toEqual(['oauth-model-alias[antigravity]: updated (1 -> 1 entries)']);
     expect(result.affectedProviders).toEqual(['antigravity']);
   });
+
+  it('should report an alias change when compatibility is enabled', () => {
+    const native = { name: 'deepseek-v4', alias: 'deepseek' };
+    const result = diffProviderModelAliases(
+      { openrouter: [native] },
+      { openrouter: [{ ...native, isCompat: true }] },
+    );
+
+    expect(result.changes).toEqual(['oauth-model-alias[openrouter]: updated (1 -> 1 entries)']);
+    expect(result.affectedProviders).toEqual(['openrouter']);
+  });
 });
 
 describe('accounts semantic hash over model policies', () => {

@@ -29,9 +29,14 @@ function crossedRequest(
         (names) => {
           crossing.geminiToolNames = names;
         },
-        { preserveIncompatibleReasoning },
+        {
+          preserveIncompatibleReasoning:
+            preserveIncompatibleReasoning || crossing.isCompat === true,
+        },
       )
-    : translateRequest(crossing.dialect, upstreamDialect, payload);
+    : translateRequest(crossing.dialect, upstreamDialect, payload, {
+        isCompat: crossing.isCompat === true,
+      });
 }
 
 function translatedOutbound(

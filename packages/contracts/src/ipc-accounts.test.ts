@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import { ACCOUNTS_VERSION } from './accounts';
 import { ipcChannels, ipcErrorSchema } from './ipc';
 
 const connect = ipcChannels['accounts:connect'].request;
@@ -48,7 +49,7 @@ describe('the key the connect channel carries', () => {
 describe('what the connect channel answers', () => {
   test('responses cannot smuggle the secret back', () => {
     const registry = {
-      schemaVersion: 6,
+      schemaVersion: ACCOUNTS_VERSION,
       accounts: [
         {
           id: 'a1',
@@ -61,7 +62,7 @@ describe('what the connect channel answers', () => {
       ],
     };
     const smuggled = {
-      schemaVersion: 6,
+      schemaVersion: ACCOUNTS_VERSION,
       accounts: [{ ...registry.accounts[0], secret: 'sk-abc' }],
     };
 
