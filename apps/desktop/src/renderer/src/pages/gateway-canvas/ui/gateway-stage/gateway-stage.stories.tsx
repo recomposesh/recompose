@@ -124,40 +124,27 @@ export const TheMapKeepsTheRoleTints = meta.story({
 });
 
 /**
- * The attribution badge, restyled onto the design system and clear of both corners.
+ * The canvas carries no attribution and no badge of any kind between its corners.
  *
- * @summary The record that adopted the library keeps its badge, so it stands as a legible chip at
- * the bottom edge rather than as the library's own wash, and it covers neither the tools cluster
- * nor the map.
+ * @summary The maintainer traded the library's courtesy badge away on 2026-08-09, as the adoption
+ * record allowed. Nothing may quietly take its seat: the band between the tools cluster and the
+ * map stays empty at every pane width.
  */
-export const TheAttributionReadsInItsCorner = meta.story({
+export const NoBadgeStandsBetweenTheCorners = meta.story({
   play: async ({ canvas }) => {
-    const badge = await canvas.findByRole('link', { name: 'Built with React Flow' });
-    const tools = await canvas.findByLabelText('Canvas tools');
-    const map = (await canvas.findByRole('img', { name: 'Canvas map' })).parentElement;
-    const badgeBox = paintedBox(badge);
-
-    await expect(badge).toHaveAttribute('href', 'https://reactflow.dev');
-    await expect(apart(badgeBox, paintedBox(tools))).toBe(true);
-    await expect(apart(badgeBox, paintedBox(map))).toBe(true);
-    await expect(paintedStyle(badge).color).toBe(
-      inScheme('rgba(0, 0, 0, 0.56)', 'rgba(255, 255, 255, 0.55)'),
-    );
-    await expect(paintedStyle(badge).backgroundColor).toBe(
-      inScheme('rgba(255, 255, 255, 0.92)', 'rgba(30, 30, 33, 0.92)'),
-    );
+    await expect(canvas.queryByRole('link', { name: 'Built with React Flow' })).toBeNull();
+    await expect(canvas.queryByText(/React Flow/)).toBeNull();
   },
 });
 
 /**
- * The Tidy tool takes a press at the narrowest pane the app serves.
+ * The zoom tools take a press at the narrowest pane the app serves.
  *
- * @summary At the 1120px window with the inspector standing, the pane narrows until the bottom row
- * holds no free seat between the tools cluster and the map. The badge therefore stands above that
- * row: whatever the pane width, a press aimed at Tidy lands on Tidy, and the badge still covers
- * neither corner.
+ * @summary At the 1120px window with the inspector standing, the pane narrows until the corners
+ * almost meet. Every tool in the cluster must still take a press aimed at its middle, and the
+ * cluster must stand apart from the map.
  */
-export const TheTidyToolTakesAPressAtTheNarrowestPane = meta.story({
+export const TheToolsTakeAPressAtTheNarrowestPane = meta.story({
   decorators: [
     (Story) => (
       <div className="flex h-150 w-136">
@@ -166,21 +153,17 @@ export const TheTidyToolTakesAPressAtTheNarrowestPane = meta.story({
     ),
   ],
   play: async ({ canvas }) => {
-    const tidy = await canvas.findByRole('button', { name: 'Tidy' });
+    const fit = await canvas.findByRole('button', { name: 'Zoom to fit' });
     const tools = await canvas.findByLabelText('Canvas tools');
-    const badge = await canvas.findByRole('link', { name: 'Built with React Flow' });
     const map = (await canvas.findByRole('img', { name: 'Canvas map' })).parentElement;
-    const pressed = paintedBox(tidy);
-    const badgeBox = paintedBox(badge);
+    const pressed = paintedBox(fit);
+    const hit = fit.ownerDocument.elementFromPoint(
+      pressed.left + pressed.width / 2,
+      pressed.top + pressed.height / 2,
+    );
 
-    await expect(
-      tidy.ownerDocument.elementFromPoint(
-        pressed.left + pressed.width / 2,
-        pressed.top + pressed.height / 2,
-      ),
-    ).toBe(tidy);
-    await expect(apart(badgeBox, paintedBox(tools))).toBe(true);
-    await expect(apart(badgeBox, paintedBox(map))).toBe(true);
+    await expect(fit.contains(hit)).toBe(true);
+    await expect(apart(paintedBox(tools), paintedBox(map))).toBe(true);
   },
 });
 

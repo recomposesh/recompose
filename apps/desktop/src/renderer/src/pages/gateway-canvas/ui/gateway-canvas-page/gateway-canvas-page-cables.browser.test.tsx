@@ -229,7 +229,8 @@ test('confirming the removal takes the definition out of the gateway', async () 
 test('Delete never fires from a text field, so editing a name removes nothing', async () => {
   const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByLabelText('Add a virtual model'));
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
 
   const name = screen.getByRole('textbox', { name: 'Name' });
 

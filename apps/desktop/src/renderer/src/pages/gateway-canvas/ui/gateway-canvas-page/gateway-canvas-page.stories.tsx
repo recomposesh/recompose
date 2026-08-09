@@ -47,7 +47,8 @@ export const Serving = meta.story({
 /** The gateway plus births a draft card, and the inspector turns onto its fields. */
 export const DraftingAModel = meta.story({
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByLabelText('Add a virtual model'));
+    (await canvas.findByLabelText('Add a virtual model')).focus();
+    await userEvent.keyboard('{Enter}');
 
     await expect(
       await canvas.findByRole('button', { name: /Unnamed virtual model/ }),

@@ -1,14 +1,19 @@
-import { Controls, useReactFlow } from '@xyflow/react';
+import type { ReactFlowState } from '@xyflow/react';
 
-type CanvasZoomControlsProps = {
-  /** Receives the ask to arrange the canvas afresh, which the viewport cannot answer on its own. */
-  onTidy: () => void;
-};
+import { Controls, useReactFlow, useStore } from '@xyflow/react';
+
+import { Icon, type IconName } from '../../../../shared/ui';
 
 const cluster =
-  'm-4 gap-1 rounded-canvas-card border border-line-subtle bg-canvas-card p-zoom-tools shadow-canvas-card';
+  'm-4 items-center gap-0.5 rounded-canvas-card border border-line-subtle bg-canvas-card p-zoom-tools shadow-canvas-card';
 
-const tool = 'push-button focus-ring';
+const tool =
+  'flex size-hit-target items-center justify-center rounded-control text-ink-secondary focus-ring hover:bg-surface-hover active:bg-surface-pressed';
+
+const readout =
+  'flex h-hit-target items-center rounded-control border border-line-subtle bg-surface-content px-2 font-mono text-mono-value text-ink focus-ring hover:bg-surface-hover active:bg-surface-pressed';
+
+const paintedZoom = (state: ReactFlowState) => `${String(Math.round(state.transform[2] * 100))}%`;
 
 function pressing(move: () => Promise<boolean>): () => void {
   return () => {
@@ -16,15 +21,25 @@ function pressing(move: () => Promise<boolean>): () => void {
   };
 }
 
+function zoomStep(ask: string, glyph: IconName, onPress: () => void) {
+  return (
+    <button aria-label={ask} className={tool} onClick={onPress} type="button">
+      <Icon className="size-3.5" name={glyph} />
+    </button>
+  );
+}
+
 /**
- * The tools cluster in the canvas corner, carrying every act the viewport answers to.
+ * The zoom cluster in the canvas corner, drawn the way the reference draws it.
  *
- * @summary Reach for it wherever the canvas stands, so zoom and arrangement have a visible home
- * rather than living only in the menu bar. The tools stand on the shipped push button, they answer
- * a keyboard as readily as a pointer, and no lock rides along, because the canvas is never frozen.
+ * @summary A step out, the live reading, a step in, and the fit, in one quiet pill. The reading
+ * answers the viewport it stands on, so pinching and the menu both move it. Pressing the reading
+ * puts the zoom back at its true size, and the fit brings the whole composition into view.
+ * Arrangement is not zoom's business: Tidy lives in the toolbar above the canvas.
  */
-export function CanvasZoomControls({ onTidy }: CanvasZoomControlsProps) {
-  const { fitView, zoomIn, zoomOut } = useReactFlow();
+export function CanvasZoomControls() {
+  const { fitView, zoomIn, zoomOut, zoomTo } = useReactFlow();
+  const zoom = useStore(paintedZoom);
 
   return (
     <Controls
@@ -36,18 +51,17 @@ export function CanvasZoomControls({ onTidy }: CanvasZoomControlsProps) {
       showInteractive={false}
       showZoom={false}
     >
-      <button className={tool} onClick={pressing(zoomIn)} type="button">
-        Zoom in
+      {zoomStep('Zoom out', 'minus', pressing(zoomOut))}
+      <button
+        aria-label="Reset zoom"
+        className={readout}
+        onClick={pressing(async () => zoomTo(1))}
+        type="button"
+      >
+        {zoom}
       </button>
-      <button className={tool} onClick={pressing(zoomOut)} type="button">
-        Zoom out
-      </button>
-      <button className={tool} onClick={pressing(fitView)} type="button">
-        Zoom to fit
-      </button>
-      <button className={tool} onClick={onTidy} type="button">
-        Tidy
-      </button>
+      {zoomStep('Zoom in', 'plus', pressing(zoomIn))}
+      {zoomStep('Zoom to fit', 'fit', pressing(fitView))}
     </Controls>
   );
 }

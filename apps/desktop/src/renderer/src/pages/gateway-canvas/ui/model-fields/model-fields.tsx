@@ -119,11 +119,15 @@ function modelIdField(props: ModelFieldsProps): ReactNode {
 
 function pickedFrom(label: ReactNode, control: ReactNode): ReactNode {
   return (
-    <div className="border-t border-line-faint px-3 py-2.5">
+    <div className="px-3 py-2.5">
       <p className="mb-1 text-caption font-semibold text-ink-secondary">{label}</p>
       {control}
     </div>
   );
+}
+
+function pickedFromBelow(label: ReactNode, control: ReactNode): ReactNode {
+  return <div className="border-t border-line-faint">{pickedFrom(label, control)}</div>;
 }
 
 function nothingCanServe(): ReactNode {
@@ -204,21 +208,27 @@ function modelControl(props: ModelFieldsProps): ReactNode {
 }
 
 /**
- * The fields a definition needs, in the order a person settles them.
+ * The fields a definition needs, in the order a person settles them, in two boxes.
  *
- * @summary The name and the id are typed and the target and the model are picked. The id a client
- * sends follows the name as it is derived and then a person may edit it, so it carries a copy and
- * the word that clients send it exactly. The model list belongs to the target, so it waits for one.
- * With nothing stored that can serve, the target says so and points at the screen that connects one,
- * because a picker left empty reads as a flow that failed rather than as a step not taken yet.
+ * @summary The name and the id are typed and stand in the first box, and the target and the model
+ * are picked and stand together in the second, because the pair answers one question: where does
+ * this virtual model route. The id a client sends follows the name as it is derived and then a
+ * person may edit it, so it carries a copy and the word that clients send it exactly. The model
+ * list belongs to the target, so it waits for one. With nothing stored that can serve, the target
+ * says so and points at the screen that connects one, because a picker left empty reads as a flow
+ * that failed rather than as a step not taken yet.
  */
 export function ModelFields(props: ModelFieldsProps) {
   return (
-    <div className="field-box">
-      {nameField(props)}
-      {modelIdField(props)}
-      {pickedFrom('Target', targetControl(props))}
-      {pickedFrom(modelLabel(props.targetName), modelControl(props))}
+    <div className="flex flex-col gap-2.5">
+      <div className="field-box">
+        {nameField(props)}
+        {modelIdField(props)}
+      </div>
+      <div className="field-box">
+        {pickedFrom('Target', targetControl(props))}
+        {pickedFromBelow(modelLabel(props.targetName), modelControl(props))}
+      </div>
     </div>
   );
 }

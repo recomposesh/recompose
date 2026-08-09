@@ -4,6 +4,7 @@ import { ReactFlow, ReactFlowProvider } from '@xyflow/react';
 import { beforeEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
+import { askTheCanvas } from '../../../shared/lib';
 import { CanvasCommands } from './use-canvas-commands';
 
 type CanvasCommand = IpcEventPayload<'canvas:command'>;
@@ -71,6 +72,31 @@ test('the tidy command reaches the arrangement rather than the viewport', async 
 
   expect(asked).toEqual(['tidy']);
   expect(viewportTransform(screen.container)).toBe(resting);
+});
+
+test("the toolbar's tidy ask reaches the arrangement the same way the menu does", async () => {
+  const asked: string[] = [];
+
+  await renderCommandedFlow(() => {
+    asked.push('tidy');
+  });
+
+  askTheCanvas('tidy');
+
+  expect(asked).toEqual(['tidy']);
+});
+
+test('an unmounted canvas hears no ask, so a stale listener never arranges a gone stage', async () => {
+  const asked: string[] = [];
+
+  const screen = await renderCommandedFlow(() => {
+    asked.push('tidy');
+  });
+
+  await screen.unmount();
+  askTheCanvas('tidy');
+
+  expect(asked).toEqual([]);
 });
 
 test('an unmounted canvas stops listening', async () => {

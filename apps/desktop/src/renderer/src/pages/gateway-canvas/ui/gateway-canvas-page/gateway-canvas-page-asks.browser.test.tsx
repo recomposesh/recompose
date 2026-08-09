@@ -8,10 +8,11 @@ vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
 
-test('the gateway plus births a draft wired to the gateway, with the name field focused', async () => {
+test('the gateway ask births a draft wired to the gateway, with the name field focused', async () => {
   const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByLabelText('Add a virtual model'));
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
 
   await expect
     .poll(() => draftCardOn(screen.container)?.textContent)
@@ -20,10 +21,11 @@ test('the gateway plus births a draft wired to the gateway, with the name field 
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
 });
 
-test("a virtual model's plus opens the picker of stored accounts without a drag", async () => {
+test("a virtual model's ask opens the picker of stored accounts without a drag", async () => {
   const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByLabelText('Choose a target').first());
+  screen.getByLabelText('Choose a target').first().element().focus();
+  await userEvent.keyboard('{Enter}');
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
   await expect
@@ -31,12 +33,11 @@ test("a virtual model's plus opens the picker of stored accounts without a drag"
     .toBeVisible();
 });
 
-test('the plus and the picker bind with no pointer at all', async () => {
+test('the ask and the picker bind with no pointer at all', async () => {
   const screen = await canvasPageOn();
-  const plus = screen.getByLabelText('Choose a target').first();
+  const ask = screen.getByLabelText('Choose a target').first();
 
-  await expect.element(plus).toBeVisible();
-  plus.element().focus();
+  ask.element().focus();
   await userEvent.keyboard('{Enter}');
 
   const work = screen.getByRole('dialog').getByRole('button', { name: 'work' });
@@ -59,10 +60,12 @@ test('the plus and the picker bind with no pointer at all', async () => {
 test('a named draft completed through the picker graduates into the composition', async () => {
   const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByLabelText('Add a virtual model'));
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
 
-  await userEvent.click(screen.getByLabelText('Choose a target').last());
+  screen.getByLabelText('Choose a target').last().element().focus();
+  await userEvent.keyboard('{Enter}');
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
@@ -75,7 +78,8 @@ test('a named draft completed through the picker graduates into the composition'
 test('a completed binding says so in the live region, politely', async () => {
   const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByLabelText('Choose a target').first());
+  screen.getByLabelText('Choose a target').first().element().focus();
+  await userEvent.keyboard('{Enter}');
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
@@ -89,8 +93,10 @@ test('a completed binding says so in the live region, politely', async () => {
 test('a refused write interrupts with the refusal, and the draft holds', async () => {
   const screen = await canvasPageOn();
 
-  await userEvent.click(screen.getByLabelText('Add a virtual model'));
-  await userEvent.click(screen.getByLabelText('Choose a target').last());
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  screen.getByLabelText('Choose a target').last().element().focus();
+  await userEvent.keyboard('{Enter}');
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 

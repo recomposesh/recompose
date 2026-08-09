@@ -38,19 +38,19 @@ A person MUST be able to drag a cable out of a node's port and drop it on a comp
 - Then the drag cancels
 - And the composition stands unchanged
 
-### Requirement: The plus affordance persists on every source port
+### Requirement: Every source port answers a keyboard without a drag
 
-Every source port MUST carry a persistent plus affordance, whether the node stands wired or bare. The gateway node's plus MUST drop a connected draft virtual model and open the inspector. A virtual model's plus MUST open the picker of stored accounts. A gateway with nothing wired MUST still draw its automatic wire ending in a plus, instead of presenting a bare canvas.
+Every source port MUST carry a keyboard-reachable ask that paints only under keyboard focus. The canvas shows no standing icon beside a node, and a pointer meets only the cable. The gateway port's ask MUST drop a connected draft virtual model and open the inspector. A virtual model port's ask MUST open the picker of stored accounts. A gateway with nothing wired stands as a plain node, because pulling a cable out of its port is the one composing gesture.
 
-#### Scenario: an empty gateway offers the plus affordance
+#### Scenario: an empty gateway stands plain
 
 - Given a gateway with no virtual models defined
 - When a person opens the gateway detail
-- Then the gateway node shows a wire ending in a plus affordance
+- Then the canvas shows the gateway as a plain node with no standing affordance beside its port
 
-#### Scenario: a wired gateway keeps its plus
+#### Scenario: a keyboard reaches the ask a pointer never sees
 
 - Given a gateway holding a virtual model bound to a stored target
-- When a person opens the gateway detail
-- Then the gateway node's port offers a plus affordance
-- And the virtual model's port offers a plus affordance
+- When a person moves keyboard focus onto the gateway port's ask
+- Then the ask paints and names what it offers
+- And pressing Enter takes it up

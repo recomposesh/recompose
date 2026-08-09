@@ -1,19 +1,14 @@
 Feature: Binding without a drag
 
-  Every binding a cable drag can create also arrives through single presses
-  or the keyboard alone, every binding outcome announces through the live
-  region, and every pointer target is big enough to hit.
-
-  Scenario: Single presses create a binding with no drag
-    Given a virtual model "fast" holding no target
-    When the person presses the plus on the port of "fast", picking the stored Anthropic key account and the provider model "claude-sonnet-5"
-    Then "fast" stands bound to that account
-    And the account stands wired as a target node
+  Every binding a cable drag can create also arrives through the keyboard
+  alone, every binding outcome announces through the live region, and every
+  pointer target is big enough to hit.
 
   Scenario: The keyboard alone creates a binding
     Given a virtual model "fast" holding no target
-    When the person, with the keyboard alone, activates the plus of "fast", picking the stored Anthropic key account and the provider model "claude-sonnet-5"
+    When the person, with the keyboard alone, takes up the ask of "fast", picking the stored Anthropic key account and the provider model "claude-sonnet-5"
     Then "fast" stands bound to that account
+    And the account stands wired as a target node
 
   Scenario: The live region announces a new binding
     Given a virtual model "fast" holding no target
@@ -34,4 +29,4 @@ Feature: Binding without a drag
   Scenario: Every pointer target meets the minimum size
     Given a gateway holding a virtual model bound to a target
     When the person opens the gateway detail
-    Then every port, plus, and cable endpoint offers a hit target of at least 24 by 24 pixels
+    Then every port and cable endpoint offers a hit target of at least 24 by 24 pixels

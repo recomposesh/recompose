@@ -6,11 +6,11 @@ import type { IconName } from '../../../../shared/ui';
 
 import { Icon } from '../../../../shared/ui';
 
-/** The port a cable leaves a card by, and the ask that hangs off it on its own short wire. */
+/** The port a cable leaves a card by, and the ask a keyboard reaches it with. */
 export type OutgoingPort = {
-  /** Whether a cable already meets the port, which fills its dot and quiets the wire beside it. */
+  /** Whether a cable already meets the port, which fills its dot. */
   bound: boolean;
-  /** What the plus asks for, which is also the name a keyboard reads off it. */
+  /** What the port offers without a drag, which is the name a keyboard reads off it. */
   ask: string;
   /** Receives that ask, which each kind of card answers in its own way. */
   onAsk: () => void;
@@ -48,15 +48,13 @@ export type NodeCardProps = {
 
 const portBox = 'top-port-offset flex size-hit-target items-center justify-center bg-transparent';
 
-const plusButton =
-  'nodrag absolute top-port-offset -inset-e-9 flex size-hit-target -translate-y-1/2 items-center justify-center rounded-pill border border-line-strong bg-surface-card text-ink focus-ring';
+const keyboardAsk =
+  'nodrag pointer-events-none absolute top-port-offset -inset-e-9 flex size-hit-target -translate-y-1/2 items-center justify-center rounded-pill border border-line-strong bg-surface-card text-ink opacity-0 focus-ring focus-visible:opacity-100';
 
 const cardFrame =
   'flex size-full flex-col justify-center gap-0.5 node-card px-2.75 text-start focus-ring';
 
 const kickerLine = 'truncate text-footnote font-bold tracking-wider text-ink-secondary uppercase';
-
-const stub = 'absolute -inset-e-3 top-port-offset h-px w-3 -translate-y-1/2';
 
 function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
   const { bound, ask, onAsk } = port;
@@ -67,27 +65,23 @@ function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
         <span aria-hidden className="port-dot" data-bound={bound || undefined} />
       </Handle>
       {dragging ? null : (
-        <>
-          <span
-            aria-hidden
-            className={`${stub} ${bound ? 'bg-cable-resting' : 'bg-cable-draft'}`}
-          />
-          <button aria-label={ask} className={plusButton} onClick={onAsk} type="button">
-            <Icon className="size-3" name="plus" />
-          </button>
-        </>
+        <button aria-label={ask} className={keyboardAsk} onClick={onAsk} type="button">
+          <Icon className="size-3" name="plus" />
+        </button>
       )}
     </>
   );
 }
 
 /**
- * The card every node on the canvas wears, from its frame down to the plus on its outgoing port.
+ * The card every node on the canvas wears, from its frame down to its ports.
  *
  * @summary Reach for it from a node type rather than laying the template out again, because the
  * measure, the kicker row, the truncation, the port offsets, and the twenty-four pixel pointer
- * targets are one design and drift the moment they are written twice. The plus steps aside while a
- * cable is in flight, since the drag already asks for the very thing the plus would.
+ * targets are one design and drift the moment they are written twice. The outgoing port carries a
+ * keyboard ask that paints only under keyboard focus, so a pointer only ever meets the cable and
+ * the canvas stays clear of icons the drag already covers. The ask steps aside while a cable is in
+ * flight, since the drag already asks for the very thing it would.
  */
 export function NodeCard(props: NodeCardProps) {
   const dragging = useConnection((connection) => connection.inProgress);

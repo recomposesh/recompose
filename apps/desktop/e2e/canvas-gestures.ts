@@ -2,7 +2,18 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-import { canvasTool } from './canvas-screen';
+import { canvasTool, portAskOn } from './canvas-screen';
+
+/**
+ * Takes up a port's ask the way a keyboard does.
+ *
+ * @summary The ask paints only under keyboard focus and lets every pointer event pass through,
+ * so a click can never reach it: focus and Enter are the one way in, which is the point.
+ */
+export async function takeUpThePortAsk(page: Page, nodeId: string): Promise<void> {
+  await portAskOn(page, nodeId).focus();
+  await page.keyboard.press('Enter');
+}
 
 /** A spot in the window a pointer can be put at, which is not where the canvas seats its cards. */
 export type Point = { x: number; y: number };

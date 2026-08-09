@@ -4,7 +4,7 @@ import preview from '#.storybook/preview';
 
 import type { VirtualModelNodeData } from './virtual-model-node';
 
-import { paintedStyle } from '../../../../shared/testing';
+import { paintedStyle, pressedByKeyboard } from '../../../../shared/testing';
 import { cardOnCanvas, inScheme } from '../../testing/canvas-flow.testkit';
 import { VirtualModelNode } from './virtual-model-node';
 
@@ -37,10 +37,15 @@ export const TheFrameCarriesTheVirtualModelTint = meta.story({
   },
 });
 
-/** The plus asks for the target this definition answers with, which is the pointer-free path. */
-export const ThePlusAsksForATarget = meta.story({
+/** The port ask names the target this definition answers with, which is the keyboard path. */
+export const TheAskNamesATarget = meta.story({
   play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'Choose a target' }));
+    await pressedByKeyboard(
+      canvas,
+      { role: 'button', name: 'Choose a target' },
+      userEvent.keyboard,
+      '{Enter}',
+    );
 
     await expect(args.data.onPickTarget).toHaveBeenCalledTimes(1);
   },

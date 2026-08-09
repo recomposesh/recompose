@@ -71,11 +71,11 @@ test('the gateway subject reads the endpoint and what serves, with no add button
     .not.toBeInTheDocument();
 });
 
-test('a gateway serving nothing points at the plus rather than at a button', async () => {
+test('a gateway serving nothing points at the cable rather than at a button', async () => {
   const screen = await renderDrawer({ kind: 'gateway' }, { gateway: freshGateway });
 
   await expect.element(screen.getByText('Nothing serves yet')).toBeVisible();
-  await expect.element(screen.getByText(/plus on the gateway/)).toBeVisible();
+  await expect.element(screen.getByText(/cable from the gateway/)).toBeVisible();
   await expect
     .element(screen.getByRole('button', { name: 'Add virtual model' }))
     .not.toBeInTheDocument();

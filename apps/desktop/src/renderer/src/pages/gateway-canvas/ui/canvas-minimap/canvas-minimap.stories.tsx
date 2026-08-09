@@ -1,4 +1,4 @@
-import { expect } from 'storybook/test';
+import { expect, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -93,5 +93,26 @@ export const TheMapClearsTheSeparatorsReach = meta.story({
 
     await expect(inset).toBeGreaterThan(separatorReach);
     await expect(inset).toBe(16);
+  },
+});
+
+/** Dragging the map moves the viewport it pictures, so the corner steers the composition. */
+export const DraggingTheMapMovesTheViewport = meta.story({
+  play: async ({ canvas, canvasElement }) => {
+    const map = await canvas.findByRole('img', mapLabel);
+    const viewport = canvasElement.querySelector<HTMLElement>('.react-flow__viewport');
+    const resting = viewport?.style.transform ?? '';
+    const box = paintedBox(map);
+    const middle = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    const held = { bubbles: true, button: 0, clientX: middle.x, clientY: middle.y, view: window };
+    const moved = { ...held, clientX: middle.x + 18, clientY: middle.y + 12 };
+
+    map.dispatchEvent(new MouseEvent('mousedown', held));
+    window.dispatchEvent(new MouseEvent('mousemove', moved));
+    window.dispatchEvent(new MouseEvent('mouseup', moved));
+
+    await waitFor(async () => {
+      await expect(viewport?.style.transform ?? '').not.toBe(resting);
+    });
   },
 });

@@ -36,10 +36,11 @@ export const TheFrameCarriesTheGatewayTint = meta.story({
   },
 });
 
-/** The plus asks for a virtual model, which is the one thing a gateway is missing until it has one. */
+/** The port ask names a virtual model, the one thing a gateway is missing until it has one. */
 export const ThePlusAsksForAVirtualModel = meta.story({
   play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'Add a virtual model' }));
+    (await canvas.findByRole('button', { name: 'Add a virtual model' })).focus();
+    await userEvent.keyboard('{Enter}');
 
     await expect(args.data.onAddVirtualModel).toHaveBeenCalledTimes(1);
   },

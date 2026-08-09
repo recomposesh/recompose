@@ -96,21 +96,18 @@ export const APortFillsOnlyOnceACableMeetsIt = meta.story({
   },
 });
 
-/** The plus stands past the card's own port on a target wide enough for a pointer to hit. */
-export const ThePlusHangsOffThePortOnAPointerTarget = meta.story({
+/** The ask paints nothing for a pointer: no icon stands beside the card and no click reaches it. */
+export const TheAskStaysUnpaintedForAPointer = meta.story({
   play: async ({ canvas }) => {
-    const card = await canvas.findByRole('button', { name: /Everyday Sonnet/ });
-    const affordance = await canvas.findByRole('button', plus);
+    const ask = await canvas.findByRole('button', plus);
 
-    await expect(paintedBox(affordance).width).toBe(24);
-    await expect(paintedBox(affordance).height).toBe(24);
-    await expect(paintedBox(affordance).left).toBeGreaterThan(paintedBox(card).right);
-    await expect(paintedBox(affordance).top + 12).toBeCloseTo(paintedBox(card).top + 34, 0);
+    await expect(paintedStyle(ask).opacity).toBe('0');
+    await expect(paintedStyle(ask).pointerEvents).toBe('none');
   },
 });
 
-/** The plus steps aside while a cable is in flight, since the drag already asks the same thing. */
-export const ThePlusStepsAsideForACableInFlight = meta.story({
+/** The ask steps aside while a cable is in flight, since the drag already asks the same thing. */
+export const TheAskStepsAsideForACableInFlight = meta.story({
   play: async ({ canvas, canvasElement }) => {
     await canvas.findByRole('button', plus);
 
@@ -125,8 +122,8 @@ export const ThePlusStepsAsideForACableInFlight = meta.story({
   },
 });
 
-/** A keyboard reaches the card and its plus, and each shows a ring where it has landed. */
-export const TheKeyboardReachesTheCardAndItsPlus = meta.story({
+/** A keyboard reaches the card and then its ask, which paints only once focus lands on it. */
+export const TheKeyboardReachesTheCardAndItsAsk = meta.story({
   play: async ({ canvas, userEvent }) => {
     const card = await canvas.findByRole('button', { name: /Everyday Sonnet/ });
 
@@ -135,7 +132,13 @@ export const TheKeyboardReachesTheCardAndItsPlus = meta.story({
     await expect(paintedStyle(card).outlineWidth).toBe('2px');
 
     await userEvent.tab();
-    await expect(await canvas.findByRole('button', plus)).toHaveFocus();
+
+    const ask = await canvas.findByRole('button', plus);
+
+    await expect(ask).toHaveFocus();
+    await expect(paintedBox(ask).width).toBe(24);
+    await expect(paintedBox(ask).height).toBe(24);
+    await expect(paintedStyle(ask).opacity).toBe('1');
   },
 });
 

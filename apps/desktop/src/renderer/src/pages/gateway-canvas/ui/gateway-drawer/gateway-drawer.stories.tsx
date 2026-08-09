@@ -36,7 +36,7 @@ const meta = preview.meta({
 /**
  * The gateway subject: the endpoint and what serves, with no add button anywhere.
  *
- * @summary The plus on the canvas is the one add path, so the drawer reads the gateway rather
+ * @summary The cable on the canvas is the one add path, so the drawer reads the gateway rather
  * than offering a second way to change it.
  */
 export const GatewaySubject = meta.story({

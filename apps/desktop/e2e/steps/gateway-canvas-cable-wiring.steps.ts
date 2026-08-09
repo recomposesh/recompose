@@ -10,6 +10,7 @@ import {
   fitCanvasToView,
   pullCableTo,
   releaseCable,
+  takeUpThePortAsk,
 } from '../canvas-gestures';
 import {
   anchoredUnder,
@@ -42,7 +43,6 @@ import {
   openGatewayCanvas,
   PENDING_NODE,
   pickProviderModel,
-  plusOn,
   sourcePort,
   standingCables,
   standingNodes,
@@ -89,7 +89,7 @@ async function cardNamed(page: Page, name: string): Promise<string> {
 /** Stands a definition a person began and left unbound, the one shape holding no target at all. */
 async function draftNamed(page: Page, name: string): Promise<void> {
   await openGatewayCanvas(page, focusedGateway(page));
-  await plusOn(page, GATEWAY_NODE).click();
+  await takeUpThePortAsk(page, GATEWAY_NODE);
   await expect(draftNameField(page)).toBeVisible();
   await draftNameField(page).fill(name);
   rememberVirtualModel(page, name);

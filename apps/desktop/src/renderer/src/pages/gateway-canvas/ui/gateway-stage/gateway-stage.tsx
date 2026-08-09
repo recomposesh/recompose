@@ -16,7 +16,7 @@ import type {
 import type { Edge, Node } from '@xyflow/react';
 import type { ReactNode } from 'react';
 
-import { Panel, ReactFlow, ReactFlowProvider } from '@xyflow/react';
+import { ReactFlow, ReactFlowProvider } from '@xyflow/react';
 
 import type { BindingOutcome } from '../../lib/cable-announcements';
 
@@ -79,26 +79,16 @@ const deleteKeys = ['Backspace', 'Delete'];
 const withoutTheCornerBadge = { hideAttribution: true };
 
 /**
- * What stands in the canvas corners beside the composition: the tools, the map, and the credit.
+ * What stands in the canvas corners beside the composition: the tools and the map.
  *
- * @summary The attribution stands restyled at the bottom center, one furniture band above the
- * corners, because at the narrowest pane the bottom row leaves no seat between the tools cluster
- * and the map. The menu's ear stands here too, since the commands it answers drive this viewport.
+ * @summary The menu's ear stands here too, since the commands it answers drive this viewport.
  */
 function canvasFurniture(onTidy: () => void): ReactNode {
   return (
     <>
-      <CanvasZoomControls onTidy={onTidy} />
+      <CanvasZoomControls />
       <CanvasMinimap />
       <CanvasCommands onTidy={onTidy} />
-      <Panel className="m-4 mb-17" position="bottom-center">
-        <a
-          className="rounded-pill border border-line-subtle bg-canvas-card px-2.5 py-1 text-footnote font-medium text-ink-secondary shadow-canvas-card focus-ring"
-          href="https://reactflow.dev"
-        >
-          Built with React Flow
-        </a>
-      </Panel>
     </>
   );
 }

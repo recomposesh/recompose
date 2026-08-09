@@ -104,7 +104,7 @@ function servesBox(served: readonly ServedModel[]): ReactNode {
       <div className="flex flex-col items-center gap-2 field-box px-4 py-5 text-center">
         <p className="text-control font-semibold text-ink-secondary">Nothing serves yet</p>
         <p className="text-detail text-ink-secondary">
-          Press the plus on the gateway&apos;s port to add a virtual model.
+          Pull a cable from the gateway&apos;s port to add a virtual model.
         </p>
       </div>
     );

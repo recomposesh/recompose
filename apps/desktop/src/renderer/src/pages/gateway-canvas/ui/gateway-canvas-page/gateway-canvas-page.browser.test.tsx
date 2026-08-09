@@ -88,7 +88,8 @@ test('selecting a node opens a closed inspector back up on that subject', async 
 test('a draft in flight survives leaving the screen and coming back', async () => {
   const first = await canvasPageOn();
 
-  await userEvent.click(first.getByLabelText('Add a virtual model'));
+  first.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
   await first.getByRole('textbox', { name: 'Name' }).fill('Fa');
   await first.unmount();
 

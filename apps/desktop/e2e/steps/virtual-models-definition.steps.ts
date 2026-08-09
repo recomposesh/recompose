@@ -2,13 +2,13 @@ import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
+import { takeUpThePortAsk } from '../canvas-gestures';
 import {
   canvasNode,
   completeThePick,
   DRAFT_NODE,
   GATEWAY_NODE,
   openGatewayCanvas,
-  plusOn,
 } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
 import {
@@ -31,7 +31,7 @@ const NAME_THEN_BINDING = 2;
 
 async function draftBornFromTheGatewayPlus(page: Page): Promise<void> {
   await openGatewayCanvas(page, focusedGateway(page));
-  await plusOn(page, GATEWAY_NODE).click();
+  await takeUpThePortAsk(page, GATEWAY_NODE);
   await expect(draftNameField(page)).toBeVisible();
 }
 
@@ -60,7 +60,7 @@ When(
   async ({ page }, name: string, providerModel: string) => {
     await draftBornFromTheGatewayPlus(page);
     await draftNameField(page).fill(name);
-    await plusOn(page, DRAFT_NODE).click();
+    await takeUpThePortAsk(page, DRAFT_NODE);
     await completeThePick(page, KEY_ACCOUNT, providerModel);
     await canvasNode(page, GATEWAY_NODE).click();
   },

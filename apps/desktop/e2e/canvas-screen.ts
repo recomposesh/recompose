@@ -162,8 +162,8 @@ export function targetPort(page: Page, nodeId: string): Locator {
   return canvasNode(page, nodeId).locator('.react-flow__handle.target');
 }
 
-/** The plus hanging off a card's outgoing port, whichever of the two asks it carries. */
-export function plusOn(page: Page, nodeId: string): Locator {
+/** The keyboard ask on a card's outgoing port, whichever of the two asks it carries. */
+export function portAskOn(page: Page, nodeId: string): Locator {
   return canvasNode(page, nodeId).getByRole('button', { name: PLUS_ASKS });
 }
 

@@ -10,6 +10,7 @@ import {
   fitCanvasToView,
   pullCableTo,
   releaseCable,
+  takeUpThePortAsk,
 } from './canvas-gestures';
 import {
   accountPicker,
@@ -34,7 +35,6 @@ import {
   PENDING_CABLE,
   PENDING_NODE,
   pickProviderModel,
-  plusOn,
   politelySaid,
   providerModelPicker,
   removalConfirmation,
@@ -87,7 +87,7 @@ async function gatewayHoldingABrokenBinding(page: Page): Promise<string> {
 test('the gateway plus births a draft card wired to the gateway', async ({ page }) => {
   await gatewayTargetingAKey(page);
   await openGatewayCanvas(page, GATEWAY);
-  await plusOn(page, GATEWAY_NODE).click();
+  await takeUpThePortAsk(page, GATEWAY_NODE);
 
   await expect.poll(async () => standingNodes(page)).toContain(DRAFT_NODE);
   expect(await nodeTreatment(page, DRAFT_NODE)).toBe('draft-model');
@@ -102,7 +102,7 @@ test('the plus on a virtual model opens the picker and a completed pick binds it
   await gatewayTargetingAKey(page);
   await seedVirtualModels(page, GATEWAY, [bindingOf(MODEL, GONE, SERVED)]);
   await openGatewayCanvas(page, GATEWAY);
-  await plusOn(page, modelNodeId(MODEL)).click();
+  await takeUpThePortAsk(page, modelNodeId(MODEL));
 
   await expect(accountPicker(page)).toBeVisible();
 

@@ -1,3 +1,4 @@
+export { askTheCanvas, subscribeToCanvasAsks } from './canvas-asks';
 export {
   inspectorOpen,
   subscribeToInspectorVisibility,
