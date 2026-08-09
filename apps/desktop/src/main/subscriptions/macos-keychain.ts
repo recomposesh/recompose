@@ -1,7 +1,6 @@
 import { KeychainDenied, type KeychainItem, type KeychainSeam } from './credential-custody';
 import { runCommand, WAITS_FOR_THE_PERSON } from './run-command';
 
-const PRESENCE_BOUND_MS = 3_000;
 const NOT_FOUND = 44;
 const USER_CANCELED = 128;
 const AUTHORIZATION_DENIED = 51;
@@ -31,28 +30,8 @@ function refuse(cause: unknown, operation: string): never {
   throw new Error(`the keychain refused ${operation}, exit ${status ?? 'unknown'}`);
 }
 
-async function itemStands(command: string, item: KeychainItem): Promise<boolean> {
-  try {
-    await runCommand(
-      command,
-      ['find-generic-password', '-s', item.service, '-a', item.account],
-      PRESENCE_BOUND_MS,
-    );
-
-    return true;
-  } catch (cause) {
-    if (exitStatus(cause) === NOT_FOUND) {
-      return false;
-    }
-
-    return refuse(cause, 'find-generic-password');
-  }
-}
-
 export function securityKeychain(command: string): KeychainSeam {
   return {
-    stands: async (item: KeychainItem) => itemStands(command, item),
-
     read: async (item: KeychainItem) => {
       try {
         const found = await runCommand(

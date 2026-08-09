@@ -9,7 +9,6 @@ export const RESERVED_SLOT = 'login-before-recompose';
 export type KeychainItem = { service: string; account: string };
 
 export type KeychainSeam = {
-  stands: (item: KeychainItem) => Promise<boolean>;
   read: (item: KeychainItem) => Promise<string | null>;
   write: (item: KeychainItem, blob: string) => Promise<void>;
   remove: (item: KeychainItem) => Promise<void>;
@@ -27,8 +26,7 @@ export type CredentialCustody = {
   handOver: (outgoing: string | null, incoming: string) => Promise<CustodyOutcome>;
   forget: (slot: string) => Promise<CustodyOutcome>;
   clear: () => Promise<CustodyOutcome>;
-  parkedStands: (slot: string) => Promise<boolean>;
-  vendorStands: () => Promise<boolean>;
+  vendorHolds: () => Promise<string | null>;
   readFor: (slot: string, active: boolean) => Promise<string | null>;
   writeFor: (slot: string, active: boolean, blob: string) => Promise<void>;
 };
@@ -68,12 +66,6 @@ export function credentialCustody(keychain: KeychainSeam, osUser: string): Crede
   const lane = oneAtATime();
   const vendorItem: KeychainItem = { service: VENDOR_SERVICE, account: osUser };
   const parkedItem = (slot: string): KeychainItem => ({ service: PARKED_SERVICE, account: slot });
-
-  const stands = async (item: KeychainItem): Promise<boolean> =>
-    keychain.stands(item).then(
-      (held) => held,
-      () => false,
-    );
 
   const parkInto = async (slot: string): Promise<void> => {
     const held = await keychain.read(vendorItem);
@@ -116,9 +108,7 @@ export function credentialCustody(keychain: KeychainSeam, osUser: string): Crede
         attempt('clear', 'the active account', async () => keychain.remove(vendorItem)),
       ),
 
-    parkedStands: async (slot) => lane(async () => stands(parkedItem(slot))),
-
-    vendorStands: async () => lane(async () => stands(vendorItem)),
+    vendorHolds: async () => lane(async () => keychain.read(vendorItem)),
 
     readFor: async (slot, active) =>
       lane(async () => keychain.read(active ? vendorItem : parkedItem(slot))),

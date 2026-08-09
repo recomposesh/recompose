@@ -94,7 +94,7 @@ async function runTheTool(
         observeSubscription({
           provider,
           home,
-          outsideCredential: custody === null ? null : async () => custody.vendorStands(),
+          outsideCredential: custody === null ? null : async () => custody.vendorHolds(),
         }),
       clock: shop.ctx.clock(),
       boundMs: shop.ctx.signInBoundMs,

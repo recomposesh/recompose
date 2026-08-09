@@ -48,7 +48,7 @@ describe('parking the credential the provider tool keeps in the keychain', () =>
     expect(outcome).toEqual({ ok: true });
     expect(keychain.holds(PARKED_SERVICE, 'acc-one')).toBe(false);
     expect(keychain.writes()).toBe(0);
-    await expect(custody.parkedStands('acc-one')).resolves.toBe(false);
+    await expect(custody.readFor('acc-one', false)).resolves.toBeNull();
   });
 
   test('given the person denies the keychain prompt, parking stops before any write', async () => {

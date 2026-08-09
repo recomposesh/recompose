@@ -9,6 +9,7 @@ import { beforeEach, describe, expect } from 'vitest';
 import type { OutsideCredential, SubscriptionObservation } from './subscription-standing';
 
 import { observeSubscription } from './subscription-standing';
+import { aClaudeLogin, anMcpRecordAlone } from './subscriptions.testkit';
 
 let home: string;
 
@@ -16,8 +17,9 @@ async function recorded(file: string, contents: string | Uint8Array): Promise<vo
   await writeFile(join(home, file), contents);
 }
 
-const credentialInTheKeychain = async () => Promise.resolve(true);
-const nothingInTheKeychain = async () => Promise.resolve(false);
+const credentialInTheKeychain = async () => Promise.resolve(aClaudeLogin);
+const nothingInTheKeychain = async () => Promise.resolve(null);
+const onlyAnMcpRecordInTheKeychain = async () => Promise.resolve(anMcpRecordAlone);
 
 async function reading(
   provider: SubscriptionProviderId,
@@ -61,7 +63,21 @@ describe('reading how a Claude Code account stands', () => {
     expect(observed).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com', plan: 'max' });
   });
 
-  test('given a machine that keeps the credential outside the home, the keychain settles it', async () => {
+  test('given records that name blank fields, the reading stays silent rather than empty', async () => {
+    await recorded(
+      '.credentials.json',
+      JSON.stringify({ claudeAiOauth: { subscriptionType: '   ' } }),
+    );
+    await recorded('.claude.json', JSON.stringify({ oauthAccount: { emailAddress: '' } }));
+
+    const observed = await reading('anthropic');
+
+    expect(observed).toEqual({ standing: 'connected' });
+  });
+});
+
+describe('reading a Claude Code account whose credential lives outside the home', () => {
+  test('given the login kept outside the home, the account reads as connected', async () => {
     await recorded(
       '.claude.json',
       JSON.stringify({ oauthAccount: { emailAddress: 'ada@ex.com' } }),
@@ -70,6 +86,23 @@ describe('reading how a Claude Code account stands', () => {
     const observed = await reading('anthropic', credentialInTheKeychain);
 
     expect(observed).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com' });
+  });
+
+  test('given the keychain holds an MCP record where the login goes, the account reads as lapsed', async () => {
+    await recorded(
+      '.claude.json',
+      JSON.stringify({ oauthAccount: { emailAddress: 'ada@ex.com' } }),
+    );
+
+    const observed = await reading('anthropic', onlyAnMcpRecordInTheKeychain);
+
+    expect(observed).toEqual({ standing: 'lapsed', signedInAs: 'ada@ex.com' });
+  });
+
+  test('given the keychain holds something that is no credential document at all, the account reads as lapsed', async () => {
+    const observed = await reading('anthropic', async () => Promise.resolve('fresh-blob'));
+
+    expect(observed).toEqual({ standing: 'lapsed' });
   });
 
   test('given an identity record but no credential anywhere, the account reads as lapsed', async () => {
@@ -81,18 +114,6 @@ describe('reading how a Claude Code account stands', () => {
     const observed = await reading('anthropic', nothingInTheKeychain);
 
     expect(observed).toEqual({ standing: 'lapsed', signedInAs: 'ada@ex.com' });
-  });
-
-  test('given records that name blank fields, the reading stays silent rather than empty', async () => {
-    await recorded(
-      '.credentials.json',
-      JSON.stringify({ claudeAiOauth: { subscriptionType: '   ' } }),
-    );
-    await recorded('.claude.json', JSON.stringify({ oauthAccount: { emailAddress: '' } }));
-
-    const observed = await reading('anthropic');
-
-    expect(observed).toEqual({ standing: 'connected' });
   });
 });
 

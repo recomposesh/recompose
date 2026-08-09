@@ -9,6 +9,7 @@ import { subscriptionProviderIdSchema } from '@recompose/contracts';
 
 import type { CredentialCustody } from './credential-custody';
 import type { SubscriptionHomes } from './subscription-homes';
+import type { OutsideCredential } from './subscription-standing';
 
 import { custodyOver } from './credential-custody';
 import { observeSubscription } from './subscription-standing';
@@ -43,14 +44,8 @@ function credentialEvidenceFor(
   custody: ReturnType<typeof custodyOver>,
   row: SubscriptionAccount,
   standsActive: boolean,
-): (() => Promise<boolean>) | null {
-  if (custody === null) {
-    return null;
-  }
-
-  return standsActive
-    ? async () => custody.vendorStands()
-    : async () => custody.parkedStands(row.id);
+): OutsideCredential {
+  return custody === null ? null : async () => custody.readFor(row.id, standsActive);
 }
 
 async function viewOf(
