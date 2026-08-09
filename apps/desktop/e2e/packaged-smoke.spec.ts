@@ -1,134 +1,92 @@
-import type { Browser, Page } from '@playwright/test';
-import type { RecomposeIpc } from '@recompose/contracts';
-import type { ChildProcessWithoutNullStreams } from 'node:child_process';
+import type { Page } from '@playwright/test';
+import type { AccountsDocument, RecomposeIpc } from '@recompose/contracts';
 
 import { chromium, expect, test } from '@playwright/test';
 import { findLatestBuild, parseElectronApp } from 'electron-playwright-helpers';
 import { spawn } from 'node:child_process';
-import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { inheritedEnv } from './fixtures';
+import {
+  cableBetween,
+  cableId,
+  cablePath,
+  GATEWAY_NODE,
+  hitTarget,
+  modelNodeId,
+  nodeSeat,
+  openGatewayCanvas,
+  sourcePort,
+  standingCables,
+  standingNodes,
+  targetNodeId,
+  viewportZoom,
+} from './canvas-screen';
+import { seedGateway } from './gateway-screen';
+import {
+  assertNoEarlyFailure,
+  createPackagedLaunchEnv,
+  findRendererPage,
+  noiseFrom,
+  noSandboxArgs,
+  trackChildFailure,
+  waitForDevtoolsPort,
+} from './packaged-launch';
+import { bindingOf, offerVirtualModels } from './stored-virtual-models';
 
 declare global {
   var recompose: RecomposeIpc;
 }
 
 const distDir = join(__dirname, '..', 'dist');
-const noSandboxArgs = process.platform === 'linux' ? ['--no-sandbox'] : [];
+
 const FUSE_PROBE_WINDOW_MS = 2000;
-const DEVTOOLS_PORT_TIMEOUT_MS = 30_000;
-const RENDERER_PAGE_TIMEOUT_MS = 30_000;
-const DEVTOOLS_LISTENING_PATTERN = /DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//;
 
-async function createPackagedLaunchEnv(
-  overrides: Record<string, string>,
-): Promise<Record<string, string>> {
-  const userDataDir = await mkdtemp(join(tmpdir(), 'recompose-packaged-'));
+const PACKAGED_GATEWAY = 'Codex';
 
-  return {
-    ...inheritedEnv(),
-    NODE_ENV: 'production',
-    ELECTRON_RENDERER_URL: '',
-    RECOMPOSE_USER_DATA_DIR: userDataDir,
-    ...overrides,
-  };
-}
+const PACKAGED_MODEL = 'fast';
 
-function trackChildFailure(
-  child: ChildProcessWithoutNullStreams,
-  operation: string,
-): () => string | null {
-  let failure: string | null = null;
+const PACKAGED_PROVIDER_MODEL = 'llama3.2';
 
-  child.on('error', (error) => {
-    failure = `${operation} failed: ${error.message}`;
-  });
+/** What a port measures once the packaged stylesheet stands, which no policy may collapse. */
+const PORT_MEASURE = { width: 24, height: 24 };
 
-  return () => failure;
-}
+/** The one account kind that stores without a vault, which keeps the paint proof to the canvas. */
+async function localAccountStands(page: Page): Promise<string> {
+  const answer = await page.evaluate(async () =>
+    window.recompose['accounts:connect-local']({ runtime: 'ollama' }),
+  );
 
-async function waitForDevtoolsPort(
-  child: ChildProcessWithoutNullStreams,
-  getSpawnFailure: () => string | null,
-): Promise<number> {
-  let buffer = '';
-
-  child.stdout.on('data', () => {
-    return undefined;
-  });
-  child.stderr.on('data', (chunk: Buffer) => {
-    buffer += chunk.toString();
-  });
-
-  await expect
-    .poll(
-      () => {
-        const spawnFailure = getSpawnFailure();
-
-        if (spawnFailure !== null) {
-          throw new Error(spawnFailure);
-        }
-
-        if (child.exitCode !== null) {
-          throw new Error(`devtools port wait exited early with code ${String(child.exitCode)}`);
-        }
-
-        return DEVTOOLS_LISTENING_PATTERN.test(buffer);
-      },
-      { timeout: DEVTOOLS_PORT_TIMEOUT_MS },
-    )
-    .toBe(true);
-
-  const match = DEVTOOLS_LISTENING_PATTERN.exec(buffer);
-
-  if (match?.[1] === undefined) {
-    throw new Error('devtools listening line did not carry a port number');
+  if (!answer.ok) {
+    throw new Error(`the packaged app connected no local runtime: ${answer.error.message}`);
   }
 
-  return Number(match[1]);
-}
+  const connected: AccountsDocument = answer.value;
+  const account = connected.accounts.at(-1);
 
-async function findRendererPage(browser: Browser): Promise<Page> {
-  const rendererPages = () =>
-    browser
-      .contexts()
-      .flatMap((context) => context.pages())
-      .filter((candidate) => candidate.url().startsWith('app://renderer'));
-
-  await expect
-    .poll(() => rendererPages().length, { timeout: RENDERER_PAGE_TIMEOUT_MS })
-    .toBeGreaterThan(0);
-
-  const renderer = rendererPages()[0];
-
-  expect(renderer).toBeDefined();
-
-  if (renderer === undefined) {
-    throw new Error("no app://renderer page found on the packaged binary's devtools endpoint");
+  if (account === undefined) {
+    throw new Error('the packaged app stored no account to bind a virtual model to');
   }
 
-  return renderer;
+  return account.id;
 }
 
-async function assertNoEarlyFailure(
-  detectFailure: () => string | null,
-  windowMs: number,
-): Promise<void> {
-  const start = Date.now();
+/** A gateway serving one virtual model over one stored account, which is a composition to draw. */
+async function wiredGateway(page: Page): Promise<string> {
+  const accountId = await localAccountStands(page);
 
-  await expect
-    .poll(() => {
-      const failure = detectFailure();
+  await seedGateway(page, PACKAGED_GATEWAY);
 
-      if (failure !== null) {
-        throw new Error(failure);
-      }
+  const stored = await offerVirtualModels(page, PACKAGED_GATEWAY, [
+    bindingOf(PACKAGED_MODEL, accountId, PACKAGED_PROVIDER_MODEL),
+  ]);
 
-      return Date.now() - start;
-    })
-    .toBeGreaterThan(windowMs);
+  if (!stored.ok) {
+    throw new Error(`the packaged app stored no binding: ${stored.message}`);
+  }
+
+  await page.reload();
+
+  return accountId;
 }
 
 test('the packaged artifact boots from the asar on the app scheme', async () => {
@@ -153,6 +111,53 @@ test('the packaged artifact boots from the asar on the app scheme', async () => 
       }));
 
       expect(bridge.isFrozen).toBe(true);
+    } finally {
+      await browser.close();
+    }
+  } finally {
+    child.kill();
+  }
+});
+
+/**
+ * The canvas paints a whole composition under the style policy only the packaged build carries.
+ *
+ * @summary Serve mode allows an inline source and would hide the break, so this is the one place
+ * the imperative viewport transform, the seats the cards stand at, and the line a cable draws are
+ * all read from a renderer running the policy a person actually gets.
+ */
+test('the packaged canvas paints a wired gateway under the strict style policy', async () => {
+  const appInfo = parseElectronApp(findLatestBuild(distDir));
+  const child = spawn(appInfo.executable, [...noSandboxArgs, '--remote-debugging-port=0'], {
+    env: await createPackagedLaunchEnv({}),
+  });
+  const getSpawnFailure = trackChildFailure(child, 'packaged canvas spawn');
+
+  try {
+    const port = await waitForDevtoolsPort(child, getSpawnFailure);
+    const browser = await chromium.connectOverCDP(`http://127.0.0.1:${String(port)}`);
+
+    try {
+      const renderer = await findRendererPage(browser);
+      const complaints = noiseFrom(renderer);
+      const accountId = await wiredGateway(renderer);
+
+      await openGatewayCanvas(renderer, PACKAGED_GATEWAY);
+
+      await expect
+        .poll(async () => standingNodes(renderer))
+        .toEqual([GATEWAY_NODE, modelNodeId(PACKAGED_MODEL), targetNodeId(accountId)]);
+      expect(await standingCables(renderer)).toEqual([cableId(PACKAGED_MODEL)]);
+      expect(await cablePath(renderer, cableId(PACKAGED_MODEL))).not.toBe('');
+      await expect(
+        cableBetween(renderer, modelNodeId(PACKAGED_MODEL), targetNodeId(accountId)),
+      ).toBeVisible();
+      expect((await nodeSeat(renderer, modelNodeId(PACKAGED_MODEL))).x).toBeGreaterThan(
+        (await nodeSeat(renderer, GATEWAY_NODE)).x,
+      );
+      expect(await hitTarget(sourcePort(renderer, GATEWAY_NODE))).toEqual(PORT_MEASURE);
+      expect(await viewportZoom(renderer)).toBeGreaterThan(0);
+      expect(complaints()).toEqual([]);
     } finally {
       await browser.close();
     }
