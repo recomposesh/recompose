@@ -98,6 +98,7 @@
   --spacing-port-offset: 34px;
   --spacing-hit-target: 24px;
   --spacing-cable-stroke: 1.8px;
+  --spacing-cable-stroke-selected: 3.6px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
   --spacing-zoom-tools: 3px;
@@ -127,6 +128,11 @@
   /* macOS Tahoe draws standard window corners at 26pt; the strip act matches them. */
   --radius-window: 26px;
   --radius-pill: 999px;
+
+  --glow-ring-spread: 3.5px;
+  --glow-ring-strength: 55%;
+  --glow-bloom-blur: 22px;
+  --glow-bloom-strength: 45%;
 
   --shadow-thumb: 0 1px 2px rgb(0 0 0 / 22%), 0 0 0 0.5px rgb(0 0 0 / 8%);
   --shadow-raised: 0 12px 32px rgb(0 0 0 / 18%), 0 2px 8px rgb(0 0 0 / 10%);
@@ -410,6 +416,24 @@
   stroke-width: var(--spacing-cable-stroke);
 }
 
+@utility binding-cable-selected {
+  fill: none;
+  stroke-width: var(--spacing-cable-stroke-selected);
+}
+
+@utility cable-halo-ring {
+  fill: none;
+  stroke-width: calc(var(--spacing-cable-stroke-selected) + var(--glow-ring-spread) * 2);
+  opacity: var(--glow-ring-strength);
+}
+
+@utility cable-halo-bloom {
+  fill: none;
+  stroke-width: var(--spacing-hit-target);
+  opacity: var(--glow-bloom-strength);
+  filter: blur(calc(var(--glow-bloom-blur) / 4));
+}
+
 @utility minimap-node {
   fill: color-mix(in srgb, var(--node-tint, var(--color-accent)) 85%, transparent);
 }
@@ -448,8 +472,10 @@
     border-color: var(--node-card-emphasis);
     background-color: color-mix(in srgb, var(--node-card-emphasis) 12%, var(--color-surface-card));
     box-shadow:
-      0 0 0 3.5px color-mix(in srgb, var(--node-card-emphasis) 55%, transparent),
-      0 0 22px color-mix(in srgb, var(--node-card-emphasis) 45%, transparent),
+      0 0 0 var(--glow-ring-spread)
+        color-mix(in srgb, var(--node-card-emphasis) var(--glow-ring-strength), transparent),
+      0 0 var(--glow-bloom-blur)
+        color-mix(in srgb, var(--node-card-emphasis) var(--glow-bloom-strength), transparent),
       var(--shadow-raised);
   }
 

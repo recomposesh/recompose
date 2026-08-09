@@ -144,6 +144,7 @@ jobs:
             -- ':(glob)apps/desktop/src/main/**/*.ts' ':(glob)apps/desktop/scripts/**/*.mts' \
             "$canvas_lib/node-graph.ts" "$canvas_lib/tidy-layout.ts" \
             "$canvas_lib/canvas-positions.ts" "$canvas_lib/model-draft.ts" \
+            "$canvas_lib/cable-announcements.ts" "$canvas_lib/cable-standing.ts" \
             | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
           if [ -z "$contracts" ] && [ -z "$engine" ] && [ -z "$desktop" ]; then
             echo "mutation scope untouched, skipping"
