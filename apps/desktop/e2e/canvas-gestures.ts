@@ -134,9 +134,35 @@ const LINE_WAIT_MS = 1200;
  * pointer is let go only after a whole wait answered no line, because a release any earlier could
  * land a started-but-unpainted drag as a real drop.
  */
+async function whatStandsAt(port: Locator, spot: Point): Promise<string> {
+  return port.evaluate((own, { x, y }) => {
+    const hit = document.elementFromPoint(x, y);
+
+    if (hit === null) {
+      return 'nothing';
+    }
+
+    if (own === hit || own.contains(hit)) {
+      return 'the port';
+    }
+
+    return `${hit.tagName.toLowerCase()}.${hit.getAttribute('class') ?? ''}`.slice(0, 90);
+  }, spot);
+}
+
 async function grippedCable(page: Page, port: Locator, toward: Point): Promise<Point> {
+  let stood = 'unread';
+
   for (let attempt = 0; attempt < GRIP_ATTEMPTS; attempt += 1) {
     const start = await portGrip(port);
+
+    stood = await whatStandsAt(port, start);
+
+    if (stood !== 'the port') {
+      await fitCanvasToView(page);
+      continue;
+    }
+
     const nudged = partWay(start, toward, 0.1);
 
     await page.mouse.move(start.x, start.y);
@@ -154,7 +180,7 @@ async function grippedCable(page: Page, port: Locator, toward: Point): Promise<P
     }
   }
 
-  throw new Error('no press took hold of the cable, so nothing was dragged');
+  throw new Error(`no press took hold of the cable; the grip point offered ${stood}`);
 }
 
 /** Pulls a cable out of a port and holds it over a spot, leaving the drag in flight. */
