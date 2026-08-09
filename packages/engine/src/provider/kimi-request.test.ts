@@ -18,6 +18,22 @@ describe('normalizeKimiUpstreamModel', () => {
   ])('normalizes %s to %s', (input, expected) => {
     expect(normalizeKimiUpstreamModel(input)).toBe(expected);
   });
+
+  test.each([
+    ['kimi-k2.7-code', 'kimi-for-coding'],
+    ['k2.7-code', 'kimi-for-coding'],
+    ['Kimi-K2.7-Code', 'kimi-for-coding'],
+    ['kimi-for-coding', 'kimi-for-coding'],
+    ['for-coding', 'kimi-for-coding'],
+    ['kimi-for-coding[1m]', 'kimi-for-coding'],
+    ['kimi-k2.7-code[1m](high)', 'kimi-for-coding(high)'],
+    ['kimi-k2.7-code-highspeed', 'kimi-for-coding-highspeed'],
+    ['k2.7-code-highspeed', 'kimi-for-coding-highspeed'],
+    ['for-coding-highspeed', 'kimi-for-coding-highspeed'],
+    ['kimi-for-coding-highspeed(high)', 'kimi-for-coding-highspeed(high)'],
+  ])('canonicalizes the Kimi Code alias %s to %s', (input, expected) => {
+    expect(normalizeKimiUpstreamModel(input)).toBe(expected);
+  });
 });
 
 describe('kimiProviderBody', () => {

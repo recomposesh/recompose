@@ -8,20 +8,36 @@ type ParsedKimiModel = { base: string; suffix?: string };
 const KIMI_SUFFIX = /\(([^()]*)\)\s*$/u;
 const KIMI_LEVELS = new Set(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
 const KIMI_CAPABILITIES = { levels: ['low', 'medium', 'high'] } as const;
+const KIMI_CODE_MODELS = new Map([
+  ['kimi-k2.7-code', 'kimi-for-coding'],
+  ['k2.7-code', 'kimi-for-coding'],
+  ['kimi-for-coding', 'kimi-for-coding'],
+  ['for-coding', 'kimi-for-coding'],
+  ['kimi-k2.7-code-highspeed', 'kimi-for-coding-highspeed'],
+  ['k2.7-code-highspeed', 'kimi-for-coding-highspeed'],
+  ['kimi-for-coding-highspeed', 'kimi-for-coding-highspeed'],
+  ['for-coding-highspeed', 'kimi-for-coding-highspeed'],
+]);
 
 function withoutSuffix(model: string, match: RegExpExecArray | null): string {
   return match === null ? model : model.slice(0, match.index).trim();
 }
 
+function canonicalKimiModel(base: string): string {
+  return KIMI_CODE_MODELS.get(base) ?? base.replace(/^kimi-/u, '');
+}
+
 function parsedKimiModel(model: string): ParsedKimiModel {
   const trimmed = model.trim();
   const suffixMatch = KIMI_SUFFIX.exec(trimmed);
-  const withoutContext = withoutSuffix(trimmed, suffixMatch).replace(/\[1m\]$/iu, '');
-  const withoutPrefix = withoutContext.replace(/^kimi-/iu, '');
+  const withoutContext = withoutSuffix(trimmed, suffixMatch)
+    .replace(/\[1m\]$/iu, '')
+    .trim()
+    .toLowerCase();
   const suffix = suffixMatch?.[1]?.trim();
 
   return {
-    base: withoutPrefix.trim().toLowerCase(),
+    base: canonicalKimiModel(withoutContext),
     ...(suffix === undefined || suffix === '' ? {} : { suffix }),
   };
 }
