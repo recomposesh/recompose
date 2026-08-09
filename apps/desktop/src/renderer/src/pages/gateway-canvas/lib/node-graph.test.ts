@@ -49,6 +49,7 @@ const fastAtRest: CanvasEdge = {
   source: 'model:fast',
   target: 'target:a1',
   standing: 'resting',
+  failure: undefined,
 };
 
 const fastWired: CanvasEdge = {
@@ -56,6 +57,7 @@ const fastWired: CanvasEdge = {
   source: 'gateway',
   target: 'model:fast',
   standing: 'structural',
+  failure: undefined,
 };
 
 function standingsOf(graph: CanvasGraph): readonly CableStanding[] {
