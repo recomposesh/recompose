@@ -138,6 +138,32 @@ describe('rewriting the calls a client already made', () => {
   });
 });
 
+describe('rewriting a custom call that carries a namespace', () => {
+  test('qualifies it like its declaration', () => {
+    const request = requestWith({
+      tools: [{ type: 'namespace', name: 'shell', tools: [{ type: 'custom', name: 'run' }] }],
+      input: [
+        {
+          type: 'custom_tool_call',
+          call_id: 'call_4',
+          name: 'run',
+          namespace: 'shell',
+          input: 'pwd',
+        },
+      ],
+    });
+
+    expect(normalizeResponsesExtensions(request).input).toStrictEqual([
+      {
+        type: 'function_call',
+        call_id: 'call_4',
+        name: 'shell__run',
+        arguments: '{"input":"pwd"}',
+      },
+    ]);
+  });
+});
+
 describe('rewriting the tool the client insists on', () => {
   test('a web search choice is left exactly as it arrived', () => {
     const request = requestWith({

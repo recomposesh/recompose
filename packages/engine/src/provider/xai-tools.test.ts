@@ -93,6 +93,19 @@ test('qualifies namespaced choices and drops choices for removed tools', () => {
   expect(orphaned['tool_choice']).toBeUndefined();
 });
 
+test('rewrites a forced web search into xAI required allowed_tools', () => {
+  const body = normalizeXAITools({
+    tools: [{ type: 'web_search' }],
+    tool_choice: { type: 'web_search' },
+  });
+
+  expect(body).toHaveProperty('tool_choice', {
+    type: 'allowed_tools',
+    mode: 'required',
+    tools: [{ type: 'web_search' }],
+  });
+});
+
 test('filters allowed_tools choices against the normalized tool list', () => {
   const body = normalizeXAITools({
     tools: [{ type: 'function', name: 'lookup', parameters: { type: 'object' } }],

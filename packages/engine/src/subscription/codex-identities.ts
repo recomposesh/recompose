@@ -26,6 +26,7 @@ const ITEM_ID_PREFIXES = new Map<unknown, string>([
   ['reasoning', 'rs'],
   ['function_call', 'fc'],
   ['custom_tool_call', 'ctc'],
+  ['custom_tool_call_output', 'ctco'],
 ]);
 
 function prefixedItemId(type: unknown, id: string): string {

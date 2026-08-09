@@ -10,7 +10,16 @@ const CUSTOM_REFS: Record<string, ResponsesToolRef> = {
 };
 
 const NAMESPACE_REFS: Record<string, ResponsesToolRef> = {
-  ns__Read: { kind: 'namespace', namespace: 'ns', name: 'Read' },
+  ns__Read: { kind: 'namespace', namespace: 'ns', name: 'Read', family: 'function' },
+};
+
+const NAMESPACE_CUSTOM_REFS: Record<string, ResponsesToolRef> = {
+  shell__run: {
+    kind: 'namespace',
+    namespace: 'shell',
+    name: 'run',
+    family: 'custom',
+  },
 };
 
 async function* streamed(events: readonly ResponsesStreamEvent[]) {
@@ -91,6 +100,46 @@ describe('restoring a namespaced tool call as it streams', () => {
 
     expect(events[0]).toHaveProperty('item.name', 'Read');
     expect(events[0]).toHaveProperty('item.namespace', 'ns');
+  });
+});
+
+describe('restoring a namespaced custom tool call as it streams', () => {
+  test('keeps custom events while splitting the namespace and short name', async () => {
+    const events = await restored(
+      [
+        {
+          type: 'response.output_item.added',
+          output_index: 0,
+          item: {
+            type: 'function_call',
+            id: 'fc_call_1',
+            call_id: 'call_1',
+            name: 'shell__run',
+          },
+        },
+        {
+          type: 'response.function_call_arguments.done',
+          output_index: 0,
+          arguments: '{"input":"pwd"}',
+        },
+      ],
+      NAMESPACE_CUSTOM_REFS,
+    );
+
+    expect(events[0]).toHaveProperty('item', {
+      type: 'custom_tool_call',
+      id: 'ctc_call_1',
+      call_id: 'call_1',
+      namespace: 'shell',
+      name: 'run',
+      input: '',
+    });
+    expect(events[1]).toEqual({
+      type: 'response.custom_tool_call_input.done',
+      output_index: 0,
+      item_id: 'ctc_call_1',
+      input: 'pwd',
+    });
   });
 });
 

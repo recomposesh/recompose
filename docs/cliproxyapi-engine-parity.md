@@ -16,7 +16,7 @@ assumption that similarly named code is equivalent.
 - Upstream internal tests at the audit baseline: 329 files, 2,926 `Test*` functions, 16 benchmarks
 - Upstream translator tests at the audit baseline: 767 `Test*` functions
 - Upstream Interactions translator tests at the audit baseline: 136 `Test*` functions
-- Current Recompose engine gate: 543 test files, 4,423 passing tests (2026-08-09)
+- Current Recompose engine gate: 544 test files, 4,432 passing tests (2026-08-09)
 
 ## Delta v7.2.121 → v7.2.125
 
@@ -38,16 +38,16 @@ the window carried no engine-scope behavior change.
 ## Delta v7.2.125 → `a6825fe9`
 
 Five behavior commits and one merge landed after the completed v7.2.125 checkpoint. The stream-end
-finalization already follows from the local hub lifecycle; four later changes remain open for the
-next parity pass.
+finalization already followed from the local hub lifecycle, and the four later changes were ported
+with focused behavior tests on 2026-08-09.
 
 | Upstream commit | Upstream change                                                       | Status  | Local disposition                                                                                                   |
 | --------------- | --------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
 | `4906ead3`      | finalize open Responses items on `[DONE]` without `finish_reason`     | covered | Chat stream `done` closes open hub blocks; `openai-responses-chat-response-parity.test.ts` pins the terminal output |
-| `37411842`      | restore namespaced custom-tool identity through shared handling       | open    | namespace references do not yet retain whether the child was custom                                                 |
-| `5314b29d`      | forward `stream_options.reasoning_summary_delivery=sequential_cutoff` | open    | Codex request normalization still removes the complete `stream_options` object                                      |
-| `673bac5f`      | prefix `custom_tool_call_output` item IDs with `ctco_`                | open    | the sanitizer currently covers `msg_`, `rs_`, `fc_`, and `ctc_` only                                                |
-| `a6825fe9`      | normalize forced xAI web-search choice to required `allowed_tools`    | open    | xAI currently preserves a forced `{type: "web_search"}` choice                                                      |
+| `37411842`      | restore namespaced custom-tool identity through shared handling       | covered | namespace refs retain the child family; response and stream restoration tests preserve custom type and namespace    |
+| `5314b29d`      | forward `stream_options.reasoning_summary_delivery=sequential_cutoff` | covered | `codex-stream-options.test.ts` proves unsupported stream options drop while sequential cutoff survives              |
+| `673bac5f`      | prefix `custom_tool_call_output` item IDs with `ctco_`                | covered | `codex-identities-coverage.test.ts` pins deterministic and idempotent `ctco_` normalization                         |
+| `a6825fe9`      | normalize forced xAI web-search choice to required `allowed_tools`    | covered | `xai-tools.test.ts` and `xai-request.test.ts` pin the required allowed-tools envelope                               |
 
 The final multiplicity-aware inventory audit is published in
 `docs/cliproxyapi-parity/internal-completion-audit.md`: all 2,926 upstream `Test*` functions are

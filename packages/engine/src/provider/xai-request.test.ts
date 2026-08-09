@@ -55,3 +55,27 @@ test('xaiProviderBody forces streaming and carries the execution session', () =>
     prompt_cache_key: 'conv-xai-1',
   });
 });
+
+test('xaiProviderBody rewrites a forced web search into a required allowed choice', () => {
+  const crossing = {
+    dialect: 'responses' as const,
+    raw: {},
+    gatewayName: 'Test',
+    virtualModel: 'fast',
+    providerModel: 'grok-4.5',
+  };
+  const body = xaiProviderBody(
+    {
+      input: 'search',
+      tools: [{ type: 'web_search' }],
+      tool_choice: { type: 'web_search' },
+    },
+    crossing,
+  );
+
+  expect(body).toHaveProperty('tool_choice', {
+    type: 'allowed_tools',
+    mode: 'required',
+    tools: [{ type: 'web_search' }],
+  });
+});

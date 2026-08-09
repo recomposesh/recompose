@@ -183,6 +183,12 @@ function normalizedChoice(value: unknown): unknown {
   return { ...choice, tools: choice['tools'].map(normalizedChoiceEntry) };
 }
 
+function requiredWebSearchChoice(choice: unknown): unknown {
+  if (!isJsonObject(choice) || choice['type'] !== 'web_search') return choice;
+
+  return { type: 'allowed_tools', mode: 'required', tools: [choice] };
+}
+
 function toolKey(value: unknown): string | undefined {
   if (!isJsonObject(value) || typeof value['type'] !== 'string') return undefined;
 
@@ -230,7 +236,7 @@ export function normalizeXAITools(body: JsonObject): JsonObject {
   const promoted = promotedBody(body);
   const sourceTools: unknown[] = Array.isArray(promoted['tools']) ? promoted['tools'] : [];
   const tools = sourceTools.flatMap((tool) => normalizedTool(tool));
-  const choice = normalizedChoice(promoted['tool_choice']);
+  const choice = requiredWebSearchChoice(normalizedChoice(promoted['tool_choice']));
   const pruned = prunedChoice(choice, tools);
   const { tools: _tools, tool_choice: _choice, ...rest } = promoted;
 

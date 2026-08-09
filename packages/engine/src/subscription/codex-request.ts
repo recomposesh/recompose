@@ -12,27 +12,13 @@ import {
 import { codexResponsesLite, injectCodexImageTool } from './codex-image-tools';
 import { optimizeCodexMultiAgent } from './codex-multi-agent';
 import { CODEX_ORIGINATOR, codexRequestHeaders, CODEX_USER_AGENT } from './codex-request-headers';
+import { preservedCodexStreamOptions, removeUnsupportedCodexFields } from './codex-stream-options';
 
 type JsonObject = Record<string, unknown>;
 
 const WEB_SEARCH_ALIASES = new Set(['web_search_preview', 'web_search_preview_2025_03_11']);
 
 export { CODEX_ORIGINATOR, CODEX_USER_AGENT };
-
-const REMOVED_FIELDS = [
-  'previous_response_id',
-  'generate',
-  'prompt_cache_retention',
-  'safety_identifier',
-  'stream_options',
-  'max_output_tokens',
-  'max_completion_tokens',
-  'temperature',
-  'top_p',
-  'truncation',
-  'user',
-  'context_management',
-] as const;
 
 function messageInput(input: string): JsonObject[] {
   return [
@@ -208,10 +194,9 @@ function normalizedBody(
   forcedResponsesLite: boolean,
 ): JsonObject {
   const body = normalizedToolBody(rawBody);
+  const streamOptions = preservedCodexStreamOptions(body);
 
-  for (const field of REMOVED_FIELDS) {
-    delete body[field];
-  }
+  removeUnsupportedCodexFields(body);
 
   if (body['service_tier'] !== 'priority') {
     delete body['service_tier'];
@@ -222,6 +207,8 @@ function normalizedBody(
   injectCodexImageTool(body, planType, forcedResponsesLite);
   normalizeParallelToolCalls(body, forcedResponsesLite);
   body['include'] = ['reasoning.encrypted_content'];
+
+  if (streamOptions !== undefined) body['stream_options'] = streamOptions;
 
   return body;
 }

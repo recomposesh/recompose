@@ -13,6 +13,7 @@ const prefixedItemIds: [string, string][] = [
   ['reasoning', 'rs_item_1'],
   ['function_call', 'fc_item_1'],
   ['custom_tool_call', 'ctc_item_1'],
+  ['custom_tool_call_output', 'ctco_item_1'],
 ];
 
 describe('bounding the call id Codex accepts', () => {
@@ -49,6 +50,12 @@ describe('prefixing the item ids Codex replays', () => {
 
   test('an item id carrying the prefix of another type gains its own as well', () => {
     expect(normalizedCodexItemId({ type: 'reasoning', id: 'msg_item_1' })).toBe('rs_msg_item_1');
+  });
+
+  test('a custom tool output gains its dedicated prefix', () => {
+    expect(normalizedCodexItemId({ type: 'custom_tool_call_output', id: 'item_1' })).toBe(
+      'ctco_item_1',
+    );
   });
 
   test('an item type Codex does not prefix keeps the id it arrived with', () => {
