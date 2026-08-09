@@ -17,6 +17,9 @@ const chromium = () => ({
   instances: [{ browser: 'chromium' as const }],
 });
 
+/* A shared runner starves parallel pages into forty-second click timeouts. */
+const pacedForCi = process.env['CI'] === undefined ? {} : { fileParallelism: false };
+
 export default defineConfig({
   test: {
     coverage: {
@@ -66,6 +69,7 @@ export default defineConfig({
           name: 'browser',
           include: ['src/renderer/**/*.browser.test.{ts,tsx}'],
           browser: chromium(),
+          ...pacedForCi,
         },
       },
       {
@@ -73,6 +77,7 @@ export default defineConfig({
         test: {
           name: 'storybook',
           browser: chromium(),
+          ...pacedForCi,
         },
       },
       {
@@ -80,6 +85,7 @@ export default defineConfig({
         test: {
           name: 'storybook-dark',
           browser: chromium(),
+          ...pacedForCi,
         },
       },
     ],
