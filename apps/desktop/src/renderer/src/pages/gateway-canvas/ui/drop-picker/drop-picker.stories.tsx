@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { expect } from 'storybook/test';
+import { expect, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -111,9 +111,11 @@ export const ARefusalStandsForTheList = meta.story({
     refusal: "recompose couldn't read this account's model list.",
   },
   play: async ({ canvas }) => {
-    await expect(
-      await canvas.findByText("recompose couldn't read this account's model list."),
-    ).toBeVisible();
+    await waitFor(async () =>
+      expect(
+        await canvas.findByText("recompose couldn't read this account's model list."),
+      ).toBeVisible(),
+    );
     await expect(canvas.queryByRole('searchbox')).toBeNull();
   },
 });
