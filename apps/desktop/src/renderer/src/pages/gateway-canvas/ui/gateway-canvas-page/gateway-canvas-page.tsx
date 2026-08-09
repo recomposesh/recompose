@@ -31,7 +31,8 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
     return null;
   }
 
-  const { groups, stage, anchorSeat, onDismiss, onPickAccount, onPickProviderModel } = picker;
+  const { groups, refusal, stage, anchorSeat, onDismiss, onPickAccount, onPickProviderModel } =
+    picker;
 
   return (
     <AnchoredPicker
@@ -39,6 +40,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
       onDismiss={onDismiss}
       onPickAccount={onPickAccount}
       onPickProviderModel={onPickProviderModel}
+      refusal={refusal}
       seat={anchorSeat}
       stage={stage}
     />

@@ -72,7 +72,7 @@ function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
   }
 
   if (from === 'draft' || modelIdOf(from) !== undefined) {
-    world.standings.setPicker({ step: 'account', from, at });
+    world.standings.setPicker({ step: 'account', from, at, origin: 'drop' });
   }
 }
 
@@ -271,6 +271,7 @@ function cardAsks(world: CanvasWorld) {
         step: 'account',
         from,
         at: seatForNewNode('pending-target', world.seats),
+        origin: 'ask',
       });
     },
   };
@@ -281,8 +282,7 @@ function cardAsks(world: CanvasWorld) {
  *
  * @summary Nodes and edges go in derived and only gestures come back out: position changes move
  * seats and everything else answers through a named act, so no gesture ever writes topology
- * anywhere but the stored gateway. The one silent path is a pane click while the picker stands,
- * because Esc is the picker's one way out and a stray click must not become a second one.
+ * anywhere but the stored gateway.
  */
 export function flowWiring(world: CanvasWorld): CanvasFlowWiring {
   return {

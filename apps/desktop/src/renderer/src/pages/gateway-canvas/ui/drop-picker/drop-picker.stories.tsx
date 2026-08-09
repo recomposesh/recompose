@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 
-import { expect, fn } from 'storybook/test';
+import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import type { OptionGroup } from '../option-list/option-list';
 
 import { paintedBox } from '../../../../shared/testing';
+import { pickerMetaArgs } from '../../testing/picker-args.testkit';
 import { DropPicker } from './drop-picker';
 
 const accounts: readonly OptionGroup[] = [
@@ -57,13 +58,7 @@ function PendingCard({ children }: { children: ReactNode }) {
 
 const meta = preview.meta({
   component: DropPicker,
-  args: {
-    stage: { step: 'account' as const },
-    groups: accounts,
-    onDismiss: fn(),
-    onPickAccount: fn(),
-    onPickProviderModel: fn(),
-  },
+  args: pickerMetaArgs(accounts),
   decorators: [
     (Story) => (
       <PendingCard>
@@ -105,6 +100,21 @@ export const ThePickerStandsOnItsPendingCard = meta.story({
     await expect(standing.top).toBeGreaterThanOrEqual(stood.bottom);
     await expect(standing.left).toBe(stood.left);
     await expect(paintedBox(canvasElement).bottom).toBeGreaterThan(standing.top);
+  },
+});
+
+/** An account whose models cannot be read says why, instead of offering an empty silence. */
+export const ARefusalStandsForTheList = meta.story({
+  args: {
+    stage: { step: 'provider-model', accountId: 'key-work' },
+    groups: [],
+    refusal: "recompose couldn't read this account's model list.",
+  },
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByText("recompose couldn't read this account's model list."),
+    ).toBeVisible();
+    await expect(canvas.queryByRole('searchbox')).toBeNull();
   },
 });
 

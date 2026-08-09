@@ -14,7 +14,8 @@ function isFiniteNumber(value: unknown): value is number {
   return Number.isFinite(value);
 }
 
-function isSeat(value: unknown): value is XY {
+/** Whether a written value reads as a seat, which the draft store leans on too. */
+export function isSeat(value: unknown): value is XY {
   return isRecord(value) && isFiniteNumber(value['x']) && isFiniteNumber(value['y']);
 }
 

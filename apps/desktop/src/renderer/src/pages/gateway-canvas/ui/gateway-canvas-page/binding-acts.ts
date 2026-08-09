@@ -56,14 +56,17 @@ function seatedWhereTheCableLanded(world: CanvasWorld, accountId: string): () =>
 
 function seatOfTheBornTarget(world: CanvasWorld, accountId: string): XY | undefined {
   const picker = world.standings.picker;
-  const at = picker !== undefined && 'at' in picker ? picker.at : undefined;
   const alreadyStanding = world.graph.nodes.some((node) => node.id === `target:${accountId}`);
 
-  if (alreadyStanding) {
+  if (picker === undefined || alreadyStanding) {
     return undefined;
   }
 
-  return at ?? seatForNewNode('target', world.seats);
+  if ('at' in picker) {
+    return picker.origin === 'drop' ? undefined : picker.at;
+  }
+
+  return seatForNewNode('target', world.seats);
 }
 
 function boundsAroundEveryCard(world: CanvasWorld, born: XY) {

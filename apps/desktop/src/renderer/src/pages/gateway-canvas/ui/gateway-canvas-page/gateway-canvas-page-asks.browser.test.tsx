@@ -171,3 +171,15 @@ test('a target born past the pane zooms the view out until it shows', async () =
   await expect.poll(async () => storedBindingOf('steady')).toBeDefined();
   await expect.poll(() => bornCardReading(screen.container, 'target:s1')).toBe('fits');
 });
+
+test('an account whose models cannot be read says so in the picker instead of nothing', async () => {
+  const screen = await canvasPageOn({ providerModels: {} });
+
+  screen.getByLabelText('Choose a target').first().element().focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
+
+  await expect
+    .element(screen.getByRole('dialog').getByText(/couldn't read this account's model list/))
+    .toBeVisible();
+});

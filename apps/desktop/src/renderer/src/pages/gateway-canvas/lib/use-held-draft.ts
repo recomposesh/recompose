@@ -3,6 +3,8 @@ import { useSyncExternalStore } from 'react';
 import type { XY } from './canvas-positions';
 import type { SettledDefinition } from './model-draft';
 
+import { isSeat } from './canvas-positions';
+
 /** A definition a person began and has not finished, standing at its seat on the canvas. */
 export type HeldDraft = {
   /** What the person has said so far, which the inspector edits and the draft card reads. */
@@ -12,6 +14,61 @@ export type HeldDraft = {
 };
 
 const held = new Map<string, HeldDraft>();
+
+const woken = new Set<string>();
+
+function keyFor(slug: string): string {
+  return `recompose.canvas.draft.${slug}`;
+}
+
+function isWord(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+const DEFINITION_WORDS = ['displayName', 'id', 'accountId', 'providerModel'] as const;
+
+function isDefinition(value: unknown): value is SettledDefinition {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    DEFINITION_WORDS.every((word) => isWord(Reflect.get(value, word)))
+  );
+}
+
+function isHeldDraft(value: unknown): value is HeldDraft {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    isDefinition(Reflect.get(value, 'definition')) &&
+    isSeat(Reflect.get(value, 'seat'))
+  );
+}
+
+function storedDraftRead(written: string | null): HeldDraft | undefined {
+  try {
+    const read: unknown = JSON.parse(written ?? '');
+
+    return isHeldDraft(read) ? { definition: read.definition, seat: read.seat } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function shelf(): Storage | undefined {
+  return typeof localStorage === 'undefined' ? undefined : localStorage;
+}
+
+function writeDown(slug: string): void {
+  const standing = held.get(slug);
+
+  if (standing === undefined) {
+    shelf()?.removeItem(keyFor(slug));
+
+    return;
+  }
+
+  shelf()?.setItem(keyFor(slug), JSON.stringify(standing));
+}
 
 const readers = new Set<() => void>();
 
@@ -30,14 +87,34 @@ export function subscribeToHeldDrafts(reader: () => void): () => void {
   };
 }
 
-/** The draft this gateway holds, or nothing while every definition on it is finished. */
+function wokenDraft(slug: string): HeldDraft | undefined {
+  woken.add(slug);
+
+  const written = storedDraftRead(shelf()?.getItem(keyFor(slug)) ?? null);
+
+  if (written !== undefined) {
+    held.set(slug, written);
+  }
+
+  return written;
+}
+
+/** The draft this gateway holds, woken from the last session's writing on the first look. */
 export function heldDraft(slug: string): HeldDraft | undefined {
-  return held.get(slug);
+  const standing = held.get(slug);
+
+  if (standing !== undefined || woken.has(slug)) {
+    return standing;
+  }
+
+  return wokenDraft(slug);
 }
 
 /** Stands a draft on the canvas, from the gateway's plus, a dropped cable, or an unbind. */
 export function startDrafting(slug: string, definition: SettledDefinition, seat: XY): void {
+  woken.add(slug);
   held.set(slug, { definition, seat });
+  writeDown(slug);
   tellReaders();
 }
 
@@ -50,6 +127,7 @@ export function editDraft(slug: string, definition: SettledDefinition): void {
   }
 
   held.set(slug, { ...standing, definition });
+  writeDown(slug);
   tellReaders();
 }
 
@@ -62,12 +140,15 @@ export function moveDraftSeat(slug: string, seat: XY): void {
   }
 
   held.set(slug, { ...standing, seat });
+  writeDown(slug);
   tellReaders();
 }
 
 /** Lets the draft go, which a finished definition and an explicit delete both do. */
 export function leaveDrafting(slug: string): void {
+  woken.add(slug);
   held.delete(slug);
+  writeDown(slug);
   tellReaders();
 }
 

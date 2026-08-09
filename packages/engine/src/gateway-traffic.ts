@@ -12,6 +12,8 @@ const FIRST_FAILING_STATUS = 400;
 
 const DETAIL_SPAN = 280;
 
+const QUOTE_WAIT_MS = 1500;
+
 /**
  * The sentence a red cable falls back to when the target answered without a word.
  *
@@ -35,7 +37,13 @@ function detailFor(status: number): string {
 }
 
 function wordOf(body: unknown): string | undefined {
-  return typeof body === 'string' && body !== '' ? body : undefined;
+  if (typeof body !== 'string') {
+    return undefined;
+  }
+
+  const spoken = body.trim().slice(0, DETAIL_SPAN).trim();
+
+  return spoken === '' ? undefined : spoken;
 }
 
 function spokenInside(body: object): string | undefined {
@@ -58,10 +66,21 @@ async function quotedByTheTarget(answer: Response): Promise<string | undefined> 
   }
 
   try {
-    return spokenBy(await answer.clone().json())?.slice(0, DETAIL_SPAN);
+    return spokenBy(await answer.clone().json());
   } catch {
     return undefined;
   }
+}
+
+async function beforeTheAnswerGrowsStale<Read>(read: Promise<Read>, whenLate: Read): Promise<Read> {
+  return Promise.race([
+    read,
+    new Promise<Read>((rest) => {
+      setTimeout(() => {
+        rest(whenLate);
+      }, QUOTE_WAIT_MS);
+    }),
+  ]);
 }
 
 async function outcomeOf(answer: Response, at: number): Promise<RequestOutcome> {
@@ -69,11 +88,13 @@ async function outcomeOf(answer: Response, at: number): Promise<RequestOutcome> 
     return { outcome: 'served', at };
   }
 
+  const quoted = await beforeTheAnswerGrowsStale(quotedByTheTarget(answer), undefined);
+
   return {
     outcome: 'failed',
     at,
     status: answer.status,
-    detail: (await quotedByTheTarget(answer)) ?? detailFor(answer.status),
+    detail: quoted ?? detailFor(answer.status),
   };
 }
 

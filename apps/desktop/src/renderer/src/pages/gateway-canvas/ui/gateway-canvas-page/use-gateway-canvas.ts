@@ -6,7 +6,7 @@ import { useRef, useSyncExternalStore } from 'react';
 
 import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { XY } from '../../lib/canvas-positions';
-import type { SettledDefinition } from '../../lib/model-draft';
+import type { ModelListReading, SettledDefinition } from '../../lib/model-draft';
 import type { PickerStage } from '../drop-picker/drop-picker';
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
@@ -40,6 +40,7 @@ import { modelIdOf, subjectOf } from './canvas-wiring';
 export type PickerOnCanvas = {
   stage: PickerStage;
   groups: readonly OptionGroup[];
+  refusal: string | undefined;
   anchorSeat: XY;
   onPickAccount: (accountId: string) => void;
   onPickProviderModel: (providerModel: string) => void;
@@ -83,10 +84,13 @@ function completedPick(
   }
 }
 
-function pickerOnCanvas(
-  world: CanvasWorld,
-  offered: readonly string[],
-): PickerOnCanvas | undefined {
+function pickerStage(picker: PickerStanding): PickerStage {
+  return picker.step === 'account'
+    ? { step: 'account' }
+    : { step: 'provider-model', accountId: picker.accountId };
+}
+
+function pickerOnCanvas(world: CanvasWorld, models: ModelListReading): PickerOnCanvas | undefined {
   const picker = world.standings.picker;
 
   if (picker === undefined) {
@@ -96,11 +100,9 @@ function pickerOnCanvas(
   const anchorId = 'at' in picker ? 'pending' : picker.anchor;
 
   return {
-    stage:
-      picker.step === 'account'
-        ? { step: 'account' }
-        : { step: 'provider-model', accountId: picker.accountId },
-    groups: pickerGroups(world, picker, offered),
+    stage: pickerStage(picker),
+    groups: pickerGroups(world, picker, models.offered),
+    refusal: picker.step === 'provider-model' ? models.refusal : undefined,
     anchorSeat: world.seats[anchorId] ?? { x: 0, y: 0 },
     onPickAccount: (accountId) => {
       if (picker.step === 'account') {
@@ -109,6 +111,7 @@ function pickerOnCanvas(
           from: picker.from,
           accountId,
           at: picker.at,
+          origin: picker.origin,
         });
       }
     },
@@ -174,7 +177,7 @@ export function useGatewayCanvas(
   const stored = useSyncExternalStore(subscribeToCanvasPositions, () => canvasPositions(slug));
   const draft = useHeldDraft(slug);
   const define = useDefineVirtualModel();
-  const offered = usePickerModels(standings.picker);
+  const pickerModels = usePickerModels(standings.picker);
   const { data: traffic } = useQuery(engineTrafficQueryOptions);
   const dragging = useRef<DragWatch>({ inFlight: false, escaped: false });
   const view = useRef<ReactFlowInstance | null>(null);
@@ -205,7 +208,7 @@ export function useGatewayCanvas(
     announced: standings.announced,
     subject: subjectOf(standings.selection),
     refusal: standings.refusal,
-    picker: pickerOnCanvas(world, offered),
+    picker: pickerOnCanvas(world, pickerModels),
     removal: removalAsked(world),
     onDraftDefined: (definition) => {
       leaveDrafting(slug);

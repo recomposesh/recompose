@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { NodePositions, XY } from '../../lib/canvas-positions';
+import type { ModelListReading } from '../../lib/model-draft';
 import type { CanvasGraph, CanvasOverlay } from '../../lib/node-graph';
 import type { HeldDraft } from '../../lib/use-held-draft';
 
@@ -17,9 +18,12 @@ import { tidyPositions } from '../../lib/tidy-layout';
 
 /** Where the two-stage picker stands: on a pending card, or anchored to a stored target. */
 export type PickerStanding =
-  | { step: 'account'; from: string; at: XY }
-  | { step: 'provider-model'; from: string; accountId: string; at: XY }
+  | { step: 'account'; from: string; at: XY; origin: PickerOrigin }
+  | { step: 'provider-model'; from: string; accountId: string; at: XY; origin: PickerOrigin }
   | { step: 'provider-model'; from: string; accountId: string; anchor: string };
+
+/** What opened the picker: a cable let go by hand, or an ask answered with the keyboard. */
+type PickerOrigin = 'drop' | 'ask';
 
 /** Whether a cable drag is in flight, and whether Esc already threw it away. */
 export type DragWatch = { inFlight: boolean; escaped: boolean };
@@ -91,15 +95,15 @@ export function useCanvasStandings(): CanvasStandings {
   };
 }
 
-/** The model ids the picker's second stage offers, read live from the picked account. */
-export function usePickerModels(picker: PickerStanding | undefined): readonly string[] {
+/** What the picker's second stage may offer: the models, or the refusal that stands for them. */
+export function usePickerModels(picker: PickerStanding | undefined): ModelListReading {
   const accountId = picker?.step === 'provider-model' ? picker.accountId : '';
   const look = useQuery({
     ...providerModelsQueryOptions(accountId),
     enabled: accountId !== '',
   });
 
-  return modelListReading(look.data).offered;
+  return modelListReading(look.data);
 }
 
 /**

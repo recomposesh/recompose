@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 
 import { ReactFlowProvider } from '@xyflow/react';
-import { expect, fn } from 'storybook/test';
+import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import type { OptionGroup } from '../option-list/option-list';
 
+import { pickerMetaArgs } from '../../testing/picker-args.testkit';
 import { AnchoredPicker } from './anchored-picker';
 
 const accounts: readonly OptionGroup[] = [
@@ -38,14 +39,7 @@ function CanvasFooting({ children }: { children: ReactNode }) {
 
 const meta = preview.meta({
   component: AnchoredPicker,
-  args: {
-    seat,
-    stage: { step: 'account' as const },
-    groups: accounts,
-    onDismiss: fn(),
-    onPickAccount: fn(),
-    onPickProviderModel: fn(),
-  },
+  args: { seat, ...pickerMetaArgs(accounts) },
   decorators: [
     (Story) => (
       <CanvasFooting>

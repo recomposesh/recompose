@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 import { useEffect, useId, useRef } from 'react';
 
@@ -29,11 +29,38 @@ const wording: Record<PickerStage['step'], StageWording> = {
   },
 };
 
+function stageBody(
+  refusal: string | undefined,
+  said: StageWording,
+  groups: readonly OptionGroup[],
+  onPick: (picked: string) => void,
+): ReactNode {
+  if (refusal !== undefined) {
+    return (
+      <p className="px-1 pb-1 text-detail text-ink" role="alert">
+        {refusal}
+      </p>
+    );
+  }
+
+  return (
+    <OptionList
+      groups={groups}
+      nothingMatched={said.nothingMatched}
+      onPick={onPick}
+      picked={undefined}
+      searchLabel={said.searchLabel}
+    />
+  );
+}
+
 export type DropPickerProps = {
   /** Which half of the binding is being asked for, which is what the list on offer answers. */
   stage: PickerStage;
   /** What this stage offers, gathered the way a person reads them. */
   groups: readonly OptionGroup[];
+  /** Why the stage offers nothing, when the picked account's models could not be read. */
+  refusal: string | undefined;
   /** Receives the account a person settled the first stage on. */
   onPickAccount: (accountId: string) => void;
   /** Receives the provider model that completes the binding. */
@@ -53,6 +80,7 @@ export type DropPickerProps = {
 export function DropPicker({
   stage,
   groups,
+  refusal,
   onPickAccount,
   onPickProviderModel,
   onDismiss,
@@ -88,13 +116,12 @@ export function DropPicker({
         {said.heading}
       </p>
       <div className="max-h-64 overflow-y-auto px-1.5 pb-1">
-        <OptionList
-          groups={groups}
-          nothingMatched={said.nothingMatched}
-          onPick={stage.step === 'account' ? onPickAccount : onPickProviderModel}
-          picked={undefined}
-          searchLabel={said.searchLabel}
-        />
+        {stageBody(
+          refusal,
+          said,
+          groups,
+          stage.step === 'account' ? onPickAccount : onPickProviderModel,
+        )}
       </div>
     </dialog>
   );

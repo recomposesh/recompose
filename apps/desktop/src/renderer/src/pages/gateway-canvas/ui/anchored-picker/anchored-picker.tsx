@@ -24,6 +24,7 @@ export function AnchoredPicker({
   seat,
   stage,
   groups,
+  refusal,
   onPickAccount,
   onPickProviderModel,
   onDismiss,
@@ -41,6 +42,7 @@ export function AnchoredPicker({
         onDismiss={onDismiss}
         onPickAccount={onPickAccount}
         onPickProviderModel={onPickProviderModel}
+        refusal={refusal}
         stage={stage}
       />
     </div>

@@ -118,6 +118,37 @@ describe('the words the target itself offered', () => {
     expect(noted.at(0)?.request).toMatchObject({ detail: 'The target answered 402.' });
   });
 
+  test('a message of nothing but whitespace is no quote, so the sentence stands', async () => {
+    const noted = await spendingOn('fast', failingWith({ error: { message: ' \n\t ' } }));
+
+    expect(noted.at(0)?.request).toMatchObject({ detail: 'The target answered 402.' });
+  });
+});
+
+describe('what a failed answer may never do to the request that carried it', () => {
+  test('an answer whose body never ends still comes back, noted from the status alone', async () => {
+    const holding = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"error":{"message":"slow'));
+        },
+      }),
+      { status: 429, headers: { 'content-type': 'application/json' } },
+    );
+    const { noted, note } = noting();
+
+    const answered = await watching(note)(async (spendGrantFor) => {
+      await spendGrantFor('personal', 'fast');
+
+      return holding;
+    });
+
+    expect(answered.status).toBe(429);
+    expect(noted.at(0)?.request).toMatchObject({
+      detail: 'The target is turning requests away for now.',
+    });
+  });
+
   test('an explanation longer than a card holds is cut to its span', async () => {
     const noted = await spendingOn('fast', failingWith({ error: { message: 'w'.repeat(500) } }));
 
@@ -207,7 +238,13 @@ describe('what the watch leaves exactly as it found it', () => {
 
     await Promise.all([slow, quick]);
 
-    expect(noted.map((one) => one.virtualModel)).toEqual(['deep', 'fast']);
-    expect(noted.map((one) => one.request.outcome)).toEqual(['failed', 'served']);
+    const outcomes = new Map(noted.map((one) => [one.virtualModel, one.request.outcome]));
+
+    expect(outcomes).toEqual(
+      new Map([
+        ['deep', 'failed'],
+        ['fast', 'served'],
+      ]),
+    );
   });
 });

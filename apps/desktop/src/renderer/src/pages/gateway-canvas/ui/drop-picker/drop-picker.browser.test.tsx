@@ -21,6 +21,7 @@ async function renderPicker(stage: PickerStage, groups: readonly OptionGroup[]) 
   const screen = await render(
     <DropPicker
       groups={groups}
+      refusal={undefined}
       onDismiss={() => {
         heard.push('dismissed');
       }}
@@ -104,6 +105,7 @@ test('moving to the second stage carries focus onto the model list it opens on',
   await screen.rerender(
     <DropPicker
       groups={models}
+      refusal={undefined}
       onDismiss={() => {}}
       onPickAccount={() => {}}
       onPickProviderModel={() => {}}
