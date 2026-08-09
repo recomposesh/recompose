@@ -108,6 +108,7 @@ function trayHandlers(): TrayMenuHandlers {
   return {
     onOpenWindow: () => {},
     onOpenSettings: () => {},
+    onOpenDevtools: () => {},
     onQuit: () => {},
     onStartGateway: () => {},
     onStopGateway: () => {},

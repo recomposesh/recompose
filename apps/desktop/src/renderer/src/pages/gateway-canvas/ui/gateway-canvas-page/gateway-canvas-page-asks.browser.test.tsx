@@ -8,6 +8,45 @@ vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
 
+const CONTRACT_CARD = { width: 158, height: 78 };
+const SEAT_READING = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/u;
+const VIEW_READING = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)\s*scale\(([\d.]+)\)/u;
+
+function paintedWithin(corner: { x: number; y: number }, zoom: number, pane: DOMRect): boolean {
+  return (
+    corner.x >= 0 &&
+    corner.y >= 0 &&
+    corner.x + CONTRACT_CARD.width * zoom <= pane.width &&
+    corner.y + CONTRACT_CARD.height * zoom <= pane.height
+  );
+}
+
+function transformOf(container: HTMLElement, selector: string): string {
+  return container.querySelector<HTMLElement>(selector)?.style.transform ?? '';
+}
+
+function fitsReading(seat: RegExpExecArray, view: RegExpExecArray, pane: DOMRect): string {
+  const zoom = Number(view[3]);
+  const corner = {
+    x: Number(seat[1]) * zoom + Number(view[1]),
+    y: Number(seat[2]) * zoom + Number(view[2]),
+  };
+
+  return paintedWithin(corner, zoom, pane) ? 'fits' : 'past the pane';
+}
+
+function bornCardReading(container: HTMLElement, nodeId: string): string {
+  const pane = container.querySelector('.react-flow')?.getBoundingClientRect();
+  const seat = SEAT_READING.exec(transformOf(container, `[data-id="${nodeId}"]`));
+  const view = VIEW_READING.exec(transformOf(container, '.react-flow__viewport'));
+
+  if (seat === null || view === null || pane === undefined) {
+    return 'unpainted';
+  }
+
+  return fitsReading(seat, view, pane);
+}
+
 test('the gateway ask births a draft wired to the gateway, with the name field focused', async () => {
   const screen = await canvasPageOn();
 
@@ -107,4 +146,28 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
     .poll(() => draftCardOn(screen.container)?.textContent)
     .toContain('Unnamed virtual model');
   expect((await storedModels()).length).toBe(2);
+});
+
+test('a target born past the pane zooms the view out until it shows', async () => {
+  const screen = await canvasPageOn({
+    providerModels: { k1: ['claude-haiku-4-5'], s1: ['claude-sonnet-5'] },
+  });
+  const zoomIn = screen.getByRole('button', { name: 'Zoom in' });
+
+  for (let steps = 0; steps < 5; steps += 1) {
+    await userEvent.click(zoomIn);
+  }
+
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  screen.getByLabelText('Choose a target').last().element().focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect.poll(async () => storedBindingOf('steady')).toBeDefined();
+  await expect.poll(() => bornCardReading(screen.container, 'target:s1')).toBe('fits');
 });

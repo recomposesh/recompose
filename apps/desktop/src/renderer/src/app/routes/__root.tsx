@@ -11,7 +11,7 @@ import {
   useParams,
   useRouter,
 } from '@tanstack/react-router';
-import { Suspense, lazy, useEffect, useSyncExternalStore } from 'react';
+import { Suspense, lazy, useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { AccountKind } from '../../entities/account';
 
@@ -70,6 +70,26 @@ function providersAct(kind: AccountKind | undefined): ReactNode {
   return kind === undefined ? null : <AddProviderAct kind={kind} />;
 }
 
+function useWindowBand(sidebarAway: boolean): void {
+  useEffect(() => {
+    void window.recompose['system:window-band'](sidebarAway ? 'toolbar' : 'sidebar');
+  }, [sidebarAway]);
+}
+
+function useDevtoolsAsked(): boolean {
+  const [asked, setAsked] = useState(false);
+
+  useEffect(
+    () =>
+      window.recomposeEvents['devtools:toggle'](() => {
+        setAsked((standing) => !standing);
+      }),
+    [],
+  );
+
+  return asked;
+}
+
 function RootLayout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -78,16 +98,14 @@ function RootLayout() {
   const { slug } = useParams({ strict: false });
   const providers = useMatch({ from: '/providers', shouldThrow: false });
   const sidebarAway = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
+  const devtoolsAsked = useDevtoolsAsked();
 
   useTitleBarDoubleClick();
 
   useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
   useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
-
-  useEffect(() => {
-    void window.recompose['system:window-band'](sidebarAway ? 'toolbar' : 'sidebar');
-  }, [sidebarAway]);
+  useWindowBand(sidebarAway);
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -117,9 +135,11 @@ function RootLayout() {
         }}
         open={create === true}
       />
-      <Suspense>
-        <Devtools queryClient={queryClient} router={router} />
-      </Suspense>
+      {devtoolsAsked && (
+        <Suspense>
+          <Devtools queryClient={queryClient} router={router} />
+        </Suspense>
+      )}
     </div>
   );
 }

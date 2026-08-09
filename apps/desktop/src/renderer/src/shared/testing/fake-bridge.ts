@@ -88,6 +88,7 @@ function eventBridge(): RecomposeIpcEvents {
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
     'settings:changed': (listener) => listenForSettingsChanges(listener),
+    'devtools:toggle': () => () => undefined,
   };
 }
 

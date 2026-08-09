@@ -63,6 +63,7 @@ const recomposeEvents: RecomposeIpcEvents = Object.freeze({
   'accounts:changed': eventEntry('accounts:changed'),
   'canvas:command': eventEntry('canvas:command'),
   'settings:changed': eventEntry('settings:changed'),
+  'devtools:toggle': eventEntry('devtools:toggle'),
 });
 
 contextBridge.exposeInMainWorld('recompose', recompose);

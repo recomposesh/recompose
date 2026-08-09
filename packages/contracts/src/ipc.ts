@@ -159,6 +159,7 @@ export const ipcEvents = {
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': { payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']) },
   'settings:changed': { payload: settingsSchema },
+  'devtools:toggle': { payload: z.literal('asked') },
 } as const;
 
 export type IpcEvent = keyof typeof ipcEvents;

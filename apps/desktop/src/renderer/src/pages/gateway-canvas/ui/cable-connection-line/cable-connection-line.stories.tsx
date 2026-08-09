@@ -76,7 +76,7 @@ export const TheCableInFlightTakesTheCanvasStroke = meta.story({
   play: async ({ canvasElement }) => {
     const [awaiting] = [...canvasElement.querySelectorAll<SVGPathElement>('svg > path')];
 
-    await expect(paintedStyle(awaiting).strokeWidth).toBe('1.8px');
+    await expect(paintedStyle(awaiting).strokeWidth).toBe('2.6px');
     await expect(paintedStyle(awaiting).fill).toBe('none');
   },
 });

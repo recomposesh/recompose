@@ -1,5 +1,3 @@
-import type { Settings } from '@recompose/contracts';
-
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { app, safeStorage, shell } from 'electron';
 import { join } from 'path';
@@ -28,6 +26,7 @@ import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/prov
 import {
   pushAccountsChanged,
   pushCanvasCommand,
+  pushDevtoolsToggle,
   pushEngineStates,
   pushSettingsChanged,
 } from './ipc/push-events';
@@ -56,6 +55,7 @@ import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
 import { trayRepainter } from './tray/tray-repaint';
+import { trayMenuWiring } from './tray/tray-wiring';
 import { resolveUserDataOverride } from './user-data-override';
 import {
   createMainWindow,
@@ -79,29 +79,18 @@ const gatewayLifecycle = createGatewayLifecycleRequests({
   onCorrupt: onStorageCorrupt,
 });
 
-const trayMenuHandlers = {
-  onOpenWindow: showMainWindow,
-  onOpenSettings: openSettingsSurface,
-  onQuit: () => {
+const trayMenuHandlers = trayMenuWiring({
+  showWindow: showMainWindow,
+  openSettings: openSettingsSurface,
+  openDevtools: () => {
+    showMainWindow();
+    pushDevtoolsToggle();
+  },
+  quit: () => {
     app.quit();
   },
-  onStartGateway: gatewayLifecycle.start,
-  onStopGateway: gatewayLifecycle.stop,
-  onRestartGateway: gatewayLifecycle.restart,
-};
-
-const appMenu = conductAppMenu({
-  onOpenSettings: openSettingsSurface,
-  onNewGateway: openNewGatewaySurface,
-  onCanvasCommand: pushCanvasCommand,
-  settingsFile: () => storagePathsFor(app.getPath('userData')).settingsFile,
-  onCorrupt: onStorageCorrupt,
-  pushSettings: pushSettingsChanged,
+  lifecycle: gatewayLifecycle,
 });
-
-function reflectStoredSettings(settings: Settings): void {
-  appMenu.reflectSettings({ ...settings, launchAtLogin: loginItem.isEnabled() });
-}
 
 if (process.platform === 'linux') {
   safeStorage.setUsePlainTextEncryption(true);
@@ -109,6 +98,17 @@ if (process.platform === 'linux') {
 
 const loginItemAvailability = loginItemAvailabilityFor(process.platform, app.isPackaged);
 const loginItem = createLoginItem(app, loginItemAvailability, process.execPath);
+
+const appMenu = conductAppMenu({
+  onOpenSettings: openSettingsSurface,
+  onNewGateway: openNewGatewaySurface,
+  onCanvasCommand: pushCanvasCommand,
+  settingsFile: () => storagePathsFor(app.getPath('userData')).settingsFile,
+  onCorrupt: onStorageCorrupt,
+  pushSettings: (settings) => {
+    pushSettingsChanged({ ...settings, launchAtLogin: loginItem.isEnabled() });
+  },
+});
 
 const settingsEffects = createSettingsEffects({
   showTray: () => {
@@ -150,7 +150,7 @@ function storageContext(
     applySettings: (settings, askedLoginItem) => {
       applyChosenSettingsOrComplain(settingsEffects, settings, askedLoginItem);
     },
-    onSettingsWritten: reflectStoredSettings,
+    onSettingsWritten: appMenu.reflectSettings,
     startGateway: startStoredGateway(engineHost),
     restartGateway: serveRewrittenGateway(engineHost),
     noteGatewayWrite: (gateway) => {
@@ -248,7 +248,7 @@ async function startRecompose(): Promise<void> {
     firstRequestReporter(
       () => storagePathsFor(app.getPath('userData')).settingsFile,
       onStorageCorrupt,
-      reflectStoredSettings,
+      appMenu.reflectSettings,
     ),
   );
 
@@ -282,7 +282,7 @@ async function startRecompose(): Promise<void> {
 
   registerPermissionHandlers();
 
-  reflectStoredSettings(boot.settings);
+  appMenu.reflectSettings(boot.settings);
 
   applyBootSettingsOrComplain(settingsEffects, boot.settings);
 

@@ -194,7 +194,7 @@ export const CablesPaintTheirStanding = meta.story({
 
     for (const [place, cable] of cables.entries()) {
       await expect(paintedStyle(cable).stroke).toBe(standings[place]);
-      await expect(paintedStyle(cable).strokeWidth).toBe('1.8px');
+      await expect(paintedStyle(cable).strokeWidth).toBe('2.6px');
     }
   },
 });

@@ -18,7 +18,7 @@ export type CanvasAsks = {
 /** One seat a position change moved, and whether the drag settled there. */
 export type MovedSeat = { id: string; to: XY; settled: boolean };
 
-const CARD_MEASURE = { width: 158, height: 78 };
+export const CARD_MEASURE = { width: 158, height: 78 };
 
 /** The definition id inside a model card's node id, or nothing for any other card. */
 export function modelIdOf(nodeId: string): string | undefined {

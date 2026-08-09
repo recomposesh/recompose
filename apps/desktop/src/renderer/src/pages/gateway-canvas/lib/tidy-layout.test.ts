@@ -79,11 +79,11 @@ test('virtual models stack downward in the order the gateway holds them', () => 
   expect(second.y).toBeGreaterThan(first.y);
 });
 
-test('a target seats three columns out, so the third stands empty for the routers to come', () => {
+test('a target seats two columns out, so its cable reads at a glance', () => {
   const seats = tidyPositions(canvasOf(['gateway', 'virtual-model', 'target']));
   const step = columnStep();
 
-  expect(seatAt(seats, 'target-2').x).toBe(step * 3);
+  expect(seatAt(seats, 'target-2').x).toBe(step * 2);
 });
 
 test('a draft seats among the virtual models, and a waiting card among the targets', () => {
@@ -126,7 +126,7 @@ test('a new card is born at the top of a column holding nothing yet', () => {
 test('a new card reads only its own column, so cards standing elsewhere never push it down', () => {
   const placed = tidyPositions(canvasOf(['gateway', 'virtual-model', 'virtual-model']));
 
-  expect(seatForNewNode('target', placed)).toEqual({ x: columnStep() * 3, y: 0 });
+  expect(seatForNewNode('target', placed)).toEqual({ x: columnStep() * 2, y: 0 });
 });
 
 test('a card born below one a person dragged low follows the drag rather than the tidy seat', () => {
@@ -142,18 +142,15 @@ propertyTest.prop([anyCanvas])('no two cards ever seat in the same place', (kind
   expect(new Set(taken).size).toBe(kinds.length);
 });
 
-propertyTest.prop([anyCanvas])(
-  'every card seats in the column its role owns, with the third left for the routers',
-  (kinds) => {
-    const nodes = canvasOf(kinds);
-    const columns = [0, columnStep(), columnStep() * 3];
-    const seats = tidyPositions(nodes);
+propertyTest.prop([anyCanvas])('every card seats in the column its role owns', (kinds) => {
+  const nodes = canvasOf(kinds);
+  const columns = [0, columnStep(), columnStep() * 2];
+  const seats = tidyPositions(nodes);
 
-    expect(nodes.map((node) => seatAt(seats, node.id).x)).toEqual(
-      nodes.map((node) => columns[columnRank[node.kind]]),
-    );
-  },
-);
+  expect(nodes.map((node) => seatAt(seats, node.id).x)).toEqual(
+    nodes.map((node) => columns[columnRank[node.kind]]),
+  );
+});
 
 propertyTest.prop([anyCanvas])(
   'the same canvas tidies to the same arrangement every time',

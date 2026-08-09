@@ -10,9 +10,10 @@ describe('the lifecycle push', () => {
     'accounts:changed',
     'canvas:command',
     'settings:changed',
+    'devtools:toggle',
   ];
 
-  test('exactly the state, account-change, canvas, and settings pushes exist', () => {
+  test('exactly the state, account-change, canvas, settings, and devtools pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -44,6 +45,11 @@ describe('the lifecycle push', () => {
 
   test('a canvas push refuses an act no menu item names', () => {
     expect(() => ipcEvents['canvas:command'].payload.parse('zoom')).toThrow();
+  });
+
+  test('the devtools push carries the one word it exists for', () => {
+    expect(ipcEvents['devtools:toggle'].payload.parse('asked')).toBe('asked');
+    expect(() => ipcEvents['devtools:toggle'].payload.parse('open')).toThrow();
   });
 
   test('an account change carries no stale registry snapshot', () => {

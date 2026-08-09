@@ -23,3 +23,9 @@ export function pushSettingsChanged(settings: Settings): void {
     window.webContents.send('settings:changed', settings);
   }
 }
+
+export function pushDevtoolsToggle(): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('devtools:toggle', 'asked');
+  }
+}

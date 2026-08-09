@@ -122,7 +122,7 @@ export const TheCableTakesTheCanvasStroke = meta.story({
   play: async ({ canvasElement }) => {
     const [cable] = await cablesDrawn(canvasElement);
 
-    await expect(paintedStyle(cable).strokeWidth).toBe('1.8px');
+    await expect(paintedStyle(cable).strokeWidth).toBe('2.6px');
     await expect(paintedStyle(cable).stroke).toBe(
       forScheme('rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.45)'),
     );
@@ -156,7 +156,7 @@ export const SelectingWidensTheCable = meta.story({
   play: async ({ canvasElement, userEvent }) => {
     const [resting] = await cablesDrawn(canvasElement);
 
-    await expect(paintedStyle(resting).strokeWidth).toBe('1.8px');
+    await expect(paintedStyle(resting).strokeWidth).toBe('2.6px');
 
     await pressTheCable(canvasElement, userEvent.click);
     await waitFor(async () => expect(drawnCables(canvasElement)).toHaveLength(4));

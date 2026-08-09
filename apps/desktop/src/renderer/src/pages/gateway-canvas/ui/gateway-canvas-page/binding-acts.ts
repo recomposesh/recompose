@@ -1,18 +1,21 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
 
+import type { XY } from '../../lib/canvas-positions';
 import type { SettledDefinition } from '../../lib/model-draft';
 import type { CanvasWorld } from './canvas-standings';
 
 import { accountName } from '../../../../entities/account';
 import { keepCanvasPositions, setNodePosition } from '../../lib/canvas-position-store';
+import { cardFitsTheView, viewportOf } from '../../lib/canvas-viewport';
 import {
   emptyDefinition,
   gatewayDefining,
   gatewayRebinding,
   gatewayReleasing,
 } from '../../lib/model-draft';
+import { seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
-import { modelIdOf } from './canvas-wiring';
+import { CARD_MEASURE, modelIdOf } from './canvas-wiring';
 
 /** The name a definition answers to out loud, which is its id until a person names it. */
 export function spokenNameOf(definition: SettledDefinition): string {
@@ -51,6 +54,68 @@ function seatedWhereTheCableLanded(world: CanvasWorld, accountId: string): () =>
   };
 }
 
+function seatOfTheBornTarget(world: CanvasWorld, accountId: string): XY | undefined {
+  const picker = world.standings.picker;
+  const at = picker !== undefined && 'at' in picker ? picker.at : undefined;
+  const alreadyStanding = world.graph.nodes.some((node) => node.id === `target:${accountId}`);
+
+  if (alreadyStanding) {
+    return undefined;
+  }
+
+  return at ?? seatForNewNode('target', world.seats);
+}
+
+function boundsAroundEveryCard(world: CanvasWorld, born: XY) {
+  const stands = [...Object.values(world.seats), born];
+  const x = Math.min(...stands.map((seat) => seat.x));
+  const y = Math.min(...stands.map((seat) => seat.y));
+
+  return {
+    x,
+    y,
+    width: Math.max(...stands.map((seat) => seat.x)) + CARD_MEASURE.width - x,
+    height: Math.max(...stands.map((seat) => seat.y)) + CARD_MEASURE.height - y,
+  };
+}
+
+/**
+ * Zooms the view out until a card born at the seat shows, and moves nothing when it already does.
+ *
+ * @summary A target born from the keyboard ask takes its column seat, which can stand past the
+ * pane at the zoom a person was working at. A composition that grew where nobody can see it reads
+ * as a pick that did nothing, so the view widens exactly then and holds still otherwise. The
+ * bounds come from the seats this side already holds rather than from the flow, because the born
+ * card reaches the flow a render after the write lands. The look itself waits two frames, since
+ * the pick also opens the inspector and the pane it narrows is the pane the card must fit.
+ */
+function fitTheBornCard(world: CanvasWorld, seat: XY): void {
+  const view = world.view.current;
+  const pane = document.querySelector('.react-flow')?.getBoundingClientRect();
+
+  if (view === null || pane === undefined) {
+    return;
+  }
+
+  if (cardFitsTheView(seat, CARD_MEASURE, viewportOf(view), pane)) {
+    return;
+  }
+
+  void view.fitBounds(boundsAroundEveryCard(world, seat), { padding: 0.1 });
+}
+
+function shownWhereItWasBorn(world: CanvasWorld, seat: XY | undefined): void {
+  if (seat === undefined) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fitTheBornCard(world, seat);
+    });
+  });
+}
+
 function committedPick(
   world: CanvasWorld,
   accountId: string,
@@ -58,12 +123,14 @@ function committedPick(
   landed: () => void,
 ): void {
   const seatTheTarget = seatedWhereTheCableLanded(world, accountId);
+  const bornAt = seatOfTheBornTarget(world, accountId);
 
   world.define.mutate(rewritten, {
     onSuccess: () => {
       world.standings.setPicker(undefined);
       seatTheTarget();
       landed();
+      shownWhereItWasBorn(world, bornAt);
     },
     onError: (failure) => {
       world.standings.setPicker(undefined);

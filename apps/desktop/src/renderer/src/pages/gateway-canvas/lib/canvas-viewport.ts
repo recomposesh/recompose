@@ -24,3 +24,27 @@ export function viewportOf(view: ShowingCanvas | null): Viewport {
 export function flowPointOf(at: XY, viewport: Viewport): XY {
   return { x: (at.x - viewport.x) / viewport.zoom, y: (at.y - viewport.y) / viewport.zoom };
 }
+
+type Measured = { width: number; height: number };
+
+/**
+ * Whether a card seated at a spot would paint whole inside a pane of the given measure.
+ *
+ * @summary The check runs the viewport forward: the seat times the zoom plus the pan is where the
+ * card's corner paints, and the card's measure times the zoom is how far it reaches. A card born
+ * outside this answer is one the person cannot see, which is what asks the view to zoom out.
+ */
+export function cardFitsTheView(
+  seat: XY,
+  card: Measured,
+  viewport: Viewport,
+  pane: Measured,
+): boolean {
+  const corner = { x: seat.x * viewport.zoom + viewport.x, y: seat.y * viewport.zoom + viewport.y };
+  const far = {
+    x: corner.x + card.width * viewport.zoom,
+    y: corner.y + card.height * viewport.zoom,
+  };
+
+  return corner.x >= 0 && corner.y >= 0 && far.x <= pane.width && far.y <= pane.height;
+}

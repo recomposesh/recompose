@@ -30,7 +30,7 @@ test('every card seats where tidy puts it on a canvas nobody arranged', async ()
 
   await expect.poll(() => seatOf(screen.container, 'gateway')).toBe('translate(0px, 0px)');
   await expect.poll(() => seatOf(screen.container, 'model:fast')).toBe('translate(320px, 0px)');
-  await expect.poll(() => seatOf(screen.container, 'target:k1')).toBe('translate(960px, 0px)');
+  await expect.poll(() => seatOf(screen.container, 'target:k1')).toBe('translate(640px, 0px)');
 });
 
 test('a malformed written arrangement falls back to the tidy seats', async () => {

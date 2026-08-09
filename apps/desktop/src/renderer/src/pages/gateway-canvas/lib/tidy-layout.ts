@@ -8,9 +8,9 @@ const COLUMN_OF_KIND: Record<CanvasNodeKind, number> = {
   gateway: 0,
   'virtual-model': 1,
   'draft-model': 1,
-  target: 3,
-  'ghost-target': 3,
-  'pending-target': 3,
+  target: 2,
+  'ghost-target': 2,
+  'pending-target': 2,
 };
 
 function columnX(kind: CanvasNodeKind): number {
@@ -21,9 +21,8 @@ function columnX(kind: CanvasNodeKind): number {
  * Where every card stands once the canvas arranges itself, read left to right by role.
  *
  * @summary A request travels from the gateway through a virtual model to a target, so the columns
- * run in that direction and a person reads the composition the way it runs. The third column
- * stays empty in every arrangement, so the routing feature seats its cards there without moving a
- * single card a person already knows the place of.
+ * run in that direction and a person reads the composition the way it runs. The columns stand one
+ * pitch apart, so a binding's cable reads at a glance instead of crossing an empty field.
  */
 export function tidyPositions(nodes: readonly CanvasNode[]): NodePositions {
   const rows = new Map<number, number>();

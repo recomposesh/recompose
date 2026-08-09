@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { flowPointOf, RESTING_VIEWPORT, viewportOf } from './canvas-viewport';
+import { cardFitsTheView, flowPointOf, RESTING_VIEWPORT, viewportOf } from './canvas-viewport';
 
 describe('where a point on the pane stands in the flow', () => {
   test('a pane point on a canvas nobody moved stands the pan away from the flow', () => {
@@ -35,5 +35,29 @@ describe('the viewport a gesture reads the canvas through', () => {
 
   test('a flow that has not mounted yet answers with the resting canvas', () => {
     expect(viewportOf(null)).toEqual(RESTING_VIEWPORT);
+  });
+});
+
+describe('whether a born card paints whole inside the pane', () => {
+  const card = { width: 158, height: 78 };
+  const pane = { width: 1000, height: 600 };
+
+  test('a card inside the resting view fits', () => {
+    expect(cardFitsTheView({ x: 100, y: 100 }, card, RESTING_VIEWPORT, pane)).toBe(true);
+  });
+
+  test('a card seated past the pane edge does not fit', () => {
+    expect(cardFitsTheView({ x: 940, y: 100 }, card, RESTING_VIEWPORT, pane)).toBe(false);
+  });
+
+  test('a card the pan pushed off the top does not fit', () => {
+    expect(cardFitsTheView({ x: 100, y: 10 }, card, { x: 0, y: -100, zoom: 1 }, pane)).toBe(false);
+  });
+
+  test('zooming out brings a far card back inside', () => {
+    const far = { x: 1400, y: 200 };
+
+    expect(cardFitsTheView(far, card, { x: 0, y: 0, zoom: 1 }, pane)).toBe(false);
+    expect(cardFitsTheView(far, card, { x: 0, y: 0, zoom: 0.5 }, pane)).toBe(true);
   });
 });
