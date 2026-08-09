@@ -20,6 +20,7 @@ import {
   accountsQueryOptions,
   bindAccountChangesToCache,
   bindEngineStatesToCache,
+  bindEngineTrafficToCache,
   bindSettingsToCache,
   engineStatesQueryOptions,
   gatewaysQueryOptions,
@@ -76,6 +77,19 @@ function useWindowBand(sidebarAway: boolean): void {
   }, [sidebarAway]);
 }
 
+/**
+ * Points every push the main process makes at the query cache, for as long as the window stands.
+ *
+ * @summary Each push carries a whole snapshot, so the cache is written rather than reconciled and
+ * a screen reads the same answer whether it asked or was told.
+ */
+function usePushedCaches(queryClient: QueryClient): void {
+  useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineTrafficToCache(queryClient), [queryClient]);
+  useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
+  useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
+}
+
 function useDevtoolsAsked(): boolean {
   const [asked, setAsked] = useState(false);
 
@@ -102,9 +116,7 @@ function RootLayout() {
 
   useTitleBarDoubleClick();
 
-  useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
-  useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
-  useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
+  usePushedCaches(queryClient);
   useWindowBand(sidebarAway);
 
   return (

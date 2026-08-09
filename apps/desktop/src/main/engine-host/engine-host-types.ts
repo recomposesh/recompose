@@ -5,6 +5,7 @@ import type {
   EngineStates,
   EngineSubscriptionCredentialUpdated,
   GatewayEngineState,
+  GatewayTraffic,
   KeyCheckReport,
   KeyProviderId,
   LookCustody,
@@ -33,6 +34,7 @@ export type EngineHostDeps = {
     accountId: string,
     credential: string,
   ) => Promise<void>;
+  onTraffic?: (traffic: GatewayTraffic) => void;
 };
 
 export type EngineHost = {

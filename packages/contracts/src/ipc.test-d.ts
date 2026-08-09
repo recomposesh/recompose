@@ -231,9 +231,10 @@ describe('push surface totality', () => {
     expectTypeOf<keyof RecomposeIpcEvents>().toEqualTypeOf<IpcEvent>();
   });
 
-  test('the state, account-change, and canvas pushes are the complete event vocabulary', () => {
+  test('the state, traffic, account-change, and canvas pushes are the complete vocabulary', () => {
     expectTypeOf<IpcEvent>().toEqualTypeOf<
       | 'engine:state'
+      | 'engine:traffic'
       | 'accounts:changed'
       | 'canvas:command'
       | 'settings:changed'

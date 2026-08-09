@@ -3,6 +3,7 @@ import type { EngineGateway, GatewayEngineState } from '@recompose/contracts';
 import type { SpendGrantFor } from './gateway-app';
 import type { GatewayListeners, openGatewayListeners } from './gateway-listener';
 import type { SubscriptionRuntime } from './gateway-proxy';
+import type { NoteTraffic } from './gateway-traffic';
 import type { PluginHost } from './plugin-host';
 
 import { createGatewayApp } from './gateway-app';
@@ -50,6 +51,7 @@ export function createEngineRuntime(
   fetchLike: typeof fetch = globalThis.fetch,
   subscriptions?: SubscriptionRuntime,
   plugins?: PluginHost,
+  note?: NoteTraffic,
 ): EngineRuntime {
   const serving = new Map<string, GatewayListeners>();
   const inTurn = oneTurnPerGateway();
@@ -64,6 +66,7 @@ export function createEngineRuntime(
         undefined,
         undefined,
         plugins,
+        note,
       ),
       gateway.port,
     );

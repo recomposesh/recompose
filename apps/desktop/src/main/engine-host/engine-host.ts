@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 import type { EngineLooks } from './engine-looks';
 import type { SpendGrantFor } from './engine-spend';
+import type { TrafficDesk } from './traffic-ledger';
 
 import {
   answerLook,
@@ -25,6 +26,7 @@ import {
 import { answerSpendRequest } from './engine-spend';
 import { allStopped, foldEngineReport } from './engine-state-ledger';
 import { createGatewayOrder } from './gateway-order';
+import { openTrafficDesk } from './traffic-ledger';
 
 export const DIRECTIVE_TIMEOUT_MS = 5000;
 
@@ -47,6 +49,7 @@ type Resident = {
   subscribers: Set<StateListener>;
   awaitingReport: Map<string, Waiter>;
   looks: EngineLooks;
+  traffic: TrafficDesk;
 };
 
 function publish(resident: Resident, next: EngineStates): void {
@@ -94,6 +97,10 @@ function routeReport(resident: Resident, report: EngineReport): void {
 }
 
 function receiveMessage(resident: Resident, child: EngineChild, message: unknown): void {
+  if (resident.traffic.hears(message)) {
+    return;
+  }
+
   const report = engineReportSchema.safeParse(message);
 
   if (report.success) {
@@ -187,6 +194,10 @@ async function sendDirective(
   const engine = runningChild(resident);
   const slug = gatewayOf(directive);
 
+  if (directive.kind === 'start') {
+    resident.traffic.keepOnly(directive.gateway);
+  }
+
   return new Promise<GatewayEngineState>((answer, refuse) => {
     const giveUp = setTimeout(() => {
       resident.awaitingReport.delete(directive.id);
@@ -244,6 +255,7 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     subscribers: new Set(),
     awaitingReport: new Map(),
     looks: openEngineLooks(),
+    traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
   };
   const inGatewayOrder = createGatewayOrder();
 

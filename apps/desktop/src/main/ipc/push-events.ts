@@ -1,10 +1,16 @@
-import type { EngineStates, IpcEventPayload, Settings } from '@recompose/contracts';
+import type { EngineStates, GatewayTraffic, IpcEventPayload, Settings } from '@recompose/contracts';
 
 import { BrowserWindow } from 'electron';
 
 export function pushEngineStates(states: EngineStates): void {
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send('engine:state', states);
+  }
+}
+
+export function pushEngineTraffic(traffic: GatewayTraffic): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('engine:traffic', traffic);
   }
 }
 

@@ -5,6 +5,7 @@ export * from './transport-policy';
 export * from './non-blank';
 export * from './gateway-config';
 export * from './engine-state';
+export * from './engine-traffic';
 export * from './api-keys';
 export * from './local-runtimes';
 export * from './engine-protocol';

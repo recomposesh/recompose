@@ -1,9 +1,10 @@
-import type { SubscriptionAccountView, VirtualModel } from '@recompose/contracts';
+import type { GatewayTraffic, SubscriptionAccountView, VirtualModel } from '@recompose/contracts';
 
+import { ipcEvents } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import { installFakeBridge } from './fake-bridge';
-import { gatewaySeed } from './fake-gateways';
+import { emitEngineTraffic, gatewaySeed } from './fake-gateways';
 
 async function saving(gateway: ReturnType<typeof gatewaySeed>) {
   return window.recompose['gateways:save'](gateway);
@@ -42,6 +43,42 @@ async function heldSubscriptions() {
 
   return answer.ok ? answer.value : [];
 }
+
+test('the fake event bridge carries every push the real one does', () => {
+  installFakeBridge();
+
+  expect(Object.keys(window.recomposeEvents)).toEqual(Object.keys(ipcEvents));
+});
+
+test('a pushed traffic snapshot reaches whatever is listening for it', () => {
+  installFakeBridge();
+
+  const heard: GatewayTraffic[] = [];
+  const letGo = window.recomposeEvents['engine:traffic']((traffic) => {
+    heard.push(traffic);
+  });
+  const flowed: GatewayTraffic = { codex: { fast: { outcome: 'served', at: 1_754_600_000_000 } } };
+
+  emitEngineTraffic(flowed);
+  letGo();
+  emitEngineTraffic({});
+
+  expect(heard).toEqual([flowed]);
+});
+
+test('a fresh bridge forgets the traffic listeners the run before it left behind', () => {
+  installFakeBridge();
+
+  const heard: GatewayTraffic[] = [];
+
+  window.recomposeEvents['engine:traffic']((traffic) => {
+    heard.push(traffic);
+  });
+  installFakeBridge();
+  emitEngineTraffic({ codex: { fast: { outcome: 'served', at: 1 } } });
+
+  expect(heard).toEqual([]);
+});
 
 test('a gateway with no name is refused, the way the real boundary refuses it', async () => {
   installFakeBridge();

@@ -1,8 +1,13 @@
-import type { EngineStates } from '@recompose/contracts';
+import type { EngineStates, GatewayTraffic } from '@recompose/contracts';
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { pushAccountsChanged, pushCanvasCommand, pushEngineStates } from './push-events';
+import {
+  pushAccountsChanged,
+  pushCanvasCommand,
+  pushEngineStates,
+  pushEngineTraffic,
+} from './push-events';
 
 type Delivery = { channel: string; payload: unknown };
 
@@ -57,6 +62,19 @@ describe('telling the open windows what changed', () => {
 
     expect(first).toEqual([{ channel: 'engine:state', payload: states }]);
     expect(second).toEqual([{ channel: 'engine:state', payload: states }]);
+  });
+
+  test('a fresh traffic snapshot reaches every open window', () => {
+    const first = openWindow();
+    const second = openWindow();
+    const traffic: GatewayTraffic = {
+      'my-gateway': { fast: { outcome: 'served', at: 1_754_600_000_000 } },
+    };
+
+    pushEngineTraffic(traffic);
+
+    expect(first).toEqual([{ channel: 'engine:traffic', payload: traffic }]);
+    expect(second).toEqual([{ channel: 'engine:traffic', payload: traffic }]);
   });
 
   test('a changed account list reaches every open window', () => {
