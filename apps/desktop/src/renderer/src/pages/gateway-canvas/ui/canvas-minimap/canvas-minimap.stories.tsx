@@ -15,9 +15,14 @@ const seats = [
   seat('pending', 'pending-target', 'Pending', { x: 480, y: 320 }),
 ];
 
+const cables = [
+  { id: 'cable:sonnet', source: 'model:sonnet', target: 'target:anthropic' },
+  { id: 'wire:model:sonnet', source: 'gateway', target: 'model:sonnet' },
+];
+
 const meta = preview.meta({
   component: CanvasMinimap,
-  decorators: [inCanvasFlow(seats, { x: 20, y: 20, zoom: 0.5 })],
+  decorators: [inCanvasFlow(seats, { x: 20, y: 20, zoom: 0.5 }, cables)],
 });
 
 const mapLabel = { name: 'Canvas map' };
@@ -93,6 +98,22 @@ export const TheMapClearsTheSeparatorsReach = meta.story({
 
     await expect(inset).toBeGreaterThan(separatorReach);
     await expect(inset).toBe(16);
+  },
+});
+
+/** The map draws the composition's cables beside its cards, the way the reference pictures it. */
+export const TheMapDrawsTheCables = meta.story({
+  play: async ({ canvas }) => {
+    const map = await canvas.findByRole('img', mapLabel);
+    const wires = [...map.querySelectorAll('path[vector-effect="non-scaling-stroke"]')];
+
+    await expect(wires).toHaveLength(2);
+
+    for (const wire of wires) {
+      await expect(paintedStyle(wire).stroke).toBe(
+        forScheme('rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.45)'),
+      );
+    }
   },
 });
 

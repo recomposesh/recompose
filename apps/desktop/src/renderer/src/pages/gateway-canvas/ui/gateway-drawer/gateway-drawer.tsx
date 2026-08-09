@@ -8,7 +8,7 @@ import type { IconName } from '../../../../shared/ui';
 import type { SettledDefinition } from '../../lib/model-draft';
 import type { ServedModel } from '../../model/served-models';
 
-import { accountKindTitle, accountName } from '../../../../entities/account';
+import { accountIdentity, accountKindTitle, accountName } from '../../../../entities/account';
 import {
   accountsQueryOptions,
   engineStatesQueryOptions,
@@ -161,7 +161,7 @@ function modelBody(
     { glyph: 'spark', kicker, name: model.displayName, line: model.id },
     <div className="mt-3.5 field-box">
       {factRow('Model id', model.id, <CopyButton label="Copy model id" value={model.id} />)}
-      {factRow('Target', account === undefined ? model.target.accountId : accountName(account))}
+      {factRow('Target', account === undefined ? model.target.accountId : accountIdentity(account))}
       {factRow('Model', model.target.providerModel)}
     </div>,
   );

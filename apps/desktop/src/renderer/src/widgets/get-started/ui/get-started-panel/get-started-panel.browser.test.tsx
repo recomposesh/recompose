@@ -1,4 +1,6 @@
-import { defaultSettings } from '@recompose/contracts';
+import type { AccountsDocument } from '@recompose/contracts';
+
+import { ACCOUNTS_VERSION, defaultSettings } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Suspense } from 'react';
 import { beforeEach, expect, test } from 'vitest';
@@ -16,6 +18,22 @@ import { emitSettingsChanged, gatewaySeed, installFakeBridge } from '../../../..
 import { GetStartedPanel } from './get-started-panel';
 
 const codex = gatewaySeed({ slug: 'codex', displayName: 'Codex', port: 51234 });
+
+const composedGateway = gatewaySeed({
+  slug: 'codex',
+  displayName: 'Codex',
+  port: 51234,
+  virtualModels: [
+    { id: 'fast', displayName: 'Fast', target: { accountId: 'k1', providerModel: 'sonnet' } },
+  ],
+});
+
+const oneConnectedAccount: AccountsDocument = {
+  schemaVersion: ACCOUNTS_VERSION,
+  accounts: [
+    { id: 'k1', provider: 'anthropic', kind: 'api-key', label: 'work', credentialRef: 'c1' },
+  ],
+};
 
 async function renderPanel(parameters: BridgeParameters = {}) {
   installFakeBridge(parameters);
@@ -141,6 +159,41 @@ test('a stored skip keeps the checklist away on the next session', async () => {
   await expect
     .element(screen.getByRole('heading', { name: 'Get started' }))
     .not.toBeInTheDocument();
+});
+
+test('finishing the last step celebrates with confetti and puts the checklist away', async () => {
+  const screen = await renderPanel({
+    gateways: [composedGateway],
+    accounts: oneConnectedAccount,
+  });
+
+  await expect.element(screen.getByText('3 of 4')).toBeVisible();
+
+  emitSettingsChanged({ ...defaultSettings(), firstRequestServed: true });
+
+  await expect
+    .poll(() => screen.container.querySelectorAll('.confetti-piece').length)
+    .toBeGreaterThan(0);
+  await expect
+    .element(screen.getByRole('heading', { name: 'Get started' }))
+    .not.toBeInTheDocument();
+});
+
+test('a checklist reopened after completion stands still rather than vanishing again', async () => {
+  const screen = await renderPanel({
+    gateways: [composedGateway],
+    accounts: oneConnectedAccount,
+    settings: { ...defaultSettings(), firstRequestServed: true },
+  });
+
+  await expect.element(screen.getByText('4 of 4')).toBeVisible();
+
+  await new Promise((rest) => {
+    setTimeout(rest, 1600);
+  });
+
+  await expect.element(screen.getByRole('heading', { name: 'Get started' })).toBeVisible();
+  expect(screen.container.querySelectorAll('.confetti-piece')).toHaveLength(0);
 });
 
 test('a settings push from outside the window brings the checklist back', async () => {

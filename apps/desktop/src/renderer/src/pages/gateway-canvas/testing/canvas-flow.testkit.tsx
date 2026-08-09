@@ -1,5 +1,5 @@
 import type { Decorator } from '@storybook/react-vite';
-import type { Node, NodeProps, NodeTypes, Viewport } from '@xyflow/react';
+import type { Edge, Node, NodeProps, NodeTypes, Viewport } from '@xyflow/react';
 import type { ReactElement } from 'react';
 
 import { ReactFlow } from '@xyflow/react';
@@ -114,12 +114,17 @@ export function cardOnCanvas(
  * @summary Reach for it in any story of a component the flow provides context to. The cards stand
  * where the story put them, so a measurement reads the same on every run.
  */
-export function inCanvasFlow(seats: readonly Node[], viewport: Viewport): Decorator {
+export function inCanvasFlow(
+  seats: readonly Node[],
+  viewport: Viewport,
+  cables: readonly Edge[] = [],
+): Decorator {
   return function CanvasPane(Story) {
     return (
       <div className="h-96 w-160 bg-surface-content dot-grid">
         <ReactFlow
           defaultViewport={viewport}
+          edges={[...cables]}
           nodeTypes={cards}
           nodes={[...seats]}
           nodesDraggable={false}

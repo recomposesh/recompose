@@ -9,10 +9,56 @@ import {
   settingsQueryOptions,
   useSettingsWriter,
 } from '../../../../shared/api';
+import { useCompletionCelebration } from '../../lib/get-started-celebration';
 import { getStartedCollapsed, subscribeToGetStartedCollapse } from '../../lib/get-started-collapse';
 import { getStartedSteps } from '../../lib/get-started-steps';
 import { ChecklistHeader } from '../checklist-header/checklist-header';
 import { ChecklistSteps } from '../checklist-steps/checklist-steps';
+
+const confetti = [
+  { at: 0, tint: 'var(--color-node-gateway)', drift: '-64px', delay: '0ms' },
+  { at: 1, tint: 'var(--color-node-virtual-model)', drift: '-40px', delay: '60ms' },
+  { at: 2, tint: 'var(--color-node-target)', drift: '-18px', delay: '20ms' },
+  { at: 3, tint: 'var(--color-running)', drift: '4px', delay: '90ms' },
+  { at: 4, tint: 'var(--color-node-gateway)', drift: '26px', delay: '40ms' },
+  { at: 5, tint: 'var(--color-node-virtual-model)', drift: '48px', delay: '110ms' },
+  { at: 6, tint: 'var(--color-node-target)', drift: '68px', delay: '10ms' },
+  { at: 7, tint: 'var(--color-running)', drift: '-52px', delay: '130ms' },
+  { at: 8, tint: 'var(--color-node-virtual-model)', drift: '14px', delay: '70ms' },
+  { at: 9, tint: 'var(--color-node-target)', drift: '-28px', delay: '150ms' },
+  { at: 10, tint: 'var(--color-running)', drift: '38px', delay: '30ms' },
+  { at: 11, tint: 'var(--color-node-gateway)', drift: '58px', delay: '170ms' },
+];
+
+function confettiBurst(): ReactNode {
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0">
+      {confetti.map((piece) => (
+        <i
+          className="confetti-piece"
+          key={piece.at}
+          style={{
+            '--confetti-tint': piece.tint,
+            '--confetti-drift': piece.drift,
+            animationDelay: piece.delay,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function foldRows(collapsed: boolean, steps: ReactNode): ReactNode {
+  return (
+    <div
+      className={`fold-rows ${collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'}`}
+      inert={collapsed || undefined}
+      style={{ visibility: collapsed ? 'hidden' : 'visible' }}
+    >
+      <div className="min-h-0 overflow-hidden">{steps}</div>
+    </div>
+  );
+}
 
 function progressLine(done: number, total: number): ReactNode {
   return (
@@ -46,11 +92,6 @@ export function GetStartedPanel() {
   const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const { save } = useSettingsWriter();
   const collapsed = useSyncExternalStore(subscribeToGetStartedCollapse, getStartedCollapsed);
-
-  if (!settings.showOnboardingChecklist) {
-    return null;
-  }
-
   const steps = getStartedSteps({
     gatewayExists: gateways.length > 0,
     providerConnected: registry.accounts.length > 0,
@@ -58,28 +99,31 @@ export function GetStartedPanel() {
     firstRequestServed: settings.firstRequestServed,
   });
   const done = steps.filter((step) => step.state === 'done').length;
+  const celebrating = useCompletionCelebration(done === steps.length, () => {
+    save({ showOnboardingChecklist: false });
+  });
+
+  if (!settings.showOnboardingChecklist) {
+    return null;
+  }
 
   return (
     <section
       aria-labelledby={headingId}
-      className="rounded-panel border border-line-subtle bg-surface-card px-3 pt-2.5 pb-1.5"
+      className="relative rounded-panel border border-line-subtle bg-surface-card px-3 pt-2.5 pb-1.5"
     >
+      {celebrating && confettiBurst()}
       <ChecklistHeader collapsed={collapsed} headingId={headingId} />
       {progressLine(done, steps.length)}
-      <div
-        className={`fold-rows ${collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'}`}
-        inert={collapsed || undefined}
-        style={{ visibility: collapsed ? 'hidden' : 'visible' }}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <ChecklistSteps
-            steps={steps}
-            onSkip={() => {
-              save({ showOnboardingChecklist: false });
-            }}
-          />
-        </div>
-      </div>
+      {foldRows(
+        collapsed,
+        <ChecklistSteps
+          steps={steps}
+          onSkip={() => {
+            save({ showOnboardingChecklist: false });
+          }}
+        />,
+      )}
     </section>
   );
 }
