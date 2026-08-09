@@ -2,6 +2,7 @@ import type { SpendGrant } from '@recompose/contracts';
 
 import type { Crossing, JsonObject, ProviderDialect, ProxyDialect } from '../gateway-wire';
 
+import { prepareClaudeReplay } from './claude-replay-runtime';
 import {
   geminiInteractionsBody,
   geminiInteractionsHeaders as interactionsHeaders,
@@ -105,6 +106,7 @@ function aiStudioBody(crossing: Crossing, body: JsonObject): JsonObject {
 
 const BODY_BUILDERS = new Map<string, BodyBuilder>([
   ['aistudio', aiStudioBody],
+  ['anthropic', prepareClaudeReplay],
   ['gemini', (crossing, body) => cappedGeminiOutput(body, crossing.providerModel)],
   ['xai', xaiBody],
   ['vertex', (crossing, body) => vertexProviderBody(body, crossing)],
