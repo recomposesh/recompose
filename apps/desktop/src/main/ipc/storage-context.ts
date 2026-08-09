@@ -15,6 +15,8 @@ export type StorageIpcContext = {
   isEncryptionAvailable: () => boolean;
   onCorrupt: (quarantinedPath: string) => void;
   applySettings: (settings: Settings, askedLoginItem: boolean | undefined) => void;
+  /** A saved document reaches every window and the application menu through this report. */
+  onSettingsWritten: (settings: Settings) => void;
   /** A stored gateway serves at once, and the outcome reaches the screen by push rather than here. */
   startGateway: (gateway: EngineGateway) => void;
   /** A rewritten gateway serves its fresh snapshot, which only a restart puts in front of it. */

@@ -53,7 +53,7 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
           waitsFor="request logging"
           where="grouped"
         />
-        <InspectorToggle available where="grouped" />
+        <InspectorToggle where="grouped" />
       </span>
     </div>
   );

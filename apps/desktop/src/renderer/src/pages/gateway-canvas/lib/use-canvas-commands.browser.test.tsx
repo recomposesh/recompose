@@ -21,6 +21,7 @@ beforeEach(() => {
   window.recomposeEvents = {
     'engine:state': () => () => undefined,
     'accounts:changed': () => () => undefined,
+    'settings:changed': () => () => undefined,
     'canvas:command': (listener) => {
       listeners.add(listener);
 

@@ -20,8 +20,10 @@ import {
   accountsQueryOptions,
   bindAccountChangesToCache,
   bindEngineStatesToCache,
+  bindSettingsToCache,
   engineStatesQueryOptions,
   gatewaysQueryOptions,
+  settingsQueryOptions,
 } from '../../shared/api';
 import { sidebarHidden, subscribeToSidebarVisibility } from '../../shared/lib';
 import { SidebarEdge, SidebarToggle } from '../../shared/ui';
@@ -51,6 +53,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       context.queryClient.ensureQueryData(gatewaysQueryOptions),
       context.queryClient.ensureQueryData(engineStatesQueryOptions),
       context.queryClient.ensureQueryData(accountsQueryOptions),
+      context.queryClient.ensureQueryData(settingsQueryOptions),
     ]);
   },
   component: RootLayout,
@@ -71,7 +74,7 @@ function RootLayout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const router = useRouter();
-  const { create, getStarted, at } = Route.useSearch();
+  const { create } = Route.useSearch();
   const { slug } = useParams({ strict: false });
   const providers = useMatch({ from: '/providers', shouldThrow: false });
   const sidebarAway = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
@@ -80,6 +83,7 @@ function RootLayout() {
 
   useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
+  useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
 
   useEffect(() => {
     void window.recompose['system:window-band'](sidebarAway ? 'toolbar' : 'sidebar');
@@ -93,7 +97,6 @@ function RootLayout() {
         onNewGateway={() => {
           void navigate({ to: '/', search: withSheet });
         }}
-        restoreGetStarted={getStarted === true ? (at ?? 'asked') : undefined}
       />
       <SidebarEdge />
       <main className="relative flex flex-1 flex-col overflow-hidden bg-surface-content text-body">

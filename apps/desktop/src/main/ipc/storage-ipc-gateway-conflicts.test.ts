@@ -38,6 +38,7 @@ async function freshContext(started: EngineGateway[]): Promise<StorageIpcContext
     getCodec: () => fakeCodec,
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
+    onSettingsWritten: () => undefined,
     applySettings: () => undefined,
     readLoginItem: () => false,
     startGateway: (gateway) => {

@@ -13,7 +13,7 @@ function standAs(open: boolean) {
 
 const meta = preview.meta({
   component: InspectorToggle,
-  args: { available: true, where: 'standing' as const },
+  args: { where: 'standing' as const },
   decorators: [
     (Story) => (
       <div className="flex justify-center bg-surface-toolbar p-4">
@@ -53,19 +53,6 @@ export const Closed = meta.story({
     });
 
     standAs(true);
-  },
-});
-
-/**
- * The control on a surface that carries no inspector at all.
- *
- * @summary It stays in the strip rather than disappearing, so the row keeps its shape as a person
- * moves between a gateway and a screen that has none, and it says plainly that it cannot be used.
- */
-export const Unavailable = meta.story({
-  args: { available: false },
-  play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: 'Inspector' })).toBeDisabled();
   },
 });
 

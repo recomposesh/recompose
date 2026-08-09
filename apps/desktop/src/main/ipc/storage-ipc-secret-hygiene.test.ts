@@ -34,6 +34,7 @@ async function freshContext(
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
     applySettings: () => undefined,
+    onSettingsWritten: () => undefined,
     readLoginItem: () => false,
     startGateway: () => undefined,
     restartGateway: () => undefined,

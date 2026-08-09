@@ -5,9 +5,14 @@ import { ipcChannels, ipcEvents, type IpcEvent } from './ipc';
 const runningState = { status: 'running' };
 
 describe('the lifecycle push', () => {
-  const eventNames: IpcEvent[] = ['engine:state', 'accounts:changed', 'canvas:command'];
+  const eventNames: IpcEvent[] = [
+    'engine:state',
+    'accounts:changed',
+    'canvas:command',
+    'settings:changed',
+  ];
 
-  test('exactly the state, account-change, and canvas pushes exist', () => {
+  test('exactly the state, account-change, canvas, and settings pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -46,5 +51,24 @@ describe('the lifecycle push', () => {
     expect(() => {
       ipcEvents['accounts:changed'].payload.parse({ accounts: [] });
     }).toThrow();
+  });
+});
+
+describe('the settings push', () => {
+  test('it carries the whole document, so a missed push heals on the next', () => {
+    const document = {
+      schemaVersion: 5,
+      theme: 'dark',
+      launchAtLogin: false,
+      showInMenuBar: true,
+      firstRequestServed: true,
+      showOnboardingChecklist: false,
+    };
+
+    expect(ipcEvents['settings:changed'].payload.parse(document)).toEqual(document);
+  });
+
+  test('it refuses a delta a subscriber would have to merge', () => {
+    expect(() => ipcEvents['settings:changed'].payload.parse({ theme: 'dark' })).toThrow();
   });
 });

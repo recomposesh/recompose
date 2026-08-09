@@ -1,3 +1,4 @@
+import { defaultSettings } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Suspense } from 'react';
 import { beforeEach, expect, test } from 'vitest';
@@ -5,13 +6,18 @@ import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../../shared/testing';
 
-import { accountsQueryOptions, gatewaysQueryOptions } from '../../../../shared/api';
-import { gatewaySeed, installFakeBridge } from '../../../../shared/testing';
+import {
+  accountsQueryOptions,
+  bindSettingsToCache,
+  gatewaysQueryOptions,
+  settingsQueryOptions,
+} from '../../../../shared/api';
+import { emitSettingsChanged, gatewaySeed, installFakeBridge } from '../../../../shared/testing';
 import { GetStartedPanel } from './get-started-panel';
 
 const codex = gatewaySeed({ slug: 'codex', displayName: 'Codex', port: 51234 });
 
-async function renderPanel(parameters: BridgeParameters = {}, restoreRequest?: string) {
+async function renderPanel(parameters: BridgeParameters = {}) {
   installFakeBridge(parameters);
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -19,12 +25,14 @@ async function renderPanel(parameters: BridgeParameters = {}, restoreRequest?: s
   await Promise.all([
     queryClient.ensureQueryData(gatewaysQueryOptions),
     queryClient.ensureQueryData(accountsQueryOptions),
+    queryClient.ensureQueryData(settingsQueryOptions),
   ]);
+  bindSettingsToCache(queryClient);
 
   return render(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<p>Loading…</p>}>
-        <GetStartedPanel restoreRequest={restoreRequest} />
+        <GetStartedPanel />
       </Suspense>
     </QueryClientProvider>,
   );
@@ -49,6 +57,15 @@ test('the checklist stands on the step the session has reached', async () => {
   await expect
     .element(screen.getByText('Connect a provider'))
     .toHaveAttribute('aria-current', 'step');
+});
+
+test('a served request completes the last step without a record of its own', async () => {
+  const screen = await renderPanel({
+    gateways: [codex],
+    settings: { ...defaultSettings(), firstRequestServed: true },
+  });
+
+  await expect.element(screen.getByText('2 of 4')).toBeVisible();
 });
 
 test('folding the checklist keeps its header and its progress and drops the rest', async () => {
@@ -105,7 +122,7 @@ test('opening a folded checklist brings its steps back for good', async () => {
   await expect.element(second.getByText('Create a gateway')).toBeVisible();
 });
 
-test('skipping the setup takes the whole checklist away', async () => {
+test('skipping the setup takes the whole checklist away by storing the choice', async () => {
   const screen = await renderPanel({ gateways: [codex] });
 
   await screen.getByRole('button', { name: 'Skip setup' }).click();
@@ -115,26 +132,24 @@ test('skipping the setup takes the whole checklist away', async () => {
     .not.toBeInTheDocument();
 });
 
-test('a checklist the person skipped stays away on the next session', async () => {
-  const first = await renderPanel({ gateways: [codex] });
-
-  await first.getByRole('button', { name: 'Skip setup' }).click();
-  await first.unmount();
-
-  const second = await renderPanel({ gateways: [codex] });
+test('a stored skip keeps the checklist away on the next session', async () => {
+  const screen = await renderPanel({
+    gateways: [codex],
+    settings: { ...defaultSettings(), showOnboardingChecklist: false },
+  });
 
   await expect
-    .element(second.getByRole('heading', { name: 'Get started' }))
+    .element(screen.getByRole('heading', { name: 'Get started' }))
     .not.toBeInTheDocument();
 });
 
-test('asking for the checklist again brings it back', async () => {
-  const first = await renderPanel({ gateways: [codex] });
+test('a settings push from outside the window brings the checklist back', async () => {
+  const screen = await renderPanel({
+    gateways: [codex],
+    settings: { ...defaultSettings(), showOnboardingChecklist: false },
+  });
 
-  await first.getByRole('button', { name: 'Skip setup' }).click();
-  await first.unmount();
+  emitSettingsChanged({ ...defaultSettings(), showOnboardingChecklist: true });
 
-  const second = await renderPanel({ gateways: [codex] }, '7');
-
-  await expect.element(second.getByRole('heading', { name: 'Get started' })).toBeVisible();
+  await expect.element(screen.getByRole('heading', { name: 'Get started' })).toBeVisible();
 });

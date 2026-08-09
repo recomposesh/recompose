@@ -11,8 +11,8 @@ beforeEach(() => {
   }
 });
 
-async function renderToggle(available = true) {
-  return render(<InspectorToggle available={available} where="standing" />);
+async function renderToggle() {
+  return render(<InspectorToggle where="standing" />);
 }
 
 const theToggle = { name: 'Inspector' };
@@ -46,15 +46,6 @@ test('the control follows a change nothing on it made, so the two never disagree
 
   toggleInspector();
 
-  await expect
-    .element(screen.getByRole('button', theToggle))
-    .toHaveAttribute('aria-expanded', 'false');
-});
-
-test('a surface carrying no inspector holds the control unmovable rather than dropping it', async () => {
-  const screen = await renderToggle(false);
-
-  await expect.element(screen.getByRole('button', theToggle)).toBeDisabled();
   await expect
     .element(screen.getByRole('button', theToggle))
     .toHaveAttribute('aria-expanded', 'false');

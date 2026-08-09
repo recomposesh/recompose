@@ -21,6 +21,7 @@ import {
   listenForEngineStates,
 } from './fake-gateways';
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
+import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
 
 const emptyDocument: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accounts: [] };
@@ -65,6 +66,7 @@ function settingsHandlers(seed: Settings): SettingsHandlers {
     'settings:get': async () => Promise.resolve({ ok: true, value: stored }),
     'settings:save': async (patch) => {
       stored = withSettingsPatch(stored, patch);
+      emitSettingsChanged(stored);
 
       return Promise.resolve({ ok: true, value: stored });
     },
@@ -85,6 +87,7 @@ function eventBridge(): RecomposeIpcEvents {
     'engine:state': (listener) => listenForEngineStates(listener),
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
+    'settings:changed': (listener) => listenForSettingsChanges(listener),
   };
 }
 

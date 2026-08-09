@@ -1,6 +1,5 @@
 export type RootSearch = {
   create?: true;
-  getStarted?: true;
   at?: string;
 };
 
@@ -21,10 +20,6 @@ export function surfaceRequest(search: Record<string, unknown>): RootSearch {
     request.create = true;
   }
 
-  if (asked(search['getStarted'])) {
-    request.getStarted = true;
-  }
-
   if (at !== undefined) {
     request.at = at;
   }
@@ -40,10 +35,6 @@ export function withSheet(previous: RootSearch): RootSearch {
 /** Closes the creation sheet, keeping whatever else the search already carries. */
 export function withoutSheet(previous: RootSearch): RootSearch {
   const remaining: RootSearch = {};
-
-  if (previous.getStarted === true) {
-    remaining.getStarted = true;
-  }
 
   if (previous.at !== undefined) {
     remaining.at = previous.at;

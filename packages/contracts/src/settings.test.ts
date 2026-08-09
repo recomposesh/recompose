@@ -10,12 +10,14 @@ import {
 } from './settings';
 
 describe('app settings', () => {
-  test('defaults: system theme and every switch off', () => {
+  test('defaults: system theme, every switch off, and no request served yet', () => {
     expect(defaultSettings()).toEqual({
       schemaVersion: SETTINGS_VERSION,
       theme: 'system',
       launchAtLogin: false,
       showInMenuBar: false,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
     });
   });
 
@@ -25,6 +27,8 @@ describe('app settings', () => {
       theme: 'dark',
       launchAtLogin: true,
       showInMenuBar: true,
+      firstRequestServed: true,
+      showOnboardingChecklist: false,
     };
 
     expect(loadSettings(stored)).toEqual(stored);
@@ -50,6 +54,45 @@ describe('app settings', () => {
   });
 });
 
+describe('a stored version 4 document, the shape written before requests were tracked', () => {
+  test('it gains the first-session records, keeping every choice', () => {
+    const storedUnderVersionFour = {
+      schemaVersion: 4,
+      theme: 'dark',
+      launchAtLogin: true,
+      showInMenuBar: true,
+    };
+
+    expect(loadSettings(storedUnderVersionFour)).toEqual({
+      schemaVersion: SETTINGS_VERSION,
+      theme: 'dark',
+      launchAtLogin: true,
+      showInMenuBar: true,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
+    });
+  });
+
+  const versionFourDocuments = fc.record({
+    schemaVersion: fc.constant(4),
+    theme: fc.constantFrom('system', 'light', 'dark'),
+    launchAtLogin: fc.boolean(),
+    showInMenuBar: fc.boolean(),
+  });
+
+  test.prop([versionFourDocuments])(
+    'every version 4 document keeps its choices and reads as never having served',
+    (storedUnderVersionFour) => {
+      expect(loadSettings(storedUnderVersionFour)).toEqual({
+        ...storedUnderVersionFour,
+        schemaVersion: SETTINGS_VERSION,
+        firstRequestServed: false,
+        showOnboardingChecklist: true,
+      });
+    },
+  );
+});
+
 describe('a stored version 3 document, the shape written while the token switch existed', () => {
   test('the retired switch is dropped rather than reported as damage', () => {
     const storedUnderVersionThree = {
@@ -65,6 +108,8 @@ describe('a stored version 3 document, the shape written while the token switch 
       theme: 'dark',
       launchAtLogin: true,
       showInMenuBar: true,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
     });
   });
 
@@ -85,6 +130,8 @@ describe('a stored version 3 document, the shape written while the token switch 
       expect(loadSettings(storedUnderVersionThree)).toEqual({
         ...whatSurvives,
         schemaVersion: SETTINGS_VERSION,
+        firstRequestServed: false,
+        showOnboardingChecklist: true,
       });
     },
   );
@@ -106,6 +153,8 @@ describe('a stored version 2 document, the shape a real profile holds', () => {
       theme: 'system',
       launchAtLogin: false,
       showInMenuBar: true,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
     });
   });
 
@@ -128,6 +177,8 @@ describe('a stored version 2 document, the shape a real profile holds', () => {
       expect(loadSettings(storedUnderVersionTwo)).toEqual({
         ...whatSurvives,
         schemaVersion: SETTINGS_VERSION,
+        firstRequestServed: false,
+        showOnboardingChecklist: true,
       });
     },
   );
@@ -142,6 +193,8 @@ describe('a stored version 1 document', () => {
       theme: 'dark',
       launchAtLogin: false,
       showInMenuBar: false,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
     });
   });
 
@@ -159,6 +212,8 @@ describe('a stored version 1 document', () => {
         theme: storedUnderVersionOne.theme,
         launchAtLogin: false,
         showInMenuBar: false,
+        firstRequestServed: false,
+        showOnboardingChecklist: true,
       });
     },
   );

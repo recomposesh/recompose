@@ -91,10 +91,10 @@ export function buildTrayMenuTemplate(input: TrayMenuInput): TrayMenuItem[] {
   const { handlers } = input;
 
   return [
+    ...gatewaySection(input),
     { label: 'Open recompose', click: handlers.onOpenWindow },
     { label: 'Settings…', click: handlers.onOpenSettings },
     { type: 'separator' },
-    ...gatewaySection(input),
     { label: 'Quit recompose', click: handlers.onQuit },
   ];
 }

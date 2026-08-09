@@ -64,6 +64,7 @@ async function deskHolding(stored: readonly GatewayConfig[]): Promise<Desk> {
     getCodec: () => fakeCodec,
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
+    onSettingsWritten: () => undefined,
     applySettings: () => undefined,
     readLoginItem: () => false,
     startGateway: (gateway) => {

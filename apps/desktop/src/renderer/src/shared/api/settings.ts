@@ -1,15 +1,28 @@
 import type { SettingsPatch } from '@recompose/contracts';
+import type { QueryClient } from '@tanstack/react-query';
 
 import { withSettingsPatch } from '@recompose/contracts';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { unwrapIpcResult } from '../../../shared/api';
+import { unwrapIpcResult } from './ipc-result';
 import { systemQueryOptions } from './system';
 
 export const settingsQueryOptions = queryOptions({
   queryKey: ['settings'],
   queryFn: async () => unwrapIpcResult(await window.recompose['settings:get']()),
 });
+
+/**
+ * Points the settings push at the query cache and hands back the way to stop listening.
+ *
+ * @summary Every push carries the whole document, so writing it straight into the cache leaves
+ * nothing to reconcile, wherever the save came from: this window, another one, or the menu.
+ */
+export function bindSettingsToCache(queryClient: QueryClient): () => void {
+  return window.recomposeEvents['settings:changed']((settings) => {
+    queryClient.setQueryData(settingsQueryOptions.queryKey, settings);
+  });
+}
 
 type SettingsWriter = {
   save: (patch: SettingsPatch) => void;

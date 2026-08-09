@@ -1,4 +1,4 @@
-import type { EngineStates, IpcEventPayload } from '@recompose/contracts';
+import type { EngineStates, IpcEventPayload, Settings } from '@recompose/contracts';
 
 import { BrowserWindow } from 'electron';
 
@@ -16,4 +16,10 @@ export function pushAccountsChanged(): void {
 
 export function pushCanvasCommand(command: IpcEventPayload<'canvas:command'>): void {
   BrowserWindow.getFocusedWindow()?.webContents.send('canvas:command', command);
+}
+
+export function pushSettingsChanged(settings: Settings): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('settings:changed', settings);
+  }
 }

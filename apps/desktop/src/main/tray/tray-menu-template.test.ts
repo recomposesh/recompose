@@ -75,10 +75,10 @@ describe('the menu behind the tray icon, with no gateway stored', () => {
     });
 
     expect(empty.map((item) => item.label ?? item.type)).toEqual([
+      'No gateways yet',
+      'separator',
       'Open recompose',
       'Settings…',
-      'separator',
-      'No gateways yet',
       'separator',
       'Quit recompose',
     ]);
@@ -122,7 +122,7 @@ describe('the menu behind the tray icon, with no gateway stored', () => {
 });
 
 describe('where the gateways stand in the menu', () => {
-  test('every stored gateway carries its own submenu, between the ways in and the way out', () => {
+  test('every stored gateway carries its own submenu, leading the menu above the ways in', () => {
     const template = buildTrayMenuTemplate({
       handlers: recordingHandlers([]),
       icons,
@@ -131,11 +131,11 @@ describe('where the gateways stand in the menu', () => {
     });
 
     expect(template.map((item) => item.label ?? item.type)).toEqual([
-      'Open recompose',
-      'Settings…',
-      'separator',
       'Codex',
       'Gemini',
+      'separator',
+      'Open recompose',
+      'Settings…',
       'separator',
       'Quit recompose',
     ]);

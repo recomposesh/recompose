@@ -233,7 +233,7 @@ describe('push surface totality', () => {
 
   test('the state, account-change, and canvas pushes are the complete event vocabulary', () => {
     expectTypeOf<IpcEvent>().toEqualTypeOf<
-      'engine:state' | 'accounts:changed' | 'canvas:command'
+      'engine:state' | 'accounts:changed' | 'canvas:command' | 'settings:changed'
     >();
   });
 

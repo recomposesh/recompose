@@ -30,6 +30,7 @@ async function contextHoldingAFutureDocument(): Promise<StorageIpcContext> {
     startGateway: () => undefined,
     restartGateway: () => undefined,
     isServing: () => true,
+    onSettingsWritten: () => undefined,
     applySettings: () => undefined,
     releaseSubscription: async () => Promise.resolve({ ok: true }),
   };

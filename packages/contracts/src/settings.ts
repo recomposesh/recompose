@@ -2,13 +2,15 @@ import { z } from 'zod';
 
 import { migrateDocument, type Migration } from './migration';
 
-export const SETTINGS_VERSION = 4;
+export const SETTINGS_VERSION = 5;
 
 export const settingsSchema = z.strictObject({
   schemaVersion: z.literal(SETTINGS_VERSION),
   theme: z.enum(['system', 'light', 'dark']),
   launchAtLogin: z.boolean(),
   showInMenuBar: z.boolean(),
+  firstRequestServed: z.boolean(),
+  showOnboardingChecklist: z.boolean(),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -56,10 +58,21 @@ const retireTheAppWideTokenRequirement: Migration = {
   }),
 };
 
+const recordTheFirstSession: Migration = {
+  from: 4,
+  migrate: (doc) => ({
+    ...doc,
+    schemaVersion: 5,
+    firstRequestServed: false,
+    showOnboardingChecklist: true,
+  }),
+};
+
 const settingsMigrations: readonly Migration[] = [
   addVersionTwoSwitches,
   retireTheAppWidePort,
   retireTheAppWideTokenRequirement,
+  recordTheFirstSession,
 ];
 
 export function loadSettings(doc: unknown): Settings {
@@ -72,5 +85,7 @@ export function defaultSettings(): Settings {
     theme: 'system',
     launchAtLogin: false,
     showInMenuBar: false,
+    firstRequestServed: false,
+    showOnboardingChecklist: true,
   };
 }

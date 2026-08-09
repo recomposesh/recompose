@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import type { AppMenuHandlers, AppMenuItem } from './app-menu-template';
+import type { AppMenuHandlers, AppMenuItem, AppMenuView } from './app-menu-template';
 
 import { buildAppMenuTemplate } from './app-menu-template';
 
@@ -17,7 +17,7 @@ function menuLabelled(template: AppMenuItem[], label: string): AppMenuItem | und
 }
 
 function shapeOf(items: AppMenuItem[]): (string | undefined)[] {
-  return items.map((item) => item.role ?? item.type ?? item.label);
+  return items.map((item) => item.role ?? item.label ?? item.type);
 }
 
 function recordingHandlers(taken: string[]): AppMenuHandlers {
@@ -28,8 +28,8 @@ function recordingHandlers(taken: string[]): AppMenuHandlers {
     onNewGateway: () => {
       taken.push('new-gateway');
     },
-    onShowGetStarted: () => {
-      taken.push('show-get-started');
+    onToggleChecklist: (shown) => {
+      taken.push(`show-checklist ${String(shown)}`);
     },
     onCanvasCommand: (command) => {
       taken.push(command);
@@ -38,11 +38,13 @@ function recordingHandlers(taken: string[]): AppMenuHandlers {
 }
 
 const idleHandlers = recordingHandlers([]);
+const atHome: AppMenuView = { checklistShown: true, onGatewayDetail: false };
+const atGatewayDetail: AppMenuView = { checklistShown: true, onGatewayDetail: true };
 const everyPlatform: NodeJS.Platform[] = ['darwin', 'win32', 'linux'];
 
 describe('the settings shortcut on the application menu', () => {
   test('macOS carries it in the application menu, where its readers look for it', () => {
-    const [applicationMenu] = buildAppMenuTemplate('darwin', idleHandlers);
+    const [applicationMenu] = buildAppMenuTemplate('darwin', idleHandlers, atHome);
 
     expect(itemLabelled(applicationMenu?.submenu ?? [], 'Settings…')?.accelerator).toBe(
       'CmdOrCtrl+,',
@@ -50,7 +52,7 @@ describe('the settings shortcut on the application menu', () => {
   });
 
   test('Windows and Linux carry it in the File menu, where their readers look for it', () => {
-    const fileMenu = menuLabelled(buildAppMenuTemplate('win32', idleHandlers), 'File');
+    const fileMenu = menuLabelled(buildAppMenuTemplate('win32', idleHandlers, atHome), 'File');
 
     expect(itemLabelled(fileMenu?.submenu ?? [], 'Settings…')?.accelerator).toBe('CmdOrCtrl+,');
   });
@@ -58,7 +60,10 @@ describe('the settings shortcut on the application menu', () => {
   test('choosing it reaches the settings surface', () => {
     const taken: string[] = [];
 
-    itemLabelled(buildAppMenuTemplate('linux', recordingHandlers(taken)), 'Settings…')?.click?.();
+    itemLabelled(
+      buildAppMenuTemplate('linux', recordingHandlers(taken), atHome),
+      'Settings…',
+    )?.click?.();
 
     expect(taken).toEqual(['open-settings']);
   });
@@ -67,7 +72,7 @@ describe('the settings shortcut on the application menu', () => {
 describe('creating a gateway from the menu bar', () => {
   test('every platform offers it under File, on the shortcut a new document uses', () => {
     for (const platform of everyPlatform) {
-      const fileMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers), 'File');
+      const fileMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers, atHome), 'File');
 
       expect(itemLabelled(fileMenu?.submenu ?? [], 'New Gateway…')?.accelerator).toBe(
         'CmdOrCtrl+N',
@@ -79,7 +84,7 @@ describe('creating a gateway from the menu bar', () => {
     const taken: string[] = [];
 
     itemLabelled(
-      buildAppMenuTemplate('darwin', recordingHandlers(taken)),
+      buildAppMenuTemplate('darwin', recordingHandlers(taken), atHome),
       'New Gateway…',
     )?.click?.();
 
@@ -87,34 +92,64 @@ describe('creating a gateway from the menu bar', () => {
   });
 });
 
-describe('bringing the get-started card back', () => {
-  test('every platform offers it under View, where a dismissed panel is found', () => {
-    for (const platform of everyPlatform) {
-      const viewMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers), 'View');
+describe('the onboarding checklist toggle', () => {
+  test('macOS carries it in the application menu beside the settings item', () => {
+    const [applicationMenu] = buildAppMenuTemplate('darwin', idleHandlers, atHome);
 
-      expect(itemLabelled(viewMenu?.submenu ?? [], 'Show Get Started')).toBeDefined();
+    expect(itemLabelled(applicationMenu?.submenu ?? [], 'Show Onboarding Checklist')).toBeDefined();
+  });
+
+  test('Windows and Linux carry it under View', () => {
+    for (const platform of ['win32', 'linux'] satisfies NodeJS.Platform[]) {
+      const viewMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers, atHome), 'View');
+
+      expect(itemLabelled(viewMenu?.submenu ?? [], 'Show Onboarding Checklist')).toBeDefined();
     }
   });
 
-  test('choosing it shows the card again', () => {
-    const taken: string[] = [];
+  test('the tick reads the checklist standing', () => {
+    for (const shown of [true, false]) {
+      const item = itemLabelled(
+        buildAppMenuTemplate('darwin', idleHandlers, { ...atHome, checklistShown: shown }),
+        'Show Onboarding Checklist',
+      );
+
+      expect(item?.type).toBe('checkbox');
+      expect(item?.checked).toBe(shown);
+    }
+  });
+
+  test('choosing it asks for the standing the checklist does not hold', () => {
+    const shownTaken: string[] = [];
+    const hiddenTaken: string[] = [];
 
     itemLabelled(
-      buildAppMenuTemplate('linux', recordingHandlers(taken)),
-      'Show Get Started',
+      buildAppMenuTemplate('darwin', recordingHandlers(shownTaken), atHome),
+      'Show Onboarding Checklist',
+    )?.click?.();
+    itemLabelled(
+      buildAppMenuTemplate('darwin', recordingHandlers(hiddenTaken), {
+        ...atHome,
+        checklistShown: false,
+      }),
+      'Show Onboarding Checklist',
     )?.click?.();
 
-    expect(taken).toEqual(['show-get-started']);
+    expect(shownTaken).toEqual(['show-checklist false']);
+    expect(hiddenTaken).toEqual(['show-checklist true']);
   });
 });
 
 describe('driving the canvas from the menu bar', () => {
-  test('every platform gathers the canvas acts under Canvas, on the shortcuts zoom means here', () => {
+  test('a gateway surface gathers the canvas acts under Gateway, on the shortcuts zoom means here', () => {
     for (const platform of everyPlatform) {
-      const canvasMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers), 'Canvas');
+      const gatewayMenu = menuLabelled(
+        buildAppMenuTemplate(platform, idleHandlers, atGatewayDetail),
+        'Gateway',
+      );
 
       expect(
-        (canvasMenu?.submenu ?? []).map((item) => [item.label ?? item.type, item.accelerator]),
+        (gatewayMenu?.submenu ?? []).map((item) => [item.label ?? item.type, item.accelerator]),
       ).toEqual([
         ['Zoom In', 'CmdOrCtrl+='],
         ['Zoom Out', 'CmdOrCtrl+-'],
@@ -125,9 +160,18 @@ describe('driving the canvas from the menu bar', () => {
     }
   });
 
+  test('a surface holding no gateway carries no Gateway menu', () => {
+    for (const platform of everyPlatform) {
+      const template = buildAppMenuTemplate(platform, idleHandlers, atHome);
+
+      expect(menuLabelled(template, 'Gateway')).toBeUndefined();
+      expect(menuLabelled(template, 'Canvas')).toBeUndefined();
+    }
+  });
+
   test('choosing an act carries its command to the canvas', () => {
     const taken: string[] = [];
-    const template = buildAppMenuTemplate('darwin', recordingHandlers(taken));
+    const template = buildAppMenuTemplate('darwin', recordingHandlers(taken), atGatewayDetail);
 
     for (const label of ['Zoom In', 'Zoom Out', 'Zoom to Fit', 'Tidy']) {
       itemLabelled(template, label)?.click?.();
@@ -139,23 +183,30 @@ describe('driving the canvas from the menu bar', () => {
 
 describe('the order the menus stand in', () => {
   test('macOS orders its menus the way every Mac app does', () => {
-    expect(shapeOf(buildAppMenuTemplate('darwin', idleHandlers))).toEqual([
+    expect(shapeOf(buildAppMenuTemplate('darwin', idleHandlers, atHome))).toEqual([
       'Recompose',
       'File',
       'editMenu',
       'View',
-      'Canvas',
+      'windowMenu',
+    ]);
+    expect(shapeOf(buildAppMenuTemplate('darwin', idleHandlers, atGatewayDetail))).toEqual([
+      'Recompose',
+      'File',
+      'editMenu',
+      'View',
+      'Gateway',
       'windowMenu',
     ]);
   });
 
   test('Windows and Linux lead with File and keep the rest beside it', () => {
     for (const platform of ['win32', 'linux'] satisfies NodeJS.Platform[]) {
-      expect(shapeOf(buildAppMenuTemplate(platform, idleHandlers))).toEqual([
+      expect(shapeOf(buildAppMenuTemplate(platform, idleHandlers, atGatewayDetail))).toEqual([
         'File',
         'editMenu',
         'View',
-        'Canvas',
+        'Gateway',
         'windowMenu',
       ]);
     }
@@ -163,14 +214,15 @@ describe('the order the menus stand in', () => {
 });
 
 describe('what a custom application menu must not drop', () => {
-  test('macOS keeps the whole application menu around the settings item', () => {
-    const [applicationMenu] = buildAppMenuTemplate('darwin', idleHandlers);
+  test('macOS keeps the whole application menu around the settings group', () => {
+    const [applicationMenu] = buildAppMenuTemplate('darwin', idleHandlers, atHome);
 
     expect(applicationMenu?.label).toBe('Recompose');
     expect(shapeOf(applicationMenu?.submenu ?? [])).toEqual([
       'about',
       'separator',
       'Settings…',
+      'Show Onboarding Checklist',
       'separator',
       'services',
       'separator',
@@ -183,13 +235,13 @@ describe('what a custom application menu must not drop', () => {
   });
 
   test('macOS keeps File to the document actions, because quitting lives in its own menu', () => {
-    const fileMenu = menuLabelled(buildAppMenuTemplate('darwin', idleHandlers), 'File');
+    const fileMenu = menuLabelled(buildAppMenuTemplate('darwin', idleHandlers, atHome), 'File');
 
     expect(shapeOf(fileMenu?.submenu ?? [])).toEqual(['New Gateway…', 'separator', 'close']);
   });
 
   test('Windows and Linux keep the settings item and the way out under File', () => {
-    const fileMenu = menuLabelled(buildAppMenuTemplate('linux', idleHandlers), 'File');
+    const fileMenu = menuLabelled(buildAppMenuTemplate('linux', idleHandlers, atHome), 'File');
 
     expect(shapeOf(fileMenu?.submenu ?? [])).toEqual([
       'New Gateway…',
@@ -199,12 +251,22 @@ describe('what a custom application menu must not drop', () => {
       'quit',
     ]);
   });
+});
 
-  test('the View menu keeps reloading and full screen, and page zoom leaves for the canvas', () => {
-    const viewMenu = menuLabelled(buildAppMenuTemplate('darwin', idleHandlers), 'View');
+describe('what the View menu keeps', () => {
+  test('reloading and full screen stay, and page zoom stays gone', () => {
+    const macView = menuLabelled(buildAppMenuTemplate('darwin', idleHandlers, atHome), 'View');
+    const linuxView = menuLabelled(buildAppMenuTemplate('linux', idleHandlers, atHome), 'View');
 
-    expect(shapeOf(viewMenu?.submenu ?? [])).toEqual([
-      'Show Get Started',
+    expect(shapeOf(macView?.submenu ?? [])).toEqual([
+      'reload',
+      'forceReload',
+      'toggleDevTools',
+      'separator',
+      'togglefullscreen',
+    ]);
+    expect(shapeOf(linuxView?.submenu ?? [])).toEqual([
+      'Show Onboarding Checklist',
       'separator',
       'reload',
       'forceReload',

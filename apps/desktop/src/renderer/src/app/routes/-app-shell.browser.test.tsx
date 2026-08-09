@@ -86,6 +86,12 @@ test('a surface with no gateway selected leaves the toolbar empty chrome', async
     .not.toBeInTheDocument();
 });
 
+test('a surface holding no gateway carries no Inspector control', async () => {
+  const screen = await renderAt('/', { gateways: [codex] });
+
+  await expect.element(screen.getByRole('button', { name: 'Inspector' })).not.toBeInTheDocument();
+});
+
 test('a gateway surface reads what its traffic is carrying', async () => {
   const screen = await renderAt('/gateways/codex', { gateways: [codex] });
 

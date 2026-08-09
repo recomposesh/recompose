@@ -12,8 +12,6 @@ import { ProviderSidebar } from '../../widgets/provider/sidebar';
 type AppSidebarProps = {
   /** Asked for when a person wants a gateway beyond the ones already listed. */
   onNewGateway: () => void;
-  /** Names a fresh ask for the checklist, which the View menu raises. */
-  restoreGetStarted?: string | undefined;
   /** What the top band carries, which is the sidebar control on a surface holding no toolbar. */
   band?: ReactNode;
   /** Whether the person has put the sidebar away, which it leaves and returns along. */
@@ -32,7 +30,7 @@ function sidebarWidth(): number {
   return panelWidth('sidebar');
 }
 
-export function AppSidebar({ away, band, onNewGateway, restoreGetStarted }: AppSidebarProps) {
+export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
   const systemId = useId();
   const width = useSyncExternalStore(subscribeToPanelWidths, sidebarWidth);
   const standing = away ? undefined : { width };
@@ -71,7 +69,7 @@ export function AppSidebar({ away, band, onNewGateway, restoreGetStarted }: AppS
         </nav>
         <div className="app-no-drag pt-2.5">
           <Suspense fallback={null}>
-            <GetStartedPanel restoreRequest={restoreGetStarted} />
+            <GetStartedPanel />
           </Suspense>
         </div>
       </div>

@@ -5,7 +5,8 @@ export type AppMenuItem = {
   label?: string;
   role?: NonNullable<MenuItemConstructorOptions['role']>;
   accelerator?: string;
-  type?: 'separator';
+  type?: 'separator' | 'checkbox';
+  checked?: boolean;
   click?: () => void;
   submenu?: AppMenuItem[];
 };
@@ -13,8 +14,13 @@ export type AppMenuItem = {
 export type AppMenuHandlers = {
   onOpenSettings: () => void;
   onNewGateway: () => void;
-  onShowGetStarted: () => void;
+  onToggleChecklist: (shown: boolean) => void;
   onCanvasCommand: (command: IpcEventPayload<'canvas:command'>) => void;
+};
+
+export type AppMenuView = {
+  checklistShown: boolean;
+  onGatewayDetail: boolean;
 };
 
 function settingsItem(handlers: AppMenuHandlers): AppMenuItem {
@@ -25,13 +31,25 @@ function newGatewayItem(handlers: AppMenuHandlers): AppMenuItem {
   return { label: 'New Gateway…', accelerator: 'CmdOrCtrl+N', click: handlers.onNewGateway };
 }
 
-function macApplicationMenu(handlers: AppMenuHandlers): AppMenuItem {
+function checklistToggleItem(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
+  return {
+    label: 'Show Onboarding Checklist',
+    type: 'checkbox',
+    checked: view.checklistShown,
+    click: () => {
+      handlers.onToggleChecklist(!view.checklistShown);
+    },
+  };
+}
+
+function macApplicationMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
   return {
     label: 'Recompose',
     submenu: [
       { role: 'about' },
       { type: 'separator' },
       settingsItem(handlers),
+      checklistToggleItem(handlers, view),
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
@@ -64,12 +82,20 @@ function fileMenu(handlers: AppMenuHandlers): AppMenuItem {
   };
 }
 
-function viewMenu(handlers: AppMenuHandlers): AppMenuItem {
+function viewMenu(
+  platform: NodeJS.Platform,
+  handlers: AppMenuHandlers,
+  view: AppMenuView,
+): AppMenuItem {
+  const head =
+    platform === 'darwin'
+      ? []
+      : [checklistToggleItem(handlers, view), { type: 'separator' } as const];
+
   return {
     label: 'View',
     submenu: [
-      { label: 'Show Get Started', click: handlers.onShowGetStarted },
-      { type: 'separator' },
+      ...head,
       { role: 'reload' },
       { role: 'forceReload' },
       { role: 'toggleDevTools' },
@@ -88,9 +114,9 @@ function canvasCommandClick(
   };
 }
 
-function canvasMenu(handlers: AppMenuHandlers): AppMenuItem {
+function gatewayMenu(handlers: AppMenuHandlers): AppMenuItem {
   return {
-    label: 'Canvas',
+    label: 'Gateway',
     submenu: [
       {
         label: 'Zoom In',
@@ -113,9 +139,13 @@ function canvasMenu(handlers: AppMenuHandlers): AppMenuItem {
   };
 }
 
-function leadingMenus(platform: NodeJS.Platform, handlers: AppMenuHandlers): AppMenuItem[] {
+function leadingMenus(
+  platform: NodeJS.Platform,
+  handlers: AppMenuHandlers,
+  view: AppMenuView,
+): AppMenuItem[] {
   if (platform === 'darwin') {
-    return [macApplicationMenu(handlers), macFileMenu(handlers)];
+    return [macApplicationMenu(handlers, view), macFileMenu(handlers)];
   }
 
   return [fileMenu(handlers)];
@@ -124,12 +154,13 @@ function leadingMenus(platform: NodeJS.Platform, handlers: AppMenuHandlers): App
 export function buildAppMenuTemplate(
   platform: NodeJS.Platform,
   handlers: AppMenuHandlers,
+  view: AppMenuView,
 ): AppMenuItem[] {
   return [
-    ...leadingMenus(platform, handlers),
+    ...leadingMenus(platform, handlers, view),
     { role: 'editMenu' },
-    viewMenu(handlers),
-    canvasMenu(handlers),
+    viewMenu(platform, handlers, view),
+    ...(view.onGatewayDetail ? [gatewayMenu(handlers)] : []),
     { role: 'windowMenu' },
   ];
 }
