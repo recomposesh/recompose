@@ -221,6 +221,9 @@ test('tidying seats a pending card in the target column with the cards it waits 
     .poll(() => columnOf(screen.container, 'pending'))
     .toBe(columnOf(screen.container, 'target:g1'));
   expect(seatOf(screen.container, 'pending')).not.toBe(seatOf(screen.container, 'target:g1'));
+
+  await userEvent.keyboard('{Escape}');
+  await expect.poll(() => screen.container.querySelector('[data-id="pending"]')).toBeNull();
 });
 
 test('Esc during a cable-endpoint drag rebinds nothing', async () => {
