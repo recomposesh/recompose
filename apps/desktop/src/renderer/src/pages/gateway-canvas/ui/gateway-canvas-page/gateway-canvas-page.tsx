@@ -1,20 +1,30 @@
+import type { Account, GatewayConfig, LogRow } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { notFound } from '@tanstack/react-router';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import type { ComposedCanvas, PickerOnCanvas, RemovalAsked } from './use-gateway-canvas';
 
-import { accountsQueryOptions, gatewaysQueryOptions } from '../../../../shared/api';
+import {
+  accountsQueryOptions,
+  engineLogsQueryOptions,
+  engineStatesQueryOptions,
+  gatewayStateIn,
+  gatewaysQueryOptions,
+} from '../../../../shared/api';
 import {
   inspectorOpen,
   keepPanelWidth,
+  logsDrawerOpen,
   panelBounds,
   setPanelWidth,
   subscribeToInspectorVisibility,
+  subscribeToLogsDrawerVisibility,
   subscribeToPanelWidths,
   toggleInspector,
+  toggleLogsDrawer,
 } from '../../../../shared/lib';
 import { PanelSeparator } from '../../../../shared/ui';
 import { inspectorWidth } from '../../lib/inspector-width';
@@ -22,6 +32,7 @@ import { useInspectorReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
+import { LogsDrawer } from '../logs-drawer/logs-drawer';
 import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import { useGatewayCanvas } from './use-gateway-canvas';
 
@@ -84,19 +95,92 @@ function removalDialog(removal: RemovalAsked | undefined): ReactNode {
   );
 }
 
+type InspectorBeside = {
+  gateway: GatewayConfig;
+  reveal: ReturnType<typeof useInspectorReveal>;
+  width: number;
+  canvas: ComposedCanvas;
+};
+
 /**
- * The canvas column: the stage a gateway is composed on, and the traffic strip under it.
+ * The inspector and the border that sizes it, or nothing at all while it stands away.
+ *
+ * @summary The border only exists while the panel does, because a strip that sized nothing would
+ * still take a tab stop and still answer a drag.
+ */
+function inspectorBeside({ gateway, reveal, width, canvas }: InspectorBeside): ReactNode {
+  const { onDraftDefined, refusal, subject } = canvas;
+
+  if (!reveal.rendered) {
+    return null;
+  }
+
+  return (
+    <>
+      <PanelSeparator
+        bounds={panelBounds.inspector}
+        label="Inspector width"
+        onCollapse={toggleInspector}
+        onResize={(asked) => {
+          setPanelWidth('inspector', asked);
+        }}
+        onRestore={toggleInspector}
+        onSettled={() => {
+          keepPanelWidth('inspector');
+        }}
+        panelEdge="leading"
+        width={width}
+      />
+      <GatewayDrawer
+        gateway={gateway}
+        leaving={reveal.leaving}
+        onDraftDefined={onDraftDefined}
+        refusal={refusal}
+        subject={subject}
+      />
+    </>
+  );
+}
+
+type CanvasColumn = {
+  slug: string;
+  gateway: GatewayConfig;
+  accounts: readonly Account[];
+  rows: readonly LogRow[] | undefined;
+  serving: 'running' | 'stopped';
+  logsShown: boolean;
+  canvas: ComposedCanvas;
+};
+
+/**
+ * The canvas column: the stage a gateway is composed on, the logs under it, and the traffic strip.
  *
  * @summary The strip belongs to this column rather than to the window, so it spans the canvas and
  * stops where the inspector begins, and the tally beside its readings counts the very cards and
- * cables standing above it.
+ * cables standing above it. The logs drawer stands between the two, because the strip is what a
+ * person opens the drawer from and a drawer that pushed its own control off the bottom of the
+ * column would be a control nobody could press twice. Opening the drawer shrinks the stage rather
+ * than covering it, so every card stays visible and reachable while the rows stream.
  */
-function canvasColumn(slug: string, canvas: ComposedCanvas): ReactNode {
+function canvasColumn(standing: CanvasColumn): ReactNode {
+  const { slug, gateway, accounts, rows, serving, logsShown, canvas } = standing;
+  const { onSelectSubject, subject } = canvas;
+
   return (
     <div className="flex min-w-0 flex-1 flex-col" data-canvas-column="">
       <GatewayStage announced={canvas.announced} flow={canvas.flow}>
         {anchoredPicker(canvas.picker)}
       </GatewayStage>
+      {logsShown ? (
+        <LogsDrawer
+          accounts={accounts}
+          gateway={gateway}
+          onSelectSubject={onSelectSubject}
+          rows={rows ?? []}
+          serving={serving}
+          subject={subject}
+        />
+      ) : null}
       <TrafficFooter
         nodes={canvas.flow.nodes.length}
         slug={slug}
@@ -107,58 +191,78 @@ function canvasColumn(slug: string, canvas: ComposedCanvas): ReactNode {
 }
 
 /**
- * The selected gateway: the canvas it is composed on, the strip under it, and the inspector beside.
+ * Turns the Gateway menu's drawer command into the one open state the drawer reads.
+ *
+ * @summary The command arrives on the channel every Gateway act rides, and the canvas passes this
+ * one through untouched, because the drawer stands beside the flow rather than inside it.
+ */
+function useLogsCommand(): void {
+  useEffect(
+    () =>
+      window.recomposeEvents['canvas:command']((command) => {
+        if (command === 'toggle-logs') {
+          toggleLogsDrawer();
+        }
+      }),
+    [],
+  );
+}
+
+/**
+ * Tells main whether the drawer stands, so the menu item's check mark reads the truth.
+ *
+ * @summary The drawer opens from the footer, from the menu, and from a drag that collapsed it, so
+ * the menu cannot know where it ended up by remembering what it asked for. It hears the answer
+ * instead, which is what stops the check mark from disagreeing with the screen.
+ */
+function useMenuReadsTheDrawer(open: boolean): void {
+  useEffect(() => {
+    void window.recompose['system:logs-drawer']({ open });
+  }, [open]);
+}
+
+/**
+ * The selected gateway: the canvas, the logs and the strip under it, and the inspector beside.
  *
  * @summary Reach for it from the gateway route. Selecting any card or cable opens the inspector
  * on that subject and a pane click puts both the selection and the inspector away, so the drawer
- * is a thing a person opens by pointing at what they mean. A draft in flight outlives everything
- * short of finishing or deleting it. A slug no stored gateway holds lands on the same not-found
- * state a mistyped address does, because a gateway that was deleted and one that never existed
- * are the same fact to the person reading.
+ * is a thing a person opens by pointing at what they mean. The logs drawer and the traffic strip
+ * share the canvas column, so both span the canvas and stop where the inspector begins. A draft in
+ * flight outlives everything short of finishing or deleting it. A slug no stored gateway holds
+ * lands on the same not-found state a mistyped address does, because a gateway that was deleted and
+ * one that never existed are the same fact to the person reading.
  */
 export function GatewayCanvasPage({ slug }: { slug: string }) {
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
+  const { data: engines } = useSuspenseQuery(engineStatesQueryOptions);
+  const { data: served } = useQuery(engineLogsQueryOptions(slug));
   const shown = useSyncExternalStore(subscribeToInspectorVisibility, inspectorOpen);
+  const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
   const width = useSyncExternalStore(subscribeToPanelWidths, inspectorWidth);
   const inspector = useInspectorReveal(shown);
   const gateway = gateways.find((held) => held.slug === slug);
   const canvas = useGatewayCanvas(slug, gateway, registry.accounts);
 
+  useLogsCommand();
+  useMenuReadsTheDrawer(logsShown);
+
   if (gateway === undefined || canvas === undefined) {
     throw notFound();
   }
 
-  const { onDraftDefined } = canvas;
-
   return (
     <div className="flex h-full min-h-0">
-      {canvasColumn(slug, canvas)}
-      {inspector.rendered ? (
-        <PanelSeparator
-          bounds={panelBounds.inspector}
-          label="Inspector width"
-          onCollapse={toggleInspector}
-          onResize={(asked) => {
-            setPanelWidth('inspector', asked);
-          }}
-          onRestore={toggleInspector}
-          onSettled={() => {
-            keepPanelWidth('inspector');
-          }}
-          panelEdge="leading"
-          width={width}
-        />
-      ) : null}
-      {inspector.rendered ? (
-        <GatewayDrawer
-          gateway={gateway}
-          leaving={inspector.leaving}
-          onDraftDefined={onDraftDefined}
-          refusal={canvas.refusal}
-          subject={canvas.subject}
-        />
-      ) : null}
+      {canvasColumn({
+        slug,
+        gateway,
+        accounts: registry.accounts,
+        rows: served,
+        serving: gatewayStateIn(engines, slug).status,
+        logsShown,
+        canvas,
+      })}
+      {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
       {removalDialog(canvas.removal)}
     </div>
   );

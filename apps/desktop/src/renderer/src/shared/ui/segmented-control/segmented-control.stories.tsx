@@ -96,8 +96,62 @@ export const Inert = meta.story({
   },
 });
 
+type Scope = 'all' | 'creative' | 'fast' | 'work';
+
+const scopeOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'fast', label: 'fast', tint: 'virtual-model' },
+  { value: 'creative', label: 'creative', tint: 'virtual-model' },
+  { value: 'work', label: 'work', tint: 'target' },
+] as const satisfies readonly { value: Scope; label: string; tint?: string }[];
+
+function markInkOf(segment: Element): string {
+  const mark = segment.querySelector('[aria-hidden="true"]');
+
+  return mark === null ? 'no mark' : getComputedStyle(mark).backgroundColor;
+}
+
+function ControlledScope() {
+  const [scope, setScope] = useState<Scope>('all');
+
+  return (
+    <SegmentedControl label="Scope" onChangeValue={setScope} options={scopeOptions} value={scope} />
+  );
+}
+
+/**
+ * Segments standing for roles, each led by a mark in its own role ink.
+ *
+ * @summary Reach for the tint where the segments name things a person also sees somewhere else,
+ * so the strip and that other surface read as the same set. The mark carries no name of its own,
+ * because the segment's label already said it once.
+ */
+export const RoleTinted = meta.story({
+  render: () => <ControlledScope />,
+  play: async ({ canvas, userEvent }) => {
+    const creative = await canvas.findByRole('radio', { name: 'creative' });
+    const work = await canvas.findByRole('radio', { name: 'work' });
+    const plain = await canvas.findByRole('radio', { name: 'All' });
+
+    await expect(markInkOf(creative)).not.toBe(markInkOf(work));
+    await expect(markInkOf(creative)).not.toBe('rgba(0, 0, 0, 0)');
+    await expect(plain.querySelector('[aria-hidden="true"]')).toBeNull();
+
+    await userEvent.click(creative);
+
+    await expect(creative).toHaveAttribute('aria-checked', 'true');
+    await expect(plain).toHaveAttribute('aria-checked', 'false');
+  },
+});
+
 /** The same control under the dark scheme, where the selected segment lifts off the track. */
 export const DarkScheme = meta.story({
   globals: { theme: 'dark' },
   render: () => <ControlledThemeChoice />,
+});
+
+/** The role-tinted strip in the dark scheme, where each mark has to hold against the track. */
+export const RoleTintedDarkScheme = meta.story({
+  globals: { theme: 'dark' },
+  render: () => <ControlledScope />,
 });

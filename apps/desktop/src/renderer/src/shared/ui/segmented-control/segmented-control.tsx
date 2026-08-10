@@ -2,11 +2,24 @@ import { Radio } from '@base-ui/react/radio';
 import { RadioGroup } from '@base-ui/react/radio-group';
 import { useId } from 'react';
 
+const roleInks = {
+  'virtual-model': 'text-virtual-model-ink',
+  target: 'text-target-ink',
+} as const;
+
 type SegmentedControlOption<Value extends string> = {
   /** Value committed when this segment wins. */
   value: Value;
   /** Text the segment shows and answers to. */
   label: string;
+  /**
+   * Which role the segment stands for, drawn as a leading mark in that role's ink.
+   *
+   * @summary Reach for it where the segments name things a person also meets on another surface,
+   * so the strip and that surface read as one set. Leave it off wherever the labels stand for
+   * nothing but themselves.
+   */
+  tint?: keyof typeof roleInks | undefined;
 };
 
 type SegmentedControlProps<Value extends string> = {
@@ -57,6 +70,12 @@ export function SegmentedControl<Value extends string>({
           key={option.value}
           value={option.value}
         >
+          {option.tint === undefined ? null : (
+            <span
+              aria-hidden
+              className={`me-1.5 size-1.5 shrink-0 rounded-pill bg-current ${roleInks[option.tint]}`}
+            />
+          )}
           <span id={`${segmentId}-${option.value}`}>{option.label}</span>
         </Radio.Root>
       ))}

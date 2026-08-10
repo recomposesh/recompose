@@ -9,9 +9,9 @@ import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../shared/testing';
 
-import { bindEngineTrafficToCache } from '../../../shared/api';
-import { inspectorOpen, toggleInspector } from '../../../shared/lib';
-import { installFakeBridge } from '../../../shared/testing';
+import { bindEngineLogsToCache, bindEngineTrafficToCache } from '../../../shared/api';
+import { closeLogsDrawer, inspectorOpen, toggleInspector } from '../../../shared/lib';
+import { forgetEngineLogsListeners, installFakeBridge } from '../../../shared/testing';
 import { dropCanvasPositions } from '../lib/canvas-position-store';
 import { leaveDrafting } from '../lib/use-held-draft';
 import { GatewayCanvasPage } from '../ui/gateway-canvas-page/gateway-canvas-page';
@@ -23,11 +23,14 @@ const CANVAS_FOOTING = `
 [data-canvas-footing] [data-canvas-column] { display: flex; flex: 1 1 0%; flex-direction: column; min-width: 0; }
 [data-canvas-footing] footer { display: flex; flex-shrink: 0; align-items: center; gap: 14px; height: 38px; padding-inline: 14px; }
 [data-canvas-footing] section { position: relative; display: flex; flex: 1 1 0%; min-width: 0; overflow: hidden; }
+[data-canvas-footing] [data-canvas-column] > section:has(> header) { flex: 0 0 auto; flex-direction: column; }
 [data-canvas-footing] .pointer-events-auto { pointer-events: auto; }
 [data-canvas-footing] .absolute { position: absolute; }
 [data-canvas-footing] .top-0 { top: 0; }
 [data-canvas-footing] .inset-s-0 { inset-inline-start: 0; }
 [data-canvas-footing] .z-20 { z-index: 20; }
+[data-canvas-footing] [data-panel-control] { position: relative; }
+[data-canvas-footing] [data-panel-control][aria-orientation='horizontal'] { height: 8px; margin-block: -4px; }
 [data-canvas-footing] .origin-top-left { transform-origin: 0 0; }
 `;
 
@@ -58,6 +61,8 @@ export function freshCanvasRun(): void {
   localStorage.clear();
   dropCanvasPositions('my-gateway');
   leaveDrafting('my-gateway');
+  closeLogsDrawer();
+  forgetEngineLogsListeners();
 
   if (!inspectorOpen()) {
     toggleInspector();
@@ -70,6 +75,7 @@ function wrappedPage(strict: boolean): ReactElement {
   });
 
   bindEngineTrafficToCache(queryClient);
+  bindEngineLogsToCache(queryClient);
 
   const page = (
     <div data-canvas-footing="">

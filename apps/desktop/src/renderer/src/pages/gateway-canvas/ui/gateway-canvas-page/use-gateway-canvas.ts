@@ -59,6 +59,14 @@ export type ComposedCanvas = {
   picker: PickerOnCanvas | undefined;
   removal: RemovalAsked | undefined;
   onDraftDefined: (definition: SettledDefinition) => void;
+  /**
+   * Selects a card by its node id, or clears the selection where nothing is named.
+   *
+   * @summary The canvas is not the only surface that says what a person means: the logs drawer's
+   * scope strip names the same cards, and pressing one there has to move the one selection rather
+   * than growing a second copy of it.
+   */
+  onSelectSubject: (nodeId: string | undefined) => void;
 };
 
 function pickerGroups(
@@ -210,6 +218,7 @@ export function useGatewayCanvas(
     refusal: standings.refusal,
     picker: pickerOnCanvas(world, pickerModels),
     removal: removalAsked(world),
+    onSelectSubject: standings.select,
     onDraftDefined: (definition) => {
       leaveDrafting(slug);
       standings.select(`model:${definition.id}`);
