@@ -8,13 +8,13 @@ import type { ServingTurn } from './provider/serving-turn';
 import { createGatewayApp } from './gateway-app';
 import {
   aGatewayHolding,
+  aHeldStream,
   aVirtualModel,
   fetchAnsweringWith,
   granting,
   grantsNothing,
   neverFetches,
 } from './gateway-app.testkit';
-import { aHeldStream } from './gateway-app.testkit';
 import { collectingRows } from './gateway-logs.testkit';
 import { noteUnreadableRequest, subscribeToLogRows } from './gateway-traffic';
 import { providerObservability } from './provider/provider-observability';
