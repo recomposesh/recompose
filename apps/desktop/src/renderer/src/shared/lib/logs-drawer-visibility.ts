@@ -38,3 +38,20 @@ export function toggleLogsDrawer(): void {
   open = !open;
   tellReaders();
 }
+
+/**
+ * Shuts the drawer, which is what a drag collapsing its edge asks for.
+ *
+ * @summary A collapse states where the drawer ends up rather than asking for the other side of it,
+ * so it says so here instead of turning the drawer over: a drag that overshoots twice shuts the
+ * drawer once and never reopens what it just closed. A drawer already shut changes nothing, so it
+ * tells nobody and no reader repaints over a close that did not happen.
+ */
+export function closeLogsDrawer(): void {
+  if (!open) {
+    return;
+  }
+
+  open = false;
+  tellReaders();
+}

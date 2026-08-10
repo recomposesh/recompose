@@ -29,6 +29,49 @@ test('turning it over again shuts it, so one answer drives the control both ways
   expect(drawer.logsDrawerOpen()).toBe(false);
 });
 
+test('closing an open drawer shuts it', async () => {
+  const drawer = await aFreshDrawer();
+
+  drawer.toggleLogsDrawer();
+  drawer.closeLogsDrawer();
+
+  expect(drawer.logsDrawerOpen()).toBe(false);
+});
+
+test('closing a shut drawer leaves it shut, so a drag that collapses it never reopens it', async () => {
+  const drawer = await aFreshDrawer();
+
+  drawer.closeLogsDrawer();
+  drawer.closeLogsDrawer();
+
+  expect(drawer.logsDrawerOpen()).toBe(false);
+});
+
+test('closing an open drawer tells the readers, so the menu item unchecks with it', async () => {
+  const drawer = await aFreshDrawer();
+  let heard = 0;
+
+  drawer.toggleLogsDrawer();
+  drawer.subscribeToLogsDrawerVisibility(() => {
+    heard += 1;
+  });
+  drawer.closeLogsDrawer();
+
+  expect(heard).toBe(1);
+});
+
+test('closing a shut drawer tells nobody, so a close that changes nothing repaints nothing', async () => {
+  const drawer = await aFreshDrawer();
+  let heard = 0;
+
+  drawer.subscribeToLogsDrawerVisibility(() => {
+    heard += 1;
+  });
+  drawer.closeLogsDrawer();
+
+  expect(heard).toBe(0);
+});
+
 test('a reader hears every turn, so the footer control and the menu item never disagree', async () => {
   const drawer = await aFreshDrawer();
   let heard = 0;

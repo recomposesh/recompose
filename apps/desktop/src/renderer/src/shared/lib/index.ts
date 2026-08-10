@@ -6,6 +6,7 @@ export {
 } from './inspector-visibility';
 export { lookedAtGateway, rememberedGateway } from './last-gateway';
 export {
+  closeLogsDrawer,
   logsDrawerOpen,
   subscribeToLogsDrawerVisibility,
   toggleLogsDrawer,
