@@ -133,7 +133,7 @@ describe('the menu the app paints at boot', () => {
 });
 
 describe('reflecting a stored settings document', () => {
-  test('a document that hides the checklist unticks the menu and reaches every window', async () => {
+  test('a document that hides the checklist takes the tick off the menu and reaches every window', async () => {
     const conducted = conductOver(await freshSettingsFile());
     const hidden: Settings = { ...defaultSettings(), showOnboardingChecklist: false };
 
@@ -185,7 +185,7 @@ describe('following the surface a window stands on', () => {
 });
 
 describe('toggling the onboarding checklist from the menu', () => {
-  test('the choice unticks the menu, lands on disk, and reaches every window', async () => {
+  test('the choice takes the tick off the menu, lands on disk, and reaches every window', async () => {
     const conducted = conductOver(await freshSettingsFile());
 
     conducted.menu.repaint();

@@ -63,7 +63,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
-      - run: pnpm exec turbo run lint typecheck build test
+      - run: pnpm exec turbo run lint typecheck build test --concurrency=1
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}

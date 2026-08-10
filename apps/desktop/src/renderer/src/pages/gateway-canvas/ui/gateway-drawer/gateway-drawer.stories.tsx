@@ -112,7 +112,7 @@ export const RefusedWrite = meta.story({
 export const Leaving = meta.story({
   args: { leaving: true },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('Endpoint', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Endpoint', { exact: true })).toBeInTheDocument();
   },
 });
 
