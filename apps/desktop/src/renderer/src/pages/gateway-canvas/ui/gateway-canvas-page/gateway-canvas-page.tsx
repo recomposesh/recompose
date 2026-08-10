@@ -4,7 +4,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { notFound } from '@tanstack/react-router';
 import { useSyncExternalStore } from 'react';
 
-import type { PickerOnCanvas, RemovalAsked } from './use-gateway-canvas';
+import type { ComposedCanvas, PickerOnCanvas, RemovalAsked } from './use-gateway-canvas';
 
 import { accountsQueryOptions, gatewaysQueryOptions } from '../../../../shared/api';
 import {
@@ -22,6 +22,7 @@ import { useInspectorReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
+import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import { useGatewayCanvas } from './use-gateway-canvas';
 
 const REMOVAL_HEADING = 'removal-asked-heading';
@@ -84,7 +85,29 @@ function removalDialog(removal: RemovalAsked | undefined): ReactNode {
 }
 
 /**
- * The selected gateway: the canvas it is composed on, and the inspector beside it.
+ * The canvas column: the stage a gateway is composed on, and the traffic strip under it.
+ *
+ * @summary The strip belongs to this column rather than to the window, so it spans the canvas and
+ * stops where the inspector begins, and the tally beside its readings counts the very cards and
+ * cables standing above it.
+ */
+function canvasColumn(slug: string, canvas: ComposedCanvas): ReactNode {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col" data-canvas-column="">
+      <GatewayStage announced={canvas.announced} flow={canvas.flow}>
+        {anchoredPicker(canvas.picker)}
+      </GatewayStage>
+      <TrafficFooter
+        nodes={canvas.flow.nodes.length}
+        slug={slug}
+        wires={canvas.flow.edges.length}
+      />
+    </div>
+  );
+}
+
+/**
+ * The selected gateway: the canvas it is composed on, the strip under it, and the inspector beside.
  *
  * @summary Reach for it from the gateway route. Selecting any card or cable opens the inspector
  * on that subject and a pane click puts both the selection and the inspector away, so the drawer
@@ -110,9 +133,7 @@ export function GatewayCanvasPage({ slug }: { slug: string }) {
 
   return (
     <div className="flex h-full min-h-0">
-      <GatewayStage announced={canvas.announced} flow={canvas.flow}>
-        {anchoredPicker(canvas.picker)}
-      </GatewayStage>
+      {canvasColumn(slug, canvas)}
       {inspector.rendered ? (
         <PanelSeparator
           bounds={panelBounds.inspector}

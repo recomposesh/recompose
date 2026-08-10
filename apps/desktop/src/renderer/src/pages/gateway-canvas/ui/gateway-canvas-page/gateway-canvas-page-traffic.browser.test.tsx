@@ -63,7 +63,7 @@ test('one failed virtual model stands one error, so the gateway wire never repea
   emitEngineTraffic(failed);
 
   await expect.element(screen.getByRole('button', { name: /last error/i })).toBeVisible();
-  expect(screen.container.querySelectorAll('[aria-expanded]')).toHaveLength(1);
+  expect(screen.getByRole('button', { name: /last error/i }).elements()).toHaveLength(1);
 });
 
 test('traffic through one virtual model leaves the cables of the others at rest', async () => {
