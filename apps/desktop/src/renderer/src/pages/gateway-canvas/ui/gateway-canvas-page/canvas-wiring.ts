@@ -20,6 +20,8 @@ export type MovedSeat = { id: string; to: XY; settled: boolean };
 
 export const CARD_MEASURE = { width: 158, height: 78 };
 
+const DRAFT_CARD = 'draft';
+
 /** The definition id inside a model card's node id, or nothing for any other card. */
 export function modelIdOf(nodeId: string): string | undefined {
   return nodeId.startsWith('model:') ? nodeId.slice('model:'.length) : undefined;
@@ -191,11 +193,39 @@ export function subjectOf(selection: string | undefined): InspectorSubject {
     return { kind: 'gateway' };
   }
 
-  if (selection === 'draft') {
+  if (selection === DRAFT_CARD) {
     return { kind: 'draft' };
   }
 
   return prefixedSubject(selection) ?? ghostSubject(selection) ?? { kind: 'gateway' };
+}
+
+function modelCardOf(subject: InspectorSubject): string | undefined {
+  if (subject.kind === 'virtual-model') {
+    return `model:${subject.modelId}`;
+  }
+
+  return subject.kind === 'cable' ? `cable:${subject.modelId}` : undefined;
+}
+
+function targetCardOf(subject: InspectorSubject): string | undefined {
+  if (subject.kind === 'target') {
+    return `target:${subject.accountId}`;
+  }
+
+  return subject.kind === 'ghost-target' ? `ghost:${subject.accountId}` : undefined;
+}
+
+/**
+ * The card a subject stands for, or nothing where the subject is the gateway itself.
+ *
+ * @summary The inverse of `subjectOf`, so a surface that speaks about a subject can move the one
+ * canvas selection onto it without spelling a card id out for itself. The two live side by side on
+ * purpose: a change to how a card is named has to move both, and the round trip is what proves it
+ * did. The gateway stands for no card, because selecting nothing is what reads as the gateway.
+ */
+export function nodeIdOf(subject: InspectorSubject): string | undefined {
+  return subject.kind === 'draft' ? DRAFT_CARD : (modelCardOf(subject) ?? targetCardOf(subject));
 }
 
 /**

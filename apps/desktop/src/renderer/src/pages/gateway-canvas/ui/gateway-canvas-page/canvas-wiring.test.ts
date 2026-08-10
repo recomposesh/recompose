@@ -3,10 +3,18 @@ import type { Connection, NodeChange } from '@xyflow/react';
 import { describe, expect, test } from 'vitest';
 
 import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
+import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 
 import { gatewaySeed } from '../../../../shared/testing';
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { flowEdgesOf, flowNodesOf, movedSeats, oneTargetRule, subjectOf } from './canvas-wiring';
+import {
+  flowEdgesOf,
+  flowNodesOf,
+  movedSeats,
+  nodeIdOf,
+  oneTargetRule,
+  subjectOf,
+} from './canvas-wiring';
 
 function pulled(source: string, target: string): Connection {
   return { source, target, sourceHandle: null, targetHandle: null };
@@ -229,5 +237,36 @@ describe('the selection subject the inspector reads', () => {
   test('a selection with no body of its own falls back to the gateway', () => {
     expect(subjectOf('pending')).toEqual({ kind: 'gateway' });
     expect(subjectOf('overlay:draft')).toEqual({ kind: 'gateway' });
+  });
+});
+
+describe('the card a subject stands for', () => {
+  test('the gateway stands for no card, because it is what the whole screen is about', () => {
+    expect(nodeIdOf({ kind: 'gateway' })).toBeUndefined();
+  });
+
+  test('every subject with a card of its own names it', () => {
+    const named: readonly [InspectorSubject, string][] = [
+      [{ kind: 'virtual-model', modelId: 'fast' }, 'model:fast'],
+      [{ kind: 'cable', modelId: 'fast' }, 'cable:fast'],
+      [{ kind: 'target', accountId: 'k1' }, 'target:k1'],
+      [{ kind: 'ghost-target', accountId: 'gone' }, 'ghost:gone'],
+      [{ kind: 'draft' }, 'draft'],
+    ];
+
+    expect(named.map(([subject]) => nodeIdOf(subject))).toEqual(named.map(([, id]) => id));
+  });
+
+  test('naming a subject and reading it back lands on the very same subject', () => {
+    const every: readonly InspectorSubject[] = [
+      { kind: 'gateway' },
+      { kind: 'virtual-model', modelId: 'fast' },
+      { kind: 'cable', modelId: 'fast' },
+      { kind: 'target', accountId: 'k1' },
+      { kind: 'ghost-target', accountId: 'gone' },
+      { kind: 'draft' },
+    ];
+
+    expect(every.map((subject) => subjectOf(nodeIdOf(subject)))).toEqual(every);
   });
 });

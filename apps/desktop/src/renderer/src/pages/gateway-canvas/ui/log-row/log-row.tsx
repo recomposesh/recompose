@@ -78,7 +78,7 @@ export function LogRow({ logged, account, id, underCursor = false }: LogRowProps
       <span className="w-16 shrink-0 text-ink-secondary tabular-nums">{servedAt(logged.at)}</span>
       <span className="w-10 shrink-0 text-ink-secondary">{logged.method}</span>
       <span className="flex min-w-0 flex-1 items-center gap-1">
-        <span className="shrink-0 truncate" title={asked}>
+        <span className="max-w-1/2 shrink-0 truncate" title={asked}>
           {asked}
         </span>
         <span aria-hidden className="shrink-0 text-ink-tertiary">

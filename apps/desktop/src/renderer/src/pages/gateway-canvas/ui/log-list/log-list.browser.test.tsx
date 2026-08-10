@@ -46,7 +46,12 @@ function LiveList({ start }: { start: readonly LoggedRequest[] }) {
   return (
     <>
       <div data-log-list-footing="">
-        <LogList accounts={storedAccounts.accounts} nothingYet={NOTHING_YET} rows={rows} />
+        <LogList
+          accounts={storedAccounts.accounts}
+          nothingYet={NOTHING_YET}
+          rows={rows}
+          scope="all"
+        />
       </div>
       <button
         onClick={() => {
@@ -67,6 +72,8 @@ async function listOf(rows: readonly LoggedRequest[]) {
   return {
     screen,
     listbox: () => screen.getByRole('listbox').element(),
+    cursorRef: () => screen.getByRole('listbox').element().getAttribute('aria-activedescendant'),
+    announced: () => screen.getByRole('status').element().textContent,
     drawn: () => [...screen.container.querySelectorAll('[role="option"]')],
     serveMore: async () => {
       await userEvent.click(screen.getByRole('button', { name: 'serve more' }));
@@ -91,6 +98,19 @@ test('the list reads newest first, in the order the cache handed the rows over',
   const times = list.drawn().map((row) => row.querySelector('span')?.textContent);
 
   expect(times).toEqual(['14:22:09', '14:22:08', '14:22:07', '14:22:06']);
+});
+
+test('the list never re-sorts a run, because the cache already decided what newest means', async () => {
+  const jumbled = [
+    servedRequest({ id: 'older', at: SERVED_AT - 5000 }),
+    servedRequest({ id: 'newest', at: SERVED_AT }),
+    servedRequest({ id: 'middle', at: SERVED_AT - 1000 }),
+  ];
+  const list = await listOf(jumbled);
+
+  const times = list.drawn().map((row) => row.querySelector('span')?.textContent);
+
+  expect(times).toEqual(['14:22:04', '14:22:09', '14:22:08']);
 });
 
 test('a run too long to paint draws only the rows in view', async () => {
@@ -210,5 +230,53 @@ test('nothing is announced before the first requests have even been read', async
   const list = await listOf(servedRun(20));
 
   await expect.element(list.screen.getByRole('listbox')).toBeVisible();
-  expect(list.screen.getByRole('status').element().textContent).toBe('');
+  expect(list.announced()).toBe('');
+});
+
+test('the first requests into an empty scope announce themselves', async () => {
+  const list = await listOf([]);
+
+  await expect.element(list.screen.getByText(NOTHING_YET)).toBeVisible();
+  await list.serveMore();
+
+  await expect.poll(list.announced).toBe('3 new requests.');
+});
+
+test('a steady gateway keeps announcing, since each summary has to differ from the last', async () => {
+  const list = await listOf(servedRun(20));
+
+  await list.serveMore();
+  await expect.poll(list.announced).toBe('3 new requests.');
+
+  await list.serveMore();
+
+  await expect.poll(list.announced).toBe('6 new requests.');
+});
+
+test('the cursor reference leaves with the row, so it never points at an undrawn row', async () => {
+  const list = await listOf(servedRun(400));
+
+  await userEvent.tab();
+  await userEvent.keyboard('{ArrowDown}');
+  expect(list.cursorRef()).toMatch(/-served-1$/);
+
+  list.listbox().scrollTop = 4000;
+
+  await expect.poll(list.cursorRef).toBe(null);
+});
+
+test('a copy takes the row under the cursor even once that row has scrolled out of view', async () => {
+  const written = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+  const list = await listOf(servedRun(400));
+
+  await userEvent.tab();
+  await userEvent.keyboard('{ArrowDown}');
+  list.listbox().scrollTop = 4000;
+  await expect.poll(list.cursorRef).toBe(null);
+
+  await userEvent.keyboard('{Meta>}c{/Meta}');
+
+  expect(written).toHaveBeenCalledWith(
+    '14:22:09 POST fast → claude-haiku-4-5 anthropic · work 200 0.9s',
+  );
 });

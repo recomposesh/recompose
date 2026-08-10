@@ -4,8 +4,10 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { paintedBox } from '../../../../shared/testing';
 import { servedRequest, workKey } from '../../testing/gateway-canvas.testkit';
 import { LogRow } from './log-row';
+import { LOG_ROW_HEIGHT } from './logged-request';
 
 const meta = preview.meta({
   component: LogRow,
@@ -53,6 +55,18 @@ export const Served = meta.story({
     await expect(await canvas.findByText('14:22:09')).toBeVisible();
     await expect(await canvas.findByText('anthropic · work')).toBeVisible();
     await expect(await canvas.findByText('0.9s')).toBeVisible();
+  },
+});
+
+/**
+ * The row stands exactly as tall as the virtualized list measures its whole run against.
+ *
+ * @summary The list sizes ten thousand rows from one number, so a row that painted a different
+ * height would drift the scroll position further with every row past the viewport.
+ */
+export const StandsItsMeasuredHeight = meta.story({
+  play: async ({ canvas }) => {
+    await expect(paintedBox(await canvas.findByRole('option')).height).toBe(LOG_ROW_HEIGHT);
   },
 });
 
@@ -116,24 +130,26 @@ export const AccountDeparted = meta.story({
   },
 });
 
-/** The long names a person meets in practice, where the provider model gives way first. */
-export const NamesTooLongForTheGrid = meta.story({
-  args: {
-    logged: servedRequest({
-      virtualModel: 'creative-writing-assistant',
-      providerModel: 'anthropic/claude-sonnet-5-20260501-extended-thinking',
-    }),
-  },
-  play: async ({ canvas }) => {
-    const resolved = await canvas.findByText(
-      'anthropic/claude-sonnet-5-20260501-extended-thinking',
-    );
+const A_LONG_ID = 'creative-writing-assistant-with-extended-thinking-enabled';
+const A_LONG_MODEL = 'anthropic/claude-sonnet-5-20260501-extended-thinking';
 
-    await expect(resolved).toHaveAttribute(
-      'title',
-      'anthropic/claude-sonnet-5-20260501-extended-thinking',
-    );
+/**
+ * The long names a person meets in practice, where the provider model gives way first.
+ *
+ * @summary Both halves of the pair carry their whole text in a native title, and both can give way:
+ * the provider model first, and the asked-for id once it outgrows its own share. Neither may paint
+ * over the provider and account beside it, which is the cell a person reads to know who answered.
+ */
+export const NamesTooLongForTheGrid = meta.story({
+  args: { logged: servedRequest({ virtualModel: A_LONG_ID, providerModel: A_LONG_MODEL }) },
+  play: async ({ canvas }) => {
+    const asked = await canvas.findByTitle(A_LONG_ID);
+    const resolved = await canvas.findByTitle(A_LONG_MODEL);
+    const answered = await canvas.findByText('anthropic · work');
+
     await expect(resolved.scrollWidth).toBeGreaterThan(resolved.clientWidth);
+    await expect(asked.scrollWidth).toBeGreaterThan(asked.clientWidth);
+    await expect(paintedBox(asked).right).toBeLessThanOrEqual(paintedBox(answered).left);
   },
 });
 

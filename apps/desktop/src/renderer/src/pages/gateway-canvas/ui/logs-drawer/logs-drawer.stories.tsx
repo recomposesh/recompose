@@ -5,7 +5,12 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { gatewaySeed } from '../../../../shared/testing';
-import { servedRequest, servedRun, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import {
+  crowdedGateway,
+  servedRequest,
+  servedRun,
+  storedAccounts,
+} from '../../testing/gateway-canvas.testkit';
 import { LogsDrawer } from './logs-drawer';
 
 type DrawerStanding = ComponentProps<typeof LogsDrawer>;
@@ -38,17 +43,6 @@ const acrossTwoModels = [
   }),
   ...servedRun(30).map((row) => ({ ...row, id: `older-${row.id}`, at: row.at - 10_000 })),
 ];
-
-const crowded = gatewaySeed({
-  slug: 'my-gateway',
-  displayName: 'My Gateway',
-  port: 8397,
-  virtualModels: ['one', 'two', 'three', 'four', 'five', 'six'].map((id) => ({
-    id,
-    displayName: id,
-    target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
-  })),
-});
 
 const meta = preview.meta({
   component: LogsDrawer,
@@ -133,7 +127,7 @@ export const ScopedToARemovedTarget = meta.story({
 
 /** A gateway serving more virtual models than the header holds, the rest behind the overflow. */
 export const MoreScopesThanTheHeaderHolds = meta.story({
-  args: { gateway: crowded, rows: [] },
+  args: { gateway: crowdedGateway, rows: [] },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: 'More log scopes' })).toBeVisible();
   },

@@ -5,7 +5,6 @@ import { useState, useSyncExternalStore } from 'react';
 
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 
-import { accountName } from '../../../../entities/account';
 import {
   closeLogsDrawer,
   keepPanelWidth,
@@ -25,17 +24,14 @@ import {
 } from '../../../../shared/ui';
 import { logScope } from '../../lib/log-scope';
 import { LogList } from '../log-list/log-list';
-
-const EVERY_REQUEST = 'all';
-
-/**
- * How many exclusive scopes the header keeps in reach before the rest go behind the overflow.
- *
- * @summary The whole-gateway scope counts toward it, so a gateway serving four virtual models reads
- * as one strip and a busier one reads as a strip plus a menu rather than a strip nobody can see the
- * end of.
- */
-const SCOPES_IN_THE_HEADER = 5;
+import {
+  EVERY_REQUEST,
+  type Scope,
+  modelScopes,
+  scopeOf,
+  scopeStrip,
+  targetScope,
+} from './log-scopes';
 
 const NOTHING_YET: Record<InspectorSubject['kind'], string> = {
   gateway: 'No requests from any client app yet.',
@@ -50,89 +46,6 @@ const streamStanding = {
   running: { word: 'Live', tone: 'positive' },
   stopped: { word: 'Stopped', tone: 'inert' },
 } as const;
-
-type Scope = { value: string; label: string; tint?: 'virtual-model' | 'target' | undefined };
-
-function litModel(subject: InspectorSubject): string | undefined {
-  return subject.kind === 'virtual-model' || subject.kind === 'cable'
-    ? `model:${subject.modelId}`
-    : undefined;
-}
-
-function litTarget(subject: InspectorSubject): string | undefined {
-  if (subject.kind === 'target') {
-    return `target:${subject.accountId}`;
-  }
-
-  return subject.kind === 'ghost-target' ? `ghost:${subject.accountId}` : undefined;
-}
-
-/**
- * Which scope the selection lights, since the canvas and this strip are one mechanism.
- *
- * @summary A cable lights the virtual model it binds rather than a scope of its own, because the
- * requests a cable carried are that model's requests. Anything with no scope of its own reads as
- * the whole gateway, which is what a person sees before they have narrowed anything.
- */
-function litScope(subject: InspectorSubject): string {
-  return litModel(subject) ?? litTarget(subject) ?? EVERY_REQUEST;
-}
-
-function modelScopes(gateway: GatewayConfig): readonly Scope[] {
-  return gateway.virtualModels.map((model) => ({
-    value: `model:${model.id}`,
-    label: model.displayName,
-    tint: 'virtual-model' as const,
-  }));
-}
-
-/**
- * The scope a selected target stands, for as long as that selection holds.
- *
- * @summary A target is not a standing scope the way a virtual model is, so its segment arrives with
- * the selection and leaves with it. A target that has left the registry reads as removed rather than
- * carrying a name nothing answers to any more.
- */
-function targetScope(subject: InspectorSubject, accounts: readonly Account[]): Scope | undefined {
-  if (subject.kind === 'ghost-target') {
-    return { value: `ghost:${subject.accountId}`, label: 'Removed', tint: 'target' };
-  }
-
-  if (subject.kind !== 'target') {
-    return undefined;
-  }
-
-  const account = accounts.find((held) => held.id === subject.accountId);
-
-  return {
-    value: `target:${subject.accountId}`,
-    label: account === undefined ? subject.accountId : accountName(account),
-    tint: 'target',
-  };
-}
-
-type ScopeStrip = { shown: readonly Scope[]; hidden: readonly Scope[] };
-
-/**
- * The scopes the header shows and the ones it hands the overflow.
- *
- * @summary Whatever scope stands is always in reach, even where the header had already run out of
- * room for it, because a strip that hid the standing scope would read as though nothing were
- * narrowed at all.
- */
-function scopeStrip(scopes: readonly Scope[], lit: string): ScopeStrip {
-  if (scopes.length <= SCOPES_IN_THE_HEADER) {
-    return { shown: scopes, hidden: [] };
-  }
-
-  const kept = scopes.slice(0, SCOPES_IN_THE_HEADER);
-  const standing = scopes.find((scope) => scope.value === lit);
-  const shown =
-    standing === undefined || kept.includes(standing) ? kept : [...kept.slice(0, -1), standing];
-  const inTheHeader = new Set(shown);
-
-  return { shown, hidden: scopes.filter((scope) => !inTheHeader.has(scope)) };
-}
 
 type ScopeControls = {
   options: readonly Scope[];
@@ -262,7 +175,7 @@ export function LogsDrawer({
 }: LogsDrawerProps) {
   const [errorsOnly, setErrorsOnly] = useState(false);
   const height = useSyncExternalStore(subscribeToPanelWidths, logsHeight);
-  const lit = litScope(subject);
+  const lit = scopeOf(subject);
   const transient = targetScope(subject, accounts);
   const strip = scopeStrip([{ value: EVERY_REQUEST, label: 'All' }, ...modelScopes(gateway)], lit);
 
@@ -289,6 +202,7 @@ export function LogsDrawer({
           accounts={accounts}
           nothingYet={NOTHING_YET[subject.kind]}
           rows={rows.filter(logScope(subject, errorsOnly))}
+          scope={`${lit} ${String(errorsOnly)}`}
         />
       </section>
     </>

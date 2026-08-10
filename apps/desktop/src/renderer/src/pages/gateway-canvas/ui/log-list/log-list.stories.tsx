@@ -9,6 +9,7 @@ const meta = preview.meta({
   component: LogList,
   args: {
     rows: servedRun(40),
+    scope: 'all',
     accounts: storedAccounts.accounts,
     nothingYet: 'No requests from any client app yet.',
   },
