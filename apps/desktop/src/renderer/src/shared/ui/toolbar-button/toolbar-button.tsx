@@ -31,7 +31,7 @@ export function ToolbarButton({
   return (
     <button
       aria-label={label}
-      className={`flex items-center justify-center focus-ring hover:bg-surface-hover active:bg-surface-pressed ${toolbarShape[where]} ${tone}`}
+      className={`app-no-drag flex items-center justify-center focus-ring hover:bg-surface-hover active:bg-surface-pressed ${toolbarShape[where]} ${tone}`}
       onClick={onPress}
       title={waitsFor === undefined ? label : `${label}. Waits on ${waitsFor}.`}
       type="button"
