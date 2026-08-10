@@ -30,16 +30,26 @@ export function turnUnder(model: string): unknown {
   };
 }
 
-/** Sends a real wire body, the way a command-line client asks a gateway for a turn. */
+/**
+ * Sends a real wire body, the way a command-line client asks a gateway for a turn.
+ *
+ * @summary A client app names itself in the user agent, which is the one ingredient beside the
+ * caller's address that the gateway keys a request by, so a scenario counting callers apart hands
+ * one over and a scenario about anything else leaves it alone the way a bare client would.
+ */
 export async function sendTurn(
   address: string,
   path: string,
   body: unknown,
+  clientApp?: string,
 ): Promise<GatewayAnswer> {
   return answerOf(
     await fetch(new URL(path, address), {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(clientApp === undefined ? {} : { 'user-agent': clientApp }),
+      },
       body: JSON.stringify(body),
     }),
   );

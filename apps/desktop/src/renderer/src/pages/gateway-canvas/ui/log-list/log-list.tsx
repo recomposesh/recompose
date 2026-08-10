@@ -108,7 +108,9 @@ function drawnRows(
         id={rowId(logged.id)}
         key={item.key}
         logged={logged}
+        place={item.index + 1}
         underCursor={item.index === walk.seat}
+        wholeRun={walk.rows.length}
       />
     );
   });

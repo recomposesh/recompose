@@ -10,16 +10,17 @@ const acceptanceDir = defineBddConfig({
 /**
  * How many whole Electron applications one machine can bring up at the same time.
  *
- * @summary Every worker launches an application rather than a browser context. Left to pick its
- * own count, Playwright takes half the cores and the launches starve each other, which surfaces
- * as `firstWindow` crossing the test timeout rather than as anything a scenario did.
+ * @summary Every worker launches an application rather than a browser context. On the shared CI
+ * runners the launches starve each other past two, which surfaces as `firstWindow` crossing the
+ * test timeout rather than as anything a scenario did. A developer machine takes ten by the
+ * maintainer's call; a local `firstWindow` timeout under load reads as this number, not a scenario.
  */
-const ELECTRON_LAUNCHES_AT_ONCE = 2;
+const ELECTRON_LAUNCHES_AT_ONCE = process.env['CI'] === undefined ? 10 : 2;
 
 export default defineConfig({
   timeout: 30_000,
   workers: ELECTRON_LAUNCHES_AT_ONCE,
-  retries: process.env['CI'] === undefined ? 0 : 2,
+  retries: process.env['CI'] === undefined ? 1 : 2,
   use: { trace: 'on-first-retry' },
   snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}',
   /* The macos runner pool rasterizes fonts unevenly; 1.5% absorbs that and nothing structural. */

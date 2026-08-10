@@ -30,7 +30,7 @@ const compositionsBefore = new WeakMap<Page, Composition>();
 
 const cablesInFlight = new WeakSet<Page>();
 
-function recalled<Kept>(held: WeakMap<Page, Kept>, page: Page, missing: string): Kept {
+export function recalled<Kept>(held: WeakMap<Page, Kept>, page: Page, missing: string): Kept {
   const kept = held.get(page);
 
   if (kept === undefined) {

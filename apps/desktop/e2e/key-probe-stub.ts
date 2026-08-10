@@ -25,8 +25,12 @@ export const answerTheProviderGives = 'The target answered.';
 /** How the provider answers the next check, which a scenario scripts before it asks for one. */
 type ProviderAnswer = 'accepts' | 'turns-away' | 'refuses-the-connection';
 
+/** The status and the words the provider turns a forwarded turn away with. */
+type TurnRefusal = { status: number; words: string };
+
 type ProviderDesk = {
   answer: ProviderAnswer;
+  refusal: TurnRefusal | undefined;
   asked: string[];
 };
 
@@ -37,6 +41,15 @@ export type KeyProbeStub = {
   accepts: () => void;
   turnsAway: () => void;
   cannotBeReached: () => void;
+  /**
+   * Turns every forwarded turn away under this status, saying so in its own words.
+   *
+   * @summary A vendor that refuses a turn answers a status and an explanation of its own, and the
+   * two travel separately: the status is a fact every surface may read, while the words are the
+   * target's own answer text. A scenario scripts both so it can prove which of them recompose
+   * carries and which it leaves behind.
+   */
+  refusesTurnsWith: (status: number, words: string) => void;
   /**
    * Every model the provider was asked for this run, in the order it was asked.
    *
@@ -116,6 +129,13 @@ function answerTheLook(desk: ProviderDesk, response: ServerResponse): void {
   response.end(catalogBody());
 }
 
+function refusalBody(words: string): string {
+  return JSON.stringify({
+    type: 'error',
+    error: { type: 'invalid_request_error', message: words },
+  });
+}
+
 async function answerTheTurn(
   desk: ProviderDesk,
   request: IncomingMessage,
@@ -123,8 +143,17 @@ async function answerTheTurn(
   bodyFor: (model: string) => string,
 ): Promise<void> {
   const model = modelNamedIn(await bodyOf(request));
+  const { refusal } = desk;
 
   desk.asked.push(model);
+
+  if (refusal !== undefined) {
+    response.writeHead(refusal.status, { 'content-type': 'application/json' });
+    response.end(refusalBody(refusal.words));
+
+    return;
+  }
+
   response.writeHead(ACCEPTED, { 'content-type': 'application/json' });
   response.end(bodyFor(model));
 }
@@ -170,7 +199,7 @@ async function answerAsked(
  * left the machine.
  */
 export async function fakeKeyProbe(): Promise<KeyProbeStub> {
-  const desk: ProviderDesk = { answer: 'accepts', asked: [] };
+  const desk: ProviderDesk = { answer: 'accepts', refusal: undefined, asked: [] };
   const server = createServer((request, response) => {
     answerAsked(desk, request, response).catch((failure: unknown) => {
       console.error('the stand-in provider could not answer a request', failure);
@@ -189,6 +218,9 @@ export async function fakeKeyProbe(): Promise<KeyProbeStub> {
     },
     cannotBeReached: () => {
       desk.answer = 'refuses-the-connection';
+    },
+    refusesTurnsWith: (status, words) => {
+      desk.refusal = { status, words };
     },
     modelsAsked: () => desk.asked,
     dispose: async () =>

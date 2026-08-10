@@ -121,6 +121,15 @@ test('a run too long to paint draws only the rows in view', async () => {
   expect(list.drawn().length).toBeGreaterThan(0);
 });
 
+test('every drawn row names its place in the whole run, so the few speak for the many', async () => {
+  const list = await listOf(servedRun(2000));
+
+  const [first] = list.drawn();
+
+  expect(first?.getAttribute('aria-setsize')).toBe('2000');
+  expect(first?.getAttribute('aria-posinset')).toBe('1');
+});
+
 test('the whole list is one tab stop, and the arrows walk a cursor down the rows', async () => {
   const list = await listOf(servedRun(6));
 

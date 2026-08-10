@@ -48,6 +48,10 @@ type LogRowProps = {
   id: string;
   /** Whether the row cursor rests here, which is the row a copy takes. */
   underCursor?: boolean;
+  /** Where the row stands in the whole run, counted from one, because only a few rows are drawn. */
+  place?: number;
+  /** How many rows the whole run holds, which the drawn few stand in for. */
+  wholeRun?: number;
 };
 
 /**
@@ -62,7 +66,7 @@ type LogRowProps = {
  * no duration, since a number there would say the failure took that long to arrive rather than that
  * nothing was served.
  */
-export function LogRow({ logged, account, id, underCursor = false }: LogRowProps) {
+export function LogRow({ logged, account, id, underCursor = false, place, wholeRun }: LogRowProps) {
   const asked = logged.virtualModel ?? '';
   const resolved = logged.providerModel ?? '';
   const took = tookFor(logged.durationMs);
@@ -70,7 +74,9 @@ export function LogRow({ logged, account, id, underCursor = false }: LogRowProps
 
   return (
     <div
+      aria-posinset={place}
       aria-selected={underCursor}
+      aria-setsize={wholeRun}
       className={`flex h-7.5 items-center gap-2 px-3 font-mono text-mono-caption whitespace-nowrap text-ink ${cursor}`}
       id={id}
       role="option"

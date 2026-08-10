@@ -153,11 +153,21 @@ describe('driving the canvas from the menu bar', () => {
     expect(background).toEqual([]);
   });
 
-  test('a canvas command with no window in front reaches nobody', () => {
-    const background = openWindow();
+  test('a canvas command with no window in front reaches the one window standing', () => {
+    const only = openWindow();
 
     pushCanvasCommand('tidy');
 
-    expect(background).toEqual([]);
+    expect(only).toEqual([{ channel: 'canvas:command', payload: 'tidy' }]);
+  });
+
+  test('a canvas command with no window in front and two standing reaches nobody', () => {
+    const first = openWindow();
+    const second = openWindow();
+
+    pushCanvasCommand('tidy');
+
+    expect(first).toEqual([]);
+    expect(second).toEqual([]);
   });
 });
