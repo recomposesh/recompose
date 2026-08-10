@@ -39,9 +39,13 @@
   --color-accent-fill: var(--blue-700);
   --color-accent-ink: light-dark(var(--blue-700), var(--blue-400));
   --color-subscription: light-dark(var(--blue-600), var(--blue-500));
+  --color-subscription-ink: light-dark(var(--blue-800), var(--blue-300));
   --color-api-key: light-dark(var(--yellow-700), var(--yellow-500));
+  --color-api-key-ink: light-dark(var(--yellow-800), var(--yellow-500));
   --color-aggregator: light-dark(var(--purple-600), var(--purple-500));
+  --color-aggregator-ink: light-dark(var(--purple-700), var(--purple-400));
   --color-local: light-dark(var(--teal-700), var(--teal-500));
+  --color-local-ink: light-dark(var(--teal-800), var(--teal-500));
   --color-running: light-dark(var(--green-700), var(--green-500));
   --color-stopped: light-dark(var(--red-700), var(--red-500));
   --color-warning: light-dark(var(--orange-600), var(--orange-500));
@@ -51,8 +55,11 @@
   --color-danger-ink: light-dark(var(--red-700), var(--red-400));
 
   --color-gateway: light-dark(var(--teal-700), var(--teal-500));
+  --color-gateway-ink: light-dark(var(--teal-800), var(--teal-500));
   --color-virtual-model: light-dark(var(--blue-600), var(--blue-500));
+  --color-virtual-model-ink: light-dark(var(--blue-800), var(--blue-300));
   --color-target: light-dark(var(--purple-600), var(--purple-500));
+  --color-target-ink: light-dark(var(--purple-700), var(--purple-400));
   --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
   --color-cable-live: light-dark(var(--green-600), var(--green-500));
   --color-cable-served: light-dark(var(--green-700), var(--green-500));
