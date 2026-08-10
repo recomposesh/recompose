@@ -8,7 +8,7 @@ The gateway detail screen renders a gateway's composition as a live canvas. The 
 
 ### Requirement: The gateway detail renders its composition as a canvas
 
-The gateway detail screen MUST render the gateway's composition as nodes on a canvas. The gateway stands as a node, with its virtual models and their targets as nodes wired to it by cables. Every existing binding MUST appear as a cable, so the topology a person composed reads at a glance without opening a list.
+The gateway detail screen MUST render the gateway's composition as nodes on a canvas. The gateway stands as a node, with its virtual models and their targets as nodes wired to it by cables. A wire MUST run from the gateway node to each of its virtual model nodes. A cable MUST run from each bound virtual model node to its target node, and a bound virtual model carries exactly one target cable. Every composing gesture MUST write through the stored gateway document and nothing else.
 
 #### Scenario: an existing composition appears wired
 
@@ -19,7 +19,7 @@ The gateway detail screen MUST render the gateway's composition as nodes on a ca
 
 ### Requirement: A cable dragged between nodes creates a binding
 
-A person MUST be able to drag a cable out of a node's port and drop it on a compatible node to create the binding. A stored binding always carries a provider model, so the drop MUST open the provider-model pick and the completed pick MUST write the binding. The gesture reads the way Excalidraw pulls an arrow. A drop on empty canvas MUST open the grouped picker of stored accounts. Picking an account and its provider model MUST materialize a wired target node at the drop point. Esc MUST cancel a drag in flight and leave the composition unchanged.
+A person MUST be able to drag a cable out of a node's port and drop it on a compatible node to create the binding. A stored binding always carries a provider model, so the drop MUST open the provider-model pick and the completed pick MUST write the binding. The provider model is the real model name the picked account serves, per the virtual-models specification. A completed pick MUST persist exactly one stored account and one provider model on the virtual model. The gesture reads the way Excalidraw pulls an arrow. A drop on empty canvas MUST open the grouped picker of stored accounts. Picking an account and its provider model MUST materialize a wired target node at the drop point. Esc MUST cancel a drag in flight and leave the composition unchanged.
 
 #### Scenario: a person wires a virtual model by cable
 
@@ -44,7 +44,7 @@ A person MUST be able to drag a cable out of a node's port and drop it on a comp
 
 ### Requirement: Every source port answers a keyboard without a drag
 
-Every source port MUST carry a keyboard-reachable ask that paints only under keyboard focus. The canvas shows no standing icon beside a node, and a pointer meets only the cable. The gateway port's ask MUST drop a connected draft virtual model and open the inspector. A virtual model port's ask MUST open the picker of stored accounts. A gateway with nothing wired stands as a plain node, because pulling a cable out of its port is the one composing gesture.
+Every source port MUST carry a keyboard-reachable ask that paints only under keyboard focus, with a visible focus indicator. The ask stays keyboard reachable while its pointer affordance stands hidden. The canvas shows no standing icon beside a node, and a pointer meets only the cable. The gateway port's ask MUST drop a connected draft virtual model and open the inspector on it. A virtual model port's ask MUST open the picker of stored accounts. A gateway with nothing wired stands as a plain node, because pulling a cable out of its port is the one composing gesture.
 
 #### Scenario: an empty gateway stands plain
 
@@ -57,4 +57,27 @@ Every source port MUST carry a keyboard-reachable ask that paints only under key
 - Given a gateway holding a virtual model bound to a stored target
 - When a person moves keyboard focus onto the gateway port's ask
 - Then the ask paints and names what it offers
-- And pressing Enter takes it up
+- And pressing Enter births a connected draft virtual model and opens the inspector on it
+
+#### Scenario: a virtual model's ask opens the account picker
+
+- Given a virtual model holding no target
+- When a person moves keyboard focus onto the virtual model port's ask and presses Enter
+- Then the grouped picker of stored accounts opens
+
+### Requirement: A cable paints the traffic it carried
+
+A cable with no recorded traffic MUST stand still in the resting tone. A cable whose last request served MUST paint green with a traveling pulse on an unbroken line. A cable whose last request failed MUST paint red with a marching dash and MUST stand a pressable last-error trigger on the path. Pressing the trigger MUST reveal the status and the failure's reason. A newer outcome MUST replace the older one. Motion yields where the person asked for reduced motion, and the colors stand either way.
+
+#### Scenario: a served request turns the cables green
+
+- Given a virtual model bound to a stored target
+- When a request through that virtual model comes back served
+- Then its wire and its cable paint green with a traveling pulse
+
+#### Scenario: a failed request offers its reason on the cable
+
+- Given a virtual model whose last request failed
+- When a person presses the last-error trigger on its cable
+- Then the status and the failure's reason stand readable
+- And a later served request returns the cables to green and takes the trigger away
