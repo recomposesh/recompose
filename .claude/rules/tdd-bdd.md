@@ -15,6 +15,11 @@
 - Describe *what* the system does in domain language ("failover shifts traffic to the next healthy target"), never *how* ("calls selectTarget() twice").
 - A scenario must make sense to someone who has never seen the implementation.
 
+## Property tests and the mutation gate
+
+- A property test never carries mutation duty alone. `@fast-check/vitest` bakes a random seed into every test name, so Stryker's per-test filter never runs a property against a mutant.
+- Every property law on a mutate-listed file gets a deterministic twin spec that pins the same law with fixed values. The property explores; the twin kills.
+
 ## The invariant
 - **Test code changes if and only if behavior changes.**
 - A pure refactor must never require touching a test. If it does, the test has coupled itself to implementation details, so rewrite it around public behavior instead of patching it.
