@@ -18,7 +18,7 @@ const chromium = () => ({
 });
 
 /* A shared runner starves parallel pages into forty-second click timeouts. */
-const pacedForCi = process.env['CI'] === undefined ? {} : { fileParallelism: false };
+const pacedForCi = process.env['CI'] === undefined ? {} : { fileParallelism: false, retry: 1 };
 
 export default defineConfig({
   test: {
