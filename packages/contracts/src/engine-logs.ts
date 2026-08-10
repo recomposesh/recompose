@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { gatewaySlugSchema } from './gateway-config';
+import { gatewaySlugSchema, modelAliasSchema } from './gateway-config';
 import { nonBlankString } from './non-blank';
 
 const loggedAtSchema = z.number().int().nonnegative();
@@ -23,13 +23,15 @@ const clientKeySchema = z.string().regex(/^sha256:[0-9a-f]{64}$/, 'must be a sha
  * mistake, and the renderer counts distinct callers apart without ever reading one. The count it
  * feeds reads as client apps: the distinct client apps seen in the last minute. A row
  * the gateway raised before any provider answered reads `origin: 'gateway'` and leaves its
- * provider cells empty, so the footer's errors and a red cable can never disagree.
+ * provider cells empty, so the footer's errors and a red cable can never disagree. `virtualModel`
+ * reads the alias vocabulary rather than the gateway's, because an alias keeps the dots a real
+ * model name carries and a row through `claude-5.6-sol` has to name it.
  */
 export const logRowSchema = z.strictObject({
   id: nonBlankString,
   at: loggedAtSchema,
   gateway: gatewaySlugSchema,
-  virtualModel: gatewaySlugSchema.optional(),
+  virtualModel: modelAliasSchema.optional(),
   origin: z.enum(['provider', 'gateway']),
   method: nonBlankString,
   provider: nonBlankString.optional(),

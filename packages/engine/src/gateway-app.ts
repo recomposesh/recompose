@@ -23,7 +23,7 @@ import {
   MODEL_ROUTES,
   VIDEO_ROUTES,
 } from './gateway-route-paths';
-import { watchingTraffic } from './gateway-traffic';
+import { noteUnreadableRequest, openServingTurn, watchingTraffic } from './gateway-traffic';
 import { proxyVideoRequest } from './gateway-videos';
 import { registerGatewayWebSockets } from './gateway-websocket';
 import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
@@ -254,9 +254,12 @@ export function createGatewayApp(
   const watched = watchingTraffic(spendGrantFor, note ?? (() => undefined));
 
   app.use(guardLoopback(gateway.port));
+  app.use(openServingTurn(gateway.slug));
 
   app.onError((error, c) => {
     if (error instanceof InvalidJsonBodyError) {
+      noteUnreadableRequest();
+
       return refusalResponse(dialectForPath(c.req.path), invalidJson(error.message));
     }
 

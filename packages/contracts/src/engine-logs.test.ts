@@ -61,6 +61,12 @@ describe('one request as the drawer lists it', () => {
   test('a duration measured between frames survives, because the clock reads fractions', () => {
     expect(logRowSchema.parse({ ...served, durationMs: 0.5 }).durationMs).toBe(0.5);
   });
+
+  test('a row through a dotted alias survives, because a real model name keeps its dots', () => {
+    expect(logRowSchema.parse({ ...served, virtualModel: 'claude-5.6-sol' }).virtualModel).toBe(
+      'claude-5.6-sol',
+    );
+  });
 });
 
 describe('what no row carries', () => {

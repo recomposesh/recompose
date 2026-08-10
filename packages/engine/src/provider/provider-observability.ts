@@ -1,141 +1,34 @@
-import { createHash } from 'node:crypto';
-
-import type { ProviderDialect } from '../gateway-wire';
-import type { ProviderMediaLog } from './provider-log-types';
+import type {
+  ProviderObservation,
+  ProviderObservationRequest,
+  ProviderRequestLog,
+} from './provider-observation';
 import type { ProviderUsage } from './provider-usage';
+import type { AttemptInFlight } from './telemetry-feed';
 
+import {
+  clonedMedia,
+  clonedObservation,
+  firstHeader,
+  observationRequest,
+  requestIdHash,
+  upstreamRequestIdHeaders,
+} from './provider-observation';
 import { emptyProviderUsage, providerUsageFrom } from './provider-usage';
+import { servingTurn } from './serving-turn';
+import { attemptFor, tellingReaders } from './telemetry-feed';
 
+export { providerRequestId } from './provider-observation';
+export type { ProviderObservation, ProviderRequestLog } from './provider-observation';
 export { providerUsageFrom } from './provider-usage';
 export type { ProviderUsage } from './provider-usage';
 
-export type ProviderRequestLog = {
-  provider: string;
-  model: string;
-  accountId?: string | undefined;
-  dialect: ProviderDialect;
-  method: string;
-  requestId?: string | undefined;
-  generate?: boolean | undefined;
-  version?: string | undefined;
-  media?: ProviderMediaLog | undefined;
-};
-
-export type ProviderObservation = {
-  provider: string;
-  model: string;
-  accountId?: string | undefined;
-  dialect: ProviderDialect;
-  method: string;
-  requestIdHash?: string | undefined;
-  upstreamRequestIdHash?: string | undefined;
-  startedAt: number;
-  durationMs: number;
-  ttftMs: number;
-  status: number;
-  usage: ProviderUsage;
-  generate: boolean;
-  version?: string | undefined;
-  media?: ProviderMediaLog | undefined;
-};
-
-type ProviderObservationRequest = {
-  provider: string;
-  model: string;
-  accountId?: string | undefined;
-  dialect: ProviderDialect;
-  method: string;
-  requestIdHash?: string | undefined;
-  generate?: boolean | undefined;
-  version?: string | undefined;
-  media?: ProviderMediaLog | undefined;
-};
-
 type ObservabilityOptions = {
   now?: (() => number) | undefined;
+  wallClock?: (() => number) | undefined;
   maxRecords?: number | undefined;
 };
 type ObservationListener = (record: ProviderObservation) => void;
-
-const outboundRequestIdHeaders = ['x-request-id', 'x-client-request-id', 'x-cpa-trace-id'] as const;
-const upstreamRequestIdHeaders = [
-  'x-upstream-request-id',
-  'x-request-id',
-  'request-id',
-  'openai-request-id',
-  'x-goog-request-id',
-  'x-amzn-requestid',
-] as const;
-
-function firstHeader(headers: Headers, names: readonly string[]): string | undefined {
-  for (const name of names) {
-    const value = headers.get(name)?.trim();
-
-    if (value !== undefined && value !== '') return value;
-  }
-
-  return undefined;
-}
-
-export function providerRequestId(headers: Headers): string | undefined {
-  return firstHeader(headers, outboundRequestIdHeaders);
-}
-
-function requestIdHash(value: string | undefined): string | undefined {
-  const normalized = value?.trim();
-
-  if (normalized === undefined || normalized === '') return undefined;
-
-  return `sha256:${createHash('sha256').update(normalized).digest('hex')}`;
-}
-
-function clonedMedia(media: ProviderMediaLog | undefined): ProviderMediaLog | undefined {
-  if (media === undefined) return undefined;
-
-  return {
-    connection: media.connection,
-    proxyScheme: media.proxyScheme,
-    remoteTransport: media.remoteTransport,
-    sessionId: media.sessionId,
-    callId: media.callId,
-    peer: media.peer,
-    state: media.state,
-  };
-}
-
-function observationRequest(request: ProviderRequestLog): ProviderObservationRequest {
-  return {
-    provider: request.provider,
-    model: request.model,
-    accountId: request.accountId,
-    dialect: request.dialect,
-    method: request.method,
-    requestIdHash: requestIdHash(request.requestId),
-    generate: request.generate,
-    version: request.version,
-    media: clonedMedia(request.media),
-  };
-}
-
-function clonedObservation(record: ProviderObservation): ProviderObservation {
-  return {
-    provider: record.provider,
-    model: record.model,
-    accountId: record.accountId,
-    dialect: record.dialect,
-    method: record.method,
-    requestIdHash: record.requestIdHash,
-    upstreamRequestIdHash: record.upstreamRequestIdHash,
-    startedAt: record.startedAt,
-    durationMs: record.durationMs,
-    ttftMs: record.ttftMs,
-    status: record.status,
-    usage: { ...record.usage },
-    generate: record.generate,
-    version: record.version,
-    media: clonedMedia(record.media),
-  };
-}
 
 export class ProviderObservability {
   private readonly records: ProviderObservation[] = [];
@@ -147,7 +40,14 @@ export class ProviderObservability {
   }
 
   public start(request: ProviderRequestLog): ProviderObservationSpan {
-    return new ProviderObservationSpan(this, observationRequest(request), this.now());
+    const turn = servingTurn();
+
+    return new ProviderObservationSpan(
+      this,
+      observationRequest(request, turn),
+      this.now(),
+      attemptFor(turn, request, () => this.wallClock()),
+    );
   }
 
   public snapshot(): ProviderObservation[] {
@@ -172,19 +72,23 @@ export class ProviderObservability {
     };
   }
 
-  public publish(record: ProviderObservation): void {
-    const safeRecord = clonedObservation(record);
+  public publish(record: Omit<ProviderObservation, 'at'>): void {
+    const safeRecord = clonedObservation({ ...record, at: this.wallClock() });
 
     this.records.push(safeRecord);
     const excess = this.records.length - (this.options.maxRecords ?? 10_000);
 
     if (excess > 0) this.records.splice(0, excess);
 
-    for (const listener of this.listeners) listener(clonedObservation(safeRecord));
+    tellingReaders(this.listeners, () => clonedObservation(safeRecord), 'observation');
   }
 
   public now(): number {
     return this.options.now?.() ?? performance.now();
+  }
+
+  public wallClock(): number {
+    return this.options.wallClock?.() ?? Date.now();
   }
 }
 
@@ -192,15 +96,18 @@ export class ProviderObservationSpan {
   private readonly owner: ProviderObservability;
   private readonly request: ProviderObservationRequest;
   private readonly startedAt: number;
+  private readonly attempt: AttemptInFlight;
 
   public constructor(
     owner: ProviderObservability,
     request: ProviderObservationRequest,
     startedAt: number,
+    attempt: AttemptInFlight,
   ) {
     this.owner = owner;
     this.request = request;
     this.startedAt = startedAt;
+    this.attempt = attempt;
   }
 
   public observe(response: Response): Response {
@@ -213,6 +120,8 @@ export class ProviderObservationSpan {
 
       return response;
     }
+
+    this.attempt.answered(response.status);
 
     const decoder = new TextDecoder();
     const text: string[] = [];
@@ -259,23 +168,20 @@ export class ProviderObservationSpan {
     ttftMs: number,
     usage: ProviderUsage,
   ): void {
+    const durationMs = this.owner.now() - this.startedAt;
+
     this.owner.publish({
-      provider: this.request.provider,
-      model: this.request.model,
-      accountId: this.request.accountId,
-      dialect: this.request.dialect,
-      method: this.request.method,
-      requestIdHash: this.request.requestIdHash,
+      ...this.request,
       upstreamRequestIdHash,
       startedAt: this.startedAt,
-      durationMs: this.owner.now() - this.startedAt,
+      durationMs,
       ttftMs,
       status,
       usage,
       generate: this.request.generate ?? true,
-      version: this.request.version,
       media: clonedMedia(this.request.media),
     });
+    this.attempt.answered(status, { durationMs, tokens: usage.totalTokens });
   }
 }
 
