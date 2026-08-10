@@ -2,7 +2,7 @@ import type { EngineStates, GatewayConfig, RecomposeIpc, VirtualModel } from '@r
 
 import { GATEWAY_CONFIG_VERSION, ipcChannels } from '@recompose/contracts';
 
-import { emitEngineStates } from './fake-engine-pushes';
+import { emitEngineStates, replayEngineLogs } from './fake-engine-pushes';
 
 export type GatewayHandlers = Pick<
   RecomposeIpc,
@@ -14,6 +14,7 @@ export type GatewayHandlers = Pick<
   | 'engine:start'
   | 'engine:stop'
   | 'engine:states'
+  | 'engine:replay-logs'
 >;
 
 export type GatewaySeed = {
@@ -217,5 +218,10 @@ export function gatewayHandlers(
       return Promise.resolve({ ok: true, value: { status: 'stopped' } });
     },
     'engine:states': async () => Promise.resolve({ ok: true, value: store.states() }),
+    'engine:replay-logs': async () => {
+      replayEngineLogs();
+
+      return Promise.resolve({ ok: true, value: undefined });
+    },
   };
 }

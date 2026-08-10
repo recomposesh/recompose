@@ -5,8 +5,11 @@ import { TRAFFIC_PUSH_MS } from './traffic-ledger';
 /**
  * How many finished requests the desk keeps for a subscriber that has yet to ask.
  *
- * @summary It mirrors the engine ring buffer, so the history a late drawer reads is the same length
- * the engine itself remembers, and neither side promises more than the other can hold.
+ * @summary Three separate caps have to agree on this number, and no type can tie them together: the
+ * engine ring buffer's `maxRecords` default in `provider-observability.ts`, this desk, and
+ * `HELD_ROWS` in the renderer's `shared/api/engine-logs.ts`. A desk holding more than the ring would
+ * promise history the engine never had; a renderer holding less would drop rows a backfill just
+ * delivered. Change one and all three move together.
  */
 export const LOGS_RETAINED_MAX = 10_000;
 

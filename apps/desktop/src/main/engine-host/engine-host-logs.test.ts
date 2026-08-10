@@ -120,3 +120,45 @@ describe('what a gateway starting hands the windows', () => {
     expect(pushed).toEqual([]);
   });
 });
+
+describe('a renderer that has just bound', () => {
+  test('reads the whole retained history again, with no gateway restarting', async () => {
+    vi.useFakeTimers();
+    const { host, scripted, pushed } = aHostWatchingLogs();
+
+    await host.start(aGatewayServing('fast'));
+    scripted.send(loggedRequest('log-1'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+
+    host.replayLogs();
+
+    expect(pushed.at(-1)).toEqual({ kind: 'backfill', rows: [aRow('log-1')] });
+  });
+
+  test('asking twice reads the same rows twice, so a reload can ask without counting', async () => {
+    vi.useFakeTimers();
+    const { host, scripted, pushed } = aHostWatchingLogs();
+
+    await host.start(aGatewayServing('fast'));
+    scripted.send(loggedRequest('log-1'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+
+    host.replayLogs();
+    host.replayLogs();
+
+    expect(pushed.slice(-2)).toEqual([
+      { kind: 'backfill', rows: [aRow('log-1')] },
+      { kind: 'backfill', rows: [aRow('log-1')] },
+    ]);
+  });
+
+  test('a desk no request has reached yet answers the ask with silence', async () => {
+    vi.useFakeTimers();
+    const { host, pushed } = aHostWatchingLogs();
+
+    await host.start(aGatewayServing('fast'));
+    host.replayLogs();
+
+    expect(pushed).toEqual([]);
+  });
+});

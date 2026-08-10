@@ -1,7 +1,7 @@
 import type { IpcEventPayload } from '@recompose/contracts';
 
 import { useReactFlow } from '@xyflow/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { subscribeToCanvasAsks } from '../../../shared/lib';
 
@@ -12,7 +12,7 @@ type CanvasCommandsProps = {
 
 type CanvasCommand = IpcEventPayload<'canvas:command'>;
 
-type CanvasCamera = {
+type CanvasEffects = {
   fitView: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -26,12 +26,12 @@ type CanvasCamera = {
  * level, so a command added to the contract fails the build here until this surface says what it
  * does with it, rather than falling through a switch unanswered.
  */
-function actsOn(camera: CanvasCamera): Record<CanvasCommand, () => void> {
+function actsOn(canvas: CanvasEffects): Record<CanvasCommand, () => void> {
   return {
-    'zoom-in': camera.zoomIn,
-    'zoom-out': camera.zoomOut,
-    'zoom-to-fit': camera.fitView,
-    tidy: camera.onTidy,
+    'zoom-in': canvas.zoomIn,
+    'zoom-out': canvas.zoomOut,
+    'zoom-to-fit': canvas.fitView,
+    tidy: canvas.onTidy,
     'toggle-logs': () => undefined,
   };
 }
@@ -50,30 +50,25 @@ function actsOn(camera: CanvasCamera): Record<CanvasCommand, () => void> {
  */
 export function CanvasCommands({ onTidy }: CanvasCommandsProps): null {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
-  const acts = useMemo(
-    () =>
-      actsOn({
-        fitView: () => {
-          void fitView();
-        },
-        zoomIn: () => {
-          void zoomIn();
-        },
-        zoomOut: () => {
-          void zoomOut();
-        },
-        onTidy,
-      }),
-    [fitView, zoomIn, zoomOut, onTidy],
-  );
 
-  useEffect(
-    () =>
-      window.recomposeEvents['canvas:command']((command) => {
-        acts[command]();
-      }),
-    [acts],
-  );
+  useEffect(() => {
+    const acts = actsOn({
+      fitView: () => {
+        void fitView();
+      },
+      zoomIn: () => {
+        void zoomIn();
+      },
+      zoomOut: () => {
+        void zoomOut();
+      },
+      onTidy,
+    });
+
+    return window.recomposeEvents['canvas:command']((command) => {
+      acts[command]();
+    });
+  }, [fitView, zoomIn, zoomOut, onTidy]);
 
   useEffect(
     () =>

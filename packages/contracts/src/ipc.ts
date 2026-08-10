@@ -125,6 +125,18 @@ export const ipcChannels = {
     response: ipcResult(gatewayEngineStateSchema),
   },
   'engine:states': { request: z.void(), response: ipcResult(engineStatesSchema) },
+  /**
+   * Asks main to send the retained request log again, for a renderer that just bound.
+   *
+   * @summary The rows come back on `engine:logs` as backfill runs rather than in this answer,
+   * because a full history is 10,000 rows and one reply carrying them all is the giant message the
+   * chunking exists to avoid. Every run merges by row id, so asking twice costs nothing.
+   */
+  'engine:replay-logs': { request: z.void(), response: ipcResult(z.void()) },
+  'system:logs-drawer': {
+    request: z.strictObject({ open: z.boolean() }),
+    response: ipcResult(z.void()),
+  },
   'subscriptions:list': { request: z.void(), response: subscriptionViewsResponse },
   'subscriptions:tools': {
     request: z.void(),

@@ -206,6 +206,7 @@ function assembleIpcHandlers(
       answerTitleBarDoubleClick: () => {
         answerTitleBarDoubleClick(process.platform);
       },
+      noteLogsDrawer: appMenu.reflectLogsDrawer,
     }),
   };
 }

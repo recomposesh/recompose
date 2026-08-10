@@ -1,4 +1,4 @@
-import type { EngineStates, GatewayTraffic, LogBatch } from '@recompose/contracts';
+import type { EngineStates, GatewayTraffic, LogBatch, LogRow } from '@recompose/contracts';
 
 type PushLine<Payload> = {
   forget: () => void;
@@ -76,8 +76,17 @@ export function emitEngineTraffic(traffic: GatewayTraffic): void {
   engineTrafficLine.emit(traffic);
 }
 
+const servedRows: LogRow[] = [];
+
+/**
+ * Empties the logs line, both who is listening and the history a replay would send.
+ *
+ * @summary The retained rows go with the listeners, because a scenario that reset the line and then
+ * bound would otherwise read the rows the scenario before it emitted.
+ */
 export function forgetEngineLogsListeners(): void {
   engineLogsLine.forget();
+  servedRows.length = 0;
 }
 
 export function listenForEngineLogs(listener: (batch: LogBatch) => void): () => void {
@@ -92,5 +101,20 @@ export function listenForEngineLogs(listener: (batch: LogBatch) => void): () => 
  * the gateway has served since.
  */
 export function emitEngineLogs(batch: LogBatch): void {
+  servedRows.push(...batch.rows);
   engineLogsLine.emit(batch);
+}
+
+/**
+ * Sends every row emitted so far again, the way the desk in main answers a renderer that just bound.
+ *
+ * @summary A story can seed rows before anything mounts and still have them arrive, because the
+ * binding asks for the history rather than waiting for the next request to be served.
+ */
+export function replayEngineLogs(): void {
+  if (servedRows.length === 0) {
+    return;
+  }
+
+  engineLogsLine.emit({ kind: 'backfill', rows: [...servedRows] });
 }

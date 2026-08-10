@@ -64,10 +64,26 @@ function idsHeld(queryClient: QueryClient, slug: string): readonly string[] {
   return heldRows(queryClient, slug).map((row) => row.id);
 }
 
+function aHistoryAsk(): {
+  ask: () => Promise<{ ok: true; value: undefined }>;
+  asked: () => number;
+} {
+  const calls = { times: 0 };
+
+  return {
+    ask: async () => {
+      calls.times += 1;
+
+      return Promise.resolve({ ok: true as const, value: undefined });
+    },
+    asked: () => calls.times,
+  };
+}
+
 function aBoundCache(subscribe: RecomposeIpcEvents['engine:logs']): QueryClient {
   const queryClient = new QueryClient();
 
-  bindEngineLogsToCache(queryClient, subscribe);
+  bindEngineLogsToCache(queryClient, subscribe, aHistoryAsk().ask);
 
   return queryClient;
 }
@@ -186,11 +202,37 @@ test('a batch holding no row leaves the held rows alone', () => {
   expect(idsHeld(queryClient, 'codex')).toEqual(['one']);
 });
 
+test('binding asks main for the history, because a fresh renderer holds no rows', () => {
+  const line = aLogLine();
+  const history = aHistoryAsk();
+
+  bindEngineLogsToCache(new QueryClient(), line.subscribe, history.ask);
+
+  expect(history.asked()).toBe(1);
+});
+
+test('a renderer that rebinds reads the same rows again, as a reload does', () => {
+  const line = aLogLine();
+  const history = aHistoryAsk();
+  const queryClient = new QueryClient();
+  const backfill: LogBatch = { kind: 'backfill', rows: [aRow('one', FIRST_INSTANT)] };
+
+  const letGo = bindEngineLogsToCache(queryClient, line.subscribe, history.ask);
+
+  line.push(backfill);
+  letGo();
+  bindEngineLogsToCache(queryClient, line.subscribe, history.ask);
+  line.push(backfill);
+
+  expect(history.asked()).toBe(2);
+  expect(idsHeld(queryClient, 'codex')).toEqual(['one']);
+});
+
 test('letting go stops the listening, so no binding outlives its screen', () => {
   const queryClient = new QueryClient();
   const line = aLogLine();
 
-  const letGo = bindEngineLogsToCache(queryClient, line.subscribe);
+  const letGo = bindEngineLogsToCache(queryClient, line.subscribe, aHistoryAsk().ask);
 
   expect(line.listening()).toBe(1);
 

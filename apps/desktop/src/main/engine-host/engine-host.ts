@@ -223,8 +223,8 @@ async function restartGateway(
   return sendDirective(resident, { kind: 'start', id: randomUUID(), gateway });
 }
 
-export function createEngineHost(deps: EngineHostDeps): EngineHost {
-  const resident: Resident = {
+function residentFor(deps: EngineHostDeps): Resident {
+  return {
     states: allStopped(deps.knownSlugs),
     child: null,
     spawnChild: deps.spawnChild,
@@ -240,6 +240,10 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
     logs: openLogsDesk(deps.onLogs ?? (() => undefined)),
   };
+}
+
+export function createEngineHost(deps: EngineHostDeps): EngineHost {
+  const resident = residentFor(deps);
   const inGatewayOrder = createGatewayOrder();
 
   return {
@@ -260,6 +264,9 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     listModels: async (origin, custody) =>
       listModelsThroughTheChild(resident.looks, () => runningChild(resident), origin, custody),
     states: () => resident.states,
+    replayLogs: () => {
+      resident.logs.backfill();
+    },
     onStatesChanged: (listener) => {
       resident.subscribers.add(listener);
 

@@ -170,6 +170,28 @@ describe('following the surface a window stands on', () => {
     expect(itemNamed('Show Logs').checked).toBe(false);
   });
 
+  test('the tick follows the drawer the renderer reports, in both directions', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.standOnUrl(GATEWAY_DETAIL);
+    conducted.menu.reflectLogsDrawer(true);
+
+    expect(itemNamed('Show Logs').checked).toBe(true);
+
+    conducted.menu.reflectLogsDrawer(false);
+
+    expect(itemNamed('Show Logs').checked).toBe(false);
+  });
+
+  test('a drawer that opened before the surface arrived still reads ticked on arrival', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.reflectLogsDrawer(true);
+    conducted.menu.standOnUrl(GATEWAY_DETAIL);
+
+    expect(itemNamed('Show Logs').checked).toBe(true);
+  });
+
   test('leaving the gateway takes the Gateway menu away again', async () => {
     const conducted = conductOver(await freshSettingsFile());
 
