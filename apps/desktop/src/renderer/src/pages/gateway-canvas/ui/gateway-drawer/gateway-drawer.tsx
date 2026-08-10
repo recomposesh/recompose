@@ -8,7 +8,7 @@ import type { IconName } from '../../../../shared/ui';
 import type { SettledDefinition } from '../../lib/model-draft';
 import type { ServedModel } from '../../model/served-models';
 
-import { accountIdentity, accountKindTitle, accountName } from '../../../../entities/account';
+import { accountKindTitle, accountName } from '../../../../entities/account';
 import {
   accountsQueryOptions,
   engineStatesQueryOptions,
@@ -19,7 +19,7 @@ import { CopyButton, Icon, stateMark, stateWord } from '../../../../shared/ui';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { servedModels, servesTally } from '../../model/served-models';
 import { DraftInspector } from '../draft-inspector/draft-inspector';
-import { ServedModelRow } from '../served-model-row/served-model-row';
+import { ServesBox } from '../serves-box/serves-box';
 
 /** What stands selected on the canvas, which is the one thing the inspector speaks for. */
 export type InspectorSubject =
@@ -98,27 +98,6 @@ function sectionHeading(title: string, tally?: ReactNode): ReactNode {
   );
 }
 
-function servesBox(served: readonly ServedModel[]): ReactNode {
-  if (served.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-2 field-box px-4 py-5 text-center">
-        <p className="text-control font-semibold text-ink-secondary">Nothing serves yet</p>
-        <p className="text-detail text-ink-secondary">
-          Pull a cable from the gateway&apos;s port to add a virtual model.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <ul className="field-box">
-      {served.map((model) => (
-        <ServedModelRow key={model.id} served={model} />
-      ))}
-    </ul>
-  );
-}
-
 function subjectShell(head: SubjectHead, body: ReactNode): ReactNode {
   return (
     <>
@@ -147,8 +126,22 @@ function gatewayBody(
       {sectionHeading('Endpoint')}
       {endpointBox(gateway, status)}
       {sectionHeading('Serves', servesTallyLine(served))}
-      {servesBox(served)}
+      <ServesBox served={served} />
     </>,
+  );
+}
+
+function targetRows(target: VirtualModel['target'], account: Account | undefined): ReactNode {
+  if (account === undefined) {
+    return factRow('Target', target.accountId);
+  }
+
+  return (
+    <>
+      {factRow('Target', accountName(account))}
+      {factRow('Provider', account.provider)}
+      {factRow('Kind', accountKindTitle(account.kind))}
+    </>
   );
 }
 
@@ -161,7 +154,7 @@ function modelBody(
     { glyph: 'spark', kicker, name: model.displayName, line: model.id },
     <div className="mt-3.5 field-box">
       {factRow('Model id', model.id, <CopyButton label="Copy model id" value={model.id} />)}
-      {factRow('Target', account === undefined ? model.target.accountId : accountIdentity(account))}
+      {targetRows(model.target, account)}
       {factRow('Model', model.target.providerModel)}
     </div>,
   );

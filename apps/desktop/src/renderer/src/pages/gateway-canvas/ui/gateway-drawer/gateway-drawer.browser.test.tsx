@@ -83,13 +83,16 @@ test('a gateway serving nothing points at the cable rather than at a button', as
     .not.toBeInTheDocument();
 });
 
-test('the virtual model subject reads the definition and its whole target identity', async () => {
+test('the virtual model subject spells its target out as a name, a provider, and a kind', async () => {
   const screen = await renderDrawer({ kind: 'virtual-model', modelId: 'fast' });
 
   await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('api-key \u00b7 anthropic \u00b7 work', { exact: true }))
-    .toBeVisible();
+  await expect.element(screen.getByText('Target', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('work', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Provider', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('anthropic', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Kind', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('API Keys', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
@@ -97,9 +100,8 @@ test('the cable subject reads both ends of the binding', async () => {
   const screen = await renderDrawer({ kind: 'cable', modelId: 'creative' });
 
   await expect.element(screen.getByText('Binding', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('aggregator \u00b7 openrouter \u00b7 openrouter', { exact: true }))
-    .toBeVisible();
+  await expect.element(screen.getByText('openrouter', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Aggregators', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('openai/gpt-5', { exact: true })).toBeVisible();
 });
 
@@ -119,6 +121,8 @@ test('a virtual model whose account left the registry reads that bare account id
 
   await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('g1', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Provider', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByText('Kind', { exact: true })).not.toBeInTheDocument();
 });
 
 test('a subject naming a virtual model the gateway no longer holds reads the gateway', async () => {
