@@ -187,6 +187,19 @@ test('a scope segment never opens an inspector a person put away', async () => {
 const GRAB_BAND = "[data-panel-control][aria-orientation='horizontal']";
 const A_CARD = '.react-flow__node';
 
+test('the open drawer stands between the stage and the strip that opens it', async () => {
+  const { screen } = await openedDrawer();
+
+  const stage = boxOf(screen.container, '[data-canvas-column] > section:not(:has(> header))');
+  const drawer = boxOf(screen.container, '[data-canvas-column] > section:has(> header)');
+  const strip = boxOf(screen.container, '[data-canvas-column] > footer');
+
+  expect(stage.height).toBeGreaterThan(0);
+  expect(drawer.height).toBeGreaterThan(0);
+  expect(stage.bottom).toBeLessThanOrEqual(drawer.top);
+  expect(drawer.bottom).toBeLessThanOrEqual(strip.top);
+});
+
 /**
  * The grab band on the drawer's top edge overhangs the canvas by half its width, and the library
  * lifts a selected card to z-index 1000, so this holds the one ordering a person can feel.
