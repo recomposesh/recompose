@@ -96,7 +96,7 @@ test('a gateway surface reads what its traffic is carrying', async () => {
   const screen = await renderAt('/gateways/codex', { gateways: [codex] });
 
   await expect.element(screen.getByText(/req\/min/u)).toBeVisible();
-  await expect.element(screen.getByText(/nodes/u)).toBeVisible();
+  await expect.element(screen.getByText('1 node · 0 wires')).toBeVisible();
 });
 
 test('a surface holding no gateway carries no traffic reading', async () => {

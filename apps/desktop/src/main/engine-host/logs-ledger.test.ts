@@ -31,6 +31,10 @@ function loggedRequest(id: string): unknown {
   return { kind: 'log', row: aRow(id) };
 }
 
+function bodyMeasured(id: string, tokens: number): unknown {
+  return { kind: 'log', row: { ...aRow(id), tokens } };
+}
+
 function aDesk() {
   const pushed: LogBatch[] = [];
 
@@ -195,6 +199,62 @@ describe('what a subscriber joining late reads first', () => {
   });
 });
 
+describe('one request reported more than once', () => {
+  test('two reports about one request cross as a single appended row, the later one', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    desk.hears(loggedRequest('log-1'));
+    desk.hears(bodyMeasured('log-1', 4_096));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+
+    expect(pushed).toEqual([{ kind: 'append', rows: [{ ...aRow('log-1'), tokens: 4_096 }] }]);
+  });
+
+  test('the history holds one row for it, however many reports arrived', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    desk.hears(loggedRequest('log-1'));
+    desk.hears(bodyMeasured('log-1', 4_096));
+    desk.hears(bodyMeasured('log-1', 5_120));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    desk.backfill();
+
+    expect(batchesOfKind(pushed, 'backfill')).toEqual([
+      { kind: 'backfill', rows: [{ ...aRow('log-1'), tokens: 5_120 }] },
+    ]);
+  });
+
+  test('a later report replaces the version a backfill carries, rather than riding beside it', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    desk.hears(loggedRequest('log-1'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    desk.hears(bodyMeasured('log-1', 4_096));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    desk.backfill();
+
+    expect(batchesOfKind(pushed, 'backfill')).toEqual([
+      { kind: 'backfill', rows: [{ ...aRow('log-1'), tokens: 4_096 }] },
+    ]);
+  });
+
+  test('an updated request holds the place it first arrived in', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    desk.hears(loggedRequest('log-1'));
+    desk.hears(loggedRequest('log-2'));
+    desk.hears(bodyMeasured('log-1', 4_096));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    desk.backfill();
+
+    expect(idsIn(batchesOfKind(pushed, 'backfill'))).toEqual(['log-1', 'log-2']);
+  });
+});
+
 describe('how much history the desk keeps', () => {
   test('the oldest requests leave once the retained history is full', async () => {
     vi.useFakeTimers();
@@ -211,5 +271,23 @@ describe('how much history the desk keeps', () => {
     expect(backfilled).toHaveLength(LOGS_RETAINED_MAX);
     expect(backfilled.at(0)).toBe('1');
     expect(backfilled.at(-1)).toBe(String(LOGS_RETAINED_MAX));
+  });
+
+  test('the cap counts distinct requests, so re-reporting one never costs the history a row', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    for (let index = 0; index < LOGS_RETAINED_MAX; index += 1) {
+      desk.hears(loggedRequest(String(index)));
+    }
+
+    desk.hears(bodyMeasured('0', 4_096));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    desk.backfill();
+    const backfilled = idsIn(batchesOfKind(pushed, 'backfill'));
+
+    expect(backfilled).toHaveLength(LOGS_RETAINED_MAX);
+    expect(backfilled.at(0)).toBe('0');
+    expect(backfilled.at(-1)).toBe(String(LOGS_RETAINED_MAX - 1));
   });
 });

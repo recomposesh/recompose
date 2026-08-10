@@ -29,20 +29,30 @@ export type LogsDesk = {
 };
 
 type Desk = {
-  retained: LogRow[];
-  waiting: LogRow[];
+  retained: Map<string, LogRow>;
+  waiting: Map<string, LogRow>;
   pending: ReturnType<typeof setTimeout> | null;
 };
 
+function forgetTheOldest(retained: Map<string, LogRow>): void {
+  for (const id of retained.keys()) {
+    retained.delete(id);
+    break;
+  }
+}
+
 function retain(desk: Desk, row: LogRow): void {
-  desk.retained.push(row);
-  desk.retained.splice(0, desk.retained.length - LOGS_RETAINED_MAX);
+  desk.retained.set(row.id, row);
+
+  if (desk.retained.size > LOGS_RETAINED_MAX) {
+    forgetTheOldest(desk.retained);
+  }
 }
 
 function stopWaiting(desk: Desk): void {
   clearTimeout(desk.pending ?? undefined);
   desk.pending = null;
-  desk.waiting = [];
+  desk.waiting = new Map();
 }
 
 function tellTheWindowsSoon(desk: Desk, push: (batch: LogBatch) => void): void {
@@ -51,10 +61,10 @@ function tellTheWindowsSoon(desk: Desk, push: (batch: LogBatch) => void): void {
   }
 
   desk.pending = setTimeout(() => {
-    const crossing = desk.waiting;
+    const crossing = [...desk.waiting.values()];
 
     desk.pending = null;
-    desk.waiting = [];
+    desk.waiting = new Map();
     push({ kind: 'append', rows: crossing });
   }, TRAFFIC_PUSH_MS);
 }
@@ -62,8 +72,10 @@ function tellTheWindowsSoon(desk: Desk, push: (batch: LogBatch) => void): void {
 function handOverTheHistory(desk: Desk, push: (batch: LogBatch) => void): void {
   stopWaiting(desk);
 
-  for (let from = 0; from < desk.retained.length; from += LOGS_BACKFILL_CHUNK) {
-    push({ kind: 'backfill', rows: desk.retained.slice(from, from + LOGS_BACKFILL_CHUNK) });
+  const history = [...desk.retained.values()];
+
+  for (let from = 0; from < history.length; from += LOGS_BACKFILL_CHUNK) {
+    push({ kind: 'backfill', rows: history.slice(from, from + LOGS_BACKFILL_CHUNK) });
   }
 }
 
@@ -79,9 +91,15 @@ function handOverTheHistory(desk: Desk, push: (batch: LogBatch) => void): void {
  * The desk also keeps the history itself, so a drawer opening long after a gateway started reads
  * what it missed. That history crosses as bounded backfill runs ahead of the stream, never as one
  * message, and the rows still waiting to append ride it rather than crossing a second time behind.
+ *
+ * One request can be reported more than once, because the engine commits a row when the status is
+ * known and again once the body has been measured. Both stores therefore key by row id and keep the
+ * latest version in the place the request first arrived: the cap counts requests rather than
+ * reports, so a two-phase commit cannot halve the history, and one flush carries one row per
+ * request rather than one per report.
  */
 export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
-  const desk: Desk = { retained: [], waiting: [], pending: null };
+  const desk: Desk = { retained: new Map(), waiting: new Map(), pending: null };
 
   return {
     hears: (message) => {
@@ -92,7 +110,7 @@ export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
       }
 
       retain(desk, report.data.row);
-      desk.waiting.push(report.data.row);
+      desk.waiting.set(report.data.row.id, report.data.row);
       tellTheWindowsSoon(desk, push);
 
       return true;

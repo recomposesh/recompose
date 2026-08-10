@@ -33,6 +33,7 @@ import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
 import { LogsDrawer } from '../logs-drawer/logs-drawer';
+import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import { useGatewayCanvas } from './use-gateway-canvas';
 
 const REMOVAL_HEADING = 'removal-asked-heading';
@@ -141,27 +142,51 @@ function inspectorBeside({ gateway, reveal, width, canvas }: InspectorBeside): R
   );
 }
 
-type LogsUnderTheStage = {
+type CanvasColumn = {
+  slug: string;
   gateway: GatewayConfig;
   accounts: readonly Account[];
   rows: readonly LogRow[] | undefined;
   serving: 'running' | 'stopped';
+  logsShown: boolean;
   canvas: ComposedCanvas;
 };
 
-function logsUnderTheStage(standing: LogsUnderTheStage): ReactNode {
-  const { gateway, accounts, rows, serving, canvas } = standing;
+/**
+ * The canvas column: the stage a gateway is composed on, the logs under it, and the traffic strip.
+ *
+ * @summary The strip belongs to this column rather than to the window, so it spans the canvas and
+ * stops where the inspector begins, and the tally beside its readings counts the very cards and
+ * cables standing above it. The logs drawer stands between the two, because the strip is what a
+ * person opens the drawer from and a drawer that pushed its own control off the bottom of the
+ * column would be a control nobody could press twice. Opening the drawer shrinks the stage rather
+ * than covering it, so every card stays visible and reachable while the rows stream.
+ */
+function canvasColumn(standing: CanvasColumn): ReactNode {
+  const { slug, gateway, accounts, rows, serving, logsShown, canvas } = standing;
   const { onSelectSubject, subject } = canvas;
 
   return (
-    <LogsDrawer
-      accounts={accounts}
-      gateway={gateway}
-      onSelectSubject={onSelectSubject}
-      rows={rows ?? []}
-      serving={serving}
-      subject={subject}
-    />
+    <div className="flex min-w-0 flex-1 flex-col" data-canvas-column="">
+      <GatewayStage announced={canvas.announced} flow={canvas.flow}>
+        {anchoredPicker(canvas.picker)}
+      </GatewayStage>
+      {logsShown ? (
+        <LogsDrawer
+          accounts={accounts}
+          gateway={gateway}
+          onSelectSubject={onSelectSubject}
+          rows={rows ?? []}
+          serving={serving}
+          subject={subject}
+        />
+      ) : null}
+      <TrafficFooter
+        nodes={canvas.flow.nodes.length}
+        slug={slug}
+        wires={canvas.flow.edges.length}
+      />
+    </div>
   );
 }
 
@@ -197,16 +222,15 @@ function useMenuReadsTheDrawer(open: boolean): void {
 }
 
 /**
- * The selected gateway: the canvas it is composed on, the logs under it, and the inspector beside it.
+ * The selected gateway: the canvas, the logs and the strip under it, and the inspector beside.
  *
  * @summary Reach for it from the gateway route. Selecting any card or cable opens the inspector
  * on that subject and a pane click puts both the selection and the inspector away, so the drawer
- * is a thing a person opens by pointing at what they mean. The logs drawer shares the canvas
- * column, standing under the stage rather than over it, so opening it shrinks the canvas instead of
- * covering anything a person could press. A draft in flight outlives everything short of finishing
- * or deleting it. A slug no stored gateway holds lands on the same not-found state a mistyped
- * address does, because a gateway that was deleted and one that never existed are the same fact to
- * the person reading.
+ * is a thing a person opens by pointing at what they mean. The logs drawer and the traffic strip
+ * share the canvas column, so both span the canvas and stop where the inspector begins. A draft in
+ * flight outlives everything short of finishing or deleting it. A slug no stored gateway holds
+ * lands on the same not-found state a mistyped address does, because a gateway that was deleted and
+ * one that never existed are the same fact to the person reading.
  */
 export function GatewayCanvasPage({ slug }: { slug: string }) {
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
@@ -229,20 +253,15 @@ export function GatewayCanvasPage({ slug }: { slug: string }) {
 
   return (
     <div className="flex h-full min-h-0">
-      <div className="flex min-w-0 flex-1 flex-col">
-        <GatewayStage announced={canvas.announced} flow={canvas.flow}>
-          {anchoredPicker(canvas.picker)}
-        </GatewayStage>
-        {logsShown
-          ? logsUnderTheStage({
-              gateway,
-              accounts: registry.accounts,
-              rows: served,
-              serving: gatewayStateIn(engines, slug).status,
-              canvas,
-            })
-          : null}
-      </div>
+      {canvasColumn({
+        slug,
+        gateway,
+        accounts: registry.accounts,
+        rows: served,
+        serving: gatewayStateIn(engines, slug).status,
+        logsShown,
+        canvas,
+      })}
       {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
       {removalDialog(canvas.removal)}
     </div>
