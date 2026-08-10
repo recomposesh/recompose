@@ -88,6 +88,7 @@ function eventBridge(): RecomposeIpcEvents {
   return {
     'engine:state': (listener) => listenForEngineStates(listener),
     'engine:traffic': (listener) => listenForEngineTraffic(listener),
+    'engine:logs': () => () => undefined,
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
     'settings:changed': (listener) => listenForSettingsChanges(listener),

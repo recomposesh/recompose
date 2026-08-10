@@ -23,6 +23,7 @@ beforeEach(() => {
   window.recomposeEvents = {
     'engine:state': () => () => undefined,
     'engine:traffic': () => () => undefined,
+    'engine:logs': () => () => undefined,
     'accounts:changed': () => () => undefined,
     'settings:changed': () => () => undefined,
     'devtools:toggle': () => () => undefined,

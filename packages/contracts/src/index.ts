@@ -6,6 +6,7 @@ export * from './non-blank';
 export * from './gateway-config';
 export * from './engine-state';
 export * from './engine-traffic';
+export * from './engine-logs';
 export * from './api-keys';
 export * from './local-runtimes';
 export * from './engine-protocol';

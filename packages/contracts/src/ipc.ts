@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { accountsDocumentSchema, credentialedAccountKindSchema } from './accounts';
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
+import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
@@ -158,6 +159,7 @@ export type RecomposeIpc = {
 export const ipcEvents = {
   'engine:state': { payload: engineStatesSchema },
   'engine:traffic': { payload: gatewayTrafficSchema },
+  'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': { payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']) },
   'settings:changed': { payload: settingsSchema },
