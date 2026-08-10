@@ -24,6 +24,8 @@ export type NodeCardProps = {
   frame: string;
   /** The ink class the seventeen-pixel chip and whatever it carries both take. */
   chipTint: string;
+  /** The frame's contrast-safe ink, which the kicker takes since the chip tint runs too light. */
+  kickerTint: string;
   /** The glyph the chip leads with, which every card has one of. */
   chipGlyph: IconName;
   /** A vendor's own mark, drawn in the glyph's place wherever the vendor publishes one. */
@@ -54,7 +56,7 @@ const keyboardAsk =
 const cardFrame =
   'flex size-full flex-col justify-center gap-0.5 node-card px-2.75 text-start focus-ring';
 
-const kickerLine = 'truncate text-footnote font-bold tracking-wider text-ink-secondary uppercase';
+const kickerLine = 'truncate text-footnote font-bold tracking-wider uppercase';
 
 function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
   const { bound, ask, onAsk } = port;
@@ -85,7 +87,7 @@ function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
  */
 export function NodeCard(props: NodeCardProps) {
   const dragging = useConnection((connection) => connection.inProgress);
-  const { tint, frame, chipTint, chipGlyph, chipMark, kicker, name, nameInk } = props;
+  const { tint, frame, chipTint, kickerTint, chipGlyph, chipMark, kicker, name, nameInk } = props;
   const { subtitle, subtitleInk, selected, incoming, outgoing } = props;
 
   return (
@@ -103,7 +105,7 @@ export function NodeCard(props: NodeCardProps) {
           >
             {chipMark ?? <Icon className="size-2.75" name={chipGlyph} />}
           </span>
-          <span className={kickerLine}>{kicker}</span>
+          <span className={`${kickerLine} ${kickerTint}`}>{kicker}</span>
         </span>
         <span className={`truncate text-card-title ${nameInk}`} title={name}>
           {name}

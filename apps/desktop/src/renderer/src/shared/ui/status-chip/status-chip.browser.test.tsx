@@ -37,3 +37,11 @@ test('a quiet standing says its word and draws its mark like any other tone', as
   expect(screen.container.textContent).toBe('Not running');
   expect(screen.container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(1);
 });
+
+test('a failed standing says its word and draws its mark like any other tone', async () => {
+  const screen = await render(<StatusChip tone="danger" word="Failed" />);
+
+  await expect.element(page.getByText('Failed')).toBeVisible();
+  expect(screen.container.textContent).toBe('Failed');
+  expect(screen.container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(1);
+});

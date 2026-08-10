@@ -69,7 +69,7 @@ Feature invariants:
 
 ### One row shape flows one way
 
-The engine extends `ProviderRequestLog` with the gateway slug, the virtual model id, and the hashed client key, and stamps `Date.now()` at publish. `gateway-app.ts` derives the client key where the request arrives, hashing the source address and the `User-Agent` header with the existing digest. `watchingTraffic` threads the grant's gateway and virtual model into the provider call, so one observation carries the whole row. The two gateway-raised outcomes that never reach a provider, the 400 unreadable-request and the 502 unreachable-target, publish rows on the same feed with empty provider fields. No other outcome publishes, because every provider outcome already has its observation, which keeps one row per request.
+The engine threads the gateway slug, the virtual model id, and the hashed client key into the observation as one grouped `servedFor` fact, and stamps `Date.now()` at publish. `gateway-app.ts` derives the client key where the request arrives, hashing the source address and the `User-Agent` header with the existing digest. `watchingTraffic` threads the grant's gateway and virtual model into the provider call, so one observation carries the whole row. The two gateway-raised outcomes that never reach a provider, the 400 unreadable-request and the 502 unreachable-target, publish rows on the same feed with empty provider fields. No other outcome publishes, because every provider outcome already has its observation, which keeps one row per request.
 
 ### The transport copies the traffic ledger's cadence, not its shape
 
@@ -127,7 +127,7 @@ Engine and contracts:
 - `packages/contracts/src/engine-protocol.ts`: the log report joins the child report union (modify)
 - `packages/contracts/src/ipc.ts`: `ipcEvents` gains `engine:logs` (modify)
 - `packages/contracts/src/index.ts`: barrel export for `engine-logs` (modify)
-- `packages/engine/src/provider/provider-observability.ts`: `ProviderRequestLog` gains gateway, virtual model, and client key, and publish stamps the wall clock (modify)
+- `packages/engine/src/provider/provider-observability.ts`: the observation gains the grouped `servedFor` fact (gateway, virtual model, client key), and publish stamps the wall clock (modify; the serving turn split into `serving-turn.ts` under the line budget)
 - `packages/engine/src/gateway-traffic.ts`: threads the grant's gateway and virtual model into the observation, and publishes the two gateway-raised outcome rows (modify)
 - `packages/engine/src/gateway-app.ts`: derives the hashed client key from the inbound request (modify)
 - `packages/engine/src/engine-child.ts`: subscribes non-destructively and reports rows to the parent port (modify)
@@ -195,7 +195,7 @@ Produces:
 - `trafficAggregates(rows: readonly LogRow[], now: number): TrafficAggregates` from `lib/traffic-aggregates.ts`
 - `logScope(subject: LogSubject, errorsOnly: boolean): (row: LogRow) => boolean` and `LogSubject` from `lib/log-scope.ts`
 - `engineLogsQueryOptions(slug: string)` and `bindEngineLogsToCache(queryClient: QueryClient): () => void` from `shared/api/engine-logs.ts`
-- `logsDrawerOpen(): boolean`, `toggleLogsDrawer(): void`, `subscribeToLogsDrawerVisibility(listener: () => void): () => void` from `shared/lib/logs-drawer-visibility.ts`
+- `logsDrawerOpen(): boolean`, `toggleLogsDrawer(): void`, `closeLogsDrawer(): void`, `subscribeToLogsDrawerVisibility(listener: () => void): () => void` from `shared/lib/logs-drawer-visibility.ts`
 - `emitEngineLogs(batch: LogBatch): void`, `listenForEngineLogs`, `forgetEngineLogsListeners` from `shared/testing`
 - `openLogsDesk(push: (batch: LogBatch) => void): LogsDesk` from `apps/desktop/src/main/engine-host/logs-ledger.ts`
 
@@ -305,13 +305,13 @@ Every task owns disjoint files, and the others run on disjoint files.
 - [Risk] The G2 kicker-safe tokens haven't landed when task 10 needs the tint marks → Mitigation: the implementer checks the node-kicker branch first, and this branch lands the token names itself if it wins the race.
 - [Risk] The sibling `gateway-target-identity` change reshapes target matching mid-flight → Mitigation: the identity comparison isolates in one `log-scope.ts` function, and the implementer checks which change lands first.
 - [Risk] Retiring `widgets/status-bar` leaves dead exports that trip the knip gate → Mitigation: task 9 deletes the slice with its mount in one commit.
-- [Risk] Wall-clock stamps and monotonic durations get joined somewhere → Mitigation: rows order by id sequence, and no code subtracts `at` from `startedAt`.
+- [Risk] Wall-clock stamps and monotonic durations get joined somewhere → Mitigation: rows order newest first by `at` with the id as the tiebreak, and no code subtracts `at` from `startedAt`.
 - [Risk] The one-second tick makes browser tests time-dependent → Mitigation: the tick tests run on fake timers, and e2e asserts presence, never latency.
 - [Risk] New browser tests join a suite with known flaky candidates → Mitigation: no test waits on wall time, and list tests pin their rows through the testkit.
 
 ## Migration and rollout
 
-No stored data migrates. `ProviderRequestLog` gains optional fields, so the management usage queue's payload stays backward compatible and its consumers read on unchanged. The `engine:logs` channel and the log report are additive: an old renderer ignores them. The drawer height rides the existing panel-width storage under a new name, which old builds ignore and rollback orphans harmlessly. `StatusBar` retires in the same release its replacement lands, and the release notes name the live footer. Deploy order inside the branch: contracts land first, the engine and main-process edges next, the renderer surfaces last, and the merge blocks on the eight feature files. Rollback is a revert of the feature branch, because every contract change is additive and no schema versioned.
+No stored data migrates. The observation gains an optional grouped fact, so the management usage queue's payload stays backward compatible and its consumers read on unchanged. The `engine:logs` channel and the log report are additive: an old renderer ignores them. The drawer height rides the existing panel-width storage under a new name, which old builds ignore and rollback orphans harmlessly. `StatusBar` retires in the same release its replacement lands, and the release notes name the live footer. Deploy order inside the branch: contracts land first, the engine and main-process edges next, the renderer surfaces last, and the merge blocks on the eight feature files. Rollback is a revert of the feature branch, because every contract change is additive and no schema versioned.
 
 ## Open questions
 

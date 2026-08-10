@@ -5,6 +5,12 @@ export {
   toggleInspector,
 } from './inspector-visibility';
 export { lookedAtGateway, rememberedGateway } from './last-gateway';
+export {
+  closeLogsDrawer,
+  logsDrawerOpen,
+  subscribeToLogsDrawerVisibility,
+  toggleLogsDrawer,
+} from './logs-drawer-visibility';
 export type { PanelBounds } from './panel-resize';
 export { draggedPanel, panelBounds, restoredPanel, steppedPanel } from './panel-resize';
 export { keepPanelWidth, panelWidth, setPanelWidth, subscribeToPanelWidths } from './panel-width';

@@ -20,4 +20,4 @@ Adopt `@tanstack/react-virtual`, pinned exact, as the virtualization engine for 
 
 **Good**: ten thousand rows render inside the frame budget. The headless hook leaves the row markup and every token to the design system. The dependency family is one the repository already trusts and tracks.
 
-**Bad**: one new dependency enters the license sweep and the update treadmill, `MIT` licensed with no transitive additions. The library's documented chat pattern anchors to the end, so the newest-at-top orientation takes the less-paved path. A browser test proves the viewport holds on prepend. Virtualization breaks `role="log"`, so a hidden polite live region announces batched arrivals instead.
+**Bad**: one new dependency enters the license sweep and the update treadmill, `MIT` licensed, carrying one `MIT` transitive addition (`@tanstack/virtual-core`). The library's documented chat pattern anchors to the end, so the newest-at-top orientation takes the less-paved path. A browser test proves the viewport holds on prepend. Virtualization breaks `role="log"`, so a hidden polite live region announces batched arrivals instead.

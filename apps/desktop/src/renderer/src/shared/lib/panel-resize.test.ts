@@ -36,16 +36,34 @@ test('a step narrows the panel by one step, and never under the narrowest', () =
   expect(steppedPanel(bounds.min, -1, bounds)).toBe(bounds.min);
 });
 
-test('the sidebar and the inspector each carry their own bounds', () => {
-  expect(panelBounds.sidebar.min).toBeLessThan(panelBounds.sidebar.max);
-  expect(panelBounds.inspector.min).toBeLessThan(panelBounds.inspector.max);
+test('every panel carries its own bounds, with room to stand between them', () => {
+  for (const [name, sized] of Object.entries(panelBounds)) {
+    expect(sized.min, name).toBeLessThan(sized.max);
+  }
 });
 
-test('every panel stands at a width its own bounds allow', () => {
-  expect(panelBounds.sidebar.standing).toBeGreaterThanOrEqual(panelBounds.sidebar.min);
-  expect(panelBounds.sidebar.standing).toBeLessThanOrEqual(panelBounds.sidebar.max);
-  expect(panelBounds.inspector.standing).toBeGreaterThanOrEqual(panelBounds.inspector.min);
-  expect(panelBounds.inspector.standing).toBeLessThanOrEqual(panelBounds.inspector.max);
+test('every panel stands at a size its own bounds allow', () => {
+  for (const [name, sized] of Object.entries(panelBounds)) {
+    expect(sized.standing, name).toBeGreaterThanOrEqual(sized.min);
+    expect(sized.standing, name).toBeLessThanOrEqual(sized.max);
+  }
+});
+
+test('the logs drawer sizes along its own axis, deeper than a panel edge and short of the stage', () => {
+  expect(panelBounds.logs).toEqual({
+    min: 160,
+    max: 480,
+    collapseBelow: 48,
+    step: 16,
+    standing: 280,
+  });
+});
+
+test('a drag well under the logs drawer shuts it, the way it shuts the side panels', () => {
+  const logs = panelBounds.logs;
+
+  expect(draggedPanel(logs.min - logs.collapseBelow, logs)).toEqual({ standing: 'collapsed' });
+  expect(draggedPanel(logs.standing, logs)).toEqual({ standing: 'sized', width: logs.standing });
 });
 
 test('a drag out of a shut panel brings it back once it has gone far enough to mean it', () => {
