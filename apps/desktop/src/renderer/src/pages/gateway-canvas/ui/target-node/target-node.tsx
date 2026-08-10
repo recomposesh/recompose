@@ -40,13 +40,6 @@ const kindTints: Record<AccountKind, string> = {
   local: 'text-local',
 };
 
-const kindInks: Record<AccountKind, string> = {
-  subscription: 'text-subscription-ink',
-  'api-key': 'text-api-key-ink',
-  aggregator: 'text-aggregator-ink',
-  local: 'text-local-ink',
-};
-
 const kindGlyphs: Record<AccountKind, IconName> = {
   subscription: 'person',
   'api-key': 'key',
@@ -67,7 +60,7 @@ function readingOf(data: TargetNodeData): CardReading {
     return {
       kicker: 'Target',
       chipTint: kindTints[data.account.kind],
-      kickerTint: kindInks[data.account.kind],
+      kickerTint: 'text-target-ink',
       chipGlyph: kindGlyphs[data.account.kind],
       chipMark: vendorMark(data.account),
       name: accountName(data.account),

@@ -24,7 +24,7 @@ export type NodeCardProps = {
   frame: string;
   /** The ink class the seventeen-pixel chip and whatever it carries both take. */
   chipTint: string;
-  /** The role's contrast-safe ink for the kicker, which the chip tint is too light to serve. */
+  /** The frame's contrast-safe ink, which the kicker takes since the chip tint runs too light. */
   kickerTint: string;
   /** The glyph the chip leads with, which every card has one of. */
   chipGlyph: IconName;
