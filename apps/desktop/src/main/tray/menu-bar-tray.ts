@@ -1,7 +1,7 @@
 import type { EngineStates } from '@recompose/contracts';
 import type { MenuItemConstructorOptions, NativeImage } from 'electron';
 
-import { Menu, nativeImage, Tray } from 'electron';
+import { app, Menu, nativeImage, Tray } from 'electron';
 
 import restartTemplate from '../../../resources/restartTemplate.png?asset';
 import restartTemplateRetina from '../../../resources/restartTemplate@2x.png?asset';
@@ -84,6 +84,7 @@ function paintContextMenu(tray: Tray, handlers: TrayMenuHandlers): void {
           icons: LIFECYCLE_ICONS,
           gateways: shownGateways,
           states: shownStates,
+          development: !app.isPackaged,
         }),
       ),
     ),

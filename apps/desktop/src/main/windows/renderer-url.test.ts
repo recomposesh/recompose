@@ -3,8 +3,8 @@ import { describe, expect, test } from 'vitest';
 
 import {
   SETTINGS_SHORTCUT_ROUTE,
-  getStartedRouteFor,
   newGatewayRouteFor,
+  onGatewayDetailUrl,
   rendererBaseFor,
   rendererUrlFor,
   settingsShortcutRouteFor,
@@ -92,16 +92,19 @@ describe('the route that opens the gateway creation sheet', () => {
   });
 });
 
-describe('the route that brings the get-started card back', () => {
-  test('it asks the home surface to show the card', () => {
-    expect(getStartedRouteFor(1)).toContain('/?getStarted=true');
+describe('reading whether an address stands on a gateway detail', () => {
+  test('a gateway detail reads as one, packaged and under the development server alike', () => {
+    expect(onGatewayDetailUrl(rendererUrlFor(packagedBase, '/gateways/personal'))).toBe(true);
+    expect(onGatewayDetailUrl(rendererUrlFor(devBase, '/gateways/personal'))).toBe(true);
   });
 
-  test('each press names a location the router has not seen', () => {
-    expect(getStartedRouteFor(1)).not.toBe(getStartedRouteFor(2));
+  test('every other surface reads as none', () => {
+    for (const route of ['/', '/settings', '/providers', '/usage', '/?create=true']) {
+      expect(onGatewayDetailUrl(rendererUrlFor(packagedBase, route))).toBe(false);
+    }
   });
 
-  test('it never asks for the creation sheet at the same time', () => {
-    expect(getStartedRouteFor(3)).not.toContain('create');
+  test('an address that is no address at all reads as none rather than throwing', () => {
+    expect(onGatewayDetailUrl('not a url')).toBe(false);
   });
 });

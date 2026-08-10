@@ -34,6 +34,7 @@ export type Crossing = {
   sessionId?: string | undefined;
   replayScopeId?: string | undefined;
   callerFingerprint?: string | undefined;
+  isCompat?: boolean | undefined;
   responsesLite?: boolean | undefined;
   anthropicBeta?: string | undefined;
   requestHeaders?: Record<string, string[]> | undefined;

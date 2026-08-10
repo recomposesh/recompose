@@ -1,6 +1,7 @@
 import type { ResponsesToolRef } from './responses-extended-tools';
 import type { ResponsesStreamEvent, ResponsesStreamItem } from './responses-wire';
 
+import { responsesToolRefIsCustom } from './responses-extended-tools';
 import {
   customToolInput,
   responseToolRef,
@@ -34,7 +35,9 @@ function restoredRefItem(
   ref: ResponsesToolRef,
   argumentsJson: string,
 ): ResponsesStreamItem {
-  if (ref.kind === 'namespace') return { ...item, name: ref.name, namespace: ref.namespace };
+  if (!responsesToolRefIsCustom(ref)) {
+    return { ...item, name: ref.name, namespace: ref.namespace };
+  }
 
   const { arguments: _arguments, ...rest } = item;
 
@@ -43,6 +46,7 @@ function restoredRefItem(
     type: 'custom_tool_call',
     id: `ctc_${item.call_id ?? item.id ?? ''}`,
     name: ref.name,
+    ...(ref.kind === 'namespace' ? { namespace: ref.namespace } : {}),
     input: customToolInput(argumentsJson),
   };
 }
@@ -66,7 +70,9 @@ function addedEvent(
 }
 
 function activeItemId(ref: ResponsesToolRef, item: ResponsesStreamItem): { itemId?: string } {
-  if (ref.kind === 'custom') return { itemId: `ctc_${item.call_id ?? item.id ?? ''}` };
+  if (responsesToolRefIsCustom(ref)) {
+    return { itemId: `ctc_${item.call_id ?? item.id ?? ''}` };
+  }
 
   return item.id === undefined ? {} : { itemId: item.id };
 }
@@ -77,7 +83,7 @@ function argumentDelta(
 ): ResponsesStreamEvent[] {
   const active = state.active.get(event.output_index);
 
-  if (active?.ref.kind !== 'custom') return [event];
+  if (active === undefined || !responsesToolRefIsCustom(active.ref)) return [event];
 
   active.arguments += event.delta;
 
@@ -90,7 +96,7 @@ function argumentDone(
 ): ResponsesStreamEvent[] {
   const active = state.active.get(event.output_index);
 
-  if (active?.ref.kind !== 'custom') return [event];
+  if (active === undefined || !responsesToolRefIsCustom(active.ref)) return [event];
 
   active.arguments = event.arguments;
 

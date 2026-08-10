@@ -2,7 +2,11 @@ import type { GatewayEngineState } from '@recompose/contracts';
 
 import { useSyncExternalStore } from 'react';
 
-import { sidebarHidden, subscribeToSidebarVisibility } from '../../../../../shared/lib';
+import {
+  askTheCanvas,
+  sidebarHidden,
+  subscribeToSidebarVisibility,
+} from '../../../../../shared/lib';
 import { InspectorToggle, SidebarToggle, ToolbarButton } from '../../../../../shared/ui';
 import { AddressPill } from '../address-pill/address-pill';
 
@@ -39,11 +43,12 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
       />
       <ToolbarButton glyph="book" label="Docs" waitsFor="the guide" where="standing" />
       <AddressPill address={address} port={port} status={status} />
-      <ToolbarButton glyph="tidy" label="Tidy the canvas" waitsFor="the canvas" where="standing" />
       <ToolbarButton
-        glyph="json"
-        label="View as JSON"
-        waitsFor="the config view"
+        glyph="tidy"
+        label="Tidy the canvas"
+        onPress={() => {
+          askTheCanvas('tidy');
+        }}
         where="standing"
       />
       <span className={GROUP}>
@@ -53,7 +58,7 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
           waitsFor="request logging"
           where="grouped"
         />
-        <InspectorToggle available where="grouped" />
+        <InspectorToggle where="grouped" />
       </span>
     </div>
   );

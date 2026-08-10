@@ -107,6 +107,15 @@ describe('the grant the parent answers a spend request with', () => {
     expect(engineSpendGrantSchema.parse(resolved)).toEqual(resolved);
   });
 
+  test('a credentialed grant may mark the selected model as compatibility-aware', () => {
+    const compatible = aGrantSpending({
+      ...resolved.grant.spend,
+      isCompat: true,
+    });
+
+    expect(engineSpendGrantSchema.parse(compatible)).toEqual(compatible);
+  });
+
   test('a resolved grant naming no origin is refused, because the spend would reach nowhere', () => {
     const { providerOrigin, ...withoutTheOrigin } = resolved.grant;
 

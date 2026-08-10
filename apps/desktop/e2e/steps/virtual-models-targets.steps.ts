@@ -3,15 +3,10 @@ import type { VirtualModel } from '@recompose/contracts';
 
 import { expect } from '@playwright/test';
 
+import { takeUpThePortAsk } from '../canvas-gestures';
+import { accountPicker, DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
-import {
-  defineFlow,
-  offeredKind,
-  openDefineFlow,
-  openGatewayDrawer,
-  servedRow,
-  targetOption,
-} from '../gateway-drawer';
+import { openGatewayDrawer, servedRow } from '../gateway-drawer';
 import { focusedGateway } from '../scenario-memory';
 import {
   accountHeldAs,
@@ -50,7 +45,7 @@ const FLOWS_BESIDE_THE_FOUR_KIND_SIGN_IN = 4;
 const FLOWS_BESIDE_THE_STORED_DEFINITION_SIGN_IN = 2;
 
 /** The subscription, the key, the aggregator, and the local runtime. */
-const KINDS_THE_PICKER_OFFERS = 4;
+const ACCOUNTS_THE_PICKER_OFFERS = 4;
 
 const definitions = new WeakMap<Page, VirtualModel[]>();
 
@@ -100,7 +95,10 @@ Given(
 );
 
 When('the person opens the target picker for a new virtual model', async ({ page }) => {
-  await openDefineFlow(page, focusedGateway(page));
+  await openGatewayCanvas(page, focusedGateway(page));
+  await takeUpThePortAsk(page, GATEWAY_NODE);
+  await takeUpThePortAsk(page, DRAFT_NODE);
+  await expect(accountPicker(page)).toBeVisible();
 });
 
 When('the gateway config loads', async ({ page }) => {
@@ -111,16 +109,17 @@ Then(
   'the picker lists the subscription, the key, the aggregator, and the local account',
   async ({ page }) => {
     const plan = await accountHeldAs(page, 'subscription');
+    const picker = accountPicker(page);
 
-    await expect(offeredKind(page, 'Subscriptions')).toBeVisible();
-    await expect(offeredKind(page, 'API Keys')).toBeVisible();
-    await expect(offeredKind(page, 'Aggregators')).toBeVisible();
-    await expect(offeredKind(page, 'Local Runtimes')).toBeVisible();
-    await expect(targetOption(page, plan.label)).toBeVisible();
-    await expect(targetOption(page, KEY_ACCOUNT)).toBeVisible();
-    await expect(targetOption(page, AGGREGATOR_ACCOUNT)).toBeVisible();
-    await expect(targetOption(page, LOCAL_RUNTIME)).toBeVisible();
-    await expect(defineFlow(page).getByRole('listitem')).toHaveCount(KINDS_THE_PICKER_OFFERS);
+    await expect(picker.getByText('Subscriptions', { exact: true })).toBeVisible();
+    await expect(picker.getByText('API Keys', { exact: true })).toBeVisible();
+    await expect(picker.getByText('Aggregators', { exact: true })).toBeVisible();
+    await expect(picker.getByText('Local Runtimes', { exact: true })).toBeVisible();
+    await expect(picker.getByRole('button', { name: plan.label })).toBeVisible();
+    await expect(picker.getByRole('button', { name: KEY_ACCOUNT })).toBeVisible();
+    await expect(picker.getByRole('button', { name: AGGREGATOR_ACCOUNT })).toBeVisible();
+    await expect(picker.getByRole('button', { name: LOCAL_RUNTIME })).toBeVisible();
+    await expect(picker.getByRole('listitem')).toHaveCount(ACCOUNTS_THE_PICKER_OFFERS);
   },
 );
 

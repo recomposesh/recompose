@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 
+import { settingsQueryOptions, useSettingsWriter } from '../../../../shared/api';
 import { FieldGroup, FieldRow, SegmentedControl } from '../../../../shared/ui';
-import { settingsQueryOptions, useSettingsWriter } from '../../api/settings';
 import { themeChoices } from '../../lib/choices';
 import { saveStatusFor } from '../../lib/save-failure';
 

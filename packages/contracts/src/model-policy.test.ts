@@ -2,7 +2,11 @@ import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
 import { ACCOUNTS_VERSION, loadAccountsDocument } from './accounts';
-import { normalizeExcludedModels, providerModelPoliciesSchema } from './model-policy';
+import {
+  normalizeExcludedModels,
+  providerModelIsCompat,
+  providerModelPoliciesSchema,
+} from './model-policy';
 
 describe('provider model policy storage', () => {
   test('provider keys and excluded models parse to one canonical spelling', () => {
@@ -13,8 +17,8 @@ describe('provider model policy storage', () => {
         ' Anthropic ': {
           excludedModels: [' Claude-Old ', 'claude-old', 'CLAUDE-OTHER'],
           aliases: [
-            { name: ' Model-A ', alias: ' Alias-A ', displayName: ' Friendly ' },
-            { name: 'model-a', alias: 'alias-a', displayName: 'Friendly' },
+            { name: ' Model-A ', alias: ' Alias-A ', displayName: ' Friendly ', isCompat: true },
+            { name: 'model-a', alias: 'alias-a', displayName: 'Friendly', isCompat: true },
           ],
         },
       },
@@ -23,7 +27,7 @@ describe('provider model policy storage', () => {
     expect(parsed.modelPolicies).toEqual({
       anthropic: {
         excludedModels: ['claude-old', 'claude-other'],
-        aliases: [{ name: 'model-a', alias: 'alias-a', displayName: 'Friendly' }],
+        aliases: [{ name: 'model-a', alias: 'alias-a', displayName: 'Friendly', isCompat: true }],
       },
     });
   });
@@ -34,6 +38,31 @@ describe('provider model policy storage', () => {
       accounts: [],
     });
   });
+});
+
+describe('a configured compatibility model', () => {
+  const policy = providerModelPoliciesSchema.parse({
+    openrouter: {
+      aliases: [
+        { name: 'deepseek-v4-flash', alias: 'deepseek-alias', isCompat: true },
+        { name: 'native-model', alias: 'native-alias' },
+      ],
+    },
+  })['openrouter'];
+
+  test.each(['deepseek-v4-flash', 'DEEPSEEK-ALIAS', 'deepseek-v4-flash(high)'])(
+    'matches %s by upstream name, alias, or thinking suffix',
+    (model) => {
+      expect(providerModelIsCompat(policy, model)).toBe(true);
+    },
+  );
+
+  test.each(['native-model', 'native-alias', 'missing-model', '   '])(
+    'leaves %s in native mode',
+    (model) => {
+      expect(providerModelIsCompat(policy, model)).toBe(false);
+    },
+  );
 });
 
 describe('a provider policy that rules nothing out', () => {

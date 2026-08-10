@@ -7,7 +7,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { settingsQueryOptions, systemQueryOptions } from '../pages/settings';
+import { settingsQueryOptions, systemQueryOptions } from '../shared/api';
 import {
   accountsQueryOptions,
   subscriptionToolsQueryOptions,

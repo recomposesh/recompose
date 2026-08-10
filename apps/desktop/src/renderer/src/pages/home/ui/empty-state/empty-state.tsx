@@ -6,7 +6,7 @@ type EmptyStateProps = {
   onCreateGateway: () => void;
 };
 
-const GUIDE_URL = 'https://github.com/recomposesh/recompose';
+const GUIDE_URL = 'https://recompose.sh/docs';
 
 /**
  * The invitation a person meets before any gateway exists.

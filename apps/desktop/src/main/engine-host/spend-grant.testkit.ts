@@ -3,6 +3,7 @@ import type {
   CredentialedAccount,
   GatewayConfig,
   LocalAccount,
+  ProviderModelPolicies,
   SubscriptionAccount,
   VirtualModel,
 } from '@recompose/contracts';
@@ -89,10 +90,15 @@ function vaultHolding(entries: Readonly<Record<string, string>>): VaultDocument 
 export async function rewriteRegistry(
   userDataPath: string,
   accounts: readonly Account[],
+  modelPolicies?: ProviderModelPolicies,
 ): Promise<void> {
   await writeFile(
     join(userDataPath, 'accounts.json'),
-    JSON.stringify({ schemaVersion: ACCOUNTS_VERSION, accounts }),
+    JSON.stringify({
+      schemaVersion: ACCOUNTS_VERSION,
+      accounts,
+      ...(modelPolicies === undefined ? {} : { modelPolicies }),
+    }),
     'utf8',
   );
 }
@@ -108,6 +114,7 @@ export async function storageHolding(
   models: readonly VirtualModel[],
   accounts: readonly Account[],
   credentials: Readonly<Record<string, string>> = everyRefHoldsTheSecret,
+  modelPolicies?: ProviderModelPolicies,
 ): Promise<string> {
   const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-spend-'));
   const config = gatewayHolding(models);
@@ -118,7 +125,7 @@ export async function storageHolding(
     JSON.stringify(config),
     'utf8',
   );
-  await rewriteRegistry(userDataPath, accounts);
+  await rewriteRegistry(userDataPath, accounts, modelPolicies);
   await rewriteVault(userDataPath, credentials);
 
   return userDataPath;

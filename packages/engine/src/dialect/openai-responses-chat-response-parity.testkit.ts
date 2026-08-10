@@ -20,6 +20,7 @@ export const namespaceRef = {
     kind: 'namespace',
     namespace: 'mcp__test_mcp__',
     name: 'add_numbers',
+    family: 'function',
   },
 } satisfies Readonly<Record<string, ResponsesToolRef>>;
 export const collaborationRef = {
@@ -27,6 +28,7 @@ export const collaborationRef = {
     kind: 'namespace',
     namespace: 'collaboration',
     name: 'send_message',
+    family: 'function',
   },
 } satisfies Readonly<Record<string, ResponsesToolRef>>;
 export const execRef = {

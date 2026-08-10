@@ -19,6 +19,9 @@ function recordingHandlers(taken: string[]): TrayMenuHandlers {
     onOpenSettings: () => {
       taken.push('open-settings');
     },
+    onOpenDevtools: () => {
+      taken.push('open-devtools');
+    },
     onQuit: () => {
       taken.push('quit');
     },
@@ -43,6 +46,7 @@ function templateFor(states: EngineStates, taken: string[] = []): TrayMenuItem[]
     icons,
     gateways: [codex],
     states,
+    development: false,
   });
 }
 
@@ -72,13 +76,14 @@ describe('the menu behind the tray icon, with no gateway stored', () => {
       icons,
       gateways: [],
       states: {},
+      development: false,
     });
 
     expect(empty.map((item) => item.label ?? item.type)).toEqual([
+      'No gateways yet',
+      'separator',
       'Open recompose',
       'Settings…',
-      'separator',
-      'No gateways yet',
       'separator',
       'Quit recompose',
     ]);
@@ -90,6 +95,7 @@ describe('the menu behind the tray icon, with no gateway stored', () => {
       icons,
       gateways: [],
       states: {},
+      development: false,
     });
 
     expect(itemLabelled(empty, 'No gateways yet')?.enabled).toBe(false);
@@ -122,20 +128,21 @@ describe('the menu behind the tray icon, with no gateway stored', () => {
 });
 
 describe('where the gateways stand in the menu', () => {
-  test('every stored gateway carries its own submenu, between the ways in and the way out', () => {
+  test('every stored gateway carries its own submenu, leading the menu above the ways in', () => {
     const template = buildTrayMenuTemplate({
       handlers: recordingHandlers([]),
       icons,
       gateways: [codex, gemini],
       states: {},
+      development: false,
     });
 
     expect(template.map((item) => item.label ?? item.type)).toEqual([
-      'Open recompose',
-      'Settings…',
-      'separator',
       'Codex',
       'Gemini',
+      'separator',
+      'Open recompose',
+      'Settings…',
       'separator',
       'Quit recompose',
     ]);
@@ -231,6 +238,7 @@ describe('choosing a lifecycle entry', () => {
       icons,
       gateways: [codex, gemini],
       states: { codex: { status: 'running' }, gemini: { status: 'running' } },
+      development: false,
     });
 
     submenuOf(template, 'Gemini')
@@ -238,5 +246,36 @@ describe('choosing a lifecycle entry', () => {
       ?.click?.();
 
     expect(taken).toEqual(['stop gemini']);
+  });
+});
+
+describe('the devtools entry a development run carries', () => {
+  test('a development tray offers TanStack Devtools above the way out', () => {
+    const taken: string[] = [];
+    const template = buildTrayMenuTemplate({
+      handlers: recordingHandlers(taken),
+      icons,
+      gateways: [codex],
+      states: {},
+      development: true,
+    });
+
+    expect(template.map((item) => item.label ?? item.type)).toEqual([
+      'Codex',
+      'separator',
+      'Open recompose',
+      'Settings…',
+      'TanStack Devtools',
+      'separator',
+      'Quit recompose',
+    ]);
+
+    itemLabelled(template, 'TanStack Devtools')?.click?.();
+
+    expect(taken).toEqual(['open-devtools']);
+  });
+
+  test('a packaged tray never names the devtools', () => {
+    expect(itemLabelled(templateFor({}), 'TanStack Devtools')).toBeUndefined();
   });
 });

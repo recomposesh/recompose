@@ -33,8 +33,10 @@ describe('kimiThinkingReplayModelFamily', () => {
     ['kimi-k3', 'k3'],
     ['k3-256k', 'k3'],
     ['kimi-k3-256k(high)', 'k3'],
-    ['kimi-k2.7-code', 'k2.7-code'],
-    ['kimi-k2.7-code-highspeed', 'k2.7-code-highspeed'],
+    ['kimi-k2.7-code', 'kimi-for-coding'],
+    ['kimi-k2.7-code-highspeed', 'kimi-for-coding-highspeed'],
+    ['kimi-for-coding', 'kimi-for-coding'],
+    ['kimi-for-coding-highspeed(high)', 'kimi-for-coding-highspeed'],
   ])('maps %s to %s', (model, family) => {
     expect(kimiThinkingReplayModelFamily(model)).toBe(family);
   });
@@ -74,6 +76,18 @@ describe('KimiThinkingReplay', () => {
     expect(replay.inject('kimi-k3-256k', 'execution:family-switch', compacted).applied).toBe(true);
     expect(
       replay.inject('kimi-k2.7-code-highspeed', 'execution:family-switch', compacted).applied,
+    ).toBe(false);
+  });
+
+  test('shares replay between the K2.7 Code alias and the canonical Kimi Code model', () => {
+    const replay = new KimiThinkingReplay();
+
+    expect(replay.commit('kimi-k2.7-code', 'execution:family-switch', cached)).toBe(true);
+    expect(replay.inject('kimi-for-coding', 'execution:family-switch', compacted).applied).toBe(
+      true,
+    );
+    expect(
+      replay.inject('kimi-for-coding-highspeed', 'execution:family-switch', compacted).applied,
     ).toBe(false);
   });
 

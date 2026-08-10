@@ -15,6 +15,7 @@ type EncodeState = {
   beginUsage: HubUsage;
   id: string | undefined;
   model: string | undefined;
+  begun: boolean;
 };
 
 type MessageEndEvent = Extract<HubStreamEvent, { type: 'message-end' }>;
@@ -179,6 +180,7 @@ function encodeEvent(
     state.beginUsage = event.usage ?? {};
     state.id = event.id;
     state.model = event.model;
+    state.begun = true;
     events.push(messageStartOf(state));
 
     return false;
@@ -195,16 +197,31 @@ function encodeEvent(
   return encodeActiveEvent(state, event, events);
 }
 
+function openedEvents(state: EncodeState, events: AnthropicStreamEvent[]): AnthropicStreamEvent[] {
+  const first = events[0];
+
+  if (state.begun || first === undefined || first.type === 'error') return events;
+
+  state.begun = true;
+
+  return [messageStartOf(state), ...events];
+}
+
 export async function* encodeStream(
   source: AsyncIterable<HubStreamEvent>,
 ): AsyncIterable<AnthropicStreamEvent> {
-  const state: EncodeState = { beginUsage: {}, id: undefined, model: undefined };
+  const state: EncodeState = {
+    beginUsage: {},
+    id: undefined,
+    model: undefined,
+    begun: false,
+  };
 
   for await (const event of serializeHubBlocks(source)) {
     const events: AnthropicStreamEvent[] = [];
     const done = encodeEvent(state, event, events);
 
-    for (const wireEvent of events) {
+    for (const wireEvent of openedEvents(state, events)) {
       yield wireEvent;
     }
 

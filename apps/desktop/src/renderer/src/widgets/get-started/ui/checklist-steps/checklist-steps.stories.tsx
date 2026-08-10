@@ -10,12 +10,12 @@ import { ChecklistSteps } from './checklist-steps';
 const steps: readonly GetStartedStep[] = [
   { title: 'Create a gateway', state: 'done' },
   { title: 'Connect a provider', state: 'current' },
-  { title: 'Compose a virtual model', state: 'pending', reason: 'Waits on the canvas.' },
+  { title: 'Compose a virtual model', state: 'pending' },
 ];
 
 const meta = preview.meta({
   component: ChecklistSteps,
-  args: { steps },
+  args: { steps, onSkip: () => undefined },
   decorators: [inChecklistPanel],
 });
 
@@ -31,7 +31,6 @@ export const Basic = meta.story({
       'aria-current',
       'step',
     );
-    await expect(await canvas.findByText('Waits on the canvas.')).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Skip setup' })).toBeVisible();
   },
 });

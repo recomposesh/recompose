@@ -1,6 +1,8 @@
 import type { ResponsesToolRef } from './responses-extended-tools';
 import type { ResponsesCustomToolOutputItem, ResponsesOutputItem } from './responses-wire';
 
+import { responsesToolRefIsCustom } from './responses-extended-tools';
+
 export function customToolInput(argumentsJson: string): string {
   const parsed = parsedJson(argumentsJson);
 
@@ -33,13 +35,17 @@ function restoredItem(
   const ref = responseToolRef(item.name, refs);
 
   if (ref === undefined) return item;
-  if (ref.kind === 'namespace') return { ...item, name: ref.name, namespace: ref.namespace };
+
+  if (!responsesToolRefIsCustom(ref)) {
+    return { ...item, name: ref.name, namespace: ref.namespace };
+  }
 
   const custom: ResponsesCustomToolOutputItem = {
     type: 'custom_tool_call',
     id: `ctc_${item.call_id}`,
     call_id: item.call_id,
     name: ref.name,
+    ...(ref.kind === 'namespace' ? { namespace: ref.namespace } : {}),
     input: customToolInput(item.arguments),
   };
 

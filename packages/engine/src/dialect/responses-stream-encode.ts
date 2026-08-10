@@ -17,6 +17,7 @@ import {
   responsesDoneEvents,
   type ResponsesOpenBlock,
 } from './responses-stream-done';
+import { responsesFailedEvent } from './responses-stream-failed';
 
 type HubStreamEndEvent = Extract<HubStreamEvent, { type: 'message-end' }>;
 
@@ -263,7 +264,7 @@ function encodeNonMediaHubEvent(
   }
 
   if (event.type === 'stream-error') {
-    return [{ type: 'error', code: event.error.type, message: event.error.message }];
+    return [responsesFailedEvent(state, event.error)];
   }
 
   return encodeDeltaOrEnd(state, event);

@@ -27,6 +27,7 @@ async function osBackedContext(osHolds: boolean) {
     isServing: () => true,
     releaseSubscription: async () => Promise.resolve({ ok: true }),
     readLoginItem: () => operatingSystem,
+    onSettingsWritten: () => undefined,
     applySettings: (settings, askedLoginItem) => {
       applyChosenSettings(
         {

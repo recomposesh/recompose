@@ -16,15 +16,15 @@ type AppDevtoolsProps = {
  * The router and the query cache, both inspectable through one floating trigger.
  *
  * @summary Reach for it from the root layout, inside the guard that keeps devtools out of any
- * build a person runs. Each library ships a trigger of its own, and the shell has no free
- * corner for a second one, so the panels mount as plugins of a single host instead. The host
- * activates no plugin on its own, which paints the rail over an empty body until one is named
- * with `defaultOpen`.
+ * build a person runs, and only while the tray has asked for it, so no trigger floats over the
+ * canvas uninvited. Each library ships a trigger of its own, and the shell has no free corner
+ * for a second one, so the panels mount as plugins of a single host instead. The host opens on
+ * mount, because the ask that mounted it was the ask to look inside.
  */
 export function AppDevtools({ queryClient, router }: AppDevtoolsProps) {
   return (
     <TanStackDevtools
-      config={{ position: 'middle-right' }}
+      config={{ position: 'middle-right', defaultOpen: true }}
       plugins={[
         {
           id: 'router',

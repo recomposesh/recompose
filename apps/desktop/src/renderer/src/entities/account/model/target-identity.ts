@@ -26,3 +26,14 @@ export function accountName(account: Account): string {
 export function accountMark(account: Account): BrandMarkName | undefined {
   return brandMarkNames.find((drawn) => drawn === account.provider);
 }
+
+/**
+ * The whole identity a target reads as: its kind, its provider, and its name.
+ *
+ * @summary A bare label tells a person nothing about where a binding routes, because two accounts
+ * can share one email. The kind and the provider carry the difference, so the identity says all
+ * three wherever a target stands for a routing decision.
+ */
+export function accountIdentity(account: Account): string {
+  return `${account.kind} · ${account.provider} · ${accountName(account)}`;
+}

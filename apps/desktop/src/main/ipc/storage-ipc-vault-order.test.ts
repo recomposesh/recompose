@@ -38,6 +38,7 @@ function context(): StorageIpcContext {
     getCodec: plainCodec,
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
+    onSettingsWritten: () => undefined,
     applySettings: () => undefined,
     readLoginItem: () => false,
     startGateway: () => undefined,

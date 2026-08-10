@@ -4,6 +4,7 @@ export type ResponsesCustomToolCallItem = {
   type: 'custom_tool_call';
   call_id: string;
   name: string;
+  namespace?: string;
   input?: unknown;
 };
 
@@ -18,6 +19,7 @@ export type ResponsesCustomToolOutputItem = {
   id?: string;
   call_id: string;
   name: string;
+  namespace?: string;
   input: string;
 };
 

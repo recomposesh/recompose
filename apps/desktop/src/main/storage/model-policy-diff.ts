@@ -112,8 +112,9 @@ export function diffProviderExcludedModels(
 
 function aliasValue(alias: ProviderModelAlias): string {
   const displayName = alias.displayName === undefined ? '' : `|display-name=${alias.displayName}`;
+  const isCompat = alias.isCompat === true ? '|is-compat=true' : '';
 
-  return `${alias.name.trim().toLowerCase()}->${alias.alias.trim().toLowerCase()}${displayName}`;
+  return `${alias.name.trim().toLowerCase()}->${alias.alias.trim().toLowerCase()}${displayName}${isCompat}`;
 }
 
 function summarizeAliases(aliases: readonly ProviderModelAlias[]): ModelPolicySummary {

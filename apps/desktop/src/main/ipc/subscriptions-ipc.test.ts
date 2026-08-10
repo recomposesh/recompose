@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import type { SubscriptionsWorld } from './subscriptions-ipc.testkit';
 
 import { PARKED_SERVICE, VENDOR_SERVICE } from '../subscriptions/credential-custody';
-import { osUser } from '../subscriptions/subscriptions.testkit';
+import { aClaudeLogin, anMcpRecordAlone, osUser } from '../subscriptions/subscriptions.testkit';
 import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 import { aFreshWorld, viewsIn } from './subscriptions-ipc.testkit';
 
@@ -138,11 +138,20 @@ describe('a row reads connected only where a credential stands', () => {
 
   test('given the credential parked in the keychain, the row reads connected on a bare home', async () => {
     await anAnthropicRow();
-    world.keychain.put(PARKED_SERVICE, 'acc-one', 'opaque');
+    world.keychain.put(PARKED_SERVICE, 'acc-one', aClaudeLogin);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'connected' });
+  });
+
+  test('given the parked keychain item holds an MCP record and no login, the row reads lapsed', async () => {
+    await anAnthropicRow();
+    world.keychain.put(PARKED_SERVICE, 'acc-one', anMcpRecordAlone);
+
+    const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
+
+    expect(view).toMatchObject({ standing: 'lapsed' });
   });
 
   test('given no credential in the home and none in the keychain, the row reads lapsed', async () => {
@@ -158,21 +167,31 @@ describe('the active account answers for the credential the tool actually spends
   test('given the vendor slot gone empty, the active row reads lapsed even while a backup sits parked', async () => {
     await anAnthropicRow();
     await aBareActiveAnthropicHome();
-    world.keychain.put(PARKED_SERVICE, 'acc-one', 'stale-backup');
+    world.keychain.put(PARKED_SERVICE, 'acc-one', aClaudeLogin);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'lapsed', active: true });
   });
 
-  test('given the vendor slot standing, the active row reads connected on a bare home', async () => {
+  test('given the login in the vendor slot, the active row reads connected on a bare home', async () => {
     await anAnthropicRow();
     await aBareActiveAnthropicHome();
-    world.keychain.put(VENDOR_SERVICE, osUser, 'live-login');
+    world.keychain.put(VENDOR_SERVICE, osUser, aClaudeLogin);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'connected', active: true });
+  });
+
+  test('given the vendor slot holding an MCP record and no login, the active row reads lapsed', async () => {
+    await anAnthropicRow();
+    await aBareActiveAnthropicHome();
+    world.keychain.put(VENDOR_SERVICE, osUser, anMcpRecordAlone);
+
+    const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
+
+    expect(view).toMatchObject({ standing: 'lapsed', active: true });
   });
 });
 

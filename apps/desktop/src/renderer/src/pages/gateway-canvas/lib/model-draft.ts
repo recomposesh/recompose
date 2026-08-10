@@ -1,4 +1,4 @@
-import type { GatewayConfig, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, Target, VirtualModel } from '@recompose/contracts';
 
 import { modelAliasFromName, modelAliasSchema } from '@recompose/contracts';
 
@@ -75,21 +75,6 @@ export function emptyDefinition(): SettledDefinition {
   return { displayName: '', id: '', accountId: '', providerModel: '' };
 }
 
-/**
- * What to hold on to when the flow hands its draft back as it leaves the screen.
- *
- * @summary The flow hands its values over whenever it unmounts, and it cannot tell being closed
- * from being finished. So the answer reads the draft that stands: a person still mid-definition
- * keeps their words for the reopen, and one who cancelled or stored keeps nothing, which is what
- * stops a settled draft from walking back in.
- */
-export function draftKept(
-  held: SettledDefinition | undefined,
-  handed: SettledDefinition,
-): SettledDefinition | undefined {
-  return held === undefined ? undefined : handed;
-}
-
 /** The gateway as it stands once it carries this definition too, ready for storage. */
 export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefinition): GatewayConfig {
   return {
@@ -102,6 +87,41 @@ export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefiniti
         target: { accountId: settled.accountId, providerModel: settled.providerModel },
       },
     ],
+  };
+}
+
+/**
+ * The gateway as it stands once one of its virtual models reaches a different target.
+ *
+ * @summary A virtual model answers with one target, so a cable dragged onto another card replaces
+ * the binding rather than joining it. The definition keeps its id and its name, because a person
+ * rebinding is aiming the model they already named somewhere new rather than composing a second one.
+ */
+export function gatewayRebinding(
+  gateway: GatewayConfig,
+  modelId: string,
+  target: Target,
+): GatewayConfig {
+  return {
+    ...gateway,
+    virtualModels: gateway.virtualModels.map((model) =>
+      model.id === modelId ? { ...model, target } : model,
+    ),
+  };
+}
+
+/**
+ * The gateway as it stands once one of its virtual models holds no target at all.
+ *
+ * @summary The stored shape carries no virtual model without a target, so letting a binding go
+ * takes the whole definition with it and the canvas holds the name, the id, and the seat as a
+ * draft card. Rebinding the draft writes the definition back, which is why unbinding costs one
+ * gesture rather than a confirmation.
+ */
+export function gatewayReleasing(gateway: GatewayConfig, modelId: string): GatewayConfig {
+  return {
+    ...gateway,
+    virtualModels: gateway.virtualModels.filter((model) => model.id !== modelId),
   };
 }
 

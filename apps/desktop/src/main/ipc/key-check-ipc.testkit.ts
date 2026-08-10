@@ -23,6 +23,7 @@ export function storageContextOver(userDataPath: string): StorageIpcContext {
     getCodec: () => checkCodec,
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
+    onSettingsWritten: () => undefined,
     applySettings: () => undefined,
     readLoginItem: () => false,
     startGateway: () => undefined,

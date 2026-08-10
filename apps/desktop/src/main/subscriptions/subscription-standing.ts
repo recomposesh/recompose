@@ -9,7 +9,7 @@ export type SubscriptionObservation = {
   plan?: string;
 };
 
-export type OutsideCredential = (() => Promise<boolean>) | null;
+export type OutsideCredential = (() => Promise<string | null>) | null;
 
 export type StandingRequest = {
   provider: SubscriptionProviderId;
@@ -48,12 +48,20 @@ function spokenAt(value: unknown, key: string): string | undefined {
   return said === '' ? undefined : said;
 }
 
-async function recordIn(home: string, file: string): Promise<unknown> {
+function documentIn(blob: string): unknown {
   try {
-    return JSON.parse(await readFile(join(home, file), 'utf8'));
+    return JSON.parse(blob);
   } catch {
     return null;
   }
+}
+
+async function recordIn(home: string, file: string): Promise<unknown> {
+  return readFile(join(home, file), 'utf8').then(documentIn, () => null);
+}
+
+function claudeOauthIn(document: unknown): Record<string, unknown> | null {
+  return recordAt(document, 'claudeAiOauth');
 }
 
 function planNamedByRateTier(tier: string | undefined): string | undefined {
@@ -65,7 +73,7 @@ async function readClaudeCode(home: string): Promise<Reading> {
     recordIn(home, '.credentials.json'),
     recordIn(home, '.claude.json'),
   ]);
-  const oauth = recordAt(credential, 'claudeAiOauth');
+  const oauth = claudeOauthIn(credential);
   const account = recordAt(identity, 'oauthAccount');
 
   return {
@@ -110,7 +118,9 @@ async function keptOutsideTheHome(ask: OutsideCredential): Promise<boolean> {
     return false;
   }
 
-  return ask().catch(() => false);
+  const blob = await ask().catch(() => null);
+
+  return blob !== null && claudeOauthIn(documentIn(blob)) !== null;
 }
 
 function onlyWhatTheRecordsSay(reading: Reading): Omit<SubscriptionObservation, 'standing'> {

@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 
+import { systemQueryOptions, useOpenConfigFolder } from '../../../../shared/api';
 import { FieldGroup, FieldRow, SegmentedControl } from '../../../../shared/ui';
-import { systemQueryOptions, useOpenConfigFolder } from '../../api/system';
 import { logRetentionChoices } from '../../lib/choices';
 import { revealLabelFor } from '../../lib/row-state';
 import { RowAction } from '../row-action/row-action';

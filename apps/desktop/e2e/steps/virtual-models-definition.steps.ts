@@ -1,13 +1,22 @@
+import type { Page } from '@playwright/test';
+
 import { expect } from '@playwright/test';
 
+import { takeUpThePortAsk } from '../canvas-gestures';
+import {
+  canvasNode,
+  completeThePick,
+  DRAFT_NODE,
+  GATEWAY_NODE,
+  openGatewayCanvas,
+} from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
 import {
-  defineFlow,
-  defineThroughDrawer,
-  flowRefusal,
-  modelOption,
-  openDefineFlow,
-  pickTarget,
+  draftInspector,
+  draftNameField,
+  inspectorModelOption,
+  inspectorRefusal,
+  pickTargetInInspector,
   rowLines,
   servedRow,
   servedRows,
@@ -19,6 +28,12 @@ import { gatewayTargetingAKey, KEY_ACCOUNT } from '../stored-target-accounts';
 
 /** The two lines a defined row leads with: the name a client asks for, then what serves it. */
 const NAME_THEN_BINDING = 2;
+
+async function draftBornFromTheGatewayPlus(page: Page): Promise<void> {
+  await openGatewayCanvas(page, focusedGateway(page));
+  await takeUpThePortAsk(page, GATEWAY_NODE);
+  await expect(draftNameField(page)).toBeVisible();
+}
 
 Given('a gateway with a stored Anthropic key account', async ({ page }) => {
   await gatewayTargetingAKey(page);
@@ -43,17 +58,17 @@ Given(
 When(
   "the person defines a virtual model {string} targeting that account's {string}",
   async ({ page }, name: string, providerModel: string) => {
-    await defineThroughDrawer(page, focusedGateway(page), {
-      name,
-      providerModel,
-      target: KEY_ACCOUNT,
-    });
+    await draftBornFromTheGatewayPlus(page);
+    await draftNameField(page).fill(name);
+    await takeUpThePortAsk(page, DRAFT_NODE);
+    await completeThePick(page, KEY_ACCOUNT, providerModel);
+    await canvasNode(page, GATEWAY_NODE).click();
   },
 );
 
 When('the person picks that account as the target for a new virtual model', async ({ page }) => {
-  await openDefineFlow(page, focusedGateway(page));
-  await pickTarget(page, KEY_ACCOUNT);
+  await draftBornFromTheGatewayPlus(page);
+  await pickTargetInInspector(page, KEY_ACCOUNT);
 });
 
 Then('the Models list holds {string} as one row', async ({ page }, name: string) => {
@@ -74,19 +89,20 @@ Then('the row reads {string} over its target', async ({ page }, name: string) =>
 
 Then("the Model field offers the account's live model list", async ({ page }) => {
   for (const providerModel of modelsTheProviderServes) {
-    await expect(modelOption(page, providerModel)).toBeVisible();
+    await expect(inspectorModelOption(page, providerModel)).toBeVisible();
   }
 });
 
 Then('the field accepts no free-text model', async ({ page }) => {
-  await expect(defineFlow(page).getByRole('textbox', { name: 'Model', exact: true })).toHaveCount(
-    0,
-  );
-  await expect(defineFlow(page).getByRole('textbox')).toHaveCount(2);
+  await expect(
+    draftInspector(page).getByRole('textbox', { exact: true, name: 'Model' }),
+  ).toHaveCount(0);
 });
 
-Then('the sheet reads a typed refusal naming the failed look', async ({ page }) => {
-  await expect(flowRefusal(page)).toHaveText("recompose couldn't read this account's model list.");
+Then('the inspector reads a typed refusal naming the failed look', async ({ page }) => {
+  await expect(inspectorRefusal(page)).toHaveText(
+    "recompose couldn't read this account's model list.",
+  );
 });
 
 Then('no definition is stored', async ({ page }) => {

@@ -34,17 +34,26 @@ function toolName(delta: ChatToolCallDelta): string | undefined {
   return typeof name === 'string' && name !== '' ? name : undefined;
 }
 
+function toolPosition(chatIndex: number): { choice: number; tool: number } {
+  return { choice: Math.floor(chatIndex / 1_000), tool: chatIndex % 1_000 };
+}
+
 function toolId(state: ChatToolDecodeState, id: string | undefined, chatIndex: number): string {
   if (id !== undefined && id !== '') return id;
 
   if (state.responsesTarget) {
-    const choice = Math.floor(chatIndex / 1_000);
-    const tool = chatIndex % 1_000;
+    const { choice, tool } = toolPosition(chatIndex);
 
     return `call_${state.responseId ?? 'chatcmpl'}_${String(choice)}_${String(tool)}`;
   }
 
   return `toolu_${state.syntheticIdCount++}`;
+}
+
+function openingToolName(state: ChatToolDecodeState, pending: PendingTool): string {
+  if (pending.name !== undefined) return pending.name;
+
+  return state.responsesTarget ? '' : `tool_${String(toolPosition(pending.chatIndex).tool)}`;
 }
 
 function openPendingTool(
@@ -66,7 +75,7 @@ function openPendingTool(
     opening: {
       kind: 'tool',
       id: toolId(state, pending.id, pending.chatIndex),
-      name: pending.name ?? '',
+      name: openingToolName(state, pending),
     },
   });
   flushArguments(pending, events);
@@ -190,10 +199,14 @@ export function flushPendingTools(
   );
 
   for (const tool of pending) {
-    if (tool.hubIndex === undefined && (tool.name !== undefined || state.responsesTarget)) {
+    if (tool.hubIndex === undefined && carriesToolCall(tool)) {
       openPendingTool(state, tool, events, closeCurrent);
     }
   }
+}
+
+function carriesToolCall(pending: PendingTool): boolean {
+  return pending.name !== undefined || pending.id !== undefined || pending.args !== '';
 }
 
 export function markToolsClosed(state: ChatToolDecodeState): void {

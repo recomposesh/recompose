@@ -231,8 +231,21 @@ describe('push surface totality', () => {
     expectTypeOf<keyof RecomposeIpcEvents>().toEqualTypeOf<IpcEvent>();
   });
 
-  test('the state and account-change pushes are the complete event vocabulary', () => {
-    expectTypeOf<IpcEvent>().toEqualTypeOf<'engine:state' | 'accounts:changed'>();
+  test('the state, traffic, account-change, and canvas pushes are the complete vocabulary', () => {
+    expectTypeOf<IpcEvent>().toEqualTypeOf<
+      | 'engine:state'
+      | 'engine:traffic'
+      | 'accounts:changed'
+      | 'canvas:command'
+      | 'settings:changed'
+      | 'devtools:toggle'
+    >();
+  });
+
+  test('a canvas command names one of the four acts the Canvas menu offers', () => {
+    expectTypeOf<IpcEventPayload<'canvas:command'>>().toEqualTypeOf<
+      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy'
+    >();
   });
 
   test('the push carries the whole snapshot rather than one gateway', () => {

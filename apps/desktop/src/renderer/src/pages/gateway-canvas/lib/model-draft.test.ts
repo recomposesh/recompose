@@ -1,4 +1,4 @@
-import type { GatewayConfig, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, Target, VirtualModel } from '@recompose/contracts';
 
 import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
@@ -6,8 +6,10 @@ import { expect, test } from 'vitest';
 import { IpcResultError } from '../../../shared/api';
 import {
   discoveryHint,
-  draftKept,
+  emptyDefinition,
   gatewayDefining,
+  gatewayRebinding,
+  gatewayReleasing,
   idFollowingName,
   idRefusal,
   modelListReading,
@@ -31,10 +33,22 @@ const codex: GatewayConfig = {
   layout: { nodes: {} },
 };
 
+const slow: VirtualModel = {
+  id: 'slow',
+  displayName: 'slow',
+  target: { accountId: 'a1', providerModel: 'claude-opus-5' },
+};
+
+const onWork: Target = { accountId: 'a2', providerModel: 'claude-haiku-4-5' };
+
 const noneHeld: readonly VirtualModel[] = [];
 
 test('a name with nothing in it refuses, because no model can stand under it', () => {
   expect(nameRefusal('')).toBe('Give the virtual model a name.');
+});
+
+test('a name of nothing but spacing asks for one too, because it names nothing', () => {
+  expect(nameRefusal('   ')).toBe('Give the virtual model a name.');
 });
 
 test('a name a person actually typed passes without a word', () => {
@@ -67,6 +81,16 @@ test('an id this gateway already serves refuses rather than shadowing what stand
 
 test('an id carrying dots and no collision passes without a word', () => {
   expect(idRefusal('claude-5.6-sol', noneHeld)).toBeUndefined();
+  expect(idRefusal('claude-5.6-sol', [fast])).toBeUndefined();
+});
+
+test('a fresh draft opens on nothing said yet, so no field arrives already filled', () => {
+  expect(emptyDefinition()).toEqual({
+    displayName: '',
+    id: '',
+    accountId: '',
+    providerModel: '',
+  });
 });
 
 test("an id Claude Code's picker skips carries the hint that says so", () => {
@@ -107,6 +131,42 @@ test('a definition joins the ones the gateway already holds rather than replacin
   expect(defining.virtualModels.map((model) => model.id)).toEqual(['fast', 'slow']);
 });
 
+test('a rebound virtual model reaches the new target and nothing of the old one is left', () => {
+  const rebound = gatewayRebinding({ ...codex, virtualModels: [fast] }, 'fast', onWork);
+
+  expect(rebound.virtualModels).toEqual([{ ...fast, target: onWork }]);
+});
+
+test('rebinding one virtual model leaves every other definition standing as it was', () => {
+  const rebound = gatewayRebinding({ ...codex, virtualModels: [fast, slow] }, 'fast', onWork);
+
+  expect(rebound.virtualModels).toEqual([{ ...fast, target: onWork }, slow]);
+});
+
+test('rebinding a virtual model this gateway never served rewrites nothing', () => {
+  const held = { ...codex, virtualModels: [fast] };
+
+  expect(gatewayRebinding(held, 'nowhere', onWork).virtualModels).toEqual([fast]);
+});
+
+test('releasing a binding takes the definition out, because the stored shape holds no bare model', () => {
+  const released = gatewayReleasing({ ...codex, virtualModels: [fast, slow] }, 'fast');
+
+  expect(released.virtualModels).toEqual([slow]);
+});
+
+test('releasing leaves the gateway itself untouched, so only the binding goes', () => {
+  const released = gatewayReleasing({ ...codex, virtualModels: [fast] }, 'fast');
+
+  expect(released).toEqual({ ...codex, virtualModels: [] });
+});
+
+test('releasing a virtual model this gateway never served takes nothing away', () => {
+  const held = { ...codex, virtualModels: [fast, slow] };
+
+  expect(gatewayReleasing(held, 'nowhere').virtualModels).toEqual([fast, slow]);
+});
+
 test('a gateway the rewrite could not find refuses in the words main wrote', () => {
   const refused = new IpcResultError({
     code: 'storage-failed',
@@ -134,6 +194,11 @@ test('every other refusal reads in the words main wrote', () => {
   expect(refusalFromMain(new Error('the disk is full'))).toBe('the disk is full');
 });
 
+test('a refusal arriving with no words at all still says something a person can read', () => {
+  expect(refusalFromMain(new Error(''))).toBe('recompose gave no reason for refusing.');
+  expect(refusalFromMain('the engine went away')).toBe('recompose gave no reason for refusing.');
+});
+
 test('a look that answered a list offers those ids and refuses nothing', () => {
   const answer = { standing: 'listed', modelIds: ['claude-sonnet-5'] } as const;
 
@@ -151,29 +216,6 @@ test('a look that reached nothing offers no id and carries the refusal it answer
 
 test('a look still out offers no id and refuses nothing, because it has said nothing yet', () => {
   expect(modelListReading(undefined)).toEqual({ offered: [], refusal: undefined });
-});
-
-test('a draft handed back while the flow still stands is kept for the reopen', () => {
-  const held = { displayName: 'Fast', id: 'fast', accountId: '', providerModel: '' };
-  const handed = {
-    displayName: 'Fast Sonnet',
-    id: 'fast-sonnet',
-    accountId: 'k1',
-    providerModel: 'claude-sonnet-5',
-  };
-
-  expect(draftKept(held, handed)).toBe(handed);
-});
-
-test('a draft handed back after the flow was left keeps nothing, so nothing walks back in', () => {
-  const handed = {
-    displayName: 'Fast',
-    id: 'fast',
-    accountId: 'k1',
-    providerModel: 'claude-sonnet-5',
-  };
-
-  expect(draftKept(undefined, handed)).toBeUndefined();
 });
 
 test('a settled draft previews the whole binding a client will reach', () => {

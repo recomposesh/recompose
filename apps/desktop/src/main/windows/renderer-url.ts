@@ -34,6 +34,10 @@ export function newGatewayRouteFor(press: number): string {
   return `/?create=true&at=${String(press)}`;
 }
 
-export function getStartedRouteFor(press: number): string {
-  return `/?getStarted=true&at=${String(press)}`;
+export function onGatewayDetailUrl(url: string): boolean {
+  if (!URL.canParse(url)) {
+    return false;
+  }
+
+  return new URL(url).hash.startsWith('#/gateways/');
 }

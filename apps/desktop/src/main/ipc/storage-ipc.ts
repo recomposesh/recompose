@@ -71,6 +71,7 @@ async function saveSettings(
   }
 
   ctx.applySettings(written.stored, patch.launchAtLogin);
+  ctx.onSettingsWritten(written.stored);
 
   return { ok: true as const, value: { ...written.stored, launchAtLogin: ctx.readLoginItem() } };
 }

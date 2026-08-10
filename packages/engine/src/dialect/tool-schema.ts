@@ -16,44 +16,40 @@ function schemaMetadata(schema: HubJsonObject): HubJsonObject {
   return Object.fromEntries(Object.entries(schema).filter(([key]) => !coreFields.has(key)));
 }
 
+function declaredTypeName(key: string, value: unknown): string | undefined {
+  return key === 'type' && typeof value === 'string' ? value : undefined;
+}
+
+function normalizedEntry([key, value]: [string, unknown]): [string, unknown] {
+  const declared = declaredTypeName(key, value);
+
+  return [key, declared === undefined ? normalizedSchemaValue(value) : declared.toLowerCase()];
+}
+
 function normalizedSchemaValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(normalizedSchemaValue);
   if (!isJsonObject(value)) return value;
 
-  return Object.fromEntries(
-    Object.entries(value).map(([key, nested]) => [
-      key,
-      key === 'type' ? normalizedType(nested) : normalizedSchemaValue(nested),
-    ]),
-  );
-}
-
-function normalizedType(value: unknown): string {
-  return typeof value === 'string' ? value.toLowerCase() : String(value);
+  return Object.fromEntries(Object.entries(value).map(normalizedEntry));
 }
 
 function normalizedSchema(schema: HubJsonObject): HubJsonObject {
-  return Object.fromEntries(
-    Object.entries(schema).map(([key, value]) => [
-      key,
-      key === 'type' ? normalizedType(value) : normalizedSchemaValue(value),
-    ]),
-  );
+  return Object.fromEntries(Object.entries(schema).map(normalizedEntry));
 }
 
-function normalizedTypeValue(value: unknown): boolean {
-  return typeof value === 'string' && value === value.toLowerCase();
+function entryIsNormalized([key, value]: [string, unknown]): boolean {
+  const declared = declaredTypeName(key, value);
+
+  return declared === undefined
+    ? schemaTypesAreNormalized(value)
+    : declared === declared.toLowerCase();
 }
 
 function schemaTypesAreNormalized(value: unknown): boolean {
   if (Array.isArray(value)) return value.every(schemaTypesAreNormalized);
   if (!isJsonObject(value)) return true;
 
-  return Object.entries(value).every(normalizedSchemaEntry);
-}
-
-function normalizedSchemaEntry([key, value]: [string, unknown]): boolean {
-  return key === 'type' ? normalizedTypeValue(value) : schemaTypesAreNormalized(value);
+  return Object.entries(value).every(entryIsNormalized);
 }
 
 function providerSchemaIsCanonical(schema: HubToolSchema): boolean {

@@ -16,7 +16,12 @@ import type { SubscriptionsIpcContext, SubscriptionsIpcHandlers } from './subscr
 import { loadAccountsFile, saveAccountsFile } from '../storage/accounts-store';
 import { credentialCustody, VENDOR_SERVICE } from '../subscriptions/credential-custody';
 import { subscriptionHomes } from '../subscriptions/subscription-homes';
-import { fakeClock, fakeKeychain, osUser } from '../subscriptions/subscriptions.testkit';
+import {
+  aClaudeLogin,
+  fakeClock,
+  fakeKeychain,
+  osUser,
+} from '../subscriptions/subscriptions.testkit';
 
 type Launch = SubscriptionsIpcContext['launch'];
 
@@ -124,7 +129,7 @@ export async function aFreshWorld(): Promise<SubscriptionsWorld> {
       );
 
       if (provider === 'anthropic') {
-        keychain.put(VENDOR_SERVICE, osUser, 'fresh-blob');
+        keychain.put(VENDOR_SERVICE, osUser, aClaudeLogin);
       }
     },
 

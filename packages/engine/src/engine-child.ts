@@ -6,12 +6,14 @@ import {
   engineSpendRequestSchema,
   engineSubscriptionCredentialUpdateSchema,
   engineSubscriptionCredentialUpdatedSchema,
+  engineTrafficReportSchema,
   type KeyProviderId,
   type SpendGrant,
 } from '@recompose/contracts';
 
 import type { SpendGrantFor } from './gateway-app';
 import type { SubscriptionRuntime } from './gateway-proxy';
+import type { NoteTraffic } from './gateway-traffic';
 import type { ParentPort } from './parent-port';
 import type { PluginHost } from './plugin-host';
 
@@ -230,6 +232,21 @@ function openCredentialUpdateLane(parentPort: ParentPort): CredentialUpdateLane 
   };
 }
 
+/**
+ * Tells the parent what one finished request came to, the moment it finished.
+ *
+ * @summary One word per request matches the spend request the same turn already sent, so the lane
+ * carries no more traffic than serving itself does, and the parent is free to hold the latest word
+ * per virtual model rather than replay every one of them at a screen.
+ */
+function notingTraffic(parentPort: ParentPort): NoteTraffic {
+  return (slug, virtualModel, request) => {
+    parentPort.postMessage(
+      engineTrafficReportSchema.parse({ kind: 'traffic', slug, virtualModel, request }),
+    );
+  };
+}
+
 export function attachEngineChild(
   parentPort: ParentPort,
   openListeners: OpenListeners,
@@ -248,6 +265,7 @@ export function attachEngineChild(
     fetchLike,
     subscriptions,
     plugins,
+    notingTraffic(parentPort),
   );
 
   parentPort.on('message', (messageEvent) => {

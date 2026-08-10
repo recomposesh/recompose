@@ -10,7 +10,6 @@ import {
   type NavigationPolicy,
 } from './navigation-policy';
 import {
-  getStartedRouteFor,
   newGatewayRouteFor,
   rendererBaseFor,
   rendererUrlFor,
@@ -140,8 +139,4 @@ export function openSettingsSurface(): void {
 
 export function openNewGatewaySurface(): void {
   openSurface(newGatewayRouteFor);
-}
-
-export function openGetStartedSurface(): void {
-  openSurface(getStartedRouteFor);
 }

@@ -9,7 +9,7 @@ test('the invitation sends a reader to documentation that exists rather than to 
   const screen = await render(<EmptyState onCreateGateway={noop} />);
   const guide = screen.getByRole('link', { name: 'Read the guide' });
 
-  await expect.element(guide).toHaveAttribute('href', 'https://github.com/recomposesh/recompose');
+  await expect.element(guide).toHaveAttribute('href', 'https://recompose.sh/docs');
   await expect.element(guide).toHaveAttribute('target', '_blank');
 });
 

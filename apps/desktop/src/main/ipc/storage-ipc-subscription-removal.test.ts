@@ -40,6 +40,7 @@ function contextOver(userDataPath: string): StorageIpcContext {
     getCodec: () => fakeCodec,
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
+    onSettingsWritten: () => undefined,
     applySettings: () => undefined,
     readLoginItem: () => false,
     startGateway: () => undefined,

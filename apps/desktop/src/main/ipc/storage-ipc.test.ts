@@ -36,6 +36,7 @@ async function freshContext(
     isEncryptionAvailable: () => true,
     onCorrupt: () => undefined,
     applySettings: () => undefined,
+    onSettingsWritten: () => undefined,
     readLoginItem: () => false,
     startGateway: () => undefined,
     restartGateway: () => undefined,
@@ -81,56 +82,6 @@ describe('storage ipc handlers: gateways', () => {
 
     expect(saved).toEqual({ ok: true, value: [gateway] });
     expect(listed).toEqual({ ok: true, value: [gateway] });
-  });
-});
-
-describe('storage ipc handlers: settings', () => {
-  test('settings default on first read and persist on save', async () => {
-    const handlers = createStorageIpcHandlers(await freshContext());
-
-    const first = await handlers['settings:get'](undefined);
-    const written = await handlers['settings:save'](changedSettings);
-    const second = await handlers['settings:get'](undefined);
-
-    expect(first).toMatchObject({ ok: true, value: { theme: 'system', showInMenuBar: false } });
-    expect(written).toEqual(second);
-  });
-
-  test('a stored document reaches the seam that applies it outside the window', async () => {
-    const applied: Settings[] = [];
-    const handlers = createStorageIpcHandlers(
-      await freshContext({
-        applySettings: (settings) => {
-          applied.push(settings);
-        },
-      }),
-    );
-
-    await handlers['settings:save'](changedSettings);
-
-    expect(applied).toEqual([changedSettings]);
-  });
-
-  test('a document that never reached the disk applies nothing', async () => {
-    const blockingDir = await mkdtemp(join(tmpdir(), 'recompose-ipc-unapplied-'));
-    const blockingPath = join(blockingDir, 'not-a-directory');
-
-    await writeFile(blockingPath, '', 'utf8');
-
-    const applied: Settings[] = [];
-    const handlers = createStorageIpcHandlers(
-      await freshContext({
-        userDataPath: blockingPath,
-        homeFolder: '/Users/ada',
-        applySettings: (settings) => {
-          applied.push(settings);
-        },
-      }),
-    );
-
-    await handlers['settings:save'](changedSettings);
-
-    expect(applied).toEqual([]);
   });
 });
 

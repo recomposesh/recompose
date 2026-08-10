@@ -72,6 +72,7 @@
 - **Never disable, override, loosen, or silence any gate.** No `eslint-disable`, no oxlint override that weakens a rule, no lowered mutation or coverage threshold, no hook bypass, no silenced Vale or cspell rule. This covers every gate: max-lines, complexity, mutation, coverage, prose, spelling, dependency, and the rest. Adding a rule or making one stricter is welcome; never weaken one.
 - A blocking gate is a design signal, not an obstacle. A file over `max-lines` wants splitting by single responsibility; a surviving mutant wants a better test; a real misspelling wants correcting, and only genuine project vocabulary joins the committed accept list. Fix the code to satisfy the rule.
 - When fixing the code genuinely can't satisfy a rule, stop and ask the maintainer before touching any gate config. Only the maintainer authorizes a gate change, and only after you ask.
+- **Gates run once at the end of authoring, and findings get fixed in one batch.** Write the document or code fully, run the gate once, fix everything it reports in a single editing pass, and confirm with one re-run. Never a check-fix-check loop per edit. This binds every writer, including dispatched subagents, and covers Vale and cspell alike.
 
 ## Clean Code
 

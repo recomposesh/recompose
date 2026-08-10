@@ -1,8 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 
+import { useSettingsWriter } from '../../../../shared/api';
+import { systemQueryOptions } from '../../../../shared/api';
 import { FieldGroup, FieldRow, Switch } from '../../../../shared/ui';
-import { useSettingsWriter } from '../../api/settings';
-import { systemQueryOptions } from '../../api/system';
 import { launchAtLoginRow } from '../../lib/row-state';
 import { saveStatusFor } from '../../lib/save-failure';
 

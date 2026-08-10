@@ -2,13 +2,12 @@ import type { ResponsesResponse } from './dialect/responses-wire';
 import type { Crossing, JsonObject, ProviderDialect } from './gateway-wire';
 import type { AnthropicRefusal } from './refusals';
 
-import { chatSseUntilDone } from './chat-sse-hygiene';
-import { answeredBy, answeringModelInto } from './dialect/anthropic-attribution';
-import { isResponsesAnswer, terminalResponseIn } from './dialect/responses-answer-shape';
-import { respondingModelInto, responsesAnsweredBy } from './dialect/responses-attribution';
-import { restoreResponsesToolResponse } from './dialect/responses-tool-restoration';
+import { answeredBy } from './dialect/anthropic-attribution';
+import { terminalResponseIn } from './dialect/responses-answer-shape';
+import { attributedAnswer, restoredResponsesAnswer } from './gateway-answer-attribution';
 import { isAnthropicAnswer, translatedResponse } from './gateway-response-translation';
 import { translatedStreamBody } from './gateway-stream-answers';
+import { sameDialectStreamBody, sseAnswer, streamShapedAnswer } from './gateway-stream-shape';
 import {
   isJsonObject,
   jsonResponse,
@@ -16,7 +15,7 @@ import {
   refusalResponse,
   wantsStream,
 } from './gateway-wire';
-import { jsonEventsFrom, namedSseBodyFrom } from './stream-wire';
+import { jsonEventsFrom } from './stream-wire';
 import { codexTerminalErrorAnswer } from './subscription/codex-terminal-error';
 
 function attributionOf(crossing: Crossing): Record<string, string> {
@@ -73,6 +72,10 @@ function passedAlong(upstream: Response, attribution: Record<string, string>): R
   });
 }
 
+function carriesEventStream(upstream: Response): boolean {
+  return upstream.headers.get('content-type')?.includes('text/event-stream') === true;
+}
+
 export async function answerFrom(
   crossing: Crossing,
   upstream: Response,
@@ -84,11 +87,13 @@ export async function answerFrom(
     return passedAlong(upstream, attribution);
   }
 
-  if (upstream.headers.get('content-type')?.includes('text/event-stream') === true) {
+  if (carriesEventStream(upstream)) {
     return streamedAnswer(crossing, upstream, attribution, upstreamDialect);
   }
 
-  return translatedAnswer(crossing, upstream, attribution, upstreamDialect);
+  return wantsStream(crossing.raw)
+    ? streamShapedAnswer(crossing, upstream, attribution, upstreamDialect)
+    : translatedAnswer(crossing, upstream, attribution, upstreamDialect);
 }
 
 async function streamedAnswer(
@@ -117,10 +122,7 @@ async function streamedAnswer(
     return passedAlong(upstream, attribution);
   }
 
-  return new Response(crossed, {
-    status: upstream.status,
-    headers: { ...attribution, 'content-type': 'text/event-stream' },
-  });
+  return sseAnswer(crossed, upstream.status, attribution);
 }
 
 function sameDialectStreamedAnswer(
@@ -138,21 +140,6 @@ function sameDialectStreamedAnswer(
     status: upstream.status,
     headers: upstreamHeaders(upstream, attribution),
   });
-}
-
-function sameDialectStreamBody(
-  crossing: Crossing,
-  body: ReadableStream<Uint8Array>,
-): ReadableStream<Uint8Array> {
-  if (crossing.dialect === 'chat-completions') return chatSseUntilDone(body);
-
-  if (crossing.dialect === 'anthropic') {
-    return namedSseBodyFrom(answeringModelInto(jsonEventsFrom(body), crossing.providerModel));
-  }
-
-  return crossing.dialect === 'responses'
-    ? namedSseBodyFrom(respondingModelInto(jsonEventsFrom(body), crossing.virtualModel))
-    : body;
 }
 
 function needsCompletedResponses(upstreamDialect: ProviderDialect, crossing: Crossing): boolean {
@@ -224,35 +211,6 @@ function translatedJsonAnswer(
   const value = attributedAnswer(crossing, restored);
 
   return jsonResponse(value, upstream.status, attribution);
-}
-
-function restoredResponsesAnswer(crossing: Crossing, value: unknown): unknown {
-  if (crossing.dialect !== 'responses' || !isJsonObject(value) || !isResponsesAnswer(value)) {
-    return value;
-  }
-
-  return restoreResponsesToolResponse(value, crossing.responsesToolRefs ?? {});
-}
-
-function attributedAnswer(crossing: Crossing, value: unknown): unknown {
-  if (!isJsonObject(value)) return value;
-  if (crossing.dialect === 'anthropic') return attributedAnthropic(crossing, value);
-  if (crossing.dialect === 'responses') return attributedResponses(crossing, value);
-
-  return value;
-}
-
-function attributedAnthropic(crossing: Crossing, value: JsonObject): unknown {
-  return isAnthropicAnswer(value) ? answeredBy(value, crossing.providerModel) : value;
-}
-
-function attributedResponses(crossing: Crossing, value: JsonObject): unknown {
-  if (!isResponsesAnswer(value)) return value;
-
-  const answer = responsesAnsweredBy(value, crossing.virtualModel);
-  const tools = crossing.raw['tools'];
-
-  return Array.isArray(tools) ? { ...answer, tools } : answer;
 }
 
 async function completedResponsesAnswer(

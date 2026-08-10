@@ -17,10 +17,13 @@ import { ACCOUNTS_VERSION, withSettingsPatch, defaultSettings } from '@recompose
 import { accountHandlers } from './fake-accounts';
 import {
   forgetEngineStateListeners,
+  forgetEngineTrafficListeners,
   gatewayHandlers,
   listenForEngineStates,
+  listenForEngineTraffic,
 } from './fake-gateways';
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
+import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
 
 const emptyDocument: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accounts: [] };
@@ -65,6 +68,7 @@ function settingsHandlers(seed: Settings): SettingsHandlers {
     'settings:get': async () => Promise.resolve({ ok: true, value: stored }),
     'settings:save': async (patch) => {
       stored = withSettingsPatch(stored, patch);
+      emitSettingsChanged(stored);
 
       return Promise.resolve({ ok: true, value: stored });
     },
@@ -83,7 +87,11 @@ function systemHandlers(): SystemHandlers {
 function eventBridge(): RecomposeIpcEvents {
   return {
     'engine:state': (listener) => listenForEngineStates(listener),
+    'engine:traffic': (listener) => listenForEngineTraffic(listener),
     'accounts:changed': () => () => undefined,
+    'canvas:command': () => () => undefined,
+    'settings:changed': (listener) => listenForSettingsChanges(listener),
+    'devtools:toggle': () => () => undefined,
   };
 }
 
@@ -111,6 +119,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   const seeds = seedsFrom(parameters);
 
   forgetEngineStateListeners();
+  forgetEngineTrafficListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(
     seeds.accounts,

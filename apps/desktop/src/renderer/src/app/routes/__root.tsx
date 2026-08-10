@@ -11,7 +11,7 @@ import {
   useParams,
   useRouter,
 } from '@tanstack/react-router';
-import { Suspense, lazy, useEffect, useSyncExternalStore } from 'react';
+import { Suspense, lazy, useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { AccountKind } from '../../entities/account';
 
@@ -20,8 +20,11 @@ import {
   accountsQueryOptions,
   bindAccountChangesToCache,
   bindEngineStatesToCache,
+  bindEngineTrafficToCache,
+  bindSettingsToCache,
   engineStatesQueryOptions,
   gatewaysQueryOptions,
+  settingsQueryOptions,
 } from '../../shared/api';
 import { sidebarHidden, subscribeToSidebarVisibility } from '../../shared/lib';
 import { SidebarEdge, SidebarToggle } from '../../shared/ui';
@@ -51,6 +54,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       context.queryClient.ensureQueryData(gatewaysQueryOptions),
       context.queryClient.ensureQueryData(engineStatesQueryOptions),
       context.queryClient.ensureQueryData(accountsQueryOptions),
+      context.queryClient.ensureQueryData(settingsQueryOptions),
     ]);
   },
   component: RootLayout,
@@ -67,23 +71,53 @@ function providersAct(kind: AccountKind | undefined): ReactNode {
   return kind === undefined ? null : <AddProviderAct kind={kind} />;
 }
 
+function useWindowBand(sidebarAway: boolean): void {
+  useEffect(() => {
+    void window.recompose['system:window-band'](sidebarAway ? 'toolbar' : 'sidebar');
+  }, [sidebarAway]);
+}
+
+/**
+ * Points every push the main process makes at the query cache, for as long as the window stands.
+ *
+ * @summary Each push carries a whole snapshot, so the cache is written rather than reconciled and
+ * a screen reads the same answer whether it asked or was told.
+ */
+function usePushedCaches(queryClient: QueryClient): void {
+  useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineTrafficToCache(queryClient), [queryClient]);
+  useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
+  useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
+}
+
+function useDevtoolsAsked(): boolean {
+  const [asked, setAsked] = useState(false);
+
+  useEffect(
+    () =>
+      window.recomposeEvents['devtools:toggle'](() => {
+        setAsked((standing) => !standing);
+      }),
+    [],
+  );
+
+  return asked;
+}
+
 function RootLayout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const router = useRouter();
-  const { create, getStarted, at } = Route.useSearch();
+  const { create } = Route.useSearch();
   const { slug } = useParams({ strict: false });
   const providers = useMatch({ from: '/providers', shouldThrow: false });
   const sidebarAway = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
+  const devtoolsAsked = useDevtoolsAsked();
 
   useTitleBarDoubleClick();
 
-  useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
-  useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
-
-  useEffect(() => {
-    void window.recompose['system:window-band'](sidebarAway ? 'toolbar' : 'sidebar');
-  }, [sidebarAway]);
+  usePushedCaches(queryClient);
+  useWindowBand(sidebarAway);
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -93,7 +127,6 @@ function RootLayout() {
         onNewGateway={() => {
           void navigate({ to: '/', search: withSheet });
         }}
-        restoreGetStarted={getStarted === true ? (at ?? 'asked') : undefined}
       />
       <SidebarEdge />
       <main className="relative flex flex-1 flex-col overflow-hidden bg-surface-content text-body">
@@ -114,9 +147,11 @@ function RootLayout() {
         }}
         open={create === true}
       />
-      <Suspense>
-        <Devtools queryClient={queryClient} router={router} />
-      </Suspense>
+      {devtoolsAsked && (
+        <Suspense>
+          <Devtools queryClient={queryClient} router={router} />
+        </Suspense>
+      )}
     </div>
   );
 }

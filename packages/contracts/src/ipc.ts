@@ -4,6 +4,7 @@ import { accountsDocumentSchema, credentialedAccountKindSchema } from './account
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
+import { gatewayTrafficSchema } from './engine-traffic';
 import { gatewayConfigSchema, gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import {
   localRuntimeIdSchema,
@@ -156,7 +157,11 @@ export type RecomposeIpc = {
 
 export const ipcEvents = {
   'engine:state': { payload: engineStatesSchema },
+  'engine:traffic': { payload: gatewayTrafficSchema },
   'accounts:changed': { payload: z.literal('changed') },
+  'canvas:command': { payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']) },
+  'settings:changed': { payload: settingsSchema },
+  'devtools:toggle': { payload: z.literal('asked') },
 } as const;
 
 export type IpcEvent = keyof typeof ipcEvents;

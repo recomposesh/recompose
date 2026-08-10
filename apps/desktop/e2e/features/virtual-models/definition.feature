@@ -15,8 +15,8 @@ Feature: Defining a virtual model on a gateway
     Then the Model field offers the account's live model list
     And the field accepts no free-text model
 
-  Scenario: An unreachable model list refuses in the sheet
+  Scenario: An unreachable model list refuses in the inspector
     Given a gateway with a stored Anthropic key account whose model list is unreachable
     When the person picks that account as the target for a new virtual model
-    Then the sheet reads a typed refusal naming the failed look
+    Then the inspector reads a typed refusal naming the failed look
     And no definition is stored

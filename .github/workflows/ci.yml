@@ -63,7 +63,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
-      - run: pnpm exec turbo run lint typecheck build test
+      - run: pnpm exec turbo run lint typecheck build test --concurrency=1
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
@@ -139,7 +139,13 @@ jobs:
         run: |
           contracts=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)packages/contracts/src/**/*.ts' | grep -vE '\.(test(-d)?|d)\.ts$' | sed 's|^packages/contracts/||' | paste -sd, -) || true
           engine=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)packages/engine/src/**/*.ts' | grep -vE '\.(test|testkit|d)\.ts$' | sed 's|^packages/engine/||' | paste -sd, -) || true
-          desktop=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)apps/desktop/src/main/**/*.ts' ':(glob)apps/desktop/scripts/**/*.mts' | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
+          canvas_lib=apps/desktop/src/renderer/src/pages/gateway-canvas/lib
+          desktop=$(git diff --name-only "$BASE_SHA"...HEAD \
+            -- ':(glob)apps/desktop/src/main/**/*.ts' ':(glob)apps/desktop/scripts/**/*.mts' \
+            "$canvas_lib/node-graph.ts" "$canvas_lib/tidy-layout.ts" \
+            "$canvas_lib/canvas-positions.ts" "$canvas_lib/model-draft.ts" \
+            "$canvas_lib/cable-announcements.ts" "$canvas_lib/cable-standing.ts" \
+            | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
           if [ -z "$contracts" ] && [ -z "$engine" ] && [ -z "$desktop" ]; then
             echo "mutation scope untouched, skipping"
             exit 0

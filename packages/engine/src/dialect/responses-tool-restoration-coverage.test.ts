@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
-import { customToolInput, responseToolRef } from './responses-tool-restoration';
+import {
+  customToolInput,
+  responseToolRef,
+  restoreResponsesToolResponse,
+} from './responses-tool-restoration';
 
 describe('reading the free-form input a custom tool call carries', () => {
   test('arguments that are not JSON pass through as the input', () => {
@@ -49,5 +53,40 @@ describe('matching a provider tool call back to the tool the caller declared', (
         fetch: { kind: 'custom', name: 'fetch' },
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('restoring a namespaced custom tool response', () => {
+  test('keeps the custom family while splitting its namespace and short name', () => {
+    const response = restoreResponsesToolResponse(
+      {
+        output: [
+          {
+            type: 'function_call' as const,
+            id: 'fc_call_1',
+            call_id: 'call_1',
+            name: 'shell__run',
+            arguments: '{"input":"pwd"}',
+          },
+        ],
+      },
+      {
+        shell__run: {
+          kind: 'namespace',
+          namespace: 'shell',
+          name: 'run',
+          family: 'custom',
+        },
+      },
+    );
+
+    expect(response.output[0]).toEqual({
+      type: 'custom_tool_call',
+      id: 'ctc_call_1',
+      call_id: 'call_1',
+      namespace: 'shell',
+      name: 'run',
+      input: 'pwd',
+    });
   });
 });

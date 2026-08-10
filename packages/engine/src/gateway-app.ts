@@ -3,6 +3,7 @@ import type { EngineGateway } from '@recompose/contracts';
 import { Hono } from 'hono';
 
 import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
+import type { NoteTraffic, ServeWatched } from './gateway-traffic';
 import type { ProxyDialect } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
 import type { ProviderLogStore } from './provider/provider-log-store';
@@ -11,8 +12,18 @@ import { proxyCodexAlphaSearch } from './gateway-codex-alpha-search';
 import { proxyCodexCompactRequest } from './gateway-codex-compact';
 import { proxyTokenCountRequest } from './gateway-count-tokens';
 import { modelListing } from './gateway-discovery';
-import { type ImagePath, proxyImageRequest } from './gateway-images';
+import { proxyImageRequest } from './gateway-images';
 import { proxyModelRequest, subscriptionRuntime } from './gateway-proxy';
+import {
+  ALPHA_SEARCH_PATHS,
+  COMPACT_PATHS,
+  COUNT_TOKENS_PATHS,
+  GEMINI_MODEL_ROUTE,
+  IMAGE_ROUTES,
+  MODEL_ROUTES,
+  VIDEO_ROUTES,
+} from './gateway-route-paths';
+import { watchingTraffic } from './gateway-traffic';
 import { proxyVideoRequest } from './gateway-videos';
 import { registerGatewayWebSockets } from './gateway-websocket';
 import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
@@ -28,40 +39,8 @@ import { invalidJson, unservedPath } from './refusals';
 
 export type { SpendGrantFor } from './gateway-proxy';
 
-const MODEL_ROUTES: readonly (readonly [string, ProxyDialect])[] = [
-  ['/v1/messages', 'anthropic'],
-  ['/messages', 'anthropic'],
-  ['/v1/chat/completions', 'chat-completions'],
-  ['/chat/completions', 'chat-completions'],
-  ['/v1/responses', 'responses'],
-  ['/responses', 'responses'],
-  ['/v1/interactions', 'interactions'],
-  ['/v1beta/interactions', 'interactions'],
-  ['/interactions', 'interactions'],
-];
-
-const GEMINI_MODEL_ROUTE = '/v1beta/models/:action{.+}';
 const generateContentSuffix = ':generateContent';
 const streamGenerateContentSuffix = ':streamGenerateContent';
-
-const COUNT_TOKENS_PATHS = ['/v1/messages/count_tokens', '/messages/count_tokens'];
-const COMPACT_PATHS = ['/v1/responses/compact', '/responses/compact'];
-const IMAGE_ROUTES: readonly (readonly [string, ImagePath])[] = [
-  ['/v1/images/generations', '/images/generations'],
-  ['/images/generations', '/images/generations'],
-  ['/v1/images/edits', '/images/edits'],
-  ['/images/edits', '/images/edits'],
-];
-const VIDEO_ROUTES = [
-  ['/v1/videos/generations', '/videos/generations'],
-  ['/videos/generations', '/videos/generations'],
-  ['/v1/videos/edits', '/videos/edits'],
-  ['/videos/edits', '/videos/edits'],
-  ['/v1/videos/extensions', '/videos/extensions'],
-  ['/videos/extensions', '/videos/extensions'],
-  ['/v1/videos', ''],
-  ['/videos', ''],
-] as const;
 
 function chosenAIStudioRelay(relay?: AIStudioRelay): AIStudioRelay {
   return relay ?? aiStudioRelayRuntime();
@@ -97,16 +76,31 @@ function defaultDialectForPath(path: string): ProxyDialect {
   return path.includes('/messages') ? 'anthropic' : 'chat-completions';
 }
 
+function registerAlphaSearchRoutes(
+  app: Hono,
+  gateway: EngineGateway,
+  watched: ServeWatched,
+  fetchLike: typeof fetch,
+): void {
+  for (const path of ALPHA_SEARCH_PATHS) {
+    app.post(path, async (c) =>
+      watched(async (grantFor) => proxyCodexAlphaSearch(c, gateway, grantFor, fetchLike)),
+    );
+  }
+}
+
 function registerImageRoutes(
   app: Hono,
   gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
+  watched: ServeWatched,
   subscriptionServing: SubscriptionRuntime,
   fetchLike: typeof fetch,
 ): void {
   for (const [route, path] of IMAGE_ROUTES) {
     app.post(route, async (c) =>
-      proxyImageRequest(c, gateway, path, spendGrantFor, subscriptionServing, fetchLike),
+      watched(async (grantFor) =>
+        proxyImageRequest(c, gateway, path, grantFor, subscriptionServing, fetchLike),
+      ),
     );
   }
 }
@@ -114,18 +108,20 @@ function registerImageRoutes(
 function registerVideoRoutes(
   app: Hono,
   gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
+  watched: ServeWatched,
   fetchLike: typeof fetch,
 ): void {
   for (const [route, path] of VIDEO_ROUTES) {
-    app.post(route, async (c) => proxyVideoRequest(c, gateway, path, spendGrantFor, fetchLike));
+    app.post(route, async (c) =>
+      watched(async (grantFor) => proxyVideoRequest(c, gateway, path, grantFor, fetchLike)),
+    );
   }
 }
 
 function registerCountRoutes(
   app: Hono,
   gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
+  watched: ServeWatched,
   subscriptions: SubscriptionRuntime,
   fetchLike: typeof fetch,
   relay: AIStudioRelay,
@@ -133,7 +129,9 @@ function registerCountRoutes(
 ): void {
   for (const path of COUNT_TOKENS_PATHS) {
     app.post(path, async (c) =>
-      proxyTokenCountRequest(c, gateway, spendGrantFor, subscriptions, fetchLike, relay, plugins),
+      watched(async (grantFor) =>
+        proxyTokenCountRequest(c, gateway, grantFor, subscriptions, fetchLike, relay, plugins),
+      ),
     );
   }
 }
@@ -141,13 +139,15 @@ function registerCountRoutes(
 function registerCompactRoutes(
   app: Hono,
   gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
+  watched: ServeWatched,
   subscriptions: SubscriptionRuntime,
   fetchLike: typeof fetch,
 ): void {
   for (const path of COMPACT_PATHS) {
     app.post(path, async (c) =>
-      proxyCodexCompactRequest(c, gateway, spendGrantFor, subscriptions, fetchLike),
+      watched(async (grantFor) =>
+        proxyCodexCompactRequest(c, gateway, grantFor, subscriptions, fetchLike),
+      ),
     );
   }
 }
@@ -155,7 +155,7 @@ function registerCompactRoutes(
 function registerModelRoutes(
   app: Hono,
   gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
+  watched: ServeWatched,
   subscriptions: SubscriptionRuntime,
   fetchLike: typeof fetch,
   relay: AIStudioRelay,
@@ -163,41 +163,36 @@ function registerModelRoutes(
 ): void {
   for (const [path, dialect] of MODEL_ROUTES) {
     app.all(path, async (c) =>
-      proxyModelRequest(
-        c,
-        dialect,
-        gateway,
-        spendGrantFor,
-        fetchLike,
-        subscriptions,
-        relay,
-        plugins,
+      watched(async (grantFor) =>
+        proxyModelRequest(c, dialect, gateway, grantFor, fetchLike, subscriptions, relay, plugins),
       ),
     );
   }
 
-  registerGeminiModelRoutes(app, gateway, spendGrantFor, subscriptions, fetchLike, relay, plugins);
+  registerGeminiModelRoutes(app, gateway, watched, subscriptions, fetchLike, relay, plugins);
 }
 
 function registerGeminiModelRoutes(
   app: Hono,
   gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
+  watched: ServeWatched,
   subscriptions: SubscriptionRuntime,
   fetchLike: typeof fetch,
   relay: AIStudioRelay,
   plugins?: PluginHost,
 ): void {
   app.post(GEMINI_MODEL_ROUTE, async (c) =>
-    proxyGeminiAction(
-      c,
-      c.req.param('action'),
-      gateway,
-      spendGrantFor,
-      subscriptions,
-      fetchLike,
-      relay,
-      plugins,
+    watched(async (grantFor) =>
+      proxyGeminiAction(
+        c,
+        c.req.param('action'),
+        gateway,
+        grantFor,
+        subscriptions,
+        fetchLike,
+        relay,
+        plugins,
+      ),
     ),
   );
 }
@@ -250,11 +245,13 @@ export function createGatewayApp(
   aiStudio?: AIStudioRelay,
   providerLogs?: ProviderLogStore,
   plugins?: PluginHost,
+  note?: NoteTraffic,
 ): Hono {
   const app = new Hono();
   const subscriptionServing = subscriptions ?? subscriptionRuntime();
   const relay = chosenAIStudioRelay(aiStudio);
   const logStore = preparedLogStore(providerLogs);
+  const watched = watchingTraffic(spendGrantFor, note ?? (() => undefined));
 
   app.use(guardLoopback(gateway.port));
 
@@ -274,20 +271,15 @@ export function createGatewayApp(
   registerManagementUsage(app);
   registerManagementLogs(app, logStore);
   registerGatewayWebSockets(app, gateway, spendGrantFor, fetchLike, relay);
-  app.post('/v1/alpha/search', async (c) =>
-    proxyCodexAlphaSearch(c, gateway, spendGrantFor, fetchLike),
-  );
-  app.post('/backend-api/codex/alpha/search', async (c) =>
-    proxyCodexAlphaSearch(c, gateway, spendGrantFor, fetchLike),
-  );
+  registerAlphaSearchRoutes(app, gateway, watched, fetchLike);
 
-  registerCountRoutes(app, gateway, spendGrantFor, subscriptionServing, fetchLike, relay, plugins);
-  registerCompactRoutes(app, gateway, spendGrantFor, subscriptionServing, fetchLike);
+  registerCountRoutes(app, gateway, watched, subscriptionServing, fetchLike, relay, plugins);
+  registerCompactRoutes(app, gateway, watched, subscriptionServing, fetchLike);
 
-  registerImageRoutes(app, gateway, spendGrantFor, subscriptionServing, fetchLike);
-  registerVideoRoutes(app, gateway, spendGrantFor, fetchLike);
+  registerImageRoutes(app, gateway, watched, subscriptionServing, fetchLike);
+  registerVideoRoutes(app, gateway, watched, fetchLike);
 
-  registerModelRoutes(app, gateway, spendGrantFor, subscriptionServing, fetchLike, relay, plugins);
+  registerModelRoutes(app, gateway, watched, subscriptionServing, fetchLike, relay, plugins);
 
   app.notFound((c) => c.json(unservedPath(gateway.displayName, c.req.path), 404));
 

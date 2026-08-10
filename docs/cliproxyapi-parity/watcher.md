@@ -18,7 +18,7 @@ Every row is either **Covered** by concrete local behavior or **N/A** because th
 - **N3 — loose auth/config synthesis absent:** Recompose does not scan/import arbitrary auth JSON files or synthesize config-file API-key clients; accounts are explicit strict registry rows with secrets in the vault.
 - **N4 — plugin behavior excluded:** plugin multi-auth parsing, virtual auths, precedence, and plugin-owned mutations are outside scope.
 - **N5 — router/weight/compat routing excluded:** weights, priorities, force mapping, fork routing, prompt-cache compatibility switches, and custom compatibility-provider identity are outside scope.
-- **N6 — ID-only model contract:** Recompose intentionally transports model IDs, not image/modalities/thinking/is-compat capability records or provider-specific configured-model sub-hashes.
+- **N6 — ID-only model catalog contract:** model listings transport IDs only; configured `isCompat` capability rides account model policy and the per-request spend grant rather than the catalog.
 - **N7 — unsupported credential transport metadata:** per-key prefix, proxy, arbitrary headers, cooling/retry flags, notes, and custom origins are not account fields.
 - **N8 — opaque identity design:** accounts and vault entries use random opaque UUID identities, not deterministic secret/file-derived hashes or collision suffixes.
 

@@ -1,46 +1,51 @@
-import type { EngineStates } from '@recompose/contracts';
-
 import { electronApp, optimizer } from '@electron-toolkit/utils';
-import { app, nativeTheme, safeStorage, shell } from 'electron';
+import { app, safeStorage, shell } from 'electron';
 import { join } from 'path';
 
 import type { EngineHost } from './engine-host/engine-host';
 import type { SpendGrantFor } from './engine-host/engine-spend';
 import type { SpendGrantContext } from './engine-host/spend-grant';
 import type { IpcHandlers } from './ipc/dispatch';
-import type { KeyCheckIpcContext } from './ipc/key-check-ipc';
 import type { StorageIpcContext } from './ipc/storage-context';
-import type { SettingsEffects } from './settings/apply-settings';
 import type { StorageWatchers } from './storage/storage-watchers';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
 import { registerAppLifecycle } from './app-lifecycle';
 import { createEngineHost } from './engine-host/engine-host';
+import { noticingTheFirstGrant } from './engine-host/first-request';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { probeFreePort } from './engine-host/probe-free-port';
 import { spawnEngineChild } from './engine-host/spawn-engine';
 import { resolveSpendGrant } from './engine-host/spend-grant';
 import { serveRewrittenGateway, startStoredGateway } from './engine-host/stored-gateway-serving';
 import { createEngineIpcHandlers } from './ipc/engine-ipc';
-import { createKeyCheckIpcHandlers } from './ipc/key-check-ipc';
+import { createKeyCheckIpcHandlers, keyCheckReach } from './ipc/key-check-ipc';
 import { createLocalRuntimesIpcHandlers } from './ipc/local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/provider-models-ipc';
-import { pushAccountsChanged, pushEngineStates } from './ipc/push-events';
+import {
+  pushAccountsChanged,
+  pushCanvasCommand,
+  pushDevtoolsToggle,
+  pushEngineStates,
+  pushEngineTraffic,
+  pushSettingsChanged,
+} from './ipc/push-events';
 import { registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { createStorageIpcHandlers } from './ipc/storage-ipc';
 import { createSubscriptionsIpcHandlers } from './ipc/subscriptions-ipc';
 import { createSystemIpcHandlers } from './ipc/system-ipc';
-import { installAppMenu } from './menu/app-menu';
+import { conductAppMenu } from './menu/app-menu-conductor';
 import { resolvePasswordStoreOverride } from './password-store-override';
 import { registerAppScheme, serveRenderer } from './protocol/app-protocol';
 import {
   applyBootSettingsOrComplain,
   applyChosenSettingsOrComplain,
 } from './settings/apply-settings';
+import { createSettingsEffects } from './settings/settings-effects';
 import { storedBootState } from './storage/boot-state';
-import { listGatewayConfigs } from './storage/gateway-store';
 import { createSafeStorageCodec } from './storage/safe-storage-codec';
+import { firstRequestReporter } from './storage/settings-amend';
 import { startStorageWatchers } from './storage/storage-watchers';
 import { subscriptionCredentialStore } from './subscriptions/subscription-credential-store';
 import { subscriptionHomes } from './subscriptions/subscription-homes';
@@ -48,17 +53,13 @@ import { subscriptionRelease } from './subscriptions/subscription-release';
 import { machineCustody, subscriptionsContext } from './subscriptions/subscriptions-wiring';
 import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
-import {
-  hideMenuBarTray,
-  isMenuBarTrayVisible,
-  refreshMenuBarTray,
-  showMenuBarTray,
-} from './tray/menu-bar-tray';
+import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
+import { trayRepainter } from './tray/tray-repaint';
+import { trayMenuWiring } from './tray/tray-wiring';
 import { resolveUserDataOverride } from './user-data-override';
 import {
   createMainWindow,
   HOME_ROUTE,
-  openGetStartedSurface,
   openNewGatewaySurface,
   openSettingsSurface,
   showMainWindow,
@@ -75,45 +76,49 @@ let storageWatchers: StorageWatchers | null = null;
 const gatewayLifecycle = createGatewayLifecycleRequests({
   host: () => engineHost,
   userDataPath: () => app.getPath('userData'),
-  onCorrupt: (quarantinedPath) => {
-    onStorageCorrupt(quarantinedPath);
-  },
+  onCorrupt: onStorageCorrupt,
 });
 
-const trayMenuHandlers = {
-  onOpenWindow: showMainWindow,
-  onOpenSettings: openSettingsSurface,
-  onQuit: () => {
+const trayMenuHandlers = trayMenuWiring({
+  showWindow: showMainWindow,
+  openSettings: openSettingsSurface,
+  openDevtools: () => {
+    showMainWindow();
+    pushDevtoolsToggle();
+  },
+  quit: () => {
     app.quit();
   },
-  onStartGateway: gatewayLifecycle.start,
-  onStopGateway: gatewayLifecycle.stop,
-  onRestartGateway: gatewayLifecycle.restart,
-};
+  lifecycle: gatewayLifecycle,
+});
 
 if (process.platform === 'linux') {
   safeStorage.setUsePlainTextEncryption(true);
 }
 
 const loginItemAvailability = loginItemAvailabilityFor(process.platform, app.isPackaged);
-
 const loginItem = createLoginItem(app, loginItemAvailability, process.execPath);
 
-const settingsEffects: SettingsEffects = {
-  setThemeSource: (theme) => {
-    nativeTheme.themeSource = theme;
+const appMenu = conductAppMenu({
+  onOpenSettings: openSettingsSurface,
+  onNewGateway: openNewGatewaySurface,
+  onCanvasCommand: pushCanvasCommand,
+  settingsFile: () => storagePathsFor(app.getPath('userData')).settingsFile,
+  onCorrupt: onStorageCorrupt,
+  pushSettings: (settings) => {
+    pushSettingsChanged({ ...settings, launchAtLogin: loginItem.isEnabled() });
   },
-  setMenuBarVisible: (visible) => {
-    if (visible) {
-      showMenuBarTray(trayMenuHandlers);
-    } else {
-      hideMenuBarTray();
-    }
+});
+
+const settingsEffects = createSettingsEffects({
+  showTray: () => {
+    showMenuBarTray(trayMenuHandlers);
   },
+  hideTray: hideMenuBarTray,
   setLoginItem: (enabled) => {
     loginItem.setEnabled(enabled);
   },
-};
+});
 
 function onStorageCorrupt(quarantinedPath: string): void {
   console.warn(`storage document quarantined: ${quarantinedPath}`);
@@ -145,6 +150,7 @@ function storageContext(
     applySettings: (settings, askedLoginItem) => {
       applyChosenSettingsOrComplain(settingsEffects, settings, askedLoginItem);
     },
+    onSettingsWritten: appMenu.reflectSettings,
     startGateway: startStoredGateway(engineHost),
     restartGateway: serveRewrittenGateway(engineHost),
     noteGatewayWrite: (gateway) => {
@@ -156,10 +162,6 @@ function storageContext(
       custody,
     ),
   };
-}
-
-function keyCheckContext(engineHost: EngineHost): KeyCheckIpcContext {
-  return { ...storageReach(), probe: async (provider, key) => engineHost.probe(provider, key) };
 }
 
 function assembleIpcHandlers(
@@ -181,7 +183,7 @@ function assembleIpcHandlers(
       probeFreePort,
     }),
     ...createStorageIpcHandlers(storageContext(engineHost, custody)),
-    ...createKeyCheckIpcHandlers(keyCheckContext(engineHost)),
+    ...createKeyCheckIpcHandlers(keyCheckReach(storageReach(), engineHost)),
     ...createProviderModelsIpcHandlers(providerModelsReach(storageReach(custody), engineHost)),
     ...createLocalRuntimesIpcHandlers({
       userDataPath,
@@ -207,18 +209,10 @@ function assembleIpcHandlers(
   };
 }
 
-function repaintTray(states: EngineStates): void {
-  listGatewayConfigs(storagePathsFor(app.getPath('userData')).gatewaysDir, onStorageCorrupt)
-    .then((stored) => {
-      refreshMenuBarTray(
-        stored.map((gateway) => ({ slug: gateway.slug, displayName: gateway.displayName })),
-        states,
-      );
-    })
-    .catch((error: unknown) => {
-      console.error('recompose could not read its gateways for the menu bar', error);
-    });
-}
+const repaintTray = trayRepainter(
+  () => storagePathsFor(app.getPath('userData')).gatewaysDir,
+  onStorageCorrupt,
+);
 
 const userDataOverride = resolveUserDataOverride(process.env);
 
@@ -245,14 +239,21 @@ async function startRecompose(): Promise<void> {
     process.platform,
     custody,
   );
-  const grantFor: SpendGrantFor = async (slug, model) =>
-    resolveSpendGrant(storageReach(custody), slug, model);
+  const grantFor: SpendGrantFor = noticingTheFirstGrant(
+    async (slug, model) => resolveSpendGrant(storageReach(custody), slug, model),
+    firstRequestReporter(
+      () => storagePathsFor(app.getPath('userData')).settingsFile,
+      onStorageCorrupt,
+      appMenu.reflectSettings,
+    ),
+  );
 
   engineHost = createEngineHost({
     knownSlugs: boot.slugs,
     spawnChild: () => spawnEngineChild(app.getPath('userData')),
     grantFor,
     storeSubscriptionCredential: subscriptionCredentials.write,
+    onTraffic: pushEngineTraffic,
   });
   engineHost.onStatesChanged(pushEngineStates);
   engineHost.onStatesChanged(repaintTray);
@@ -270,16 +271,15 @@ async function startRecompose(): Promise<void> {
   electronApp.setAppUserModelId('sh.recompose.app');
 
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window);
+    optimizer.watchWindowShortcuts(window, { zoom: true });
+    window.webContents.on('did-navigate-in-page', (_navigation, url) => {
+      appMenu.standOnUrl(url);
+    });
   });
 
   registerPermissionHandlers();
 
-  installAppMenu({
-    onOpenSettings: openSettingsSurface,
-    onNewGateway: openNewGatewaySurface,
-    onShowGetStarted: openGetStartedSurface,
-  });
+  appMenu.reflectSettings(boot.settings);
 
   applyBootSettingsOrComplain(settingsEffects, boot.settings);
 

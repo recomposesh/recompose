@@ -14,11 +14,15 @@ const chromium = () => ({
       reducedMotion: 'reduce',
     },
   }),
-  instances: [{ browser: 'chromium' as const }],
+  instances: [{ browser: 'chromium' as const, viewport: { width: 1280, height: 800 } }],
 });
+
+/* A shared runner starves parallel pages into forty-second click timeouts. */
+const pacedForCi = process.env['CI'] === undefined ? {} : { fileParallelism: false, retry: 1 };
 
 export default defineConfig({
   test: {
+    ...pacedForCi,
     coverage: {
       ...coverageDefaults,
       include: ['src/**/*.{ts,tsx}', 'scripts/**/*.mts'],
@@ -66,6 +70,7 @@ export default defineConfig({
           name: 'browser',
           include: ['src/renderer/**/*.browser.test.{ts,tsx}'],
           browser: chromium(),
+          ...pacedForCi,
         },
       },
       {
@@ -73,6 +78,7 @@ export default defineConfig({
         test: {
           name: 'storybook',
           browser: chromium(),
+          ...pacedForCi,
         },
       },
       {
@@ -80,6 +86,7 @@ export default defineConfig({
         test: {
           name: 'storybook-dark',
           browser: chromium(),
+          ...pacedForCi,
         },
       },
     ],

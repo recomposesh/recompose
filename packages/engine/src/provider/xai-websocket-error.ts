@@ -1,6 +1,7 @@
 import type { JsonObject } from '../gateway-wire';
 
 import { isJsonObject } from '../gateway-wire';
+import { namesXaiBadCredentials } from './xai-response';
 
 const FREE_USAGE_EXHAUSTED = 'subscription:free-usage-exhausted';
 
@@ -42,6 +43,10 @@ function inferredStatus(payload: JsonObject, error: JsonObject): number {
   return validationMessage(message) ? 400 : 500;
 }
 
+function authenticatedStatus(status: number, frame: JsonObject): number {
+  return status === 403 && namesXaiBadCredentials(JSON.stringify(frame)) ? 401 : status;
+}
+
 function validationMessage(message: string): boolean {
   return message.includes('Request validation error') || message.includes('"code":"400"');
 }
@@ -57,7 +62,7 @@ export function parseXAIWebSocketError(value: unknown): XAIWebSocketError | null
 
   if (error === null) return null;
 
-  const status = inferredStatus(value, error);
+  const status = authenticatedStatus(inferredStatus(value, error), value);
   const retryAfterSeconds = retryAfter(error);
   const payload = { ...value, type: 'error', status, error };
 

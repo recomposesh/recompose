@@ -101,3 +101,51 @@ test('reports a client error when the xAI message embeds a 400 code', () => {
 
   expect(parsed?.status).toBe(400);
 });
+
+test.each([
+  [
+    'a bad-credentials code',
+    {
+      type: 'error',
+      status: 403,
+      error: { code: 'unauthenticated:bad-credentials', message: 'invalid token' },
+    },
+  ],
+  [
+    'an unvalidated access token message',
+    { status: 403, error: { message: 'The OAuth2 access token could not be validated.' } },
+  ],
+] as const)('an xAI WebSocket 403 naming %s is reported as unauthorized', (_signature, payload) => {
+  expect(parseXAIWebSocketError(payload)).toMatchObject({
+    status: 401,
+    payload: { type: 'error', status: 401, error: payload.error },
+  });
+});
+
+test('reads a credential failure the xAI WebSocket frame names outside the error block', () => {
+  const parsed = parseXAIWebSocketError({
+    status: 403,
+    message: 'The OAuth2 access token could not be validated.',
+    error: { code: 'unauthenticated' },
+  });
+
+  expect(parsed).toMatchObject({ status: 401, payload: { status: 401 } });
+});
+
+test('a WebSocket credential failure reported under any other status keeps that status', () => {
+  const parsed = parseXAIWebSocketError({
+    status: 503,
+    error: { code: 'unauthenticated:bad-credentials', message: 'invalid token' },
+  });
+
+  expect(parsed).toMatchObject({ status: 503, payload: { status: 503 } });
+});
+
+test('an xAI WebSocket 403 that names no credential failure keeps its status', () => {
+  const parsed = parseXAIWebSocketError({
+    status: 403,
+    error: { code: 'permission_denied', message: 'model not enabled for this team' },
+  });
+
+  expect(parsed).toMatchObject({ status: 403, payload: { status: 403 } });
+});

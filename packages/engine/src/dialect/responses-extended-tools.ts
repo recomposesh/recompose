@@ -10,12 +10,30 @@ import type {
 
 import { responsesToolChoiceName } from './responses-tools-wire';
 
-export type ResponsesToolRef =
+type CustomResponsesToolRef =
   | { kind: 'custom'; name: string }
-  | { kind: 'namespace'; namespace: string; name: string };
+  | {
+      kind: 'namespace';
+      namespace: string;
+      name: string;
+      family: 'custom';
+    };
+
+export type ResponsesToolRef =
+  | CustomResponsesToolRef
+  | {
+      kind: 'namespace';
+      namespace: string;
+      name: string;
+      family: 'function' | 'custom';
+    };
 
 type Candidate = { tool: ResponsesTool; priority: number; order: number; ref?: ResponsesToolRef };
 type NamespaceRef = { namespace: string; child: string; qualified: string };
+
+export function responsesToolRefIsCustom(ref: ResponsesToolRef): ref is CustomResponsesToolRef {
+  return ref.kind === 'custom' || ref.family === 'custom';
+}
 
 export function qualifyResponsesToolName(namespace: string, child: string): string {
   const parent = namespace.trim().replace(/__+$/u, '');
@@ -65,7 +83,12 @@ function namespaceChildCandidate(
 
   refs.push({ namespace, child: child.name, qualified });
 
-  const ref: ResponsesToolRef = { kind: 'namespace', namespace, name: child.name };
+  const ref: ResponsesToolRef = {
+    kind: 'namespace',
+    namespace,
+    name: child.name,
+    family: child.type,
+  };
 
   if (child.type === 'function') {
     return [{ tool: { ...child, name: qualified }, priority, order, ref }];
@@ -153,7 +176,7 @@ function normalizedCustomCall(
   return {
     type: 'function_call',
     call_id: item.call_id,
-    name: qualifiedCallName(item.name, undefined, refs),
+    name: qualifiedCallName(item.name, item.namespace, refs),
     arguments: customArguments(item.input),
   };
 }

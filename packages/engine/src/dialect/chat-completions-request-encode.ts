@@ -294,6 +294,6 @@ export function encodeRequest(hub: HubRequest): Translated<ChatCompletionsReques
   return encodeRequestInternal(hub, true);
 }
 
-export function encodeRequestWithCompat(hub: HubRequest): Translated<ChatCompletionsRequest> {
-  return encodeRequestInternal(hub, true);
+export function encodeRequestWithoutCompat(hub: HubRequest): Translated<ChatCompletionsRequest> {
+  return encodeRequestInternal(hub, false);
 }

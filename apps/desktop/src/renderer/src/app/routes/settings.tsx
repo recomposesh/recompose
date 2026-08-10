@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { SettingsPage, settingsQueryOptions, systemQueryOptions } from '../../pages/settings';
+import { SettingsPage } from '../../pages/settings';
+import { settingsQueryOptions, systemQueryOptions } from '../../shared/api';
 import { PageError } from '../../shared/ui';
 
 type SettingsSearch = {

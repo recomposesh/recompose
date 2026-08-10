@@ -112,9 +112,11 @@ test('no waiting row owns a field in the settings document', async () => {
   await renderSettings();
 
   expect(Object.keys(await storedSettings()).sort()).toEqual([
+    'firstRequestServed',
     'launchAtLogin',
     'schemaVersion',
     'showInMenuBar',
+    'showOnboardingChecklist',
     'theme',
   ]);
 });

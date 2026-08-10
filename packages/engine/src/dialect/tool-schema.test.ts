@@ -15,6 +15,24 @@ describe('strictProviderToolSchema', () => {
     expect(cleaned).toBe(schema);
   });
 
+  it('should lowercase uppercase types buried in a union of an otherwise strict schema', () => {
+    const cleaned = strictProviderToolSchema({
+      type: 'object',
+      properties: {
+        value: { anyOf: [{ type: 'string' }, { type: 'NUMBER', description: 'a count' }] },
+      },
+      additionalProperties: false,
+    });
+
+    expect(cleaned).toEqual({
+      type: 'object',
+      properties: {
+        value: { anyOf: [{ type: 'string' }, { type: 'number', description: 'a count' }] },
+      },
+      additionalProperties: false,
+    });
+  });
+
   it('should remove the schema declaration and close additional properties', () => {
     const cleaned = strictProviderToolSchema({
       type: 'object',

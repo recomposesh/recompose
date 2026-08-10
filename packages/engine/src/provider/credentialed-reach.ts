@@ -9,6 +9,7 @@ import type { AIStudioRelay, RelayRequest } from './ai-studio-relay';
 import { afterAuthPlugins, flattenedHeaders, headerMap } from '../plugin-after-auth';
 import { notePluginExecution } from '../plugin-execution-context';
 import { reachAIStudio } from './ai-studio-request';
+import { observeClaudeReplay } from './claude-replay-runtime';
 import {
   credentialedDialect,
   credentialedRequestBody,
@@ -23,6 +24,12 @@ import { filterXAIInternalSearchResponse } from './xai-search-response';
 import { restoreXAIToolResponse } from './xai-tool-response';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
+type AnswerObserver = (crossing: Crossing, answer: Response) => Promise<Response>;
+
+const ANSWER_OBSERVERS = new Map<string, AnswerObserver>([
+  ['anthropic', observeClaudeReplay],
+  ['kimi', observeKimiReplay],
+]);
 
 function requestFor(grant: ResolvedGrant, crossing: Crossing, body: JsonObject): RelayRequest {
   const normalized = credentialedRequestBody(grant, crossing, body);
@@ -67,7 +74,10 @@ async function providerAnswer(
   answer: Response,
 ): Promise<Response> {
   if (grant.spend.custody !== 'credentialed') return answer;
-  if (grant.spend.provider === 'kimi') return observeKimiReplay(crossing, answer);
+
+  const observer = ANSWER_OBSERVERS.get(grant.spend.provider);
+
+  if (observer !== undefined) return observer(crossing, answer);
   if (grant.spend.provider !== 'xai') return answer;
 
   const decorated = await withXaiRetryAfter(answer);
