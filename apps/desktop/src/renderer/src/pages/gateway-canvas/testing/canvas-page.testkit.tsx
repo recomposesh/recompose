@@ -20,6 +20,8 @@ import { servingBridgeWorld } from './gateway-canvas.testkit';
 const CANVAS_FOOTING = `
 [data-canvas-footing] { display: flex; width: 1280px; height: 800px; }
 [data-canvas-footing] > div { display: flex; flex: 1 1 0%; min-width: 0; }
+[data-canvas-footing] [data-canvas-column] { display: flex; flex: 1 1 0%; flex-direction: column; min-width: 0; }
+[data-canvas-footing] footer { display: flex; flex-shrink: 0; align-items: center; gap: 14px; height: 38px; padding-inline: 14px; }
 [data-canvas-footing] section { position: relative; display: flex; flex: 1 1 0%; min-width: 0; overflow: hidden; }
 [data-canvas-footing] .pointer-events-auto { pointer-events: auto; }
 [data-canvas-footing] .absolute { position: absolute; }

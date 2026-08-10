@@ -43,7 +43,7 @@
   --color-aggregator: light-dark(var(--purple-600), var(--purple-500));
   --color-local: light-dark(var(--teal-700), var(--teal-500));
   --color-running: light-dark(var(--green-700), var(--green-500));
-  --color-running-ink: light-dark(#127d25, var(--green-500));
+  --color-running-ink: light-dark(var(--green-800), var(--green-500));
   --color-stopped: light-dark(var(--red-700), var(--red-500));
   --color-warning: light-dark(var(--orange-600), var(--orange-500));
   --color-attention: light-dark(var(--amber-600), var(--amber-500));
