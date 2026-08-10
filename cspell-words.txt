@@ -118,6 +118,7 @@ Groq
 healthz
 highspeed
 homeplugins
+HTCAPTION
 htmlsanitize
 httpfetch
 httpwire
@@ -172,6 +173,7 @@ msvc
 multiset
 musistudio
 negotiables
+NCLBUTTONDBLCLK
 nizos
 nodrag
 nofilter

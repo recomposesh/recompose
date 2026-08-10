@@ -49,11 +49,14 @@
   --color-attention: light-dark(var(--amber-600), var(--amber-500));
   --color-attention-ink: light-dark(var(--amber-700), var(--amber-400));
   --color-danger: light-dark(var(--red-700), var(--red-500));
-  --color-danger-ink: light-dark(var(--red-700), var(--red-400));
+  --color-danger-ink: light-dark(var(--red-800), var(--red-300));
 
   --color-gateway: light-dark(var(--teal-700), var(--teal-500));
+  --color-gateway-ink: light-dark(var(--teal-800), var(--teal-500));
   --color-virtual-model: light-dark(var(--blue-600), var(--blue-500));
+  --color-virtual-model-ink: light-dark(var(--blue-800), var(--blue-300));
   --color-target: light-dark(var(--purple-600), var(--purple-500));
+  --color-target-ink: light-dark(var(--purple-700), var(--purple-400));
   --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
   --color-cable-live: light-dark(var(--green-600), var(--green-500));
   --color-cable-served: light-dark(var(--green-700), var(--green-500));

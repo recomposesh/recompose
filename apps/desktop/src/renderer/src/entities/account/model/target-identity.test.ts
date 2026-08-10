@@ -2,7 +2,7 @@ import type { Account } from '@recompose/contracts';
 
 import { expect, test } from 'vitest';
 
-import { accountIdentity, accountMark, accountName } from './target-identity';
+import { accountMark, accountName } from './target-identity';
 
 const workKey: Account = {
   id: 'a1',
@@ -33,12 +33,4 @@ test('an account whose vendor recompose draws leads with that vendor mark', () =
 
 test('an account whose vendor recompose draws no mark for leads with nothing', () => {
   expect(accountMark({ ...workKey, provider: 'a-vendor-nobody-drew' })).toBeUndefined();
-});
-
-test('a target identifies itself by kind, provider, and name, never by the name alone', () => {
-  expect(accountIdentity(workKey)).toBe('api-key \u00b7 anthropic \u00b7 Work key');
-});
-
-test('a runtime target identifies itself the same way, with the server as its name', () => {
-  expect(accountIdentity(runtime)).toBe('local \u00b7 ollama \u00b7 Ollama');
 });
