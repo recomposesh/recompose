@@ -6,4 +6,4 @@ export {
   accountsStandingAsTarget,
   offeredAccountKind,
 } from './model/account-kind';
-export { accountIdentity, accountMark, accountName } from './model/target-identity';
+export { accountMark, accountName } from './model/target-identity';

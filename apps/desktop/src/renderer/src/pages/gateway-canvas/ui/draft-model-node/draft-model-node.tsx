@@ -34,6 +34,7 @@ export function DraftModelNode({ data, selected }: DraftModelNodeProps) {
       frame="border-line-strong border-dashed"
       incoming
       kicker="Draft"
+      kickerTint="text-ink-secondary"
       name={displayName === '' ? 'Unnamed virtual model' : displayName}
       nameInk="text-ink-secondary"
       outgoing={{ bound: false, ask: 'Choose a target', onAsk: onPickTarget }}

@@ -24,6 +24,7 @@ type TargetNodeProps = {
 type CardReading = {
   kicker: string;
   chipTint: string;
+  kickerTint: string;
   chipGlyph: IconName;
   chipMark: ReactNode | undefined;
   name: string;
@@ -59,6 +60,7 @@ function readingOf(data: TargetNodeData): CardReading {
     return {
       kicker: 'Target',
       chipTint: kindTints[data.account.kind],
+      kickerTint: 'text-target-ink',
       chipGlyph: kindGlyphs[data.account.kind],
       chipMark: vendorMark(data.account),
       name: accountName(data.account),
@@ -72,6 +74,7 @@ function readingOf(data: TargetNodeData): CardReading {
     return {
       kicker: 'Removed',
       chipTint: 'text-danger',
+      kickerTint: 'text-danger-ink',
       chipGlyph: 'close',
       chipMark: undefined,
       name: data.accountId,
@@ -84,6 +87,7 @@ function readingOf(data: TargetNodeData): CardReading {
   return {
     kicker: 'Target',
     chipTint: 'text-target',
+    kickerTint: 'text-target-ink',
     chipGlyph: 'plus',
     chipMark: undefined,
     name: 'Choose a target',
@@ -113,6 +117,7 @@ export function TargetNode({ data, selected }: TargetNodeProps) {
       frame={reading.frame}
       incoming
       kicker={reading.kicker}
+      kickerTint={reading.kickerTint}
       name={reading.name}
       nameInk={reading.nameInk}
       outgoing={undefined}

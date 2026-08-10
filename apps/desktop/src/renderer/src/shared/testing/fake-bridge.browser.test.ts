@@ -1,10 +1,17 @@
-import type { GatewayTraffic, SubscriptionAccountView, VirtualModel } from '@recompose/contracts';
+import type {
+  GatewayTraffic,
+  LogBatch,
+  LogRow,
+  SubscriptionAccountView,
+  VirtualModel,
+} from '@recompose/contracts';
 
 import { ipcEvents } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
+import { emitEngineLogs, emitEngineTraffic } from '.';
 import { installFakeBridge } from './fake-bridge';
-import { emitEngineTraffic, gatewaySeed } from './fake-gateways';
+import { gatewaySeed } from './fake-gateways';
 
 async function saving(gateway: ReturnType<typeof gatewaySeed>) {
   return window.recompose['gateways:save'](gateway);
@@ -76,6 +83,50 @@ test('a fresh bridge forgets the traffic listeners the run before it left behind
   });
   installFakeBridge();
   emitEngineTraffic({ codex: { fast: { outcome: 'served', at: 1 } } });
+
+  expect(heard).toEqual([]);
+});
+
+function aServedRow(): LogRow {
+  return {
+    id: 'req-1',
+    at: 1_754_600_000_000,
+    gateway: 'codex',
+    virtualModel: 'fast',
+    origin: 'provider',
+    method: 'POST',
+    provider: 'anthropic',
+    status: 200,
+    clientKey: `sha256:${'a'.repeat(64)}`,
+  };
+}
+
+test('a pushed run of request rows reaches whatever is listening for it', () => {
+  installFakeBridge();
+
+  const heard: LogBatch[] = [];
+  const letGo = window.recomposeEvents['engine:logs']((batch) => {
+    heard.push(batch);
+  });
+  const served: LogBatch = { kind: 'append', rows: [aServedRow()] };
+
+  emitEngineLogs(served);
+  letGo();
+  emitEngineLogs({ kind: 'append', rows: [] });
+
+  expect(heard).toEqual([served]);
+});
+
+test('a fresh bridge forgets the log listeners the run before it left behind', () => {
+  installFakeBridge();
+
+  const heard: LogBatch[] = [];
+
+  window.recomposeEvents['engine:logs']((batch) => {
+    heard.push(batch);
+  });
+  installFakeBridge();
+  emitEngineLogs({ kind: 'append', rows: [aServedRow()] });
 
   expect(heard).toEqual([]);
 });

@@ -36,7 +36,7 @@ export function SidebarToggle({ where }: SidebarToggleProps) {
     <button
       aria-expanded={!hidden}
       aria-label="Sidebar"
-      className={`flex items-center justify-center text-ink-secondary focus-ring hover:bg-surface-hover active:bg-surface-pressed ${shape[where]}`}
+      className={`app-no-drag flex items-center justify-center text-ink-secondary focus-ring hover:bg-surface-hover active:bg-surface-pressed ${shape[where]}`}
       onClick={hidden ? showSidebar : hideSidebar}
       type="button"
     >

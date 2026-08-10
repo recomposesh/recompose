@@ -21,6 +21,7 @@ const worn: NodeCardProps = {
   frame: '',
   incoming: true,
   kicker: 'Virtual model',
+  kickerTint: 'text-virtual-model-ink',
   name: 'Everyday Sonnet',
   nameInk: 'text-ink',
   outgoing: { bound: true, ask: 'Choose a target', onAsk: fn(() => {}) },
