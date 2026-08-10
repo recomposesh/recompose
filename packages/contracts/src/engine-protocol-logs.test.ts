@@ -15,7 +15,7 @@ const row = {
   status: 200,
   durationMs: 912,
   tokens: 1_820,
-  clientKey: 'sha256:1f0c8a4d2b6e',
+  clientKey: 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c',
 };
 
 const report = { kind: 'log', row };

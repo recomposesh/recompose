@@ -4,7 +4,7 @@ import { logBatchSchema, logRowSchema } from './engine-logs';
 
 const servedAt = 1_754_600_000_000;
 
-const clientKey = 'sha256:1f0c8a4d2b6e';
+const clientKey = 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c';
 
 const served = {
   id: 'log-1',
@@ -77,6 +77,26 @@ describe('what no row carries', () => {
     expect(() => logRowSchema.parse({ ...served, clientAddress: '127.0.0.1' })).toThrow();
     expect(() => logRowSchema.parse({ ...served, userAgent: 'curl/8.7.1' })).toThrow();
   });
+
+  test('an address smuggled into the key itself is refused', () => {
+    expect(() => logRowSchema.parse({ ...served, clientKey: '127.0.0.1' })).toThrow();
+    expect(() => logRowSchema.parse({ ...served, clientKey: '127.0.0.1|curl/8.7.1' })).toThrow();
+  });
+
+  test('a key that is not the digest the gateway writes is refused', () => {
+    expect(() => logRowSchema.parse({ ...served, clientKey: 'a'.repeat(64) })).toThrow();
+    expect(() =>
+      logRowSchema.parse({ ...served, clientKey: `sha256:${'a'.repeat(63)}` }),
+    ).toThrow();
+    expect(() =>
+      logRowSchema.parse({ ...served, clientKey: `sha256:${'A'.repeat(64)}` }),
+    ).toThrow();
+  });
+
+  test('an address riding beside a real digest is refused at either end', () => {
+    expect(() => logRowSchema.parse({ ...served, clientKey: `127.0.0.1 ${clientKey}` })).toThrow();
+    expect(() => logRowSchema.parse({ ...served, clientKey: `${clientKey} 127.0.0.1` })).toThrow();
+  });
 });
 
 describe('what a row must name to be worth listing', () => {
@@ -98,6 +118,12 @@ describe('what a row must name to be worth listing', () => {
 
   test('a row nothing could key on is refused, because the cache merges by id', () => {
     expect(() => logRowSchema.parse({ ...served, id: '' })).toThrow();
+  });
+
+  test('a refused key says what the field must carry', () => {
+    expect(() => logRowSchema.parse({ ...served, clientKey: 'curl/8.7.1' })).toThrow(
+      'must be a sha256 digest',
+    );
   });
 });
 
