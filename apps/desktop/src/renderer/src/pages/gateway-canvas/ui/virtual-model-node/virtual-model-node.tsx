@@ -33,6 +33,7 @@ export function VirtualModelNode({ data, selected }: VirtualModelNodeProps) {
       frame=""
       incoming
       kicker="Virtual model"
+      kickerTint="text-virtual-model-ink"
       name={displayName}
       nameInk="text-ink"
       outgoing={{ bound: true, ask: 'Choose a target', onAsk: onPickTarget }}

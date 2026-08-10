@@ -34,6 +34,7 @@ export function GatewayNode({ data, selected }: GatewayNodeProps) {
       frame=""
       incoming={false}
       kicker="Gateway"
+      kickerTint="text-gateway-ink"
       name={displayName}
       nameInk="text-ink"
       outgoing={{ bound: true, ask: 'Add a virtual model', onAsk: onAddVirtualModel }}
