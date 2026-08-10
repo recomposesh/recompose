@@ -17,9 +17,31 @@ function systemContext(overrides: Partial<SystemIpcContext> = {}): SystemIpcCont
     openFolder: async () => Promise.resolve(''),
     placeWindowButtons: () => undefined,
     answerTitleBarDoubleClick: () => undefined,
+    noteLogsDrawer: () => undefined,
     ...overrides,
   };
 }
+
+describe('what the renderer tells main about the logs drawer', () => {
+  test('the standing reaches the menu either way, so the tick follows the drawer', async () => {
+    const standings: boolean[] = [];
+    const handlers = createSystemIpcHandlers(
+      systemContext({
+        noteLogsDrawer: (open) => {
+          standings.push(open);
+        },
+      }),
+    );
+
+    await expect(handlers['system:logs-drawer']({ open: true })).resolves.toEqual({
+      ok: true,
+      value: undefined,
+    });
+    await handlers['system:logs-drawer']({ open: false });
+
+    expect(standings).toEqual([true, false]);
+  });
+});
 
 describe('the system state behind the settings screen', () => {
   test('carries the file browser, the login item, the menu bar, and the config folder', async () => {

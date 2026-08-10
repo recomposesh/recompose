@@ -1,7 +1,6 @@
 import {
   engineReportSchema,
   engineSpendRequestSchema,
-  engineSubscriptionCredentialUpdateSchema,
   type EngineDirective,
   type EngineGateway,
   type EngineReport,
@@ -13,8 +12,10 @@ import { randomUUID } from 'node:crypto';
 import type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 import type { EngineLooks } from './engine-looks';
 import type { SpendGrantFor } from './engine-spend';
+import type { LogsDesk } from './logs-ledger';
 import type { TrafficDesk } from './traffic-ledger';
 
+import { persistRefreshedCredential } from './engine-host-credential-update';
 import {
   answerLook,
   foldEveryLook,
@@ -26,6 +27,7 @@ import {
 import { answerSpendRequest } from './engine-spend';
 import { allStopped, foldEngineReport } from './engine-state-ledger';
 import { createGatewayOrder } from './gateway-order';
+import { openLogsDesk } from './logs-ledger';
 import { openTrafficDesk } from './traffic-ledger';
 
 export const DIRECTIVE_TIMEOUT_MS = 5000;
@@ -50,6 +52,7 @@ type Resident = {
   awaitingReport: Map<string, Waiter>;
   looks: EngineLooks;
   traffic: TrafficDesk;
+  logs: LogsDesk;
 };
 
 function publish(resident: Resident, next: EngineStates): void {
@@ -96,8 +99,12 @@ function routeReport(resident: Resident, report: EngineReport): void {
   answerLook(resident.looks, report);
 }
 
+function aDeskHeardIt(resident: Resident, message: unknown): boolean {
+  return resident.traffic.hears(message) || resident.logs.hears(message);
+}
+
 function receiveMessage(resident: Resident, child: EngineChild, message: unknown): void {
-  if (resident.traffic.hears(message)) {
+  if (aDeskHeardIt(resident, message)) {
     return;
   }
 
@@ -117,33 +124,7 @@ function receiveMessage(resident: Resident, child: EngineChild, message: unknown
     return;
   }
 
-  const update = engineSubscriptionCredentialUpdateSchema.safeParse(message);
-
-  if (update.success) {
-    void resident
-      .storeSubscriptionCredential(
-        update.data.provider,
-        update.data.accountId,
-        update.data.credential,
-      )
-      .then(
-        () => {
-          child.postMessage({
-            kind: 'subscription-credential-updated',
-            answers: update.data.id,
-            verdict: 'stored',
-          });
-        },
-        (error: unknown) => {
-          console.error('recompose could not persist a refreshed subscription credential.', error);
-          child.postMessage({
-            kind: 'subscription-credential-updated',
-            answers: update.data.id,
-            verdict: 'failed',
-          });
-        },
-      );
-
+  if (persistRefreshedCredential(child, resident.storeSubscriptionCredential, message)) {
     return;
   }
 
@@ -196,6 +177,7 @@ async function sendDirective(
 
   if (directive.kind === 'start') {
     resident.traffic.keepOnly(directive.gateway);
+    resident.logs.backfill();
   }
 
   return new Promise<GatewayEngineState>((answer, refuse) => {
@@ -241,8 +223,8 @@ async function restartGateway(
   return sendDirective(resident, { kind: 'start', id: randomUUID(), gateway });
 }
 
-export function createEngineHost(deps: EngineHostDeps): EngineHost {
-  const resident: Resident = {
+function residentFor(deps: EngineHostDeps): Resident {
+  return {
     states: allStopped(deps.knownSlugs),
     child: null,
     spawnChild: deps.spawnChild,
@@ -256,7 +238,12 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     awaitingReport: new Map(),
     looks: openEngineLooks(),
     traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
+    logs: openLogsDesk(deps.onLogs ?? (() => undefined)),
   };
+}
+
+export function createEngineHost(deps: EngineHostDeps): EngineHost {
+  const resident = residentFor(deps);
   const inGatewayOrder = createGatewayOrder();
 
   return {
@@ -277,6 +264,9 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     listModels: async (origin, custody) =>
       listModelsThroughTheChild(resident.looks, () => runningChild(resident), origin, custody),
     states: () => resident.states,
+    replayLogs: () => {
+      resident.logs.backfill();
+    },
     onStatesChanged: (listener) => {
       resident.subscribers.add(listener);
 

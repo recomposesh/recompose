@@ -48,6 +48,29 @@ function codexServing(models: readonly VirtualModel[], port = FIRST_PORT): Gatew
 
 type ProbePort = (taken: ReadonlySet<number>, installFolder: string) => Promise<number>;
 
+function hostServing(serving: Set<string>) {
+  return {
+    start: async (gateway: EngineGateway) => {
+      serving.add(gateway.slug);
+
+      return Promise.resolve({ status: 'running' as const });
+    },
+    stop: async () => Promise.resolve({ status: 'stopped' as const }),
+    restart: async (gateway: EngineGateway) => {
+      serving.add(gateway.slug);
+
+      return Promise.resolve({ status: 'running' as const });
+    },
+    probe: async () => Promise.resolve({ verdict: 'could-not-check' as const }),
+    probeRuntime: async () => Promise.resolve({ verdict: 'unreachable' as const }),
+    listModels: async () => Promise.resolve({ standing: 'unlisted' as const }),
+    states: () => ({}),
+    onStatesChanged: () => () => undefined,
+    replayLogs: () => undefined,
+    dispose: () => undefined,
+  } satisfies EngineHost;
+}
+
 async function deskOver(probeFreePort: ProbePort) {
   const serving = new Set<string>();
   const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-write-order-'));
@@ -71,25 +94,7 @@ async function deskOver(probeFreePort: ProbePort) {
     releaseSubscription: async () => Promise.resolve({ ok: true }),
   };
 
-  const host = {
-    start: async (gateway: EngineGateway) => {
-      serving.add(gateway.slug);
-
-      return Promise.resolve({ status: 'running' as const });
-    },
-    stop: async () => Promise.resolve({ status: 'stopped' as const }),
-    restart: async (gateway: EngineGateway) => {
-      serving.add(gateway.slug);
-
-      return Promise.resolve({ status: 'running' as const });
-    },
-    probe: async () => Promise.resolve({ verdict: 'could-not-check' as const }),
-    probeRuntime: async () => Promise.resolve({ verdict: 'unreachable' as const }),
-    listModels: async () => Promise.resolve({ standing: 'unlisted' as const }),
-    states: () => ({}),
-    onStatesChanged: () => () => undefined,
-    dispose: () => undefined,
-  } satisfies EngineHost;
+  const host = hostServing(serving);
 
   await writeFile(join(userDataPath, 'accounts.json'), JSON.stringify(registry), 'utf8');
 

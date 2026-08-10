@@ -1,4 +1,4 @@
-import type { EngineStates, GatewayTraffic, Settings } from '@recompose/contracts';
+import type { EngineStates, GatewayTraffic, LogBatch, Settings } from '@recompose/contracts';
 
 import { defaultSettings } from '@recompose/contracts';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -7,6 +7,7 @@ import {
   pushAccountsChanged,
   pushCanvasCommand,
   pushDevtoolsToggle,
+  pushEngineLogs,
   pushEngineStates,
   pushEngineTraffic,
   pushSettingsChanged,
@@ -99,6 +100,33 @@ describe('telling the open windows what changed', () => {
 
     expect(first).toEqual([{ channel: 'settings:changed', payload: settings }]);
     expect(second).toEqual([{ channel: 'settings:changed', payload: settings }]);
+  });
+});
+
+describe('telling the open windows which requests were served', () => {
+  test('a run of logged requests reaches every open window', () => {
+    const first = openWindow();
+    const second = openWindow();
+    const batch: LogBatch = {
+      kind: 'append',
+      rows: [
+        {
+          id: 'log-1',
+          at: 1_754_600_000_000,
+          gateway: 'my-gateway',
+          virtualModel: 'fast',
+          origin: 'provider',
+          method: 'POST',
+          status: 200,
+          clientKey: 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c',
+        },
+      ],
+    };
+
+    pushEngineLogs(batch);
+
+    expect(first).toEqual([{ channel: 'engine:logs', payload: batch }]);
+    expect(second).toEqual([{ channel: 'engine:logs', payload: batch }]);
   });
 });
 

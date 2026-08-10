@@ -61,6 +61,7 @@ type SystemHandlers = Pick<
   | 'system:open-config-folder'
   | 'system:window-band'
   | 'system:title-bar-double-click'
+  | 'system:logs-drawer'
 >;
 
 function settingsHandlers(seed: Settings): SettingsHandlers {
@@ -83,6 +84,7 @@ function systemHandlers(): SystemHandlers {
     'system:open-config-folder': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:window-band': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:title-bar-double-click': async () => Promise.resolve({ ok: true, value: undefined }),
+    'system:logs-drawer': async () => Promise.resolve({ ok: true, value: undefined }),
   };
 }
 

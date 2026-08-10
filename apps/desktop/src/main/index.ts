@@ -26,6 +26,7 @@ import {
   pushAccountsChanged,
   pushCanvasCommand,
   pushDevtoolsToggle,
+  pushEngineLogs,
   pushEngineStates,
   pushEngineTraffic,
   pushSettingsChanged,
@@ -205,6 +206,7 @@ function assembleIpcHandlers(
       answerTitleBarDoubleClick: () => {
         answerTitleBarDoubleClick(process.platform);
       },
+      noteLogsDrawer: appMenu.reflectLogsDrawer,
     }),
   };
 }
@@ -254,6 +256,7 @@ async function startRecompose(): Promise<void> {
     grantFor,
     storeSubscriptionCredential: subscriptionCredentials.write,
     onTraffic: pushEngineTraffic,
+    onLogs: pushEngineLogs,
   });
   engineHost.onStatesChanged(pushEngineStates);
   engineHost.onStatesChanged(repaintTray);

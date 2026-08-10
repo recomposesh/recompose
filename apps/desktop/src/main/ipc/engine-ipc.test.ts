@@ -34,10 +34,14 @@ function hostAnswering(
 ) {
   const started: EngineGateway[] = [];
   const stopped: string[] = [];
+  const replays = { asked: 0 };
   const answer = async (): Promise<GatewayEngineState> =>
     refusal === undefined ? Promise.resolve(state) : Promise.reject(refusal);
 
   const host: EngineHost = {
+    replayLogs: () => {
+      replays.asked += 1;
+    },
     start: async (gateway) => {
       started.push(gateway);
 
@@ -57,7 +61,7 @@ function hostAnswering(
     dispose: () => undefined,
   };
 
-  return { host, started, stopped };
+  return { host, started, stopped, replays };
 }
 
 async function freshContext(
@@ -255,5 +259,29 @@ describe('reading which gateways serve', () => {
       ok: true,
       value: snapshot,
     });
+  });
+});
+
+describe('sending the request log to a renderer that just bound', () => {
+  test('the ask reaches the desk holding the history, and answers with no rows of its own', async () => {
+    const answering = hostAnswering();
+    const context = await freshContext([], answering.host, offeringTheFirstFreeOf([51234]));
+
+    await expect(
+      createEngineIpcHandlers(context)['engine:replay-logs'](undefined),
+    ).resolves.toEqual({ ok: true, value: undefined });
+    expect(answering.replays.asked).toBe(1);
+  });
+
+  test('a reload that asks again reaches the desk again, because every run merges by row id', async () => {
+    const answering = hostAnswering();
+    const handlers = createEngineIpcHandlers(
+      await freshContext([], answering.host, offeringTheFirstFreeOf([51234])),
+    );
+
+    await handlers['engine:replay-logs'](undefined);
+    await handlers['engine:replay-logs'](undefined);
+
+    expect(answering.replays.asked).toBe(2);
   });
 });

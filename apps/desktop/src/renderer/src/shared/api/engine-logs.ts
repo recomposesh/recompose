@@ -1,4 +1,4 @@
-import type { LogRow, RecomposeIpcEvents } from '@recompose/contracts';
+import type { LogRow, RecomposeIpc, RecomposeIpcEvents } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { queryOptions, skipToken } from '@tanstack/react-query';
@@ -74,21 +74,45 @@ function runsByGateway(rows: readonly LogRow[]): Map<string, LogRow[]> {
   return runs;
 }
 
+type AskForHistory = RecomposeIpc['engine:replay-logs'];
+
+function askForTheHistory(ask: AskForHistory): void {
+  const complain = (reason: unknown): void => {
+    console.error('recompose could not ask for the requests a gateway has already served.', reason);
+  };
+
+  void ask().then((answered) => {
+    if (!answered.ok) {
+      complain(answered.error);
+    }
+  }, complain);
+}
+
 /**
  * Points the log push at the query cache and hands back the way to stop listening.
  *
  * @summary Every batch merges into what each gateway already holds, backfill and append alike, so
  * reopening the drawer and restarting the gateway both leave the rows a person saw standing.
+ *
+ * Binding also asks main to send the history again, because a reload and a second window each start
+ * on an empty cache while main still holds every row. The answer carries no rows: they arrive as
+ * backfill runs on the push, so the ask stays cheap however long the history is, and merging by row
+ * id makes asking twice cost nothing.
  */
 export function bindEngineLogsToCache(
   queryClient: QueryClient,
   subscribe: RecomposeIpcEvents['engine:logs'] = window.recomposeEvents['engine:logs'],
+  ask: AskForHistory = window.recompose['engine:replay-logs'],
 ): () => void {
-  return subscribe((batch) => {
+  const letGo = subscribe((batch) => {
     for (const [slug, arriving] of runsByGateway(batch.rows)) {
       queryClient.setQueryData(engineLogsQueryOptions(slug).queryKey, (held?: readonly LogRow[]) =>
         merged(held ?? NOTHING_HAS_BEEN_SERVED, arriving),
       );
     }
   });
+
+  askForTheHistory(ask);
+
+  return letGo;
 }

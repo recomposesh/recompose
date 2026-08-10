@@ -182,7 +182,7 @@ describe('bridge surface totality', () => {
     expectTypeOf<keyof RecomposeIpc>().toEqualTypeOf<IpcChannel>();
   });
 
-  test('the surface is exactly these twenty-seven channels, so a twenty-eighth arrives red', () => {
+  test('the surface is exactly these twenty-nine channels, so a thirtieth arrives red', () => {
     expectTypeOf<IpcChannel>().toEqualTypeOf<
       | 'gateways:list'
       | 'gateways:save'
@@ -206,6 +206,8 @@ describe('bridge surface totality', () => {
       | 'engine:start'
       | 'engine:stop'
       | 'engine:states'
+      | 'engine:replay-logs'
+      | 'system:logs-drawer'
       | 'subscriptions:list'
       | 'subscriptions:tools'
       | 'subscriptions:sign-in'
@@ -243,9 +245,9 @@ describe('push surface totality', () => {
     >();
   });
 
-  test('a canvas command names one of the four acts the Canvas menu offers', () => {
+  test('a canvas command names one of the five acts the Gateway menu offers', () => {
     expectTypeOf<IpcEventPayload<'canvas:command'>>().toEqualTypeOf<
-      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy'
+      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy' | 'toggle-logs'
     >();
   });
 

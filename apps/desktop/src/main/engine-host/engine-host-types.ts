@@ -8,6 +8,7 @@ import type {
   GatewayTraffic,
   KeyCheckReport,
   KeyProviderId,
+  LogBatch,
   LookCustody,
   ModelListing,
   RuntimeReachability,
@@ -35,6 +36,7 @@ export type EngineHostDeps = {
     credential: string,
   ) => Promise<void>;
   onTraffic?: (traffic: GatewayTraffic) => void;
+  onLogs?: (batch: LogBatch) => void;
 };
 
 export type EngineHost = {
@@ -45,6 +47,14 @@ export type EngineHost = {
   probeRuntime: (address: string) => Promise<RuntimeReachability>;
   listModels: (origin: string, custody: LookCustody) => Promise<ModelListing>;
   states: () => EngineStates;
+  /**
+   * Sends the retained request log to the windows again, as backfill runs.
+   *
+   * @summary A renderer binds fresh on every reload and on every new window, holding no rows, while
+   * main sits on the whole history. Nothing about that is a gateway restart, so the ask has to be
+   * its own act rather than a side effect of starting.
+   */
+  replayLogs: () => void;
   onStatesChanged: (listener: (states: EngineStates) => void) => () => void;
   dispose: () => void;
 };
