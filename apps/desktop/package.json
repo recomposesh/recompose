@@ -44,6 +44,7 @@
     "@lobehub/icons": "^5.15.0",
     "@tanstack/react-form": "1.33.2",
     "@tanstack/react-router": "1.170.18",
+    "@tanstack/react-virtual": "3.14.9",
     "@xyflow/react": "12.11.2",
     "electron-liquid-glass": "^1.1.1",
     "koffi": "3.1.4",

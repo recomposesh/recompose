@@ -1,4 +1,10 @@
-import type { AccountsDocument, EngineStates, GatewayConfig } from '@recompose/contracts';
+import type {
+  Account,
+  AccountsDocument,
+  EngineStates,
+  GatewayConfig,
+  LogRow,
+} from '@recompose/contracts';
 
 import { ACCOUNTS_VERSION } from '@recompose/contracts';
 
@@ -8,6 +14,37 @@ import { gatewaySeed } from '../../../shared/testing';
 import { emptyDefinition } from '../lib/model-draft';
 import { leaveDrafting, startDrafting } from '../lib/use-held-draft';
 
+const claudeSubscription: Account = {
+  id: 's1',
+  provider: 'anthropic',
+  kind: 'subscription',
+  label: 'Claude',
+};
+
+/** The stored key the seeded requests are served through, which a row names as their account. */
+export const workKey: Account = {
+  id: 'k1',
+  provider: 'anthropic',
+  kind: 'api-key',
+  label: 'work',
+  credentialRef: 'c1',
+};
+
+const openrouterAccount: Account = {
+  id: 'g1',
+  provider: 'openrouter',
+  kind: 'aggregator',
+  label: 'openrouter',
+  credentialRef: 'c2',
+};
+
+const ollamaRuntime: Account = {
+  id: 'l1',
+  provider: 'ollama',
+  kind: 'local',
+  address: 'http://127.0.0.1:11434',
+};
+
 /**
  * A registry holding one account of every kind, which is what the target picker is read against.
  *
@@ -16,18 +53,7 @@ import { leaveDrafting, startDrafting } from '../lib/use-held-draft';
  */
 export const storedAccounts: AccountsDocument = {
   schemaVersion: ACCOUNTS_VERSION,
-  accounts: [
-    { id: 's1', provider: 'anthropic', kind: 'subscription', label: 'Claude' },
-    { id: 'k1', provider: 'anthropic', kind: 'api-key', label: 'work', credentialRef: 'c1' },
-    {
-      id: 'g1',
-      provider: 'openrouter',
-      kind: 'aggregator',
-      label: 'openrouter',
-      credentialRef: 'c2',
-    },
-    { id: 'l1', provider: 'ollama', kind: 'local', address: 'http://127.0.0.1:11434' },
-  ],
+  accounts: [claudeSubscription, workKey, openrouterAccount, ollamaRuntime],
 };
 
 /** The same registry after one target left it, which a serving definition has to survive. */
@@ -74,6 +100,48 @@ export const servingBridgeWorld: BridgeParameters = {
   engineStates: runningGateway,
   providerModels: listedModels,
 };
+
+/** The wall clock a seeded request is stamped at, read as `14:22:09` wherever a row prints it. */
+export const SERVED_AT = new Date(2026, 7, 10, 14, 22, 9).getTime();
+
+const A_CLIENT = `sha256:${'a'.repeat(64)}`;
+
+/**
+ * One request the serving gateway answered, which every drawer scenario reads rows from.
+ *
+ * @summary The seed answers under `fast` through the stored key, so a row reads against the same
+ * world the canvas is composed from and a scenario says what it cares about by what it overrides.
+ */
+export function servedRequest(differing: Partial<LogRow> = {}): LogRow {
+  return {
+    id: 'served-1',
+    at: SERVED_AT,
+    gateway: 'my-gateway',
+    virtualModel: 'fast',
+    origin: 'provider',
+    method: 'POST',
+    provider: 'anthropic',
+    accountId: 'k1',
+    providerModel: 'claude-haiku-4-5',
+    status: 200,
+    durationMs: 900,
+    tokens: 1200,
+    clientKey: A_CLIENT,
+    ...differing,
+  };
+}
+
+/**
+ * A run of served requests, newest first, the way the renderer cache holds them.
+ *
+ * @summary Each request lands a second before the one ahead of it and carries its own id, so a
+ * scenario about order or about a stable key never has to spell either out.
+ */
+export function servedRun(count: number, differing: Partial<LogRow> = {}): readonly LogRow[] {
+  return Array.from({ length: count }, (_unused, seat) =>
+    servedRequest({ id: `served-${String(seat + 1)}`, at: SERVED_AT - seat * 1000, ...differing }),
+  );
+}
 
 /**
  * Stands a draft on the serving gateway, and hands back the act that lets it go.
