@@ -8,6 +8,7 @@ import type {
   GatewayTraffic,
   KeyCheckReport,
   KeyProviderId,
+  LogBatch,
   LookCustody,
   ModelListing,
   RuntimeReachability,
@@ -35,6 +36,7 @@ export type EngineHostDeps = {
     credential: string,
   ) => Promise<void>;
   onTraffic?: (traffic: GatewayTraffic) => void;
+  onLogs?: (batch: LogBatch) => void;
 };
 
 export type EngineHost = {

@@ -39,8 +39,8 @@ describe('the lifecycle push', () => {
     expect(Object.keys(ipcChannels)).not.toContain('engine:state');
   });
 
-  test('a canvas push carries one of the four acts the Canvas menu offers', () => {
-    const acts = ['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy'];
+  test('a canvas push carries one of the five acts the Gateway menu offers', () => {
+    const acts = ['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs'];
 
     expect(acts.map((act) => ipcEvents['canvas:command'].payload.parse(act))).toEqual(acts);
   });

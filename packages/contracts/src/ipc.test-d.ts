@@ -243,9 +243,9 @@ describe('push surface totality', () => {
     >();
   });
 
-  test('a canvas command names one of the four acts the Canvas menu offers', () => {
+  test('a canvas command names one of the five acts the Gateway menu offers', () => {
     expectTypeOf<IpcEventPayload<'canvas:command'>>().toEqualTypeOf<
-      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy'
+      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy' | 'toggle-logs'
     >();
   });
 

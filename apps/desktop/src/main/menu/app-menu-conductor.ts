@@ -32,7 +32,11 @@ type AppMenuSeams = {
  * than mutating one, so every change lands as a fresh install from the same view value.
  */
 export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
-  const view: AppMenuView = { checklistShown: true, onGatewayDetail: false };
+  const view: AppMenuView = {
+    checklistShown: true,
+    onGatewayDetail: false,
+    logsDrawerOpen: false,
+  };
 
   const handlers: AppMenuHandlers = {
     onOpenSettings: seams.onOpenSettings,

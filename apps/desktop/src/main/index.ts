@@ -26,6 +26,7 @@ import {
   pushAccountsChanged,
   pushCanvasCommand,
   pushDevtoolsToggle,
+  pushEngineLogs,
   pushEngineStates,
   pushEngineTraffic,
   pushSettingsChanged,
@@ -254,6 +255,7 @@ async function startRecompose(): Promise<void> {
     grantFor,
     storeSubscriptionCredential: subscriptionCredentials.write,
     onTraffic: pushEngineTraffic,
+    onLogs: pushEngineLogs,
   });
   engineHost.onStatesChanged(pushEngineStates);
   engineHost.onStatesChanged(repaintTray);

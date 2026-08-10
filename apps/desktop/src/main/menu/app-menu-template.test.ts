@@ -1,46 +1,16 @@
 import { describe, expect, test } from 'vitest';
 
-import type { AppMenuHandlers, AppMenuItem, AppMenuView } from './app-menu-template';
-
 import { buildAppMenuTemplate } from './app-menu-template';
-
-function everyItem(template: AppMenuItem[]): AppMenuItem[] {
-  return template.flatMap((item) => [item, ...everyItem(item.submenu ?? [])]);
-}
-
-function itemLabelled(template: AppMenuItem[], label: string): AppMenuItem | undefined {
-  return everyItem(template).find((item) => item.label === label);
-}
-
-function menuLabelled(template: AppMenuItem[], label: string): AppMenuItem | undefined {
-  return template.find((item) => item.label === label);
-}
-
-function shapeOf(items: AppMenuItem[]): (string | undefined)[] {
-  return items.map((item) => item.role ?? item.label ?? item.type);
-}
-
-function recordingHandlers(taken: string[]): AppMenuHandlers {
-  return {
-    onOpenSettings: () => {
-      taken.push('open-settings');
-    },
-    onNewGateway: () => {
-      taken.push('new-gateway');
-    },
-    onToggleChecklist: (shown) => {
-      taken.push(`show-checklist ${String(shown)}`);
-    },
-    onCanvasCommand: (command) => {
-      taken.push(command);
-    },
-  };
-}
-
-const idleHandlers = recordingHandlers([]);
-const atHome: AppMenuView = { checklistShown: true, onGatewayDetail: false };
-const atGatewayDetail: AppMenuView = { checklistShown: true, onGatewayDetail: true };
-const everyPlatform: NodeJS.Platform[] = ['darwin', 'win32', 'linux'];
+import {
+  atGatewayDetail,
+  atHome,
+  everyPlatform,
+  idleHandlers,
+  itemLabelled,
+  menuLabelled,
+  recordingHandlers,
+  shapeOf,
+} from './app-menu-template.testkit';
 
 describe('the settings shortcut on the application menu', () => {
   test('macOS carries it in the application menu, where its readers look for it', () => {
@@ -137,47 +107,6 @@ describe('the onboarding checklist toggle', () => {
 
     expect(shownTaken).toEqual(['show-checklist false']);
     expect(hiddenTaken).toEqual(['show-checklist true']);
-  });
-});
-
-describe('driving the canvas from the menu bar', () => {
-  test('a gateway surface gathers the canvas acts under Gateway, on the shortcuts zoom means here', () => {
-    for (const platform of everyPlatform) {
-      const gatewayMenu = menuLabelled(
-        buildAppMenuTemplate(platform, idleHandlers, atGatewayDetail),
-        'Gateway',
-      );
-
-      expect(
-        (gatewayMenu?.submenu ?? []).map((item) => [item.label ?? item.type, item.accelerator]),
-      ).toEqual([
-        ['Zoom In', 'CmdOrCtrl+='],
-        ['Zoom Out', 'CmdOrCtrl+-'],
-        ['Zoom to Fit', 'CmdOrCtrl+0'],
-        ['separator', undefined],
-        ['Tidy', undefined],
-      ]);
-    }
-  });
-
-  test('a surface holding no gateway carries no Gateway menu', () => {
-    for (const platform of everyPlatform) {
-      const template = buildAppMenuTemplate(platform, idleHandlers, atHome);
-
-      expect(menuLabelled(template, 'Gateway')).toBeUndefined();
-      expect(menuLabelled(template, 'Canvas')).toBeUndefined();
-    }
-  });
-
-  test('choosing an act carries its command to the canvas', () => {
-    const taken: string[] = [];
-    const template = buildAppMenuTemplate('darwin', recordingHandlers(taken), atGatewayDetail);
-
-    for (const label of ['Zoom In', 'Zoom Out', 'Zoom to Fit', 'Tidy']) {
-      itemLabelled(template, label)?.click?.();
-    }
-
-    expect(taken).toEqual(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']);
   });
 });
 

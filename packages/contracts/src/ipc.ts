@@ -161,7 +161,9 @@ export const ipcEvents = {
   'engine:traffic': { payload: gatewayTrafficSchema },
   'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
-  'canvas:command': { payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']) },
+  'canvas:command': {
+    payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs']),
+  },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
 } as const;
