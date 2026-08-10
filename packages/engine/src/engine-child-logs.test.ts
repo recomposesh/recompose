@@ -11,6 +11,7 @@ import {
   fetchAnsweringWith,
   openedApp,
 } from './gateway-app.testkit';
+import { rowsStanding } from './gateway-logs.testkit';
 import { providerObservability } from './provider/provider-observability';
 
 function aServingChild(answer: () => Response) {
@@ -55,19 +56,23 @@ function logsIn(reports: readonly unknown[]) {
   });
 }
 
+function rowsStandingIn(reports: readonly unknown[]) {
+  return rowsStanding(logsIn(reports).map(({ row }) => row));
+}
+
 afterEach(() => {
   providerObservability().clear();
 });
 
 describe('what the parent hears once one request has been logged', () => {
-  test('a request the target answered leaves as one log report carrying its row', async () => {
+  test('a request the target answered stands as one row on the parent port', async () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
-    await reportsReach(child.parent, 4);
+    await reportsReach(child.parent, 5);
 
-    expect(logsIn(child.parent.reports)).toMatchObject([
-      { kind: 'log', row: { gateway: 'codex', virtualModel: 'fast', origin: 'provider' } },
+    expect(rowsStandingIn(child.parent.reports)).toMatchObject([
+      { gateway: 'codex', virtualModel: 'fast', origin: 'provider' },
     ]);
   });
 
@@ -75,7 +80,7 @@ describe('what the parent hears once one request has been logged', () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
-    await reportsReach(child.parent, 4);
+    await reportsReach(child.parent, 5);
 
     expect(JSON.stringify(logsIn(child.parent.reports))).not.toContain('my diary entry');
   });
@@ -84,7 +89,7 @@ describe('what the parent hears once one request has been logged', () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
-    await reportsReach(child.parent, 4);
+    await reportsReach(child.parent, 5);
 
     expect(providerObservability().snapshot()).toHaveLength(1);
   });

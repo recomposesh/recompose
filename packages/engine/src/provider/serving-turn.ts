@@ -6,15 +6,17 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * @summary A provider call starts deep inside the serving path, where the gateway it answers for
  * and the client that asked are both out of reach. The turn carries them down rather than threading
  * them through every call site, and it opens once per request, so two requests in flight at once can
- * never take each other's facts. `reachedProvider` is what tells a failure the gateway raised apart
- * from one a provider answered, which is how one request stays one row.
+ * never take each other's facts. `rowPublished` is what tells a failure the gateway raised apart
+ * from one an upstream attempt already stands for, which is how one request stays one row. It turns
+ * on when a row is actually told to a reader, never when a call merely began, because a call that
+ * began and never answered is exactly the failure the gateway has to raise a row for itself.
  */
 export type ServingTurn = {
   gateway: string;
   clientKey: string;
   method: string;
   virtualModel?: string | undefined;
-  reachedProvider: boolean;
+  rowPublished: boolean;
 };
 
 /**
@@ -30,10 +32,12 @@ export type ServedFor = {
   virtualModel?: string | undefined;
 };
 
-export function servedForTurn(turn: ServingTurn | undefined): ServedFor | undefined {
-  if (turn === undefined) return undefined;
-
+export function servedFor(turn: ServingTurn): ServedFor {
   return { gateway: turn.gateway, clientKey: turn.clientKey, virtualModel: turn.virtualModel };
+}
+
+export function servedForTurn(turn: ServingTurn | undefined): ServedFor | undefined {
+  return turn === undefined ? undefined : servedFor(turn);
 }
 
 const servingTurns = new AsyncLocalStorage<ServingTurn>();

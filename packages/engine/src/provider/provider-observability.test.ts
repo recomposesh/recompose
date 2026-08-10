@@ -86,6 +86,20 @@ describe('ProviderObservability timing and queueing', () => {
     expect(observability.snapshot()[0]).toMatchObject({ ttftMs: 45, durationMs: 60 });
   });
 
+  it('should stop telling a reader that let its subscription go', async () => {
+    const observability = new ProviderObservability();
+    const heard: unknown[] = [];
+    const forget = observability.subscribe((record) => {
+      heard.push(record);
+    });
+
+    await observability.start(requestLog()).observe(Response.json({})).text();
+    forget();
+    await observability.start(requestLog()).observe(Response.json({})).text();
+
+    expect(heard).toHaveLength(1);
+  });
+
   it('should preserve explicit generate false and default omission to true', async () => {
     const observability = new ProviderObservability();
 

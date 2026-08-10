@@ -1,7 +1,6 @@
 import type { LogRow, SpendGrant } from '@recompose/contracts';
 import type { Hono } from 'hono';
 
-import { logRowSchema } from '@recompose/contracts';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { createGatewayApp } from './gateway-app';
@@ -13,7 +12,7 @@ import {
   grantsNothing,
   neverFetches,
 } from './gateway-app.testkit';
-import { subscribeToLogRows } from './gateway-traffic';
+import { collectingRows } from './gateway-logs.testkit';
 import { providerObservability } from './provider/provider-observability';
 
 const codex = aGatewayHolding(aVirtualModel());
@@ -56,15 +55,12 @@ async function ask(app: Hono, body: string, userAgent = 'curl/8.7.1'): Promise<v
 }
 
 async function rowsWhile(serving: () => Promise<void>): Promise<LogRow[]> {
-  const rows: unknown[] = [];
-  const forget = subscribeToLogRows((row) => {
-    rows.push(row);
-  });
+  const collected = collectingRows();
 
   await serving();
-  forget();
+  collected.forget();
 
-  return rows.map((row) => logRowSchema.parse(row));
+  return collected.standing();
 }
 
 async function rowsFrom(app: Hono, body = aTurn, userAgent?: string): Promise<LogRow[]> {

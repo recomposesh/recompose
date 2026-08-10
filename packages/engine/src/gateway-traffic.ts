@@ -1,14 +1,13 @@
 import type { LogRow, RequestOutcome } from '@recompose/contracts';
 import type { MiddlewareHandler } from 'hono';
 
-import { createHash } from 'node:crypto';
-
 import type { SpendGrantFor } from './gateway-proxy';
-import type { ProviderObservation } from './provider/provider-observability';
 import type { ServingTurn } from './provider/serving-turn';
+import type { ProviderAttempt } from './provider/telemetry-feed';
 
-import { providerObservability } from './provider/provider-observability';
+import { sha256Digest } from './provider/provider-observation';
 import { servingTurn, withinServingTurn } from './provider/serving-turn';
+import { subscribeToProviderAttempts, tellingReaders } from './provider/telemetry-feed';
 
 export type NoteTraffic = (slug: string, virtualModel: string, request: RequestOutcome) => void;
 
@@ -67,7 +66,7 @@ function clientAddressOf(bindings: unknown): string {
 }
 
 function clientKeyFor(address: string, clientApp: string): string {
-  return `sha256:${createHash('sha256').update(`${address}|${clientApp}`).digest('hex')}`;
+  return sha256Digest(`${address}|${clientApp}`);
 }
 
 /**
@@ -84,7 +83,7 @@ export function openServingTurn(gateway: string): MiddlewareHandler {
         gateway,
         clientKey: clientKeyFor(clientAddressOf(c.env), c.req.header('user-agent') ?? ''),
         method: c.req.method,
-        reachedProvider: false,
+        rowPublished: false,
       },
       next,
     );
@@ -92,32 +91,36 @@ export function openServingTurn(gateway: string): MiddlewareHandler {
 
 const rowListeners = new Set<LogRowListener>();
 
-function observedRow(observation: ProviderObservation): LogRow | null {
-  const { servedFor, status } = observation;
+function named(value: string | undefined): string | undefined {
+  const spoken = value?.trim();
 
-  if (servedFor === undefined) return null;
+  return spoken === '' ? undefined : spoken;
+}
+
+function attemptRow(attempt: ProviderAttempt): LogRow {
+  const { servedFor, status } = attempt;
 
   return {
-    id: crypto.randomUUID(),
-    at: observation.at,
+    id: attempt.id,
+    at: attempt.at,
     gateway: servedFor.gateway,
     virtualModel: servedFor.virtualModel,
     origin: 'provider',
-    method: observation.method,
-    provider: observation.provider,
-    accountId: observation.accountId,
-    providerModel: observation.model,
+    method: attempt.method,
+    provider: named(attempt.provider),
+    accountId: named(attempt.accountId),
+    providerModel: named(attempt.providerModel),
     status,
-    tokens: observation.usage.totalTokens,
+    tokens: attempt.tokens,
     clientKey: servedFor.clientKey,
-    ...(failed(status) ? { failure: detailFor(status) } : { durationMs: observation.durationMs }),
+    ...(failed(status) ? { failure: detailFor(status) } : { durationMs: attempt.durationMs }),
   };
 }
 
-function raisedRow(turn: ServingTurn, status: number): LogRow {
+function raisedRow(turn: ServingTurn, status: number, at: number): LogRow {
   return {
     id: crypto.randomUUID(),
-    at: Date.now(),
+    at,
     gateway: turn.gateway,
     virtualModel: turn.virtualModel,
     origin: 'gateway',
@@ -133,38 +136,38 @@ function raisedRow(turn: ServingTurn, status: number): LogRow {
  *
  * @summary Management drains the observation buffer destructively through its usage queue, so a
  * feed that popped rows would take them from under it. This one only listens, and a row the gateway
- * raised before any provider answered rides the same feed, so the errors a footer counts and a
- * cable that reads red can never disagree.
+ * raised before any attempt stood for the request rides the same feed, so the errors a footer counts
+ * and a cable that reads red can never disagree.
  */
 export function subscribeToLogRows(listener: LogRowListener): () => void {
-  const forgetObservations = providerObservability().subscribe((observation) => {
-    const row = observedRow(observation);
-
-    if (row !== null) listener(row);
+  const forgetAttempts = subscribeToProviderAttempts((attempt) => {
+    listener(attemptRow(attempt));
   });
 
   rowListeners.add(listener);
 
   return () => {
-    forgetObservations();
+    forgetAttempts();
     rowListeners.delete(listener);
   };
 }
 
 function publishRow(row: LogRow): void {
-  for (const listener of rowListeners) listener(row);
+  tellingReaders(rowListeners, () => row, 'log row');
 }
 
-export function noteUnreadableRequest(): void {
+export function noteUnreadableRequest(at: number = Date.now()): void {
   const turn = servingTurn();
 
-  if (turn !== undefined) publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS));
+  if (turn === undefined || turn.rowPublished) return;
+
+  publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS, at));
 }
 
-function noteRaisedFailure(turn: ServingTurn | undefined, status: number): void {
-  if (turn === undefined || turn.reachedProvider || !failed(status)) return;
+function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: number): void {
+  if (turn === undefined || turn.rowPublished || !failed(status)) return;
 
-  publishRow(raisedRow(turn, status));
+  publishRow(raisedRow(turn, status, at));
 }
 
 function wordOf(body: unknown): string | undefined {
@@ -257,8 +260,10 @@ export function watchingTraffic(
     const spent = asked.at(-1);
 
     if (spent !== undefined) {
-      note(spent.slug, spent.virtualModel, await outcomeOf(answer, now()));
-      noteRaisedFailure(turn, answer.status);
+      const at = now();
+
+      note(spent.slug, spent.virtualModel, await outcomeOf(answer, at));
+      noteRaisedFailure(turn, answer.status, at);
     }
 
     return answer;

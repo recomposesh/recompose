@@ -14,13 +14,12 @@ import {
 
 import type { SpendGrantFor } from './gateway-app';
 import type { SubscriptionRuntime } from './gateway-proxy';
-import type { NoteTraffic } from './gateway-traffic';
 import type { ParentPort } from './parent-port';
 import type { PluginHost } from './plugin-host';
 
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
 import { subscriptionRuntime } from './gateway-proxy';
-import { subscribeToLogRows } from './gateway-traffic';
+import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { firstPartyProbeOrigins, probeKey } from './provider/key-probe';
 import { listProviderModels } from './provider/model-list';
 import { probeRuntime } from './provider/runtime-probe';
@@ -271,7 +270,11 @@ export function attachEngineChild(
   );
 
   subscribeToLogRows((row) => {
-    parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
+    try {
+      parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
+    } catch (failure) {
+      console.error(`The engine child dropped a log row for "${row.gateway}".`, failure);
+    }
   });
 
   parentPort.on('message', (messageEvent) => {
