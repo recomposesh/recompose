@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import type { ProviderDialect } from '../gateway-wire';
 import type { ProviderMediaLog } from './provider-log-types';
 import type { ProviderUsage } from './provider-usage';
+import type { ServedFor, ServingTurn } from './serving-turn';
 
 import { emptyProviderUsage, providerUsageFrom } from './provider-usage';
+import { servedForTurn, servingTurn } from './serving-turn';
 
 export { providerUsageFrom } from './provider-usage';
 export type { ProviderUsage } from './provider-usage';
@@ -29,6 +31,7 @@ export type ProviderObservation = {
   method: string;
   requestIdHash?: string | undefined;
   upstreamRequestIdHash?: string | undefined;
+  at: number;
   startedAt: number;
   durationMs: number;
   ttftMs: number;
@@ -37,18 +40,12 @@ export type ProviderObservation = {
   generate: boolean;
   version?: string | undefined;
   media?: ProviderMediaLog | undefined;
+  servedFor?: ServedFor | undefined;
 };
 
-type ProviderObservationRequest = {
-  provider: string;
-  model: string;
-  accountId?: string | undefined;
-  dialect: ProviderDialect;
-  method: string;
+type ProviderObservationRequest = Omit<ProviderRequestLog, 'requestId'> & {
   requestIdHash?: string | undefined;
-  generate?: boolean | undefined;
-  version?: string | undefined;
-  media?: ProviderMediaLog | undefined;
+  servedFor?: ServedFor | undefined;
 };
 
 type ObservabilityOptions = {
@@ -103,7 +100,10 @@ function clonedMedia(media: ProviderMediaLog | undefined): ProviderMediaLog | un
   };
 }
 
-function observationRequest(request: ProviderRequestLog): ProviderObservationRequest {
+function observationRequest(
+  request: ProviderRequestLog,
+  turn: ServingTurn | undefined,
+): ProviderObservationRequest {
   return {
     provider: request.provider,
     model: request.model,
@@ -114,6 +114,7 @@ function observationRequest(request: ProviderRequestLog): ProviderObservationReq
     generate: request.generate,
     version: request.version,
     media: clonedMedia(request.media),
+    servedFor: servedForTurn(turn),
   };
 }
 
@@ -126,6 +127,7 @@ function clonedObservation(record: ProviderObservation): ProviderObservation {
     method: record.method,
     requestIdHash: record.requestIdHash,
     upstreamRequestIdHash: record.upstreamRequestIdHash,
+    at: record.at,
     startedAt: record.startedAt,
     durationMs: record.durationMs,
     ttftMs: record.ttftMs,
@@ -134,6 +136,7 @@ function clonedObservation(record: ProviderObservation): ProviderObservation {
     generate: record.generate,
     version: record.version,
     media: clonedMedia(record.media),
+    servedFor: record.servedFor === undefined ? undefined : { ...record.servedFor },
   };
 }
 
@@ -147,7 +150,11 @@ export class ProviderObservability {
   }
 
   public start(request: ProviderRequestLog): ProviderObservationSpan {
-    return new ProviderObservationSpan(this, observationRequest(request), this.now());
+    const turn = servingTurn();
+
+    if (turn !== undefined) turn.reachedProvider = true;
+
+    return new ProviderObservationSpan(this, observationRequest(request, turn), this.now());
   }
 
   public snapshot(): ProviderObservation[] {
@@ -172,8 +179,8 @@ export class ProviderObservability {
     };
   }
 
-  public publish(record: ProviderObservation): void {
-    const safeRecord = clonedObservation(record);
+  public publish(record: Omit<ProviderObservation, 'at'>): void {
+    const safeRecord = clonedObservation({ ...record, at: Date.now() });
 
     this.records.push(safeRecord);
     const excess = this.records.length - (this.options.maxRecords ?? 10_000);
@@ -260,12 +267,7 @@ export class ProviderObservationSpan {
     usage: ProviderUsage,
   ): void {
     this.owner.publish({
-      provider: this.request.provider,
-      model: this.request.model,
-      accountId: this.request.accountId,
-      dialect: this.request.dialect,
-      method: this.request.method,
-      requestIdHash: this.request.requestIdHash,
+      ...this.request,
       upstreamRequestIdHash,
       startedAt: this.startedAt,
       durationMs: this.owner.now() - this.startedAt,
@@ -273,7 +275,6 @@ export class ProviderObservationSpan {
       status,
       usage,
       generate: this.request.generate ?? true,
-      version: this.request.version,
       media: clonedMedia(this.request.media),
     });
   }

@@ -1,6 +1,7 @@
 import {
   type EngineDirective,
   engineDirectiveSchema,
+  engineLogReportSchema,
   engineReportSchema,
   engineSpendGrantSchema,
   engineSpendRequestSchema,
@@ -19,6 +20,7 @@ import type { PluginHost } from './plugin-host';
 
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
 import { subscriptionRuntime } from './gateway-proxy';
+import { subscribeToLogRows } from './gateway-traffic';
 import { firstPartyProbeOrigins, probeKey } from './provider/key-probe';
 import { listProviderModels } from './provider/model-list';
 import { probeRuntime } from './provider/runtime-probe';
@@ -267,6 +269,10 @@ export function attachEngineChild(
     plugins,
     notingTraffic(parentPort),
   );
+
+  subscribeToLogRows((row) => {
+    parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
+  });
 
   parentPort.on('message', (messageEvent) => {
     if (spendLane.settle(messageEvent.data) || credentialLane.settle(messageEvent.data)) {

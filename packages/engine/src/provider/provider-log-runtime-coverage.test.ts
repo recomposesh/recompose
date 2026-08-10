@@ -17,6 +17,7 @@ function observation(model: string): ProviderObservation {
     model,
     dialect: 'anthropic',
     method: 'POST',
+    at: 1_754_600_000_000,
     startedAt: 1_700_000_000_000,
     durationMs: 12,
     ttftMs: 3,

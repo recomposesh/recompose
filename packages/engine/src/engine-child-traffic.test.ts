@@ -54,8 +54,8 @@ async function grantThenAnswer(
 
   child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
 
-  await answering;
-  await reportsReach(child.parent, 3);
+  await (await answering).text();
+  await reportsReach(child.parent, 4);
 }
 
 describe('what the parent hears once a request through a gateway has finished', () => {
@@ -113,8 +113,8 @@ describe('what the parent hears once a request through a gateway has finished', 
     const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
 
     child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
-    await answering;
-    await reportsReach(child.parent, 3);
+    await (await answering).text();
+    await reportsReach(child.parent, 4);
 
     expect(JSON.stringify(child.parent.reports)).not.toContain('my diary entry');
   });

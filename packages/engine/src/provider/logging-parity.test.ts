@@ -168,6 +168,7 @@ function observation(overrides: Partial<ProviderObservation>): ProviderObservati
     model: 'gpt-5.4',
     dialect: 'responses',
     method: 'POST',
+    at: 1_754_600_000_000,
     startedAt: 0,
     durationMs: 1,
     ttftMs: 1,
