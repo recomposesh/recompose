@@ -1,5 +1,7 @@
 import { engineSpendRequestSchema, engineTrafficReportSchema } from '@recompose/contracts';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
+
+import type { ParentPort } from './parent-port';
 
 import { attachEngineChild } from './engine-child';
 import { aParent, reportsReach } from './engine-child.testkit';
@@ -57,6 +59,52 @@ async function grantThenAnswer(
   await (await answering).text();
   await reportsReach(child.parent, 5);
 }
+
+function aChildWhoseTrafficLaneBroke(answer: () => Response) {
+  const parent = aParent();
+  const capturing = aLoopbackCapturing();
+  const { fetchLike } = fetchAnsweringWith(answer);
+  const brokenPort: ParentPort = {
+    postMessage: (message) => {
+      if (engineTrafficReportSchema.safeParse(message).success) {
+        throw new Error('the parent port is gone');
+      }
+
+      parent.port.postMessage(message);
+    },
+    on: parent.port.on,
+  };
+
+  attachEngineChild(brokenPort, capturing.openListeners, fetchLike);
+  parent.send({ kind: 'start', id: 'd1', gateway: aGatewayHolding(fast) });
+
+  return { parent, capturing };
+}
+
+describe('a traffic word the parent could not be told', () => {
+  test('the caller keeps its answer, because reporting is not what a gateway is for', async () => {
+    const complaints = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const child = aChildWhoseTrafficLaneBroke(() => Response.json({ choices: [] }));
+
+    await reportsReach(child.parent, 1);
+
+    const answering = askUnder(child, 'fast');
+
+    await reportsReach(child.parent, 2);
+
+    const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+
+    child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
+
+    const answer = await answering;
+
+    await answer.text();
+
+    expect(answer.status).toBe(200);
+    expect(JSON.stringify(complaints.mock.calls)).toContain('traffic');
+    complaints.mockRestore();
+  });
+});
 
 describe('what the parent hears once a request through a gateway has finished', () => {
   test('a request the target answered is reported served under its gateway and model', async () => {

@@ -9,7 +9,9 @@ import { servedFor } from './serving-turn';
  * @summary A retry is its own attempt under its own id, so a person reads each try rather than one
  * blurred outcome. An attempt commits the moment the gateway knows a status and repeats itself under
  * the same id once the body ends, which is why a row never depends on whether the caller drained the
- * answer: the first telling stands, and the second only adds what measuring the body revealed.
+ * answer: the first telling stands, and the second only adds what measuring the body revealed. Who
+ * it was served for is read once, when the attempt opens, because a turn is free to ask for a second
+ * grant and the two tellings of one attempt must never disagree on the virtual model it reached.
  */
 export type ProviderAttempt = {
   id: string;
@@ -82,6 +84,7 @@ export function attemptFor(
   }
 
   const id = crypto.randomUUID();
+  const served = servedFor(turn);
   let at: number | undefined;
 
   return {
@@ -95,7 +98,7 @@ export function attemptFor(
         () => ({
           id,
           at: told,
-          servedFor: servedFor(turn),
+          servedFor: served,
           provider: request.provider,
           providerModel: request.model,
           accountId: request.accountId,

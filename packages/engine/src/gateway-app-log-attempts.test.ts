@@ -62,6 +62,28 @@ function keyThrough(rows: readonly LogRow[], virtualModel: string): string | und
   return rows.find((row) => row.virtualModel === virtualModel)?.clientKey;
 }
 
+const relay = { slug: 'relay', displayName: 'Relay', port: 8398, virtualModels: [deep] };
+
+function relayAnswering(answer: () => Response | Promise<Response>): Hono {
+  return createGatewayApp(relay, grantsAfterAPause, async () => answer());
+}
+
+async function askRelay(app: Hono, clientApp: string): Promise<Response> {
+  return app.request(
+    'http://127.0.0.1:8398/v1/chat/completions',
+    {
+      method: 'POST',
+      body: JSON.stringify({ model: 'deep', messages: [{ role: 'user', content: 'hello' }] }),
+      headers: { 'user-agent': clientApp },
+    },
+    loopbackClient,
+  );
+}
+
+function gatewayThrough(rows: readonly LogRow[], virtualModel: string): string | undefined {
+  return rows.find((row) => row.virtualModel === virtualModel)?.gateway;
+}
+
 let complaints: MockInstance;
 
 beforeEach(() => {
@@ -162,7 +184,22 @@ describe('two requests in flight at once', () => {
 
     expect(keyThrough(alongside, 'fast')).toBe(keyThrough(apart, 'fast'));
     expect(keyThrough(alongside, 'deep')).toBe(keyThrough(apart, 'deep'));
-    expect(alongside.map((row) => row.gateway)).toEqual(['codex', 'codex']);
     expect(new Set(alongside.map((row) => row.clientKey)).size).toBe(2);
+  });
+
+  test('neither row takes the other gateway, because each turn holds its own', async () => {
+    const codexApp = gatewayAnswering(() => Response.json({ choices: [] }));
+    const relayApp = relayAnswering(() => Response.json({ choices: [] }));
+    const { rows, forget } = collecting();
+    const answers = await Promise.all([
+      ask(codexApp, 'fast', 'curl/8.7.1'),
+      askRelay(relayApp, 'claude-code/2.1.0'),
+    ]);
+
+    await Promise.all(answers.map(async (answer) => answer.text()));
+    forget();
+
+    expect(gatewayThrough(rows(), 'fast')).toBe('codex');
+    expect(gatewayThrough(rows(), 'deep')).toBe('relay');
   });
 });

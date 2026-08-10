@@ -3,20 +3,15 @@ import {
   engineDirectiveSchema,
   engineLogReportSchema,
   engineReportSchema,
-  engineSpendGrantSchema,
-  engineSpendRequestSchema,
-  engineSubscriptionCredentialUpdateSchema,
-  engineSubscriptionCredentialUpdatedSchema,
   engineTrafficReportSchema,
   type KeyProviderId,
-  type SpendGrant,
 } from '@recompose/contracts';
 
-import type { SpendGrantFor } from './gateway-app';
 import type { SubscriptionRuntime } from './gateway-proxy';
 import type { ParentPort } from './parent-port';
 import type { PluginHost } from './plugin-host';
 
+import { openCredentialUpdateLane, openSpendLane } from './engine-child-lanes';
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
@@ -140,111 +135,23 @@ async function reportBack(
   parentPort.postMessage(engineReportSchema.parse(await answerFor(runtime, fetchLike, directive)));
 }
 
-type SpendLane = {
-  grantFor: SpendGrantFor;
-  settle: (data: unknown) => boolean;
-};
-
-function openSpendLane(parentPort: ParentPort): SpendLane {
-  const pending = new Map<string, (grant: SpendGrant) => void>();
-
-  return {
-    grantFor: async (slug, virtualModel) =>
-      new Promise((resolve) => {
-        const id = crypto.randomUUID();
-
-        pending.set(id, resolve);
-        parentPort.postMessage(
-          engineSpendRequestSchema.parse({ kind: 'spend-request', id, slug, virtualModel }),
-        );
-      }),
-    settle: (data) => {
-      const answer = engineSpendGrantSchema.safeParse(data);
-
-      if (!answer.success) {
-        return false;
-      }
-
-      const resolve = pending.get(answer.data.answers);
-
-      if (resolve === undefined) {
-        console.error('The engine child heard a spend grant answering no open request.');
-
-        return true;
-      }
-
-      pending.delete(answer.data.answers);
-      resolve(answer.data.grant);
-
-      return true;
-    },
-  };
-}
-
-type CredentialUpdateLane = {
-  persist: SubscriptionRuntime['persist'];
-  settle: (data: unknown) => boolean;
-};
-
-function openCredentialUpdateLane(parentPort: ParentPort): CredentialUpdateLane {
-  const pending = new Map<string, { stored: () => void; failed: () => void }>();
-
-  return {
-    persist: async (provider, accountId, credential) =>
-      new Promise<void>((stored, failed) => {
-        const id = crypto.randomUUID();
-
-        pending.set(id, {
-          stored,
-          failed: () => {
-            failed(new Error('credential update failed'));
-          },
-        });
-        parentPort.postMessage(
-          engineSubscriptionCredentialUpdateSchema.parse({
-            kind: 'subscription-credential-update',
-            id,
-            provider,
-            accountId,
-            credential,
-          }),
-        );
-      }),
-    settle: (data) => {
-      const answer = engineSubscriptionCredentialUpdatedSchema.safeParse(data);
-
-      if (!answer.success) {
-        return false;
-      }
-
-      const waiting = pending.get(answer.data.answers);
-
-      if (waiting === undefined) {
-        console.error('The engine child heard a credential update answering no open request.');
-
-        return true;
-      }
-
-      pending.delete(answer.data.answers);
-      waiting[answer.data.verdict]();
-
-      return true;
-    },
-  };
-}
-
 /**
  * Tells the parent what one finished request came to, the moment it finished.
  *
  * @summary One word per request matches the spend request the same turn already sent, so the lane
  * carries no more traffic than serving itself does, and the parent is free to hold the latest word
- * per virtual model rather than replay every one of them at a screen.
+ * per virtual model rather than replay every one of them at a screen. A word the parent cannot be
+ * told is written down and dropped, because the caller is owed its answer either way.
  */
 function notingTraffic(parentPort: ParentPort): NoteTraffic {
   return (slug, virtualModel, request) => {
-    parentPort.postMessage(
-      engineTrafficReportSchema.parse({ kind: 'traffic', slug, virtualModel, request }),
-    );
+    try {
+      parentPort.postMessage(
+        engineTrafficReportSchema.parse({ kind: 'traffic', slug, virtualModel, request }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a traffic word for "${slug}".`, failure);
+    }
   };
 }
 

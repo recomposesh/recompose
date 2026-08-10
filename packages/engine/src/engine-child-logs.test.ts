@@ -1,5 +1,7 @@
 import { engineLogReportSchema, engineSpendRequestSchema } from '@recompose/contracts';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
+
+import type { ParentPort } from './parent-port';
 
 import { attachEngineChild } from './engine-child';
 import { aParent, reportsReach } from './engine-child.testkit';
@@ -25,9 +27,30 @@ function aServingChild(answer: () => Response) {
   return { parent, capturing };
 }
 
+function aChildWhoseLogLaneBroke(answer: () => Response) {
+  const parent = aParent();
+  const capturing = aLoopbackCapturing();
+  const { fetchLike } = fetchAnsweringWith(answer);
+  const brokenPort: ParentPort = {
+    postMessage: (message) => {
+      if (engineLogReportSchema.safeParse(message).success) {
+        throw new Error('the parent port is gone');
+      }
+
+      parent.port.postMessage(message);
+    },
+    on: parent.port.on,
+  };
+
+  attachEngineChild(brokenPort, capturing.openListeners, fetchLike);
+  parent.send({ kind: 'start', id: 'd1', gateway: aGatewayHolding(aVirtualModel()) });
+
+  return { parent, capturing };
+}
+
 type ServingChild = ReturnType<typeof aServingChild>;
 
-async function grantThenAnswer(child: ServingChild, model: string): Promise<void> {
+async function grantThenAnswer(child: ServingChild, model: string): Promise<Response> {
   await reportsReach(child.parent, 1);
 
   const answering = openedApp(child.capturing).request(
@@ -45,7 +68,12 @@ async function grantThenAnswer(child: ServingChild, model: string): Promise<void
   const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
 
   child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
-  await (await answering).text();
+
+  const answer = await answering;
+
+  await answer.text();
+
+  return answer;
 }
 
 function logsIn(reports: readonly unknown[]) {
@@ -62,6 +90,19 @@ function rowsStandingIn(reports: readonly unknown[]) {
 
 afterEach(() => {
   providerObservability().clear();
+});
+
+describe('a row the parent could not be told', () => {
+  test('the caller keeps its answer, and the gateway it was for is written down', async () => {
+    const complaints = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const child = aChildWhoseLogLaneBroke(() => Response.json({ choices: [] }));
+
+    const answer = await grantThenAnswer(child, 'fast');
+
+    expect(answer.status).toBe(200);
+    expect(JSON.stringify(complaints.mock.calls)).toContain('codex');
+    complaints.mockRestore();
+  });
 });
 
 describe('what the parent hears once one request has been logged', () => {

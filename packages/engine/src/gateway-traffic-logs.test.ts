@@ -14,9 +14,11 @@ import {
   grantsNothing,
   neverFetches,
 } from './gateway-app.testkit';
+import { aHeldStream } from './gateway-app.testkit';
 import { collectingRows } from './gateway-logs.testkit';
 import { noteUnreadableRequest, subscribeToLogRows } from './gateway-traffic';
 import { providerObservability } from './provider/provider-observability';
+import { sha256Digest } from './provider/provider-observation';
 import { withinServingTurn } from './provider/serving-turn';
 
 const codex = aGatewayHolding(aVirtualModel());
@@ -80,12 +82,13 @@ describe('a request too broken to read that reached no gateway', () => {
   });
 });
 
-function reachingWith(provider: string, model: string): void {
+function reachingWith(provider: string, model: string, requestId?: string): void {
   const span = providerObservability().start({
     provider,
     model,
     dialect: 'anthropic',
     method: 'POST',
+    requestId,
   });
 
   span.complete(200, new Headers(), new TextEncoder().encode('{}'));
@@ -145,6 +148,51 @@ describe('a reach whose provider names arrived blank', () => {
     expect(rows().at(0)).toMatchObject({ providerModel: 'gpt-5-mini' });
     expect(rows().at(0)?.provider).toBeUndefined();
     expect(rows().at(0)?.accountId).toBeUndefined();
+  });
+});
+
+describe('two attempts at one request', () => {
+  test('they stand as two rows sharing the one hashed request identity', () => {
+    const { rows, forget } = collecting();
+
+    withinServingTurn(aTurnOf('codex'), () => {
+      reachingWith('anthropic', 'claude-sonnet-4-5', 'req-7');
+      reachingWith('anthropic', 'claude-sonnet-4-5', 'req-7');
+    });
+    forget();
+
+    expect(new Set(rows().map((row) => row.id)).size).toBe(2);
+    expect(
+      providerObservability()
+        .snapshot()
+        .map(({ requestIdHash }) => requestIdHash),
+    ).toEqual([sha256Digest('req-7'), sha256Digest('req-7')]);
+  });
+});
+
+describe('a turn that asked for a second grant', () => {
+  test('both tellings of one attempt name the virtual model that reach was granted', async () => {
+    const turn = aTurnOf('codex');
+    const collected = collectingRows();
+    const held = aHeldStream();
+
+    await withinServingTurn(turn, async () => {
+      const answered = providerObservability()
+        .start({
+          provider: 'openai',
+          model: 'gpt-5-mini',
+          dialect: 'chat-completions',
+          method: 'POST',
+        })
+        .observe(new Response(held.stream));
+
+      turn.virtualModel = 'deep';
+      held.end();
+      await answered.text();
+    });
+    collected.forget();
+
+    expect(collected.told.map(({ virtualModel }) => virtualModel)).toEqual(['fast', 'fast']);
   });
 });
 
