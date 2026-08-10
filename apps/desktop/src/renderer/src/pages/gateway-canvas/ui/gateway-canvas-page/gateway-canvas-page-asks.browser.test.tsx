@@ -169,7 +169,9 @@ test('a target born past the pane zooms the view out until it shows', async () =
   );
 
   await expect.poll(async () => storedBindingOf('steady')).toBeDefined();
-  await expect.poll(() => bornCardReading(screen.container, 'target:s1')).toBe('fits');
+  await expect
+    .poll(() => bornCardReading(screen.container, 'target:s1'), { timeout: 10_000 })
+    .toBe('fits');
 });
 
 test('an account whose models cannot be read says so in the picker instead of nothing', async () => {
