@@ -50,9 +50,8 @@ test('selecting a cable shows the binding in the inspector', async () => {
 
   const drawer = screen.getByRole('complementary');
 
-  await expect
-    .element(drawer.getByText('api-key · anthropic · work', { exact: true }))
-    .toBeVisible();
+  await expect.element(drawer.getByText('work', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('API Keys', { exact: true })).toBeVisible();
   await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
