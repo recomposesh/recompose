@@ -1,4 +1,4 @@
-import type { GatewayConfig } from '@recompose/contracts';
+import type { AccountsDocument, GatewayConfig } from '@recompose/contracts';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Suspense } from 'react';
@@ -13,6 +13,7 @@ import { installFakeBridge } from '../../../../shared/testing';
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
 import {
+  accountsWithout,
   freshGateway,
   listedModels,
   runningGateway,
@@ -28,6 +29,7 @@ beforeEach(() => {
 });
 
 type DrawerWorld = {
+  accounts?: AccountsDocument;
   gateway?: GatewayConfig;
   refusal?: string;
   onDraftDefined?: (definition: SettledDefinition) => void;
@@ -37,7 +39,7 @@ async function renderDrawer(subject: InspectorSubject, world: DrawerWorld = {}) 
   const gateway = world.gateway ?? servingGateway;
 
   installFakeBridge({
-    accounts: storedAccounts,
+    accounts: world.accounts ?? storedAccounts,
     gateways: [gateway],
     engineStates: runningGateway,
     providerModels: listedModels,
@@ -107,6 +109,30 @@ test('the target subject reads the account behind it', async () => {
   await expect.element(screen.getByText('Target', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('anthropic', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('API Keys', { exact: true })).toBeVisible();
+});
+
+test('a virtual model whose account left the registry reads that bare account id as its target', async () => {
+  const screen = await renderDrawer(
+    { kind: 'virtual-model', modelId: 'creative' },
+    { accounts: accountsWithout('g1') },
+  );
+
+  await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('g1', { exact: true })).toBeVisible();
+});
+
+test('a subject naming a virtual model the gateway no longer holds reads the gateway', async () => {
+  const screen = await renderDrawer({ kind: 'virtual-model', modelId: 'gone' });
+
+  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Virtual model', { exact: true })).not.toBeInTheDocument();
+});
+
+test('a subject naming a target the registry no longer holds reads the gateway', async () => {
+  const screen = await renderDrawer({ kind: 'target', accountId: 'gone' });
+
+  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Target', { exact: true })).not.toBeInTheDocument();
 });
 
 test('a removed target says where the account went', async () => {

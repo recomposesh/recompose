@@ -114,19 +114,32 @@ export async function draggedCable(from: Element, onto: Element): Promise<void> 
   releasedAt(portPointOf(onto));
 }
 
-/** The grab anchor at a cable's target end, once the cable stands to carry it. */
-export async function reconnectAnchorOf(container: HTMLElement, cableId: string): Promise<Element> {
+async function standingAnchor(
+  container: HTMLElement,
+  cableId: string,
+  end: 'source' | 'target',
+): Promise<Element> {
   return vi.waitFor(() => {
     const anchor = container.querySelector(
-      `[data-id="${cableId}"] .react-flow__edgeupdater-target`,
+      `[data-id="${cableId}"] .react-flow__edgeupdater-${end}`,
     );
 
     if (anchor === null) {
-      throw new Error(`no reconnect anchor stands on "${cableId}" yet`);
+      throw new Error(`no ${end} reconnect anchor stands on "${cableId}" yet`);
     }
 
     return anchor;
   });
+}
+
+/** The grab anchor at a cable's target end, once the cable stands to carry it. */
+export async function reconnectAnchorOf(container: HTMLElement, cableId: string): Promise<Element> {
+  return standingAnchor(container, cableId, 'target');
+}
+
+/** The grab anchor at a cable's source end, which is the end the virtual model holds. */
+export async function sourceAnchorOf(container: HTMLElement, cableId: string): Promise<Element> {
+  return standingAnchor(container, cableId, 'source');
 }
 
 /** Takes hold of a card and drags it by an offset, the way a person rearranges the canvas. */
@@ -155,6 +168,27 @@ export function draggedCard(card: Element | null, by: { x: number; y: number }):
 /** The draft card standing on the canvas, or nothing while no draft stands. */
 export function draftCardOn(container: HTMLElement): Element | null {
   return container.querySelector('.react-flow__node[data-id="draft"]');
+}
+
+/**
+ * Presses a card's own frame rather than the card a person reads, once the card stands.
+ *
+ * @operation The press is a dispatched click on the node's box, because the ports that stand
+ * outside the card are what a real pointer meets there and a press on one starts a cable drag,
+ * which is a different gesture from the press this asks about.
+ */
+export async function clickedNodeFrame(container: HTMLElement, nodeId: string): Promise<void> {
+  const frame = await vi.waitFor(() => {
+    const standing = container.querySelector(`.react-flow__node[data-id="${nodeId}"]`);
+
+    if (standing === null) {
+      throw new Error(`no card stands under "${nodeId}"`);
+    }
+
+    return standing;
+  });
+
+  frame.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
 /**

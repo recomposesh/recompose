@@ -4,6 +4,7 @@ import preview from '#.storybook/preview';
 
 import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import {
+  barelyCabledFlow,
   cabledFlow,
   cableSeats,
   cablesDrawn,
@@ -38,6 +39,18 @@ export const TheCableTakesTheCanvasStroke = meta.story({
     const [cable] = await cablesDrawn(canvasElement);
 
     await expect(paintedStyle(cable).strokeWidth).toBe('2.6px');
+    await expect(paintedStyle(cable).stroke).toBe(
+      forScheme('rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.45)'),
+    );
+  },
+});
+
+/** A cable told nothing about itself still draws, because a pane that fell over loses everything. */
+export const ACableCarryingNothingStillDraws = meta.story({
+  render: () => barelyCabledFlow(),
+  play: async ({ canvasElement }) => {
+    const [cable] = await cablesDrawn(canvasElement);
+
     await expect(paintedStyle(cable).stroke).toBe(
       forScheme('rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.45)'),
     );

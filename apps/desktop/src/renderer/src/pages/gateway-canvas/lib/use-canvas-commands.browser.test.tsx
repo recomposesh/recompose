@@ -1,4 +1,5 @@
 import type { IpcEventPayload } from '@recompose/contracts';
+import type { Node } from '@xyflow/react';
 
 import { ReactFlow, ReactFlowProvider } from '@xyflow/react';
 import { beforeEach, expect, test } from 'vitest';
@@ -35,11 +36,19 @@ beforeEach(() => {
   };
 });
 
-async function renderCommandedFlow(onTidy: () => void = () => {}) {
+const distantCard = {
+  id: 'far',
+  position: { x: 900, y: 700 },
+  data: { label: 'Far' },
+  width: 158,
+  height: 78,
+};
+
+async function renderCommandedFlow(onTidy: () => void = () => {}, nodes: Node[] = []) {
   return render(
     <div style={{ width: 640, height: 400 }}>
       <ReactFlowProvider>
-        <ReactFlow defaultViewport={{ x: 0, y: 0, zoom: 1 }}>
+        <ReactFlow defaultNodes={nodes} defaultViewport={{ x: 0, y: 0, zoom: 1 }}>
           <CanvasCommands onTidy={onTidy} />
         </ReactFlow>
       </ReactFlowProvider>
@@ -58,6 +67,24 @@ test('the zoom-in command grows the viewport', async () => {
   const resting = viewportTransform(screen.container);
 
   pushCommand('zoom-in');
+
+  await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
+});
+
+test('the zoom-out command shrinks the viewport', async () => {
+  const screen = await renderCommandedFlow();
+  const resting = viewportTransform(screen.container);
+
+  pushCommand('zoom-out');
+
+  await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
+});
+
+test('the zoom-to-fit command moves the view onto the cards that stand', async () => {
+  const screen = await renderCommandedFlow(() => {}, [distantCard]);
+  const resting = viewportTransform(screen.container);
+
+  pushCommand('zoom-to-fit');
 
   await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
 });

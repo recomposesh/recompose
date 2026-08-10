@@ -59,14 +59,7 @@ export const cableSeats = {
   targetY: 228,
 };
 
-/**
- * One cable drawn between two cards on a canvas, standing however a scenario says.
- *
- * @summary Reach for it in any story about how a binding reads, so every scenario draws the same
- * two cards and differs only in what the cable between them carries. The flow holds its own
- * selection, because the story is about how a cable paints rather than about who writes topology.
- */
-export function cabledFlow(standing: CableStanding, failure?: CableFailure): ReactElement {
+function cardsWiredBy(carried: Record<string, unknown> | undefined): ReactElement {
   return (
     <div className="h-96 w-160 bg-surface-content dot-grid">
       <ReactFlow
@@ -76,7 +69,7 @@ export function cabledFlow(standing: CableStanding, failure?: CableFailure): Rea
             type: 'binding',
             source: 'model:fast',
             target: 'target:work',
-            data: { standing, failure },
+            ...(carried === undefined ? {} : { data: carried }),
           },
         ]}
         defaultNodes={seats}
@@ -87,6 +80,28 @@ export function cabledFlow(standing: CableStanding, failure?: CableFailure): Rea
       />
     </div>
   );
+}
+
+/**
+ * One cable drawn between two cards on a canvas, standing however a scenario says.
+ *
+ * @summary Reach for it in any story about how a binding reads, so every scenario draws the same
+ * two cards and differs only in what the cable between them carries. The flow holds its own
+ * selection, because the story is about how a cable paints rather than about who writes topology.
+ */
+export function cabledFlow(standing: CableStanding, failure?: CableFailure): ReactElement {
+  return cardsWiredBy({ standing, failure });
+}
+
+/**
+ * The same two cards with a cable handed nothing to carry at all.
+ *
+ * @summary Reach for it to ask what a binding draws before anything has been said about it. A
+ * canvas edge that leaned on data it was not given would take the whole pane down with it, and a
+ * pane that fell over would lose the composition rather than one cable's tint.
+ */
+export function barelyCabledFlow(): ReactElement {
+  return cardsWiredBy(undefined);
 }
 
 /** The color the running scheme paints, so one assertion covers light and dark alike. */

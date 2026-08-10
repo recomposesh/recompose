@@ -68,6 +68,31 @@ test('Escape puts the error away, which is the way out that changes nothing', as
   await expect.element(screen.getByText(REFUSED)).not.toBeVisible();
 });
 
+test('a key that is not Escape leaves a standing reading standing', async () => {
+  const screen = await renderChip();
+  const chip = screen.getByRole('button', { name: /last error/i });
+
+  await userEvent.click(chip);
+  await expect.element(screen.getByText(REFUSED)).toBeVisible();
+
+  chip.element().focus();
+  await userEvent.keyboard('a');
+
+  await expect.element(screen.getByText(REFUSED)).toBeVisible();
+});
+
+test('Escape with the error already away leaves it away', async () => {
+  const screen = await renderChip();
+
+  screen
+    .getByRole('button', { name: /last error/i })
+    .element()
+    .focus();
+  await userEvent.keyboard('{Escape}');
+
+  await expect.element(screen.getByText(REFUSED)).not.toBeVisible();
+});
+
 test('the chip says out loud whether the error stands open, so a screen reader reads the same state', async () => {
   const screen = await renderChip();
   const chip = screen.getByRole('button', { name: /last error/i });

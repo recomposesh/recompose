@@ -57,6 +57,16 @@ test('moving the draft keeps what a person typed', () => {
   expect(heldDraft('my-gateway')?.definition.displayName).toBe('Fa');
 });
 
+test('moving a draft nobody started leaves the gateway holding none', () => {
+  moveDraftSeat('my-gateway', { x: 10, y: 20 });
+
+  expect(heldDraft('my-gateway')).toBeUndefined();
+});
+
+test('a gateway opened for the first time this session holds no draft', () => {
+  expect(heldDraft('never-opened-gateway')).toBeUndefined();
+});
+
 test('leaving the draft lets it go entirely', () => {
   startDrafting('my-gateway', emptyDefinition(), seat);
   leaveDrafting('my-gateway');

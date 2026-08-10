@@ -2,11 +2,11 @@ import type { Connection, NodeChange } from '@xyflow/react';
 
 import { describe, expect, test } from 'vitest';
 
-import type { CanvasEdge } from '../../lib/node-graph';
+import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
 
 import { gatewaySeed } from '../../../../shared/testing';
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { flowEdgesOf, movedSeats, oneTargetRule, subjectOf } from './canvas-wiring';
+import { flowEdgesOf, flowNodesOf, movedSeats, oneTargetRule, subjectOf } from './canvas-wiring';
 
 function pulled(source: string, target: string): Connection {
   return { source, target, sourceHandle: null, targetHandle: null };
@@ -95,6 +95,44 @@ describe('the one-target rule during a drag', () => {
   test('nothing leaves the gateway or a target by cable', () => {
     expect(valid(pulled('gateway', 'target:k1'))).toBe(false);
     expect(valid(pulled('target:k1', 'target:g1'))).toBe(false);
+  });
+});
+
+describe('what the flow hands each card to stand on', () => {
+  const graph: CanvasGraph = {
+    nodes: [
+      { id: 'gateway', kind: 'gateway', displayName: 'My Gateway', port: 8397 },
+      {
+        id: 'model:fast',
+        kind: 'virtual-model',
+        modelId: 'fast',
+        displayName: 'Fast',
+        providerModel: 'claude-haiku-4-5',
+      },
+    ],
+    edges: [],
+  };
+  const asks = { onAddVirtualModel: () => {}, onPickTargetFor: () => {} };
+
+  test('a card seats where the arrangement puts it', () => {
+    const seated = flowNodesOf(graph, { 'model:fast': { x: 320, y: 140 } }, undefined, asks);
+
+    expect(seated.find((node) => node.id === 'model:fast')?.position).toEqual({ x: 320, y: 140 });
+  });
+
+  test('a card the arrangement never seated stands at the origin rather than nowhere', () => {
+    const seated = flowNodesOf(graph, {}, undefined, asks);
+
+    expect(seated.map((node) => node.position)).toEqual([
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+  });
+
+  test('only the selected card reads as selected', () => {
+    const seated = flowNodesOf(graph, {}, 'model:fast', asks);
+
+    expect(seated.map((node) => node.selected)).toEqual([false, true]);
   });
 });
 

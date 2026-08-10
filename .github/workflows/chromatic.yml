@@ -3,6 +3,12 @@ name: chromatic
 on:
   push:
     branches: ['**']
+  workflow_dispatch:
+    inputs:
+      accept-reviewed-baselines:
+        description: accept this branch's reviewed snapshots as baselines
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -34,4 +40,4 @@ jobs:
           workingDir: apps/desktop
           buildScriptName: storybook:build
           exitZeroOnChanges: true
-          autoAcceptChanges: main
+          autoAcceptChanges: ${{ github.event_name == 'workflow_dispatch' && inputs.accept-reviewed-baselines && github.ref_name || 'main' }}

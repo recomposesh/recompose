@@ -103,5 +103,18 @@ export const RefusedWrite = meta.story({
   },
 });
 
+/**
+ * The drawer on its way off screen, which is the standing its exit motion plays over.
+ *
+ * @summary A panel that unmounts the instant a person closes it never plays an exit, so it is held
+ * here for exactly as long as that motion runs and reads its subject the whole way out.
+ */
+export const Leaving = meta.story({
+  args: { leaving: true },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Endpoint', { exact: true })).toBeVisible();
+  },
+});
+
 /** The drawer in the dark scheme, where every subject body has to separate from the stage. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

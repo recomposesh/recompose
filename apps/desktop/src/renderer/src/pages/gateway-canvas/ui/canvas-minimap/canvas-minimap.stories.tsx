@@ -89,6 +89,28 @@ export const EachCardDrawsInItsRoleTint = meta.story({
   },
 });
 
+/**
+ * A card of a kind the map holds no tint for still draws, in the plain mark every card falls back to.
+ *
+ * @summary A map that skipped whatever it did not recognize would answer a person's glance with a
+ * smaller composition than the one in front of them, which misleads where a mark drawn without a
+ * role tint only looks plain.
+ */
+export const ACardOfNoKnownKindStillDraws = meta.story({
+  decorators: [
+    inCanvasFlow(
+      [...seats, { id: 'stranger', position: { x: 720, y: 0 }, data: {}, width: 180, height: 76 }],
+      { x: 20, y: 20, zoom: 0.5 },
+      cables,
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const drawing = await canvas.findByRole('img', mapLabel);
+
+    await expect(drawing.querySelectorAll('rect')).toHaveLength(seats.length + 1);
+  },
+});
+
 /** The map insets clear of the separator riding the canvas edge, so neither steals the other's drag. */
 export const TheMapClearsTheSeparatorsReach = meta.story({
   play: async ({ canvas }) => {
