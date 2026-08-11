@@ -11,4 +11,4 @@ A canvas target card takes its identity from the bound real model within an acco
 
 The maintainer locked the domain hierarchy on 2026-08-10, and this change makes the canvas honor it. A virtual model maps to a real model, and a provider serves that real model. The provider stands as one of four kinds: subscription, API key, aggregator, or local runtime. The account name lives inside that kind. The hierarchy binds copy and structure everywhere, so a target card carries the real model it serves. The design-system mock already titles target cards this way, for example `work · sonnet`.
 
-The maintainer gave the spec amendment a fresh approval on 2026-08-11. The behavior itself shipped through the hackathon sprint (#159), so this change archives from discovery and carries no design or tasks artifacts of its own.
+The maintainer gave the spec amendment a fresh approval on 2026-08-11. The behavior itself shipped with #159, so this change archives from discovery and carries no design or tasks artifacts of its own.
