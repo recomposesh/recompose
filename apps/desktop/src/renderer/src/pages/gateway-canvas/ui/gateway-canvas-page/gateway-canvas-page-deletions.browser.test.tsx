@@ -1,13 +1,20 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
+import { toggleInspector } from '../../../../shared/lib';
+import { gatewaySeed } from '../../../../shared/testing';
 import {
   clickedCable,
   draftCardOn,
   storedBindingOf,
   storedModels,
 } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import {
+  canvasPageOn,
+  freshCanvasRun,
+  renderCanvasPage,
+  standCanvasBridge,
+} from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -124,4 +131,22 @@ test('Cancel on the target question leaves the binding exactly as it stood', asy
     accountId: 'k1',
     providerModel: 'claude-haiku-4-5',
   });
+});
+
+test('a gateway nobody named asks its removal by the slug it stores under', async () => {
+  standCanvasBridge({
+    gateways: [gatewaySeed({ slug: 'my-gateway', displayName: '', port: 8397 })],
+  });
+
+  const screen = await renderCanvasPage(false, undefined, /:8397/);
+
+  toggleInspector();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Gateway' }));
+
+  await expect.element(screen.getByText(/Delete the gateway "my-gateway"/)).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+  await expect.element(screen.getByText(/Delete the gateway/)).not.toBeInTheDocument();
 });

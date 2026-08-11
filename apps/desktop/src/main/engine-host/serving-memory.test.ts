@@ -1,7 +1,7 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { rememberedServingSlugs, servingMemoryKeeper } from './serving-memory';
 
@@ -58,5 +58,32 @@ describe('the memory of which gateways serve', () => {
     );
 
     expect(await rememberedServingSlugs(userDataPath)).toEqual(['codex', 'relay']);
+  });
+});
+
+describe('a memory the disk pushes back on', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('a memory that is sound JSON but no list reads as nothing serving', async () => {
+    const userDataPath = await freshUserData();
+
+    await writeFile(join(userDataPath, 'serving-gateways.json'), '{"codex":"running"}', 'utf8');
+
+    expect(await rememberedServingSlugs(userDataPath)).toEqual([]);
+  });
+
+  test('a keep the disk refuses complains rather than failing the state change', async () => {
+    const userDataPath = await freshUserData();
+
+    await mkdir(join(userDataPath, 'serving-gateways.json'));
+
+    const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    servingMemoryKeeper(userDataPath).keep({ codex: { status: 'running' } });
+
+    await expect.poll(() => complaint.mock.calls.length).toBeGreaterThan(0);
+    expect(complaint.mock.calls[0]?.[0]).toBe('recompose could not keep which gateways serve');
   });
 });

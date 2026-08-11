@@ -195,6 +195,30 @@ test('a sign-in the tool reported leaves the account behind and the fork with it
   expect((await heldSubscriptions()).map((view) => view.provider)).toEqual(['anthropic']);
 });
 
+test('a subscription fork over a provider that never signs in stands nothing at all', async () => {
+  installFakeBridge();
+
+  const screen = await renderFork(offered('openrouter'), 'subscription');
+
+  expect(screen.container.childElementCount).toBe(0);
+});
+
+test('a local fork over a provider this machine cannot serve stands nothing at all', async () => {
+  installFakeBridge();
+
+  const screen = await renderFork(offered('anthropic'), 'local');
+
+  expect(screen.container.childElementCount).toBe(0);
+});
+
+test('a key fork over a provider that takes no key stands nothing at all', async () => {
+  installFakeBridge();
+
+  const screen = await renderFork(offered('ollama'), 'api-key');
+
+  expect(screen.container.childElementCount).toBe(0);
+});
+
 test('a refused sign-in says why rather than waiting on a tool that already answered', async () => {
   installFakeBridge({
     tools: [claudeCode],

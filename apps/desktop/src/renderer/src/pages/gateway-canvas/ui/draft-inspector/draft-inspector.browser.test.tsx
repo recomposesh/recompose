@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
+import { heldDraft } from '../../lib/use-held-draft';
 import { clickedCable, storedModels } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 
@@ -65,6 +66,21 @@ test('selecting a released virtual model does not move focus into its name', asy
 
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).toBeVisible();
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).not.toHaveFocus();
+});
+
+test('stepping back to the target choice lets the picked model go with the target', async () => {
+  const { panel } = await draftedInspectorOn();
+
+  await userEvent.click(panel.getByRole('button', { name: 'work' }));
+  await userEvent.click(panel.getByRole('button', { name: 'claude-opus-5' }));
+
+  await expect.poll(() => heldDraft('my-gateway')?.definition.providerModel).toBe('claude-opus-5');
+
+  await userEvent.click(panel.getByRole('button', { name: 'Select different provider' }));
+
+  await expect.element(panel.getByRole('button', { name: 'work' })).toBeVisible();
+  expect(heldDraft('my-gateway')?.definition.accountId).toBe('');
+  expect(heldDraft('my-gateway')?.definition.providerModel).toBe('');
 });
 
 test('a save the store refuses says why in the inspector and holds every word typed', async () => {

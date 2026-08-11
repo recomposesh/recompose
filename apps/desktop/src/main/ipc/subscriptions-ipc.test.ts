@@ -207,4 +207,18 @@ describe('reporting the provider tools this machine can run', () => {
       ['antigravity', false],
     ]);
   });
+
+  test('given a search path that cannot be read, the report is a typed refusal', async () => {
+    const handlers = createSubscriptionsIpcHandlers({
+      ...world.contextOn('linux', world.nothingHappens),
+      searchPath: async () => Promise.reject(new Error('the login shell never answered')),
+    });
+
+    const answered = await handlers['subscriptions:tools']();
+
+    expect(answered).toMatchObject({
+      ok: false,
+      error: { code: 'storage-failed', message: 'the login shell never answered' },
+    });
+  });
 });

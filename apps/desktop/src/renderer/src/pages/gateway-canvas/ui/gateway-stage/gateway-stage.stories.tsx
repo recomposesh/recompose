@@ -75,9 +75,11 @@ export const TheComposedCanvas = meta.story({
     await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: /Fast/ })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: /work/ })).toBeVisible();
-    await expect(canvasElement.querySelector('[data-id="cable:fast"]')).not.toBeNull();
-    await expect(canvasElement.querySelector('[data-id="cable:creative"]')).not.toBeNull();
-    await expect(canvasElement.querySelector('[data-id="wire:model:fast"]')).not.toBeNull();
+    await waitFor(async () => {
+      await expect(canvasElement.querySelector('[data-id="cable:fast"]')).not.toBeNull();
+      await expect(canvasElement.querySelector('[data-id="cable:creative"]')).not.toBeNull();
+      await expect(canvasElement.querySelector('[data-id="wire:model:fast"]')).not.toBeNull();
+    });
     await expect(await canvas.findByRole('img', { name: 'Canvas map' })).toBeVisible();
     await expect(await canvas.findByLabelText('Canvas tools')).toBeVisible();
   },

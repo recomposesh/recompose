@@ -1,9 +1,13 @@
 import type { LogBatch, LogRow, RecomposeIpcEvents } from '@recompose/contracts';
 
 import { QueryClient } from '@tanstack/react-query';
-import { expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import { bindEngineLogsToCache, engineLogsQueryOptions } from './engine-logs';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function aLogLine(): {
   subscribe: RecomposeIpcEvents['engine:logs'];
@@ -153,6 +157,18 @@ test('the newest row stands first, whichever order the batches arrived in', () =
   expect(idsHeld(queryClient, 'codex')).toEqual(['newest', 'middle', 'oldest']);
 });
 
+test('rows sharing an instant stand by their ids, whichever order they arrived in', () => {
+  const line = aLogLine();
+  const queryClient = aBoundCache(line.subscribe);
+
+  line.push({
+    kind: 'append',
+    rows: [aRow('a', FIRST_INSTANT), aRow('c', FIRST_INSTANT), aRow('b', FIRST_INSTANT)],
+  });
+
+  expect(idsHeld(queryClient, 'codex')).toEqual(['c', 'b', 'a']);
+});
+
 test('rows sharing an instant hold one order, so a merge never shuffles what stands', () => {
   const line = aLogLine();
   const queryClient = aBoundCache(line.subscribe);
@@ -226,6 +242,35 @@ test('a renderer that rebinds reads the same rows again, as a reload does', () =
 
   expect(history.asked()).toBe(2);
   expect(idsHeld(queryClient, 'codex')).toEqual(['one']);
+});
+
+test('a history the main process refuses is complained about rather than dropped silently', async () => {
+  const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+  bindEngineLogsToCache(new QueryClient(), aLogLine().subscribe, async () =>
+    Promise.resolve({
+      ok: false as const,
+      error: { code: 'storage-failed' as const, message: 'the ledger is gone' },
+    }),
+  );
+
+  await expect.poll(() => complaint.mock.calls.length).toBe(1);
+  expect(complaint.mock.calls[0]?.[1]).toEqual({
+    code: 'storage-failed',
+    message: 'the ledger is gone',
+  });
+});
+
+test('a history ask that breaks in transit is complained about rather than thrown', async () => {
+  const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  const bridgeGone = new Error('the bridge is gone');
+
+  bindEngineLogsToCache(new QueryClient(), aLogLine().subscribe, async () =>
+    Promise.reject(bridgeGone),
+  );
+
+  await expect.poll(() => complaint.mock.calls.length).toBe(1);
+  expect(complaint.mock.calls[0]?.[1]).toBe(bridgeGone);
 });
 
 test('letting go stops the listening, so no binding outlives its screen', () => {

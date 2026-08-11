@@ -1,9 +1,15 @@
+import type { AccountsDocument } from '@recompose/contracts';
+
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
-import { accountsWithout, freshGateway } from '../../testing/gateway-canvas.testkit';
+import {
+  accountsWithout,
+  freshGateway,
+  storedAccounts,
+} from '../../testing/gateway-canvas.testkit';
 import { renderDrawer } from '../../testing/gateway-drawer.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
@@ -113,6 +119,65 @@ test('a subscription target reads the signed-in email', async () => {
   await expect.element(screen.getByText('Claude', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('Email', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('ada@example.com', { exact: true })).toBeVisible();
+});
+
+test('a local runtime target reads the address a person pointed it at', async () => {
+  const screen = await renderDrawer({ kind: 'target', accountId: 'l1', modelId: 'fast' });
+
+  await expect.element(screen.getByText('Local Runtime', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Address', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('http://127.0.0.1:11434', { exact: true })).toBeVisible();
+});
+
+const personalPlan: AccountsDocument = {
+  ...storedAccounts,
+  accounts: [
+    { id: 's1', provider: 'anthropic', kind: 'subscription', label: 'personal plan' },
+    ...storedAccounts.accounts.filter((held) => held.id !== 's1'),
+  ],
+};
+
+test('a subscription target nobody is signed into reads its stored label as the email', async () => {
+  const screen = await renderDrawer(
+    { kind: 'target', accountId: 's1', modelId: 'fast' },
+    { accounts: personalPlan },
+  );
+
+  await expect.element(screen.getByText('Email', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('personal plan', { exact: true })).toBeVisible();
+});
+
+const researchKey: AccountsDocument = {
+  ...storedAccounts,
+  accounts: [
+    ...storedAccounts.accounts,
+    {
+      id: 'p1',
+      provider: 'perplexity',
+      kind: 'api-key',
+      label: 'research',
+      credentialRef: 'c9',
+      keyTail: '9x2f',
+    },
+  ],
+};
+
+test('a target whose provider recompose draws no mark for still reads its stored facts', async () => {
+  const screen = await renderDrawer(
+    { kind: 'target', accountId: 'p1', modelId: 'fast' },
+    { accounts: researchKey },
+  );
+
+  await expect.element(screen.getByText('API Key', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('perplexity', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
+});
+
+test('the draft subject with nothing drafted yet opens on an empty definition', async () => {
+  const screen = await renderDrawer({ kind: 'draft' });
+
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
 });
 
 test('a virtual model whose account left the registry reads that bare account id as its target', async () => {

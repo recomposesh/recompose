@@ -116,3 +116,58 @@ describe('how a settings save is reported', () => {
     expect(reported).toEqual([]);
   });
 });
+
+async function restartCountingDesk() {
+  let restarts = 0;
+  const context = await freshContext({
+    restartServingGateways: () => {
+      restarts += 1;
+    },
+  });
+
+  return { context, handlers: createStorageIpcHandlers(context), restarts: () => restarts };
+}
+
+describe('moving the gateway bind address', () => {
+  test('a save that moves the bind address restarts the serving gateways', async () => {
+    const desk = await restartCountingDesk();
+
+    await desk.handlers['settings:save']({ ...defaultSettings(), bindAddress: '0.0.0.0' });
+
+    expect(desk.restarts()).toBe(1);
+  });
+
+  test('a save that keeps the stored bind address restarts nothing', async () => {
+    const desk = await restartCountingDesk();
+
+    await desk.handlers['settings:save'](changedSettings);
+
+    expect(desk.restarts()).toBe(0);
+  });
+
+  test('a stored document naming no bind address stands for the default, so saving the default moves nothing', async () => {
+    const desk = await restartCountingDesk();
+    const { bindAddress: _unspoken, ...documentNamingNoBindAddress } = defaultSettings();
+
+    await writeFile(
+      join(desk.context.userDataPath, 'settings.json'),
+      JSON.stringify(documentNamingNoBindAddress),
+      'utf8',
+    );
+
+    await desk.handlers['settings:save'](defaultSettings());
+
+    expect(desk.restarts()).toBe(0);
+  });
+
+  test('a desk without the restart seam still answers a moved bind address whole', async () => {
+    const handlers = createStorageIpcHandlers(await freshContext());
+
+    const answer = await handlers['settings:save']({
+      ...defaultSettings(),
+      bindAddress: '0.0.0.0',
+    });
+
+    expect(answer).toMatchObject({ ok: true, value: { bindAddress: '0.0.0.0' } });
+  });
+});

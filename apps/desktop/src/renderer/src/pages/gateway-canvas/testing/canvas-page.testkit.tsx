@@ -98,10 +98,14 @@ export function standCanvasBridge(parameters: BridgeParameters = {}): void {
 }
 
 /** Renders the page onto whatever bridge stands, holding until the gateway card paints. */
-export async function renderCanvasPage(strict = false, onGatewayRemoved?: () => void) {
+export async function renderCanvasPage(
+  strict = false,
+  onGatewayRemoved?: () => void,
+  gatewayCard: RegExp = /My Gateway/,
+) {
   const screen = await render(wrappedPage(strict, onGatewayRemoved));
 
-  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: gatewayCard })).toBeVisible();
 
   return screen;
 }
