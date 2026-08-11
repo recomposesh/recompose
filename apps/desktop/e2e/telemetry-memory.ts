@@ -8,8 +8,6 @@ const wholeStreams = new WeakMap<Page, number>();
 
 const draggedHeights = new WeakMap<Page, number>();
 
-const departedAccounts = new WeakMap<Page, string>();
-
 const cursorsHeld = new WeakMap<Page, string>();
 
 export function rememberFooterReading(page: Page, reading: string): void {
@@ -37,15 +35,6 @@ export function rememberDraggedHeight(page: Page, height: number): void {
 /** How tall the drawer stood after a drag, which reopening it has to stand at again. */
 export function draggedHeightBefore(page: Page): number {
   return recalled(draggedHeights, page, 'no step in this scenario dragged the drawer taller');
-}
-
-export function rememberDepartedAccount(page: Page, accountId: string): void {
-  departedAccounts.set(page, accountId);
-}
-
-/** The account whose rows outlived it, which is the ghost card a step goes on to select. */
-export function departedAccount(page: Page): string {
-  return recalled(departedAccounts, page, 'no step in this scenario removed a target account');
 }
 
 export function rememberCursorRow(page: Page, row: string): void {

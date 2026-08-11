@@ -12,7 +12,7 @@ beforeEach(freshCanvasRun);
 
 const REFUSED = 'The gateway could not reach the target.';
 
-const served: GatewayTraffic = { 'my-gateway': { fast: { outcome: 'served', at: 1 } } };
+const served: GatewayTraffic = { 'my-gateway': { fast: { outcome: 'served', at: Date.now() } } };
 
 const failed: GatewayTraffic = {
   'my-gateway': { fast: { outcome: 'failed', at: 2, status: 502, detail: REFUSED } },
@@ -31,9 +31,11 @@ function standingsOn(container: HTMLElement, modelId: string): readonly string[]
 test('a gateway nothing has flowed through leaves every cable resting, because green is earned', async () => {
   const screen = await canvasPageOn();
 
-  for (const standing of standingsOn(screen.container, 'fast')) {
-    expect(standing).toContain('stroke-cable-resting');
-  }
+  await expect
+    .poll(() =>
+      standingsOn(screen.container, 'fast').every((held) => held.includes('stroke-cable-resting')),
+    )
+    .toBe(true);
 });
 
 test('a request the gateway served paints both cables of the model it flowed through', async () => {

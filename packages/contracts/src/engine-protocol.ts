@@ -7,6 +7,7 @@ import { requestOutcomeSchema } from './engine-traffic';
 import { gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import { loopbackAddressSchema, runtimeReachabilitySchema } from './local-runtimes';
 import { nonBlankString } from './non-blank';
+import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
@@ -27,6 +28,7 @@ export const engineGatewaySchema = z.strictObject({
   slug: gatewaySlugSchema,
   displayName: z.string().trim().min(1),
   port: gatewayPortSchema,
+  bindAddress: gatewayBindAddressSchema.optional(),
   virtualModels: z.array(engineVirtualModelSchema),
 });
 

@@ -39,7 +39,10 @@ function kindSurface(kind: AccountKind) {
  */
 export function ProvidersPage({ kind }: ProvidersPageProps) {
   return (
-    <section className="mx-auto flex w-full max-w-column flex-col gap-5 px-6 pt-page-top pb-6">
+    <section
+      className="mx-auto flex w-full max-w-column flex-col gap-5 px-6 pt-page-top pb-6"
+      data-focus-group=""
+    >
       <header className="flex flex-col gap-1">
         <h1 className="text-title text-ink">{accountKindTitle(kind)}</h1>
         <p className="text-body text-ink-secondary">{subtitles[kind]}</p>

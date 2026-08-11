@@ -5,8 +5,8 @@ import type { SettledDefinition } from '../../lib/model-draft';
 import type { CanvasWorld } from './canvas-standings';
 
 import { accountName } from '../../../../entities/account';
+import { closeInspector } from '../../../../shared/lib';
 import { keepCanvasPositions, setNodePosition } from '../../lib/canvas-position-store';
-import { cardFitsTheView, viewportOf } from '../../lib/canvas-viewport';
 import {
   emptyDefinition,
   gatewayDefining,
@@ -15,7 +15,8 @@ import {
 } from '../../lib/model-draft';
 import { seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
-import { CARD_MEASURE, modelIdOf } from './canvas-wiring';
+import { shownWhereItWasBorn } from './born-card-camera';
+import { modelIdOf, targetModelIdOf } from './canvas-wiring';
 
 /** The name a definition answers to out loud, which is its id until a person names it. */
 export function spokenNameOf(definition: SettledDefinition): string {
@@ -38,25 +39,24 @@ export function targetNameIn(accounts: readonly Account[], accountId: string): s
  * a card a person can see is one they placed rather than one this pick is making, and nothing
  * when the picker was opened on a card rather than by a drop, which named no spot at all.
  */
-function seatedWhereTheCableLanded(world: CanvasWorld, accountId: string): () => void {
+function seatedWhereTheCableLanded(world: CanvasWorld, bornTargetId: string): () => void {
   const picker = world.standings.picker;
   const at = picker !== undefined && 'at' in picker ? picker.at : undefined;
-  const nodeId = `target:${accountId}`;
-  const alreadyStanding = world.graph.nodes.some((node) => node.id === nodeId);
+  const alreadyStanding = world.graph.nodes.some((node) => node.id === bornTargetId);
 
   return () => {
     if (at === undefined || alreadyStanding) {
       return;
     }
 
-    setNodePosition(world.slug, nodeId, at);
+    setNodePosition(world.slug, bornTargetId, at);
     keepCanvasPositions(world.slug);
   };
 }
 
-function seatOfTheBornTarget(world: CanvasWorld, accountId: string): XY | undefined {
+function seatOfTheBornTarget(world: CanvasWorld, bornTargetId: string): XY | undefined {
   const picker = world.standings.picker;
-  const alreadyStanding = world.graph.nodes.some((node) => node.id === `target:${accountId}`);
+  const alreadyStanding = world.graph.nodes.some((node) => node.id === bornTargetId);
 
   if (picker === undefined || alreadyStanding) {
     return undefined;
@@ -69,64 +69,14 @@ function seatOfTheBornTarget(world: CanvasWorld, accountId: string): XY | undefi
   return seatForNewNode('target', world.seats);
 }
 
-function boundsAroundEveryCard(world: CanvasWorld, born: XY) {
-  const stands = [...Object.values(world.seats), born];
-  const x = Math.min(...stands.map((seat) => seat.x));
-  const y = Math.min(...stands.map((seat) => seat.y));
-
-  return {
-    x,
-    y,
-    width: Math.max(...stands.map((seat) => seat.x)) + CARD_MEASURE.width - x,
-    height: Math.max(...stands.map((seat) => seat.y)) + CARD_MEASURE.height - y,
-  };
-}
-
-/**
- * Zooms the view out until a card born at the seat shows, and moves nothing when it already does.
- *
- * @summary A target born from the keyboard ask takes its column seat, which can stand past the
- * pane at the zoom a person was working at. A composition that grew where nobody can see it reads
- * as a pick that did nothing, so the view widens exactly then and holds still otherwise. The
- * bounds come from the seats this side already holds rather than from the flow, because the born
- * card reaches the flow a render after the write lands. The look itself waits two frames, since
- * the pick also opens the inspector and the pane it narrows is the pane the card must fit.
- */
-function fitTheBornCard(world: CanvasWorld, seat: XY): void {
-  const view = world.view.current;
-  const pane = document.querySelector('.react-flow')?.getBoundingClientRect();
-
-  if (view === null || pane === undefined) {
-    return;
-  }
-
-  if (cardFitsTheView(seat, CARD_MEASURE, viewportOf(view), pane)) {
-    return;
-  }
-
-  void view.fitBounds(boundsAroundEveryCard(world, seat), { padding: 0.1 });
-}
-
-function shownWhereItWasBorn(world: CanvasWorld, seat: XY | undefined): void {
-  if (seat === undefined) {
-    return;
-  }
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      fitTheBornCard(world, seat);
-    });
-  });
-}
-
 function committedPick(
   world: CanvasWorld,
-  accountId: string,
+  bornTargetId: string,
   rewritten: GatewayConfig,
   landed: () => void,
 ): void {
-  const seatTheTarget = seatedWhereTheCableLanded(world, accountId);
-  const bornAt = seatOfTheBornTarget(world, accountId);
+  const seatTheTarget = seatedWhereTheCableLanded(world, bornTargetId);
+  const bornAt = seatOfTheBornTarget(world, bornTargetId);
 
   world.define.mutate(rewritten, {
     onSuccess: () => {
@@ -154,12 +104,19 @@ export function completedDraftPick(
   accountId: string,
   providerModel: string,
 ): void {
-  const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
+  const draft = heldDraft(world.slug);
+  const definition = draft?.definition ?? emptyDefinition();
   const settled = { ...definition, accountId, providerModel };
 
-  committedPick(world, accountId, gatewayDefining(world.gateway, settled), () => {
+  committedPick(world, `target:${settled.id}`, gatewayDefining(world.gateway, settled), () => {
+    if (draft !== undefined) {
+      setNodePosition(world.slug, `model:${settled.id}`, draft.seat);
+      keepCanvasPositions(world.slug);
+    }
+
     leaveDrafting(world.slug);
-    world.standings.select(`model:${settled.id}`);
+    world.standings.select(undefined);
+    closeInspector();
     world.standings.announce({
       kind: 'bound',
       virtualModel: spokenNameOf(settled),
@@ -192,7 +149,7 @@ export function completedRebindPick(
 
   committedPick(
     world,
-    accountId,
+    `target:${modelId}`,
     gatewayRebinding(world.gateway, modelId, { accountId, providerModel }),
     () => {
       world.standings.announce({
@@ -211,7 +168,7 @@ export function completedRebindPick(
  * definition out of the gateway and stands what a person typed as a draft card in the same place.
  * Rebinding the draft writes it back, which is why the unbind itself needs no confirmation.
  */
-export function releasedBinding(world: CanvasWorld, modelId: string): void {
+export function releasedBinding(world: CanvasWorld, modelId: string, selectDraft = true): void {
   const model = world.gateway.virtualModels.find((held) => held.id === modelId);
 
   if (model === undefined) {
@@ -227,11 +184,48 @@ export function releasedBinding(world: CanvasWorld, modelId: string): void {
         { displayName: model.displayName, id: model.id, accountId: '', providerModel: '' },
         seat,
       );
-      world.standings.select('draft');
+      world.standings.select(selectDraft ? 'draft' : undefined);
+
+      if (!selectDraft) {
+        closeInspector();
+      }
+
       world.standings.announce({ kind: 'released', virtualModel: model.displayName });
     },
     onError: world.standings.refuse,
   });
+}
+
+function boundModelOf(world: CanvasWorld, nodeId: string) {
+  const modelId = targetModelIdOf(nodeId);
+
+  return world.gateway.virtualModels.find((held) => held.id === modelId);
+}
+
+/**
+ * Turns a Delete press on a target card into the removal question.
+ *
+ * @summary A target card stands for exactly one binding, and releasing still takes a stored
+ * definition off the gateway, so a press this small never does that unannounced.
+ */
+export function askedTargetRemoval(world: CanvasWorld, nodeId: string): void {
+  if (boundModelOf(world, nodeId) !== undefined) {
+    world.standings.setRemoving(nodeId);
+  }
+}
+
+/**
+ * Releases the one binding a confirmed target removal held, standing its model back as a draft.
+ *
+ * @summary Deleting the card unbinds rather than destroys, because the target is a reference to a
+ * stored account and the definition aimed at it is the person's own work.
+ */
+export function releasedTarget(world: CanvasWorld, nodeId: string): void {
+  const model = boundModelOf(world, nodeId);
+
+  if (model !== undefined) {
+    releasedBinding(world, model.id, false);
+  }
 }
 
 /**
@@ -244,6 +238,7 @@ export function removedDefinition(world: CanvasWorld, nodeId: string): void {
   if (nodeId === 'draft') {
     leaveDrafting(world.slug);
     world.standings.select(undefined);
+    closeInspector();
 
     return;
   }
@@ -257,6 +252,7 @@ export function removedDefinition(world: CanvasWorld, nodeId: string): void {
   world.define.mutate(gatewayReleasing(world.gateway, modelId), {
     onSuccess: () => {
       world.standings.select(undefined);
+      closeInspector();
     },
     onError: world.standings.refuse,
   });

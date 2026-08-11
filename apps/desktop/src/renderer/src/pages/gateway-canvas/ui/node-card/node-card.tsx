@@ -10,6 +10,8 @@ import { Icon } from '../../../../shared/ui';
 export type OutgoingPort = {
   /** Whether a cable already meets the port, which fills its dot. */
   bound: boolean;
+  /** Whether a new cable can leave here; a port already spoken for answers no drag. */
+  offersCable?: boolean;
   /** What the port offers without a drag, which is the name a keyboard reads off it. */
   ask: string;
   /** Receives that ask, which each kind of card answers in its own way. */
@@ -37,7 +39,7 @@ export type NodeCardProps = {
   /** The ink class the name takes, which quietens on a card nothing answers yet. */
   nameInk: string;
   /** The mono line under the name, which is the identifier or the standing. */
-  subtitle: string;
+  subtitle?: string | undefined;
   /** The ink class that line takes. */
   subtitleInk: string;
   /** Whether the card stands selected, which is what rings it in its own tint. */
@@ -48,22 +50,28 @@ export type NodeCardProps = {
   outgoing: OutgoingPort | undefined;
 };
 
-const portBox = 'top-port-offset flex size-hit-target items-center justify-center bg-transparent';
+const portBox = 'top-1/2 flex size-hit-target items-center justify-center bg-transparent';
 
 const keyboardAsk =
-  'nodrag pointer-events-none absolute top-port-offset -inset-e-9 flex size-hit-target -translate-y-1/2 items-center justify-center rounded-pill border border-line-strong bg-surface-card text-ink opacity-0 focus-ring focus-visible:opacity-100';
+  'nodrag pointer-events-none absolute top-1/2 -inset-e-9 flex size-hit-target -translate-y-1/2 items-center justify-center rounded-pill border border-line-strong bg-surface-card text-ink opacity-0 focus-ring focus-visible:opacity-100';
 
 const cardFrame =
-  'flex size-full flex-col justify-center gap-0.5 node-card px-2.75 text-start focus-ring';
+  'flex size-full flex-col justify-center gap-0.5 node-card px-2.75 text-start outline-none';
 
 const kickerLine = 'truncate text-footnote font-bold tracking-wider uppercase';
 
 function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
-  const { bound, ask, onAsk } = port;
+  const { bound, offersCable = true, ask, onAsk } = port;
 
   return (
     <>
-      <Handle className={portBox} position={Position.Right} type="source">
+      <Handle
+        className={portBox}
+        isConnectable={offersCable}
+        isConnectableStart={offersCable}
+        position={Position.Right}
+        type="source"
+      >
         <span aria-hidden className="port-dot" data-bound={bound || undefined} />
       </Handle>
       {dragging ? null : (
@@ -91,7 +99,7 @@ export function NodeCard(props: NodeCardProps) {
   const { subtitle, subtitleInk, selected, incoming, outgoing } = props;
 
   return (
-    <div className={`relative h-19.5 w-39.5 ${tint}`}>
+    <div className={`relative h-22 w-46 ${tint}`}>
       {incoming ? (
         <Handle className={portBox} position={Position.Left} type="target">
           <span aria-hidden className="port-dot" data-bound />
@@ -110,7 +118,9 @@ export function NodeCard(props: NodeCardProps) {
         <span className={`truncate text-card-title ${nameInk}`} title={name}>
           {name}
         </span>
-        <span className={`truncate font-mono text-mono-caption ${subtitleInk}`}>{subtitle}</span>
+        {subtitle === undefined ? null : (
+          <span className={`truncate font-mono text-mono-caption ${subtitleInk}`}>{subtitle}</span>
+        )}
       </button>
       {outgoing === undefined ? null : outgoingSide(outgoing, dragging)}
     </div>

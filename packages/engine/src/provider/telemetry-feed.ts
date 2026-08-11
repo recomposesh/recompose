@@ -1,7 +1,7 @@
 import type { ProviderRequestLog } from './provider-observation';
 import type { ServedFor, ServingTurn } from './serving-turn';
 
-import { servedFor } from './serving-turn';
+import { onServingTurnAbort, servedFor } from './serving-turn';
 
 /**
  * One upstream attempt, as the logs drawer lists it.
@@ -24,6 +24,7 @@ export type ProviderAttempt = {
   status: number;
   durationMs?: number | undefined;
   tokens?: number | undefined;
+  failure?: string | undefined;
 };
 
 type AttemptMeasure = { durationMs: number; tokens: number };
@@ -33,6 +34,28 @@ export type AttemptInFlight = { answered: (status: number, measure?: AttemptMeas
 type AttemptReader = (attempt: ProviderAttempt) => void;
 
 const attemptReaders = new Set<AttemptReader>();
+
+type AttemptOpening = { id: string; at: number; servedFor: ServedFor; request: ProviderRequestLog };
+
+function attemptRowOf(
+  opening: AttemptOpening,
+  status: number,
+  measure?: AttemptMeasure,
+  failure?: string,
+): ProviderAttempt {
+  return {
+    id: opening.id,
+    at: opening.at,
+    servedFor: opening.servedFor,
+    provider: opening.request.provider,
+    providerModel: opening.request.model,
+    accountId: opening.request.accountId,
+    method: opening.request.method,
+    status,
+    ...measure,
+    ...(failure === undefined ? {} : { failure }),
+  };
+}
 
 /**
  * Hands one telemetry fact to every reader, and never lets a broken reader reach the serving path.
@@ -65,6 +88,9 @@ export function subscribeToProviderAttempts(reader: AttemptReader): () => void {
 
 const tellsNobody: AttemptInFlight = { answered: () => undefined };
 
+const CLIENT_DISCONNECTED_STATUS = 499;
+const CLIENT_DISCONNECTED_FAILURE = 'The client disconnected before the request finished.';
+
 /**
  * Opens the attempt a provider call will be listed as, or one that lists nothing.
  *
@@ -83,31 +109,50 @@ export function attemptFor(
     return tellsNobody;
   }
 
-  const id = crypto.randomUUID();
-  const served = servedFor(turn);
-  let at: number | undefined;
+  const opening: AttemptOpening = {
+    id: crypto.randomUUID(),
+    at: wallClock(),
+    servedFor: servedFor(turn),
+    request,
+  };
+  let finished = false;
+  let interrupted = false;
+  let stopListeningForDisconnect: () => void = () => undefined;
+
+  const tell = (status: number, measure?: AttemptMeasure, failure?: string) => {
+    turn.rowPublished = true;
+    tellingReaders(
+      attemptReaders,
+      () => attemptRowOf(opening, status, measure, failure),
+      'request row',
+    );
+  };
+
+  stopListeningForDisconnect = onServingTurnAbort(turn, () => {
+    if (finished || interrupted) {
+      return;
+    }
+
+    interrupted = true;
+    tell(
+      CLIENT_DISCONNECTED_STATUS,
+      { durationMs: Math.max(0, wallClock() - opening.at), tokens: 0 },
+      CLIENT_DISCONNECTED_FAILURE,
+    );
+  });
 
   return {
     answered: (status, measure) => {
-      const told = at ?? wallClock();
+      if (interrupted) {
+        return;
+      }
 
-      at = told;
-      turn.rowPublished = true;
-      tellingReaders(
-        attemptReaders,
-        () => ({
-          id,
-          at: told,
-          servedFor: served,
-          provider: request.provider,
-          providerModel: request.model,
-          accountId: request.accountId,
-          method: request.method,
-          status,
-          ...measure,
-        }),
-        'request row',
-      );
+      if (measure !== undefined) {
+        finished = true;
+        stopListeningForDisconnect();
+      }
+
+      tell(status, measure);
     },
   };
 }

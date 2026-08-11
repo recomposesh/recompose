@@ -18,7 +18,7 @@ const LIST_FOOTING = `
 [data-log-list-footing] { display: flex; width: 640px; height: 300px; }
 [data-log-list-footing] > div { display: flex; flex: 1 1 0%; min-height: 0; }
 [data-log-list-footing] [role='listbox'] { flex: 1 1 0%; min-height: 0; overflow-y: auto; }
-[data-log-list-footing] [role='option'] { height: 30px; }
+[data-log-list-footing] [role='option'] { height: 20px; }
 `;
 
 const footing = document.createElement('style');

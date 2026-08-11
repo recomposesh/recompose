@@ -55,6 +55,8 @@ export type EngineHost = {
    * its own act rather than a side effect of starting.
    */
   replayLogs: () => void;
+  /** Forgets every in-memory reading owned by a gateway removed from storage. */
+  forget?: ((slug: string) => void) | undefined;
   onStatesChanged: (listener: (states: EngineStates) => void) => () => void;
   dispose: () => void;
 };

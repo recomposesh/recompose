@@ -1,7 +1,10 @@
 import type { ReactNode, RefObject } from 'react';
 
+import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
 import { useSelector } from '@tanstack/react-form';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
+import { settingsQueryOptions } from '../../../../../shared/api';
 import { FieldBoxRow, Sheet } from '../../../../../shared/ui';
 import { nameRefusal, portRefusal, previewAddressFor } from '../../lib/gateway-draft';
 import { useGatewayDraft } from '../../lib/use-gateway-draft';
@@ -99,6 +102,7 @@ function draftFields(
 /** The standing draft of one gateway, from its fields to the save that stores it. */
 export function GatewayDraft({ open, onOpenChange, onCreated, nameField }: GatewayDraftProps) {
   const draft = useGatewayDraft(onOpenChange, onCreated);
+  const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const attempted = useSelector(draft.form.store, (state) => state.submissionAttempts > 0);
   const port = useSelector(draft.form.store, (state) => state.values.port);
 
@@ -115,7 +119,9 @@ export function GatewayDraft({ open, onOpenChange, onCreated, nameField }: Gatew
       <p className="mt-2.5 flex items-center gap-1.75 px-0.5 font-mono text-mono-value text-ink-secondary">
         <span aria-hidden className="size-1.75 shrink-0 rounded-pill bg-ink-tertiary" />
         <span>Serves at</span>
-        <span className="font-medium text-ink">{previewAddressFor(port)}</span>
+        <span className="font-medium text-ink">
+          {previewAddressFor(port, settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS)}
+        </span>
       </p>
       {draft.refusals.sheet === undefined ? null : (
         <p className="mt-2.5 px-0.5 text-caption text-danger-ink" role="alert">

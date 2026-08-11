@@ -4,6 +4,8 @@ import { Icon } from '../icon/icon';
 import { toolbarShape } from '../toolbar-shape';
 
 type ToolbarButtonProps = {
+  /** Whether the surface this control discloses stands open, absent on plain acts. */
+  expanded?: boolean | undefined;
   glyph: IconName;
   label: string;
   onPress?: (() => void) | undefined;
@@ -21,6 +23,7 @@ type ToolbarButtonProps = {
  * changes once changes for all of them.
  */
 export function ToolbarButton({
+  expanded,
   glyph,
   label,
   onPress,
@@ -30,8 +33,9 @@ export function ToolbarButton({
 }: ToolbarButtonProps) {
   return (
     <button
+      aria-expanded={expanded}
       aria-label={label}
-      className={`app-no-drag flex items-center justify-center focus-ring hover:bg-surface-hover active:bg-surface-pressed ${toolbarShape[where]} ${tone}`}
+      className={`app-no-drag flex items-center justify-center focus-ring hover:bg-surface-hover active:bg-surface-pressed aria-expanded:bg-surface-pressed aria-expanded:text-ink ${toolbarShape[where]} ${tone}`}
       onClick={onPress}
       title={waitsFor === undefined ? label : `${label}. Waits on ${waitsFor}.`}
       type="button"

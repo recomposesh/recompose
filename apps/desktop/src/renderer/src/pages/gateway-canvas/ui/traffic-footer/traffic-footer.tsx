@@ -2,16 +2,11 @@ import type { LogRow } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useState, useSyncExternalStore } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import type { TrafficAggregates } from '../../lib/traffic-aggregates';
 
 import { engineLogsQueryOptions } from '../../../../shared/api';
-import {
-  logsDrawerOpen,
-  subscribeToLogsDrawerVisibility,
-  toggleLogsDrawer,
-} from '../../../../shared/lib';
 import { trafficAggregates } from '../../lib/traffic-aggregates';
 import { compactCount, pluralized, readDuration } from './footer-readings';
 
@@ -93,8 +88,8 @@ function trafficSide(traffic: TrafficAggregates, meaning: string): ReactNode {
         {' req/min'}
       </span>
       <span className={AWAY_WITH_THE_LATENCY}>
-        {'p95 '}
         {reading(readDuration(traffic.p95Ms))}
+        {' latency'}
       </span>
       <span aria-describedby={meaning}>{counted(traffic.clientApps, 'client app')}</span>
       <span aria-hidden className={`h-3.5 w-px bg-line-subtle ${AWAY_WITH_THE_TOKENS}`} />
@@ -121,15 +116,14 @@ function compositionTally(nodes: number, wires: number): ReactNode {
  * The strip under the canvas, reading the minute of traffic behind this gateway.
  *
  * @summary Reach for it at the foot of the gateway detail. It reads as selectable text rather than
- * as a control, so a person can take a reading into a bug report, and the one thing on it to press
- * is the disclosure control that opens the logs drawer. An idle gateway reads zeros instead of
- * hiding, because the surface a person will watch under load has to already stand in place. The
- * cells leave in a fixed order as the pane narrows, and the request rate and the error count are
- * the last two standing.
+ * as a control, so a person can take a reading into a bug report, and nothing on it is there to
+ * press: the toolbar's request log control is what stands the drawer up. An idle gateway reads
+ * zeros instead of hiding, because the surface a person will watch under load has to already stand
+ * in place. The cells leave in a fixed order as the pane narrows, and the request rate and the
+ * error count are the last two standing.
  */
 export function TrafficFooter({ slug, nodes, wires }: TrafficFooterProps) {
   const { data: rows } = useQuery(engineLogsQueryOptions(slug));
-  const drawerOpen = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
   const meaning = useId();
   const traffic = trafficAggregates(rows ?? NOTHING_SERVED, useDisplayTick());
 
@@ -138,14 +132,6 @@ export function TrafficFooter({ slug, nodes, wires }: TrafficFooterProps) {
       {trafficSide(traffic, meaning)}
       <span className="flex-1" />
       {compositionTally(nodes, wires)}
-      <button
-        aria-expanded={drawerOpen}
-        className="push-button focus-ring"
-        onClick={toggleLogsDrawer}
-        type="button"
-      >
-        Logs
-      </button>
       <span hidden id={meaning}>
         {CLIENT_APPS_MEANING}
       </span>

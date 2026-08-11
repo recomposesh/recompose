@@ -14,7 +14,7 @@ export function ChecklistHeader({ headingId, collapsed }: ChecklistHeaderProps) 
     <h2 className="text-card-title text-ink" id={headingId}>
       <button
         aria-expanded={!collapsed}
-        className="group flex w-full items-center justify-between px-0.5 focus-ring"
+        className="group flex w-full items-center justify-between focus-ring px-0.5"
         onClick={collapsed ? expandGetStarted : collapseGetStarted}
         type="button"
       >

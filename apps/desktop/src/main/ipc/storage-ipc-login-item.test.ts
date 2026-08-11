@@ -24,6 +24,7 @@ async function osBackedContext(osHolds: boolean) {
     onCorrupt: () => undefined,
     startGateway: () => undefined,
     restartGateway: () => undefined,
+    stopGateway: () => undefined,
     isServing: () => true,
     releaseSubscription: async () => Promise.resolve({ ok: true }),
     readLoginItem: () => operatingSystem,

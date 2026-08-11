@@ -22,7 +22,8 @@ test('a served row reads the time, the method, the models it went through, and w
   await expect.element(screen.getByText('POST', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('fast', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('anthropic · work', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('anthropic', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('work', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('200', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('0.9s', { exact: true })).toBeVisible();
 });
@@ -36,15 +37,22 @@ test('the model pair carries the whole of both names where the cells run out of 
   await expect.element(screen.getByText('fast', { exact: true })).toHaveAttribute('title', 'fast');
 });
 
-test('a request that failed leaves its duration cell empty and says so out loud', async () => {
+test('a request that failed reads its status alongside the time the failure took', async () => {
   const screen = await renderRow(
-    servedRequest({ status: 500, durationMs: undefined, failure: 'The provider answered 500.' }),
+    servedRequest({ status: 500, failure: 'The provider answered 500.' }),
     workKey,
   );
 
-  await expect.element(screen.getByText('no duration', { exact: true })).toBeInTheDocument();
   await expect.element(screen.getByText('500', { exact: true })).toBeVisible();
-  expect(screen.container.textContent).not.toContain('0.9s');
+  await expect.element(screen.getByText('0.9s', { exact: true })).toBeVisible();
+});
+
+test('an in-flight response reads live rather than claiming its header status is final', async () => {
+  const screen = await renderRow(servedRequest({ durationMs: undefined }), workKey);
+
+  await expect.element(screen.getByText('live', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('200', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByLabelText('in progress')).toBeVisible();
 });
 
 test('a row the gateway raised before any provider answered leaves its provider cells empty', async () => {
@@ -71,7 +79,8 @@ test('a row the gateway raised before any provider answered leaves its provider 
 test('a request served through an account that has left the registry reads its raw id', async () => {
   const screen = await renderRow(servedRequest(), undefined);
 
-  await expect.element(screen.getByText('anthropic · k1', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('anthropic', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('k1', { exact: true })).toBeVisible();
 });
 
 test('the row cursor marks the row a copy would take, without taking focus off the list', async () => {

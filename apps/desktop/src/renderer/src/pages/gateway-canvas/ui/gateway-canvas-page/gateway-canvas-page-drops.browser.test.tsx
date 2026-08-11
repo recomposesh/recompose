@@ -8,6 +8,7 @@ import {
   releasedAt,
   sourcePortOf,
   storedBindingOf,
+  targetPortOf,
 } from '../../testing/canvas-gestures.testkit';
 import {
   canvasCommandLine,
@@ -38,21 +39,18 @@ function paneSpot(container: HTMLElement, from: XY): XY {
   return { x: pane.left + from.x, y: pane.top + from.y };
 }
 
-function cardCornerOn(container: HTMLElement, nodeId: string): XY | undefined {
-  const card = container.querySelector(`.react-flow__node[data-id="${nodeId}"]`);
-
-  if (card === null) {
-    return undefined;
-  }
-
-  const pane = boxOf(container, '.react-flow');
-  const box = card.getBoundingClientRect();
-
-  return { x: Math.round(box.left - pane.left), y: Math.round(box.top - pane.top) };
-}
-
 function centreOf(box: DOMRect): XY {
   return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+}
+
+async function portCentreOn(container: HTMLElement, nodeId: string): Promise<XY> {
+  const pane = boxOf(container, '.react-flow');
+  const port = (await targetPortOf(container, nodeId)).getBoundingClientRect();
+
+  return {
+    x: Math.round(port.left + port.width / 2 - pane.left),
+    y: Math.round(port.top + port.height / 2 - pane.top),
+  };
 }
 
 function covers(box: DOMRect, point: XY): boolean {
@@ -76,32 +74,68 @@ test('a pending card born from a drop stands at the drop point, whatever the can
   pushCommand('zoom-in');
   await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
 
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+
   const letGo = { x: 520, y: 470 };
   const spot = paneSpot(screen.container, letGo);
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), spot);
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
 
-  await expect.poll(() => cardCornerOn(screen.container, 'pending')).toEqual(letGo);
+  await expect.poll(async () => portCentreOn(screen.container, 'pending')).toEqual(letGo);
+});
+
+test('a draft born from the gateway keeps its incoming port exactly where the cable was released', async () => {
+  const screen = await canvasPageOn();
+  const letGo = { x: 510, y: 360 };
+  const spot = paneSpot(screen.container, letGo);
+
+  await pulledCable(await sourcePortOf(screen.container, 'gateway'), spot);
+  releasedAt(spot);
+
+  await expect.poll(async () => portCentreOn(screen.container, 'draft')).toEqual(letGo);
+});
+
+test('dropping a cable from the draft closes its inspector and leaves the picker standing', async () => {
+  const screen = await canvasPageOn();
+  const draftSpot = paneSpot(screen.container, { x: 420, y: 260 });
+
+  await pulledCable(await sourcePortOf(screen.container, 'gateway'), draftSpot);
+  releasedAt(draftSpot);
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+
+  const targetSpot = paneSpot(screen.container, { x: 650, y: 390 });
+
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), targetSpot);
+  releasedAt(targetSpot);
+
+  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
 });
 
 test('the target a completed pick materializes stands where the cable was let go', async () => {
   const screen = await canvasPageOn({
     providerModels: { ...listedModels, s1: ['claude-opus-5'] },
   });
+
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+
   const letGo = { x: 620, y: 420 };
   const spot = paneSpot(screen.container, letGo);
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), spot);
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
   await expect
-    .poll(async () => storedBindingOf('creative'))
+    .poll(async () => storedBindingOf('steady'))
     .toEqual({ accountId: 's1', providerModel: 'claude-opus-5' });
-  await expect.poll(() => cardCornerOn(screen.container, 'target:s1')).toEqual(letGo);
+  await expect.poll(async () => portCentreOn(screen.container, 'target:steady')).toEqual(letGo);
 });
 
 function optionUnderTheMap(container: HTMLElement): Element {
@@ -120,9 +154,13 @@ function optionUnderTheMap(container: HTMLElement): Element {
 test('a picker standing over the canvas map takes the press a person aims at it', async () => {
   const screen = await canvasPageOn();
   const map = boxOf(screen.container, '.react-flow__minimap');
-  const spot = { x: map.left + 4, y: map.top - 56 };
+  const spot = { x: map.left + 4, y: map.top - 12 };
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), spot);
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
+
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();

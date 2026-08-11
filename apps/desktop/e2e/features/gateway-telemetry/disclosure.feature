@@ -1,15 +1,15 @@
-Feature: The footer's control opens the logs drawer
+Feature: The toolbar's control opens the logs drawer
 
-  The footer stays passive, selectable text. A discrete Logs control at its
-  trailing end opens the drawer, and the Gateway menu carries the same
-  command as its twin.
+  The footer stays passive, selectable text. The request log control on the
+  toolbar opens the drawer, and the Gateway menu carries the same command
+  as its twin.
 
   Background:
     Given the gateway detail of a running gateway "relay"
 
-  Scenario: The Logs control opens the drawer
+  Scenario: The request log control opens the drawer
     Given the logs drawer stands closed
-    When the person presses the Logs control at the footer's end
+    When the person presses the request log control on the toolbar
     Then the logs drawer opens under the stage
 
   Scenario: The close control returns the drawer

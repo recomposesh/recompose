@@ -9,6 +9,8 @@ export type GatewayHandlers = Pick<
   | 'gateways:list'
   | 'gateways:save'
   | 'gateways:update'
+  | 'gateways:remove'
+  | 'gateways:set-port'
   | 'gateways:offer-port'
   | 'gateways:move-port'
   | 'engine:start'
@@ -83,6 +85,13 @@ function unheldSlug(slug: string): { code: 'storage-failed'; message: string } {
   return {
     code: 'storage-failed',
     message: `recompose stores no gateway under the slug "${slug}", so it has nothing to rewrite.`,
+  };
+}
+
+function unremovableSlug(slug: string): { code: 'storage-failed'; message: string } {
+  return {
+    code: 'storage-failed',
+    message: `recompose stores no gateway under the slug "${slug}", so it has nothing to remove.`,
   };
 }
 
@@ -175,6 +184,55 @@ function rewritingGateway(store: GatewayStore): GatewayHandlers['gateways:update
   };
 }
 
+function storedUnder(store: GatewayStore, slug: string) {
+  return store.held().find((one) => one.slug === slug);
+}
+
+function removingGateway(store: GatewayStore): GatewayHandlers['gateways:remove'] {
+  return async ({ slug }) => {
+    if (storedUnder(store, slug) === undefined) {
+      return Promise.resolve({ ok: false, error: unremovableSlug(slug) });
+    }
+
+    if (store.isServing(slug)) {
+      store.report(slug, { status: 'stopped' });
+    }
+
+    return Promise.resolve(
+      store.landWithoutServing(store.held().filter((one) => one.slug !== slug)),
+    );
+  };
+}
+
+function settingGatewayPort(store: GatewayStore): GatewayHandlers['gateways:set-port'] {
+  return async ({ slug, port }) => {
+    const held = storedUnder(store, slug);
+
+    if (held === undefined) {
+      return Promise.resolve({ ok: false, error: unremovableSlug(slug) });
+    }
+
+    if (held.port === port) {
+      return Promise.resolve({ ok: true, value: store.held() });
+    }
+
+    const holder = store.held().find((one) => one.port === port);
+
+    if (holder !== undefined) {
+      return Promise.resolve({
+        ok: false,
+        error: { code: 'port-conflict', message: `${holder.slug} already holds this port.` },
+      });
+    }
+
+    const next = store.held().map((one) => (one.slug === slug ? { ...one, port } : one));
+
+    return Promise.resolve(
+      store.isServing(slug) ? store.land(next, slug) : store.landWithoutServing(next),
+    );
+  };
+}
+
 /**
  * The gateway half of the fake bridge, mirroring what main does with a stored document.
  *
@@ -194,6 +252,8 @@ export function gatewayHandlers(
     'gateways:list': async () => Promise.resolve({ ok: true, value: store.held() }),
     'gateways:save': savingGateway(store),
     'gateways:update': rewritingGateway(store),
+    'gateways:remove': removingGateway(store),
+    'gateways:set-port': settingGatewayPort(store),
     'gateways:offer-port': async () => Promise.resolve({ ok: true, value: store.freePort() }),
     'gateways:move-port': async ({ slug }) => {
       const moved = store.freePort();

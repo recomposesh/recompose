@@ -1,12 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { systemQueryOptions, useOpenConfigFolder } from '../../../../shared/api';
-import { FieldGroup, FieldRow, SegmentedControl } from '../../../../shared/ui';
-import { logRetentionChoices } from '../../lib/choices';
+import { FieldGroup, FieldRow } from '../../../../shared/ui';
 import { revealLabelFor } from '../../lib/row-state';
 import { RowAction } from '../row-action/row-action';
 
-/** Where recompose keeps its data, and how long the engine will keep request logs. */
+/** Where recompose keeps its data. */
 export function DataSection() {
   const { data: system } = useSuspenseQuery(systemQueryOptions);
   const openConfigFolder = useOpenConfigFolder();
@@ -26,21 +25,6 @@ export function DataSection() {
         description={system.configFolder}
         label="Config folder"
         status={openConfigFolder.isError ? openConfigFolder.error.message : undefined}
-      />
-      <FieldRow
-        control={
-          <SegmentedControl
-            inert
-            label="Keep request logs"
-            onChangeValue={() => {}}
-            options={logRetentionChoices}
-            value="30"
-          />
-        }
-        description="Drops request logs older than the window you choose."
-        inert
-        label="Keep request logs"
-        reason="Waits on request logging."
       />
     </FieldGroup>
   );

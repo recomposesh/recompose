@@ -71,15 +71,18 @@ async function ask(app: GatewayApp, path: string, body: unknown): Promise<Respon
 const aTurn = { model: 'fast', messages: [{ role: 'user', content: 'hello' }] };
 
 describe('a request the gateway carried through to its target', () => {
-  test('the model route reports the virtual model it served', async () => {
+  test('the model route reports the virtual model it served, live and then served', async () => {
     const { noted, note } = noting();
 
-    await ask(servingGateway(codex, note), '/v1/messages', aTurn);
+    const answer = await ask(servingGateway(codex, note), '/v1/messages', aTurn);
+
+    await answer.arrayBuffer();
 
     expect(noted.map(({ slug, virtualModel }) => ({ slug, virtualModel }))).toEqual([
       { slug: 'codex', virtualModel: 'fast' },
+      { slug: 'codex', virtualModel: 'fast' },
     ]);
-    expect(noted.at(0)?.request.outcome).toBe('served');
+    expect(noted.map((one) => one.request.outcome)).toEqual(['live', 'served']);
   });
 
   test('the report says when the request landed', async () => {
@@ -126,9 +129,11 @@ describe('a request the gateway could not carry through', () => {
   test('a virtual model whose target left is reported failed, with the status and a sentence', async () => {
     const { noted, note } = noting();
 
-    await ask(refusingGateway(codex, note), '/v1/messages', aTurn);
+    const answer = await ask(refusingGateway(codex, note), '/v1/messages', aTurn);
 
-    expect(noted.at(0)?.request).toMatchObject({
+    await answer.arrayBuffer();
+
+    expect(noted.at(-1)?.request).toMatchObject({
       outcome: 'failed',
       status: 502,
       detail: 'The gateway "Codex" holds no target for the virtual model "fast".',

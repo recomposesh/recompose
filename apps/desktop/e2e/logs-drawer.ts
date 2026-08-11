@@ -2,39 +2,43 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-import { logsControl } from './traffic-footer';
+/** The toolbar control that stands the logs drawer up and puts it away. */
+export function logsControl(page: Page): Locator {
+  return page.getByRole('toolbar').getByRole('button', { exact: true, name: 'Request log' });
+}
 
 /** Which cell of a row carries which fact, in the order a person reads across the row. */
 export const ROW_CELLS = {
   time: 0,
   method: 1,
   models: 2,
-  servedBy: 3,
-  status: 4,
-  duration: 5,
+  provider: 3,
+  account: 4,
+  status: 5,
+  duration: 6,
 } as const;
 
-/** What the duration cell says to a screen reader where a failed request filled it with nothing. */
-export const NO_DURATION = 'no duration';
-
-/**
- * The logs drawer, which is the one panel in the canvas column that heads itself.
- *
- * @operation The panel is a plain section carrying no name of its own, so it answers no role a
- * reading could ask for. It is found by its place in the column and by heading itself, which is
- * exactly what tells it from the stage above it.
- */
+/** The logs drawer in the canvas column, named by the surface's own stable marker. */
 function logsDrawer(page: Page): Locator {
-  return page.locator('[data-canvas-column] > section:has(> header)');
+  return page.locator('[data-canvas-column] > [data-logs-drawer]');
 }
 
 export function drawerHeader(page: Page): Locator {
   return logsDrawer(page).locator('header');
 }
 
-/** The drawer's own heading, which names the gateway whose requests it streams. */
-export function logsHeading(page: Page, gateway: string): Locator {
-  return page.getByRole('heading', { exact: true, level: 2, name: `Logs · ${gateway}` });
+/** The drawer's own heading, which names the canvas subject currently scoping the rows. */
+export function logsHeading(page: Page, subject: string): Locator {
+  return logsDrawer(page).getByRole('heading', {
+    exact: true,
+    level: 2,
+    name: `Logs for ${subject}`,
+  });
+}
+
+/** The visible kind printed beside the selected subject's name. */
+export function logsSubjectType(page: Page, type: string): Locator {
+  return drawerHeader(page).getByText(type, { exact: true });
 }
 
 /** Whether the drawer stands at all, which is a state to read rather than a thing to assert. */
@@ -133,27 +137,17 @@ export async function rowUnderCursor(page: Page): Promise<string | null> {
   return servedRequests(page).getAttribute('aria-activedescendant');
 }
 
-/** One exclusive scope in the drawer's strip, which is a canvas card said as a segment. */
-export function logScope(page: Page, label: string): Locator {
-  return drawerHeader(page).getByRole('radio', { exact: true, name: label });
+/** The exclusive outcome filter group in the drawer header. */
+export function logFilters(page: Page): Locator {
+  return drawerHeader(page).getByRole('radiogroup', { exact: true, name: 'Log filter' });
 }
 
-/** Every exclusive scope the strip keeps in reach, before the overflow holds the rest. */
-export function logScopes(page: Page): Locator {
-  return drawerHeader(page).getByRole('radio');
+/** One mutually exclusive outcome choice in the All / Success / Errors control. */
+export function logFilter(page: Page, label: string): Locator {
+  return logFilters(page).getByRole('radio', { exact: true, name: label });
 }
 
-/** The narrowing that stands apart from the scopes and only ever takes requests away. */
-export function errorsFilter(page: Page): Locator {
-  return drawerHeader(page).getByRole('button', { exact: true, name: 'Errors' });
-}
-
-/** The way to the scopes the strip ran out of room for. */
-export function scopeOverflow(page: Page): Locator {
-  return drawerHeader(page).getByRole('button', { name: 'More log scopes' });
-}
-
-/** Presses the strip's disclosure and waits for the drawer to stand under the stage. */
+/** Presses the toolbar's disclosure and waits for the drawer to stand under the stage. */
 export async function theLogsDrawerOpens(page: Page, gateway: string): Promise<void> {
   await logsControl(page).click();
   await expect(logsHeading(page, gateway)).toBeVisible();
@@ -170,8 +164,8 @@ export async function drawerSharesTheColumn(page: Page): Promise<boolean> {
   return page.locator('[data-canvas-column]').evaluate((column) => {
     const boxOf = (selector: string): DOMRect =>
       column.querySelector(selector)?.getBoundingClientRect() ?? new DOMRect();
-    const stage = boxOf(':scope > section:not(:has(> header))');
-    const drawer = boxOf(':scope > section:has(> header)');
+    const stage = boxOf(':scope > section:not([data-logs-drawer])');
+    const drawer = boxOf(':scope > [data-logs-drawer]');
     const strip = boxOf(':scope > footer');
 
     return (
@@ -179,6 +173,48 @@ export async function drawerSharesTheColumn(page: Page): Promise<boolean> {
       drawer.height > 0 &&
       stage.bottom <= drawer.top &&
       drawer.bottom <= strip.top
+    );
+  });
+}
+
+/**
+ * Whether the logs keep the whole left canvas column while the inspector keeps the full-height
+ * column beside it, with neither panel covering the other.
+ */
+export async function logsAndInspectorKeepTheirColumns(page: Page): Promise<boolean> {
+  return page.locator('[data-canvas-workspace]').evaluate((workspace) => {
+    const standingIn = (root: ParentNode | null, selector: string): HTMLElement | null =>
+      root === null ? null : root.querySelector<HTMLElement>(selector);
+    const near = (first: number, second: number): boolean => Math.abs(first - second) <= 1;
+    const drawerKeepsTheCanvasColumn = (drawerBox: DOMRect, canvasBox: DOMRect): boolean =>
+      drawerBox.width > 0 &&
+      near(drawerBox.left, canvasBox.left) &&
+      near(drawerBox.right, canvasBox.right);
+    const inspectorKeepsItsFullColumn = (inspectorBox: DOMRect, canvasBox: DOMRect): boolean =>
+      inspectorBox.width > 0 &&
+      near(inspectorBox.top, canvasBox.top) &&
+      near(inspectorBox.bottom, canvasBox.bottom);
+    const neitherCoversTheOther = (
+      canvasBox: DOMRect,
+      drawerBox: DOMRect,
+      inspectorBox: DOMRect,
+    ): boolean =>
+      drawerKeepsTheCanvasColumn(drawerBox, canvasBox) &&
+      drawerBox.right <= inspectorBox.left &&
+      inspectorKeepsItsFullColumn(inspectorBox, canvasBox);
+
+    const column = standingIn(workspace, ':scope > [data-canvas-column]');
+    const drawer = standingIn(column, ':scope > [data-logs-drawer]');
+    const inspector = standingIn(workspace, ':scope > aside[data-panel-control]');
+
+    if (column === null || drawer === null || inspector === null) {
+      return false;
+    }
+
+    return neitherCoversTheOther(
+      column.getBoundingClientRect(),
+      drawer.getBoundingClientRect(),
+      inspector.getBoundingClientRect(),
     );
   });
 }

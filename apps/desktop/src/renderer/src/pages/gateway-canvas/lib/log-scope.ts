@@ -11,6 +11,11 @@ export type LogSubject =
   | { kind: 'ghost-target'; accountId: string }
   | { kind: 'draft' };
 
+/** Whether a provider response has started but its body has not finished or failed yet. */
+export function requestInFlight(row: LogRow): boolean {
+  return row.origin === 'provider' && row.durationMs === undefined;
+}
+
 /**
  * Whether a request failed, which is where this slice decides what counts as an error.
  *
@@ -18,7 +23,7 @@ export type LogSubject =
  * so a tally and a filtered list can never disagree about the same request.
  */
 export function requestFailed(row: LogRow): boolean {
-  return row.status >= FIRST_FAILING_STATUS;
+  return !requestInFlight(row) && row.status >= FIRST_FAILING_STATUS;
 }
 
 /**

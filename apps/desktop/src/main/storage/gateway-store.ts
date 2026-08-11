@@ -3,7 +3,7 @@ import {
   loadGatewayConfig,
   type GatewayConfig,
 } from '@recompose/contracts';
-import { mkdir, readdir } from 'node:fs/promises';
+import { mkdir, readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -33,6 +33,10 @@ export class GatewayNewerSchemaError extends Error {
 
 export async function saveGatewayConfig(dir: string, config: GatewayConfig): Promise<void> {
   await writeJsonAtomic(join(dir, `${config.slug}.json`), config);
+}
+
+export async function removeGatewayConfig(dir: string, slug: string): Promise<void> {
+  await rm(join(dir, `${slug}.json`));
 }
 
 async function loadOneGatewayConfig(

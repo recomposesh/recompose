@@ -24,8 +24,15 @@ export const MixedStates = meta.story({
     },
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('link', { name: 'Codex Running' })).toBeVisible();
+    const codexRow = await canvas.findByRole('link', { name: 'Codex Running' });
+
+    await expect(codexRow).toBeVisible();
     await expect(await canvas.findByRole('link', { name: 'Gemini Stopped' })).toBeVisible();
+    await expect(paintedStyle(codexRow.querySelector('svg')).color).toBe(
+      document.documentElement.classList.contains('scheme-dark')
+        ? 'rgb(64, 200, 224)'
+        : 'rgb(23, 134, 155)',
+    );
   },
 });
 

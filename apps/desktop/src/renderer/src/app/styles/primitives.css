@@ -9,6 +9,7 @@
   --green-600: #28cd41;
   --green-700: #1a9e33;
   --green-800: #127d25;
+  --green-900: #0f6e20;
   --orange-500: #ff9f0a;
   --orange-600: #ff9500;
   --purple-400: #dd79ff;
@@ -19,11 +20,13 @@
   --teal-600: #30b0c7;
   --teal-700: #17869b;
   --teal-800: #006f84;
+  --red-200: #ffa399;
   --red-300: #ff7a70;
   --red-500: #ff453a;
   --red-600: #ff3b30;
   --red-700: #d70015;
   --red-800: #ce0008;
+  --red-900: #c40008;
   --yellow-500: #ffd60a;
   --yellow-600: #c79000;
   --yellow-700: #a37400;
@@ -31,10 +34,23 @@
   --amber-500: #ffb02e;
   --amber-600: #c27a00;
   --amber-700: #946200;
+  --coral-300: #ff9a86;
+  --coral-400: #ff8068;
+  --coral-500: #ff664f;
+  --coral-600: #e7553f;
+  --coral-700: #bf3e2f;
+  --coral-800: #963126;
+  --pink-300: #ff91d4;
+  --pink-400: #ff72c4;
+  --pink-500: #f252ad;
+  --pink-600: #d63d93;
+  --pink-700: #ad2d75;
+  --pink-800: #86235b;
 
   --white: #ffffff;
   --white-a92: rgb(255 255 255 / 92%);
   --white-a90: rgb(255 255 255 / 90%);
+  --white-a58: rgb(255 255 255 / 58%);
   --white-a55: rgb(255 255 255 / 55%);
   --white-a45: rgb(255 255 255 / 45%);
   --white-a28: rgb(255 255 255 / 28%);

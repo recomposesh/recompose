@@ -5,9 +5,9 @@ import { cableStandsSelected, nodeStandsSelected } from '../canvas-selection';
 import { Given, Then, When } from '../fixtures';
 import {
   closeLogsControl,
-  errorsFilter,
-  logScope,
+  logsControl,
   logsHeading,
+  logsSubjectType,
   onlyRowsRemain,
   ROW_CELLS,
 } from '../logs-drawer';
@@ -20,15 +20,9 @@ import {
   SPARE_ACCOUNT,
 } from '../served-gateway';
 import { turnThrough } from '../served-traffic';
-import {
-  departedAccount,
-  footerReadingBefore,
-  rememberDepartedAccount,
-  rememberFooterReading,
-  wholeStreamBefore,
-} from '../telemetry-memory';
+import { footerReadingBefore, rememberFooterReading, wholeStreamBefore } from '../telemetry-memory';
 import { theDetailStandsOpen, theDrawerStandsOpen } from '../telemetry-standing';
-import { footerReading, logsControl } from '../traffic-footer';
+import { footerReading } from '../traffic-footer';
 
 /** The definition every telemetry scenario names first. */
 const CREATIVE = 'creative';
@@ -109,7 +103,6 @@ Given('rows that reached a target since removed from the registry', async ({ pag
 
   await turnThrough(page, CREATIVE);
   await theDrawerStandsOpen(page);
-  rememberDepartedAccount(page, departing);
 
   const removed = await page.evaluate(
     async (id) => window.recompose['accounts:remove']({ id }),
@@ -120,12 +113,7 @@ Given('rows that reached a target since removed from the registry', async ({ pag
     throw new Error(`the app removed no account: ${removed.error.message}`);
   }
 
-  await expect(canvasNode(page, ghostNodeId(departing))).toBeVisible();
-});
-
-Given('the scope standing on {string}', async ({ page }, model: string) => {
-  await logScope(page, model).click();
-  await expect(logScope(page, model)).toHaveAttribute('aria-checked', 'true');
+  await expect(canvasNode(page, ghostNodeId(CREATIVE))).toBeVisible();
 });
 
 When(
@@ -148,17 +136,12 @@ When(
   'the person selects the target node of the account {string}',
   async ({ page }, account: string) => {
     expect(account).toBe(ANTHROPIC_ACCOUNT);
-    await nodeStandsSelected(page, `target:${await accountLabeled(page, account)}`);
+    await nodeStandsSelected(page, `target:${CREATIVE}`);
   },
 );
 
 When('the person selects the ghost target node', async ({ page }) => {
-  await nodeStandsSelected(page, ghostNodeId(departedAccount(page)));
-});
-
-When('the person turns on the Errors filter', async ({ page }) => {
-  await errorsFilter(page).click();
-  await expect(errorsFilter(page)).toHaveAttribute('aria-pressed', 'true');
+  await nodeStandsSelected(page, ghostNodeId(CREATIVE));
 });
 
 When('the person closes and reopens the drawer', async ({ page }) => {
@@ -181,4 +164,13 @@ Then('only the rows through {string} remain', async ({ page }, model: string) =>
   await onlyRowsRemain(page, wholeStreamBefore(page), (cells) =>
     (cells[ROW_CELLS.models] ?? '').includes(model),
   );
+});
+
+Then('the drawer heads {string} as {string}', async ({ page }, subject: string, type: string) => {
+  await expect(logsHeading(page, subject)).toBeVisible();
+  await expect(logsSubjectType(page, type)).toBeVisible();
+});
+
+Then('the drawer shows subject type {string}', async ({ page }, type: string) => {
+  await expect(logsSubjectType(page, type)).toBeVisible();
 });

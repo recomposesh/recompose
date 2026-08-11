@@ -40,11 +40,7 @@ function threeStandings(failedThrough: Account | undefined) {
     <>
       <LogRow account={workKey} id="served" logged={servedRequest()} />
       <LogRow account={workKey} id="limited" logged={servedRequest({ status: 429 })} />
-      <LogRow
-        account={failedThrough}
-        id="failed"
-        logged={servedRequest({ status: 500, durationMs: undefined })}
-      />
+      <LogRow account={failedThrough} id="failed" logged={servedRequest({ status: 500 })} />
     </>
   );
 }
@@ -53,7 +49,8 @@ function threeStandings(failedThrough: Account | undefined) {
 export const Served = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('14:22:09')).toBeVisible();
-    await expect(await canvas.findByText('anthropic · work')).toBeVisible();
+    await expect(await canvas.findByText('anthropic')).toBeVisible();
+    await expect(await canvas.findByText('work')).toBeVisible();
     await expect(await canvas.findByText('0.9s')).toBeVisible();
   },
 });
@@ -89,17 +86,17 @@ export const EveryStanding = meta.story({
   },
 });
 
-/** A request the provider refused, whose duration cell stays empty rather than reading zero. */
+/** A request the provider refused, which keeps the duration the failure took to arrive. */
 export const Failed = meta.story({
   args: {
     logged: servedRequest({
       status: 500,
-      durationMs: undefined,
       failure: 'The provider answered 500.',
     }),
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('no duration')).toBeInTheDocument();
+    await expect(await canvas.findByText('500')).toBeVisible();
+    await expect(await canvas.findByText('0.9s')).toBeVisible();
   },
 });
 
@@ -126,7 +123,8 @@ export const RaisedByTheGateway = meta.story({
 export const AccountDeparted = meta.story({
   args: { account: undefined },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('anthropic · k1')).toBeVisible();
+    await expect(await canvas.findByText('anthropic')).toBeVisible();
+    await expect(await canvas.findByText('k1')).toBeVisible();
   },
 });
 
@@ -145,7 +143,7 @@ export const NamesTooLongForTheGrid = meta.story({
   play: async ({ canvas }) => {
     const asked = await canvas.findByTitle(A_LONG_ID);
     const resolved = await canvas.findByTitle(A_LONG_MODEL);
-    const answered = await canvas.findByText('anthropic · work');
+    const answered = await canvas.findByText('anthropic');
 
     await expect(resolved.scrollWidth).toBeGreaterThan(resolved.clientWidth);
     await expect(asked.scrollWidth).toBeGreaterThan(asked.clientWidth);

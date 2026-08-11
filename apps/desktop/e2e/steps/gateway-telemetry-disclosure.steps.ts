@@ -12,11 +12,12 @@ import {
 import {
   closeLogsControl,
   drawerSharesTheColumn,
+  logsControl,
   logsHeading,
   theLogsDrawerOpens,
 } from '../logs-drawer';
 import { SERVING_GATEWAY } from '../served-gateway';
-import { footerReading, logsControl, trafficFooter } from '../traffic-footer';
+import { footerReading, trafficFooter } from '../traffic-footer';
 
 /** The Gateway menu item that stands the drawer up, named the way the menu names it. */
 const SHOW_LOGS = 'Show Logs';
@@ -32,7 +33,7 @@ Given('a footer reading live traffic', async ({ electronApp, page }) => {
   await theClipboardStandsEmpty(electronApp);
 });
 
-When("the person presses the Logs control at the footer's end", async ({ page }) => {
+When('the person presses the request log control on the toolbar', async ({ page }) => {
   await theLogsDrawerOpens(page, SERVING_GATEWAY);
 });
 

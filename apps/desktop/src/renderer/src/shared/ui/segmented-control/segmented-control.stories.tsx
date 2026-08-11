@@ -102,7 +102,7 @@ const scopeOptions = [
   { value: 'all', label: 'All' },
   { value: 'fast', label: 'fast', tint: 'virtual-model' },
   { value: 'creative', label: 'creative', tint: 'virtual-model' },
-  { value: 'work', label: 'work', tint: 'target' },
+  { value: 'work', label: 'work' },
 ] as const satisfies readonly { value: Scope; label: string; tint?: string }[];
 
 function markInkOf(segment: Element): string {
@@ -141,6 +141,49 @@ export const RoleTinted = meta.story({
 
     await expect(creative).toHaveAttribute('aria-checked', 'true');
     await expect(plain).toHaveAttribute('aria-checked', 'false');
+  },
+});
+
+type Outcome = 'quiet' | 'passing' | 'failing';
+
+const outcomeOptions = [
+  { value: 'quiet', label: 'Quiet' },
+  { value: 'passing', label: 'Passing', tone: 'positive' },
+  { value: 'failing', label: 'Failing', tone: 'danger' },
+] as const;
+
+function ControlledOutcome() {
+  const [outcome, setOutcome] = useState<Outcome>('quiet');
+
+  return (
+    <SegmentedControl
+      label="Outcome"
+      onChangeValue={setOutcome}
+      options={outcomeOptions}
+      value={outcome}
+    />
+  );
+}
+
+/** Semantic option inks hold whether the option rests or stands selected. */
+export const SemanticTones = meta.story({
+  render: () => <ControlledOutcome />,
+  play: async ({ canvas, userEvent }) => {
+    const success = await canvas.findByRole('radio', { name: 'Passing' });
+    const errors = await canvas.findByRole('radio', { name: 'Failing' });
+
+    await expect(success).toHaveClass('text-running-ink');
+    await expect(errors).toHaveClass('text-danger-ink');
+
+    await userEvent.click(success);
+
+    await expect(success).toHaveAttribute('aria-checked', 'true');
+    await expect(success).toHaveClass('text-running-ink');
+
+    await userEvent.click(errors);
+
+    await expect(errors).toHaveAttribute('aria-checked', 'true');
+    await expect(errors).toHaveClass('text-danger-ink');
   },
 });
 

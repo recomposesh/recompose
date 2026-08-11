@@ -42,7 +42,7 @@ export function ChecklistSteps({ steps, onSkip }: ChecklistStepsProps) {
       </ul>
       <footer className="mt-1.25 flex justify-end border-t border-line-faint px-0.5 py-1.75">
         <button
-          className="text-detail text-ink-secondary focus-ring hover:text-ink"
+          className="focus-ring text-detail text-ink-secondary hover:text-ink"
           onClick={onSkip}
           type="button"
         >

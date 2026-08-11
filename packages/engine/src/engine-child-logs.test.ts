@@ -63,9 +63,9 @@ async function grantThenAnswer(child: ServingChild, model: string): Promise<Resp
     { incoming: { socket: { remoteAddress: '127.0.0.1' } } },
   );
 
-  await reportsReach(child.parent, 2);
+  await reportsReach(child.parent, 3);
 
-  const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+  const ask = engineSpendRequestSchema.parse(child.parent.reports.at(-1));
 
   child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
 
@@ -110,7 +110,7 @@ describe('what the parent hears once one request has been logged', () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
-    await reportsReach(child.parent, 5);
+    await reportsReach(child.parent, 6);
 
     expect(rowsStandingIn(child.parent.reports)).toMatchObject([
       { gateway: 'codex', virtualModel: 'fast', origin: 'provider' },
@@ -121,7 +121,7 @@ describe('what the parent hears once one request has been logged', () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
-    await reportsReach(child.parent, 5);
+    await reportsReach(child.parent, 6);
 
     expect(JSON.stringify(logsIn(child.parent.reports))).not.toContain('my diary entry');
   });
@@ -130,7 +130,7 @@ describe('what the parent hears once one request has been logged', () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
-    await reportsReach(child.parent, 5);
+    await reportsReach(child.parent, 6);
 
     expect(providerObservability().snapshot()).toHaveLength(1);
   });

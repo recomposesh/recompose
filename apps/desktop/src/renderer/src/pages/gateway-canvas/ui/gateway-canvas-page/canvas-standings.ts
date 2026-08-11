@@ -12,9 +12,11 @@ import type { CanvasGraph, CanvasOverlay } from '../../lib/node-graph';
 import type { HeldDraft } from '../../lib/use-held-draft';
 
 import { providerModelsQueryOptions, useDefineVirtualModel } from '../../../../shared/api';
+import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { heldOver } from '../../lib/canvas-positions';
 import { modelListReading, refusalFromMain } from '../../lib/model-draft';
 import { tidyPositions } from '../../lib/tidy-layout';
+import { editingText } from './canvas-wiring';
 
 /** Where the two-stage picker stands: on a pending card, or anchored to a stored target. */
 export type PickerStanding =
@@ -130,6 +132,55 @@ export function useEscapeCancelledDrag(dragging: RefObject<DragWatch>): void {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [dragging]);
+}
+
+function escapeAnsweredElsewhere(dragging: RefObject<DragWatch>): boolean {
+  return (
+    dragging.current.inFlight ||
+    editingText(document.activeElement) ||
+    document.querySelector('dialog[open]') !== null
+  );
+}
+
+/**
+ * Lets Escape settle the canvas: the picker goes first, then the selection with its inspector.
+ *
+ * @summary Escape means "put away the most recent thing", so it works outward: a picker in
+ * flight dismisses alone, and only a quiet canvas lets go of the selection. A drag in flight, a
+ * text field mid-edit, and an open dialog all keep Escape to themselves, because each already
+ * answers it with a cancel of its own.
+ */
+export function useEscapeSettledCanvas(
+  standings: CanvasStandings,
+  dragging: RefObject<DragWatch>,
+): void {
+  const { picker, setPicker, select } = standings;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape' || escapeAnsweredElsewhere(dragging)) {
+        return;
+      }
+
+      if (picker !== undefined) {
+        setPicker(undefined);
+
+        return;
+      }
+
+      select(undefined);
+
+      if (inspectorOpen()) {
+        toggleInspector();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [picker, setPicker, select, dragging]);
 }
 
 /** The two renderer standings the graph draws beside engine truth. */

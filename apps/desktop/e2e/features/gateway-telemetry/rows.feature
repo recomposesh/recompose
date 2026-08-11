@@ -17,7 +17,7 @@ Feature: A row tells one request's story
   Scenario: A provider failure reads at a glance
     When the provider answers a request with status 500
     Then the row marks the failure with status 500
-    And its duration cell stands empty
+    And its duration cell reads how long the failure took
 
   Scenario: A request that reaches no provider still lands
     Given "creative" bound to an unreachable target

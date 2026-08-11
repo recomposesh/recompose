@@ -17,11 +17,15 @@ describe('the settings document contract', () => {
     expectTypeOf<Settings['showOnboardingChecklist']>().toEqualTypeOf<boolean>();
   });
 
+  test('the global bind address is an optional host string for older documents', () => {
+    expectTypeOf<Settings['bindAddress']>().toEqualTypeOf<string | undefined>();
+  });
+
   test('the theme keeps the shape version 1 gave it', () => {
     expectTypeOf<Settings['theme']>().toEqualTypeOf<'system' | 'light' | 'dark'>();
   });
 
-  test('the document holds exactly six fields, so nothing can name a port', () => {
+  test('the document holds the server bind address without bringing back an app-wide port', () => {
     expectTypeOf<keyof Settings>().toEqualTypeOf<
       | 'schemaVersion'
       | 'theme'
@@ -29,6 +33,8 @@ describe('the settings document contract', () => {
       | 'showInMenuBar'
       | 'firstRequestServed'
       | 'showOnboardingChecklist'
+      | 'bindAddress'
+      | 'startGatewaysOnLaunch'
     >();
   });
 

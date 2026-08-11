@@ -56,7 +56,7 @@ export async function sendTurn(
 }
 
 export function addressOfPort(port: number): string {
-  return `http://localhost:${String(port)}`;
+  return `http://127.0.0.1:${String(port)}`;
 }
 
 function isObject(value: unknown): value is object {

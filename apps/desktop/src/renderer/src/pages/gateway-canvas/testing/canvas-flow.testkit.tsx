@@ -24,7 +24,7 @@ const cards = {
   'pending-target': Card,
 } satisfies Record<CanvasNodeKind, typeof Card>;
 
-const cardSize = { width: 158, height: 78 };
+const cardSize = { width: 184, height: 88 };
 
 /**
  * One card standing at a fixed seat, sized as every canvas node declares itself.

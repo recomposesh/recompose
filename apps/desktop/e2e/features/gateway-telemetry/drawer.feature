@@ -1,8 +1,8 @@
-Feature: The drawer shares the stage without covering it
+Feature: The drawer shares the workspace without covering it
 
   The drawer stands under the stage in the canvas column. The canvas shrinks
-  and stays fully usable above it, and the drawer's height drags and
-  persists.
+  and stays fully usable above it, while the inspector keeps its own
+  full-height column beside both. The drawer's height drags and persists.
 
   Background:
     Given a running gateway "relay" serving the virtual model "creative"
@@ -11,6 +11,10 @@ Feature: The drawer shares the stage without covering it
   Scenario: The canvas keeps its furniture
     When the person reads the canvas above the drawer
     Then the zoom controls and the minimap stand visible
+
+  Scenario: The logs and inspector keep separate columns
+    When the person selects the node of "creative"
+    Then the logs stay left of the full-height inspector
 
   Scenario: The canvas stays live under an open drawer
     When the person selects the node of "creative"

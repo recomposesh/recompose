@@ -1,13 +1,14 @@
 import type { Account, LogRow as LoggedRequest } from '@recompose/contracts';
 
 import { accountName } from '../../../../entities/account';
+import { requestInFlight } from '../../lib/log-scope';
 
 const TWO_DIGITS = 2;
 const MS_PER_SECOND = 1000;
 const ONE_DECIMAL = 1;
 
 /** How tall one row stands, which the virtualized list measures its whole run against. */
-export const LOG_ROW_HEIGHT = 30;
+export const LOG_ROW_HEIGHT = 20;
 
 function padded(part: number): string {
   return String(part).padStart(TWO_DIGITS, '0');
@@ -30,12 +31,18 @@ function reading(parts: readonly string[], between: string): string {
   return parts.filter((part) => part !== '').join(between);
 }
 
-function named(logged: LoggedRequest, account: Account | undefined): string {
+/** The account a request was served through, or the raw id one that left the registry kept. */
+export function servedByAccount(logged: LoggedRequest, account: Account | undefined): string {
   if (account !== undefined) {
     return accountName(account);
   }
 
   return logged.accountId ?? '';
+}
+
+/** The provider that answered, or nothing while the request never reached one. */
+export function servedByProvider(logged: LoggedRequest): string {
+  return logged.provider ?? '';
 }
 
 /**
@@ -44,10 +51,10 @@ function named(logged: LoggedRequest, account: Account | undefined): string {
  * @summary An account that has left the registry leaves its raw id standing rather than a blank,
  * because the request did reach something and a person repairing the composition needs to know what.
  */
-export function servedBy(logged: LoggedRequest, account: Account | undefined): string {
+function servedBy(logged: LoggedRequest, account: Account | undefined): string {
   return logged.provider === undefined
     ? ''
-    : reading([logged.provider, named(logged, account)], ' · ');
+    : reading([logged.provider, servedByAccount(logged, account)], ' · ');
 }
 
 /**
@@ -64,7 +71,7 @@ export function copiedRow(logged: LoggedRequest, account: Account | undefined): 
       logged.method,
       reading([logged.virtualModel ?? '', logged.providerModel ?? ''], ' → '),
       servedBy(logged, account),
-      String(logged.status),
+      requestInFlight(logged) ? 'live' : String(logged.status),
       tookFor(logged.durationMs),
     ],
     ' ',

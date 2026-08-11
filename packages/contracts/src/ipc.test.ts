@@ -18,6 +18,7 @@ const channelNames: IpcChannel[] = [
   'system:title-bar-double-click',
   'gateways:offer-port',
   'gateways:move-port',
+  'gateways:set-port',
   'engine:start',
   'engine:stop',
   'engine:states',
@@ -31,12 +32,13 @@ const channelNames: IpcChannel[] = [
   'accounts:check-runtime',
   'accounts:list-models',
   'gateways:update',
+  'gateways:remove',
   'engine:replay-logs',
   'system:logs-drawer',
 ];
 
 describe('ipc channel registry', () => {
-  test('exactly the twenty-nine specified channels exist', () => {
+  test('exactly the thirty-one specified channels exist', () => {
     expect(Object.keys(ipcChannels).sort()).toEqual([...channelNames].sort());
   });
 

@@ -18,15 +18,26 @@ const workKey: Account = {
   credentialRef: 'c-a1',
 };
 
-const wired: TargetNodeData = { id: 'target:a1', kind: 'target', account: workKey };
+const wired: TargetNodeData = {
+  id: 'target:a1',
+  kind: 'target',
+  account: workKey,
+  modelId: 'fast',
+};
 
-const removed: TargetNodeData = { id: 'ghost:a9', kind: 'ghost-target', accountId: 'a9' };
+const removed: TargetNodeData = {
+  id: 'ghost:a9',
+  kind: 'ghost-target',
+  accountId: 'a9',
+  modelId: 'slow',
+};
 
 const waiting: TargetNodeData = { id: 'pending', kind: 'pending-target' };
 
 const keyed: TargetNodeData = {
   id: 'target:a5',
   kind: 'target',
+  modelId: 'fast',
   account: {
     id: 'a5',
     provider: 'acme',
@@ -39,17 +50,20 @@ const keyed: TargetNodeData = {
 const subscribed: TargetNodeData = {
   id: 'target:a2',
   kind: 'target',
-  account: { id: 'a2', provider: 'antigravity', kind: 'subscription', label: 'Antigravity' },
+  modelId: 'fast',
+  account: { id: 'a2', provider: 'openai', kind: 'subscription', label: 'Codex account' },
+  detail: 'dev@example.com',
 };
 
 const aggregated: TargetNodeData = {
   id: 'target:a3',
   kind: 'target',
+  modelId: 'fast',
   account: {
     id: 'a3',
-    provider: 'acme-router',
+    provider: 'openrouter',
     kind: 'aggregator',
-    label: 'Acme router',
+    label: 'Shared router',
     credentialRef: 'c-a3',
   },
 };
@@ -57,14 +71,11 @@ const aggregated: TargetNodeData = {
 const runtime: TargetNodeData = {
   id: 'target:a4',
   kind: 'target',
+  modelId: 'fast',
   account: { id: 'a4', provider: 'ollama', kind: 'local', address: '127.0.0.1:11434' },
 };
 
-const personGlyph = 'M5.4 19.6c.7-3.5 3.4-5.3 6.6-5.3s5.9 1.8 6.6 5.3';
-
 const keyGlyph = 'M10.2 13.8 19.5 4.5M16.4 7.6l2.2 2.2M13.8 10.2l2.2 2.2';
-
-const networkGlyph = 'M7.2 11l8.5-4.2M7.2 13l8.5 4.2';
 
 function chipInk(card: HTMLElement): string {
   return paintedStyle(card.querySelector('svg')?.parentElement).color;
@@ -83,12 +94,12 @@ const meta = preview.meta({
 /** A stored account standing as the end of a binding, which is where a request finally lands. */
 export const Basic = meta.story({});
 
-/** The frame carries the target tint, so the column a card sits in is legible before a word is. */
-export const TheFrameCarriesTheTargetTint = meta.story({
+/** The frame carries the account kind tint, so a key and a subscription never share one color. */
+export const TheFrameCarriesTheAccountKindTint = meta.story({
   play: async ({ canvas }) => {
     const painted = paintedStyle(await canvas.findByRole('button', { name: /Work key/ }));
 
-    await expect(painted.borderColor).toBe(inScheme('rgb(175, 82, 222)', 'rgb(191, 90, 242)'));
+    await expect(painted.borderColor).toBe(inScheme('rgb(163, 116, 0)', 'rgb(255, 214, 10)'));
     await expect(painted.borderStyle).toBe('solid');
   },
 });
@@ -104,25 +115,31 @@ export const AKeyChipReadsAsAKey = meta.story({
   },
 });
 
-/** A subscription leads with the person glyph, in the tint the subscription surfaces already use. */
-export const ASubscriptionChipReadsAsAPerson = meta.story({
+/** A subscription leads with its provider mark rather than a generic person. */
+export const ASubscriptionChipWearsItsProviderMark = meta.story({
   args: { data: subscribed },
   play: async ({ canvas }) => {
-    const card = await canvas.findByRole('button', { name: /Antigravity/ });
+    const card = await canvas.findByRole('button', { name: /Subscription Codex/ });
 
     await expect(chipInk(card)).toBe(inScheme('rgb(0, 122, 255)', 'rgb(10, 132, 255)'));
-    await expect(chipGlyph(card)).toBe(personGlyph);
+    await expect(card).toHaveTextContent('Subscription');
+    await expect(card).toHaveTextContent('Codex');
+    await expect(card).toHaveTextContent('dev@example.com');
+    await expect(chipGlyph(card)).not.toBe(keyGlyph);
   },
 });
 
-/** An aggregator leads with the network glyph, because it fans one ask out to many vendors. */
-export const AnAggregatorChipReadsAsANetwork = meta.story({
+/** An aggregator leads with its provider mark in the aggregator tint. */
+export const AnAggregatorChipWearsItsProviderMark = meta.story({
   args: { data: aggregated },
   play: async ({ canvas }) => {
-    const card = await canvas.findByRole('button', { name: /Acme router/ });
+    const card = await canvas.findByRole('button', { name: /Aggregator OpenRouter/ });
 
     await expect(chipInk(card)).toBe(inScheme('rgb(175, 82, 222)', 'rgb(191, 90, 242)'));
-    await expect(chipGlyph(card)).toBe(networkGlyph);
+    await expect(chipGlyph(card)).not.toBe(keyGlyph);
+    await expect(card).toHaveTextContent('Aggregator');
+    await expect(card).toHaveTextContent('OpenRouter');
+    await expect(card).toHaveTextContent('Shared router');
   },
 });
 
@@ -132,9 +149,12 @@ export const ARuntimeChipWearsItsVendorMark = meta.story({
   play: async ({ canvas }) => {
     const card = await canvas.findByRole('button', { name: /Ollama/ });
 
-    await expect(chipInk(card)).toBe(inScheme('rgb(23, 134, 155)', 'rgb(64, 200, 224)'));
+    await expect(chipInk(card)).toBe(inScheme('rgb(191, 62, 47)', 'rgb(255, 128, 104)'));
     await expect(chipGlyph(card)).not.toBe(keyGlyph);
     await expect(card.querySelector('svg title')?.textContent).toBe('Ollama');
+    await expect(card).toHaveTextContent('Local Runtime');
+    await expect(card).toHaveTextContent('Ollama');
+    await expect(card).toHaveTextContent('127.0.0.1:11434');
   },
 });
 
@@ -160,13 +180,13 @@ export const ARemovedTargetDashesAndSaysSo = meta.story({
   },
 });
 
-/** The spot a cable was let go at holds itself open until a pick lands on it. */
+/** The spot a cable was let go at offers the pick without repeating that it waits. */
 export const ACardWaitingOnAPickSaysItIsWaiting = meta.story({
   args: { data: waiting },
   play: async ({ canvas }) => {
     const card = await canvas.findByRole('button', { name: /Choose a target/ });
 
-    await expect(card).toHaveTextContent('waiting on a pick');
+    await expect(card).not.toHaveTextContent('waiting on a pick');
     await expect(paintedStyle(card).borderStyle).toBe('dashed');
   },
 });

@@ -71,6 +71,14 @@ test('every kind an account can be held as gets a row of its own', async () => {
     .toBeVisible();
 });
 
+test('the subscription row uses the recurring subscription glyph rather than a person', async () => {
+  const screen = await renderSidebar(stored([]));
+  const row = screen.getByRole('link', { name: 'Subscriptions, 0 connected' }).element();
+
+  expect(row.querySelector('svg path')?.getAttribute('d')).toBe('M19.6 12a7.6 7.6 0 1 1-2.2-5.4');
+  expect(row.querySelector('svg circle')).toBeNull();
+});
+
 test('the kind that holds nothing yet still reaches a destination of its own', async () => {
   const screen = await renderSidebar(stored([]));
 

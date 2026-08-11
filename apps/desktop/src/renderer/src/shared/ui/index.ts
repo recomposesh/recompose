@@ -1,4 +1,5 @@
 export { Badge } from './badge/badge';
+export { Button } from './button/button';
 export { BrandMark } from './brand-mark/brand-mark';
 export {
   type BrandMarkName,
@@ -6,6 +7,7 @@ export {
   brandMarkNames,
 } from './brand-mark/brand-mark-inventory';
 export { Chip } from './chip/chip';
+export { NavGroup } from './nav-group/nav-group';
 export { CopyButton } from './copy-button/copy-button';
 export { FieldGroup } from './field-group/field-group';
 export { type IconName, Icon } from './icon/icon';

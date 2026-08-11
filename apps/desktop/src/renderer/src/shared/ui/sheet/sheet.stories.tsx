@@ -21,7 +21,7 @@ function GatewaySheet(args: ComponentProps<typeof Sheet>) {
       <label className="flex flex-col gap-1 text-body text-ink">
         Name
         <input
-          className="field-control focus-ring"
+          className="field-control"
           onInput={(event) => {
             setName(event.currentTarget.value);
           }}

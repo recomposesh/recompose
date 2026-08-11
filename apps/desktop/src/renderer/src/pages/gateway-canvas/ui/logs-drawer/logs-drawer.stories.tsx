@@ -5,12 +5,7 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { gatewaySeed } from '../../../../shared/testing';
-import {
-  crowdedGateway,
-  servedRequest,
-  servedRun,
-  storedAccounts,
-} from '../../testing/gateway-canvas.testkit';
+import { servedRequest, servedRun, storedAccounts } from '../../testing/gateway-canvas.testkit';
 import { LogsDrawer } from './logs-drawer';
 
 type DrawerStanding = ComponentProps<typeof LogsDrawer>;
@@ -18,8 +13,17 @@ type DrawerStanding = ComponentProps<typeof LogsDrawer>;
 const wholeGateway: DrawerStanding['subject'] = { kind: 'gateway' };
 const theCreativeModel: DrawerStanding['subject'] = { kind: 'virtual-model', modelId: 'creative' };
 const theFastModel: DrawerStanding['subject'] = { kind: 'virtual-model', modelId: 'fast' };
-const theAggregator: DrawerStanding['subject'] = { kind: 'target', accountId: 'g1' };
-const theRemovedTarget: DrawerStanding['subject'] = { kind: 'ghost-target', accountId: 'g1' };
+const theAggregator: DrawerStanding['subject'] = {
+  kind: 'target',
+  accountId: 'g1',
+  modelId: 'creative',
+};
+const theRemovedTarget: DrawerStanding['subject'] = {
+  kind: 'ghost-target',
+  accountId: 'g1',
+  modelId: 'creative',
+};
+const aDraft: DrawerStanding['subject'] = { kind: 'draft' };
 const answering: DrawerStanding['serving'] = 'running';
 const notAnswering: DrawerStanding['serving'] = 'stopped';
 
@@ -68,7 +72,6 @@ const meta = preview.meta({
     rows: acrossTwoModels,
     serving: answering,
     subject: wholeGateway,
-    onSelectSubject: () => {},
   },
   decorators: [
     (Story) => (
@@ -82,8 +85,15 @@ const meta = preview.meta({
 /** The drawer a person opens on a working gateway, streaming under the canvas. */
 export const Streaming = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('Logs · My Gateway')).toBeVisible();
+    await expect(await canvas.findByText('Logs for My Gateway')).toBeVisible();
+    await expect(await canvas.findByText('Gateway', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Live')).toBeVisible();
+    await expect(await canvas.findByRole('radio', { name: 'All' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(await canvas.findByRole('radio', { name: 'Success' })).toBeVisible();
+    await expect(await canvas.findByRole('radio', { name: 'Errors' })).toBeVisible();
     await expect(await canvas.findByRole('separator', { name: 'Logs height' })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Close logs' })).toBeVisible();
   },
@@ -98,40 +108,44 @@ export const Stopped = meta.story({
   },
 });
 
-/** A virtual model selected on the canvas, whose segment lights and whose requests remain. */
+/** A virtual model selected on the canvas, whose name and type lead its scoped requests. */
 export const ScopedToAVirtualModel = meta.story({
   args: { subject: theCreativeModel },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radio', { name: 'Creative' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
+    await expect(await canvas.findByText('Logs for Creative')).toBeVisible();
+    await expect(await canvas.findByText('Virtual Model', { exact: true })).toBeVisible();
   },
 });
 
-/** A target selected on the canvas, which brings a scope of its own for as long as it holds. */
+/** A target selected on the canvas, named from the account registry. */
 export const ScopedToATarget = meta.story({
   args: { subject: theAggregator },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radio', { name: 'openrouter' })).toBeVisible();
+    await expect(await canvas.findByText('Logs for openrouter')).toBeVisible();
+    await expect(await canvas.findByText('Target', { exact: true })).toBeVisible();
   },
 });
 
-/** A target since removed, whose transient scope says removed rather than naming what is gone. */
+/** A target since removed, whose type says what happened while its last known name remains. */
 export const ScopedToARemovedTarget = meta.story({
   args: { subject: theRemovedTarget },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radio', { name: 'Removed' })).toBeVisible();
+    await expect(await canvas.findByText('Logs for openrouter')).toBeVisible();
+    await expect(await canvas.findByText('Removed Target', { exact: true })).toBeVisible();
   },
 });
 
-/** A gateway serving more virtual models than the header holds, the rest behind the overflow. */
-export const MoreScopesThanTheHeaderHolds = meta.story({
-  args: { gateway: crowdedGateway, rows: [] },
+/** A draft in flight, named before it has a stored id. */
+export const Draft = meta.story({
+  args: { subject: aDraft },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: 'More log scopes' })).toBeVisible();
+    await expect(await canvas.findByText('Logs for New virtual model')).toBeVisible();
+    await expect(await canvas.findByText('Draft', { exact: true })).toBeVisible();
   },
 });
+
+/** The drawer while its owner plays the exit animation. */
+export const Leaving = meta.story({ args: { leaving: true } });
 
 /** A scope narrowed past every request, reading its own line instead of an empty box. */
 export const NothingInScope = meta.story({
@@ -143,7 +157,7 @@ export const NothingInScope = meta.story({
   },
 });
 
-/** The drawer in the dark scheme, where the header, the strip, and the inks all have to hold. */
+/** The drawer in the dark scheme, where the header, filter, and inks all have to hold. */
 export const DarkScheme = meta.story({
   globals: { theme: 'dark' },
   args: { subject: theAggregator },

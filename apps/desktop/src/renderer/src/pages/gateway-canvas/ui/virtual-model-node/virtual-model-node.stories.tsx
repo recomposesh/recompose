@@ -33,7 +33,7 @@ export const TheFrameCarriesTheVirtualModelTint = meta.story({
   play: async ({ canvas }) => {
     const painted = paintedStyle(await canvas.findByRole('button', named));
 
-    await expect(painted.borderColor).toBe(inScheme('rgb(0, 122, 255)', 'rgb(10, 132, 255)'));
+    await expect(painted.borderColor).toBe(inScheme('rgb(173, 45, 117)', 'rgb(255, 114, 196)'));
   },
 });
 

@@ -24,7 +24,7 @@ type RowStanding = {
 };
 
 function row(id: string, standing: RowStanding): LogRow {
-  const { at, status = 200, clientKey = FIRST_CLIENT, ...spent } = standing;
+  const { at, status = 200, clientKey = FIRST_CLIENT, durationMs = 12, ...spent } = standing;
 
   return {
     id,
@@ -33,6 +33,7 @@ function row(id: string, standing: RowStanding): LogRow {
     origin: 'provider',
     method: 'POST',
     status,
+    durationMs,
     clientKey,
     ...spent,
   };
@@ -157,19 +158,25 @@ test('a request answered beside a failed one still gives the p95 the duration it
   expect(trafficAggregates(served, NOW).p95Ms).toBe(900);
 });
 
-test('a failed request carries no duration and never drags the p95 down', () => {
+function stillInFlight(logged: LogRow): LogRow {
+  const { durationMs: _stillRunning, ...rest } = logged;
+
+  return rest;
+}
+
+test('a request still in flight carries no duration and never drags the p95 down', () => {
   const answered = Array.from({ length: 19 }, (_, index) =>
     row(`answered-${String(index)}`, { at: NOW - index, durationMs: index + 1 }),
   );
-  const failed = row('failed', { at: NOW, status: 502 });
+  const running = stillInFlight(row('running', { at: NOW }));
 
-  expect(trafficAggregates([...answered, failed], NOW).p95Ms).toBe(19);
+  expect(trafficAggregates([...answered, running], NOW).p95Ms).toBe(19);
 });
 
-test('a minute of requests that all failed leaves the p95 reading nothing at all', () => {
+test('a minute of requests still in flight leaves the p95 reading nothing at all', () => {
   const served = [
-    row('first-failure', { at: NOW - 5_000, status: 500 }),
-    row('second-failure', { at: NOW, status: 502 }),
+    stillInFlight(row('first-running', { at: NOW - 5_000 })),
+    stillInFlight(row('second-running', { at: NOW })),
   ];
 
   expect(trafficAggregates(served, NOW).p95Ms).toBe(0);
@@ -184,7 +191,9 @@ propertyTest.prop([fc.array(anyRow, { maxLength: 40 }), anyInstant])(
     expect(reading.requestsPerMinute).toBe(held.length);
     expect(reading.tokensPerMinute).toBe(held.reduce((sum, one) => sum + (one.tokens ?? 0), 0));
     expect(reading.clientApps).toBe(new Set(held.map((one) => one.clientKey)).size);
-    expect(reading.errors).toBe(held.filter((one) => one.status >= 400).length);
+    expect(reading.errors).toBe(
+      held.filter((one) => one.durationMs !== undefined && one.status >= 400).length,
+    );
   },
 );
 

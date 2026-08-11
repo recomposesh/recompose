@@ -5,7 +5,12 @@ import { expect } from '@playwright/test';
 import { canvasTool, minimap, modelNodeId } from '../canvas-screen';
 import { nodeCard } from '../canvas-selection';
 import { Given, Then, When } from '../fixtures';
-import { drawerHeight, logsHeightHandle, logsHeading } from '../logs-drawer';
+import {
+  drawerHeight,
+  logsAndInspectorKeepTheirColumns,
+  logsHeightHandle,
+  logsHeading,
+} from '../logs-drawer';
 import { SERVING_GATEWAY } from '../served-gateway';
 import { draggedHeightBefore, rememberDraggedHeight } from '../telemetry-memory';
 
@@ -65,6 +70,10 @@ Then('the zoom controls and the minimap stand visible', async ({ page }) => {
   await expect(canvasTool(page, 'Zoom in')).toBeVisible();
   await expect(canvasTool(page, 'Zoom out')).toBeVisible();
   await expect(minimap(page)).toBeVisible();
+});
+
+Then('the logs stay left of the full-height inspector', async ({ page }) => {
+  await expect.poll(async () => logsAndInspectorKeepTheirColumns(page)).toBe(true);
 });
 
 Then('the node takes selection', async ({ page }) => {

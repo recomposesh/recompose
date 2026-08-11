@@ -1,7 +1,8 @@
+import type { GatewayConfig } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useId, useSyncExternalStore } from 'react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 
 import {
   accountsQueryOptions,
@@ -9,25 +10,28 @@ import {
   settingsQueryOptions,
   useSettingsWriter,
 } from '../../../../shared/api';
+import { usePanelReveal } from '../../../../shared/lib';
 import { useCompletionCelebration } from '../../lib/get-started-celebration';
 import { getStartedCollapsed, subscribeToGetStartedCollapse } from '../../lib/get-started-collapse';
 import { getStartedSteps } from '../../lib/get-started-steps';
 import { ChecklistHeader } from '../checklist-header/checklist-header';
 import { ChecklistSteps } from '../checklist-steps/checklist-steps';
 
+const CHECKLIST_EXIT_MS = 150;
+
 const confetti = [
-  { at: 0, tint: 'var(--color-node-gateway)', drift: '-64px', delay: '0ms' },
-  { at: 1, tint: 'var(--color-node-virtual-model)', drift: '-40px', delay: '60ms' },
-  { at: 2, tint: 'var(--color-node-target)', drift: '-18px', delay: '20ms' },
+  { at: 0, tint: 'var(--color-gateway)', drift: '-64px', delay: '0ms' },
+  { at: 1, tint: 'var(--color-virtual-model)', drift: '-40px', delay: '60ms' },
+  { at: 2, tint: 'var(--color-subscription)', drift: '-18px', delay: '20ms' },
   { at: 3, tint: 'var(--color-running)', drift: '4px', delay: '90ms' },
-  { at: 4, tint: 'var(--color-node-gateway)', drift: '26px', delay: '40ms' },
-  { at: 5, tint: 'var(--color-node-virtual-model)', drift: '48px', delay: '110ms' },
-  { at: 6, tint: 'var(--color-node-target)', drift: '68px', delay: '10ms' },
-  { at: 7, tint: 'var(--color-running)', drift: '-52px', delay: '130ms' },
-  { at: 8, tint: 'var(--color-node-virtual-model)', drift: '14px', delay: '70ms' },
-  { at: 9, tint: 'var(--color-node-target)', drift: '-28px', delay: '150ms' },
-  { at: 10, tint: 'var(--color-running)', drift: '38px', delay: '30ms' },
-  { at: 11, tint: 'var(--color-node-gateway)', drift: '58px', delay: '170ms' },
+  { at: 4, tint: 'var(--color-api-key)', drift: '26px', delay: '40ms' },
+  { at: 5, tint: 'var(--color-aggregator)', drift: '48px', delay: '110ms' },
+  { at: 6, tint: 'var(--color-local)', drift: '68px', delay: '10ms' },
+  { at: 7, tint: 'var(--color-gateway)', drift: '-52px', delay: '130ms' },
+  { at: 8, tint: 'var(--color-virtual-model)', drift: '14px', delay: '70ms' },
+  { at: 9, tint: 'var(--color-subscription)', drift: '-28px', delay: '150ms' },
+  { at: 10, tint: 'var(--color-api-key)', drift: '38px', delay: '30ms' },
+  { at: 11, tint: 'var(--color-aggregator)', drift: '58px', delay: '170ms' },
 ];
 
 function confettiBurst(): ReactNode {
@@ -76,6 +80,59 @@ function progressLine(done: number, total: number): ReactNode {
   );
 }
 
+function sessionSteps(
+  gateways: readonly GatewayConfig[],
+  providerConnected: boolean,
+  firstRequestServed: boolean,
+) {
+  return getStartedSteps({
+    gatewayExists: gateways.length > 0,
+    providerConnected,
+    virtualModelComposed: gateways.some((gateway) => gateway.virtualModels.length > 0),
+    firstRequestServed,
+  });
+}
+
+function useCompletionLeaving(
+  save: ReturnType<typeof useSettingsWriter>['save'],
+  checklistShown: boolean,
+) {
+  const saveSettings = useRef(save);
+  const [completionLeaving, setCompletionLeaving] = useState(false);
+  const [checklistShownBefore, setChecklistShownBefore] = useState(checklistShown);
+
+  saveSettings.current = save;
+
+  if (checklistShownBefore !== checklistShown) {
+    setChecklistShownBefore(checklistShown);
+
+    if (!checklistShown) {
+      setCompletionLeaving(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!completionLeaving) {
+      return undefined;
+    }
+
+    const persistence = setTimeout(() => {
+      saveSettings.current({ showOnboardingChecklist: false });
+    }, CHECKLIST_EXIT_MS);
+
+    return () => {
+      clearTimeout(persistence);
+    };
+  }, [completionLeaving]);
+
+  return {
+    completionLeaving,
+    leaveAfterCelebration: () => {
+      setCompletionLeaving(true);
+    },
+  };
+}
+
 /**
  * The four steps of a first session, folded into the foot of the sidebar.
  *
@@ -91,39 +148,44 @@ export function GetStartedPanel() {
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
   const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const { save } = useSettingsWriter();
+  const { completionLeaving, leaveAfterCelebration } = useCompletionLeaving(
+    save,
+    settings.showOnboardingChecklist,
+  );
   const collapsed = useSyncExternalStore(subscribeToGetStartedCollapse, getStartedCollapsed);
-  const steps = getStartedSteps({
-    gatewayExists: gateways.length > 0,
-    providerConnected: registry.accounts.length > 0,
-    virtualModelComposed: gateways.some((gateway) => gateway.virtualModels.length > 0),
-    firstRequestServed: settings.firstRequestServed,
-  });
+  const reveal = usePanelReveal(settings.showOnboardingChecklist && !completionLeaving);
+  const steps = sessionSteps(gateways, registry.accounts.length > 0, settings.firstRequestServed);
   const done = steps.filter((step) => step.state === 'done').length;
-  const celebrating = useCompletionCelebration(done === steps.length, () => {
-    save({ showOnboardingChecklist: false });
-  });
+  const celebrating = useCompletionCelebration(done === steps.length, leaveAfterCelebration);
 
-  if (!settings.showOnboardingChecklist) {
+  if (!reveal.rendered) {
     return null;
   }
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className="relative rounded-panel border border-line-subtle bg-surface-card px-3 pt-2.5 pb-1.5"
+    <div
+      className={reveal.leaving ? 'checklist-panel-leaving' : 'checklist-panel'}
+      data-get-started-panel=""
     >
-      {celebrating && confettiBurst()}
-      <ChecklistHeader collapsed={collapsed} headingId={headingId} />
-      {progressLine(done, steps.length)}
-      {foldRows(
-        collapsed,
-        <ChecklistSteps
-          steps={steps}
-          onSkip={() => {
-            save({ showOnboardingChecklist: false });
-          }}
-        />,
-      )}
-    </section>
+      <div className="min-h-0 overflow-hidden">
+        <section
+          aria-labelledby={headingId}
+          className="relative rounded-panel border border-line-subtle bg-surface-card px-3 pt-2.5 pb-1.5"
+        >
+          {celebrating && confettiBurst()}
+          <ChecklistHeader collapsed={collapsed} headingId={headingId} />
+          {progressLine(done, steps.length)}
+          {foldRows(
+            collapsed,
+            <ChecklistSteps
+              steps={steps}
+              onSkip={() => {
+                save({ showOnboardingChecklist: false });
+              }}
+            />,
+          )}
+        </section>
+      </div>
+    </div>
   );
 }

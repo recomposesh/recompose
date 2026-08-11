@@ -80,18 +80,6 @@ export const servingGateway: GatewayConfig = gatewaySeed({
   ],
 });
 
-/** A gateway serving more virtual models than a header keeps segments for. */
-export const crowdedGateway: GatewayConfig = gatewaySeed({
-  slug: 'my-gateway',
-  displayName: 'My Gateway',
-  port: 8397,
-  virtualModels: ['one', 'two', 'three', 'four', 'five', 'six'].map((id) => ({
-    id,
-    displayName: id,
-    target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
-  })),
-});
-
 /** A gateway nobody has defined anything on yet, which every gateway starts as. */
 export const freshGateway: GatewayConfig = gatewaySeed({
   slug: 'my-gateway',

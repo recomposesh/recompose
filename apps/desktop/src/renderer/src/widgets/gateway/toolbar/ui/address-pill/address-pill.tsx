@@ -14,6 +14,9 @@ type AddressPillProps = {
 
 /** The address the gateway answers on, filling the strip the way the reference draws it. */
 export function AddressPill({ address, port, status }: AddressPillProps) {
+  const host = address.replace(/^https?:\/\//u, '').replace(/:\d+$/u, '');
+  const displayed = `${host}:${String(port)}`;
+
   return (
     <span className={PILL}>
       <Icon
@@ -23,7 +26,7 @@ export function AddressPill({ address, port, status }: AddressPillProps) {
       <span className={`size-1.75 shrink-0 rounded-pill ${stateMark[status]}`} />
       <span>
         <span className="text-ink-secondary">http://</span>
-        <span className="text-ink">{`localhost:${String(port)}`}</span>
+        <span className="text-ink">{displayed}</span>
       </span>
       <span className="text-ink-secondary">·</span>
       <span className="text-ink-secondary">{stateWord[status]}</span>

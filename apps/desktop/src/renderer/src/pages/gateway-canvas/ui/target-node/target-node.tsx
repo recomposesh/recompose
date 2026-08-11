@@ -4,8 +4,14 @@ import type { ReactNode } from 'react';
 import type { IconName } from '../../../../shared/ui';
 import type { CanvasNode } from '../../lib/node-graph';
 
-import { accountMark, accountName } from '../../../../entities/account';
+import {
+  accountDetail,
+  accountKindName,
+  accountMark,
+  accountProductName,
+} from '../../../../entities/account';
 import { BrandMark } from '../../../../shared/ui';
+import { accountKindNodeTint, accountKindTextTint } from '../../lib/account-kind-paint';
 import { NodeCard } from '../node-card/node-card';
 
 /** What a target card stands as: a stored account, one that left the registry, or one being picked. */
@@ -29,19 +35,13 @@ type CardReading = {
   chipMark: ReactNode | undefined;
   name: string;
   nameInk: string;
-  subtitle: string;
+  subtitle: string | undefined;
   frame: string;
-};
-
-const kindTints: Record<AccountKind, string> = {
-  subscription: 'text-subscription',
-  'api-key': 'text-api-key',
-  aggregator: 'text-aggregator',
-  local: 'text-local',
+  tint: string;
 };
 
 const kindGlyphs: Record<AccountKind, IconName> = {
-  subscription: 'person',
+  subscription: 'renew',
   'api-key': 'key',
   aggregator: 'network',
   local: 'cube',
@@ -58,15 +58,16 @@ function vendorMark(account: Account): ReactNode | undefined {
 function readingOf(data: TargetNodeData): CardReading {
   if (data.kind === 'target') {
     return {
-      kicker: 'Target',
-      chipTint: kindTints[data.account.kind],
-      kickerTint: 'text-target-ink',
+      kicker: accountKindName(data.account.kind),
+      chipTint: accountKindTextTint[data.account.kind],
+      kickerTint: accountKindTextTint[data.account.kind],
       chipGlyph: kindGlyphs[data.account.kind],
       chipMark: vendorMark(data.account),
-      name: accountName(data.account),
+      name: accountProductName(data.account),
       nameInk: 'text-ink',
-      subtitle: data.account.provider,
+      subtitle: data.detail ?? accountDetail(data.account),
       frame: '',
+      tint: accountKindNodeTint[data.account.kind],
     };
   }
 
@@ -81,19 +82,21 @@ function readingOf(data: TargetNodeData): CardReading {
       nameInk: 'text-ink',
       subtitle: 'not in the registry',
       frame: 'border-dashed',
+      tint: 'node-tint-danger',
     };
   }
 
   return {
-    kicker: 'Target',
-    chipTint: 'text-target',
-    kickerTint: 'text-target-ink',
+    kicker: 'Pending',
+    chipTint: 'text-ink-secondary',
+    kickerTint: 'text-ink-secondary',
     chipGlyph: 'plus',
     chipMark: undefined,
     name: 'Choose a target',
     nameInk: 'text-ink-secondary',
-    subtitle: 'waiting on a pick',
+    subtitle: undefined,
     frame: 'border-dashed',
+    tint: 'node-tint-ink-tertiary',
   };
 }
 
@@ -101,10 +104,11 @@ function readingOf(data: TargetNodeData): CardReading {
  * Where a request finally lands, drawn as the account behind it or as the gap one left.
  *
  * @summary Reach for it as the canvas card for the target column, whichever of its three standings
- * a card arrives in. An account that left the registry keeps its card and dashes it rather than
- * vanishing, because a broken binding is what a person came back to repair. A card waiting on a
- * pick dashes the same way and says so, so the spot a cable was let go at never reads as finished.
- * Nothing leaves a target, which is why it carries no outgoing port at all.
+ * a card arrives in. A stored target leads with its connection kind and provider mark, names the
+ * provider product, and reads the account identity beneath it, while its frame takes that kind's
+ * tint. An account that left the registry keeps its card and dashes it rather than vanishing,
+ * because a broken binding is what a person came back to repair. A card waiting on a pick dashes
+ * the same way and says so. Nothing leaves a target, which is why it carries no outgoing port.
  */
 export function TargetNode({ data, selected }: TargetNodeProps) {
   const reading = readingOf(data);
@@ -124,7 +128,7 @@ export function TargetNode({ data, selected }: TargetNodeProps) {
       selected={selected}
       subtitle={reading.subtitle}
       subtitleInk="text-ink-secondary"
-      tint="node-tint-target"
+      tint={reading.tint}
     />
   );
 }

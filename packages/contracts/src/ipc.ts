@@ -76,6 +76,10 @@ export const ipcChannels = {
     request: gatewayConfigSchema,
     response: ipcResult(z.array(gatewayConfigSchema)),
   },
+  'gateways:remove': {
+    request: z.strictObject({ slug: gatewaySlugSchema }),
+    response: ipcResult(z.array(gatewayConfigSchema)),
+  },
   'settings:get': { request: z.void(), response: ipcResult(settingsSchema) },
   'settings:save': { request: settingsPatchSchema, response: ipcResult(settingsSchema) },
   'accounts:list': { request: z.void(), response: ipcResult(accountsDocumentSchema) },
@@ -114,6 +118,10 @@ export const ipcChannels = {
   'gateways:offer-port': { request: z.void(), response: ipcResult(gatewayPortSchema) },
   'gateways:move-port': {
     request: z.strictObject({ slug: gatewaySlugSchema }),
+    response: ipcResult(z.array(gatewayConfigSchema)),
+  },
+  'gateways:set-port': {
+    request: z.strictObject({ slug: gatewaySlugSchema, port: gatewayPortSchema }),
     response: ipcResult(z.array(gatewayConfigSchema)),
   },
   'engine:start': {

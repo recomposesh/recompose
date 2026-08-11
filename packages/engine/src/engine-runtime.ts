@@ -57,19 +57,20 @@ export function createEngineRuntime(
   const inTurn = oneTurnPerGateway();
 
   async function openFor(gateway: EngineGateway): Promise<GatewayEngineState> {
-    const outcome = await openListeners(
-      createGatewayApp(
-        gateway,
-        spendGrantFor,
-        fetchLike,
-        subscriptions,
-        undefined,
-        undefined,
-        plugins,
-        note,
-      ),
-      gateway.port,
+    const app = createGatewayApp(
+      gateway,
+      spendGrantFor,
+      fetchLike,
+      subscriptions,
+      undefined,
+      undefined,
+      plugins,
+      note,
     );
+    const outcome =
+      gateway.bindAddress === undefined
+        ? await openListeners(app, gateway.port)
+        : await openListeners(app, gateway.port, gateway.bindAddress);
 
     if (!('opened' in outcome)) {
       return { status: 'stopped', failure: outcome.failed };

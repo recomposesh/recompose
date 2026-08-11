@@ -28,6 +28,7 @@ export function storageContextOver(userDataPath: string): StorageIpcContext {
     readLoginItem: () => false,
     startGateway: () => undefined,
     restartGateway: () => undefined,
+    stopGateway: () => undefined,
     isServing: () => true,
     releaseSubscription: async () => Promise.resolve({ ok: true }),
   };

@@ -13,6 +13,13 @@ const titles: Record<AccountKind, string> = {
   local: 'Local Runtimes',
 };
 
+const names: Record<AccountKind, string> = {
+  subscription: 'Subscription',
+  'api-key': 'API Key',
+  aggregator: 'Aggregator',
+  local: 'Local Runtime',
+};
+
 /**
  * Every kind an account can be held as, in the order they are offered.
  *
@@ -29,6 +36,11 @@ export function offeredAccountKind(asked: unknown): AccountKind | undefined {
 /** The name a kind goes by on screen, rather than the token it is stored under. */
 export function accountKindTitle(kind: AccountKind): string {
   return titles[kind];
+}
+
+/** The singular name a stored account kind reads as when one account stands on screen. */
+export function accountKindName(kind: AccountKind): string {
+  return names[kind];
 }
 
 /** The stored accounts held as one kind, which is what a kind's surface lists and counts. */

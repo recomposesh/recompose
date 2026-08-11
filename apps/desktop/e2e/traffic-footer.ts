@@ -16,8 +16,3 @@ export function trafficFooter(page: Page): Locator {
 export async function footerReading(page: Page): Promise<string> {
   return (await trafficFooter(page).innerText()).replaceAll(/\s+/gu, ' ').trim();
 }
-
-/** The one control on the strip, which is the disclosure that stands the logs drawer up. */
-export function logsControl(page: Page): Locator {
-  return trafficFooter(page).getByRole('button', { exact: true, name: 'Logs' });
-}

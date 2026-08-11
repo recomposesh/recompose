@@ -25,7 +25,7 @@
 
   --color-highlight-ink: var(--white);
   --color-ink: light-dark(var(--black-a88), var(--white-a90));
-  --color-ink-secondary: light-dark(var(--black-a56), var(--white-a55));
+  --color-ink-secondary: light-dark(var(--black-a56), var(--white-a58));
   --color-ink-tertiary: light-dark(var(--black-a28), var(--white-a28));
 
   --color-line-subtle: light-dark(var(--black-a09), var(--white-a08));
@@ -41,22 +41,20 @@
   --color-subscription: light-dark(var(--blue-600), var(--blue-500));
   --color-api-key: light-dark(var(--yellow-700), var(--yellow-500));
   --color-aggregator: light-dark(var(--purple-600), var(--purple-500));
-  --color-local: light-dark(var(--teal-700), var(--teal-500));
+  --color-local: light-dark(var(--coral-700), var(--coral-400));
   --color-running: light-dark(var(--green-700), var(--green-500));
-  --color-running-ink: light-dark(var(--green-800), var(--green-500));
+  --color-running-ink: light-dark(var(--green-900), var(--green-500));
   --color-stopped: light-dark(var(--red-700), var(--red-500));
   --color-warning: light-dark(var(--orange-600), var(--orange-500));
   --color-attention: light-dark(var(--amber-600), var(--amber-500));
   --color-attention-ink: light-dark(var(--amber-700), var(--amber-400));
-  --color-danger: light-dark(var(--red-700), var(--red-500));
-  --color-danger-ink: light-dark(var(--red-800), var(--red-300));
+  --color-danger: var(--red-700);
+  --color-danger-ink: light-dark(var(--red-900), var(--red-200));
 
   --color-gateway: light-dark(var(--teal-700), var(--teal-500));
   --color-gateway-ink: light-dark(var(--teal-800), var(--teal-500));
-  --color-virtual-model: light-dark(var(--blue-600), var(--blue-500));
-  --color-virtual-model-ink: light-dark(var(--blue-800), var(--blue-300));
-  --color-target: light-dark(var(--purple-600), var(--purple-500));
-  --color-target-ink: light-dark(var(--purple-700), var(--purple-400));
+  --color-virtual-model: light-dark(var(--pink-700), var(--pink-400));
+  --color-virtual-model-ink: light-dark(var(--pink-800), var(--pink-300));
   --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
   --color-cable-live: light-dark(var(--green-600), var(--green-500));
   --color-cable-served: light-dark(var(--green-700), var(--green-500));
@@ -153,17 +151,41 @@
 @utility focus-ring {
   &:focus-visible,
   &[data-placed-focus] {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 1px;
+    outline: 2px solid transparent;
+    background-color: var(--color-surface-hover);
   }
 }
 
 @utility focus-ring-wide {
   &:focus-visible,
   &[data-placed-focus] {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    outline: 2px solid transparent;
+    filter: brightness(1.12);
   }
+}
+
+@utility picker-focus-plain {
+  &:focus-visible,
+  &[data-placed-focus],
+  & :focus-visible,
+  & [data-placed-focus] {
+    outline: 2px solid transparent;
+  }
+}
+
+@utility picker-heading {
+  font-size: var(--text-footnote);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-secondary);
+  text-transform: uppercase;
+}
+
+@utility drawer-picker-heading {
+  font-size: var(--text-footnote);
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-ink-secondary);
 }
 
 @utility field-control {
@@ -176,8 +198,12 @@
   font-size: var(--text-control);
   color: var(--color-ink);
 
-  &:not([aria-disabled='true']):hover {
-    border-color: var(--color-line-strong);
+  &:focus-visible,
+  &:focus-within {
+    border-color: var(--color-accent);
+    box-shadow:
+      inset 0 1px 1.5px rgb(0 0 0 / 6%),
+      0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
   }
 }
 
@@ -194,10 +220,6 @@
   font-size: var(--text-control);
   font-weight: 500;
   color: var(--color-ink);
-
-  &:hover {
-    border-color: var(--color-line-strong);
-  }
 
   &:active {
     background-color: var(--color-surface-inert);
@@ -380,7 +402,7 @@
   font-weight: 500;
   color: var(--white);
 
-  &:hover {
+  &:active {
     background-color: color-mix(in oklab, var(--color-accent-fill), black 14%);
   }
 }
@@ -508,7 +530,8 @@
   }
 
   &:hover,
-  &[data-hovered] {
+  &[data-hovered],
+  &:focus-visible {
     border-color: var(--node-card-emphasis);
     background-color: color-mix(in srgb, var(--node-card-emphasis) 8%, var(--color-surface-card));
   }
@@ -545,6 +568,34 @@
   }
 }
 
+@utility logs-drawer {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: logs-drawer-in 150ms ease;
+  }
+}
+
+@utility logs-drawer-leaving {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: logs-drawer-out 150ms ease forwards;
+  }
+}
+
+@utility checklist-panel {
+  transform-origin: center bottom;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: checklist-pop-in 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@utility checklist-panel-leaving {
+  transform-origin: center bottom;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: checklist-pop-out 150ms cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  }
+}
+
 @utility chip-selected {
   border: 1px solid var(--color-line-selected);
   background-color: var(--color-surface-chip);
@@ -562,13 +613,6 @@
   background-color: var(--color-track-off);
   padding: var(--spacing-hairline);
 
-  &:not([aria-disabled='true']):not([data-checked]):hover {
-    background-color: var(--color-track-off-hover);
-  }
-
-  &:not([aria-disabled='true'])[data-checked]:hover {
-    background-color: var(--color-accent-hover);
-  }
   transition:
     background-color 150ms,
     border-color 150ms;
@@ -583,15 +627,16 @@
   padding-inline: calc(var(--spacing) * 2);
   color: var(--color-ink);
 
-  &:hover {
-    background: var(--color-surface-hover);
-  }
-
   &:active {
     background: var(--color-surface-pressed);
   }
 
   &[data-status='active'] {
+    background: var(--color-surface-pressed);
+  }
+
+  &:focus-visible {
+    outline: 2px solid transparent;
     background: var(--color-surface-pressed);
   }
 }
@@ -606,8 +651,9 @@
   color: var(--color-accent-ink);
   font-weight: 500;
 
-  &:hover {
-    background: var(--color-surface-hover);
+  &:focus-visible {
+    outline: 2px solid transparent;
+    background: var(--color-surface-pressed);
   }
 
   &:active {
@@ -657,6 +703,34 @@
   to {
     width: 0;
     opacity: 0;
+  }
+}
+
+@keyframes logs-drawer-in {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes logs-drawer-out {
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes checklist-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+}
+
+@keyframes checklist-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
   }
 }
 

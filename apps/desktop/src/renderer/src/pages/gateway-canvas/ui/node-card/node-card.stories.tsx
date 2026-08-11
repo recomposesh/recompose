@@ -47,8 +47,8 @@ export const TheCardTakesTheTemplateMeasure = meta.story({
   play: async ({ canvas }) => {
     const drawn = paintedBox(await canvas.findByRole('button', { name: /Everyday Sonnet/ }));
 
-    await expect(drawn.width).toBe(158);
-    await expect(drawn.height).toBe(78);
+    await expect(drawn.width).toBe(184);
+    await expect(drawn.height).toBe(88);
   },
 });
 
@@ -76,7 +76,7 @@ export const EveryPortStandsOnAPointerTarget = meta.story({
     await expect(ports).toHaveLength(2);
 
     for (const port of ports) {
-      await expect(paintedStyle(port).top).toBe('34px');
+      await expect(paintedStyle(port).top).toBe('44px');
       await expect(paintedBox(port).width).toBe(24);
       await expect(paintedBox(port).height).toBe(24);
       await expect(paintedBox(port.firstElementChild).width).toBe(9);
@@ -92,7 +92,7 @@ export const APortFillsOnlyOnceACableMeetsIt = meta.story({
     const bound = canvasElement.querySelector('.react-flow__handle.source > span');
 
     await expect(paintedStyle(bound).backgroundColor).toBe(
-      inScheme('rgb(0, 122, 255)', 'rgb(10, 132, 255)'),
+      inScheme('rgb(173, 45, 117)', 'rgb(255, 114, 196)'),
     );
   },
 });
@@ -130,7 +130,7 @@ export const TheKeyboardReachesTheCardAndItsAsk = meta.story({
 
     await userEvent.tab();
     await expect(card).toHaveFocus();
-    await expect(paintedStyle(card).outlineWidth).toBe('2px');
+    await expect(paintedStyle(card).outlineColor).toBe('rgba(0, 0, 0, 0)');
 
     await userEvent.tab();
 
@@ -154,7 +154,7 @@ export const ALongNameTruncatesAndKeepsItsWhole = meta.story({
       'The one everybody points their editor at on a Monday morning',
     );
     await expect(paintedStyle(line).textOverflow).toBe('ellipsis');
-    await expect(paintedBox(line).width).toBeLessThan(158);
+    await expect(paintedBox(line).width).toBeLessThan(184);
   },
 });
 
@@ -166,7 +166,10 @@ export const ASelectedCardRingsInItsTint = meta.story({
 
     await expect(card).toHaveAttribute('aria-pressed', 'true');
     await expect(paintedStyle(card).boxShadow).toContain(
-      inScheme('color(srgb 0 0.478431 1 / 0.55)', 'color(srgb 0.0392157 0.517647 1 / 0.55)'),
+      inScheme(
+        'color(srgb 0.678431 0.176471 0.458824 / 0.55)',
+        'color(srgb 1 0.447059 0.768627 / 0.55)',
+      ),
     );
   },
 });

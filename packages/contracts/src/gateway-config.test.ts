@@ -52,6 +52,18 @@ describe('a virtual model bound to one target', () => {
     expect(gatewayConfigSchema.parse(twoModels).virtualModels).toHaveLength(2);
   });
 
+  test('two virtual models can never share the client-facing model id', () => {
+    const duplicated = {
+      ...validConfig,
+      virtualModels: [
+        { id: 'fast', displayName: 'Fast', target: boundTarget },
+        { id: 'fast', displayName: 'Faster', target: boundTarget },
+      ],
+    };
+
+    expect(() => gatewayConfigSchema.parse(duplicated)).toThrow(/duplicate virtual model id/iu);
+  });
+
   test('a gateway stores before any virtual model exists', () => {
     const bare = { ...validConfig, virtualModels: [] };
 

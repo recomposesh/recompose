@@ -1,67 +1,16 @@
-import type { AccountsDocument, GatewayConfig } from '@recompose/contracts';
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Suspense } from 'react';
 import { beforeEach, expect, test, vi } from 'vitest';
-import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import type { SettledDefinition } from '../../lib/model-draft';
-import type { InspectorSubject } from './gateway-drawer';
-
-import { installFakeBridge } from '../../../../shared/testing';
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
-import {
-  accountsWithout,
-  freshGateway,
-  listedModels,
-  runningGateway,
-  servingGateway,
-  storedAccounts,
-} from '../../testing/gateway-canvas.testkit';
-import { GatewayDrawer } from './gateway-drawer';
+import { accountsWithout, freshGateway } from '../../testing/gateway-canvas.testkit';
+import { renderDrawer } from '../../testing/gateway-drawer.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(() => {
   leaveDrafting('my-gateway');
 });
-
-type DrawerWorld = {
-  accounts?: AccountsDocument;
-  gateway?: GatewayConfig;
-  refusal?: string;
-  onDraftDefined?: (definition: SettledDefinition) => void;
-};
-
-async function renderDrawer(subject: InspectorSubject, world: DrawerWorld = {}) {
-  const gateway = world.gateway ?? servingGateway;
-
-  installFakeBridge({
-    accounts: world.accounts ?? storedAccounts,
-    gateways: [gateway],
-    engineStates: runningGateway,
-    providerModels: listedModels,
-  });
-
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<p>Loading…</p>}>
-        <GatewayDrawer
-          gateway={gateway}
-          onDraftDefined={world.onDraftDefined ?? (() => {})}
-          refusal={world.refusal}
-          subject={subject}
-        />
-      </Suspense>
-    </QueryClientProvider>,
-  );
-}
 
 test('the gateway subject reads the endpoint and what serves, with no add button', async () => {
   const screen = await renderDrawer({ kind: 'gateway' });
@@ -83,16 +32,20 @@ test('a gateway serving nothing points at the cable rather than at a button', as
     .not.toBeInTheDocument();
 });
 
-test('the virtual model subject spells its target out as a name, a provider, and a kind', async () => {
+test('the virtual model subject separates general info from where it goes', async () => {
   const screen = await renderDrawer({ kind: 'virtual-model', modelId: 'fast' });
 
   await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Target', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('work', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('General Info', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Model Name', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Fast', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Model id', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Goes to', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Target type', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('API Key', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Provider', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('anthropic', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Kind', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('API Keys', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Anthropic', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
@@ -100,17 +53,66 @@ test('the cable subject reads both ends of the binding', async () => {
   const screen = await renderDrawer({ kind: 'cable', modelId: 'creative' });
 
   await expect.element(screen.getByText('Binding', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('openrouter', { exact: true }).first()).toBeVisible();
-  await expect.element(screen.getByText('Aggregators', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Aggregator', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('OpenRouter', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('openai/gpt-5', { exact: true })).toBeVisible();
 });
 
 test('the target subject reads the account behind it', async () => {
-  const screen = await renderDrawer({ kind: 'target', accountId: 'k1' });
+  const screen = await renderDrawer({ kind: 'target', accountId: 'k1', modelId: 'fast' });
 
-  await expect.element(screen.getByText('Target', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('anthropic', { exact: true }).first()).toBeVisible();
-  await expect.element(screen.getByText('API Keys', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('API Key', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Anthropic', { exact: true }).last()).toBeVisible();
+  await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Behind of', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Model Name', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Model id', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Fast', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('fast', { exact: true })).toBeVisible();
+});
+
+test.each([
+  [{ kind: 'gateway' } as const, 'Delete Gateway', 'gateway'],
+  [{ kind: 'virtual-model', modelId: 'fast' } as const, 'Delete Virtual Model', 'model:fast'],
+  [{ kind: 'target', accountId: 'k1', modelId: 'fast' } as const, 'Delete Target', 'target:fast'],
+])(
+  'the drawer deletion link asks through the shared confirmation',
+  async (subject, label, nodeId) => {
+    const asked: string[] = [];
+    const screen = await renderDrawer(subject, {
+      onAskRemoval: (askedNodeId) => {
+        asked.push(askedNodeId);
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: label }));
+
+    expect(asked).toEqual([nodeId]);
+  },
+);
+
+test('a subscription target reads the signed-in email', async () => {
+  const screen = await renderDrawer(
+    { kind: 'target', accountId: 's1', modelId: 'fast' },
+    {
+      subscriptions: [
+        {
+          id: 's1',
+          provider: 'anthropic',
+          label: 'Claude',
+          signedInAs: 'ada@example.com',
+          standing: 'connected',
+          active: true,
+        },
+      ],
+    },
+  );
+
+  await expect.element(screen.getByText('Subscription', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Claude', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Email', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('ada@example.com', { exact: true })).toBeVisible();
 });
 
 test('a virtual model whose account left the registry reads that bare account id as its target', async () => {
@@ -120,9 +122,9 @@ test('a virtual model whose account left the registry reads that bare account id
   );
 
   await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('g1', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Goes to', { exact: true })).not.toBeInTheDocument();
   await expect.element(screen.getByText('Provider', { exact: true })).not.toBeInTheDocument();
-  await expect.element(screen.getByText('Kind', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByText('Target type', { exact: true })).not.toBeInTheDocument();
 });
 
 test('a subject naming a virtual model the gateway no longer holds reads the gateway', async () => {
@@ -133,14 +135,18 @@ test('a subject naming a virtual model the gateway no longer holds reads the gat
 });
 
 test('a subject naming a target the registry no longer holds reads the gateway', async () => {
-  const screen = await renderDrawer({ kind: 'target', accountId: 'gone' });
+  const screen = await renderDrawer({ kind: 'target', accountId: 'gone', modelId: 'ghosted' });
 
   await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Target', { exact: true })).not.toBeInTheDocument();
 });
 
 test('a removed target says where the account went', async () => {
-  const screen = await renderDrawer({ kind: 'ghost-target', accountId: 'gone' });
+  const screen = await renderDrawer({
+    kind: 'ghost-target',
+    accountId: 'gone',
+    modelId: 'creative',
+  });
 
   await expect.element(screen.getByText('Removed', { exact: true })).toBeVisible();
   await expect.element(screen.getByText(/left the registry/)).toBeVisible();

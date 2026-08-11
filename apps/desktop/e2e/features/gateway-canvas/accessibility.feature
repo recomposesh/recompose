@@ -29,4 +29,5 @@ Feature: Binding without a drag
   Scenario: Every pointer target meets the minimum size
     Given a gateway holding a virtual model bound to a target
     When the person opens the gateway detail
+    And the person resets the zoom to one hundred percent
     Then every port and cable endpoint offers a hit target of at least 24 by 24 pixels

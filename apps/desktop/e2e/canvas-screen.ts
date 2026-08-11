@@ -15,7 +15,7 @@ export const DRAFT_NODE = 'draft';
 export const PENDING_NODE = 'pending';
 
 /** The cable joining the gateway to a draft, namespaced away from any binding a person aliased. */
-export const DRAFT_CABLE = 'overlay:draft';
+export const DRAFT_CABLE = 'wire:draft';
 
 /** What the plus on the gateway's port asks for, which is also the name a keyboard reads. */
 const GATEWAY_ASK = 'Add a virtual model';
@@ -38,12 +38,12 @@ export function modelNodeId(modelId: string): string {
   return `model:${modelId}`;
 }
 
-export function targetNodeId(accountId: string): string {
-  return `target:${accountId}`;
+export function targetNodeId(modelId: string): string {
+  return `target:${modelId}`;
 }
 
-export function ghostNodeId(accountId: string): string {
-  return `ghost:${accountId}`;
+export function ghostNodeId(modelId: string): string {
+  return `ghost:${modelId}`;
 }
 
 export function cableId(modelId: string): string {

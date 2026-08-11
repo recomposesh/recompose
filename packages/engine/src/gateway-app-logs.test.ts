@@ -129,10 +129,10 @@ describe('a request that failed', () => {
     expect(rows.at(0)).toMatchObject({ origin: 'provider', status: 429 });
   });
 
-  test('a failed row leaves its duration empty and reads the status as a sentence', async () => {
+  test('a failed row still times the turn and reads the status as a sentence', async () => {
     const rows = await rowsFrom(servingGateway(() => new Response('{}', { status: 429 })));
 
-    expect(rows.at(0)?.durationMs).toBeUndefined();
+    expect(rows.at(0)?.durationMs).toBeGreaterThanOrEqual(0);
     expect(rows.at(0)?.failure).toBe('The target is turning requests away for now.');
   });
 
@@ -140,7 +140,7 @@ describe('a request that failed', () => {
     const rows = await rowsFrom(servingGateway(() => new Response('{}', { status: 400 })));
 
     expect(rows.at(0)?.failure).toEqual(expect.any(String));
-    expect(rows.at(0)?.durationMs).toBeUndefined();
+    expect(rows.at(0)?.durationMs).toBeGreaterThanOrEqual(0);
   });
 
   test('a virtual model whose target left lands as one row the gateway raised', async () => {

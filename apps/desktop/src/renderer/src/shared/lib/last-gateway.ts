@@ -5,6 +5,13 @@ export function lookedAtGateway(slug: string): void {
   localStorage.setItem(LAST_GATEWAY_KEY, slug);
 }
 
+/** Forgets the last route when the gateway it names is deleted. */
+export function forgetLookedAtGateway(slug: string): void {
+  if (localStorage.getItem(LAST_GATEWAY_KEY) === slug) {
+    localStorage.removeItem(LAST_GATEWAY_KEY);
+  }
+}
+
 /**
  * The gateway a launch should open, given the ones that still exist.
  *

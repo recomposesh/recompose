@@ -51,6 +51,44 @@ export function useDefineVirtualModel() {
 }
 
 /**
+ * Removes a stored gateway for good, stopping whatever it was serving first.
+ *
+ * @summary The answer carries the remaining stored list straight into the cache, so the sidebar
+ * and every route guard read the removal in the same frame the person confirmed it.
+ */
+export function useRemoveGateway() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: IpcRequest<'gateways:remove'>) =>
+      unwrapIpcResult(await window.recompose['gateways:remove'](request)),
+    onSuccess: (gateways) => {
+      queryClient.setQueryData(gatewaysQueryOptions.queryKey, gateways);
+    },
+  });
+}
+
+/**
+ * Moves a stored gateway onto the port a person chose, restarting it only if it was serving.
+ *
+ * @summary The refusal sentence rides on `refusal`, because a port another gateway holds is an
+ * expected answer the drawer has to read back rather than a surprise.
+ */
+export function useSetGatewayPort() {
+  const queryClient = useQueryClient();
+
+  return withRefusal(
+    useMutation({
+      mutationFn: async (request: IpcRequest<'gateways:set-port'>) =>
+        unwrapIpcResult(await window.recompose['gateways:set-port'](request)),
+      onSuccess: (gateways) => {
+        queryClient.setQueryData(gatewaysQueryOptions.queryKey, gateways);
+      },
+    }),
+  );
+}
+
+/**
  * Moves a gateway that lost its port onto a free one, and starts it there.
  *
  * @summary A move that fails carries the sentence explaining it in `refusal`, because a person

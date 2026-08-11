@@ -3,10 +3,8 @@ import type { LogRow } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { engineLogsQueryOptions } from '../../../../shared/api';
-import { closeLogsDrawer, toggleLogsDrawer } from '../../../../shared/lib';
 import { TrafficFooter } from './traffic-footer';
 
 const SLUG = 'relay';
@@ -58,14 +56,13 @@ async function footerHolding(rows: readonly LogRow[], tally = { nodes: 5, wires:
 
 afterEach(() => {
   vi.useRealTimers();
-  closeLogsDrawer();
 });
 
 test('a gateway no client app has called reads zeros rather than hiding the strip', async () => {
   const screen = await footerHolding([]);
 
   await expect.element(screen.getByText('0 req/min')).toBeVisible();
-  await expect.element(screen.getByText('p95 0ms')).toBeVisible();
+  await expect.element(screen.getByText('0ms latency')).toBeVisible();
   await expect.element(screen.getByText('0 client apps')).toBeVisible();
   await expect.element(screen.getByText('0 tok/min')).toBeVisible();
 });
@@ -87,7 +84,7 @@ test('served traffic reads through every cell with nobody asking for a refresh',
   ]);
 
   await expect.element(screen.getByText('2 req/min')).toBeVisible();
-  await expect.element(screen.getByText('p95 1.1s')).toBeVisible();
+  await expect.element(screen.getByText('1.1s latency')).toBeVisible();
   await expect.element(screen.getByText('2 client apps')).toBeVisible();
   await expect.element(screen.getByText('18.2k tok/min')).toBeVisible();
 });
@@ -116,7 +113,7 @@ test('no error count stands on the strip while the minute holds no failure', asy
 test('a failure the minute holds surfaces the error count', async () => {
   const screen = await footerHolding([
     row('answered', { at: Date.now() - 500, durationMs: 300 }),
-    row('refused', { at: Date.now(), status: 500 }),
+    row('refused', { at: Date.now(), status: 500, durationMs: 120 }),
   ]);
 
   await expect.element(screen.getByText('1 error')).toBeVisible();
@@ -141,7 +138,7 @@ test('the strip decays to zeros on its own clock once the minute passes it by', 
   await vi.advanceTimersByTimeAsync(MINUTE + 1_000);
 
   await expect.element(screen.getByText('0 req/min')).toBeVisible();
-  await expect.element(screen.getByText('p95 0ms')).toBeVisible();
+  await expect.element(screen.getByText('0ms latency')).toBeVisible();
   await expect.element(screen.getByText('0 tok/min')).toBeVisible();
 });
 
@@ -160,40 +157,9 @@ test('the tick slides the window, so an older request leaves while a newer one s
   await expect.element(screen.getByText('1 req/min')).toBeVisible();
 });
 
-test('the strip stands passive: the disclosure control is the one thing on it to press', async () => {
+test('the strip stands passive, with nothing on it to press', async () => {
   const screen = await footerHolding([]);
 
-  await expect.element(screen.getByRole('button', { name: 'Logs' })).toBeVisible();
-  expect(screen.container.querySelectorAll('button, a, input, [tabindex]')).toHaveLength(1);
-});
-
-test('the disclosure control says out loud whether the drawer stands open', async () => {
-  const screen = await footerHolding([]);
-  const control = screen.getByRole('button', { name: 'Logs' });
-
-  await expect.element(control).toHaveAttribute('aria-expanded', 'false');
-
-  await userEvent.click(control);
-
-  await expect.element(control).toHaveAttribute('aria-expanded', 'true');
-});
-
-test('the keyboard alone opens the drawer', async () => {
-  const screen = await footerHolding([]);
-  const control = screen.getByRole('button', { name: 'Logs' });
-
-  control.element().focus();
-  await userEvent.keyboard('{Enter}');
-
-  await expect.element(control).toHaveAttribute('aria-expanded', 'true');
-});
-
-test('the control reads the shared drawer state rather than holding one of its own', async () => {
-  const screen = await footerHolding([]);
-
-  toggleLogsDrawer();
-
-  await expect
-    .element(screen.getByRole('button', { name: 'Logs' }))
-    .toHaveAttribute('aria-expanded', 'true');
+  await expect.element(screen.getByText('0 req/min')).toBeVisible();
+  expect(screen.container.querySelectorAll('button, a, input, [tabindex]')).toHaveLength(0);
 });

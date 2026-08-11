@@ -1,5 +1,6 @@
 import { is } from '@electron-toolkit/utils';
 import { BrowserWindow, shell } from 'electron';
+import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 
 import icon from '../../../resources/icon.png?asset';
@@ -41,9 +42,16 @@ function applyGlassBackdrop(window: BrowserWindow): void {
 
 export function createMainWindow(route: string): void {
   const windowStaysBack = process.env['RECOMPOSE_WINDOW_STAYS_BACK'] === '1';
-  const mainWindow = new BrowserWindow(
-    windowOptionsFor(process.platform, join(__dirname, '../preload/index.js'), icon),
-  );
+  const windowState = windowStateKeeper({ defaultWidth: 1120, defaultHeight: 780 });
+  const mainWindow = new BrowserWindow({
+    ...windowOptionsFor(process.platform, join(__dirname, '../preload/index.js'), icon),
+    x: windowState.x,
+    y: windowState.y,
+    width: windowState.width,
+    height: windowState.height,
+  });
+
+  windowState.manage(mainWindow);
 
   if (isMac && !windowStaysBack) {
     applyGlassBackdrop(mainWindow);

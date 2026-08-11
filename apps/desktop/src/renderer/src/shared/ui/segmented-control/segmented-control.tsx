@@ -4,7 +4,11 @@ import { useId } from 'react';
 
 const roleInks = {
   'virtual-model': 'text-virtual-model-ink',
-  target: 'text-target-ink',
+} as const;
+
+const optionInks = {
+  positive: 'text-running-ink',
+  danger: 'text-danger-ink',
 } as const;
 
 type SegmentedControlOption<Value extends string> = {
@@ -20,6 +24,8 @@ type SegmentedControlOption<Value extends string> = {
    * nothing but themselves.
    */
   tint?: keyof typeof roleInks | undefined;
+  /** Semantic ink the option's text carries in every selection state. */
+  tone?: keyof typeof optionInks | undefined;
 };
 
 type SegmentedControlProps<Value extends string> = {
@@ -66,7 +72,9 @@ export function SegmentedControl<Value extends string>({
       {options.map((option) => (
         <Radio.Root
           aria-labelledby={`${segmentId}-${option.value}`}
-          className="flex h-chip items-center rounded-chip px-2 text-detail text-ink focus-ring row-hover data-checked:chip-selected"
+          className={`flex h-chip items-center rounded-chip focus-ring px-2 text-detail data-checked:chip-selected ${
+            option.tone === undefined ? 'text-ink' : optionInks[option.tone]
+          }`}
           key={option.value}
           value={option.value}
         >

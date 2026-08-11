@@ -1,6 +1,6 @@
 const readers = new Set<() => void>();
 
-let open = true;
+let open = false;
 
 function tellReaders(): void {
   for (const reader of readers) {
@@ -20,11 +20,19 @@ export function subscribeToInspectorVisibility(reader: () => void): () => void {
 /**
  * Whether the selected gateway's inspector stands open.
  *
- * @summary It opens with the app rather than remembering the last answer, because a gateway a
- * person has just navigated to is one they came to read, and the drawer is what reads it.
+ * @summary It opens away, because a person entering a gateway came for the canvas, and the drawer
+ * is a thing they open by pointing at what they mean.
  */
 export function inspectorOpen(): boolean {
   return open;
+}
+
+/** Puts the inspector away, which is what leaving a gateway's detail asks for. */
+export function closeInspector(): void {
+  if (open) {
+    open = false;
+    tellReaders();
+  }
 }
 
 /**

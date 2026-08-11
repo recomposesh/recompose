@@ -45,7 +45,7 @@ export function CableFailureChip({ status, detail }: CableFailureChipProps) {
       <button
         aria-controls={readingId}
         aria-expanded={shown}
-        className="inline-flex h-chip items-center rounded-chip border border-cable-failed bg-surface-card px-1.5 text-caption font-medium text-danger-ink focus-ring"
+        className="inline-flex h-chip items-center rounded-chip border border-cable-failed bg-surface-card px-1.5 text-caption font-medium text-danger-ink focus-ring-wide"
         onClick={() => {
           setShown((was) => !was);
         }}

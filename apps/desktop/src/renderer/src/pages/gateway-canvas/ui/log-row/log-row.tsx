@@ -1,17 +1,27 @@
 import type { Account, LogRow as LoggedRequest } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { requestFailed } from '../../lib/log-scope';
-import { servedAt, servedBy, tookFor } from './logged-request';
+import { useEffect, useState } from 'react';
+
+import { requestFailed, requestInFlight } from '../../lib/log-scope';
+import { servedAt, servedByAccount, servedByProvider, tookFor } from './logged-request';
 
 const TOO_MANY_REQUESTS = 429;
 
-function statusInk(logged: LoggedRequest): string {
+function statusInk(logged: LoggedRequest, ongoing: boolean): string {
+  if (ongoing) {
+    return 'text-accent-ink';
+  }
+
   if (logged.status === TOO_MANY_REQUESTS) {
     return 'text-attention-ink';
   }
 
   return requestFailed(logged) ? 'text-danger-ink' : 'text-running-ink';
+}
+
+function statusCell(logged: LoggedRequest, ongoing: boolean): ReactNode {
+  return ongoing ? <span aria-label="in progress">live</span> : logged.status;
 }
 
 function modelArrow(asked: string, resolved: string): string {
@@ -29,6 +39,27 @@ function durationCell(took: string): ReactNode {
   return took === '' ? <span className="sr-only">no duration</span> : took;
 }
 
+function useOngoingDuration(startedAt: number, ongoing: boolean): string {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!ongoing) {
+      return undefined;
+    }
+
+    setNow(Date.now());
+    const ticking = setInterval(() => {
+      setNow(Date.now());
+    }, 100);
+
+    return () => {
+      clearInterval(ticking);
+    };
+  }, [ongoing, startedAt]);
+
+  return ongoing ? tookFor(Math.max(0, now - startedAt)) : '';
+}
+
 /**
  * The ink the provider and account cell reads in, which fades once the account has departed.
  *
@@ -37,6 +68,28 @@ function durationCell(took: string): ReactNode {
  */
 function targetInk(account: Account | undefined): string {
   return account === undefined ? 'text-ink-secondary' : '';
+}
+
+type ModelJourney = { asked: string; resolved: string };
+
+function modelJourneyOf(logged: LoggedRequest): ModelJourney {
+  return { asked: logged.virtualModel ?? '', resolved: logged.providerModel ?? '' };
+}
+
+function modelJourneyCell({ asked, resolved }: ModelJourney): ReactNode {
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-1">
+      <span className="max-w-1/2 shrink-0 truncate" title={asked}>
+        {asked}
+      </span>
+      <span aria-hidden className="shrink-0 text-ink-tertiary">
+        {modelArrow(asked, resolved)}
+      </span>
+      <span className="min-w-0 truncate text-ink-secondary" title={resolved}>
+        {resolved}
+      </span>
+    </span>
+  );
 }
 
 type LogRowProps = {
@@ -62,14 +115,14 @@ type LogRowProps = {
  * than hunting across each line. The fixed cells never give way: what gives way first is the
  * provider model, then the account, because a truncated account is still readable next to its
  * provider while a truncated time says nothing at all. The status digits carry the standing and the
- * ink only reinforces it, so a screen painting no color loses nothing. A request that failed shows
- * no duration, since a number there would say the failure took that long to arrive rather than that
- * nothing was served.
+ * ink only reinforces it, so a screen painting no color loses nothing. A request the gateway never
+ * served shows no duration, since a number there would claim something answered when nothing did.
  */
 export function LogRow({ logged, account, id, underCursor = false, place, wholeRun }: LogRowProps) {
-  const asked = logged.virtualModel ?? '';
-  const resolved = logged.providerModel ?? '';
-  const took = tookFor(logged.durationMs);
+  const journey = modelJourneyOf(logged);
+  const ongoing = requestInFlight(logged);
+  const liveDuration = useOngoingDuration(logged.at, ongoing);
+  const took = ongoing ? liveDuration : tookFor(logged.durationMs);
   const cursor = underCursor ? '-outline-offset-2 outline-2 outline-accent' : '';
 
   return (
@@ -77,28 +130,24 @@ export function LogRow({ logged, account, id, underCursor = false, place, wholeR
       aria-posinset={place}
       aria-selected={underCursor}
       aria-setsize={wholeRun}
-      className={`flex h-7.5 items-center gap-2 px-3 font-mono text-mono-caption whitespace-nowrap text-ink ${cursor}`}
+      className={`flex h-5 items-center gap-1 px-2 font-mono text-mono-caption whitespace-nowrap text-ink ${cursor}`}
       id={id}
       role="option"
     >
       <span className="w-16 shrink-0 text-ink-secondary tabular-nums">{servedAt(logged.at)}</span>
       <span className="w-10 shrink-0 text-ink-secondary">{logged.method}</span>
-      <span className="flex min-w-0 flex-1 items-center gap-1">
-        <span className="max-w-1/2 shrink-0 truncate" title={asked}>
-          {asked}
-        </span>
-        <span aria-hidden className="shrink-0 text-ink-tertiary">
-          {modelArrow(asked, resolved)}
-        </span>
-        <span className="min-w-0 truncate text-ink-secondary" title={resolved}>
-          {resolved}
-        </span>
+      {modelJourneyCell(journey)}
+      <span className={`w-20 shrink-0 truncate text-end ${targetInk(account)}`}>
+        {servedByProvider(logged)}
       </span>
-      <span className={`w-40 shrink-0 truncate text-end ${targetInk(account)}`}>
-        {servedBy(logged, account)}
+      <span
+        className={`w-36 shrink-0 truncate ${targetInk(account)}`}
+        title={servedByAccount(logged, account)}
+      >
+        {servedByAccount(logged, account)}
       </span>
-      <span className={`w-8 shrink-0 text-end tabular-nums ${statusInk(logged)}`}>
-        {logged.status}
+      <span className={`w-8 shrink-0 text-end tabular-nums ${statusInk(logged, ongoing)}`}>
+        {statusCell(logged, ongoing)}
       </span>
       <span className="w-10 shrink-0 text-end text-ink-secondary tabular-nums">
         {durationCell(took)}

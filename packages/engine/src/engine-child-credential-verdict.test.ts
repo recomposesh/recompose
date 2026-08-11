@@ -103,14 +103,14 @@ async function anAskAwaitingItsCredential(send: SubscriptionRuntime['send']) {
     body: JSON.stringify({ model: 'fast', messages: [{ role: 'user', content: 'hello' }] }),
   });
 
-  await reportsReach(parent, 2);
-  grantExpiredSubscription(parent, engineSpendRequestSchema.parse(parent.reports[1]).id);
   await reportsReach(parent, 3);
+  grantExpiredSubscription(parent, engineSpendRequestSchema.parse(parent.reports.at(-1)).id);
+  await reportsReach(parent, 4);
 
   return {
     parent,
     answering,
-    update: engineSubscriptionCredentialUpdateSchema.parse(parent.reports[2]),
+    update: engineSubscriptionCredentialUpdateSchema.parse(parent.reports.at(-1)),
   };
 }
 

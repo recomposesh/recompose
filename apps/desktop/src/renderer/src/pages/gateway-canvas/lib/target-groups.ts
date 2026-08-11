@@ -18,7 +18,6 @@ function optionFor(account: Account): OptionRow {
     id: account.id,
     name: accountName(account),
     ...(mark === undefined ? {} : { mark }),
-    ...(account.kind === 'local' ? { detail: account.address } : {}),
   };
 }
 

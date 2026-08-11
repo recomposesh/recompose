@@ -5,165 +5,114 @@ import { useQuery } from '@tanstack/react-query';
 import { useRef, useSyncExternalStore } from 'react';
 
 import type { BindingOutcome } from '../../lib/cable-announcements';
-import type { XY } from '../../lib/canvas-positions';
 import type { ModelListReading, SettledDefinition } from '../../lib/model-draft';
-import type { PickerStage } from '../drop-picker/drop-picker';
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
-import type { OptionGroup } from '../option-list/option-list';
-import type { CanvasWorld, DragWatch, PickerStanding } from './canvas-standings';
+import type { CanvasWorld, DragWatch } from './canvas-standings';
+import type { PickerOnCanvas } from './picker-on-canvas';
+import type { RemovalAsked } from './removal-flow';
 
-import { engineTrafficQueryOptions, useDefineVirtualModel } from '../../../../shared/api';
-import { canvasPositions, subscribeToCanvasPositions } from '../../lib/canvas-position-store';
-import { emptyDefinition } from '../../lib/model-draft';
-import { canvasGraph } from '../../lib/node-graph';
-import { targetGroups } from '../../lib/target-groups';
-import { heldDraft, leaveDrafting, useHeldDraft } from '../../lib/use-held-draft';
 import {
-  completedDraftPick,
-  completedRebindPick,
-  removedDefinition,
-  spokenNameOf,
-  targetNameIn,
-} from './binding-acts';
+  engineTrafficQueryOptions,
+  subscriptionsQueryOptions,
+  useDefineVirtualModel,
+} from '../../../../shared/api';
+import { closeInspector } from '../../../../shared/lib';
+import {
+  canvasPositions,
+  keepCanvasPositions,
+  setNodePosition,
+  subscribeToCanvasPositions,
+} from '../../lib/canvas-position-store';
+import { canvasGraph } from '../../lib/node-graph';
+import { targetSeatBeside } from '../../lib/tidy-layout';
+import { useCanvasClock } from '../../lib/use-canvas-clock';
+import { heldDraft, leaveDrafting, useHeldDraft } from '../../lib/use-held-draft';
+import { askedTargetRemoval, spokenNameOf, targetNameIn } from './binding-acts';
 import { flowWiring } from './canvas-gestures';
 import {
   overlayOf,
   seatsOf,
   useCanvasStandings,
   useEscapeCancelledDrag,
+  useEscapeSettledCanvas,
   usePickerModels,
 } from './canvas-standings';
-import { modelIdOf, subjectOf } from './canvas-wiring';
-
-/** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
-export type PickerOnCanvas = {
-  stage: PickerStage;
-  groups: readonly OptionGroup[];
-  refusal: string | undefined;
-  anchorSeat: XY;
-  onPickAccount: (accountId: string) => void;
-  onPickProviderModel: (providerModel: string) => void;
-  onDismiss: () => void;
-};
-
-/** The removal a Delete press asked for, standing until the person answers. */
-export type RemovalAsked = { name: string; onConfirm: () => void; onCancel: () => void };
+import { subjectOf, targetModelIdOf } from './canvas-wiring';
+import { pickerOnCanvas } from './picker-on-canvas';
+import { removalAsked, useGatewayRemoval } from './removal-flow';
 
 /** Everything the page renders the canvas from, wired in one place. */
 export type ComposedCanvas = {
   flow: CanvasFlowWiring;
   announced: BindingOutcome | undefined;
   subject: InspectorSubject;
+  hasSelection: boolean;
   refusal: string | undefined;
   picker: PickerOnCanvas | undefined;
   removal: RemovalAsked | undefined;
+  clearSelection: () => void;
+  selectNode: (nodeId: string) => void;
+  askRemoval: (nodeId: string) => void;
   onDraftDefined: (definition: SettledDefinition) => void;
-  /**
-   * Selects a card by its node id, or clears the selection where nothing is named.
-   *
-   * @summary The canvas is not the only surface that says what a person means: the logs drawer's
-   * scope strip names the same cards, and pressing one there has to move the one selection rather
-   * than growing a second copy of it.
-   */
-  onSelectSubject: (nodeId: string | undefined) => void;
 };
 
-function pickerGroups(
-  world: CanvasWorld,
-  picker: PickerStanding,
-  offered: readonly string[],
-): readonly OptionGroup[] {
-  return picker.step === 'account'
-    ? targetGroups([...world.accounts])
-    : [{ options: offered.map((id) => ({ id, name: id })) }];
-}
+function draftGraduation(world: CanvasWorld): (definition: SettledDefinition) => void {
+  return (definition) => {
+    const draft = heldDraft(world.slug);
 
-function completedPick(
-  world: CanvasWorld,
-  from: string,
-  accountId: string,
-  providerModel: string,
-): void {
-  if (from === 'draft') {
-    completedDraftPick(world, accountId, providerModel);
-  } else {
-    completedRebindPick(world, accountId, providerModel);
-  }
-}
+    if (draft !== undefined) {
+      setNodePosition(world.slug, `model:${definition.id}`, draft.seat);
+      setNodePosition(world.slug, `target:${definition.id}`, targetSeatBeside(draft.seat));
+      keepCanvasPositions(world.slug);
+    }
 
-function pickerStage(picker: PickerStanding): PickerStage {
-  return picker.step === 'account'
-    ? { step: 'account' }
-    : { step: 'provider-model', accountId: picker.accountId };
-}
-
-function pickerOnCanvas(world: CanvasWorld, models: ModelListReading): PickerOnCanvas | undefined {
-  const picker = world.standings.picker;
-
-  if (picker === undefined) {
-    return undefined;
-  }
-
-  const anchorId = 'at' in picker ? 'pending' : picker.anchor;
-
-  return {
-    stage: pickerStage(picker),
-    groups: pickerGroups(world, picker, models.offered),
-    refusal: picker.step === 'provider-model' ? models.refusal : undefined,
-    anchorSeat: world.seats[anchorId] ?? { x: 0, y: 0 },
-    onPickAccount: (accountId) => {
-      if (picker.step === 'account') {
-        world.standings.setPicker({
-          step: 'provider-model',
-          from: picker.from,
-          accountId,
-          at: picker.at,
-          origin: picker.origin,
-        });
-      }
-    },
-    onPickProviderModel: (providerModel) => {
-      if (picker.step === 'provider-model') {
-        completedPick(world, picker.from, picker.accountId, providerModel);
-      }
-    },
-    onDismiss: () => {
-      world.standings.setPicker(undefined);
-    },
+    leaveDrafting(world.slug);
+    world.standings.select(undefined);
+    closeInspector();
+    world.standings.announce({
+      kind: 'bound',
+      virtualModel: spokenNameOf(definition),
+      target: targetNameIn(world.accounts, definition.accountId),
+    });
   };
 }
 
-function draftRemovalName(world: CanvasWorld): string {
-  return spokenNameOf(heldDraft(world.slug)?.definition ?? emptyDefinition());
+function removalAsking(world: CanvasWorld): (nodeId: string) => void {
+  return (nodeId) => {
+    if (targetModelIdOf(nodeId) === undefined) {
+      world.standings.setRemoving(nodeId);
+
+      return;
+    }
+
+    askedTargetRemoval(world, nodeId);
+  };
 }
 
-function removalName(world: CanvasWorld, nodeId: string): string {
-  if (nodeId === 'draft') {
-    return draftRemovalName(world);
-  }
-
-  const model = world.gateway.virtualModels.find((held) => held.id === modelIdOf(nodeId));
-
-  return model?.displayName ?? nodeId;
-}
-
-function removalAsked(world: CanvasWorld): RemovalAsked | undefined {
-  const nodeId = world.standings.removing;
-
-  if (nodeId === undefined) {
-    return undefined;
-  }
+function composedCanvas(
+  world: CanvasWorld,
+  pickerModels: ModelListReading,
+  deleteGateway: () => void,
+): ComposedCanvas {
+  const { standings } = world;
 
   return {
-    name: removalName(world, nodeId),
-    onConfirm: () => {
-      removedDefinition(world, nodeId);
-      world.standings.setRemoving(undefined);
+    flow: flowWiring(world),
+    announced: standings.announced,
+    subject: subjectOf(world.gateway, standings.selection),
+    hasSelection: standings.selection !== undefined,
+    refusal: standings.refusal,
+    picker: pickerOnCanvas(world, pickerModels),
+    removal: removalAsked(world, deleteGateway),
+    clearSelection: () => {
+      standings.select(undefined);
     },
-    onCancel: () => {
-      world.standings.setRemoving(undefined);
+    selectNode: (nodeId) => {
+      standings.select(nodeId);
     },
+    askRemoval: removalAsking(world),
+    onDraftDefined: draftGraduation(world),
   };
 }
 
@@ -180,6 +129,7 @@ export function useGatewayCanvas(
   slug: string,
   gateway: GatewayConfig | undefined,
   accounts: readonly Account[],
+  onGatewayRemoved: () => void,
 ): ComposedCanvas | undefined {
   const standings = useCanvasStandings();
   const stored = useSyncExternalStore(subscribeToCanvasPositions, () => canvasPositions(slug));
@@ -187,17 +137,21 @@ export function useGatewayCanvas(
   const define = useDefineVirtualModel();
   const pickerModels = usePickerModels(standings.picker);
   const { data: traffic } = useQuery(engineTrafficQueryOptions);
+  const { data: subscriptions = [] } = useQuery(subscriptionsQueryOptions);
+  const now = useCanvasClock();
   const dragging = useRef<DragWatch>({ inFlight: false, escaped: false });
   const view = useRef<ReactFlowInstance | null>(null);
+  const deleteGateway = useGatewayRemoval(slug, standings.refuse, onGatewayRemoved);
 
   useEscapeCancelledDrag(dragging);
+  useEscapeSettledCanvas(standings, dragging);
 
   if (gateway === undefined) {
     return undefined;
   }
 
   const overlay = overlayOf(draft, standings.picker);
-  const graph = canvasGraph(gateway, accounts, overlay, traffic);
+  const graph = canvasGraph(gateway, accounts, overlay, traffic, subscriptions, now);
   const seats = seatsOf(graph, stored, overlay);
   const world: CanvasWorld = {
     slug,
@@ -211,22 +165,5 @@ export function useGatewayCanvas(
     view,
   };
 
-  return {
-    flow: flowWiring(world),
-    announced: standings.announced,
-    subject: subjectOf(standings.selection),
-    refusal: standings.refusal,
-    picker: pickerOnCanvas(world, pickerModels),
-    removal: removalAsked(world),
-    onSelectSubject: standings.select,
-    onDraftDefined: (definition) => {
-      leaveDrafting(slug);
-      standings.select(`model:${definition.id}`);
-      standings.announce({
-        kind: 'bound',
-        virtualModel: spokenNameOf(definition),
-        target: targetNameIn(accounts, definition.accountId),
-      });
-    },
-  };
+  return composedCanvas(world, pickerModels, deleteGateway);
 }

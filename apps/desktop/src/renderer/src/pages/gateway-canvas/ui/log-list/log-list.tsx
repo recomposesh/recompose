@@ -150,7 +150,7 @@ function requestRun({ drawn, wholeRun, walk, rowId, holdScrolling }: RequestRun)
     <div
       aria-activedescendant={cursorRef(drawn, walk, rowId)}
       aria-label="Served requests"
-      className="min-h-0 flex-1 overflow-y-auto focus-ring outline-none"
+      className="min-h-0 flex-1 overflow-y-auto focus-ring pt-1 outline-none"
       onKeyDown={(event) => {
         walkedByKey(event, walk);
       }}

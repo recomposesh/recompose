@@ -18,6 +18,8 @@ describe('app settings', () => {
       showInMenuBar: false,
       firstRequestServed: false,
       showOnboardingChecklist: true,
+      bindAddress: '127.0.0.1',
+      startGatewaysOnLaunch: false,
     });
   });
 
@@ -44,6 +46,13 @@ describe('app settings', () => {
 
   test('unknown keys are rejected', () => {
     expect(() => loadSettings({ ...defaultSettings(), telemetry: true })).toThrow();
+  });
+
+  test('the bind address accepts a host or IPv4 address and refuses a URL or port', () => {
+    expect(settingsPatchSchema.safeParse({ bindAddress: '0.0.0.0' }).success).toBe(true);
+    expect(settingsPatchSchema.safeParse({ bindAddress: 'gateway.local' }).success).toBe(true);
+    expect(settingsPatchSchema.safeParse({ bindAddress: 'http://0.0.0.0' }).success).toBe(false);
+    expect(settingsPatchSchema.safeParse({ bindAddress: '127.0.0.1:8397' }).success).toBe(false);
   });
 
   test('a missing switch is rejected rather than quietly defaulted', () => {

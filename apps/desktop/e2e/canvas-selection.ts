@@ -30,8 +30,3 @@ export async function theEmptyCanvasIsPressed(page: Page): Promise<void> {
 
   await page.mouse.click(spot.x, spot.y);
 }
-
-/** Whether any card on the canvas stands selected, which is what a cleared selection reads as. */
-export async function anyNodeStandsSelected(page: Page): Promise<boolean> {
-  return (await page.locator('.react-flow__node button[aria-pressed="true"]').count()) > 0;
-}

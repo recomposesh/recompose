@@ -38,10 +38,6 @@ Feature: The settings screen
   Scenario: The Appearance group offers the theme alone
     Then the Appearance group offers the theme and nothing beside it
 
-  Scenario: The bind address states a value rather than offering a control
-    Then the bind address row reads "127.0.0.1 and [::1]"
-    And the row states that recompose never serves the network
-
-  Scenario: Telemetry states a value rather than offering a control
-    Then the telemetry row reads "None"
-    And the row states that recompose never phones home
+  Scenario: The bind address starts local and remains editable
+    Then the bind address field reads "127.0.0.1"
+    And the row says another host can serve the network

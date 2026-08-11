@@ -15,7 +15,7 @@ Feature: The creation sheet
   Scenario: The preview follows the port field
     Given the creation sheet is open
     When the maintainer replaces the port with 9000
-    Then the sheet previews serving at "http://localhost:9000"
+    Then the sheet previews serving at "http://127.0.0.1:9000"
 
   Scenario: A name Windows keeps for a device keeps the sheet open
     Given the creation sheet is open

@@ -9,12 +9,14 @@ import {
 } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
 
+import type { Waiter } from './directive-waiters';
 import type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 import type { EngineLooks } from './engine-looks';
 import type { SpendGrantFor } from './engine-spend';
 import type { LogsDesk } from './logs-ledger';
 import type { TrafficDesk } from './traffic-ledger';
 
+import { refuseEveryWaiter } from './directive-waiters';
 import { persistRefreshedCredential } from './engine-host-credential-update';
 import {
   answerLook,
@@ -37,11 +39,6 @@ export type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-type
 
 type StateListener = (states: EngineStates) => void;
 
-type Waiter = {
-  answer: (state: GatewayEngineState) => void;
-  refuse: (reason: Error) => void;
-};
-
 type Resident = {
   states: EngineStates;
   child: EngineChild | null;
@@ -63,16 +60,6 @@ function publish(resident: Resident, next: EngineStates): void {
   }
 }
 
-function refuseEveryWaiter(resident: Resident, reason: Error): void {
-  const waiting = [...resident.awaitingReport.values()];
-
-  resident.awaitingReport.clear();
-
-  for (const waiter of waiting) {
-    waiter.refuse(reason);
-  }
-}
-
 function answerState(resident: Resident, report: Extract<EngineReport, { kind: 'state' }>): void {
   const waiting = resident.awaitingReport.get(report.answers);
 
@@ -85,6 +72,12 @@ function answerState(resident: Resident, report: Extract<EngineReport, { kind: '
   }
 
   resident.awaitingReport.delete(report.answers);
+
+  if (report.state.status === 'stopped') {
+    resident.traffic.interrupt(report.slug);
+    resident.logs.interrupt(report.slug);
+  }
+
   publish(resident, foldEngineReport(resident.states, report));
   waiting.answer(report.state);
 }
@@ -138,9 +131,14 @@ function receiveExit(resident: Resident, code: number): void {
 
   console.error(death.message);
 
+  for (const slug of Object.keys(resident.states)) {
+    resident.traffic.interrupt(slug);
+    resident.logs.interrupt(slug);
+  }
+
   resident.child = null;
   publish(resident, allStopped(Object.keys(resident.states)));
-  refuseEveryWaiter(resident, death);
+  refuseEveryWaiter(resident.awaitingReport, death);
   foldEveryLook(resident.looks);
 }
 
@@ -177,6 +175,7 @@ async function sendDirective(
 
   if (directive.kind === 'start') {
     resident.traffic.keepOnly(directive.gateway);
+    resident.logs.resume(directive.gateway.slug);
     resident.logs.backfill();
   }
 
@@ -266,6 +265,17 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     states: () => resident.states,
     replayLogs: () => {
       resident.logs.backfill();
+    },
+    forget: (slug) => {
+      resident.traffic.forget(slug);
+      resident.logs.forget(slug);
+
+      if (resident.states[slug] !== undefined) {
+        const remaining = { ...resident.states };
+
+        delete remaining[slug];
+        publish(resident, remaining);
+      }
     },
     onStatesChanged: (listener) => {
       resident.subscribers.add(listener);

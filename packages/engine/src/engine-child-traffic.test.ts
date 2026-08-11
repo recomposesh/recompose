@@ -50,14 +50,14 @@ async function grantThenAnswer(
 
   const answering = askUnder(child, model);
 
-  await reportsReach(child.parent, 2);
+  await reportsReach(child.parent, 3);
 
-  const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+  const ask = engineSpendRequestSchema.parse(child.parent.reports.at(-1));
 
   child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
 
   await (await answering).text();
-  await reportsReach(child.parent, 5);
+  await reportsReach(child.parent, 6);
 }
 
 function aChildWhoseTrafficLaneBroke(answer: () => Response) {
@@ -107,7 +107,7 @@ describe('a traffic word the parent could not be told', () => {
 });
 
 describe('what the parent hears once a request through a gateway has finished', () => {
-  test('a request the target answered is reported served under its gateway and model', async () => {
+  test('a request the target answered is reported live and then served under its gateway and model', async () => {
     const child = aServingChild(() => Response.json({ choices: [] }));
 
     await grantThenAnswer(child, 'fast');
@@ -116,16 +116,17 @@ describe('what the parent hears once a request through a gateway has finished', 
 
     expect(traffic.map(({ kind, slug, virtualModel }) => ({ kind, slug, virtualModel }))).toEqual([
       { kind: 'traffic', slug: 'codex', virtualModel: 'fast' },
+      { kind: 'traffic', slug: 'codex', virtualModel: 'fast' },
     ]);
-    expect(traffic.at(0)?.request.outcome).toBe('served');
+    expect(traffic.map((one) => one.request.outcome)).toEqual(['live', 'served']);
   });
 
-  test('a request the target turned away is reported failed with the status', async () => {
+  test('a request the target turned away settles as failed with the status', async () => {
     const child = aServingChild(() => new Response('{}', { status: 429 }));
 
     await grantThenAnswer(child, 'fast');
 
-    expect(trafficIn(child.parent.reports).at(0)?.request).toMatchObject({
+    expect(trafficIn(child.parent.reports).at(-1)?.request).toMatchObject({
       outcome: 'failed',
       status: 429,
     });
@@ -156,13 +157,13 @@ describe('what the parent hears once a request through a gateway has finished', 
       },
     );
 
-    await reportsReach(child.parent, 2);
+    await reportsReach(child.parent, 3);
 
-    const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+    const ask = engineSpendRequestSchema.parse(child.parent.reports.at(-1));
 
     child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
     await (await answering).text();
-    await reportsReach(child.parent, 5);
+    await reportsReach(child.parent, 6);
 
     expect(JSON.stringify(child.parent.reports)).not.toContain('my diary entry');
   });

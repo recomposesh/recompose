@@ -309,6 +309,9 @@ importers:
       electron-liquid-glass:
         specifier: ^1.1.1
         version: 1.1.1
+      electron-window-state:
+        specifier: ^5.0.3
+        version: 5.0.3
       koffi:
         specifier: 3.1.4
         version: 3.1.4
@@ -5370,6 +5373,10 @@ packages:
     peerDependenciesMeta:
       '@swc/core':
         optional: true
+
+  electron-window-state@5.0.3:
+    resolution: {integrity: sha512-1mNTwCfkolXl3kMf50yW3vE2lZj0y92P/HYWFBrb+v2S/pCka5mdwN3cagKm458A7NjndSwijynXgcLWRodsVg==}
+    engines: {node: '>=8.0.0'}
 
   electron-winstaller@5.4.0:
     resolution: {integrity: sha512-bO3y10YikuUwUuDUQRM4KfwNkKhnpVO7IPdbsrejwN9/AABJzzTQ4GeHwyzNSrVO+tEH3/Np255a3sVZpZDjvg==}
@@ -12338,6 +12345,11 @@ snapshots:
       '@swc/core': 1.15.46
     transitivePeerDependencies:
       - supports-color
+
+  electron-window-state@5.0.3:
+    dependencies:
+      jsonfile: 4.0.0
+      mkdirp: 0.5.6
 
   electron-winstaller@5.4.0(supports-color@7.2.0):
     dependencies:

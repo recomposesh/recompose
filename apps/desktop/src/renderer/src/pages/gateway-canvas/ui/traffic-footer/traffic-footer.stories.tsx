@@ -8,7 +8,6 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { bindEngineLogsToCache } from '../../../../shared/api';
-import { closeLogsDrawer } from '../../../../shared/lib';
 import { emitEngineLogs, paintedBox, paintedStyle } from '../../../../shared/testing';
 import { TrafficFooter } from './traffic-footer';
 
@@ -80,7 +79,11 @@ function answered(now: number): readonly LogRow[] {
 
 function refused(now: number): readonly LogRow[] {
   return Array.from({ length: REFUSED }, (_, index) =>
-    row(`refused-${String(index)}`, { at: now - index * APART_MS, status: 500 }),
+    row(`refused-${String(index)}`, {
+      at: now - index * APART_MS,
+      status: 500,
+      durationMs: SLOW_MS,
+    }),
   );
 }
 
@@ -132,7 +135,7 @@ type StripCanvas = {
 async function cellsOf(canvas: StripCanvas) {
   return {
     requests: await canvas.findByText('req/min', { exact: false }),
-    latency: await canvas.findByText('p95', { exact: false }),
+    latency: await canvas.findByText('latency', { exact: false }),
     clients: await canvas.findByText('client app', { exact: false, ignore: '[hidden]' }),
     tokens: await canvas.findByText('tok/min', { exact: false }),
     errors: await canvas.findByText('error', { exact: false }),
@@ -157,7 +160,6 @@ function fitsItsPane(strip: Element | null): boolean {
 }
 
 const meta = preview.meta({
-  beforeEach: () => closeLogsDrawer,
   component: TrafficFooter,
   args: { slug: SLUG, nodes: 5, wires: 4 },
 });
@@ -178,7 +180,9 @@ export const Idle = meta.story({
     const requests = await canvas.findByText('req/min', { exact: false });
 
     await expect(requests.textContent).toBe('0 req/min');
-    await expect((await canvas.findByText('p95', { exact: false })).textContent).toBe('p95 0ms');
+    await expect((await canvas.findByText('latency', { exact: false })).textContent).toBe(
+      '0ms latency',
+    );
     await expect(
       (await canvas.findByText('client app', { exact: false, ignore: '[hidden]' })).textContent,
     ).toBe('0 client apps');
@@ -188,7 +192,6 @@ export const Idle = meta.story({
     await expect((await canvas.findByText('wires', { exact: false })).textContent).toBe(
       '5 nodes · 4 wires',
     );
-    await expect(await canvas.findByRole('button', { name: 'Logs' })).toBeVisible();
     await expect(canvas.queryByText('error', { exact: false })).toBeNull();
   },
 });
@@ -227,7 +230,7 @@ export const UnderLoad = meta.story({
     const { requests, latency, clients, tokens, errors, tally } = await cellsOf(canvas);
 
     await expect(requests.textContent).toBe('42 req/min');
-    await expect(latency.textContent).toBe('p95 1.1s');
+    await expect(latency.textContent).toBe('1.1s latency');
     await expect(clients.textContent).toBe('3 client apps');
     await expect(tokens.textContent).toBe('18.2k tok/min');
     await expect(errors.textContent).toBe('3 errors');
@@ -270,20 +273,6 @@ export const DropOrder = meta.story({
     await expect(requests).toBeVisible();
     await expect(errors).toBeVisible();
     await expect(fitsItsPane(strip)).toBe(true);
-  },
-});
-
-/** The one control on the strip, saying out loud whether the drawer stands open. */
-export const Disclosure = meta.story({
-  decorators: [quiet],
-  play: async ({ canvas, userEvent }) => {
-    const control = await canvas.findByRole('button', { name: 'Logs' });
-
-    await expect(control).toHaveAttribute('aria-expanded', 'false');
-
-    await userEvent.click(control);
-
-    await expect(control).toHaveAttribute('aria-expanded', 'true');
   },
 });
 

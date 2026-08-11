@@ -35,7 +35,7 @@ Then(
 Then('only the rows that reached {string} remain', async ({ page }, account: string) => {
   expect(account).toBe(ANTHROPIC_ACCOUNT);
   await onlyRowsRemain(page, wholeStreamBefore(page), (cells) =>
-    (cells[ROW_CELLS.servedBy] ?? '').includes(account),
+    (cells[ROW_CELLS.account] ?? '').includes(account),
   );
 });
 

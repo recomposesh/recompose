@@ -30,6 +30,7 @@ import {
 import {
   accountPicker,
   cableBetween,
+  wireBetween,
   cableId,
   cablePath,
   canvasNode,
@@ -158,7 +159,7 @@ Given('a stored Anthropic key account standing as a target node', async ({ page 
     await openGatewayCanvas(page, gateway);
   }
 
-  await expect(canvasNode(page, targetNodeId(key.id))).toBeVisible();
+  await expect(canvasNode(page, targetNodeId(COMPANION))).toBeVisible();
 });
 
 Given(
@@ -186,11 +187,10 @@ Given('a cable drag in flight from the port of {string}', async ({ page }, name:
 When(
   'the person drags a cable from the port of {string} onto the target node and picks the provider model {string}',
   async ({ page }, name: string, providerModel: string) => {
-    const key = await accountHeldAs(page, 'api-key');
     const from = await cardNamed(page, name);
 
     await fitCanvasToView(page);
-    await dragCableOnto(page, sourcePort(page, from), targetPort(page, targetNodeId(key.id)));
+    await dragCableOnto(page, sourcePort(page, from), targetPort(page, targetNodeId(COMPANION)));
     await pickProviderModel(page, providerModel);
   },
 );
@@ -233,11 +233,10 @@ Then('{string} stands bound to it', async ({ page }, name: string) => {
 });
 
 Then('the canvas draws the new cable', async ({ page }) => {
-  const key = await accountHeldAs(page, 'api-key');
   const alias = modelAliasFromName(virtualModelInFocus(page));
 
   await expect.poll(async () => standingCables(page)).toContain(cableId(alias));
-  await expect(cableBetween(page, modelNodeId(alias), targetNodeId(key.id))).toHaveCount(1);
+  await expect(cableBetween(page, modelNodeId(alias), targetNodeId(alias))).toHaveCount(1);
   expect(await cablePath(page, cableId(alias))).not.toBe('');
 });
 
@@ -252,10 +251,10 @@ Then('it anchors to a pending target card at the drop point', async ({ page }) =
 });
 
 Then('the account stands as a target node at the drop point', async ({ page }) => {
-  const key = await accountHeldAs(page, 'api-key');
+  const alias = modelAliasFromName(virtualModelInFocus(page));
 
-  await expect.poll(async () => standingNodes(page)).toContain(targetNodeId(key.id));
-  expect(await nodeSeat(page, targetNodeId(key.id))).toEqual(thePendingSeat(page));
+  await expect.poll(async () => standingNodes(page)).toContain(targetNodeId(alias));
+  expect(await nodeSeat(page, targetNodeId(alias))).toEqual(thePendingSeat(page));
 });
 
 Then('the picker closes and the pending card leaves the canvas', async ({ page }) => {
@@ -286,7 +285,7 @@ Then(
     expect(await nodeTreatment(page, DRAFT_NODE)).toBe('draft-model');
 
     await expect.poll(async () => standingCables(page)).toContain(DRAFT_CABLE);
-    await expect(cableBetween(page, GATEWAY_NODE, DRAFT_NODE)).toHaveCount(1);
+    await expect(wireBetween(page, GATEWAY_NODE, DRAFT_NODE)).toHaveCount(1);
     await standsAt(canvasNode(page, DRAFT_NODE), theDropPoint(page));
   },
 );

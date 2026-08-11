@@ -19,8 +19,8 @@ const nodeOfKind: Record<CanvasNodeKind, (id: string) => CanvasNode> = {
     displayName: 'Fast',
     providerModel: 'claude-sonnet-5',
   }),
-  target: (id) => ({ id, kind: 'target', account: work }),
-  'ghost-target': (id) => ({ id, kind: 'ghost-target', accountId: 'a2' }),
+  target: (id) => ({ id, kind: 'target', account: work, modelId: 'fast' }),
+  'ghost-target': (id) => ({ id, kind: 'ghost-target', accountId: 'a2', modelId: 'slow' }),
   'draft-model': (id) => ({ id, kind: 'draft-model', modelId: '', displayName: '' }),
   'pending-target': (id) => ({ id, kind: 'pending-target' }),
 };

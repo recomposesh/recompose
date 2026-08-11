@@ -6,7 +6,7 @@ import type {
   SubscriptionAccount,
 } from '@recompose/contracts';
 
-import { withSettingsPatch } from '@recompose/contracts';
+import { DEFAULT_GATEWAY_BIND_ADDRESS, withSettingsPatch } from '@recompose/contracts';
 
 import type { IpcHandlers } from './dispatch';
 
@@ -51,10 +51,18 @@ async function getSettings(ctx: StorageIpcContext, paths: StoragePaths) {
 
 async function writeSettings(ctx: StorageIpcContext, paths: StoragePaths, patch: SettingsPatch) {
   const previous = await loadSettingsFile(paths.settingsFile, ctx.onCorrupt);
+  const stored = withSettingsPatch(previous, patch);
 
-  await saveSettingsFile(paths.settingsFile, withSettingsPatch(previous, patch));
+  await saveSettingsFile(paths.settingsFile, stored);
 
-  return { stored: await loadSettingsFile(paths.settingsFile, ctx.onCorrupt) };
+  return { previous, stored: await loadSettingsFile(paths.settingsFile, ctx.onCorrupt) };
+}
+
+function bindAddressMoved(patch: SettingsPatch, previousBindAddress: string | undefined): boolean {
+  return (
+    patch.bindAddress !== undefined &&
+    patch.bindAddress !== (previousBindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS)
+  );
 }
 
 async function saveSettings(
@@ -72,6 +80,10 @@ async function saveSettings(
 
   ctx.applySettings(written.stored, patch.launchAtLogin);
   ctx.onSettingsWritten(written.stored);
+
+  if (bindAddressMoved(patch, written.previous.bindAddress)) {
+    ctx.restartServingGateways?.();
+  }
 
   return { ok: true as const, value: { ...written.stored, launchAtLogin: ctx.readLoginItem() } };
 }
@@ -183,6 +195,8 @@ export type StorageIpcHandlers = Pick<
   | 'gateways:list'
   | 'gateways:save'
   | 'gateways:update'
+  | 'gateways:remove'
+  | 'gateways:set-port'
   | 'settings:get'
   | 'settings:save'
   | 'accounts:list'

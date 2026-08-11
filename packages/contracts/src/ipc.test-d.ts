@@ -35,6 +35,7 @@ describe('ipc request contracts', () => {
 
   test('write channels take exactly their domain payload', () => {
     expectTypeOf<IpcRequest<'gateways:save'>>().toEqualTypeOf<GatewayConfig>();
+    expectTypeOf<IpcRequest<'gateways:remove'>>().toEqualTypeOf<{ slug: string }>();
     expectTypeOf<IpcRequest<'settings:save'>>().toEqualTypeOf<SettingsPatch>();
     expectTypeOf<IpcRequest<'accounts:remove'>>().toEqualTypeOf<{ id: string }>();
   });
@@ -182,11 +183,13 @@ describe('bridge surface totality', () => {
     expectTypeOf<keyof RecomposeIpc>().toEqualTypeOf<IpcChannel>();
   });
 
-  test('the surface is exactly these twenty-nine channels, so a thirtieth arrives red', () => {
+  test('the surface is exactly these thirty-one channels, so a thirty-second arrives red', () => {
     expectTypeOf<IpcChannel>().toEqualTypeOf<
       | 'gateways:list'
       | 'gateways:save'
       | 'gateways:update'
+      | 'gateways:remove'
+      | 'gateways:set-port'
       | 'gateways:offer-port'
       | 'gateways:move-port'
       | 'settings:get'

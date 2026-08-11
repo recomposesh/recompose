@@ -43,12 +43,10 @@ test('a stored key offers the name a person filed it under, and its vendor mark'
   expect(keys?.options).toEqual([{ id: 'k1', name: 'Work key', mark: 'anthropic' }]);
 });
 
-test('a stored runtime offers the server it is and the address it answers at', () => {
+test('a stored runtime offers only the server name and its mark', () => {
   const runtimes = targetGroups(everyKind).at(-1);
 
-  expect(runtimes?.options).toEqual([
-    { id: 'l1', name: 'Ollama', mark: 'ollama', detail: 'http://127.0.0.1:11434' },
-  ]);
+  expect(runtimes?.options).toEqual([{ id: 'l1', name: 'Ollama', mark: 'ollama' }]);
 });
 
 test('a registry holding nothing offers no group for anyone to search', () => {

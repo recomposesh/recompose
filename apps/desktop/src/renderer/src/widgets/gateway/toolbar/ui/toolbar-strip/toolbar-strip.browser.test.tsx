@@ -1,13 +1,22 @@
-import { expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
+import { userEvent } from 'vitest/browser';
 
-import { subscribeToCanvasAsks } from '../../../../../shared/lib';
+import {
+  closeLogsDrawer,
+  subscribeToCanvasAsks,
+  toggleLogsDrawer,
+} from '../../../../../shared/lib';
 import { ToolbarStrip } from './toolbar-strip';
+
+afterEach(() => {
+  closeLogsDrawer();
+});
 
 async function renderStrip() {
   return render(
     <ToolbarStrip
-      address="http://localhost:51234"
+      address="http://127.0.0.1:51234"
       name="Codex"
       onRun={() => undefined}
       port={51234}
@@ -40,4 +49,35 @@ test('a strip nobody pressed asks the canvas for nothing', async () => {
   letGo();
 
   expect(asked).toEqual([]);
+});
+
+test('the request log control says out loud whether the drawer stands open', async () => {
+  const screen = await renderStrip();
+  const control = screen.getByRole('button', { name: 'Request log' });
+
+  await expect.element(control).toHaveAttribute('aria-expanded', 'false');
+
+  await userEvent.click(control);
+
+  await expect.element(control).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('the keyboard alone opens the drawer', async () => {
+  const screen = await renderStrip();
+  const control = screen.getByRole('button', { name: 'Request log' });
+
+  control.element().focus();
+  await userEvent.keyboard('{Enter}');
+
+  await expect.element(control).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('the control reads the shared drawer state rather than holding one of its own', async () => {
+  const screen = await renderStrip();
+
+  toggleLogsDrawer();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Request log' }))
+    .toHaveAttribute('aria-expanded', 'true');
 });

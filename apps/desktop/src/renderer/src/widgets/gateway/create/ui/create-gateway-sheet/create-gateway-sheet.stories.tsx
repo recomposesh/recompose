@@ -22,7 +22,7 @@ export const Open = meta.story({
       await expect(await screen.findByRole('textbox', { name: 'Port' })).toHaveValue('51234');
     });
     await expect(sheet).toHaveTextContent('Serves at');
-    await expect(sheet).toHaveTextContent('http://localhost:51234');
+    await expect(sheet).toHaveTextContent('http://127.0.0.1:51234');
   },
 });
 

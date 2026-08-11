@@ -6,7 +6,6 @@ import { Given, Then, When } from '../fixtures';
 import { clipboardHolds, COPY_CHORD, theClipboardStandsEmpty } from '../held-clipboard';
 import {
   loggedRows,
-  NO_DURATION,
   readsInFull,
   ROW_CELLS,
   rowCells,
@@ -135,8 +134,8 @@ Then('the row names {string} and {string}', async ({ page }, model: string, reso
 Then('it names {string} and {string}', async ({ page }, provider: string, account: string) => {
   const cells = await cellsOfTheNewestRow(page);
 
-  expect(cells[ROW_CELLS.servedBy] ?? '').toContain(provider);
-  expect(cells[ROW_CELLS.servedBy] ?? '').toContain(account);
+  expect(cells[ROW_CELLS.provider] ?? '').toContain(provider);
+  expect(cells[ROW_CELLS.account] ?? '').toContain(account);
 });
 
 Then(
@@ -156,10 +155,10 @@ Then('the row marks the failure with status {int}', async ({ page }, status: num
   expect(cells[ROW_CELLS.status] ?? '').toBe(String(status));
 });
 
-Then('its duration cell stands empty', async ({ page }) => {
+Then('its duration cell reads how long the failure took', async ({ page }) => {
   const cells = await cellsOfTheNewestRow(page);
 
-  expect(cells[ROW_CELLS.duration] ?? '').toBe(NO_DURATION);
+  expect(cells[ROW_CELLS.duration] ?? '').toMatch(A_DURATION);
 });
 
 Then('a row carries status {int}', async ({ page }, status: number) => {
@@ -171,7 +170,8 @@ Then('a row carries status {int}', async ({ page }, status: number) => {
 Then('its provider and account cells stand empty', async ({ page }) => {
   const cells = await cellsOfTheNewestRow(page);
 
-  expect(cells[ROW_CELLS.servedBy] ?? '').toBe('');
+  expect(cells[ROW_CELLS.provider] ?? '').toBe('');
+  expect(cells[ROW_CELLS.account] ?? '').toBe('');
 });
 
 Then('the rows still name {string}', async ({ page }, model: string) => {

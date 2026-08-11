@@ -50,7 +50,7 @@ export const Serving = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Fast')).toBeVisible();
     await expect(await canvas.findByText('fast → work · claude-haiku-4-5')).toBeVisible();
-    await expect(await canvas.findByText('serving')).toBeVisible();
+    await expect(canvas.queryByText('serving')).toBeNull();
   },
 });
 

@@ -152,23 +152,12 @@ Then('the Appearance group offers the theme and nothing beside it', async ({ pag
   await expect(section(page, 'Appearance').getByRole('switch')).toHaveCount(0);
 });
 
-Then('the bind address row reads {string}', async ({ page }, value: string) => {
-  await expect(section(page, 'Server').getByText(value, { exact: true })).toBeVisible();
-  await expect(section(page, 'Server').getByRole('textbox', { name: 'Bind address' })).toHaveCount(
-    0,
+Then('the bind address field reads {string}', async ({ page }, value: string) => {
+  await expect(section(page, 'Server').getByRole('textbox', { name: 'Bind address' })).toHaveValue(
+    value,
   );
 });
 
-Then('the row states that recompose never serves the network', async ({ page }) => {
-  await expect(
-    section(page, 'Server').getByText('Fixed at loopback. recompose never serves the network.'),
-  ).toBeVisible();
-});
-
-Then('the telemetry row reads {string}', async ({ page }, value: string) => {
-  await expect(section(page, 'General').getByText(value, { exact: true })).toBeVisible();
-});
-
-Then('the row states that recompose never phones home', async ({ page }) => {
-  await expect(section(page, 'General').getByText('recompose never phones home.')).toBeVisible();
+Then('the row says another host can serve the network', async ({ page }) => {
+  await expect(section(page, 'Server').getByText(/Use 0\.0\.0\.0 or another host/iu)).toBeVisible();
 });

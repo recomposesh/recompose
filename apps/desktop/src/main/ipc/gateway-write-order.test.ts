@@ -90,6 +90,7 @@ async function deskOver(probeFreePort: ProbePort) {
     restartGateway: (gateway) => {
       serving.add(gateway.slug);
     },
+    stopGateway: () => undefined,
     isServing: (slug) => serving.has(slug),
     releaseSubscription: async () => Promise.resolve({ ok: true }),
   };

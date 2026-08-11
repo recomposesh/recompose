@@ -37,8 +37,8 @@ async function takePort(address: string, port = 0): Promise<number> {
   });
 }
 
-async function openAndTrack(app: Hono, port: number): Promise<GatewayListeners> {
-  const outcome = await openGatewayListeners(app, port);
+async function openAndTrack(app: Hono, port: number, address?: string): Promise<GatewayListeners> {
+  const outcome = await openGatewayListeners(app, port, address);
 
   if (!('opened' in outcome)) {
     throw new Error(`the gateway refused to open on port ${port}`);
@@ -89,21 +89,6 @@ const echoEvents: WSEvents = {
   },
 };
 
-async function loopbackIpv6Exists(): Promise<boolean> {
-  const probe = createServer();
-
-  return new Promise<boolean>((settle) => {
-    probe.once('error', () => {
-      settle(false);
-    });
-    probe.listen(0, '::1', () => {
-      probe.close(() => {
-        settle(true);
-      });
-    });
-  });
-}
-
 async function releasePort(squatter: Server): Promise<void> {
   return new Promise<void>((settle) => {
     squatter.close(() => {
@@ -111,8 +96,6 @@ async function releasePort(squatter: Server): Promise<void> {
     });
   });
 }
-
-const hasIpv6Loopback = await loopbackIpv6Exists();
 
 afterEach(async () => {
   await Promise.all(openedListeners.splice(0).map(async (listeners) => listeners.close()));
@@ -128,16 +111,13 @@ describe('the address a gateway answers on', () => {
     expect(await askHealthOf('127.0.0.1', port)).toBe('codex');
   });
 
-  test.skipIf(!hasIpv6Loopback)(
-    'the same gateway answers on the IPv6 loopback at the same port',
-    async () => {
-      const port = await reserveFreePort();
+  test('a gateway may bind every IPv4 interface when asked', async () => {
+    const port = await reserveFreePort();
 
-      await openAndTrack(anAppAnswering('codex'), port);
+    await openAndTrack(anAppAnswering('codex'), port, '0.0.0.0');
 
-      expect(await askHealthOf('[::1]', port)).toBe('codex');
-    },
-  );
+    expect(await askHealthOf('127.0.0.1', port)).toBe('codex');
+  });
 
   test('two gateways keep to their own ports and never answer for each other', async () => {
     const codexPort = await reserveFreePort();
@@ -158,25 +138,6 @@ describe('a port another process already holds', () => {
     const outcome = await openGatewayListeners(anAppAnswering('codex'), taken);
 
     expect(outcome).toEqual({ failed: { port: taken } });
-  });
-
-  test.skipIf(!hasIpv6Loopback)(
-    'a port held on one loopback family alone still fails the whole start',
-    async () => {
-      const taken = await takePort('::1');
-
-      const outcome = await openGatewayListeners(anAppAnswering('codex'), taken);
-
-      expect(outcome).toEqual({ failed: { port: taken } });
-    },
-  );
-
-  test.skipIf(!hasIpv6Loopback)('a failed start leaves no half-open sibling behind', async () => {
-    const taken = await takePort('::1');
-
-    await openGatewayListeners(anAppAnswering('codex'), taken);
-
-    await expect(takePort('127.0.0.1', taken)).resolves.toBe(taken);
   });
 });
 

@@ -2,15 +2,25 @@ import { beforeEach, expect, test } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { logsDrawerOpen, panelWidth } from '../../../../shared/lib';
-import { drawerOn, freshDrawer, listed } from './logs-drawer.testkit';
+import { drawerOn, freshDrawer, listed } from '../../testing/logs-drawer.testkit';
 
 beforeEach(freshDrawer);
 
 test('the drawer titles itself with the gateway it streams and reads live while it serves', async () => {
   const screen = await drawerOn();
 
-  await expect.element(screen.getByText('Logs · My Gateway')).toBeVisible();
+  await expect.element(screen.getByText('Logs for My Gateway')).toBeVisible();
+  await expect.element(screen.getByText('Gateway', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Live', { exact: true })).toBeVisible();
+});
+
+test('the drawer exposes its animation hook and switches to the leaving class on exit', async () => {
+  const screen = await drawerOn({ leaving: true });
+  const drawer = screen.container.querySelector('[data-logs-drawer]');
+
+  expect(drawer).not.toBeNull();
+  expect(drawer?.classList.contains('logs-drawer-leaving')).toBe(true);
+  expect(drawer?.classList.contains('logs-drawer')).toBe(false);
 });
 
 test('a gateway that stopped reads stopped in the same place, with its rows still standing', async () => {

@@ -4,8 +4,11 @@ import { useSyncExternalStore } from 'react';
 
 import {
   askTheCanvas,
+  logsDrawerOpen,
   sidebarHidden,
+  subscribeToLogsDrawerVisibility,
   subscribeToSidebarVisibility,
+  toggleLogsDrawer,
 } from '../../../../../shared/lib';
 import { InspectorToggle, SidebarToggle, ToolbarButton } from '../../../../../shared/ui';
 import { AddressPill } from '../address-pill/address-pill';
@@ -33,6 +36,7 @@ type ToolbarStripProps = {
  */
 export function ToolbarStrip({ address, name, onRun, port, running, status }: ToolbarStripProps) {
   const away = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
+  const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
 
   return (
     <div
@@ -60,9 +64,10 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
       />
       <span className={GROUP}>
         <ToolbarButton
+          expanded={logsShown}
           glyph="panel-bottom"
           label="Request log"
-          waitsFor="request logging"
+          onPress={toggleLogsDrawer}
           where="grouped"
         />
         <InspectorToggle where="grouped" />

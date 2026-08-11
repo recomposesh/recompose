@@ -26,13 +26,20 @@ export const LOGS_BACKFILL_CHUNK = 500;
 export type LogsDesk = {
   hears: (message: unknown) => boolean;
   backfill: () => void;
+  resume: (slug: string) => void;
+  interrupt: (slug: string) => void;
+  forget: (slug: string) => void;
 };
 
 type Desk = {
   retained: Map<string, LogRow>;
   waiting: Map<string, LogRow>;
   pending: ReturnType<typeof setTimeout> | null;
+  inactive: Set<string>;
 };
+
+const INTERRUPTED_STATUS = 503;
+const INTERRUPTED_FAILURE = 'The gateway stopped before the request finished.';
 
 function forgetTheOldest(retained: Map<string, LogRow>): void {
   for (const id of retained.keys()) {
@@ -69,6 +76,24 @@ function tellTheWindowsSoon(desk: Desk, push: (batch: LogBatch) => void): void {
   }, TRAFFIC_PUSH_MS);
 }
 
+function failTheUnfinishedRows(desk: Desk, slug: string): void {
+  for (const [id, row] of desk.retained) {
+    if (row.gateway !== slug || row.origin !== 'provider' || row.durationMs !== undefined) {
+      continue;
+    }
+
+    const interrupted = {
+      ...row,
+      status: INTERRUPTED_STATUS,
+      durationMs: Math.max(0, Date.now() - row.at),
+      failure: INTERRUPTED_FAILURE,
+    };
+
+    desk.retained.set(id, interrupted);
+    desk.waiting.set(id, interrupted);
+  }
+}
+
 function handOverTheHistory(desk: Desk, push: (batch: LogBatch) => void): void {
   stopWaiting(desk);
 
@@ -99,7 +124,12 @@ function handOverTheHistory(desk: Desk, push: (batch: LogBatch) => void): void {
  * request rather than one per report.
  */
 export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
-  const desk: Desk = { retained: new Map(), waiting: new Map(), pending: null };
+  const desk: Desk = {
+    retained: new Map(),
+    waiting: new Map(),
+    pending: null,
+    inactive: new Set(),
+  };
 
   return {
     hears: (message) => {
@@ -107,6 +137,10 @@ export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
 
       if (!report.success) {
         return false;
+      }
+
+      if (desk.inactive.has(report.data.row.gateway)) {
+        return true;
       }
 
       retain(desk, report.data.row);
@@ -117,6 +151,32 @@ export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
     },
     backfill: () => {
       handOverTheHistory(desk, push);
+    },
+    resume: (slug) => {
+      desk.inactive.delete(slug);
+    },
+    interrupt: (slug) => {
+      desk.inactive.add(slug);
+      failTheUnfinishedRows(desk, slug);
+
+      if (desk.waiting.size > 0) {
+        tellTheWindowsSoon(desk, push);
+      }
+    },
+    forget: (slug) => {
+      desk.inactive.delete(slug);
+
+      for (const [id, row] of desk.retained) {
+        if (row.gateway === slug) {
+          desk.retained.delete(id);
+        }
+      }
+
+      for (const [id, row] of desk.waiting) {
+        if (row.gateway === slug) {
+          desk.waiting.delete(id);
+        }
+      }
     },
   };
 }

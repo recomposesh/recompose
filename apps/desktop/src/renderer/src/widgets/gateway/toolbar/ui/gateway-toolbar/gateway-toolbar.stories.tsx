@@ -67,7 +67,7 @@ export const Stopped = meta.story({
   parameters: { bridge: { gateways: [codex], engineStates: {} } },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: 'Start' })).toBeVisible();
-    await expect(await canvas.findByText('localhost:51234')).toBeVisible();
+    await expect(await canvas.findByText('127.0.0.1:51234')).toBeVisible();
   },
 });
 
@@ -117,10 +117,7 @@ export const EveryControl = meta.story({
 
     const waiting = controls.filter((control) => control.title.includes('Waits on'));
 
-    await expect(waiting.map((control) => control.title)).toEqual([
-      'Docs. Waits on the guide.',
-      'Request log. Waits on request logging.',
-    ]);
+    await expect(waiting.map((control) => control.title)).toEqual(['Docs. Waits on the guide.']);
   },
 });
 

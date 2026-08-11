@@ -1,12 +1,10 @@
 import type { Hono } from 'hono';
 
 import { createAdaptorServer, type ServerType } from '@hono/node-server';
+import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
 import { createServer } from 'node:http';
 
 import { NodeWebSocketServer } from './node-websocket-server';
-
-const IPV4_LOOPBACK = '127.0.0.1';
-const IPV6_LOOPBACK = '::1';
 
 export type GatewayListeners = {
   close: () => Promise<void>;
@@ -63,28 +61,20 @@ function isBound(outcome: BindOutcome): outcome is { bound: BoundListener } {
   return 'bound' in outcome;
 }
 
-export async function openGatewayListeners(app: Hono, port: number): Promise<OpenOutcome> {
-  const overIpv4 = await bindTo(app, IPV4_LOOPBACK, port);
+export async function openGatewayListeners(
+  app: Hono,
+  port: number,
+  address = DEFAULT_GATEWAY_BIND_ADDRESS,
+): Promise<OpenOutcome> {
+  const outcome = await bindTo(app, address, port);
 
-  if (!isBound(overIpv4)) {
+  if (!isBound(outcome)) {
     return { failed: { port } };
   }
-
-  const overIpv6 = await bindTo(app, IPV6_LOOPBACK, port);
-
-  if (!isBound(overIpv6) && overIpv6.refused === 'port-taken') {
-    await stopServing(overIpv4.bound);
-
-    return { failed: { port } };
-  }
-
-  const serving = [overIpv4, overIpv6].filter(isBound).map((outcome) => outcome.bound);
 
   return {
     opened: {
-      close: async () => {
-        await Promise.all(serving.map(stopServing));
-      },
+      close: async () => stopServing(outcome.bound),
     },
   };
 }

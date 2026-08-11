@@ -16,7 +16,7 @@ vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
 
-const DRAWER_TITLE = 'Logs · My Gateway';
+const DRAWER_TITLE = 'Logs for My Gateway';
 
 async function pageWithTheMenu(overrides: Parameters<typeof standCanvasBridge>[0] = {}) {
   standCanvasBridge(overrides);
@@ -67,6 +67,8 @@ test('the Show Logs command stands the drawer under the stage, and the stage kee
 
   await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
   await expect.element(screen.getByRole('radio', { name: 'All' })).toBeVisible();
+  await expect.element(screen.getByRole('radio', { name: 'Success' })).toBeVisible();
+  await expect.element(screen.getByRole('radio', { name: 'Errors' })).toBeVisible();
 });
 
 test('the same command asked twice puts the drawer away again', async () => {
@@ -123,81 +125,82 @@ test('requests served before the drawer opened are already standing when it does
   await expect.element(screen.getByText('14:22:09')).toBeVisible();
 });
 
-test('pressing a scope segment selects that virtual model on the canvas', async () => {
+test('the drawer keeps canvas subjects out of its All, Success, and Errors filter', async () => {
   const { screen } = await openedDrawer();
 
-  await userEvent.click(screen.getByRole('radio', { name: 'Fast' }));
-
-  await expect
-    .element(screen.getByRole('button', { name: /Fast/ }))
-    .toHaveAttribute('aria-pressed', 'true');
+  await expect.element(screen.getByRole('radio', { name: 'Fast' })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole('radio', { name: 'Creative' })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole('radio', { name: 'work' })).not.toBeInTheDocument();
 });
 
-test('selecting a virtual model on the canvas lights its own scope segment', async () => {
+test('selecting a virtual model on the canvas scopes the dynamic drawer heading', async () => {
   const { screen } = await openedDrawer();
 
   await userEvent.click(screen.getByRole('button', { name: /Creative/ }));
 
+  await expect.element(screen.getByRole('heading', { name: 'Logs for Creative' })).toBeVisible();
   await expect
-    .element(screen.getByRole('radio', { name: 'Creative' }))
+    .element(screen.getByRole('radio', { name: 'All' }))
     .toHaveAttribute('aria-checked', 'true');
 });
 
-test('selecting a target on the canvas brings its own scope segment along', async () => {
+test('selecting a target on the canvas scopes the dynamic drawer heading', async () => {
   const { screen } = await openedDrawer();
 
   await userEvent.click(screen.getByRole('button', { name: /work/ }));
 
-  await expect
-    .element(screen.getByRole('radio', { name: 'work' }))
-    .toHaveAttribute('aria-checked', 'true');
+  await expect.element(screen.getByRole('heading', { name: 'Logs for work' })).toBeVisible();
 });
 
-test('a pane click returns the scope to the whole gateway and leaves the drawer standing', async () => {
+test('a pane click returns the heading to the whole gateway and leaves the drawer standing', async () => {
   const { screen } = await openedDrawer();
 
   await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
-  await expect
-    .element(screen.getByRole('radio', { name: 'Fast' }))
-    .toHaveAttribute('aria-checked', 'true');
+  await expect.element(screen.getByRole('heading', { name: 'Logs for Fast' })).toBeVisible();
 
   paneClickedOn(screen.container);
 
-  await expect
-    .element(screen.getByRole('radio', { name: 'All' }))
-    .toHaveAttribute('aria-checked', 'true');
   await expect.element(screen.getByText(DRAWER_TITLE)).toBeVisible();
 });
 
-test('a scope segment never opens an inspector a person put away', async () => {
+test('the Errors filter never opens an inspector a person put away', async () => {
   const { screen } = await openedDrawer();
 
   paneClickedOn(screen.container);
   await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
   await expect.poll(inspectorOpen).toBe(false);
 
-  await userEvent.click(screen.getByRole('radio', { name: 'Fast' }));
+  await userEvent.click(screen.getByRole('radio', { name: 'Errors' }));
 
-  await expect
-    .element(screen.getByRole('button', { name: /Fast/ }))
-    .toHaveAttribute('aria-pressed', 'true');
+  await expect.element(screen.getByText(DRAWER_TITLE)).toBeVisible();
   await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
 });
 
 const GRAB_BAND = "[data-panel-control][aria-orientation='horizontal']";
 const A_CARD = '.react-flow__node';
 
-test('the open drawer stands between the stage and the strip that opens it', async () => {
+test('the open drawer and full-height inspector keep separate visible regions', async () => {
   const { screen } = await openedDrawer();
 
-  const stage = boxOf(screen.container, '[data-canvas-column] > section:not(:has(> header))');
-  const drawer = boxOf(screen.container, '[data-canvas-column] > section:has(> header)');
+  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+
+  const stage = boxOf(screen.container, '[data-canvas-column] > section');
   const strip = boxOf(screen.container, '[data-canvas-column] > footer');
+  const inspector = boxOf(screen.container, '[data-canvas-workspace] > aside');
+  const drawer = boxOf(screen.container, '[data-logs-drawer]');
 
   expect(stage.height).toBeGreaterThan(0);
+  expect(inspector.width).toBeGreaterThan(0);
+  expect(inspector.height).toBeGreaterThan(0);
+  expect(drawer.width).toBeGreaterThan(0);
   expect(drawer.height).toBeGreaterThan(0);
+  expect(stage.bottom).toBeLessThanOrEqual(strip.top);
   expect(stage.bottom).toBeLessThanOrEqual(drawer.top);
   expect(drawer.bottom).toBeLessThanOrEqual(strip.top);
+  expect(drawer.right).toBeLessThanOrEqual(inspector.left);
+  expect(inspector.top).toBeLessThanOrEqual(stage.top);
+  expect(inspector.bottom).toBeGreaterThanOrEqual(strip.bottom);
 });
 
 /**
@@ -210,10 +213,19 @@ test("the drawer's top edge answers a grab even where a selected card rests agai
   await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
 
   const card = screen.container.querySelector(`${A_CARD}[data-id="model:fast"]`);
+
+  await expect
+    .poll(
+      () =>
+        boxOf(screen.container, GRAB_BAND).height > 0 &&
+        (card?.getBoundingClientRect().height ?? 0) > 0,
+    )
+    .toBe(true);
+
   const reachedFor = boxOf(screen.container, GRAB_BAND);
   const restingAt = card?.getBoundingClientRect() ?? new DOMRect();
 
-  draggedCard(card, { x: 0, y: Math.round(reachedFor.top - restingAt.top) + 2 });
+  draggedCard(card, { x: 0, y: Math.round(reachedFor.top - restingAt.bottom) + 6 });
 
   const band = boxOf(screen.container, GRAB_BAND);
 

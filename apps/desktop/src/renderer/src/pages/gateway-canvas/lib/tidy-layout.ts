@@ -2,7 +2,7 @@ import type { NodePositions, XY } from './canvas-positions';
 import type { CanvasNode, CanvasNodeKind } from './node-graph';
 
 const COLUMN_PITCH = 320;
-const ROW_PITCH = 140;
+const ROW_PITCH = 150;
 
 const COLUMN_OF_KIND: Record<CanvasNodeKind, number> = {
   gateway: 0,
@@ -15,6 +15,11 @@ const COLUMN_OF_KIND: Record<CanvasNodeKind, number> = {
 
 function columnX(kind: CanvasNodeKind): number {
   return COLUMN_OF_KIND[kind] * COLUMN_PITCH;
+}
+
+/** Seats a target in its column on the same row as the virtual model that created it. */
+export function targetSeatBeside(modelSeat: XY): XY {
+  return { x: modelSeat.x + COLUMN_PITCH, y: modelSeat.y };
 }
 
 /**

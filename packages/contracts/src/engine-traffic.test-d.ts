@@ -9,16 +9,20 @@ import type {
   RequestOutcome,
 } from './index';
 
+type LiveOutcome = Extract<RequestOutcome, { outcome: 'live' }>;
+
 type ServedOutcome = Extract<RequestOutcome, { outcome: 'served' }>;
 
 type FailedOutcome = Extract<RequestOutcome, { outcome: 'failed' }>;
 
 describe('the outcome one virtual model last came to', () => {
-  test('a request either served or failed, and never a third thing', () => {
-    expectTypeOf<RequestOutcome['outcome']>().toEqualTypeOf<'served' | 'failed'>();
+  test('a request is live, served, or failed, and never a fourth thing', () => {
+    expectTypeOf<RequestOutcome['outcome']>().toEqualTypeOf<'live' | 'served' | 'failed'>();
   });
 
   test('only a failure names a status and the sentence explaining it', () => {
+    expectTypeOf<LiveOutcome>().not.toHaveProperty('status');
+    expectTypeOf<LiveOutcome>().not.toHaveProperty('detail');
     expectTypeOf<ServedOutcome>().not.toHaveProperty('status');
     expectTypeOf<ServedOutcome>().not.toHaveProperty('detail');
     expectTypeOf<FailedOutcome['status']>().toEqualTypeOf<number>();
@@ -26,6 +30,7 @@ describe('the outcome one virtual model last came to', () => {
   });
 
   test('every outcome says when it landed', () => {
+    expectTypeOf<LiveOutcome['at']>().toEqualTypeOf<number>();
     expectTypeOf<ServedOutcome['at']>().toEqualTypeOf<number>();
     expectTypeOf<FailedOutcome['at']>().toEqualTypeOf<number>();
   });

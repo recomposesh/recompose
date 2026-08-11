@@ -16,6 +16,7 @@ export function createAppRouter(options: AppRouterOptions) {
     routeTree,
     context: { queryClient: options.queryClient },
     history,
+    defaultPreload: 'intent',
   });
 }
 

@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
-import { storedModels } from '../../testing/canvas-gestures.testkit';
+import { clickedCable, storedModels } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
@@ -55,6 +55,16 @@ test('adding a virtual model with no name refuses beside the name and stores not
 
   await expect.element(screen.getByText('Give the virtual model a name.')).toBeVisible();
   expect((await storedModels()).length).toBe(2);
+});
+
+test('selecting a released virtual model does not move focus into its name', async () => {
+  const screen = await canvasPageOn();
+
+  await clickedCable(screen.container, 'cable:fast');
+  await userEvent.keyboard('{Delete}');
+
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toBeVisible();
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).not.toHaveFocus();
 });
 
 test('a save the store refuses says why in the inspector and holds every word typed', async () => {

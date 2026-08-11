@@ -78,7 +78,7 @@ function sheetHead(
       {onBack === undefined ? null : (
         <button
           aria-label="Back"
-          className="flex h-6 w-7 items-center justify-center rounded-control text-ink-secondary focus-ring row-hover"
+          className="flex h-6 w-7 items-center justify-center rounded-control focus-ring text-ink-secondary row-hover"
           onClick={onBack}
           type="button"
         >

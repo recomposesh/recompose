@@ -44,6 +44,7 @@ async function holdingOnlyTheRuntime(): Promise<StorageIpcContext> {
     readLoginItem: () => false,
     startGateway: () => undefined,
     restartGateway: () => undefined,
+    stopGateway: () => undefined,
     isServing: () => true,
     releaseSubscription: subscriptionRelease(
       subscriptionHomes(userDataPath, process.platform),

@@ -6,7 +6,10 @@
  */
 export function UsagePage() {
   return (
-    <section className="mx-auto flex w-full max-w-column flex-col gap-5 px-6 pt-page-top pb-6">
+    <section
+      className="mx-auto flex w-full max-w-column flex-col gap-5 px-6 pt-page-top pb-6"
+      data-focus-group=""
+    >
       <h1 className="text-title text-ink">Usage</h1>
       <div className="flex flex-col items-center gap-1.5 rounded-card border border-line-subtle bg-surface-card px-6 py-12 text-center">
         <h2 className="text-heading text-ink">No requests yet</h2>

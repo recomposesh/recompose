@@ -5,6 +5,8 @@ import { haltGateway } from '../gateway-screen';
 import {
   drawerHeader,
   loggedRows,
+  logsHeading,
+  logsSubjectType,
   ROW_CELLS,
   rowAtTheTopOfTheView,
   rowCells,
@@ -77,10 +79,14 @@ Then('the new row waits at the top', async ({ page }) => {
   await expect.poll(async () => scrolledBy(page)).toBeGreaterThan(0);
 });
 
-Then('it names {string} and reads Live', async ({ page }, gateway: string) => {
-  await expect(drawerHeader(page)).toContainText(gateway);
-  await expect(drawerHeader(page)).toContainText('Live');
-});
+Then(
+  'it heads {string} as {string} and reads Live',
+  async ({ page }, gateway: string, type: string) => {
+    await expect(logsHeading(page, gateway)).toBeVisible();
+    await expect(logsSubjectType(page, type)).toBeVisible();
+    await expect(drawerHeader(page)).toContainText('Live');
+  },
+);
 
 Then('the header reads Stopped', async ({ page }) => {
   await expect(drawerHeader(page)).toContainText('Stopped');

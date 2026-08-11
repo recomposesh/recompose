@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 
 import { takeUpThePortAsk } from '../canvas-gestures';
 import {
-  cableBetween,
+  wireBetween,
   cablePath,
   DRAFT_CABLE,
   DRAFT_NODE,
@@ -145,6 +145,6 @@ Then('a draft virtual model node stands wired to the gateway', async ({ page }) 
   await expect.poll(async () => standingNodes(page)).toContain(DRAFT_NODE);
   expect(await nodeTreatment(page, DRAFT_NODE)).toBe('draft-model');
 
-  await expect(cableBetween(page, GATEWAY_NODE, DRAFT_NODE)).toHaveCount(1);
+  await expect(wireBetween(page, GATEWAY_NODE, DRAFT_NODE)).toHaveCount(1);
   await expect.poll(async () => cablePath(page, DRAFT_CABLE)).not.toBe('');
 });

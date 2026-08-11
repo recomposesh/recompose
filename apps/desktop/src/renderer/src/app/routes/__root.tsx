@@ -27,7 +27,7 @@ import {
   gatewaysQueryOptions,
   settingsQueryOptions,
 } from '../../shared/api';
-import { sidebarHidden, subscribeToSidebarVisibility } from '../../shared/lib';
+import { sidebarHidden, subscribeToSidebarVisibility, useArrowWalk } from '../../shared/lib';
 import { SidebarEdge, SidebarToggle } from '../../shared/ui';
 import { CreateGatewaySheet } from '../../widgets/gateway/create';
 import { useTitleBarDoubleClick } from '../lib/use-title-bar-double-click';
@@ -118,6 +118,7 @@ function RootLayout() {
   const devtoolsAsked = useDevtoolsAsked();
 
   useTitleBarDoubleClick();
+  useArrowWalk();
 
   usePushedCaches(queryClient);
   useWindowBand(sidebarAway);

@@ -4,6 +4,15 @@ import { migrateDocument, type Migration } from './migration';
 
 export const SETTINGS_VERSION = 5;
 
+export const DEFAULT_GATEWAY_BIND_ADDRESS = '127.0.0.1';
+
+export const gatewayBindAddressSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(253)
+  .refine((address) => !/[\s/:?#]/u.test(address), 'a host name or IPv4 address');
+
 export const settingsSchema = z.strictObject({
   schemaVersion: z.literal(SETTINGS_VERSION),
   theme: z.enum(['system', 'light', 'dark']),
@@ -11,6 +20,8 @@ export const settingsSchema = z.strictObject({
   showInMenuBar: z.boolean(),
   firstRequestServed: z.boolean(),
   showOnboardingChecklist: z.boolean(),
+  bindAddress: gatewayBindAddressSchema.optional(),
+  startGatewaysOnLaunch: z.boolean().optional(),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -87,5 +98,7 @@ export function defaultSettings(): Settings {
     showInMenuBar: false,
     firstRequestServed: false,
     showOnboardingChecklist: true,
+    bindAddress: DEFAULT_GATEWAY_BIND_ADDRESS,
+    startGatewaysOnLaunch: false,
   };
 }

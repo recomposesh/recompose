@@ -26,6 +26,7 @@ function row(id: string, standing: RowStanding): LogRow {
     origin,
     method: 'POST',
     status,
+    durationMs: 12,
     clientKey: CLIENT_KEY,
     ...reached,
   };

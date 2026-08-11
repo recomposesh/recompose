@@ -253,7 +253,7 @@ export function createGatewayApp(
   const logStore = preparedLogStore(providerLogs);
   const watched = watchingTraffic(spendGrantFor, note ?? (() => undefined));
 
-  app.use(guardLoopback(gateway.port));
+  app.use(guardLoopback(gateway.port, gateway.bindAddress));
   app.use(openServingTurn(gateway.slug));
 
   app.onError((error, c) => {

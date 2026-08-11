@@ -20,7 +20,7 @@ Feature: Rows stream in live, newest at the top
 
   Scenario: The header reads Live while the stream stands
     When the person reads the drawer header
-    Then it names "relay" and reads Live
+    Then it heads "relay" as "Gateway" and reads Live
 
   Scenario: Stopping the gateway reads Stopped
     Given rows standing in the list

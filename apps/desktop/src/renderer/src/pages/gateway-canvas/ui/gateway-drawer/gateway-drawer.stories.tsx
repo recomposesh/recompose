@@ -21,7 +21,9 @@ const meta = preview.meta({
     gateway: servingGateway,
     subject: subject({ kind: 'gateway' }),
     refusal: undefined,
+    onAskRemoval: () => {},
     onDraftDefined: () => {},
+    onModelRenamed: () => {},
   },
   decorators: [
     (Story) => (
@@ -52,6 +54,11 @@ export const VirtualModelSubject = meta.story({
   args: { subject: subject({ kind: 'virtual-model', modelId: 'fast' }) },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Virtual model', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('General Info', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Model Name', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Goes to', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('API Key', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('claude-haiku-4-5', { exact: true })).toBeVisible();
   },
 });
@@ -61,22 +68,29 @@ export const CableSubject = meta.story({
   args: { subject: subject({ kind: 'cable', modelId: 'creative' }) },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Binding', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Aggregator', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('OpenRouter', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('openai/gpt-5', { exact: true })).toBeVisible();
   },
 });
 
 /** The target subject: the stored account a binding lands on. */
 export const TargetSubject = meta.story({
-  args: { subject: subject({ kind: 'target', accountId: 'k1' }) },
+  args: { subject: subject({ kind: 'target', accountId: 'k1', modelId: 'fast' }) },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('Target', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('API Keys', { exact: true })).toBeVisible();
+    await expect((await canvas.findAllByText('API Key', { exact: true }))[0]).toBeVisible();
+    await expect((await canvas.findAllByText('Anthropic', { exact: true }))[0]).toBeVisible();
+    await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Behind of', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Model Name', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Model id', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Fast', { exact: true })).toBeVisible();
   },
 });
 
 /** The removed subject: the gap an account left, and what repairs it. */
 export const RemovedTargetSubject = meta.story({
-  args: { subject: subject({ kind: 'ghost-target', accountId: 'gone' }) },
+  args: { subject: subject({ kind: 'ghost-target', accountId: 'gone', modelId: 'creative' }) },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Removed', { exact: true })).toBeVisible();
     await expect(await canvas.findByText(/left the registry/)).toBeVisible();

@@ -17,7 +17,42 @@ export type ServingTurn = {
   method: string;
   virtualModel?: string | undefined;
   rowPublished: boolean;
+  aborted?: boolean | undefined;
+  abortListeners?: Set<() => void> | undefined;
 };
+
+/** Marks the downstream client as gone and wakes every in-flight observer exactly once. */
+export function abortServingTurn(turn: ServingTurn): void {
+  if (turn.aborted === true) {
+    return;
+  }
+
+  turn.aborted = true;
+
+  for (const listener of turn.abortListeners ?? []) {
+    listener();
+  }
+
+  turn.abortListeners?.clear();
+}
+
+/** Runs a callback when the downstream client leaves before the serving turn finishes. */
+export function onServingTurnAbort(turn: ServingTurn, listener: () => void): () => void {
+  if (turn.aborted === true) {
+    listener();
+
+    return () => undefined;
+  }
+
+  const listeners = turn.abortListeners ?? new Set<() => void>();
+
+  turn.abortListeners = listeners;
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 /**
  * Who one provider call was served for, kept on the observation it produced.

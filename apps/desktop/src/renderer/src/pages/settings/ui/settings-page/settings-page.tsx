@@ -29,6 +29,7 @@ export function SettingsPage({ focus, at }: SettingsPageProps) {
   return (
     <div
       className="mx-auto flex w-full max-w-column flex-col gap-5 px-6 pt-page-top pb-6"
+      data-focus-group=""
       ref={surface}
     >
       <h1 className="text-title text-ink">Settings</h1>

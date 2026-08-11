@@ -2,7 +2,7 @@ import type { Account } from '@recompose/contracts';
 
 import { expect, test } from 'vitest';
 
-import { accountMark, accountName } from './target-identity';
+import { accountDetail, accountMark, accountName, accountProductName } from './target-identity';
 
 const workKey: Account = {
   id: 'a1',
@@ -33,4 +33,56 @@ test('an account whose vendor recompose draws leads with that vendor mark', () =
 
 test('an account whose vendor recompose draws no mark for leads with nothing', () => {
   expect(accountMark({ ...workKey, provider: 'a-vendor-nobody-drew' })).toBeUndefined();
+});
+
+test('a subscription names the product a person connected', () => {
+  expect(
+    accountProductName({
+      id: 'subscription',
+      provider: 'anthropic',
+      kind: 'subscription',
+      label: 'Claude Max',
+    }),
+  ).toBe('Claude');
+});
+
+test('the other target kinds name their provider product', () => {
+  expect(accountProductName(workKey)).toBe('Anthropic');
+  expect(
+    accountProductName({
+      id: 'aggregator',
+      provider: 'openrouter',
+      kind: 'aggregator',
+      label: 'OpenRouter',
+      credentialRef: 'c-aggregator',
+    }),
+  ).toBe('OpenRouter');
+  expect(accountProductName(runtime)).toBe('Ollama');
+});
+
+test('the target detail reads the account identity appropriate to its kind', () => {
+  expect(accountDetail(workKey)).toBe('Work key');
+  expect(accountDetail(runtime)).toBe('http://127.0.0.1:11434');
+  expect(
+    accountDetail(
+      {
+        id: 'subscription',
+        provider: 'openai',
+        kind: 'subscription',
+        label: 'Codex account',
+      },
+      'ada@example.com',
+    ),
+  ).toBe('ada@example.com');
+});
+
+test('a subscription transport with a provider alias still leads with the provider mark', () => {
+  expect(
+    accountMark({
+      id: 'antigravity',
+      provider: 'antigravity',
+      kind: 'subscription',
+      label: 'Gemini',
+    }),
+  ).toBe('gemini');
 });
