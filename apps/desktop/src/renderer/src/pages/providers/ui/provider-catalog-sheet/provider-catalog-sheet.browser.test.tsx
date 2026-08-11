@@ -57,7 +57,13 @@ async function press(name: RegExp | string) {
 
   await expect.element(control).toBeVisible();
 
-  control.element().focus();
+  await expect
+    .poll(() => {
+      control.element().focus();
+
+      return document.activeElement === control.element();
+    })
+    .toBe(true);
 
   await userEvent.keyboard('{Enter}');
 }
