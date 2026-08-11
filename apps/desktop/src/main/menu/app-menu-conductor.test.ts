@@ -162,7 +162,7 @@ describe('following the surface a window stands on', () => {
     expect(conducted.commanded).toEqual(['zoom-to-fit']);
   });
 
-  test('arriving at a gateway offers the logs drawer unticked, because no drawer stands open yet', async () => {
+  test('arriving at a gateway offers the logs drawer unchecked, because no drawer stands open yet', async () => {
     const conducted = conductOver(await freshSettingsFile());
 
     conducted.menu.standOnUrl(GATEWAY_DETAIL);

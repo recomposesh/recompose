@@ -24,5 +24,51 @@
         "ref": "main"
       }
     }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *pnpm-lock.yaml) echo 'pnpm-lock.yaml is generated - run pnpm commands instead of editing it' >&2; exit 2;; *.env.example) ;; *.env|*.env.*) echo '.env files hold secrets - the user edits these by hand' >&2; exit 2;; *.pem|*.key|*.p12|*/id_rsa*|*/id_ed25519*) echo 'key material is never edited by Claude' >&2; exit 2;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "c=$(jq -r '.tool_input.command // empty'); case \"$c\" in *--no-verify*|*--no-gpg-sign*) echo 'hook bypass flags are blocked - fix the failing gate instead of skipping it' >&2; exit 2;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/workflows/hooks/launch-gate.mjs\"",
+            "timeout": 120,
+            "statusMessage": "test-first gate"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/workflows/hooks/format-edit.mts\"",
+            "timeout": 60,
+            "statusMessage": "oxfmt + oxlint"
+          }
+        ]
+      }
+    ]
   }
 }

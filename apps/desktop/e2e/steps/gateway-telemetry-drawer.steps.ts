@@ -26,13 +26,31 @@ const WELL_BELOW = 220;
  * @operation The border watches the window for the moves rather than itself, so the pointer travels
  * in steps and lets go where it stopped, which is how a person's own drag arrives.
  */
-async function theTopEdgeTravels(page: Page, by: number): Promise<void> {
+async function settledBorderBox(page: Page) {
   const border = logsHeightHandle(page);
-  const box = await border.boundingBox();
 
-  if (box === null) {
+  let resting = await border.boundingBox();
+
+  await expect
+    .poll(async () => {
+      const next = await border.boundingBox();
+      const still = next !== null && resting !== null && next.y === resting.y;
+
+      resting = next;
+
+      return still;
+    })
+    .toBe(true);
+
+  if (resting === null) {
     throw new Error('the drawer stands with no border a drag could take hold of');
   }
+
+  return resting;
+}
+
+async function theTopEdgeTravels(page: Page, by: number): Promise<void> {
+  const box = await settledBorderBox(page);
 
   const from = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
@@ -63,7 +81,16 @@ When("the person drags the drawer's top edge upward", async ({ page }) => {
 });
 
 When('the person drags the top edge well below the smallest height', async ({ page }) => {
-  await theTopEdgeTravels(page, WELL_BELOW);
+  const box = await settledBorderBox(page);
+  const from = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const floor = (page.viewportSize()?.height ?? from.y + WELL_BELOW) - 8;
+
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x, from.y + (floor - from.y) * 0.4);
+  await page.mouse.move(from.x, from.y + (floor - from.y) * 0.8);
+  await page.mouse.move(from.x, floor);
+  await page.mouse.up();
 });
 
 Then('the zoom controls and the minimap stand visible', async ({ page }) => {

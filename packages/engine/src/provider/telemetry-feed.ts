@@ -11,7 +11,7 @@ import { onServingTurnAbort, servedFor } from './serving-turn';
  * the same id once the body ends, which is why a row never depends on whether the caller drained the
  * answer: the first telling stands, and the second only adds what measuring the body revealed. Who
  * it was served for is read once, when the attempt opens, because a turn is free to ask for a second
- * grant and the two tellings of one attempt must never disagree on the virtual model it reached.
+ * grant and the two reports of one attempt must never disagree on the virtual model it reached.
  */
 export type ProviderAttempt = {
   id: string;

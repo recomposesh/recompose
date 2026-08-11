@@ -171,7 +171,7 @@ describe('two attempts at one request', () => {
 });
 
 describe('a turn that asked for a second grant', () => {
-  test('both tellings of one attempt name the virtual model that reach was granted', async () => {
+  test('both reports of one attempt name the virtual model that reach was granted', async () => {
     const turn = aTurnOf('codex');
     const collected = collectingRows();
     const held = aHeldStream();

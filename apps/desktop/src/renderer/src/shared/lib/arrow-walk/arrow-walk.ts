@@ -42,7 +42,7 @@ function walkRoot(): ParentNode {
   return document.querySelector('dialog[open]') ?? document.body;
 }
 
-function walkablesIn(root: ParentNode): HTMLElement[] {
+function reachableIn(root: ParentNode): HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>(WALKABLE)].filter(painted);
 }
 
@@ -71,7 +71,7 @@ function steppedWithin(
   standing: HTMLElement,
   forth: boolean,
 ): HTMLElement | undefined {
-  const reachable = walkablesIn(group);
+  const reachable = reachableIn(group);
   const seat = reachable.indexOf(standing);
 
   return seat === -1 ? undefined : reachable[seat + (forth ? 1 : -1)];
@@ -118,7 +118,7 @@ function steppedToward(
   let nearest: HTMLElement | undefined;
   let nearestScore = Number.POSITIVE_INFINITY;
 
-  for (const candidate of walkablesIn(group)) {
+  for (const candidate of reachableIn(group)) {
     const score = travelScore(from, centerOf(candidate.getBoundingClientRect()), heading);
 
     if (score !== undefined && score < nearestScore) {
@@ -136,7 +136,7 @@ function steppedToward(
 function greeterOf(group: HTMLElement): HTMLElement | undefined {
   const remembered = [...group.querySelectorAll<HTMLElement>(REMEMBERED)].filter(painted);
 
-  return remembered[0] ?? walkablesIn(group)[0];
+  return remembered[0] ?? reachableIn(group)[0];
 }
 
 function neighborGroup(
@@ -155,7 +155,7 @@ function flatStep(
   standing: HTMLElement,
   forth: boolean,
 ): HTMLElement | undefined {
-  const reachable = walkablesIn(root);
+  const reachable = reachableIn(root);
   const seat = reachable.indexOf(standing);
 
   if (seat === -1) {

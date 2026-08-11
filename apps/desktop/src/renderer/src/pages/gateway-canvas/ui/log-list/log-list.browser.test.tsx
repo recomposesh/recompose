@@ -262,7 +262,7 @@ test('a steady gateway keeps announcing, since each summary has to differ from t
   await expect.poll(list.announced).toBe('6 new requests.');
 });
 
-test('the cursor reference leaves with the row, so it never points at an undrawn row', async () => {
+test('the cursor reference leaves with the row, so it never points at a row no longer drawn', async () => {
   const list = await listOf(servedRun(400));
 
   await userEvent.tab();
