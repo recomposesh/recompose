@@ -31,8 +31,10 @@ test('the canvas stands the gateway, its virtual models, and their targets as ca
   await expect.element(screen.getByRole('button', { name: /Fast/ })).toBeVisible();
   await expect.element(screen.getByRole('button', { name: /Creative/ })).toBeVisible();
   await expect.element(screen.getByRole('button', { name: /work/ })).toBeVisible();
-  expect(screen.container.querySelector('[data-id="cable:fast"]')).not.toBeNull();
-  expect(screen.container.querySelector('[data-id="cable:creative"]')).not.toBeNull();
+  await expect.poll(() => screen.container.querySelector('[data-id="cable:fast"]')).not.toBeNull();
+  await expect
+    .poll(() => screen.container.querySelector('[data-id="cable:creative"]'))
+    .not.toBeNull();
 });
 
 test('the gateway detail opens on its canvas, with the inspector away until asked for', async () => {

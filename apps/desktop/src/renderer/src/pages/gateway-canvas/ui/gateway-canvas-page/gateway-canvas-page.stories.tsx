@@ -62,6 +62,12 @@ export const ReadingACable = meta.story({
   play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
 
+    await waitFor(() => {
+      if (canvasElement.querySelector('[data-id="cable:fast"]') === null) {
+        throw new Error('the cable has not painted yet');
+      }
+    });
+
     canvasElement
       .querySelector('[data-id="cable:fast"]')
       ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
