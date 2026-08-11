@@ -161,6 +161,7 @@ test('the packaged canvas paints a wired gateway under the strict style policy',
       expect((await nodeSeat(renderer, modelNodeId(PACKAGED_MODEL))).x).toBeGreaterThan(
         (await nodeSeat(renderer, GATEWAY_NODE)).x,
       );
+      await renderer.getByRole('button', { name: 'Reset zoom' }).click();
       expect(await hitTarget(sourcePort(renderer, GATEWAY_NODE))).toEqual(PORT_MEASURE);
       expect(await viewportZoom(renderer)).toBeGreaterThan(0);
       expect(complaints()).toEqual([]);
