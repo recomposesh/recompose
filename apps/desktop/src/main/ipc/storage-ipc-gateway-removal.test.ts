@@ -131,21 +131,22 @@ describe('removing a stored gateway', () => {
 
 describe('removing a serving gateway on a desk that owns a runtime removal lane', () => {
   test('the gateway retires through that lane before its document leaves', async () => {
-    const retired: string[] = [];
+    const retirements: { slug: string; documentStillHeld: boolean }[] = [];
+    let deskPath = '';
     const { handlers, stoppedSlugs, userDataPath } = await deskHolding(
       [gatewayNamed('codex', 8397)],
       ['codex'],
       async (slug) => {
-        retired.push(slug);
-
-        return Promise.resolve();
+        retirements.push({ slug, documentStillHeld: await documentStands(deskPath, slug) });
       },
     );
+
+    deskPath = userDataPath;
 
     const answer = await handlers['gateways:remove']({ slug: 'codex' });
 
     expect(answer.ok && answer.value).toEqual([]);
-    expect(retired).toEqual(['codex']);
+    expect(retirements).toEqual([{ slug: 'codex', documentStillHeld: true }]);
     expect(stoppedSlugs).toEqual([]);
     expect(await documentStands(userDataPath, 'codex')).toBe(false);
   });

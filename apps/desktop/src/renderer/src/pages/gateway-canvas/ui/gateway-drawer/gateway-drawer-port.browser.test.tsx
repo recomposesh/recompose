@@ -11,6 +11,19 @@ async function storedPort(): Promise<number | undefined> {
   return listed.ok ? listed.value[0]?.port : undefined;
 }
 
+function countedUpdates(): () => number {
+  const update = window.recompose['gateways:update'];
+  let writes = 0;
+
+  window.recompose['gateways:update'] = async (request) => {
+    writes += 1;
+
+    return update(request);
+  };
+
+  return () => writes;
+}
+
 test('the endpoint carries the port as a field a person reads and edits', async () => {
   const screen = await renderDrawer({ kind: 'gateway' });
 
@@ -71,6 +84,7 @@ test('a port outside the range settles back to the stored one instead of asking'
 
 test('Escape walks the draft back to the stored port and moves nothing', async () => {
   const screen = await renderDrawer({ kind: 'gateway' });
+  const writesSoFar = countedUpdates();
   const field = screen.getByRole('textbox', { name: 'Port' });
 
   await field.fill('8500');
@@ -79,10 +93,12 @@ test('Escape walks the draft back to the stored port and moves nothing', async (
   await expect.element(field).toHaveValue('8397');
   await expect.element(screen.getByText(/Move the gateway/)).not.toBeInTheDocument();
   expect(await storedPort()).toBe(8397);
+  expect(writesSoFar()).toBe(0);
 });
 
 test('settling the field on the port it already holds asks nothing and rewrites nothing', async () => {
   const screen = await renderDrawer({ kind: 'gateway' });
+  const writesSoFar = countedUpdates();
   const field = screen.getByRole('textbox', { name: 'Port' });
 
   await field.fill('8397');
@@ -91,4 +107,5 @@ test('settling the field on the port it already holds asks nothing and rewrites 
   await expect.element(screen.getByText(/Move the gateway/)).not.toBeInTheDocument();
   await expect.element(field).toHaveValue('8397');
   expect(await storedPort()).toBe(8397);
+  expect(writesSoFar()).toBe(0);
 });
