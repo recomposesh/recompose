@@ -57,7 +57,7 @@ test('a fresh cable landed on a stored target opens the pick on that very target
     .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
 });
 
-test('a cable regrabbed at its model end and dropped on the draft rebinds nothing', async () => {
+test('a cable taken back up at its model end and dropped on the draft rebinds nothing', async () => {
   localStorage.setItem(POSITIONS_KEY, JSON.stringify({ 'model:creative': { x: 600, y: 430 } }));
 
   const screen = await canvasPageOn();
