@@ -252,3 +252,15 @@ describe('the reading holds against whatever sits in the home', () => {
     expect(observed).toEqual({ standing: 'lapsed' });
   });
 });
+
+describe('a session token whose claims cannot be read', () => {
+  test('given a payload that decodes to no document, the reading stays silent about the person', async () => {
+    const garbled = Buffer.from('not json', 'utf8').toString('base64url');
+
+    await recorded('auth.json', JSON.stringify({ tokens: { id_token: `head.${garbled}.seal` } }));
+
+    const observed = await reading('openai');
+
+    expect(observed).toEqual({ standing: 'connected' });
+  });
+});

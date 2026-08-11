@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { adoptLegacyConfigHome, resolveConfigHome } from './config-home';
 
@@ -67,5 +67,26 @@ describe('adopting the documents an earlier build left behind', () => {
     await adoptLegacyConfigHome(legacy, legacy);
 
     expect(await readFile(join(legacy, 'settings.json'), 'utf8')).toBe('{"theme":"dark"}');
+  });
+});
+
+describe('an adoption the filesystem pushes back on', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('a move the filesystem refuses is reported rather than failing the launch', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'recompose-adopt-refused-'));
+    const legacy = join(root, 'userData');
+    const home = join(root, '.recompose');
+
+    await writeFile(legacy, '', 'utf8');
+
+    const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await adoptLegacyConfigHome(legacy, home);
+
+    expect(complaint.mock.calls.length).toBeGreaterThan(0);
+    expect(complaint.mock.calls[0]?.[0]).toContain('recompose could not adopt');
   });
 });

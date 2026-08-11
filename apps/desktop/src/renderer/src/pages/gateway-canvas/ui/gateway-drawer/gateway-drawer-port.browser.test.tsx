@@ -68,3 +68,27 @@ test('a port outside the range settles back to the stored one instead of asking'
   await expect.element(screen.getByText(/Move the gateway/)).not.toBeInTheDocument();
   await expect.element(field).toHaveValue('8397');
 });
+
+test('Escape walks the draft back to the stored port and moves nothing', async () => {
+  const screen = await renderDrawer({ kind: 'gateway' });
+  const field = screen.getByRole('textbox', { name: 'Port' });
+
+  await field.fill('8500');
+  await userEvent.keyboard('{Escape}');
+
+  await expect.element(field).toHaveValue('8397');
+  await expect.element(screen.getByText(/Move the gateway/)).not.toBeInTheDocument();
+  expect(await storedPort()).toBe(8397);
+});
+
+test('settling the field on the port it already holds asks nothing and rewrites nothing', async () => {
+  const screen = await renderDrawer({ kind: 'gateway' });
+  const field = screen.getByRole('textbox', { name: 'Port' });
+
+  await field.fill('8397');
+  await userEvent.keyboard('{Enter}');
+
+  await expect.element(screen.getByText(/Move the gateway/)).not.toBeInTheDocument();
+  await expect.element(field).toHaveValue('8397');
+  expect(await storedPort()).toBe(8397);
+});

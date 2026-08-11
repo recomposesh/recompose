@@ -121,3 +121,37 @@ describe('moving a stored gateway onto a chosen port', () => {
     expect(!answer.ok && answer.error.message).toContain('no port to move');
   });
 });
+
+async function deskOverANotFolder() {
+  const blockingDir = await mkdtemp(join(tmpdir(), 'recompose-set-port-blocked-'));
+  const notAFolder = join(blockingDir, 'not-a-folder');
+
+  await writeFile(notAFolder, '', 'utf8');
+
+  return createStorageIpcHandlers({
+    userDataPath: notAFolder,
+    homeFolder: '/Users/ada',
+    getCodec: () => reversibleCodec,
+    isEncryptionAvailable: () => true,
+    onCorrupt: () => undefined,
+    onSettingsWritten: () => undefined,
+    applySettings: () => undefined,
+    readLoginItem: () => false,
+    startGateway: () => undefined,
+    restartGateway: () => undefined,
+    stopGateway: () => undefined,
+    isServing: () => false,
+    releaseSubscription: async () => Promise.resolve({ ok: true }),
+  });
+}
+
+describe('moving a port when the storage folder cannot be read', () => {
+  test('the move answers a typed storage failure rather than throwing', async () => {
+    const broken = await deskOverANotFolder();
+
+    expect(await broken['gateways:set-port']({ slug: 'codex', port: 8500 })).toMatchObject({
+      ok: false,
+      error: { code: 'storage-failed' },
+    });
+  });
+});

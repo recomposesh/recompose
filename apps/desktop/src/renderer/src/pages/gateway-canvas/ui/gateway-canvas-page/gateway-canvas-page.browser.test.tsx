@@ -104,6 +104,41 @@ test('selecting a node opens a closed inspector back up on that subject', async 
   await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
+test('Escape on a quiet canvas lets the selection go and puts the inspector away', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /work/ }));
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+
+  await userEvent.keyboard('{Escape}');
+
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: /work/ }))
+    .toHaveAttribute('aria-pressed', 'false');
+});
+
+async function storedPort(): Promise<number | undefined> {
+  const listed = await window.recompose['gateways:list']();
+
+  return listed.ok ? listed.value[0]?.port : undefined;
+}
+
+test('a port settled while the gateway rests moves the endpoint and the field together', async () => {
+  const screen = await canvasPageOn({ engineStates: {} });
+
+  toggleInspector();
+
+  const field = screen.getByRole('textbox', { name: 'Port' });
+
+  await field.fill('8500');
+  await userEvent.keyboard('{Enter}');
+
+  await expect.poll(async () => storedPort()).toBe(8500);
+  await expect.element(field).toHaveValue('8500');
+  await expect.element(screen.getByText(/http:\/\/.*:8500/)).toBeVisible();
+});
+
 test('a saved id rename keeps the drawer on the renamed definition', async () => {
   const screen = await canvasPageOn();
 

@@ -74,6 +74,22 @@ describe('what the cables of a virtual model say about the traffic they carried'
     expect(standingsOf(graph)).toEqual(['served', 'served']);
   });
 
+  test('a request still in flight paints both its cables live', () => {
+    const inFlight: GatewayTraffic = {
+      codex: { fast: { outcome: 'live', at: 1_754_600_000_000 } },
+    };
+
+    expect(standingsOf(graphAt(inFlight, JUST_AFTER))).toEqual(['live', 'live']);
+  });
+
+  test('a request in flight stays live however long it has been running', () => {
+    const inFlight: GatewayTraffic = {
+      codex: { fast: { outcome: 'live', at: 1_754_600_000_000 } },
+    };
+
+    expect(standingsOf(graphAt(inFlight, A_MINUTE_LATER))).toEqual(['live', 'live']);
+  });
+
   test('a served virtual model leaves no failure on either cable, so nothing stands to be read', () => {
     const graph = graphAt(flowed, JUST_AFTER);
 

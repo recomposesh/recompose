@@ -32,10 +32,15 @@ function gatewayNamed(slug: string, port: number): GatewayConfig {
   };
 }
 
-async function deskHolding(stored: readonly GatewayConfig[], serving: readonly string[]) {
+async function deskHolding(
+  stored: readonly GatewayConfig[],
+  serving: readonly string[],
+  removeGatewayRuntime?: (slug: string) => Promise<void>,
+) {
   const stoppedSlugs: string[] = [];
   const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-removal-'));
   const context: StorageIpcContext = {
+    removeGatewayRuntime,
     userDataPath,
     homeFolder: '/Users/ada',
     getCodec: () => reversibleCodec,
@@ -121,5 +126,57 @@ describe('removing a stored gateway', () => {
     expect(answer.ok).toBe(false);
     expect(!answer.ok && answer.error.message).toContain('"ghost"');
     expect(!answer.ok && answer.error.message).toContain('nothing to remove');
+  });
+});
+
+describe('removing a serving gateway on a desk that owns a runtime removal lane', () => {
+  test('the gateway retires through that lane before its document leaves', async () => {
+    const retired: string[] = [];
+    const { handlers, stoppedSlugs, userDataPath } = await deskHolding(
+      [gatewayNamed('codex', 8397)],
+      ['codex'],
+      async (slug) => {
+        retired.push(slug);
+
+        return Promise.resolve();
+      },
+    );
+
+    const answer = await handlers['gateways:remove']({ slug: 'codex' });
+
+    expect(answer.ok && answer.value).toEqual([]);
+    expect(retired).toEqual(['codex']);
+    expect(stoppedSlugs).toEqual([]);
+    expect(await documentStands(userDataPath, 'codex')).toBe(false);
+  });
+});
+
+describe('removing a gateway when the storage folder cannot be read', () => {
+  test('the removal answers a typed storage failure rather than throwing', async () => {
+    const blockingDir = await mkdtemp(join(tmpdir(), 'recompose-removal-blocked-'));
+    const notAFolder = join(blockingDir, 'not-a-folder');
+
+    await writeFile(notAFolder, '', 'utf8');
+
+    const broken = createStorageIpcHandlers({
+      userDataPath: notAFolder,
+      homeFolder: '/Users/ada',
+      getCodec: () => reversibleCodec,
+      isEncryptionAvailable: () => true,
+      onCorrupt: () => undefined,
+      onSettingsWritten: () => undefined,
+      applySettings: () => undefined,
+      readLoginItem: () => false,
+      startGateway: () => undefined,
+      restartGateway: () => undefined,
+      stopGateway: () => undefined,
+      isServing: () => false,
+      releaseSubscription: async () => Promise.resolve({ ok: true }),
+    });
+
+    expect(await broken['gateways:remove']({ slug: 'codex' })).toMatchObject({
+      ok: false,
+      error: { code: 'storage-failed' },
+    });
   });
 });

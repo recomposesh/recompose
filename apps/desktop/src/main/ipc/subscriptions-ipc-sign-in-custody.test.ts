@@ -3,8 +3,17 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import type { SubscriptionsIpcContext } from './subscriptions-ipc';
 import type { SubscriptionsWorld } from './subscriptions-ipc.testkit';
 
-import { PARKED_SERVICE, VENDOR_SERVICE } from '../subscriptions/credential-custody';
-import { aClaudeLogin, anMcpRecordAlone, osUser } from '../subscriptions/subscriptions.testkit';
+import {
+  credentialCustody,
+  PARKED_SERVICE,
+  VENDOR_SERVICE,
+} from '../subscriptions/credential-custody';
+import {
+  aClaudeLogin,
+  anMcpRecordAlone,
+  fakeKeychain,
+  osUser,
+} from '../subscriptions/subscriptions.testkit';
 import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 import { aFreshWorld, claudeCodeSignedIn, refusalIn, viewsIn } from './subscriptions-ipc.testkit';
 
@@ -114,6 +123,39 @@ describe('signing in on macOS, where the tool writes the keychain before the log
     ]({ provider: 'anthropic' });
 
     expect(refusalIn(answered).code).toBe('sign-in-timed-out');
+    await expect(world.storedAccounts()).resolves.toMatchObject({ accounts: [] });
+  });
+});
+
+describe('signing in when the keychain turns on recompose partway', () => {
+  test('given the keychain refusing to clear the vendor slot, the sign-in says so before the tool runs', async () => {
+    await world.toolInstalled('claude');
+
+    const keychain = fakeKeychain({}, { atStep: 2, kind: 'failed' });
+    const handlers = createSubscriptionsIpcHandlers({
+      ...world.contextOn('darwin', world.nothingHappens),
+      custody: credentialCustody(keychain.seam, osUser),
+    });
+
+    const answered = await handlers['subscriptions:sign-in']({ provider: 'anthropic' });
+
+    expect(refusalIn(answered).code).toBe('storage-failed');
+    expect(refusalIn(answered).message).toContain('could not clear');
+    expect(world.launched).toEqual([]);
+  });
+
+  test('given the keychain denying custody of the landed login, the sign-in refuses and stores no account', async () => {
+    await world.toolInstalled('claude');
+
+    const keychain = fakeKeychain({}, { atStep: 3, kind: 'denied' });
+    const handlers = createSubscriptionsIpcHandlers({
+      ...world.contextOn('darwin', claudeCodeSigningIn()),
+      custody: credentialCustody(keychain.seam, osUser),
+    });
+
+    const answered = await handlers['subscriptions:sign-in']({ provider: 'anthropic' });
+
+    expect(refusalIn(answered).code).toBe('keychain-denied');
     await expect(world.storedAccounts()).resolves.toMatchObject({ accounts: [] });
   });
 });

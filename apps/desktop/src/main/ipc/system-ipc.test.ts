@@ -117,6 +117,29 @@ describe('a double-click on the title bar', () => {
   });
 });
 
+describe('the band the window controls sit over', () => {
+  test('each band centers the controls in its own height', async () => {
+    const placements: { x: number; y: number }[] = [];
+    const handlers = createSystemIpcHandlers(
+      systemContext({
+        placeWindowButtons: (position) => {
+          placements.push(position);
+        },
+      }),
+    );
+
+    const answer = await handlers['system:window-band']('sidebar');
+
+    await handlers['system:window-band']('toolbar');
+
+    expect(answer).toEqual({ ok: true, value: undefined });
+    expect(placements).toEqual([
+      { x: 14, y: 12 },
+      { x: 14, y: 21 },
+    ]);
+  });
+});
+
 describe('opening the config folder', () => {
   test('hands the file browser the folder the state names', async () => {
     const opened: string[] = [];
