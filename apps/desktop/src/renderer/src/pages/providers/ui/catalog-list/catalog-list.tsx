@@ -57,7 +57,7 @@ function connectableCards(
 
     return (
       <button
-        className="flex items-center gap-2.5 rounded-card border border-line-subtle bg-surface-card p-3 text-start focus-ring row-hover"
+        className="flex items-center gap-2.5 rounded-card border border-line-subtle bg-surface-card p-3 text-start focus-ring-wide row-hover"
         key={entry.id}
         onClick={() => {
           onPick(entry);
@@ -74,7 +74,7 @@ function awaitedCards(awaited: readonly AwaitedProvider[]): readonly ReactNode[]
   return awaited.map((provider) => (
     <button
       aria-disabled
-      className="relative flex items-center gap-2.5 rounded-card border border-line-subtle bg-surface-card p-3 text-start focus-ring"
+      className="relative flex items-center gap-2.5 rounded-card border border-line-subtle bg-surface-card p-3 text-start focus-ring-wide"
       key={provider.name}
       type="button"
     >

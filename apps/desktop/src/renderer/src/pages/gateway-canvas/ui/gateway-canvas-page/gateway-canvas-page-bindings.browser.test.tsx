@@ -1,6 +1,8 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
+import { canvasPositions } from '../../lib/canvas-position-store';
+import { heldDraft } from '../../lib/use-held-draft';
 import { draftCardOn, storedBindingOf, storedModels } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 import { listedModels } from '../../testing/gateway-canvas.testkit';
@@ -15,6 +17,13 @@ const withClaudeModels = { providerModels: { ...listedModels, s1: ['claude-sonne
 
 function viewportTransform(container: HTMLElement): string {
   return container.querySelector<HTMLElement>('.react-flow__viewport')?.style.transform ?? '';
+}
+
+function targetSeatBesideDraft(seat: { x: number; y: number } | undefined): {
+  x: number;
+  y: number;
+} {
+  return { x: (seat?.x ?? 0) + 320, y: seat?.y ?? 0 };
 }
 
 async function settledFrames(): Promise<void> {
@@ -41,7 +50,7 @@ test('a draft carrying only an id is asked about by that id, and the confirm let
 
   await expect.element(screen.getByText('Delete the virtual model "steady"?')).toBeVisible();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
 
   await expect.poll(() => draftCardOn(screen.container)).toBeNull();
   expect((await storedModels()).length).toBe(2);
@@ -101,6 +110,7 @@ test('a draft finished in the inspector graduates into the composition and says 
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  const draftSeat = heldDraft('my-gateway')?.seat;
 
   const panel = screen.getByRole('complementary');
 
@@ -111,6 +121,11 @@ test('a draft finished in the inspector graduates into the composition and says 
   await expect
     .poll(async () => storedBindingOf('steady'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-opus-5' });
+  expect(draftSeat).toBeDefined();
+  expect(canvasPositions('my-gateway')).toMatchObject({
+    'model:steady': draftSeat,
+    'target:steady': targetSeatBesideDraft(draftSeat),
+  });
   await expect
     .poll(() => screen.container.querySelector('section > p[aria-live="polite"]')?.textContent)
     .toBe('Bound the virtual model "Steady" to "work".');

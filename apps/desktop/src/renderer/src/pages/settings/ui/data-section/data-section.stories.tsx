@@ -17,10 +17,6 @@ export const Basic = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('~/Library/Application Support/recompose')).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Reveal in Finder' })).toBeVisible();
-    await expect(
-      await canvas.findByRole('radiogroup', { name: 'Keep request logs' }),
-    ).toHaveAttribute('aria-disabled', 'true');
-    await expect(await canvas.findByText('Waits on request logging.')).toBeVisible();
   },
 });
 

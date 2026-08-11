@@ -18,16 +18,29 @@ export type CanvasAsks = {
 /** One seat a position change moved, and whether the drag settled there. */
 export type MovedSeat = { id: string; to: XY; settled: boolean };
 
-export const CARD_MEASURE = { width: 158, height: 78 };
+export const CARD_MEASURE = { width: 184, height: 88 };
+
+const DRAFT_CARD = 'draft';
 
 /** The definition id inside a model card's node id, or nothing for any other card. */
 export function modelIdOf(nodeId: string): string | undefined {
   return nodeId.startsWith('model:') ? nodeId.slice('model:'.length) : undefined;
 }
 
-/** The account id inside a target card's node id, or nothing for any other card. */
-export function accountIdOf(nodeId: string): string | undefined {
-  return nodeId.startsWith('target:') ? nodeId.slice('target:'.length) : undefined;
+/** The binding's model id inside a target or ghost card's node id, or nothing otherwise. */
+export function targetModelIdOf(nodeId: string): string | undefined {
+  if (nodeId.startsWith('target:')) {
+    return nodeId.slice('target:'.length);
+  }
+
+  return nodeId.startsWith('ghost:') ? nodeId.slice('ghost:'.length) : undefined;
+}
+
+/** The account behind a target or ghost card, read through the binding the card stands for. */
+export function targetAccountIdIn(gateway: GatewayConfig, nodeId: string): string | undefined {
+  const modelId = targetModelIdOf(nodeId);
+
+  return gateway.virtualModels.find((model) => model.id === modelId)?.target.accountId;
 }
 
 /** The definition id inside a binding cable's id, or nothing for an overlay cable. */
@@ -65,7 +78,7 @@ export function movedSeats(changes: readonly NodeChange[]): readonly MovedSeat[]
  */
 export function oneTargetRule(gateway: GatewayConfig) {
   return (connection: Edge | Connection): boolean => {
-    const accountId = accountIdOf(connection.target);
+    const accountId = targetAccountIdIn(gateway, connection.target);
 
     if (accountId === undefined) {
       return false;
@@ -151,32 +164,33 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
   }));
 }
 
-function prefixedSubject(selection: string): InspectorSubject | undefined {
+function modelSubject(selection: string): InspectorSubject | undefined {
   const modelId = modelIdOf(selection);
 
-  if (modelId !== undefined) {
-    return { kind: 'virtual-model', modelId };
-  }
-
-  const cableId = bindingCableId(selection);
-
-  if (cableId !== undefined) {
-    return { kind: 'cable', modelId: cableId };
-  }
-
-  const accountId = accountIdOf(selection);
-
-  if (accountId !== undefined) {
-    return { kind: 'target', accountId };
-  }
-
-  return undefined;
+  return modelId === undefined ? undefined : { kind: 'virtual-model', modelId };
 }
 
-function ghostSubject(selection: string): InspectorSubject | undefined {
+function cableSubject(selection: string): InspectorSubject | undefined {
+  const cableId = bindingCableId(selection);
+
+  return cableId === undefined ? undefined : { kind: 'cable', modelId: cableId };
+}
+
+function targetSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
+  const boundModelId = targetModelIdOf(selection);
+  const accountId = targetAccountIdIn(gateway, selection);
+
+  if (boundModelId === undefined || accountId === undefined) {
+    return undefined;
+  }
+
   return selection.startsWith('ghost:')
-    ? { kind: 'ghost-target', accountId: selection.slice('ghost:'.length) }
-    : undefined;
+    ? { kind: 'ghost-target', accountId, modelId: boundModelId }
+    : { kind: 'target', accountId, modelId: boundModelId };
+}
+
+function prefixedSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
+  return modelSubject(selection) ?? cableSubject(selection) ?? targetSubject(gateway, selection);
 }
 
 /**
@@ -184,18 +198,47 @@ function ghostSubject(selection: string): InspectorSubject | undefined {
  *
  * @summary Nothing selected reads as the gateway, because the gateway is what the whole screen is
  * about, and a selection with no body of its own falls back the same way rather than standing the
- * inspector in front of nothing.
+ * inspector in front of nothing. A target card names the binding it serves, so the account behind
+ * it reads through the gateway rather than out of the card's id.
  */
-export function subjectOf(selection: string | undefined): InspectorSubject {
+export function subjectOf(gateway: GatewayConfig, selection: string | undefined): InspectorSubject {
   if (selection === undefined) {
     return { kind: 'gateway' };
   }
 
-  if (selection === 'draft') {
+  if (selection === DRAFT_CARD) {
     return { kind: 'draft' };
   }
 
-  return prefixedSubject(selection) ?? ghostSubject(selection) ?? { kind: 'gateway' };
+  return prefixedSubject(gateway, selection) ?? { kind: 'gateway' };
+}
+
+function modelCardOf(subject: InspectorSubject): string | undefined {
+  if (subject.kind === 'virtual-model') {
+    return `model:${subject.modelId}`;
+  }
+
+  return subject.kind === 'cable' ? `cable:${subject.modelId}` : undefined;
+}
+
+function targetCardOf(subject: InspectorSubject): string | undefined {
+  if (subject.kind === 'target') {
+    return `target:${subject.modelId}`;
+  }
+
+  return subject.kind === 'ghost-target' ? `ghost:${subject.modelId}` : undefined;
+}
+
+/**
+ * The card a subject stands for, or nothing where the subject is the gateway itself.
+ *
+ * @summary The inverse of `subjectOf`, so a surface that speaks about a subject can move the one
+ * canvas selection onto it without spelling a card id out for itself. The two live side by side on
+ * purpose: a change to how a card is named has to move both, and the round trip is what proves it
+ * did. The gateway stands for no card, because selecting nothing is what reads as the gateway.
+ */
+export function nodeIdOf(subject: InspectorSubject): string | undefined {
+  return subject.kind === 'draft' ? DRAFT_CARD : (modelCardOf(subject) ?? targetCardOf(subject));
 }
 
 /**

@@ -4,7 +4,8 @@ import { useEffect, useId, useRef } from 'react';
 
 import type { OptionGroup } from '../option-list/option-list';
 
-import { placeFocus } from '../../../../shared/ui';
+import { useStepTransition } from '../../../../shared/lib';
+import { Button, placeFocus } from '../../../../shared/ui';
 import { OptionList } from '../option-list/option-list';
 
 /** Which half of the binding the picker is asking for, and what the first half settled on. */
@@ -34,6 +35,7 @@ function stageBody(
   said: StageWording,
   groups: readonly OptionGroup[],
   onPick: (picked: string) => void,
+  focusSearch: boolean,
 ): ReactNode {
   if (refusal !== undefined) {
     return (
@@ -45,12 +47,37 @@ function stageBody(
 
   return (
     <OptionList
+      focusSearch={focusSearch}
       groups={groups}
       nothingMatched={said.nothingMatched}
       onPick={onPick}
       picked={undefined}
       searchLabel={said.searchLabel}
     />
+  );
+}
+
+function stageHeading(
+  stage: PickerStage,
+  headingId: string,
+  said: StageWording,
+  onSelectDifferentProvider: () => void,
+): ReactNode {
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 pt-1 pb-1.5">
+      {stage.step === 'provider-model' ? (
+        <Button
+          aria-label="Select different provider"
+          glyph="chevron"
+          glyphClassName="rotate-90"
+          onPress={onSelectDifferentProvider}
+          variant="icon-secondary"
+        />
+      ) : null}
+      <p className="picker-heading" id={headingId}>
+        {said.heading}
+      </p>
+    </div>
   );
 }
 
@@ -65,6 +92,8 @@ export type DropPickerProps = {
   onPickAccount: (accountId: string) => void;
   /** Receives the provider model that completes the binding. */
   onPickProviderModel: (providerModel: string) => void;
+  /** Returns the second stage to the account choices. */
+  onSelectDifferentProvider: () => void;
   /** Runs when a person leaves the picker, which is what takes the pending card away. */
   onDismiss: () => void;
 };
@@ -83,23 +112,26 @@ export function DropPicker({
   refusal,
   onPickAccount,
   onPickProviderModel,
+  onSelectDifferentProvider,
   onDismiss,
 }: DropPickerProps) {
   const headingId = useId();
   const asking = useRef<HTMLDialogElement>(null);
   const said = wording[stage.step];
+  const transition = useStepTransition(stage.step, ['account', 'provider-model']);
 
   useEffect(() => {
     const asked = asking.current;
+    const body = asked?.querySelector<HTMLElement>('[data-picker-body]');
 
     asked?.show();
-    placeFocus(asked?.querySelector<HTMLElement>('input, button') ?? asked);
+    placeFocus(body?.querySelector<HTMLElement>('input, button') ?? asked);
   }, [stage.step]);
 
   return (
     <dialog
       aria-labelledby={headingId}
-      className="absolute inset-s-0 top-full z-10 mx-0 mt-2 mb-0 w-64 menu-surface px-0 focus-ring"
+      className="absolute inset-s-0 top-full z-10 mx-0 mt-1 mb-0 w-64 menu-surface px-0 picker-focus-plain"
       onKeyDown={(event: KeyboardEvent<HTMLDialogElement>) => {
         if (event.key === 'Escape') {
           event.stopPropagation();
@@ -109,19 +141,17 @@ export function DropPicker({
       ref={asking}
       tabIndex={-1}
     >
-      <p
-        className="px-2.5 pt-1 pb-1.5 text-footnote font-bold tracking-wider text-ink-secondary uppercase"
-        id={headingId}
-      >
-        {said.heading}
-      </p>
-      <div className="max-h-64 overflow-y-auto px-1.5 pb-1">
-        {stageBody(
-          refusal,
-          said,
-          groups,
-          stage.step === 'account' ? onPickAccount : onPickProviderModel,
-        )}
+      <div className={transition} key={stage.step}>
+        {stageHeading(stage, headingId, said, onSelectDifferentProvider)}
+        <div className="max-h-64 overflow-y-auto px-1.5 pb-1" data-picker-body="">
+          {stageBody(
+            refusal,
+            said,
+            groups,
+            stage.step === 'account' ? onPickAccount : onPickProviderModel,
+            stage.step === 'provider-model',
+          )}
+        </div>
       </div>
     </dialog>
   );

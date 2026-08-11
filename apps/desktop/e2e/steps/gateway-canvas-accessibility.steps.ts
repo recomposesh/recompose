@@ -153,21 +153,24 @@ When(
   },
 );
 
-When("the person drops a cable from the gateway's port onto that node", async ({ page }) => {
-  const key = await accountHeldAs(page, 'api-key');
+const COMPANION = 'steady';
 
+When("the person drops a cable from the gateway's port onto that node", async ({ page }) => {
   await rememberComposition(page);
   await fitCanvasToView(page);
-  await dragCableOnto(page, sourcePort(page, GATEWAY_NODE), targetPort(page, targetNodeId(key.id)));
+  await dragCableOnto(
+    page,
+    sourcePort(page, GATEWAY_NODE),
+    targetPort(page, targetNodeId(COMPANION)),
+  );
 });
 
 Then('the account stands wired as a target node', async ({ page }) => {
-  const key = await accountHeldAs(page, 'api-key');
   const alias = modelAliasFromName(virtualModelInFocus(page));
 
-  await expect.poll(async () => standingNodes(page)).toContain(targetNodeId(key.id));
-  expect(await nodeTreatment(page, targetNodeId(key.id))).toBe('target');
-  await expect(cableBetween(page, modelNodeId(alias), targetNodeId(key.id))).toHaveCount(1);
+  await expect.poll(async () => standingNodes(page)).toContain(targetNodeId(alias));
+  expect(await nodeTreatment(page, targetNodeId(alias))).toBe('target');
+  await expect(cableBetween(page, modelNodeId(alias), targetNodeId(alias))).toHaveCount(1);
 });
 
 Then('the live region announces the new binding', async ({ page }) => {
@@ -189,6 +192,10 @@ Then('the live region announces the removed binding', async ({ page }) => {
     `Unbound the virtual model "${virtualModelInFocus(page)}", which now holds no target.`,
   );
   await expect(urgentlySaid(page)).toBeEmpty();
+});
+
+When('the person resets the zoom to one hundred percent', async ({ page }) => {
+  await page.getByRole('button', { name: 'Reset zoom' }).click();
 });
 
 Then(

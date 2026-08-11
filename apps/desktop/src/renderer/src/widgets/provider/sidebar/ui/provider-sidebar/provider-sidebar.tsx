@@ -1,6 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { useId } from 'react';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 
 import type { IconName } from '../../../../../shared/ui';
 
@@ -11,10 +10,11 @@ import {
   accountsOfKind,
 } from '../../../../../entities/account';
 import { accountsQueryOptions } from '../../../../../shared/api';
-import { Icon } from '../../../../../shared/ui';
+import { focusDrivenByArrow } from '../../../../../shared/lib';
+import { Icon, NavGroup } from '../../../../../shared/ui';
 
 const glyph: Record<AccountKind, IconName> = {
-  subscription: 'person',
+  subscription: 'renew',
   'api-key': 'key',
   aggregator: 'cube',
   local: 'monitor',
@@ -35,14 +35,12 @@ const tint: Record<AccountKind, string> = {
  * beside the count is what a screen reader needs to make sense of a bare number.
  */
 export function ProviderSidebar() {
-  const groupId = useId();
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
+  const standingOn = useRouterState({ select: (state) => state.location.search });
+  const navigate = useNavigate();
 
   return (
-    <div aria-labelledby={groupId} className="flex flex-col gap-px" role="group">
-      <h2 className="nav-group" id={groupId}>
-        Providers
-      </h2>
+    <NavGroup title="Providers">
       {accountKinds.map((kind) => {
         const connected = accountsOfKind(registry.accounts, kind).length;
 
@@ -52,6 +50,11 @@ export function ProviderSidebar() {
             aria-label={`${accountKindTitle(kind)}, ${String(connected)} connected`}
             className="nav-item"
             key={kind}
+            onFocus={() => {
+              if (focusDrivenByArrow() && (!('kind' in standingOn) || standingOn.kind !== kind)) {
+                void navigate({ to: '/providers', search: { kind } });
+              }
+            }}
             search={{ kind }}
             to="/providers"
           >
@@ -63,6 +66,6 @@ export function ProviderSidebar() {
           </Link>
         );
       })}
-    </div>
+    </NavGroup>
   );
 }

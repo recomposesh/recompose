@@ -91,3 +91,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0083](0083-the-storage-watcher-startup-window-stays-accepted.md)               | The Storage Watcher Startup Window Stays Accepted                                   | Accepted   | 2026-08-08 |
 | [0084](0084-the-gateway-canvas-adopts-xyflow-react.md)                          | The Gateway Canvas Adopts @xyflow/react                                             | Accepted   | 2026-08-09 |
 | [0085](0085-window-chrome-drags-and-its-controls-opt-out.md)                    | Window Chrome Drags, and Its Controls Opt Out                                       | Accepted   | 2026-08-10 |
+| [0086](0086-the-log-list-adopts-tanstack-react-virtual.md)                      | The Log List Adopts `@tanstack/react-virtual`                                       | Accepted   | 2026-08-10 |

@@ -16,12 +16,14 @@ import { ACCOUNTS_VERSION, withSettingsPatch, defaultSettings } from '@recompose
 
 import { accountHandlers } from './fake-accounts';
 import {
+  forgetEngineLogsListeners,
   forgetEngineStateListeners,
   forgetEngineTrafficListeners,
-  gatewayHandlers,
+  listenForEngineLogs,
   listenForEngineStates,
   listenForEngineTraffic,
-} from './fake-gateways';
+} from './fake-engine-pushes';
+import { gatewayHandlers } from './fake-gateways';
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
 import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
@@ -59,6 +61,7 @@ type SystemHandlers = Pick<
   | 'system:open-config-folder'
   | 'system:window-band'
   | 'system:title-bar-double-click'
+  | 'system:logs-drawer'
 >;
 
 function settingsHandlers(seed: Settings): SettingsHandlers {
@@ -81,6 +84,7 @@ function systemHandlers(): SystemHandlers {
     'system:open-config-folder': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:window-band': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:title-bar-double-click': async () => Promise.resolve({ ok: true, value: undefined }),
+    'system:logs-drawer': async () => Promise.resolve({ ok: true, value: undefined }),
   };
 }
 
@@ -88,6 +92,7 @@ function eventBridge(): RecomposeIpcEvents {
   return {
     'engine:state': (listener) => listenForEngineStates(listener),
     'engine:traffic': (listener) => listenForEngineTraffic(listener),
+    'engine:logs': (listener) => listenForEngineLogs(listener),
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
     'settings:changed': (listener) => listenForSettingsChanges(listener),
@@ -120,6 +125,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
 
   forgetEngineStateListeners();
   forgetEngineTrafficListeners();
+  forgetEngineLogsListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(
     seeds.accounts,

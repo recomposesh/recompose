@@ -8,6 +8,10 @@ import { withSheet } from './-surface-request';
 
 export const Route = createFileRoute('/')({
   beforeLoad: async ({ context, search }) => {
+    if (search.create === true) {
+      return;
+    }
+
     const gateways = await context.queryClient.ensureQueryData(gatewaysQueryOptions);
     const slug = rememberedGateway(gateways.map((gateway) => gateway.slug));
 

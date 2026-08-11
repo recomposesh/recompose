@@ -1,7 +1,7 @@
 import type { Account, VirtualModel } from '@recompose/contracts';
 
 /** Where a definition's target stands: on an account the registry holds, or on nothing at all. */
-export type ServedTarget = { standing: 'serving'; account: Account } | { standing: 'removed' };
+type ServedTarget = { standing: 'serving'; account: Account } | { standing: 'removed' };
 
 export type ServedModel = {
   /** The id a client asks this gateway for. */

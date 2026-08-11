@@ -1,4 +1,10 @@
-import type { EngineStates, GatewayTraffic, IpcEventPayload, Settings } from '@recompose/contracts';
+import type {
+  EngineStates,
+  GatewayTraffic,
+  IpcEventPayload,
+  LogBatch,
+  Settings,
+} from '@recompose/contracts';
 
 import { BrowserWindow } from 'electron';
 
@@ -14,6 +20,12 @@ export function pushEngineTraffic(traffic: GatewayTraffic): void {
   }
 }
 
+export function pushEngineLogs(batch: LogBatch): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('engine:logs', batch);
+  }
+}
+
 export function pushAccountsChanged(): void {
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send('accounts:changed', 'changed');
@@ -21,7 +33,15 @@ export function pushAccountsChanged(): void {
 }
 
 export function pushCanvasCommand(command: IpcEventPayload<'canvas:command'>): void {
-  BrowserWindow.getFocusedWindow()?.webContents.send('canvas:command', command);
+  const standing = BrowserWindow.getFocusedWindow() ?? theOnlyWindow();
+
+  standing?.webContents.send('canvas:command', command);
+}
+
+function theOnlyWindow(): BrowserWindow | undefined {
+  const open = BrowserWindow.getAllWindows();
+
+  return open.length === 1 ? open[0] : undefined;
 }
 
 export function pushSettingsChanged(settings: Settings): void {

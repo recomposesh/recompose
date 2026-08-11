@@ -67,35 +67,57 @@ test('the screen groups its settings under General, Server, Appearance, and Data
   ]);
 });
 
-test('a waiting row stays reachable and names what it waits for', async () => {
+test('the launch switch is live, and turning it on stores the choice', async () => {
   const screen = await renderSettings();
+  const control = screen.getByRole('switch', { name: 'Start gateways on launch' });
 
-  const waiting = [
-    {
-      control: screen.getByRole('switch', { name: 'Start gateways on launch' }),
-      awaits: /launch-time start/i,
-    },
-    {
-      control: screen.getByRole('radiogroup', { name: 'Keep request logs' }),
-      awaits: /request logging/i,
-    },
-  ];
+  await expect.element(control).not.toHaveAttribute('aria-disabled');
+  await expect.element(control).toHaveAttribute('aria-checked', 'false');
 
-  for (const { control, awaits } of waiting) {
-    await expect.element(control).toHaveAttribute('aria-disabled', 'true');
-    await expect.element(control).not.toHaveAttribute('disabled');
-    await expect.element(control).toHaveAccessibleDescription(awaits);
-  }
+  control.element().focus();
+  await userEvent.keyboard(' ');
+
+  await expect.element(control).toHaveAttribute('aria-checked', 'true');
+  await expect.poll(async () => (await storedSettings()).startGatewaysOnLaunch).toBe(true);
 });
 
-test('the bind address states its value rather than offering a control', async () => {
+test('the bind address defaults to loopback and remains editable', async () => {
   const screen = await renderSettings();
 
-  await expect.element(screen.getByText('127.0.0.1 and [::1]', { exact: true })).toBeVisible();
   await expect
-    .element(screen.getByText('Fixed at loopback. recompose never serves the network.'))
+    .element(screen.getByRole('textbox', { name: 'Bind address' }))
+    .toHaveValue('127.0.0.1');
+  await expect.element(screen.getByText(/Use 0\.0\.0\.0 or another host/iu)).toBeVisible();
+});
+
+test('settling another bind address stores it', async () => {
+  const screen = await renderSettings();
+  const field = screen.getByRole('textbox', { name: 'Bind address' });
+
+  await field.fill('0.0.0.0');
+  await userEvent.keyboard('{Enter}');
+
+  await expect.poll(async () => (await storedSettings()).bindAddress).toBe('0.0.0.0');
+});
+
+test('changing the bind address asks before restarting running gateways', async () => {
+  const screen = await renderSettings({
+    engineStates: { codex: { status: 'running' } },
+  });
+  const field = screen.getByRole('textbox', { name: 'Bind address' });
+
+  await field.fill('0.0.0.0');
+  field.element().blur();
+
+  await expect
+    .element(screen.getByRole('heading', { name: 'Restart running gateways?' }))
     .toBeVisible();
-  expect(screen.container.querySelectorAll('[aria-label="Bind address"]')).toHaveLength(0);
+  await expect.element(screen.getByText(/restarts 1 running gateway/iu)).toBeVisible();
+  expect((await storedSettings()).bindAddress).toBe('127.0.0.1');
+
+  await screen.getByRole('button', { name: 'Restart gateways' }).click();
+
+  await expect.poll(async () => (await storedSettings()).bindAddress).toBe('0.0.0.0');
 });
 
 test('the Appearance group offers the theme alone, and nothing names wire motion', async () => {
@@ -112,11 +134,13 @@ test('no waiting row owns a field in the settings document', async () => {
   await renderSettings();
 
   expect(Object.keys(await storedSettings()).sort()).toEqual([
+    'bindAddress',
     'firstRequestServed',
     'launchAtLogin',
     'schemaVersion',
     'showInMenuBar',
     'showOnboardingChecklist',
+    'startGatewaysOnLaunch',
     'theme',
   ]);
 });
@@ -130,11 +154,11 @@ test('the Server group offers no token and no switch demanding one', async () =>
   expect(screen.getByText(/token/iu).elements()).toHaveLength(0);
 });
 
-test('the telemetry row states a value rather than offering a control', async () => {
+test('the General group carries no telemetry row', async () => {
   const screen = await renderSettings();
 
-  await expect.element(screen.getByText('None', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText(/never phones home/i)).toBeVisible();
+  expect(screen.getByText('Telemetry', { exact: true }).elements()).toHaveLength(0);
+  expect(screen.getByText(/never phones home/i).elements()).toHaveLength(0);
 });
 
 test('switching the theme to dark stores the new document', async () => {

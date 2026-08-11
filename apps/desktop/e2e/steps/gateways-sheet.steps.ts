@@ -23,7 +23,7 @@ const DRAFT = { name: 'Gemini' };
 const portsBeforeTheAttempt = new WeakMap<Page, number>();
 
 function addressOf(port: string): string {
-  return `http://localhost:${port}`;
+  return `http://127.0.0.1:${port}`;
 }
 
 async function previewShows(page: Page, address: string): Promise<void> {

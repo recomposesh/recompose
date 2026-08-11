@@ -23,9 +23,14 @@ export function draftInspector(page: Page): Locator {
   return asideHeaded(page, DRAFT_SUBJECT);
 }
 
-/** Picks a gateway out of the sidebar and waits for its inspector to stand. */
+/** Picks a gateway out of the sidebar, opens its inspector, and waits for it to stand. */
 export async function openGatewayDrawer(page: Page, name: string): Promise<void> {
   await gatewayRow(page, name).click();
+
+  if (!(await gatewayDrawer(page, name).isVisible())) {
+    await page.getByRole('button', { name: 'Inspector' }).click();
+  }
+
   await expect(gatewayDrawer(page, name)).toBeVisible();
 }
 

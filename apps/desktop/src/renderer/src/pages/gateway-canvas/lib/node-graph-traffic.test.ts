@@ -34,6 +34,14 @@ const nothingOverlaid: CanvasOverlay = { draft: undefined, pending: undefined };
 
 const flowed: GatewayTraffic = { codex: { fast: { outcome: 'served', at: 1_754_600_000_000 } } };
 
+const JUST_AFTER = 1_754_600_000_500;
+
+const A_MINUTE_LATER = 1_754_600_061_000;
+
+function graphAt(traffic: GatewayTraffic, now: number, gateway: GatewayConfig = codex) {
+  return canvasGraph(gateway, [work], nothingOverlaid, traffic, [], now);
+}
+
 const wentRed: GatewayTraffic = {
   codex: {
     fast: {
@@ -55,19 +63,19 @@ function cableIn(graph: CanvasGraph, id: string): CanvasEdge | undefined {
 
 describe('what the cables of a virtual model say about the traffic they carried', () => {
   test('a virtual model nothing has flowed through yet keeps the cables it stands with at rest', () => {
-    const graph = canvasGraph(codex, [work], nothingOverlaid, {});
+    const graph = graphAt({}, JUST_AFTER);
 
     expect(standingsOf(graph)).toEqual(['structural', 'resting']);
   });
 
   test('a virtual model whose last request was served paints both its cables served', () => {
-    const graph = canvasGraph(codex, [work], nothingOverlaid, flowed);
+    const graph = graphAt(flowed, JUST_AFTER);
 
     expect(standingsOf(graph)).toEqual(['served', 'served']);
   });
 
   test('a served virtual model leaves no failure on either cable, so nothing stands to be read', () => {
-    const graph = canvasGraph(codex, [work], nothingOverlaid, flowed);
+    const graph = graphAt(flowed, JUST_AFTER);
 
     expect(cableIn(graph, 'cable:fast')?.failure).toBeUndefined();
     expect(cableIn(graph, 'wire:model:fast')?.failure).toBeUndefined();
@@ -77,7 +85,7 @@ describe('what the cables of a virtual model say about the traffic they carried'
     const elsewhere: GatewayTraffic = {
       other: { fast: { outcome: 'served', at: 1_754_600_000_000 } },
     };
-    const graph = canvasGraph(codex, [work], nothingOverlaid, elsewhere);
+    const graph = graphAt(elsewhere, JUST_AFTER);
 
     expect(standingsOf(graph)).toEqual(['structural', 'resting']);
   });
@@ -86,7 +94,7 @@ describe('what the cables of a virtual model say about the traffic they carried'
     const departed: GatewayTraffic = {
       codex: { removed: { outcome: 'failed', at: 1, status: 500, detail: 'It fell over.' } },
     };
-    const graph = canvasGraph(codex, [work], nothingOverlaid, departed);
+    const graph = graphAt(departed, JUST_AFTER);
 
     expect(standingsOf(graph)).toEqual(['structural', 'resting']);
   });
@@ -94,13 +102,13 @@ describe('what the cables of a virtual model say about the traffic they carried'
 
 describe('what a failed virtual model hands a person to read', () => {
   test('a virtual model whose last request failed paints both its cables failed', () => {
-    const graph = canvasGraph(codex, [work], nothingOverlaid, wentRed);
+    const graph = graphAt(wentRed, JUST_AFTER);
 
     expect(standingsOf(graph)).toEqual(['failed', 'failed']);
   });
 
   test('a failed virtual model carries the status and the sentence on its binding cable', () => {
-    const graph = canvasGraph(codex, [work], nothingOverlaid, wentRed);
+    const graph = graphAt(wentRed, JUST_AFTER);
 
     expect(cableIn(graph, 'cable:fast')?.failure).toEqual({
       status: 502,
@@ -109,18 +117,32 @@ describe('what a failed virtual model hands a person to read', () => {
   });
 
   test('the gateway wire of a failed virtual model carries no failure, so one model reads one error', () => {
-    const graph = canvasGraph(codex, [work], nothingOverlaid, wentRed);
+    const graph = graphAt(wentRed, JUST_AFTER);
 
     expect(cableIn(graph, 'wire:model:fast')?.failure).toBeUndefined();
   });
 
   test('a binding whose account left the registry stays broken, whatever last flowed through it', () => {
-    const stale: GatewayTraffic = { codex: { slow: { outcome: 'served', at: 1 } } };
-    const graph = canvasGraph({ ...codex, virtualModels: [stranded] }, [work], nothingOverlaid, {
-      ...stale,
-    });
+    const stale: GatewayTraffic = { codex: { slow: { outcome: 'served', at: 1_754_600_000_000 } } };
+    const graph = graphAt(stale, JUST_AFTER, { ...codex, virtualModels: [stranded] });
 
     expect(standingsOf(graph)).toEqual(['structural', 'broken']);
     expect(cableIn(graph, 'cable:slow')?.failure).toBeUndefined();
+  });
+});
+
+describe('how the tints cool once the traffic goes quiet', () => {
+  test('a served reading cools back to rest once the minute passes it by', () => {
+    expect(standingsOf(graphAt(flowed, A_MINUTE_LATER))).toEqual(['structural', 'resting']);
+  });
+
+  test('a served reading still warm at the minute edge keeps its tint', () => {
+    const atTheEdge = 1_754_600_000_000 + 60_000;
+
+    expect(standingsOf(graphAt(flowed, atTheEdge))).toEqual(['served', 'served']);
+  });
+
+  test('a failure stays on the cable however long the traffic stays quiet', () => {
+    expect(standingsOf(graphAt(wentRed, A_MINUTE_LATER))).toEqual(['failed', 'failed']);
   });
 });

@@ -9,7 +9,10 @@ import { CanvasMinimap } from './canvas-minimap';
 const seats = [
   seat('gateway', 'gateway', 'Gateway', { x: 0, y: 0 }),
   seat('model:sonnet', 'virtual-model', 'Sonnet', { x: 240, y: 0 }),
-  seat('target:anthropic', 'target', 'Anthropic', { x: 480, y: 0 }),
+  {
+    ...seat('target:anthropic', 'target', 'Anthropic', { x: 480, y: 0 }),
+    data: { name: 'Anthropic', account: { kind: 'subscription' } },
+  },
   seat('draft', 'draft-model', 'Draft', { x: 240, y: 160 }),
   seat('ghost:openai', 'ghost-target', 'Gone', { x: 480, y: 160 }),
   seat('pending', 'pending-target', 'Pending', { x: 480, y: 320 }),
@@ -31,8 +34,9 @@ const gatewayChannels: [string, string] = [
   '0.0901961 0.52549 0.607843',
   '0.25098 0.784314 0.878431',
 ];
-const modelChannels: [string, string] = ['0 0.478431 1', '0.0392157 0.517647 1'];
-const targetChannels: [string, string] = ['0.686275 0.321569 0.870588', '0.74902 0.352941 0.94902'];
+const modelChannels: [string, string] = ['0.678431 0.176471 0.458824', '1 0.447059 0.768627'];
+const subscriptionChannels: [string, string] = ['0 0.478431 1', '0.0392157 0.517647 1'];
+const dangerChannels: [string, string] = ['0.843137 0 0.0823529', '0.843137 0 0.0823529'];
 
 function forScheme(light: string, dark: string): string {
   return document.documentElement.classList.contains('scheme-dark') ? dark : light;
@@ -72,7 +76,7 @@ export const TheMaskWashesWhatIsOffscreen = meta.story({
   },
 });
 
-/** Every card draws in its own role tint, and one that is not real yet reads dimmed beside them. */
+/** Every card draws in its role or account-kind tint, and unfinished cards read dimmed. */
 export const EachCardDrawsInItsRoleTint = meta.story({
   play: async ({ canvas }) => {
     const drawing = await canvas.findByRole('img', mapLabel);
@@ -81,10 +85,10 @@ export const EachCardDrawsInItsRoleTint = meta.story({
     await expect(drawn).toEqual([
       roleTint(gatewayChannels, '0.85'),
       roleTint(modelChannels, '0.85'),
-      roleTint(targetChannels, '0.85'),
+      roleTint(subscriptionChannels, '0.85'),
       roleTint(modelChannels, '0.45'),
-      roleTint(targetChannels, '0.45'),
-      roleTint(targetChannels, '0.45'),
+      roleTint(dangerChannels, '0.45'),
+      forScheme('color(srgb 0 0 0 / 0.125294)', 'color(srgb 1 1 1 / 0.125294)'),
     ]);
   },
 });

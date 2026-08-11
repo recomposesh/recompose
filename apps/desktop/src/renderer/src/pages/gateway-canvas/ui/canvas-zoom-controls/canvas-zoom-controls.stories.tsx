@@ -165,6 +165,7 @@ export const TheReachedToolShowsItsFocus = meta.story({
     const reached = await canvas.findByRole('button', { name: 'Reset zoom' });
 
     await waitFor(async () => expect(reached).toHaveFocus());
-    await expect(paintedStyle(reached).outlineWidth).toBe('2px');
+    await expect(paintedStyle(reached).outlineColor).toBe('rgba(0, 0, 0, 0)');
+    await expect(paintedStyle(reached).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
   },
 });

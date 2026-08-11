@@ -59,7 +59,7 @@ test('a press on the toolbar leaves the inspector standing, since that is using 
 test('a press on the status bar leaves the inspector standing too', async () => {
   const screen = await renderGateway();
 
-  pressOn(screen.getByText(/p95/).element());
+  pressOn(screen.getByText(/latency/).element());
 
   await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
 });
@@ -83,6 +83,19 @@ test('the toolbar control that opens the inspector closes it once, never twice',
   await userEvent.click(screen.getByRole('button', { name: 'Inspector' }));
 
   await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
+});
+
+test('closing the inspector from the toolbar clears the glowing canvas selection', async () => {
+  const screen = await renderGateway();
+  const gateway = screen.getByRole('button', { name: /Codex/ });
+
+  await userEvent.click(gateway);
+  await expect.element(gateway).toHaveAttribute('aria-pressed', 'true');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Inspector' }));
+
+  await expect.element(screen.getByText('Endpoint', theEndpoint)).not.toBeInTheDocument();
+  await expect.element(gateway).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('a press inside the inspector leaves it standing, since that is not looking away', async () => {
@@ -112,14 +125,16 @@ test('selecting the gateway card opens a closed inspector back up', async () => 
   await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
 });
 
-test('choosing another gateway leaves the inspector standing, being a choice not a look away', async () => {
+test('choosing another gateway puts the inspector away with the page it was reading', async () => {
   const claude = gatewaySeed({ slug: 'claude', displayName: 'Claude', port: 51235 });
   const screen = await renderAt('/gateways/codex', { gateways: [codex, claude] });
 
+  await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
+
   await userEvent.click(screen.getByRole('link', { name: /Claude/ }));
 
-  await expect.element(screen.getByRole('heading', { name: 'Claude' })).toBeVisible();
-  await expect.element(screen.getByText('Endpoint', theEndpoint)).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Claude/ })).toBeVisible();
+  await expect.element(screen.getByText('Endpoint', theEndpoint)).not.toBeInTheDocument();
 });
 
 test('a draft in flight survives the inspector closing and answers the next selection', async () => {

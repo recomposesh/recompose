@@ -35,6 +35,7 @@ describe('ipc request contracts', () => {
 
   test('write channels take exactly their domain payload', () => {
     expectTypeOf<IpcRequest<'gateways:save'>>().toEqualTypeOf<GatewayConfig>();
+    expectTypeOf<IpcRequest<'gateways:remove'>>().toEqualTypeOf<{ slug: string }>();
     expectTypeOf<IpcRequest<'settings:save'>>().toEqualTypeOf<SettingsPatch>();
     expectTypeOf<IpcRequest<'accounts:remove'>>().toEqualTypeOf<{ id: string }>();
   });
@@ -182,11 +183,13 @@ describe('bridge surface totality', () => {
     expectTypeOf<keyof RecomposeIpc>().toEqualTypeOf<IpcChannel>();
   });
 
-  test('the surface is exactly these twenty-seven channels, so a twenty-eighth arrives red', () => {
+  test('the surface is exactly these thirty-one channels, so a thirty-second arrives red', () => {
     expectTypeOf<IpcChannel>().toEqualTypeOf<
       | 'gateways:list'
       | 'gateways:save'
       | 'gateways:update'
+      | 'gateways:remove'
+      | 'gateways:set-port'
       | 'gateways:offer-port'
       | 'gateways:move-port'
       | 'settings:get'
@@ -206,6 +209,8 @@ describe('bridge surface totality', () => {
       | 'engine:start'
       | 'engine:stop'
       | 'engine:states'
+      | 'engine:replay-logs'
+      | 'system:logs-drawer'
       | 'subscriptions:list'
       | 'subscriptions:tools'
       | 'subscriptions:sign-in'
@@ -231,10 +236,11 @@ describe('push surface totality', () => {
     expectTypeOf<keyof RecomposeIpcEvents>().toEqualTypeOf<IpcEvent>();
   });
 
-  test('the state, traffic, account-change, and canvas pushes are the complete vocabulary', () => {
+  test('the state, traffic, logs, account-change, and canvas pushes are the complete vocabulary', () => {
     expectTypeOf<IpcEvent>().toEqualTypeOf<
       | 'engine:state'
       | 'engine:traffic'
+      | 'engine:logs'
       | 'accounts:changed'
       | 'canvas:command'
       | 'settings:changed'
@@ -242,9 +248,9 @@ describe('push surface totality', () => {
     >();
   });
 
-  test('a canvas command names one of the four acts the Canvas menu offers', () => {
+  test('a canvas command names one of the five acts the Gateway menu offers', () => {
     expectTypeOf<IpcEventPayload<'canvas:command'>>().toEqualTypeOf<
-      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy'
+      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy' | 'toggle-logs'
     >();
   });
 

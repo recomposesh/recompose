@@ -29,7 +29,7 @@ const standingMarch: Record<CableStanding, string> = {
   resting: '',
   live: '',
   served: '',
-  failed: 'cable-march',
+  failed: '',
   broken: '',
   draft: '',
   pending: '',
@@ -38,8 +38,8 @@ const standingMarch: Record<CableStanding, string> = {
 
 const standingPulse: Record<CableStanding, string> = {
   resting: '',
-  live: '',
-  served: 'cable-pulse',
+  live: 'cable-pulse',
+  served: '',
   failed: '',
   broken: '',
   draft: '',

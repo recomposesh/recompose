@@ -40,11 +40,12 @@ const restingFlow: CanvasFlowWiring = {
   onEdgesDelete: () => {},
   onInit: () => {},
   onTidy: () => {},
+  onNodeFocus: () => {},
 };
 
 const meta = preview.meta({
   component: GatewayStage,
-  args: { flow: restingFlow, announced: undefined },
+  args: { slug: 'my-gateway', flow: restingFlow, announced: undefined },
   decorators: [
     (Story) => (
       <div className="flex h-150 bg-surface-content">

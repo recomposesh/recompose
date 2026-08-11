@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { accountsDocumentSchema, credentialedAccountKindSchema } from './accounts';
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
+import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
@@ -75,6 +76,10 @@ export const ipcChannels = {
     request: gatewayConfigSchema,
     response: ipcResult(z.array(gatewayConfigSchema)),
   },
+  'gateways:remove': {
+    request: z.strictObject({ slug: gatewaySlugSchema }),
+    response: ipcResult(z.array(gatewayConfigSchema)),
+  },
   'settings:get': { request: z.void(), response: ipcResult(settingsSchema) },
   'settings:save': { request: settingsPatchSchema, response: ipcResult(settingsSchema) },
   'accounts:list': { request: z.void(), response: ipcResult(accountsDocumentSchema) },
@@ -115,6 +120,10 @@ export const ipcChannels = {
     request: z.strictObject({ slug: gatewaySlugSchema }),
     response: ipcResult(z.array(gatewayConfigSchema)),
   },
+  'gateways:set-port': {
+    request: z.strictObject({ slug: gatewaySlugSchema, port: gatewayPortSchema }),
+    response: ipcResult(z.array(gatewayConfigSchema)),
+  },
   'engine:start': {
     request: z.strictObject({ slug: gatewaySlugSchema }),
     response: ipcResult(gatewayEngineStateSchema),
@@ -124,6 +133,18 @@ export const ipcChannels = {
     response: ipcResult(gatewayEngineStateSchema),
   },
   'engine:states': { request: z.void(), response: ipcResult(engineStatesSchema) },
+  /**
+   * Asks main to send the retained request log again, for a renderer that just bound.
+   *
+   * @summary The rows come back on `engine:logs` as backfill runs rather than in this answer,
+   * because a full history is 10,000 rows and one reply carrying them all is the giant message the
+   * chunking exists to avoid. Every run merges by row id, so asking twice costs nothing.
+   */
+  'engine:replay-logs': { request: z.void(), response: ipcResult(z.void()) },
+  'system:logs-drawer': {
+    request: z.strictObject({ open: z.boolean() }),
+    response: ipcResult(z.void()),
+  },
   'subscriptions:list': { request: z.void(), response: subscriptionViewsResponse },
   'subscriptions:tools': {
     request: z.void(),
@@ -158,8 +179,11 @@ export type RecomposeIpc = {
 export const ipcEvents = {
   'engine:state': { payload: engineStatesSchema },
   'engine:traffic': { payload: gatewayTrafficSchema },
+  'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
-  'canvas:command': { payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy']) },
+  'canvas:command': {
+    payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs']),
+  },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
 } as const;

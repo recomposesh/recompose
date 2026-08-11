@@ -17,12 +17,12 @@ Feature: A cable is a first-class object
     Then "fast" stands bound to the key account
     And no cable runs from "fast" to the subscription account
 
-  Scenario: A new cable from a bound virtual model rebinds it
+  Scenario: A bound virtual model offers no new cable
     Given a virtual model "fast" bound to a subscription account
     And a stored key account standing as a target node
-    When the person drags a new cable from the port of "fast" onto the key account node
-    Then "fast" stands bound to the key account
-    And the old cable falls
+    When the person tries to pull a new cable from the port of "fast"
+    Then no cable leaves the port
+    And "fast" stays bound to the subscription account
 
   Scenario: Delete unbinds a selected cable without confirmation
     Given the cable of a virtual model "fast" selected

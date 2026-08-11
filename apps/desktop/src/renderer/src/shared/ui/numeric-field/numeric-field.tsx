@@ -81,7 +81,7 @@ export function NumericField({
       <Field.Control
         aria-describedby={description === undefined ? undefined : descriptionId}
         aria-label={label}
-        className="field-control w-port text-end tabular-nums focus-ring"
+        className="field-control w-port text-end tabular-nums"
         inputMode="numeric"
         onBlur={commit}
         onChange={(event) => {

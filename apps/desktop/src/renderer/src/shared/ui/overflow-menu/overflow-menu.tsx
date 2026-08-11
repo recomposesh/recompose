@@ -44,7 +44,7 @@ export function OverflowMenu({ label, items }: OverflowMenuProps) {
     <Menu.Root>
       <Menu.Trigger
         aria-label={label}
-        className="flex size-6 items-center justify-center rounded-control text-ink-secondary focus-ring hover:bg-surface-hover active:bg-surface-pressed"
+        className="flex size-6 items-center justify-center rounded-control focus-ring text-ink-secondary hover:bg-surface-hover active:bg-surface-pressed"
       >
         <Icon className="size-4" name="more" />
       </Menu.Trigger>

@@ -26,6 +26,8 @@
     "src/renderer/src/pages/gateway-canvas/lib/model-draft.ts",
     "src/renderer/src/pages/gateway-canvas/lib/cable-announcements.ts",
     "src/renderer/src/pages/gateway-canvas/lib/cable-standing.ts",
+    "src/renderer/src/pages/gateway-canvas/lib/traffic-aggregates.ts",
+    "src/renderer/src/pages/gateway-canvas/lib/log-scope.ts",
     "scripts/**/*.mts",
     "!scripts/**/*.test.mts",
     "!scripts/generate-icons.mts",

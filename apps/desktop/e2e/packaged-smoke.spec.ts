@@ -141,13 +141,14 @@ test('the packaged canvas paints a wired gateway under the strict style policy',
     try {
       const renderer = await findRendererPage(browser);
       const complaints = noiseFrom(renderer);
-      const accountId = await wiredGateway(renderer);
+
+      await wiredGateway(renderer);
 
       await openGatewayCanvas(renderer, PACKAGED_GATEWAY);
 
       await expect
         .poll(async () => standingNodes(renderer))
-        .toEqual([GATEWAY_NODE, modelNodeId(PACKAGED_MODEL), targetNodeId(accountId)]);
+        .toEqual([GATEWAY_NODE, modelNodeId(PACKAGED_MODEL), targetNodeId(PACKAGED_MODEL)]);
       expect(await standingCables(renderer)).toEqual([
         wireId(PACKAGED_MODEL),
         cableId(PACKAGED_MODEL),
@@ -155,11 +156,12 @@ test('the packaged canvas paints a wired gateway under the strict style policy',
       expect(await cablePath(renderer, cableId(PACKAGED_MODEL))).not.toBe('');
       expect(await cablePath(renderer, wireId(PACKAGED_MODEL))).not.toBe('');
       await expect(
-        cableBetween(renderer, modelNodeId(PACKAGED_MODEL), targetNodeId(accountId)),
+        cableBetween(renderer, modelNodeId(PACKAGED_MODEL), targetNodeId(PACKAGED_MODEL)),
       ).toBeVisible();
       expect((await nodeSeat(renderer, modelNodeId(PACKAGED_MODEL))).x).toBeGreaterThan(
         (await nodeSeat(renderer, GATEWAY_NODE)).x,
       );
+      await renderer.getByRole('button', { name: 'Reset zoom' }).click();
       expect(await hitTarget(sourcePort(renderer, GATEWAY_NODE))).toEqual(PORT_MEASURE);
       expect(await viewportZoom(renderer)).toBeGreaterThan(0);
       expect(complaints()).toEqual([]);

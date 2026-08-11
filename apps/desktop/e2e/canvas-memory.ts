@@ -30,7 +30,7 @@ const compositionsBefore = new WeakMap<Page, Composition>();
 
 const cablesInFlight = new WeakSet<Page>();
 
-function recalled<Kept>(held: WeakMap<Page, Kept>, page: Page, missing: string): Kept {
+export function recalled<Kept>(held: WeakMap<Page, Kept>, page: Page, missing: string): Kept {
   const kept = held.get(page);
 
   if (kept === undefined) {
@@ -109,11 +109,11 @@ export function letGoOfAnyCableInFlight(page: Page): boolean {
 /** Where a surface stands in the window, or nothing at all while it stands nowhere. */
 type Standing = { x: number; y: number; width: number; height: number } | null;
 
-/** How far a card's corner sits from a spot, which nothing standing reads as immeasurably far. */
-function cornerFrom(card: Standing, spot: Point): number {
+/** How far a card's incoming edge sits from a spot, which nothing standing reads as immeasurably far. */
+function incomingEdgeFrom(card: Standing, spot: Point): number {
   return card === null
     ? Number.POSITIVE_INFINITY
-    : Math.max(Math.abs(card.x - spot.x), Math.abs(card.y - spot.y));
+    : Math.max(Math.abs(card.x - spot.x), Math.abs(card.y + card.height / 2 - spot.y));
 }
 
 /** How an anchored surface sits against the card it belongs to: level with it, and under its foot. */
@@ -128,10 +128,10 @@ function hangingOff(under: Standing, anchor: Standing): { level: boolean; beneat
   };
 }
 
-/** Reads a card as standing where a cable was let go, within the width of a pointer's aim. */
+/** Reads a card's incoming edge as meeting the spot a cable was let go at, within a pointer's aim. */
 export async function standsAt(card: Locator, spot: Point): Promise<void> {
   await expect
-    .poll(async () => cornerFrom(await card.boundingBox(), spot))
+    .poll(async () => incomingEdgeFrom(await card.boundingBox(), spot))
     .toBeLessThanOrEqual(AT_THE_SPOT);
 }
 

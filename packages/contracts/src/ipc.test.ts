@@ -18,6 +18,7 @@ const channelNames: IpcChannel[] = [
   'system:title-bar-double-click',
   'gateways:offer-port',
   'gateways:move-port',
+  'gateways:set-port',
   'engine:start',
   'engine:stop',
   'engine:states',
@@ -31,10 +32,13 @@ const channelNames: IpcChannel[] = [
   'accounts:check-runtime',
   'accounts:list-models',
   'gateways:update',
+  'gateways:remove',
+  'engine:replay-logs',
+  'system:logs-drawer',
 ];
 
 describe('ipc channel registry', () => {
-  test('exactly the twenty-seven specified channels exist', () => {
+  test('exactly the thirty-one specified channels exist', () => {
     expect(Object.keys(ipcChannels).sort()).toEqual([...channelNames].sort());
   });
 
@@ -199,6 +203,22 @@ describe('the channels that answer with nothing', () => {
     expect(
       ipcChannels['system:open-config-folder'].response.parse({ ok: true, value: undefined }),
     ).toEqual({ ok: true, value: undefined });
+  });
+
+  test('asking for the log history again carries no rows back, because they arrive by push', () => {
+    expect(ipcChannels['engine:replay-logs'].request.safeParse(undefined).success).toBe(true);
+    expect(
+      ipcChannels['engine:replay-logs'].response.parse({ ok: true, value: undefined }),
+    ).toEqual({ ok: true, value: undefined });
+  });
+
+  test('telling main the drawer stands open carries the standing and nothing else', () => {
+    expect(ipcChannels['system:logs-drawer'].request.parse({ open: true })).toEqual({ open: true });
+    expect(ipcChannels['system:logs-drawer'].request.parse({ open: false })).toEqual({
+      open: false,
+    });
+    expect(() => ipcChannels['system:logs-drawer'].request.parse({})).toThrow();
+    expect(() => ipcChannels['system:logs-drawer'].request.parse({ open: 'yes' })).toThrow();
   });
 });
 

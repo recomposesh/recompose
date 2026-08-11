@@ -7,7 +7,7 @@ import { AddressPill } from './address-pill';
 const meta = preview.meta({
   component: AddressPill,
   args: {
-    address: 'http://localhost:51234',
+    address: 'http://127.0.0.1:51234',
     port: 51234,
     status: 'running' as const,
   },
@@ -28,7 +28,7 @@ const meta = preview.meta({
  */
 export const Running = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('localhost:51234')).toBeVisible();
+    await expect(await canvas.findByText('127.0.0.1:51234')).toBeVisible();
     await expect(await canvas.findByText('Running')).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Copy address' })).toBeVisible();
   },

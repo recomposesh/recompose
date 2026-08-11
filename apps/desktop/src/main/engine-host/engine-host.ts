@@ -1,7 +1,6 @@
 import {
   engineReportSchema,
   engineSpendRequestSchema,
-  engineSubscriptionCredentialUpdateSchema,
   type EngineDirective,
   type EngineGateway,
   type EngineReport,
@@ -10,11 +9,15 @@ import {
 } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
 
+import type { Waiter } from './directive-waiters';
 import type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 import type { EngineLooks } from './engine-looks';
 import type { SpendGrantFor } from './engine-spend';
+import type { LogsDesk } from './logs-ledger';
 import type { TrafficDesk } from './traffic-ledger';
 
+import { refuseEveryWaiter } from './directive-waiters';
+import { persistRefreshedCredential } from './engine-host-credential-update';
 import {
   answerLook,
   foldEveryLook,
@@ -26,6 +29,7 @@ import {
 import { answerSpendRequest } from './engine-spend';
 import { allStopped, foldEngineReport } from './engine-state-ledger';
 import { createGatewayOrder } from './gateway-order';
+import { openLogsDesk } from './logs-ledger';
 import { openTrafficDesk } from './traffic-ledger';
 
 export const DIRECTIVE_TIMEOUT_MS = 5000;
@@ -34,11 +38,6 @@ export { PROBE_TIMEOUT_MS } from './engine-looks';
 export type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 
 type StateListener = (states: EngineStates) => void;
-
-type Waiter = {
-  answer: (state: GatewayEngineState) => void;
-  refuse: (reason: Error) => void;
-};
 
 type Resident = {
   states: EngineStates;
@@ -50,6 +49,7 @@ type Resident = {
   awaitingReport: Map<string, Waiter>;
   looks: EngineLooks;
   traffic: TrafficDesk;
+  logs: LogsDesk;
 };
 
 function publish(resident: Resident, next: EngineStates): void {
@@ -57,16 +57,6 @@ function publish(resident: Resident, next: EngineStates): void {
 
   for (const subscriber of resident.subscribers) {
     subscriber(next);
-  }
-}
-
-function refuseEveryWaiter(resident: Resident, reason: Error): void {
-  const waiting = [...resident.awaitingReport.values()];
-
-  resident.awaitingReport.clear();
-
-  for (const waiter of waiting) {
-    waiter.refuse(reason);
   }
 }
 
@@ -82,6 +72,12 @@ function answerState(resident: Resident, report: Extract<EngineReport, { kind: '
   }
 
   resident.awaitingReport.delete(report.answers);
+
+  if (report.state.status === 'stopped') {
+    resident.traffic.interrupt(report.slug);
+    resident.logs.interrupt(report.slug);
+  }
+
   publish(resident, foldEngineReport(resident.states, report));
   waiting.answer(report.state);
 }
@@ -96,8 +92,12 @@ function routeReport(resident: Resident, report: EngineReport): void {
   answerLook(resident.looks, report);
 }
 
+function aDeskHeardIt(resident: Resident, message: unknown): boolean {
+  return resident.traffic.hears(message) || resident.logs.hears(message);
+}
+
 function receiveMessage(resident: Resident, child: EngineChild, message: unknown): void {
-  if (resident.traffic.hears(message)) {
+  if (aDeskHeardIt(resident, message)) {
     return;
   }
 
@@ -117,33 +117,7 @@ function receiveMessage(resident: Resident, child: EngineChild, message: unknown
     return;
   }
 
-  const update = engineSubscriptionCredentialUpdateSchema.safeParse(message);
-
-  if (update.success) {
-    void resident
-      .storeSubscriptionCredential(
-        update.data.provider,
-        update.data.accountId,
-        update.data.credential,
-      )
-      .then(
-        () => {
-          child.postMessage({
-            kind: 'subscription-credential-updated',
-            answers: update.data.id,
-            verdict: 'stored',
-          });
-        },
-        (error: unknown) => {
-          console.error('recompose could not persist a refreshed subscription credential.', error);
-          child.postMessage({
-            kind: 'subscription-credential-updated',
-            answers: update.data.id,
-            verdict: 'failed',
-          });
-        },
-      );
-
+  if (persistRefreshedCredential(child, resident.storeSubscriptionCredential, message)) {
     return;
   }
 
@@ -157,9 +131,14 @@ function receiveExit(resident: Resident, code: number): void {
 
   console.error(death.message);
 
+  for (const slug of Object.keys(resident.states)) {
+    resident.traffic.interrupt(slug);
+    resident.logs.interrupt(slug);
+  }
+
   resident.child = null;
   publish(resident, allStopped(Object.keys(resident.states)));
-  refuseEveryWaiter(resident, death);
+  refuseEveryWaiter(resident.awaitingReport, death);
   foldEveryLook(resident.looks);
 }
 
@@ -196,6 +175,8 @@ async function sendDirective(
 
   if (directive.kind === 'start') {
     resident.traffic.keepOnly(directive.gateway);
+    resident.logs.resume(directive.gateway.slug);
+    resident.logs.backfill();
   }
 
   return new Promise<GatewayEngineState>((answer, refuse) => {
@@ -241,8 +222,8 @@ async function restartGateway(
   return sendDirective(resident, { kind: 'start', id: randomUUID(), gateway });
 }
 
-export function createEngineHost(deps: EngineHostDeps): EngineHost {
-  const resident: Resident = {
+function residentFor(deps: EngineHostDeps): Resident {
+  return {
     states: allStopped(deps.knownSlugs),
     child: null,
     spawnChild: deps.spawnChild,
@@ -256,7 +237,12 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     awaitingReport: new Map(),
     looks: openEngineLooks(),
     traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
+    logs: openLogsDesk(deps.onLogs ?? (() => undefined)),
   };
+}
+
+export function createEngineHost(deps: EngineHostDeps): EngineHost {
+  const resident = residentFor(deps);
   const inGatewayOrder = createGatewayOrder();
 
   return {
@@ -277,6 +263,20 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     listModels: async (origin, custody) =>
       listModelsThroughTheChild(resident.looks, () => runningChild(resident), origin, custody),
     states: () => resident.states,
+    replayLogs: () => {
+      resident.logs.backfill();
+    },
+    forget: (slug) => {
+      resident.traffic.forget(slug);
+      resident.logs.forget(slug);
+
+      if (resident.states[slug] !== undefined) {
+        const remaining = { ...resident.states };
+
+        delete remaining[slug];
+        publish(resident, remaining);
+      }
+    },
     onStatesChanged: (listener) => {
       resident.subscribers.add(listener);
 

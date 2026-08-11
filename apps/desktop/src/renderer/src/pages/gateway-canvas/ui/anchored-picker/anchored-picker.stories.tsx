@@ -25,7 +25,7 @@ function CanvasFooting({ children }: { children: ReactNode }) {
     <ReactFlowProvider>
       <div className="relative h-96 w-160 overflow-hidden bg-surface-content dot-grid">
         <div
-          className="absolute flex h-19.5 w-39.5 items-center justify-center rounded-canvas-card border border-dashed border-line-strong bg-surface-card text-card-title text-ink"
+          className="absolute flex h-22 w-46 items-center justify-center rounded-canvas-card border border-dashed border-line-strong bg-surface-card text-card-title text-ink"
           data-pending-card=""
           style={{ transform: `translate(${String(seat.x)}px, ${String(seat.y)}px)` }}
         >

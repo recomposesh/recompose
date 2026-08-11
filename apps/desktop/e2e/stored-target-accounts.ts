@@ -27,7 +27,7 @@ const ANTHROPIC_KEY_ENTRY = 'Anthropic API';
 const AGGREGATOR_KEY_ENTRY = 'OpenRouter';
 
 /** Every account row recompose holds, read through the channel every surface reads it with. */
-async function storedAccounts(page: Page): Promise<Account[]> {
+export async function storedAccounts(page: Page): Promise<Account[]> {
   const answer = await page.evaluate(async () => window.recompose['accounts:list']());
 
   if (!answer.ok) {

@@ -19,6 +19,7 @@ import { AddProviderAct } from '../../pages/providers';
 import {
   accountsQueryOptions,
   bindAccountChangesToCache,
+  bindEngineLogsToCache,
   bindEngineStatesToCache,
   bindEngineTrafficToCache,
   bindSettingsToCache,
@@ -26,10 +27,9 @@ import {
   gatewaysQueryOptions,
   settingsQueryOptions,
 } from '../../shared/api';
-import { sidebarHidden, subscribeToSidebarVisibility } from '../../shared/lib';
+import { sidebarHidden, subscribeToSidebarVisibility, useArrowWalk } from '../../shared/lib';
 import { SidebarEdge, SidebarToggle } from '../../shared/ui';
 import { CreateGatewaySheet } from '../../widgets/gateway/create';
-import { StatusBar } from '../../widgets/status-bar';
 import { useTitleBarDoubleClick } from '../lib/use-title-bar-double-click';
 import { AppSidebar } from './-app-sidebar';
 import { AppToolbar } from './-app-toolbar';
@@ -80,12 +80,15 @@ function useWindowBand(sidebarAway: boolean): void {
 /**
  * Points every push the main process makes at the query cache, for as long as the window stands.
  *
- * @summary Each push carries a whole snapshot, so the cache is written rather than reconciled and
- * a screen reads the same answer whether it asked or was told.
+ * @summary A state push carries a whole snapshot, so the cache is written rather than reconciled
+ * and a screen reads the same answer whether it asked or was told. A log push carries a run of rows
+ * instead, which merges into what the cache already holds, because the engine buffer behind it
+ * drains as it is read and a replace would take rows a person is reading.
  */
 function usePushedCaches(queryClient: QueryClient): void {
   useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineTrafficToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineLogsToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
   useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
 }
@@ -115,6 +118,7 @@ function RootLayout() {
   const devtoolsAsked = useDevtoolsAsked();
 
   useTitleBarDoubleClick();
+  useArrowWalk();
 
   usePushedCaches(queryClient);
   useWindowBand(sidebarAway);
@@ -134,7 +138,6 @@ function RootLayout() {
         <div className="relative flex-1 overflow-y-auto">
           <Outlet />
         </div>
-        {slug !== undefined && <StatusBar />}
       </main>
       <CreateGatewaySheet
         onCreated={(slug) => {

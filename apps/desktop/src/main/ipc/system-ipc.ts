@@ -20,6 +20,8 @@ export type SystemIpcContext = {
   placeWindowButtons: (position: { x: number; y: number }) => void;
   /** Does what the person set a title-bar double-click to do, to the window they double-clicked. */
   answerTitleBarDoubleClick: () => void;
+  /** Carries whether the logs drawer stands open, which only the renderer knows, to the menu tick. */
+  noteLogsDrawer: (open: boolean) => void;
 };
 
 export type SystemIpcHandlers = Pick<
@@ -28,6 +30,7 @@ export type SystemIpcHandlers = Pick<
   | 'system:open-config-folder'
   | 'system:window-band'
   | 'system:title-bar-double-click'
+  | 'system:logs-drawer'
 >;
 
 function observeSystem(ctx: SystemIpcContext): SystemState {
@@ -63,6 +66,11 @@ export function createSystemIpcHandlers(ctx: SystemIpcContext): SystemIpcHandler
     'system:window-band': async (band) => Promise.resolve(placedWindowButtons(ctx, band)),
     'system:title-bar-double-click': async () => {
       ctx.answerTitleBarDoubleClick();
+
+      return Promise.resolve({ ok: true as const, value: undefined });
+    },
+    'system:logs-drawer': async ({ open }) => {
+      ctx.noteLogsDrawer(open);
 
       return Promise.resolve({ ok: true as const, value: undefined });
     },

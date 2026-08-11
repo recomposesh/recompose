@@ -12,7 +12,7 @@ function windowRegionOf(element: Element | null | undefined): string {
 const meta = preview.meta({
   component: ToolbarStrip,
   args: {
-    address: 'http://localhost:51234',
+    address: 'http://127.0.0.1:51234',
     name: 'Codex',
     onRun: () => undefined,
     port: 51234,

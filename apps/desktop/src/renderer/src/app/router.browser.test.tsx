@@ -179,11 +179,11 @@ test('the /settings route loader warms the settings and system caches before any
   });
 });
 
-test('a valid gateway slug opens the stage and the inspector for that gateway', async () => {
+test('a valid gateway slug opens the stage with the inspector away', async () => {
   const screen = await renderAt('/gateways/codex', { gateways: [codex] });
 
-  await expect.element(screen.getByRole('heading', { name: 'Codex' })).toBeVisible();
-  await expect.element(screen.getByRole('button', { name: /Codex/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Codex/ }).first()).toBeVisible();
+  await expect.element(screen.getByText('Endpoint', { exact: true })).not.toBeInTheDocument();
 });
 
 test('a gateway slug nothing is stored under lands on the not-found state', async () => {
@@ -208,19 +208,19 @@ test('the sidebar offers no way home, because home is no longer a place', async 
 test('a launch opens the gateway the last session was looking at', async () => {
   const first = await renderAt('/gateways/claude', { gateways: [codex, claude] });
 
-  await expect.element(first.getByRole('heading', { name: 'claude' })).toBeVisible();
+  await expect.element(first.getByRole('button', { name: /Claude/ }).first()).toBeVisible();
 
   await first.unmount();
 
   const second = await renderAt('/', { gateways: [codex, claude] });
 
-  await expect.element(second.getByRole('heading', { name: 'claude' })).toBeVisible();
+  await expect.element(second.getByRole('button', { name: /Claude/ }).first()).toBeVisible();
 });
 
 test('a launch whose remembered gateway has gone invites a new one instead', async () => {
   const first = await renderAt('/gateways/claude', { gateways: [codex, claude] });
 
-  await expect.element(first.getByRole('heading', { name: 'claude' })).toBeVisible();
+  await expect.element(first.getByRole('button', { name: /Claude/ }).first()).toBeVisible();
 
   await first.unmount();
 

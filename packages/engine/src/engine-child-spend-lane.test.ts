@@ -50,9 +50,9 @@ describe('a request arriving under a defined name', () => {
 
     const answering = askUnder(child, 'fast');
 
-    await reportsReach(child.parent, 2);
+    await reportsReach(child.parent, 3);
 
-    const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+    const ask = engineSpendRequestSchema.parse(child.parent.reports.at(-1));
 
     expect(ask).toMatchObject({ kind: 'spend-request', slug: 'codex', virtualModel: 'fast' });
 
@@ -71,9 +71,9 @@ describe('a request arriving under a defined name', () => {
 
     const answering = askUnder(child, 'fast');
 
-    await reportsReach(child.parent, 2);
+    await reportsReach(child.parent, 3);
 
-    const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+    const ask = engineSpendRequestSchema.parse(child.parent.reports.at(-1));
 
     child.parent.send({
       kind: 'spend-grant',
@@ -95,11 +95,13 @@ describe('two grants in flight at once', () => {
     const underFast = askUnder(child, 'fast');
     const underSmart = askUnder(child, 'smart');
 
-    await reportsReach(child.parent, 3);
+    await reportsReach(child.parent, 5);
 
-    const asks = [child.parent.reports[1], child.parent.reports[2]].map((report) =>
-      engineSpendRequestSchema.parse(report),
-    );
+    const asks = child.parent.reports.flatMap((report) => {
+      const read = engineSpendRequestSchema.safeParse(report);
+
+      return read.success ? [read.data] : [];
+    });
     const askFor = (virtualModel: string): string => {
       const ask = asks.find((candidate) => candidate.virtualModel === virtualModel);
 
@@ -141,9 +143,9 @@ describe('a grant answering an open request', () => {
 
       const answering = askUnder(child, 'fast');
 
-      await reportsReach(child.parent, 2);
+      await reportsReach(child.parent, 3);
 
-      const ask = engineSpendRequestSchema.parse(child.parent.reports[1]);
+      const ask = engineSpendRequestSchema.parse(child.parent.reports.at(-1));
 
       child.parent.send(aGrantAnswering(ask.id, 'http://127.0.0.1:4242'));
       await answering;

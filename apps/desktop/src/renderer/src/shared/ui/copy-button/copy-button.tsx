@@ -71,7 +71,7 @@ export function CopyButton({ label, value, announcement = ADDRESS_COPIED }: Copy
     <>
       <button
         aria-label={label}
-        className="inline-flex size-4.5 items-center justify-center rounded-chip text-ink-secondary focus-ring hover:text-ink"
+        className="inline-flex size-4.5 items-center justify-center rounded-chip focus-ring text-ink-secondary hover:text-ink"
         onClick={() => {
           void navigator.clipboard
             .writeText(value)

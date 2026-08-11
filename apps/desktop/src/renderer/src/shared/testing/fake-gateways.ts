@@ -1,23 +1,22 @@
-import type {
-  EngineStates,
-  GatewayConfig,
-  GatewayTraffic,
-  RecomposeIpc,
-  VirtualModel,
-} from '@recompose/contracts';
+import type { EngineStates, GatewayConfig, RecomposeIpc, VirtualModel } from '@recompose/contracts';
 
 import { GATEWAY_CONFIG_VERSION, ipcChannels } from '@recompose/contracts';
+
+import { emitEngineStates, replayEngineLogs } from './fake-engine-pushes';
 
 export type GatewayHandlers = Pick<
   RecomposeIpc,
   | 'gateways:list'
   | 'gateways:save'
   | 'gateways:update'
+  | 'gateways:remove'
+  | 'gateways:set-port'
   | 'gateways:offer-port'
   | 'gateways:move-port'
   | 'engine:start'
   | 'engine:stop'
   | 'engine:states'
+  | 'engine:replay-logs'
 >;
 
 export type GatewaySeed = {
@@ -49,80 +48,6 @@ export function gatewaySeed({
 }
 
 const FIRST_OFFERED_PORT = 51234;
-
-type PushLine<Payload> = {
-  forget: () => void;
-  listen: (listener: (payload: Payload) => void) => () => void;
-  emit: (payload: Payload) => void;
-};
-
-/**
- * One push the main process would make, standing on its own so a spec can drive it.
- *
- * @summary Every push works the same way, so the knowledge of how one behaves lives here once and
- * each line is only its payload and its name.
- */
-function aPushLine<Payload>(): PushLine<Payload> {
-  const listeners = new Set<(payload: Payload) => void>();
-
-  return {
-    forget: () => {
-      listeners.clear();
-    },
-    listen: (listener) => {
-      listeners.add(listener);
-
-      return () => {
-        listeners.delete(listener);
-      };
-    },
-    emit: (payload) => {
-      for (const listener of listeners) {
-        listener(payload);
-      }
-    },
-  };
-}
-
-const engineStateLine = aPushLine<EngineStates>();
-
-const engineTrafficLine = aPushLine<GatewayTraffic>();
-
-export function forgetEngineStateListeners(): void {
-  engineStateLine.forget();
-}
-
-export function listenForEngineStates(listener: (states: EngineStates) => void): () => void {
-  return engineStateLine.listen(listener);
-}
-
-/**
- * Pushes a lifecycle snapshot at everything listening, the way the main process would.
- *
- * @summary Reach for it in a story or a spec that has to show state arriving on its own, with
- * nothing on screen having asked for it.
- */
-export function emitEngineStates(states: EngineStates): void {
-  engineStateLine.emit(states);
-}
-
-export function forgetEngineTrafficListeners(): void {
-  engineTrafficLine.forget();
-}
-
-export function listenForEngineTraffic(listener: (traffic: GatewayTraffic) => void): () => void {
-  return engineTrafficLine.listen(listener);
-}
-
-/**
- * Pushes a traffic snapshot at everything listening, the way the main process would.
- *
- * @summary Reach for it in a story or a spec that has to show a cable answering a request nobody
- * on screen asked about.
- */
-export function emitEngineTraffic(traffic: GatewayTraffic): void {
-  engineTrafficLine.emit(traffic);
-}
 
 type Refusal = { code: 'validation-failed' | 'name-conflict' | 'port-conflict'; message: string };
 
@@ -160,6 +85,13 @@ function unheldSlug(slug: string): { code: 'storage-failed'; message: string } {
   return {
     code: 'storage-failed',
     message: `recompose stores no gateway under the slug "${slug}", so it has nothing to rewrite.`,
+  };
+}
+
+function unremovableSlug(slug: string): { code: 'storage-failed'; message: string } {
+  return {
+    code: 'storage-failed',
+    message: `recompose stores no gateway under the slug "${slug}", so it has nothing to remove.`,
   };
 }
 
@@ -252,6 +184,55 @@ function rewritingGateway(store: GatewayStore): GatewayHandlers['gateways:update
   };
 }
 
+function storedUnder(store: GatewayStore, slug: string) {
+  return store.held().find((one) => one.slug === slug);
+}
+
+function removingGateway(store: GatewayStore): GatewayHandlers['gateways:remove'] {
+  return async ({ slug }) => {
+    if (storedUnder(store, slug) === undefined) {
+      return Promise.resolve({ ok: false, error: unremovableSlug(slug) });
+    }
+
+    if (store.isServing(slug)) {
+      store.report(slug, { status: 'stopped' });
+    }
+
+    return Promise.resolve(
+      store.landWithoutServing(store.held().filter((one) => one.slug !== slug)),
+    );
+  };
+}
+
+function settingGatewayPort(store: GatewayStore): GatewayHandlers['gateways:set-port'] {
+  return async ({ slug, port }) => {
+    const held = storedUnder(store, slug);
+
+    if (held === undefined) {
+      return Promise.resolve({ ok: false, error: unremovableSlug(slug) });
+    }
+
+    if (held.port === port) {
+      return Promise.resolve({ ok: true, value: store.held() });
+    }
+
+    const holder = store.held().find((one) => one.port === port);
+
+    if (holder !== undefined) {
+      return Promise.resolve({
+        ok: false,
+        error: { code: 'port-conflict', message: `${holder.slug} already holds this port.` },
+      });
+    }
+
+    const next = store.held().map((one) => (one.slug === slug ? { ...one, port } : one));
+
+    return Promise.resolve(
+      store.isServing(slug) ? store.land(next, slug) : store.landWithoutServing(next),
+    );
+  };
+}
+
 /**
  * The gateway half of the fake bridge, mirroring what main does with a stored document.
  *
@@ -271,6 +252,8 @@ export function gatewayHandlers(
     'gateways:list': async () => Promise.resolve({ ok: true, value: store.held() }),
     'gateways:save': savingGateway(store),
     'gateways:update': rewritingGateway(store),
+    'gateways:remove': removingGateway(store),
+    'gateways:set-port': settingGatewayPort(store),
     'gateways:offer-port': async () => Promise.resolve({ ok: true, value: store.freePort() }),
     'gateways:move-port': async ({ slug }) => {
       const moved = store.freePort();
@@ -295,5 +278,10 @@ export function gatewayHandlers(
       return Promise.resolve({ ok: true, value: { status: 'stopped' } });
     },
     'engine:states': async () => Promise.resolve({ ok: true, value: store.states() }),
+    'engine:replay-logs': async () => {
+      replayEngineLogs();
+
+      return Promise.resolve({ ok: true, value: undefined });
+    },
   };
 }

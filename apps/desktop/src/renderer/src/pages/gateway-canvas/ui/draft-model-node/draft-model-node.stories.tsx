@@ -46,7 +46,10 @@ export const ASelectedDraftRingsInTheModelTint = meta.story({
     const card = await canvas.findByRole('button', named);
 
     await expect(paintedStyle(card).boxShadow).toContain(
-      inScheme('color(srgb 0 0.478431 1 / 0.55)', 'color(srgb 0.0392157 0.517647 1 / 0.55)'),
+      inScheme(
+        'color(srgb 0.678431 0.176471 0.458824 / 0.55)',
+        'color(srgb 1 0.447059 0.768627 / 0.55)',
+      ),
     );
     await expect(paintedStyle(card).borderStyle).toBe('dashed');
   },
@@ -56,7 +59,7 @@ export const ASelectedDraftRingsInTheModelTint = meta.story({
 export const TheCardQuietensRatherThanDims = meta.story({
   play: async ({ canvas }) => {
     const card = await canvas.findByRole('button', named);
-    const quiet = inScheme('rgba(0, 0, 0, 0.56)', 'rgba(255, 255, 255, 0.55)');
+    const quiet = inScheme('rgba(0, 0, 0, 0.56)', 'rgba(255, 255, 255, 0.58)');
 
     await expect(paintedStyle(card).opacity).toBe('1');
     await expect(paintedStyle(card.children[1]).color).toBe(quiet);

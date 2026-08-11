@@ -21,10 +21,20 @@ const meta = preview.meta({
 
 const SERVED_INK = { light: 'rgb(26, 158, 51)', dark: 'rgb(50, 215, 75)' };
 
+const LIVE_INK = { light: 'rgb(40, 205, 65)', dark: 'rgb(50, 215, 75)' };
+
 const FAILED_INK = { light: 'rgb(215, 0, 21)', dark: 'rgb(255, 69, 58)' };
 
 function stilled(): boolean {
   return matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+async function standsWholeAndStill(canvasElement: HTMLElement): Promise<void> {
+  const [cable] = await cablesDrawn(canvasElement);
+
+  await expect(paintedStyle(cable).strokeDasharray).toBe('none');
+  await expect(paintedStyle(cable).animationName).toBe('none');
+  await expect(canvasElement.querySelector('.cable-pulse')).toBeNull();
 }
 
 /** A binding whose last request came back served reads green, which no cable wears unearned. */
@@ -36,14 +46,15 @@ export const AServedBindingPaintsItsStanding = meta.story({
   },
 });
 
-/** A served binding keeps its line whole and sends a pulse down it, which is what flowing looks like. */
-export const AServedBindingPulsesAlongAWholeLine = meta.story({
+/** A live binding keeps its line whole and sends a pulse down it, which is what flowing looks like. */
+export const ALiveBindingPulsesAlongAWholeLine = meta.story({
+  render: () => cabledFlow('live'),
   play: async ({ canvasElement }) => {
     const [cable] = await cablesDrawn(canvasElement);
     const traveling = pulseIn(canvasElement);
 
     await expect(paintedStyle(cable).strokeDasharray).toBe('none');
-    await expect(paintedStyle(traveling).stroke).toBe(forScheme(SERVED_INK.light, SERVED_INK.dark));
+    await expect(paintedStyle(traveling).stroke).toBe(forScheme(LIVE_INK.light, LIVE_INK.dark));
     await expect(paintedStyle(traveling).animationName).toBe(
       stilled() ? 'none' : 'cable-pulse-travel',
     );
@@ -53,6 +64,7 @@ export const AServedBindingPulsesAlongAWholeLine = meta.story({
 
 /** The pulse is decoration, so it never takes the press meant for the cable it rides. */
 export const ThePulseTakesNoPointer = meta.story({
+  render: () => cabledFlow('live'),
   play: async ({ canvasElement }) => {
     await cablesDrawn(canvasElement);
 
@@ -70,14 +82,11 @@ export const AFailedBindingPaintsItsStanding = meta.story({
   },
 });
 
-/** A failed binding breaks into a march, and stands still where motion is unwelcome. */
-export const AFailedBindingMarchesUnlessMotionIsUnwelcome = meta.story({
+/** A failed binding holds its line whole and still, because red already carries the news. */
+export const AFailedBindingStandsWholeAndStill = meta.story({
   render: () => cabledFlow('failed', REFUSED),
   play: async ({ canvasElement }) => {
-    const [cable] = await cablesDrawn(canvasElement);
-
-    await expect(paintedStyle(cable).strokeDasharray).toBe('7px, 5px');
-    await expect(paintedStyle(cable).animationName).toBe(stilled() ? 'none' : 'cable-flow');
+    await standsWholeAndStill(canvasElement);
   },
 });
 
@@ -85,11 +94,7 @@ export const AFailedBindingMarchesUnlessMotionIsUnwelcome = meta.story({
 export const AnUntriedBindingStandsStill = meta.story({
   render: () => cabledFlow('resting'),
   play: async ({ canvasElement }) => {
-    const [cable] = await cablesDrawn(canvasElement);
-
-    await expect(paintedStyle(cable).strokeDasharray).toBe('none');
-    await expect(paintedStyle(cable).animationName).toBe('none');
-    await expect(canvasElement.querySelector('.cable-pulse')).toBeNull();
+    await standsWholeAndStill(canvasElement);
   },
 });
 

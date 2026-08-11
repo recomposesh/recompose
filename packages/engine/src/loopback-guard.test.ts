@@ -15,6 +15,14 @@ async function askCodexFrom(host: string, init?: RequestInit): Promise<Response>
   );
 }
 
+async function askNetworkGatewayFrom(host: string, init?: RequestInit): Promise<Response> {
+  return createGatewayApp(
+    { ...codex, bindAddress: '0.0.0.0' },
+    grantsNothing,
+    neverFetches,
+  ).request(`http://${host}/health`, init);
+}
+
 const hostArb = fc.oneof(
   fc.domain().map((domain) => `${domain}:${codex.port}`),
   fc
@@ -33,6 +41,12 @@ describe('who a gateway answers', () => {
     const refusal = await askCodexFrom('gateway.example:8397');
 
     expect(refusal.status).toBe(403);
+  });
+
+  test('a gateway explicitly exposed on the network accepts the host the client used', async () => {
+    const answer = await askNetworkGatewayFrom('gateway.example:8397');
+
+    expect(answer.status).toBe(200);
   });
 
   test.each(LOOPBACK_ADDRESSES)(

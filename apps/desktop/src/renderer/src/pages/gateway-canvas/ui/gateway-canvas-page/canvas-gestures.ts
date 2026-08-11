@@ -1,30 +1,25 @@
-import type { Edge, Node, OnConnectEnd } from '@xyflow/react';
+import type { OnConnectEnd } from '@xyflow/react';
 
 import type { XY } from '../../lib/canvas-positions';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasStandings, CanvasWorld } from './canvas-standings';
 
-import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
-import {
-  dropCanvasPositions,
-  keepCanvasPositions,
-  setNodePosition,
-} from '../../lib/canvas-position-store';
+import { closeInspector, inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { flowPointOf, viewportOf } from '../../lib/canvas-viewport';
 import { emptyDefinition } from '../../lib/model-draft';
-import { seatForNewNode, tidyPositions } from '../../lib/tidy-layout';
-import { heldDraft, moveDraftSeat, startDrafting } from '../../lib/use-held-draft';
-import { releasedBinding } from './binding-acts';
+import { seatForNewNode } from '../../lib/tidy-layout';
+import { heldDraft, startDrafting } from '../../lib/use-held-draft';
+import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import {
-  accountIdOf,
   bindingCableId,
-  editingText,
+  CARD_MEASURE,
   flowEdgesOf,
   flowNodesOf,
   modelIdOf,
-  movedSeats,
   oneTargetRule,
+  targetAccountIdIn,
 } from './canvas-wiring';
+import { deletionWiring } from './deletion-gestures';
 
 function revealOn(standings: CanvasStandings, subject: string): void {
   standings.select(subject);
@@ -36,13 +31,14 @@ function revealOn(standings: CanvasStandings, subject: string): void {
 
 function birthedDraftAt(world: CanvasWorld, at: XY): void {
   const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
+  const seat = { x: at.x, y: at.y - CARD_MEASURE.height / 2 };
 
-  startDrafting(world.slug, definition, at);
+  startDrafting(world.slug, definition, seat);
   revealOn(world.standings, 'draft');
 }
 
 function openedStageTwo(world: CanvasWorld, from: string, target: string): void {
-  const accountId = accountIdOf(target);
+  const accountId = targetAccountIdIn(world.gateway, target);
 
   if (accountId !== undefined) {
     world.standings.setPicker({ step: 'provider-model', from, accountId, anchor: target });
@@ -72,7 +68,16 @@ function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
   }
 
   if (from === 'draft' || modelIdOf(from) !== undefined) {
-    world.standings.setPicker({ step: 'account', from, at, origin: 'drop' });
+    world.standings.setPicker({
+      step: 'account',
+      from,
+      at: { x: at.x, y: at.y - CARD_MEASURE.height / 2 },
+      origin: 'drop',
+    });
+
+    if (from === 'draft') {
+      closeInspector();
+    }
   }
 }
 
@@ -166,6 +171,8 @@ function selectionWiring(
     },
     onPaneClick: () => {
       if (standings.picker !== undefined) {
+        standings.setPicker(undefined);
+
         return;
       }
 
@@ -175,86 +182,6 @@ function selectionWiring(
         toggleInspector();
       }
     },
-  };
-}
-
-function deletionDecision(
-  world: CanvasWorld,
-  asked: { nodes: Node[]; edges: Edge[] },
-): boolean | { nodes: Node[]; edges: Edge[] } {
-  if (editingText(document.activeElement)) {
-    return false;
-  }
-
-  const removable = asked.nodes.find(
-    (node) => node.id === 'draft' || modelIdOf(node.id) !== undefined,
-  );
-
-  if (removable !== undefined) {
-    world.standings.setRemoving(removable.id);
-
-    return false;
-  }
-
-  if (asked.nodes.length > 0) {
-    return false;
-  }
-
-  const cables = asked.edges.filter((edge) => bindingCableId(edge.id) !== undefined);
-
-  return cables.length > 0 ? { nodes: [], edges: cables } : false;
-}
-
-function deletionWiring(
-  world: CanvasWorld,
-): Pick<CanvasFlowWiring, 'onBeforeDelete' | 'onEdgesDelete'> {
-  return {
-    onBeforeDelete: async (asked) => Promise.resolve(deletionDecision(world, asked)),
-    onEdgesDelete: (deleted) => {
-      for (const edge of deleted) {
-        const modelId = bindingCableId(edge.id);
-
-        if (modelId !== undefined) {
-          releasedBinding(world, modelId);
-        }
-      }
-    },
-  };
-}
-
-function appliedSeatMoves(world: CanvasWorld): CanvasFlowWiring['onNodesChange'] {
-  return (changes) => {
-    for (const moved of movedSeats(changes)) {
-      if (moved.id === 'draft') {
-        moveDraftSeat(world.slug, moved.to);
-      } else if (moved.id === 'pending') {
-        world.standings.movePendingTo(moved.to);
-      } else {
-        setNodePosition(world.slug, moved.id, moved.to);
-
-        if (moved.settled) {
-          keepCanvasPositions(world.slug);
-        }
-      }
-    }
-  };
-}
-
-function tidiedArrangement(world: CanvasWorld): () => void {
-  return () => {
-    dropCanvasPositions(world.slug);
-
-    const tidy = tidyPositions(world.graph.nodes);
-    const draftSeat = tidy['draft'];
-    const pendingSeat = tidy['pending'];
-
-    if (draftSeat !== undefined) {
-      moveDraftSeat(world.slug, draftSeat);
-    }
-
-    if (pendingSeat !== undefined) {
-      world.standings.movePendingTo(pendingSeat);
-    }
   };
 }
 
@@ -296,5 +223,10 @@ export function flowWiring(world: CanvasWorld): CanvasFlowWiring {
     ...connectWiring(world),
     ...deletionWiring(world),
     onTidy: tidiedArrangement(world),
+    onNodeFocus: (nodeId) => {
+      if (world.standings.selection !== nodeId) {
+        world.standings.select(nodeId);
+      }
+    },
   };
 }

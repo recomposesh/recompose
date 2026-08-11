@@ -116,7 +116,12 @@ export const gatewayConfigSchema = z.strictObject({
   slug: gatewaySlugSchema,
   displayName: z.string().trim().min(1),
   port: gatewayPortSchema,
-  virtualModels: z.array(virtualModelSchema),
+  virtualModels: z
+    .array(virtualModelSchema)
+    .refine(
+      (models) => new Set(models.map((model) => model.id)).size === models.length,
+      'duplicate virtual model id',
+    ),
   layout: layoutSchema,
 });
 

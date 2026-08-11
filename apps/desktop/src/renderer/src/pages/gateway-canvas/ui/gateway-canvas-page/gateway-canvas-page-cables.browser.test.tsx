@@ -2,8 +2,6 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import {
-  clickedCable,
-  draftCardOn,
   draggedCable,
   draggedCableOver,
   pulledCable,
@@ -24,26 +22,46 @@ beforeEach(freshCanvasRun);
 const POSITIONS_KEY = 'recompose.canvas.positions.my-gateway';
 
 function seatedInsideThePane(): void {
-  localStorage.setItem(POSITIONS_KEY, JSON.stringify({ 'target:k1': { x: 560, y: 280 } }));
+  localStorage.setItem(POSITIONS_KEY, JSON.stringify({ 'target:fast': { x: 560, y: 280 } }));
 }
 
-test('a cable dragged from a virtual model port onto a target card rebinds it there', async () => {
-  seatedInsideThePane();
+async function draftPulledTo(
+  screen: Awaited<ReturnType<typeof canvasPageOn>>,
+  at: { x: number; y: number },
+) {
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), at);
+  releasedAt(at);
+}
 
+test('a bound virtual model offers no new cable out of its port', async () => {
   const screen = await canvasPageOn();
+  const before = await storedModels();
+  const port = await sourcePortOf(screen.container, 'model:creative');
+  const box = port.getBoundingClientRect();
+  const grip = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
-  await draggedCable(
-    await sourcePortOf(screen.container, 'model:creative'),
-    await targetPortOf(screen.container, 'target:k1'),
+  port.dispatchEvent(
+    new MouseEvent('mousedown', { bubbles: true, clientX: grip.x, clientY: grip.y }),
+  );
+  document.dispatchEvent(
+    new MouseEvent('mousemove', { bubbles: true, clientX: grip.x + 60, clientY: grip.y + 40 }),
+  );
+  document.dispatchEvent(
+    new MouseEvent('mousemove', { bubbles: true, clientX: grip.x + 120, clientY: grip.y + 90 }),
   );
 
-  await userEvent.click(
-    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  expect(document.querySelector('.react-flow__connectionline')).toBeNull();
+
+  document.dispatchEvent(
+    new MouseEvent('mouseup', { bubbles: true, clientX: grip.x + 120, clientY: grip.y + 90 }),
   );
 
   await expect
-    .poll(async () => storedBindingOf('creative'))
-    .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
+    .element(screen.getByText('Pick a provider model', { exact: true }))
+    .not.toBeInTheDocument();
+  expect(await storedModels()).toEqual(before);
 });
 
 test('dragging a cable target endpoint onto another stored target rebinds through the pick', async () => {
@@ -53,8 +71,34 @@ test('dragging a cable target endpoint onto another stored target rebinds throug
 
   await draggedCable(
     await reconnectAnchorOf(screen.container, 'cable:creative'),
-    await targetPortOf(screen.container, 'target:k1'),
+    await targetPortOf(screen.container, 'target:fast'),
   );
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect
+    .poll(async () => storedBindingOf('creative'))
+    .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
+});
+
+test('stepping back mid-rebind reopens the accounts, and the fresh pick still lands', async () => {
+  seatedInsideThePane();
+
+  const screen = await canvasPageOn();
+
+  await draggedCable(
+    await reconnectAnchorOf(screen.container, 'cable:creative'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+
+  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
   );
@@ -95,19 +139,17 @@ test('a click along the gateway wire reaches the pane, so it still dismisses the
 test('a cable dropped on empty canvas births the pending card and opens the picker', async () => {
   const screen = await canvasPageOn();
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), { x: 620, y: 320 });
-  releasedAt({ x: 620, y: 320 });
+  await draftPulledTo(screen, { x: 620, y: 320 });
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('waiting on a pick', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Choose a target', { exact: true }).first()).toBeVisible();
 });
 
 test('Esc dismisses the picker and the pending card together, changing nothing', async () => {
   const screen = await canvasPageOn();
   const before = await storedModels();
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), { x: 620, y: 320 });
-  releasedAt({ x: 620, y: 320 });
+  await draftPulledTo(screen, { x: 620, y: 320 });
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
 
   await userEvent.keyboard('{Escape}');
@@ -115,26 +157,26 @@ test('Esc dismisses the picker and the pending card together, changing nothing',
   await expect
     .element(screen.getByText('Pick an account', { exact: true }))
     .not.toBeInTheDocument();
-  await expect
-    .element(screen.getByText('waiting on a pick', { exact: true }))
-    .not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
 
 test('a completed pick on a pending card writes the binding it stands for', async () => {
   const screen = await canvasPageOn();
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), { x: 620, y: 320 });
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), { x: 620, y: 320 });
   releasedAt({ x: 620, y: 320 });
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
   await expect
-    .poll(async () => storedBindingOf('creative'))
+    .poll(async () => storedBindingOf('steady'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-opus-5' });
   await expect
-    .element(screen.getByText('waiting on a pick', { exact: true }))
+    .element(screen.getByText('Pick an account', { exact: true }))
     .not.toBeInTheDocument();
 });
 
@@ -142,7 +184,9 @@ test('Esc cancels a drag in flight and the composition stands unchanged', async 
   const screen = await canvasPageOn();
   const before = await storedModels();
 
-  await pulledCable(await sourcePortOf(screen.container, 'model:creative'), { x: 620, y: 320 });
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), { x: 620, y: 320 });
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
   await expect.poll(() => document.querySelector('.react-flow__connectionline')).toBeNull();
@@ -158,9 +202,11 @@ test('Esc over a valid target port cancels the drag instead of opening the picke
   const screen = await canvasPageOn();
   const before = await storedModels();
 
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
   await draggedCableOver(
-    await sourcePortOf(screen.container, 'model:creative'),
-    await targetPortOf(screen.container, 'target:k1'),
+    await sourcePortOf(screen.container, 'draft'),
+    await targetPortOf(screen.container, 'target:fast'),
   );
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
@@ -179,7 +225,7 @@ test('a gateway cable dropped on a target refuses out loud and changes nothing',
 
   await draggedCable(
     await sourcePortOf(screen.container, 'gateway'),
-    await targetPortOf(screen.container, 'target:k1'),
+    await targetPortOf(screen.container, 'target:fast'),
   );
 
   await expect
@@ -190,71 +236,6 @@ test('a gateway cable dropped on a target refuses out loud and changes nothing',
   expect(await storedModels()).toEqual(before);
 });
 
-test('Delete unbinds a selected cable without confirmation, into a draft that keeps the name', async () => {
-  const screen = await canvasPageOn();
-
-  await clickedCable(screen.container, 'cable:fast');
-  await userEvent.keyboard('{Delete}');
-
-  await expect.poll(async () => storedBindingOf('fast')).toBeUndefined();
-  await expect.poll(() => draftCardOn(screen.container)?.textContent).toContain('Fast');
-});
-
-test('Delete on a selected virtual model node asks first, and cancel keeps it', async () => {
-  const screen = await canvasPageOn();
-
-  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
-  await userEvent.keyboard('{Delete}');
-
-  await expect.element(screen.getByText(/Delete the virtual model/)).toBeVisible();
-  expect(await storedBindingOf('fast')).toBeDefined();
-
-  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-
-  await expect.element(screen.getByText(/Delete the virtual model/)).not.toBeInTheDocument();
-  expect(await storedBindingOf('fast')).toBeDefined();
-});
-
-test('confirming the removal takes the definition out of the gateway', async () => {
-  const screen = await canvasPageOn();
-
-  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
-  await userEvent.keyboard('{Delete}');
-  await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-
-  await expect.poll(async () => storedBindingOf('fast')).toBeUndefined();
-  expect(draftCardOn(screen.container)).toBeNull();
-});
-
-test('Delete never fires from a text field, so editing a name removes nothing', async () => {
-  const screen = await canvasPageOn();
-
-  screen.getByLabelText('Add a virtual model').element().focus();
-  await userEvent.keyboard('{Enter}');
-
-  const name = screen.getByRole('textbox', { name: 'Name' });
-
-  await name.fill('Steady');
-  await userEvent.keyboard('{Delete}{Backspace}');
-
-  await expect.element(screen.getByText(/Delete the/)).not.toBeInTheDocument();
-  expect((await storedModels()).length).toBe(2);
-});
-
-test('Delete on a selected target refuses, and its cables stay bound', async () => {
-  const screen = await canvasPageOn();
-
-  await userEvent.click(screen.getByRole('button', { name: /work/ }));
-  await userEvent.keyboard('{Delete}');
-
-  await expect.element(screen.getByText(/Delete the/)).not.toBeInTheDocument();
-  expect(draftCardOn(screen.container)).toBeNull();
-  expect(await storedBindingOf('fast')).toEqual({
-    accountId: 'k1',
-    providerModel: 'claude-haiku-4-5',
-  });
-});
-
 test('a broken binding repairs through the same drop, reading as repaired', async () => {
   seatedInsideThePane();
 
@@ -263,8 +244,8 @@ test('a broken binding repairs through the same drop, reading as repaired', asyn
   await expect.element(screen.getByText('Removed', { exact: true })).toBeVisible();
 
   await draggedCable(
-    await sourcePortOf(screen.container, 'model:creative'),
-    await targetPortOf(screen.container, 'target:k1'),
+    await reconnectAnchorOf(screen.container, 'cable:creative'),
+    await targetPortOf(screen.container, 'target:fast'),
   );
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),

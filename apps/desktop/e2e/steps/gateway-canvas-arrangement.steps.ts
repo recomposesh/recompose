@@ -107,11 +107,9 @@ async function composedOnto(page: Page, gateway: string, name: string): Promise<
  * a column was still arriving would be a different arrangement from the one Tidy goes back to.
  */
 async function theCanvasArrangesItself(page: Page, gateway: string, name: string): Promise<void> {
-  const key = await accountHeldAs(page, 'api-key');
-
   await openGatewayCanvas(page, gateway);
   await expect(canvasNode(page, modelNodeId(modelAliasFromName(name)))).toBeVisible();
-  await expect(canvasNode(page, targetNodeId(key.id))).toBeVisible();
+  await expect(canvasNode(page, targetNodeId(modelAliasFromName(name)))).toBeVisible();
   automaticArrangements.set(page, await nodeSeats(page));
 }
 
@@ -202,9 +200,8 @@ Then('{string} still stands bound to that account', async ({ page }, name: strin
 
 Then('the cable follows the node', async ({ page }) => {
   const alias = modelAliasFromName(virtualModelInFocus(page));
-  const key = await accountHeldAs(page, 'api-key');
 
-  await expect(cableBetween(page, modelNodeId(alias), targetNodeId(key.id))).toHaveCount(1);
+  await expect(cableBetween(page, modelNodeId(alias), targetNodeId(alias))).toHaveCount(1);
   await expect
     .poll(async () => cablePath(page, cableId(alias)))
     .not.toBe(theLineBeforeTheDrag(page));

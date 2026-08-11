@@ -15,6 +15,7 @@ const answeredStatusSchema = z.number().int().min(100).max(599);
  * neither, because there is nothing to explain when a request flowed and answered well.
  */
 export const requestOutcomeSchema = z.discriminatedUnion('outcome', [
+  z.strictObject({ outcome: z.literal('live'), at: answeredAtSchema }),
   z.strictObject({ outcome: z.literal('served'), at: answeredAtSchema }),
   z.strictObject({
     outcome: z.literal('failed'),

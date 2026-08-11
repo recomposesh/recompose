@@ -70,7 +70,7 @@ const toolDefinition = fc.record({
 const responsesRequest = fc.record({
   instructions: fc.string(),
   input: inputItems,
-  tools: fc.array(toolDefinition, { maxLength: 3 }),
+  tools: fc.uniqueArray(toolDefinition, { maxLength: 3, selector: (tool) => tool.name }),
 });
 
 function toolNames(tools: readonly ResponsesTool[] | undefined): string[] | undefined {

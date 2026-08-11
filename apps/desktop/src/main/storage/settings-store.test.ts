@@ -1,4 +1,4 @@
-import { defaultSettings } from '@recompose/contracts';
+import { defaultSettings, SETTINGS_VERSION } from '@recompose/contracts';
 import { mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -75,10 +75,12 @@ describe('a settings document this build already reads', () => {
     await loadSettingsFile(file, () => undefined);
 
     expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({
-      ...defaultSettings(),
+      schemaVersion: SETTINGS_VERSION,
       theme: 'dark',
       launchAtLogin: false,
       showInMenuBar: true,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
     });
   });
 });

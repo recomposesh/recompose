@@ -7,9 +7,12 @@ import type {
   VirtualModel,
 } from '@recompose/contracts';
 
+import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
+
 import { storagePathsFor } from '../ipc/storage-context';
 import { loadAccountsFile } from '../storage/accounts-store';
 import { listGatewayConfigs } from '../storage/gateway-store';
+import { loadSettingsFile } from '../storage/settings-store';
 
 function standingOf(accounts: readonly Account[], target: Target): EngineVirtualModel['target'] {
   const held = accounts.find((account) => account.id === target.accountId);
@@ -43,12 +46,18 @@ export async function engineGatewayOf(
   onCorrupt: (quarantinedPath: string) => void,
   config: GatewayConfig,
 ): Promise<EngineGateway> {
-  const registry = await loadAccountsFile(storagePathsFor(userDataPath).accountsFile, onCorrupt);
+  const [registry, settings] = await Promise.all([
+    loadAccountsFile(storagePathsFor(userDataPath).accountsFile, onCorrupt),
+    loadSettingsFile(storagePathsFor(userDataPath).settingsFile, onCorrupt),
+  ]);
 
   return {
     slug: config.slug,
     displayName: config.displayName,
     port: config.port,
+    ...(settings.bindAddress === undefined || settings.bindAddress === DEFAULT_GATEWAY_BIND_ADDRESS
+      ? {}
+      : { bindAddress: settings.bindAddress }),
     virtualModels: mintedAgainst(registry.accounts, config.virtualModels),
   };
 }

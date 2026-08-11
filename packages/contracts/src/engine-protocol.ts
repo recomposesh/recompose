@@ -1,11 +1,13 @@
 import { z } from 'zod';
 
 import { keyCheckVerdictSchema, keyProviderIdSchema } from './api-keys';
+import { logRowSchema } from './engine-logs';
 import { gatewayEngineStateSchema } from './engine-state';
 import { requestOutcomeSchema } from './engine-traffic';
 import { gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import { loopbackAddressSchema, runtimeReachabilitySchema } from './local-runtimes';
 import { nonBlankString } from './non-blank';
+import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
@@ -26,6 +28,7 @@ export const engineGatewaySchema = z.strictObject({
   slug: gatewaySlugSchema,
   displayName: z.string().trim().min(1),
   port: gatewayPortSchema,
+  bindAddress: gatewayBindAddressSchema.optional(),
   virtualModels: z.array(engineVirtualModelSchema),
 });
 
@@ -150,6 +153,20 @@ export const engineTrafficReportSchema = z.strictObject({
 });
 
 export type EngineTrafficReport = z.infer<typeof engineTrafficReportSchema>;
+
+/**
+ * What the child says on its own once one request has been logged.
+ *
+ * @summary It answers no directive for the same reason traffic does not: the child speaks the
+ * moment a request finishes. One report carries one row, and the logs desk in the parent gathers
+ * the reports into the batches the renderer reads, so no row waits on another to cross.
+ */
+export const engineLogReportSchema = z.strictObject({
+  kind: z.literal('log'),
+  row: logRowSchema,
+});
+
+export type EngineLogReport = z.infer<typeof engineLogReportSchema>;
 
 export const engineSpendRequestSchema = z.strictObject({
   kind: z.literal('spend-request'),

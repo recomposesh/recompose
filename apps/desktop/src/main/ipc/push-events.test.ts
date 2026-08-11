@@ -1,4 +1,4 @@
-import type { EngineStates, GatewayTraffic, Settings } from '@recompose/contracts';
+import type { EngineStates, GatewayTraffic, LogBatch, Settings } from '@recompose/contracts';
 
 import { defaultSettings } from '@recompose/contracts';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -7,6 +7,7 @@ import {
   pushAccountsChanged,
   pushCanvasCommand,
   pushDevtoolsToggle,
+  pushEngineLogs,
   pushEngineStates,
   pushEngineTraffic,
   pushSettingsChanged,
@@ -102,6 +103,33 @@ describe('telling the open windows what changed', () => {
   });
 });
 
+describe('telling the open windows which requests were served', () => {
+  test('a run of logged requests reaches every open window', () => {
+    const first = openWindow();
+    const second = openWindow();
+    const batch: LogBatch = {
+      kind: 'append',
+      rows: [
+        {
+          id: 'log-1',
+          at: 1_754_600_000_000,
+          gateway: 'my-gateway',
+          virtualModel: 'fast',
+          origin: 'provider',
+          method: 'POST',
+          status: 200,
+          clientKey: 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c',
+        },
+      ],
+    };
+
+    pushEngineLogs(batch);
+
+    expect(first).toEqual([{ channel: 'engine:logs', payload: batch }]);
+    expect(second).toEqual([{ channel: 'engine:logs', payload: batch }]);
+  });
+});
+
 describe('asking the renderer for its devtools', () => {
   test('the ask reaches every open window', () => {
     const first = openWindow();
@@ -125,11 +153,21 @@ describe('driving the canvas from the menu bar', () => {
     expect(background).toEqual([]);
   });
 
-  test('a canvas command with no window in front reaches nobody', () => {
-    const background = openWindow();
+  test('a canvas command with no window in front reaches the one window standing', () => {
+    const only = openWindow();
 
     pushCanvasCommand('tidy');
 
-    expect(background).toEqual([]);
+    expect(only).toEqual([{ channel: 'canvas:command', payload: 'tidy' }]);
+  });
+
+  test('a canvas command with no window in front and two standing reaches nobody', () => {
+    const first = openWindow();
+    const second = openWindow();
+
+    pushCanvasCommand('tidy');
+
+    expect(first).toEqual([]);
+    expect(second).toEqual([]);
   });
 });

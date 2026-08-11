@@ -43,8 +43,14 @@ describe('a settings document the disk refuses to take back', () => {
       quarantined.push(path);
     });
 
+    const {
+      bindAddress: _servedByDefault,
+      startGatewaysOnLaunch: _offByDefault,
+      ...migrated
+    } = defaultSettings();
+
     expect(settings).toEqual({
-      ...defaultSettings(),
+      ...migrated,
       theme: 'dark',
       launchAtLogin: false,
       showInMenuBar: true,

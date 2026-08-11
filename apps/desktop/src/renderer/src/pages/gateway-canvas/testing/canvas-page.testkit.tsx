@@ -9,10 +9,12 @@ import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../shared/testing';
 
-import { bindEngineTrafficToCache } from '../../../shared/api';
-import { inspectorOpen, toggleInspector } from '../../../shared/lib';
-import { installFakeBridge } from '../../../shared/testing';
+import { bindEngineLogsToCache, bindEngineTrafficToCache } from '../../../shared/api';
+import { closeInspector, closeLogsDrawer } from '../../../shared/lib';
+import { forgetEngineLogsListeners, installFakeBridge } from '../../../shared/testing';
 import { dropCanvasPositions } from '../lib/canvas-position-store';
+import { RESTING_VIEWPORT } from '../lib/canvas-viewport';
+import { keepCanvasViewport } from '../lib/canvas-viewport-store';
 import { leaveDrafting } from '../lib/use-held-draft';
 import { GatewayCanvasPage } from '../ui/gateway-canvas-page/gateway-canvas-page';
 import { servingBridgeWorld } from './gateway-canvas.testkit';
@@ -20,12 +22,18 @@ import { servingBridgeWorld } from './gateway-canvas.testkit';
 const CANVAS_FOOTING = `
 [data-canvas-footing] { display: flex; width: 1280px; height: 800px; }
 [data-canvas-footing] > div { display: flex; flex: 1 1 0%; min-width: 0; }
+[data-canvas-footing] [data-canvas-workspace] { display: flex; flex: 1 1 0%; min-width: 0; min-height: 0; }
+[data-canvas-footing] [data-canvas-column] { display: flex; flex: 1 1 0%; flex-direction: column; min-width: 0; }
+[data-canvas-footing] footer { display: flex; flex-shrink: 0; align-items: center; gap: 14px; height: 38px; padding-inline: 14px; }
 [data-canvas-footing] section { position: relative; display: flex; flex: 1 1 0%; min-width: 0; overflow: hidden; }
+[data-canvas-footing] [data-canvas-column] > [data-logs-drawer] { flex: 0 0 auto; flex-direction: column; }
 [data-canvas-footing] .pointer-events-auto { pointer-events: auto; }
 [data-canvas-footing] .absolute { position: absolute; }
 [data-canvas-footing] .top-0 { top: 0; }
 [data-canvas-footing] .inset-s-0 { inset-inline-start: 0; }
 [data-canvas-footing] .z-20 { z-index: 20; }
+[data-canvas-footing] [data-panel-control] { position: relative; }
+[data-canvas-footing] [data-panel-control][aria-orientation='horizontal'] { height: 8px; margin-block: -4px; }
 [data-canvas-footing] .origin-top-left { transform-origin: 0 0; }
 `;
 
@@ -54,26 +62,28 @@ export function freshCanvasRun(): void {
   }
 
   localStorage.clear();
+  keepCanvasViewport('my-gateway', RESTING_VIEWPORT);
   dropCanvasPositions('my-gateway');
   leaveDrafting('my-gateway');
+  closeLogsDrawer();
+  forgetEngineLogsListeners();
 
-  if (!inspectorOpen()) {
-    toggleInspector();
-  }
+  closeInspector();
 }
 
-function wrappedPage(strict: boolean): ReactElement {
+function wrappedPage(strict: boolean, onGatewayRemoved?: () => void): ReactElement {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
   bindEngineTrafficToCache(queryClient);
+  bindEngineLogsToCache(queryClient);
 
   const page = (
     <div data-canvas-footing="">
       <QueryClientProvider client={queryClient}>
         <Suspense fallback={<p>Loading…</p>}>
-          <GatewayCanvasPage slug="my-gateway" />
+          <GatewayCanvasPage onGatewayRemoved={onGatewayRemoved} slug="my-gateway" />
         </Suspense>
       </QueryClientProvider>
     </div>
@@ -88,8 +98,8 @@ export function standCanvasBridge(parameters: BridgeParameters = {}): void {
 }
 
 /** Renders the page onto whatever bridge stands, holding until the gateway card paints. */
-export async function renderCanvasPage(strict = false) {
-  const screen = await render(wrappedPage(strict));
+export async function renderCanvasPage(strict = false, onGatewayRemoved?: () => void) {
+  const screen = await render(wrappedPage(strict, onGatewayRemoved));
 
   await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
 

@@ -3,6 +3,7 @@ import type { AccountsDocument } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import {
+  accountKindName,
   accountKindTitle,
   accountKinds,
   accountsOfKind,
@@ -33,6 +34,15 @@ test('every kind reads as a name rather than as its stored token', () => {
     'API Keys',
     'Aggregators',
     'Local Runtimes',
+  ]);
+});
+
+test('one account reads its kind in the singular', () => {
+  expect(accountKinds.map(accountKindName)).toEqual([
+    'Subscription',
+    'API Key',
+    'Aggregator',
+    'Local Runtime',
   ]);
 });
 

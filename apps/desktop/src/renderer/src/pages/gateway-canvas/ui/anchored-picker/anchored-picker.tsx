@@ -27,6 +27,7 @@ export function AnchoredPicker({
   refusal,
   onPickAccount,
   onPickProviderModel,
+  onSelectDifferentProvider,
   onDismiss,
 }: AnchoredPickerProps) {
   const { x, y, zoom } = useViewport();
@@ -34,7 +35,7 @@ export function AnchoredPicker({
 
   return (
     <div
-      className="pointer-events-auto absolute inset-s-0 top-0 z-20 h-19.5 w-39.5 origin-top-left"
+      className="pointer-events-auto absolute inset-s-0 top-0 z-20 h-22 w-46 origin-top-left"
       style={{ transform: `${stood} scale(${String(zoom)})` }}
     >
       <DropPicker
@@ -42,6 +43,7 @@ export function AnchoredPicker({
         onDismiss={onDismiss}
         onPickAccount={onPickAccount}
         onPickProviderModel={onPickProviderModel}
+        onSelectDifferentProvider={onSelectDifferentProvider}
         refusal={refusal}
         stage={stage}
       />

@@ -8,7 +8,7 @@ vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
 
-const CONTRACT_CARD = { width: 158, height: 78 };
+const CONTRACT_CARD = { width: 184, height: 88 };
 const SEAT_READING = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/u;
 const VIEW_READING = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)\s*scale\(([\d.]+)\)/u;
 
@@ -56,8 +56,18 @@ test('the gateway ask births a draft wired to the gateway, with the name field f
   await expect
     .poll(() => draftCardOn(screen.container)?.textContent)
     .toContain('Unnamed virtual model');
-  expect(screen.container.querySelector('[data-id="overlay:draft"]')).not.toBeNull();
+  expect(screen.container.querySelector('[data-id="wire:draft"]')).not.toBeNull();
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
+});
+
+test('typing an id another model already uses never makes the draft node disappear', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByLabelText('Add a virtual model'));
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Fast');
+
+  await expect.poll(() => draftCardOn(screen.container)).not.toBeNull();
+  await expect.element(screen.getByRole('button', { name: /Fast/ }).first()).toBeVisible();
 });
 
 test("a virtual model's ask opens the picker of stored accounts without a drag", async () => {
@@ -134,6 +144,7 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
 
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
   screen.getByLabelText('Choose a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
@@ -146,6 +157,23 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
     .poll(() => draftCardOn(screen.container)?.textContent)
     .toContain('Unnamed virtual model');
   expect((await storedModels()).length).toBe(2);
+});
+
+test('stepping back from the models returns the ask to the account choice', async () => {
+  const screen = await canvasPageOn();
+
+  screen.getByLabelText('Choose a target').first().element().focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+
+  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect
+    .element(screen.getByRole('dialog').getByRole('button', { name: 'openrouter' }))
+    .toBeVisible();
 });
 
 test('a target born past the pane zooms the view out until it shows', async () => {
@@ -170,7 +198,7 @@ test('a target born past the pane zooms the view out until it shows', async () =
 
   await expect.poll(async () => storedBindingOf('steady')).toBeDefined();
   await expect
-    .poll(() => bornCardReading(screen.container, 'target:s1'), { timeout: 10_000 })
+    .poll(() => bornCardReading(screen.container, 'target:steady'), { timeout: 10_000 })
     .toBe('fits');
 });
 

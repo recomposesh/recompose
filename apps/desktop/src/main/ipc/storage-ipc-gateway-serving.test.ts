@@ -68,6 +68,7 @@ async function deskHolding(stored: readonly GatewayConfig[]) {
     restartGateway: (gateway) => {
       restarted.push(gateway);
     },
+    stopGateway: () => undefined,
     isServing: (slug) => !stopped.has(slug),
     releaseSubscription: async () => Promise.resolve({ ok: true }),
   };

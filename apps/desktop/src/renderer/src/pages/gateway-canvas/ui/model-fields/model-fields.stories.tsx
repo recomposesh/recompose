@@ -29,6 +29,7 @@ const meta = preview.meta({
     onIdChange: () => {},
     targets,
     onPickTarget: () => {},
+    onSelectDifferentProvider: () => {},
     models: [],
     providerModel: '',
     onPickModel: () => {},
@@ -51,7 +52,7 @@ const meta = preview.meta({
 export const Empty = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('textbox', { name: 'Name' })).toHaveValue('');
-    await expect(await canvas.findByText('Pick a target first.')).toBeVisible();
+    await expect(await canvas.findByText('Pick a provider', { exact: true })).toBeVisible();
   },
 });
 
@@ -75,8 +76,10 @@ export const Settled = meta.story({
     await expect(await canvas.findByRole('textbox', { name: 'Model id' })).toHaveValue(
       'fast-sonnet',
     );
-    await expect(await canvas.findByText(/Claude Code/)).toBeVisible();
-    await expect(await canvas.findByText("· from work's live list")).toBeVisible();
+    await expect(await canvas.findByText('Pick a model', { exact: true })).toBeVisible();
+    await expect(
+      await canvas.findByRole('button', { name: 'Select different provider' }),
+    ).toBeVisible();
   },
 });
 

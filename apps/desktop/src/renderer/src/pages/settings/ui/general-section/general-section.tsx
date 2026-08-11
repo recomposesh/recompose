@@ -6,7 +6,7 @@ import { FieldGroup, FieldRow, Switch } from '../../../../shared/ui';
 import { launchAtLoginRow } from '../../lib/row-state';
 import { saveStatusFor } from '../../lib/save-failure';
 
-/** Launch at login, menu bar presence, and the telemetry recompose never sends. */
+/** Launch at login and menu bar presence. */
 export function GeneralSection() {
   const { data: system } = useSuspenseQuery(systemQueryOptions);
   const { save, unsavedFields } = useSettingsWriter();
@@ -47,11 +47,6 @@ export function GeneralSection() {
         description="Keeps recompose running after the last window closes."
         label="Show in menu bar"
         status={saveStatusFor('showInMenuBar', unsavedFields)}
-      />
-      <FieldRow
-        control={<span className="text-control text-ink-secondary">None</span>}
-        description="recompose never phones home."
-        label="Telemetry"
       />
     </FieldGroup>
   );

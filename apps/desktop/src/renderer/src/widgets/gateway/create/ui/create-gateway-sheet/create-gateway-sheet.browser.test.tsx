@@ -74,7 +74,7 @@ test('the port field arrives holding a free port, and the preview carries it', a
   await openSheet();
 
   await expect.element(page.getByRole('textbox', { name: 'Port' })).toHaveValue('51234');
-  await expect.element(sheet()).toHaveTextContent('http://localhost:51234');
+  await expect.element(sheet()).toHaveTextContent('http://127.0.0.1:51234');
 });
 
 test('the offered port skips a port a stored gateway already holds', async () => {
@@ -88,7 +88,7 @@ test('the preview follows the port field on every keystroke', async () => {
 
   await page.getByRole('textbox', { name: 'Port' }).fill('9000');
 
-  await expect.element(sheet()).toHaveTextContent('http://localhost:9000');
+  await expect.element(sheet()).toHaveTextContent('http://127.0.0.1:9000');
 });
 
 test('an empty port field previews no port rather than half an address', async () => {
@@ -96,7 +96,7 @@ test('an empty port field previews no port rather than half an address', async (
 
   await page.getByRole('textbox', { name: 'Port' }).fill('');
 
-  await expect.element(sheet()).toHaveTextContent('http://localhost');
+  await expect.element(sheet()).toHaveTextContent('http://127.0.0.1');
 });
 
 test('accepting what the sheet offers stores the gateway and hands the screen back', async () => {

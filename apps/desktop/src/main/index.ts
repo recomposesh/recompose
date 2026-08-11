@@ -3,33 +3,26 @@ import { app, safeStorage, shell } from 'electron';
 import { join } from 'path';
 
 import type { EngineHost } from './engine-host/engine-host';
-import type { SpendGrantFor } from './engine-host/engine-spend';
 import type { SpendGrantContext } from './engine-host/spend-grant';
 import type { IpcHandlers } from './ipc/dispatch';
 import type { StorageIpcContext } from './ipc/storage-context';
-import type { StorageWatchers } from './storage/storage-watchers';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
 import { registerAppLifecycle } from './app-lifecycle';
-import { createEngineHost } from './engine-host/engine-host';
-import { noticingTheFirstGrant } from './engine-host/first-request';
+import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { probeFreePort } from './engine-host/probe-free-port';
-import { spawnEngineChild } from './engine-host/spawn-engine';
-import { resolveSpendGrant } from './engine-host/spend-grant';
-import { serveRewrittenGateway, startStoredGateway } from './engine-host/stored-gateway-serving';
+import { storedEngineGateway } from './engine-host/stored-gateway';
+import {
+  serveRewrittenGateway,
+  startStoredGateway,
+  stopRemovedGateway,
+} from './engine-host/stored-gateway-serving';
 import { createEngineIpcHandlers } from './ipc/engine-ipc';
 import { createKeyCheckIpcHandlers, keyCheckReach } from './ipc/key-check-ipc';
 import { createLocalRuntimesIpcHandlers } from './ipc/local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/provider-models-ipc';
-import {
-  pushAccountsChanged,
-  pushCanvasCommand,
-  pushDevtoolsToggle,
-  pushEngineStates,
-  pushEngineTraffic,
-  pushSettingsChanged,
-} from './ipc/push-events';
+import { pushCanvasCommand, pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
 import { registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { createStorageIpcHandlers } from './ipc/storage-ipc';
@@ -43,14 +36,12 @@ import {
   applyChosenSettingsOrComplain,
 } from './settings/apply-settings';
 import { createSettingsEffects } from './settings/settings-effects';
-import { storedBootState } from './storage/boot-state';
+import { resolveConfigHome } from './storage/config-home';
 import { createSafeStorageCodec } from './storage/safe-storage-codec';
-import { firstRequestReporter } from './storage/settings-amend';
-import { startStorageWatchers } from './storage/storage-watchers';
 import { subscriptionCredentialStore } from './subscriptions/subscription-credential-store';
 import { subscriptionHomes } from './subscriptions/subscription-homes';
 import { subscriptionRelease } from './subscriptions/subscription-release';
-import { machineCustody, subscriptionsContext } from './subscriptions/subscriptions-wiring';
+import { subscriptionsContext } from './subscriptions/subscriptions-wiring';
 import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
@@ -70,12 +61,11 @@ import { answerTitleBarDoubleClick, placeWindowButtons } from './windows/window-
 app.setName('Recompose');
 app.setAboutPanelOptions({ applicationName: 'Recompose' });
 
-let engineHost: EngineHost | null = null;
-let storageWatchers: StorageWatchers | null = null;
+let booted: StoredBoot | null = null;
 
 const gatewayLifecycle = createGatewayLifecycleRequests({
-  host: () => engineHost,
-  userDataPath: () => app.getPath('userData'),
+  host: () => booted?.engineHost ?? null,
+  userDataPath: () => recomposeHome(),
   onCorrupt: onStorageCorrupt,
 });
 
@@ -103,7 +93,7 @@ const appMenu = conductAppMenu({
   onOpenSettings: openSettingsSurface,
   onNewGateway: openNewGatewaySurface,
   onCanvasCommand: pushCanvasCommand,
-  settingsFile: () => storagePathsFor(app.getPath('userData')).settingsFile,
+  settingsFile: () => storagePathsFor(recomposeHome()).settingsFile,
   onCorrupt: onStorageCorrupt,
   pushSettings: (settings) => {
     pushSettingsChanged({ ...settings, launchAtLogin: loginItem.isEnabled() });
@@ -124,8 +114,12 @@ function onStorageCorrupt(quarantinedPath: string): void {
   console.warn(`storage document quarantined: ${quarantinedPath}`);
 }
 
+function recomposeHome(): string {
+  return resolveConfigHome(process.env, app.getPath('home'));
+}
+
 function storageReach(custody: CredentialCustody | null = null): SpendGrantContext {
-  const userDataPath = app.getPath('userData');
+  const userDataPath = recomposeHome();
 
   return {
     userDataPath,
@@ -151,10 +145,36 @@ function storageContext(
       applyChosenSettingsOrComplain(settingsEffects, settings, askedLoginItem);
     },
     onSettingsWritten: appMenu.reflectSettings,
+    restartServingGateways: () => {
+      for (const [slug, state] of Object.entries(engineHost.states())) {
+        if (state.status !== 'running') {
+          continue;
+        }
+
+        void storedEngineGateway(reach.userDataPath, onStorageCorrupt, slug)
+          .then(async (gateway) =>
+            gateway === undefined ? undefined : engineHost.restart(gateway),
+          )
+          .catch((error: unknown) => {
+            console.error(`recompose could not move ${slug} to the new bind address`, error);
+          });
+      }
+    },
     startGateway: startStoredGateway(engineHost),
     restartGateway: serveRewrittenGateway(engineHost),
+    stopGateway: stopRemovedGateway(engineHost),
+    removeGatewayRuntime: async (slug) => {
+      try {
+        await engineHost.stop(slug);
+      } finally {
+        engineHost.forget?.(slug);
+      }
+    },
+    forgetGateway: (slug) => {
+      engineHost.forget?.(slug);
+    },
     noteGatewayWrite: (gateway) => {
-      storageWatchers?.noteGatewayWrite(gateway);
+      booted?.storageWatchers.noteGatewayWrite(gateway);
     },
     isServing: (slug) => engineHost.states()[slug]?.status === 'running',
     releaseSubscription: subscriptionRelease(
@@ -168,7 +188,7 @@ function assembleIpcHandlers(
   engineHost: EngineHost,
   custody: CredentialCustody | null,
 ): IpcHandlers {
-  const userDataPath = app.getPath('userData');
+  const userDataPath = recomposeHome();
   const homeFolder = app.getPath('home');
 
   return {
@@ -205,12 +225,13 @@ function assembleIpcHandlers(
       answerTitleBarDoubleClick: () => {
         answerTitleBarDoubleClick(process.platform);
       },
+      noteLogsDrawer: appMenu.reflectLogsDrawer,
     }),
   };
 }
 
 const repaintTray = trayRepainter(
-  () => storagePathsFor(app.getPath('userData')).gatewaysDir,
+  () => storagePathsFor(recomposeHome()).gatewaysDir,
   onStorageCorrupt,
 );
 
@@ -231,42 +252,18 @@ registerAppScheme();
 async function startRecompose(): Promise<void> {
   serveRenderer(join(__dirname, '../renderer'));
 
-  const boot = await storedBootState(app.getPath('userData'), onStorageCorrupt);
-
-  const custody = machineCustody();
-  const subscriptionCredentials = subscriptionCredentialStore(
-    app.getPath('userData'),
-    process.platform,
-    custody,
-  );
-  const grantFor: SpendGrantFor = noticingTheFirstGrant(
-    async (slug, model) => resolveSpendGrant(storageReach(custody), slug, model),
-    firstRequestReporter(
-      () => storagePathsFor(app.getPath('userData')).settingsFile,
-      onStorageCorrupt,
-      appMenu.reflectSettings,
-    ),
-  );
-
-  engineHost = createEngineHost({
-    knownSlugs: boot.slugs,
-    spawnChild: () => spawnEngineChild(app.getPath('userData')),
-    grantFor,
-    storeSubscriptionCredential: subscriptionCredentials.write,
-    onTraffic: pushEngineTraffic,
-  });
-  engineHost.onStatesChanged(pushEngineStates);
-  engineHost.onStatesChanged(repaintTray);
-  repaintTray(engineHost.states());
-
-  storageWatchers = await startStorageWatchers({
-    userDataPath: app.getPath('userData'),
-    lifecycle: gatewayLifecycle,
+  booted = await bootFromStoredState({
+    legacyUserDataPath: app.getPath('userData'),
+    platform: process.platform,
+    recomposeHome,
     onCorrupt: onStorageCorrupt,
-    onAccountsChanged: pushAccountsChanged,
+    spendGrantContext: storageReach,
+    reflectSettings: appMenu.reflectSettings,
+    repaintStates: repaintTray,
+    lifecycle: gatewayLifecycle,
   });
 
-  registerIpcHandlers(assembleIpcHandlers(engineHost, custody));
+  registerIpcHandlers(assembleIpcHandlers(booted.engineHost, booted.custody));
 
   electronApp.setAppUserModelId('sh.recompose.app');
 
@@ -279,9 +276,11 @@ async function startRecompose(): Promise<void> {
 
   registerPermissionHandlers();
 
-  appMenu.reflectSettings(boot.settings);
+  appMenu.reflectSettings(booted.settings);
 
-  applyBootSettingsOrComplain(settingsEffects, boot.settings);
+  applyBootSettingsOrComplain(settingsEffects, booted.settings);
+
+  booted.serveStoredGateways();
 
   createMainWindow(HOME_ROUTE);
 }
@@ -290,8 +289,7 @@ registerAppLifecycle({
   start: startRecompose,
   activate: showMainWindow,
   dispose: () => {
-    storageWatchers?.close();
-    storageWatchers = null;
-    engineHost?.dispose();
+    booted?.close();
+    booted = null;
   },
 });

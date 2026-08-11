@@ -1,11 +1,11 @@
-import type { GatewayEngineState } from '@recompose/contracts';
-
+import { DEFAULT_GATEWAY_BIND_ADDRESS, type GatewayEngineState } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import {
   engineStatesQueryOptions,
   gatewayStateIn,
   gatewaysQueryOptions,
+  settingsQueryOptions,
 } from '../../../../../shared/api';
 import { useGatewayLifecycle } from '../../lib/use-gateway-lifecycle';
 import { ToolbarFooter } from '../toolbar-footer/toolbar-footer';
@@ -29,6 +29,7 @@ function failedStartIn(state: GatewayEngineState): { port: number } | undefined 
 export function GatewayToolbar({ slug }: GatewayToolbarProps) {
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
   const { data: states } = useSuspenseQuery(engineStatesQueryOptions);
+  const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const lifecycle = useGatewayLifecycle(slug);
   const gateway = gateways.find((held) => held.slug === slug);
 
@@ -39,11 +40,12 @@ export function GatewayToolbar({ slug }: GatewayToolbarProps) {
   const { moveToFreePort: onMoveToFreePort } = lifecycle;
   const state = gatewayStateIn(states, slug);
   const running = state.status === 'running';
+  const bindAddress = settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS;
 
   return (
     <div className="flex flex-col gap-2">
       <ToolbarStrip
-        address={`http://localhost:${String(gateway.port)}`}
+        address={`http://${bindAddress}:${String(gateway.port)}`}
         name={gateway.displayName}
         onRun={running ? lifecycle.stop : lifecycle.start}
         port={gateway.port}

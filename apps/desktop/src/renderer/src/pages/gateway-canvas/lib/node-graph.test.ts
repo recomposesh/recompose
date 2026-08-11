@@ -47,7 +47,7 @@ const seat = { x: 320, y: 140 };
 const fastAtRest: CanvasEdge = {
   id: 'cable:fast',
   source: 'model:fast',
-  target: 'target:a1',
+  target: 'target:fast',
   standing: 'resting',
   failure: undefined,
 };
@@ -89,32 +89,58 @@ test('a virtual model node carries the id a client asks for and the real model t
   });
 });
 
-test('a target node carries the account it stands for, as the registry holds it', () => {
+test('a target node carries the account and the identity it reads under the provider product', () => {
   const graph = canvasGraph(codex, [work], nothingOverlaid);
 
-  expect(graph.nodes[2]).toEqual({ id: 'target:a1', kind: 'target', account: work });
+  expect(graph.nodes[2]).toEqual({
+    id: 'target:fast',
+    kind: 'target',
+    account: work,
+    modelId: 'fast',
+    detail: 'Work',
+  });
 });
 
-test('two virtual models reaching one account stand as one target under two cables', () => {
+test('a subscription target prefers the observed signed-in address over its stored label', () => {
+  const graph = canvasGraph(codex, [work], nothingOverlaid, {}, [
+    {
+      id: work.id,
+      provider: 'anthropic',
+      label: work.label,
+      standing: 'connected',
+      active: true,
+      signedInAs: 'ada@example.com',
+    },
+  ]);
+
+  expect(graph.nodes[2]).toMatchObject({ detail: 'ada@example.com' });
+});
+
+test('two virtual models reaching one account each keep a target card of their own', () => {
   const bothOnWork = { ...codex, virtualModels: [fast, { ...slow, target: fast.target }] };
   const graph = canvasGraph(bothOnWork, [work], nothingOverlaid);
 
-  expect(graph.nodes.filter((node) => node.kind === 'target')).toHaveLength(1);
+  expect(graph.nodes.filter((node) => node.kind === 'target')).toHaveLength(2);
   expect(graph.edges.map((cable) => cable.target)).toEqual([
     'model:fast',
-    'target:a1',
+    'target:fast',
     'model:slow',
-    'target:a1',
+    'target:slow',
   ]);
 });
 
 test('a binding whose account left the registry stands as a ghost under a broken cable', () => {
   const graph = canvasGraph({ ...codex, virtualModels: [slow] }, [work], nothingOverlaid);
 
-  expect(graph.nodes[2]).toEqual({ id: 'ghost:a2', kind: 'ghost-target', accountId: 'a2' });
+  expect(graph.nodes[2]).toEqual({
+    id: 'ghost:slow',
+    kind: 'ghost-target',
+    accountId: 'a2',
+    modelId: 'slow',
+  });
   expect(graph.edges).toEqual([
     { id: 'wire:model:slow', source: 'gateway', target: 'model:slow', standing: 'structural' },
-    { id: 'cable:slow', source: 'model:slow', target: 'ghost:a2', standing: 'broken' },
+    { id: 'cable:slow', source: 'model:slow', target: 'ghost:slow', standing: 'broken' },
   ]);
 });
 
@@ -139,7 +165,6 @@ test('a draft nobody has finished stands as its own node, wired to the gateway i
   });
   expect(graph.edges).toEqual([
     { id: 'wire:draft', source: 'gateway', target: 'draft', standing: 'structural' },
-    { id: 'overlay:draft', source: 'gateway', target: 'draft', standing: 'draft' },
   ]);
 });
 
@@ -150,12 +175,13 @@ test('a draft naming a model nobody serves yet stands beside the ones the gatewa
   expect(graph.nodes.map((node) => node.id)).toContain('draft');
 });
 
-test('a draft naming a model the gateway already serves stands down, so the stored binding wins', () => {
+test('a draft temporarily matching a stored model id keeps its separate internal node', () => {
   const drafting: DraftStanding = { modelId: 'fast', displayName: 'Fast again', seat };
   const graph = canvasGraph(codex, [work], { draft: drafting, pending: undefined });
 
-  expect(graph.nodes.map((node) => node.id)).toEqual(['gateway', 'model:fast', 'target:a1']);
-  expect(standingsOf(graph)).toEqual(['structural', 'resting']);
+  expect(graph.nodes.map((node) => node.id)).toContain('draft');
+  expect(graph.nodes.map((node) => node.id)).toContain('model:fast');
+  expect(standingsOf(graph)).toEqual(['structural', 'resting', 'structural']);
 });
 
 test('a card waiting on a pick stands at the end, wired out of the port the cable left', () => {
@@ -198,7 +224,6 @@ test('a virtual model aliased draft keeps its own cable and wire, because both n
     'wire:model:pending',
     'cable:pending',
     'wire:draft',
-    'overlay:draft',
     'overlay:pending',
   ]);
 });
@@ -210,6 +235,8 @@ test('a rebound virtual model drops the cable it held, and the target it left st
   });
   const graph = canvasGraph(rebound, [work, spare], nothingOverlaid);
 
-  expect(graph.edges.map((cable) => cable.target)).toEqual(['model:fast', 'target:a2']);
-  expect(graph.nodes.map((node) => node.id)).not.toContain('target:a1');
+  expect(graph.edges.map((cable) => cable.target)).toEqual(['model:fast', 'target:fast']);
+  expect(graph.nodes.filter((node) => node.kind === 'target')).toMatchObject([
+    { id: 'target:fast', account: spare },
+  ]);
 });

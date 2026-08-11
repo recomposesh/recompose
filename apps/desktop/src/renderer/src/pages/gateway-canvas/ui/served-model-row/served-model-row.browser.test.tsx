@@ -38,7 +38,8 @@ test('a serving row reads its name over the binding a request under it reaches',
   await expect
     .element(screen.getByText('fast → work · claude-haiku-4-5', { exact: true }))
     .toBeVisible();
-  await expect.element(screen.getByText('serving', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('serving', { exact: true })).not.toBeInTheDocument();
+  expect(screen.container.querySelector('.text-virtual-model svg')).not.toBeNull();
 });
 
 test('a row whose target account left the registry says so instead of serving', async () => {

@@ -31,6 +31,9 @@ async function renderPicker(stage: PickerStage, groups: readonly OptionGroup[]) 
       onPickProviderModel={(providerModel) => {
         heard.push(`provider model ${providerModel}`);
       }}
+      onSelectDifferentProvider={() => {
+        heard.push('different provider');
+      }}
       stage={stage}
     />,
   );
@@ -63,6 +66,17 @@ test('the second stage picks the model the account serves, which completes the b
   await screen.getByRole('button', { name: 'claude-sonnet-5' }).click();
 
   expect(heard).toEqual(['provider model claude-sonnet-5']);
+});
+
+test('the second stage offers the way back to the provider choices', async () => {
+  const { heard, screen } = await renderPicker(
+    { step: 'provider-model', accountId: 'key-work' },
+    models,
+  );
+
+  await screen.getByRole('button', { name: 'Select different provider' }).click();
+
+  expect(heard).toEqual(['different provider']);
 });
 
 test('Esc dismisses the picker, which is what takes the pending card away with it', async () => {
@@ -109,11 +123,12 @@ test('moving to the second stage carries focus onto the model list it opens on',
       onDismiss={() => {}}
       onPickAccount={() => {}}
       onPickProviderModel={() => {}}
+      onSelectDifferentProvider={() => {}}
       stage={{ step: 'provider-model', accountId: 'key-work' }}
     />,
   );
 
-  await expect.element(screen.getByRole('button', { name: 'claude-sonnet-5' })).toHaveFocus();
+  await expect.element(screen.getByRole('searchbox', { name: 'Search models' })).toHaveFocus();
 });
 
 test('a stage that offers nothing says so rather than standing empty', async () => {

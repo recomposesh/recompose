@@ -53,7 +53,7 @@ test('the pill carries the address a person pastes into a client, with no path',
   const { screen } = await renderToolbar({ gateways: [codex], engineStates: {} });
 
   await expect.element(screen.getByText('http://')).toBeVisible();
-  await expect.element(screen.getByText('localhost:51234')).toBeVisible();
+  await expect.element(screen.getByText('127.0.0.1:51234')).toBeVisible();
 });
 
 test('the pill closes with the state word the gateway stands in', async () => {
@@ -106,7 +106,7 @@ test('the copy affordance puts the bare origin on the clipboard', async () => {
   await screen.getByRole('button', { name: 'Copy address' }).click();
 
   await expect.element(screen.getByRole('status')).toHaveTextContent('Address copied.');
-  expect(await navigator.clipboard.readText()).toBe('http://localhost:51234');
+  expect(await navigator.clipboard.readText()).toBe('http://127.0.0.1:51234');
 });
 
 test('a start against a taken port names the port and offers a way out', async () => {
@@ -157,13 +157,13 @@ test('accepting the move puts the gateway on a free port and the pill follows', 
 
   await screen.getByRole('button', { name: 'Move to a free port' }).click();
 
-  await expect.element(screen.getByText('localhost:51235')).toBeVisible();
+  await expect.element(screen.getByText('127.0.0.1:51235')).toBeVisible();
   await expect.element(screen.getByRole('alert')).not.toBeInTheDocument();
 });
 
 test('a gateway that has never failed shows no failure line', async () => {
   const { screen } = await renderToolbar({ gateways: [codex], engineStates: {} });
 
-  await expect.element(screen.getByText('localhost:51234')).toBeVisible();
+  await expect.element(screen.getByText('127.0.0.1:51234')).toBeVisible();
   await expect.element(screen.getByRole('alert')).not.toBeInTheDocument();
 });

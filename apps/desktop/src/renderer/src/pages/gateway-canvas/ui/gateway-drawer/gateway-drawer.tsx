@@ -1,33 +1,38 @@
-import type { Account, GatewayConfig, VirtualModel } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
+import {
+  DEFAULT_GATEWAY_BIND_ADDRESS,
+  type Account,
+  type GatewayConfig,
+  type SubscriptionAccountView,
+} from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
-import type { IconName } from '../../../../shared/ui';
 import type { SettledDefinition } from '../../lib/model-draft';
 import type { ServedModel } from '../../model/served-models';
 
-import { accountKindTitle, accountName } from '../../../../entities/account';
 import {
   accountsQueryOptions,
   engineStatesQueryOptions,
   gatewayStateIn,
+  settingsQueryOptions,
+  subscriptionsQueryOptions,
 } from '../../../../shared/api';
 import { subscribeToPanelWidths } from '../../../../shared/lib';
-import { CopyButton, Icon, stateMark, stateWord } from '../../../../shared/ui';
 import { inspectorWidth } from '../../lib/inspector-width';
-import { servedModels, servesTally } from '../../model/served-models';
+import { servedModels } from '../../model/served-models';
 import { DraftInspector } from '../draft-inspector/draft-inspector';
-import { ServesBox } from '../serves-box/serves-box';
+import { gatewayBody, ghostBody, modelBody, targetBody } from '../subject-bodies/subject-bodies';
+import { glyph, subjectHead } from '../subject-shell/subject-shell';
 
 /** What stands selected on the canvas, which is the one thing the inspector speaks for. */
 export type InspectorSubject =
   | { kind: 'gateway' }
   | { kind: 'virtual-model'; modelId: string }
   | { kind: 'cable'; modelId: string }
-  | { kind: 'target'; accountId: string }
-  | { kind: 'ghost-target'; accountId: string }
+  | { kind: 'target'; accountId: string; modelId: string }
+  | { kind: 'ghost-target'; accountId: string; modelId: string }
   | { kind: 'draft' };
 
 type GatewayDrawerProps = {
@@ -39,150 +44,21 @@ type GatewayDrawerProps = {
   refusal: string | undefined;
   /** Whether the drawer is on its way off screen, which is what plays its exit. */
   leaving?: boolean;
+  /** Opens the confirmation for the gateway, virtual model, or target the drawer reads. */
+  onAskRemoval: (nodeId: string) => void;
   /** Receives the definition the moment a draft saved through the inspector graduates. */
   onDraftDefined: (definition: SettledDefinition) => void;
+  /** Hears the model id a rename settled on, so the selection can follow the definition. */
+  onModelRenamed: (modelId: string) => void;
 };
-
-type SubjectHead = { glyph: IconName; kicker: string; name: string; line: string };
-
-function subjectHead({ glyph, kicker, name, line }: SubjectHead): ReactNode {
-  return (
-    <header className="flex items-center gap-2.5 px-4 pt-4 pb-1">
-      <span className="flex size-7.5 shrink-0 items-center justify-center rounded-control bg-accent text-highlight-ink">
-        <Icon className="size-4" name={glyph} />
-      </span>
-      <div className="min-w-0">
-        <p className="text-footnote font-bold tracking-wider text-ink-secondary uppercase">
-          {kicker}
-        </p>
-        <h2 className="truncate text-heading text-ink">{name}</h2>
-        <p className="truncate font-mono text-mono-value text-accent-ink">{line}</p>
-      </div>
-    </header>
-  );
-}
-
-function factRow(label: string, value: ReactNode, control?: ReactNode): ReactNode {
-  return (
-    <div className="flex min-h-sheet-row items-center gap-2 border-t border-line-faint px-3 py-1.5 first:border-t-0">
-      <span className="shrink-0 text-control text-ink">{label}</span>
-      <span className="ms-auto truncate font-mono text-mono-value text-ink">{value}</span>
-      {control}
-    </div>
-  );
-}
-
-function endpointBox(gateway: GatewayConfig, status: 'running' | 'stopped'): ReactNode {
-  const baseUrl = `http://localhost:${String(gateway.port)}`;
-
-  return (
-    <div className="field-box">
-      {factRow('Base URL', baseUrl, <CopyButton label="Copy base URL" value={baseUrl} />)}
-      <div className="flex min-h-sheet-row items-center gap-2 border-t border-line-faint px-3 py-1.5">
-        <span className="text-control text-ink">Status</span>
-        <span className="ms-auto flex items-center gap-1.5 text-detail text-ink">
-          <span aria-hidden className={`size-1.75 shrink-0 rounded-pill ${stateMark[status]}`} />
-          {stateWord[status]}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function sectionHeading(title: string, tally?: ReactNode): ReactNode {
-  return (
-    <h3 className="mt-3.5 mb-1.5 flex min-w-0 items-center gap-1.5 px-1 text-caption font-bold text-ink-secondary">
-      <span className="shrink-0">{title}</span>
-      {tally}
-    </h3>
-  );
-}
-
-function subjectShell(head: SubjectHead, body: ReactNode): ReactNode {
-  return (
-    <>
-      {subjectHead(head)}
-      <div className="flex-1 overflow-y-auto px-3.5 pb-4">{body}</div>
-    </>
-  );
-}
-
-function servesTallyLine(served: readonly ServedModel[]): ReactNode {
-  return served.length === 0 ? null : (
-    <span className="min-w-0 truncate font-medium text-ink-secondary">
-      · {servesTally(served.length)}
-    </span>
-  );
-}
-
-function gatewayBody(
-  gateway: GatewayConfig,
-  served: readonly ServedModel[],
-  status: 'running' | 'stopped',
-): ReactNode {
-  return subjectShell(
-    { glyph: 'network', kicker: 'Gateway', name: gateway.displayName, line: gateway.slug },
-    <>
-      {sectionHeading('Endpoint')}
-      {endpointBox(gateway, status)}
-      {sectionHeading('Serves', servesTallyLine(served))}
-      <ServesBox served={served} />
-    </>,
-  );
-}
-
-function targetRows(target: VirtualModel['target'], account: Account | undefined): ReactNode {
-  if (account === undefined) {
-    return factRow('Target', target.accountId);
-  }
-
-  return (
-    <>
-      {factRow('Target', accountName(account))}
-      {factRow('Provider', account.provider)}
-      {factRow('Kind', accountKindTitle(account.kind))}
-    </>
-  );
-}
-
-function modelBody(
-  model: VirtualModel,
-  account: Account | undefined,
-  kicker: 'Virtual model' | 'Binding',
-): ReactNode {
-  return subjectShell(
-    { glyph: 'spark', kicker, name: model.displayName, line: model.id },
-    <div className="mt-3.5 field-box">
-      {factRow('Model id', model.id, <CopyButton label="Copy model id" value={model.id} />)}
-      {targetRows(model.target, account)}
-      {factRow('Model', model.target.providerModel)}
-    </div>,
-  );
-}
-
-function targetBody(account: Account): ReactNode {
-  return subjectShell(
-    { glyph: 'network', kicker: 'Target', name: accountName(account), line: account.provider },
-    <div className="mt-3.5 field-box">
-      {factRow('Provider', account.provider)}
-      {factRow('Kind', accountKindTitle(account.kind))}
-    </div>,
-  );
-}
-
-function ghostBody(accountId: string): ReactNode {
-  return subjectShell(
-    { glyph: 'close', kicker: 'Removed', name: accountId, line: 'not in the registry' },
-    <p className="mt-3.5 field-box px-3 py-2.5 text-detail text-ink-secondary">
-      This account left the registry. The binding holds until a cable gesture repairs it.
-    </p>,
-  );
-}
 
 type DrawerWorld = {
   gateway: GatewayConfig;
   accounts: readonly Account[];
+  subscriptions: readonly SubscriptionAccountView[];
+  onAskRemoval: (nodeId: string) => void;
   onDraftDefined: (definition: SettledDefinition) => void;
+  onModelRenamed: (modelId: string) => void;
 };
 
 function bindingSubjectBody(
@@ -197,13 +73,34 @@ function bindingSubjectBody(
 
   const account = world.accounts.find((held) => held.id === model.target.accountId);
 
-  return modelBody(model, account, subject.kind === 'cable' ? 'Binding' : 'Virtual model');
+  return modelBody(
+    world.gateway,
+    model,
+    account,
+    world.subscriptions,
+    subject.kind === 'cable' ? 'Binding' : 'Virtual model',
+    () => {
+      world.onAskRemoval(`model:${model.id}`);
+    },
+    world.onModelRenamed,
+  );
 }
 
-function accountSubjectBody(world: DrawerWorld, accountId: string): ReactNode | undefined {
+function accountSubjectBody(
+  world: DrawerWorld,
+  accountId: string,
+  modelId: string,
+): ReactNode | undefined {
   const account = world.accounts.find((held) => held.id === accountId);
+  const models = world.gateway.virtualModels.filter(
+    (model) => model.target.accountId === accountId,
+  );
 
-  return account === undefined ? undefined : targetBody(account);
+  return account === undefined
+    ? undefined
+    : targetBody(account, world.subscriptions, models, () => {
+        world.onAskRemoval(`target:${modelId}`);
+      });
 }
 
 function cardSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
@@ -212,7 +109,7 @@ function cardSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNo
   }
 
   if (subject.kind === 'target') {
-    return accountSubjectBody(world, subject.accountId);
+    return accountSubjectBody(world, subject.accountId, subject.modelId);
   }
 
   return subject.kind === 'ghost-target' ? ghostBody(subject.accountId) : undefined;
@@ -224,13 +121,36 @@ function draftBody(world: DrawerWorld): ReactNode {
   return (
     <>
       {subjectHead({
-        glyph: 'spark',
+        lead: glyph('spark'),
+        leadClasses: 'bg-virtual-model text-highlight-ink',
         kicker: 'Draft',
         name: 'Virtual model',
-        line: 'not stored yet',
       })}
       <DraftInspector gateway={gateway} onDefined={onDraftDefined} />
     </>
+  );
+}
+
+type ServingFacts = {
+  served: readonly ServedModel[];
+  status: 'running' | 'stopped';
+  bindAddress: string;
+};
+
+function subjectBody(
+  subject: InspectorSubject,
+  world: DrawerWorld,
+  serving: ServingFacts,
+): ReactNode {
+  if (subject.kind === 'draft') {
+    return draftBody(world);
+  }
+
+  return (
+    cardSubjectBody(subject, world) ??
+    gatewayBody(world.gateway, serving.served, serving.status, serving.bindAddress, () => {
+      world.onAskRemoval('gateway');
+    })
   );
 }
 
@@ -258,26 +178,34 @@ export function GatewayDrawer({
   subject,
   refusal,
   leaving = false,
+  onAskRemoval,
   onDraftDefined,
+  onModelRenamed,
 }: GatewayDrawerProps) {
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
   const { data: states } = useSuspenseQuery(engineStatesQueryOptions);
+  const { data: settings } = useSuspenseQuery(settingsQueryOptions);
+  const { data: subscriptions } = useSuspenseQuery(subscriptionsQueryOptions);
   const width = useSyncExternalStore(subscribeToPanelWidths, inspectorWidth);
-  const world: DrawerWorld = { gateway, accounts: registry.accounts, onDraftDefined };
+  const world: DrawerWorld = {
+    gateway,
+    accounts: registry.accounts,
+    subscriptions,
+    onAskRemoval,
+    onDraftDefined,
+    onModelRenamed,
+  };
 
-  const body =
-    subject.kind === 'draft'
-      ? draftBody(world)
-      : (cardSubjectBody(subject, world) ??
-        gatewayBody(
-          gateway,
-          servedModels(gateway.virtualModels, registry.accounts),
-          gatewayStateIn(states, gateway.slug).status,
-        ));
+  const body = subjectBody(subject, world, {
+    served: servedModels(gateway.virtualModels, registry.accounts),
+    status: gatewayStateIn(states, gateway.slug).status,
+    bindAddress: settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS,
+  });
 
   return (
     <aside
       data-panel-control=""
+      data-focus-group=""
       className={`shrink-0 overflow-hidden border-s border-line-subtle bg-surface-toolbar ${leaving ? 'inspector-panel-leaving' : 'inspector-panel'}`}
       style={{ width }}
     >

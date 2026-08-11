@@ -2,6 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { canvasPositions } from '../../lib/canvas-position-store';
+import { keepCanvasViewport } from '../../lib/canvas-viewport-store';
 import { draggedCard } from '../../testing/canvas-gestures.testkit';
 import {
   canvasCommandLine,
@@ -17,6 +18,51 @@ beforeEach(freshCanvasRun);
 
 const POSITIONS_KEY = 'recompose.canvas.positions.my-gateway';
 
+const VIEWPORT_KEY = 'recompose.canvas.viewport.my-gateway';
+
+function viewportTransform(container: HTMLElement): string {
+  return container.querySelector<HTMLElement>('.react-flow__viewport')?.style.transform ?? '';
+}
+
+function keptViewport(): unknown {
+  const kept: unknown = JSON.parse(localStorage.getItem(VIEWPORT_KEY) ?? '{}');
+
+  return kept;
+}
+
+test('a first visit centers the composition rather than pinning it to the corner', async () => {
+  standCanvasBridge();
+  localStorage.removeItem(VIEWPORT_KEY);
+
+  const screen = await renderCanvasPage();
+
+  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  await expect
+    .poll(() => viewportTransform(screen.container))
+    .not.toBe('translate(48px, 48px) scale(1)');
+});
+
+test('the canvas opens where the person left its camera', async () => {
+  standCanvasBridge();
+  keepCanvasViewport('my-gateway', { x: -120, y: 32, zoom: 0.75 });
+
+  const screen = await renderCanvasPage();
+
+  await expect
+    .poll(() => viewportTransform(screen.container))
+    .toBe('translate(-120px, 32px) scale(0.75)');
+});
+
+test('a pan the person settles on is the camera the next visit opens with', async () => {
+  const screen = await canvasPageOn();
+
+  screen.container
+    .querySelector('.react-flow__pane')
+    ?.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaX: 60, deltaY: 40 }));
+
+  await expect.poll(keptViewport).not.toEqual({ x: 48, y: 48, zoom: 1 });
+});
+
 function cardWrapper(container: HTMLElement, nodeId: string): HTMLElement | null {
   return container.querySelector<HTMLElement>(`.react-flow__node[data-id="${nodeId}"]`);
 }
@@ -30,7 +76,7 @@ test('every card seats where tidy puts it on a canvas nobody arranged', async ()
 
   await expect.poll(() => seatOf(screen.container, 'gateway')).toBe('translate(0px, 0px)');
   await expect.poll(() => seatOf(screen.container, 'model:fast')).toBe('translate(320px, 0px)');
-  await expect.poll(() => seatOf(screen.container, 'target:k1')).toBe('translate(640px, 0px)');
+  await expect.poll(() => seatOf(screen.container, 'target:fast')).toBe('translate(640px, 0px)');
 });
 
 test('a malformed written arrangement falls back to the tidy seats', async () => {

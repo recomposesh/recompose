@@ -2,8 +2,20 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { setPanelWidth, toggleInspector } from '../../../../shared/lib';
+import {
+  canvasPositions,
+  keepCanvasPositions,
+  setNodePosition,
+} from '../../lib/canvas-position-store';
+import { canvasViewport, keepCanvasViewport } from '../../lib/canvas-viewport-store';
+import { heldDraft } from '../../lib/use-held-draft';
 import { clickedCable, draftCardOn, storedBindingOf } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun, renderCanvasPage } from '../../testing/canvas-page.testkit';
+import {
+  canvasPageOn,
+  freshCanvasRun,
+  renderCanvasPage,
+  standCanvasBridge,
+} from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -23,8 +35,13 @@ test('the canvas stands the gateway, its virtual models, and their targets as ca
   expect(screen.container.querySelector('[data-id="cable:creative"]')).not.toBeNull();
 });
 
-test('the inspector reads the gateway with nothing selected, and its add button is gone', async () => {
+test('the gateway detail opens on its canvas, with the inspector away until asked for', async () => {
   const screen = await canvasPageOn();
+
+  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+
+  toggleInspector();
 
   await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
   await expect
@@ -40,7 +57,8 @@ test('selecting a target card turns the inspector onto that account', async () =
   await expect.element(screen.getByRole('complementary')).toBeVisible();
   const drawer = screen.getByRole('complementary');
 
-  await expect.element(drawer.getByText('anthropic', { exact: true }).first()).toBeVisible();
+  await expect.element(drawer.getByText('Provider', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('Encrypted key', { exact: true })).toBeVisible();
 });
 
 test('selecting a cable shows the binding in the inspector', async () => {
@@ -50,8 +68,8 @@ test('selecting a cable shows the binding in the inspector', async () => {
 
   const drawer = screen.getByRole('complementary');
 
-  await expect.element(drawer.getByText('work', { exact: true })).toBeVisible();
-  await expect.element(drawer.getByText('API Keys', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('Binding', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('Goes to', { exact: true })).toBeVisible();
   await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
@@ -86,6 +104,22 @@ test('selecting a node opens a closed inspector back up on that subject', async 
   await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
+test('a saved id rename keeps the drawer on the renamed definition', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
+
+  const drawer = screen.getByRole('complementary');
+
+  await userEvent.click(drawer.getByRole('button', { name: 'Edit' }));
+  await drawer.getByRole('textbox', { name: 'Model id' }).fill('rapid');
+  await userEvent.click(drawer.getByRole('button', { name: 'Save' }));
+
+  await expect.poll(async () => storedBindingOf('rapid')).toBeDefined();
+  await expect.element(drawer.getByText('Virtual model', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('rapid', { exact: true })).toBeVisible();
+});
+
 test('a draft in flight survives leaving the screen and coming back', async () => {
   const first = await canvasPageOn();
 
@@ -115,6 +149,48 @@ test('the removal dialog holds through a re-render, still answerable', async () 
   expect(await storedBindingOf('fast')).toBeDefined();
 });
 
+test('Delete on the gateway node asks with the gateway wording, and Cancel changes nothing', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await userEvent.keyboard('{Delete}');
+
+  await expect.element(screen.getByText(/Delete the gateway "My Gateway"/)).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+  await expect.element(screen.getByText(/Delete the gateway/)).not.toBeInTheDocument();
+  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+});
+
+test('confirming the gateway deletion removes it from the store and hands the person away', async () => {
+  standCanvasBridge();
+
+  let handedAway = 0;
+  const screen = await renderCanvasPage(false, () => {
+    handedAway += 1;
+  });
+
+  await userEvent.click(screen.getByLabelText('Add a virtual model'));
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Forgotten');
+  setNodePosition('my-gateway', 'gateway', { x: 12, y: 34 });
+  keepCanvasPositions('my-gateway');
+  keepCanvasViewport('my-gateway', { x: 20, y: 30, zoom: 1.2 });
+
+  await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
+  await userEvent.keyboard('{Delete}');
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
+
+  await expect.poll(() => handedAway).toBe(1);
+
+  const listed = await window.recompose['gateways:list']();
+
+  expect(listed.ok && listed.value).toEqual([]);
+  expect(heldDraft('my-gateway')).toBeUndefined();
+  expect(canvasPositions('my-gateway')).toEqual({});
+  expect(canvasViewport('my-gateway')).toBeUndefined();
+});
+
 function dragSeparator(handle: Element, from: number, to: number) {
   handle.dispatchEvent(
     new PointerEvent('pointerdown', { pointerId: 1, clientX: from, bubbles: true }),
@@ -127,6 +203,9 @@ const theSeparator = { name: 'Inspector width' };
 
 test('dragging the inspector border sizes the panel inside its bounds', async () => {
   const screen = await canvasPageOn();
+
+  toggleInspector();
+
   const handle = screen.getByRole('separator', theSeparator);
 
   await expect.element(handle).toBeInTheDocument();
@@ -138,6 +217,9 @@ test('dragging the inspector border sizes the panel inside its bounds', async ()
 
 test('dragging the border well past the narrowest width shuts the inspector', async () => {
   const screen = await canvasPageOn();
+
+  toggleInspector();
+
   const handle = screen.getByRole('separator', theSeparator);
 
   await expect.element(handle).toBeInTheDocument();

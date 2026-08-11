@@ -1,10 +1,10 @@
 import type { ReactElement } from 'react';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { BrandMarkName } from '../../../../shared/ui';
 
-import { BrandMark, Icon } from '../../../../shared/ui';
+import { BrandMark, Icon, placeFocus } from '../../../../shared/ui';
 
 export type OptionRow = {
   /** The value picking this option settles on. */
@@ -34,9 +34,25 @@ type OptionListProps = {
   searchLabel: string;
   /** Sentence standing where the search matched nothing at all. */
   nothingMatched: string;
+  /** Forces the search field to stand and take focus when this list arrives. */
+  focusSearch?: boolean;
 };
 
 const SEARCH_APPEARS_ABOVE = 6;
+
+function searchAppears(groups: readonly OptionGroup[], focusSearch: boolean): boolean {
+  const offered = groups.reduce((count, group) => count + group.options.length, 0);
+
+  return focusSearch || offered > SEARCH_APPEARS_ABOVE;
+}
+
+function narrowedWhileSearchable(
+  groups: readonly OptionGroup[],
+  searchable: boolean,
+  typed: string,
+): readonly OptionGroup[] {
+  return searchable ? matching(groups, typed) : groups;
+}
 
 function matching(groups: readonly OptionGroup[], typed: string): readonly OptionGroup[] {
   const sought = typed.trim().toLowerCase();
@@ -65,7 +81,7 @@ function optionRow(option: OptionRow, picked: boolean, onPick: (id: string) => v
     <li key={option.id}>
       <button
         aria-pressed={picked}
-        className={`flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-start text-control focus-ring row-hover ${picked ? 'bg-accent/10' : ''}`}
+        className={`flex w-full items-center gap-2 rounded-control focus-ring px-2 py-1.5 text-start text-control row-hover ${picked ? 'bg-accent/10' : ''}`}
         onClick={() => {
           onPick(option.id);
         }}
@@ -120,23 +136,31 @@ export function OptionList({
   onPick,
   searchLabel,
   nothingMatched,
+  focusSearch = false,
 }: OptionListProps) {
   const [typed, setTyped] = useState('');
+  const search = useRef<HTMLInputElement>(null);
 
-  const offered = groups.reduce((count, group) => count + group.options.length, 0);
-  const searchable = offered > SEARCH_APPEARS_ABOVE;
-  const shown = searchable ? matching(groups, typed) : groups;
+  const searchable = searchAppears(groups, focusSearch);
+  const shown = narrowedWhileSearchable(groups, searchable, typed);
+
+  useEffect(() => {
+    if (focusSearch) {
+      placeFocus(search.current);
+    }
+  }, [focusSearch]);
 
   return (
     <div className="flex flex-col gap-1">
       {searchable ? (
         <input
           aria-label={searchLabel}
-          className="field-control w-full focus-ring placeholder:text-ink-tertiary"
+          className="field-control w-full placeholder:text-ink-tertiary focus-visible:bg-surface-hover data-placed-focus:bg-surface-hover"
           onInput={(event) => {
             setTyped(event.currentTarget.value);
           }}
           placeholder={searchLabel}
+          ref={search}
           type="search"
           value={typed}
         />

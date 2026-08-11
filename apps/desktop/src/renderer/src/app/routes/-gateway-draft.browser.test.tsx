@@ -32,7 +32,7 @@ test('a draft on one gateway never follows a person to another', async () => {
 
   await userEvent.click(screen.getByRole('link', { name: /Claude/ }));
 
-  await expect.element(screen.getByRole('heading', { name: 'Claude' })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Claude/ })).toBeVisible();
   expect(draftCardOn(screen.container)).toBeNull();
 
   await expect.element(screen.getByLabelText('Add a virtual model')).toBeVisible();
@@ -49,10 +49,10 @@ test('a draft is still standing when a person comes back to the gateway they lef
   await screen.getByRole('textbox', { name: 'Name' }).fill('Fast Sonnet');
 
   await userEvent.click(screen.getByRole('link', { name: /Claude/ }));
-  await expect.element(screen.getByRole('heading', { name: 'Claude' })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Claude/ })).toBeVisible();
 
   await userEvent.click(screen.getByRole('link', { name: /Codex/ }));
 
-  await expect.element(screen.getByRole('heading', { name: 'Codex' })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Codex/ })).toBeVisible();
   await expect.poll(() => draftCardOn(screen.container)?.textContent).toContain('Fast Sonnet');
 });

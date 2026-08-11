@@ -50,6 +50,7 @@ describe('the protocol the two processes speak', () => {
       slug: string;
       displayName: string;
       port: number;
+      bindAddress?: string | undefined;
       virtualModels: EngineVirtualModel[];
     }>();
   });

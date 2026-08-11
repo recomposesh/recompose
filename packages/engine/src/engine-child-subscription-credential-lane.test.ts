@@ -98,15 +98,15 @@ test('a refreshed token is not spent until main acknowledges durable storage', a
     body: JSON.stringify({ model: 'fast', messages: [{ role: 'user', content: 'hello' }] }),
   });
 
-  await reportsReach(parent, 2);
+  await reportsReach(parent, 3);
 
-  const spend = engineSpendRequestSchema.parse(parent.reports[1]);
+  const spend = engineSpendRequestSchema.parse(parent.reports.at(-1));
 
   grantExpiredSubscription(parent, spend.id);
 
-  await reportsReach(parent, 3);
+  await reportsReach(parent, 4);
 
-  const update = engineSubscriptionCredentialUpdateSchema.parse(parent.reports[2]);
+  const update = engineSubscriptionCredentialUpdateSchema.parse(parent.reports.at(-1));
 
   expect(update).toMatchObject({
     provider: 'anthropic',

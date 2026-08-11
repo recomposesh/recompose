@@ -1,16 +1,20 @@
-import type { GatewayConfig, IpcRequest } from '@recompose/contracts';
+import type { EngineGateway, GatewayConfig, IpcRequest } from '@recompose/contracts';
 
 import type { IpcHandlers } from './dispatch';
 import type { StorageIpcContext, StoragePaths } from './storage-context';
 
 import { engineGatewayOf } from '../engine-host/stored-gateway';
-import { listGatewayConfigs, saveGatewayConfig } from '../storage/gateway-store';
+import {
+  listGatewayConfigs,
+  removeGatewayConfig,
+  saveGatewayConfig,
+} from '../storage/gateway-store';
 import { inGatewayWriteOrder } from '../storage/gateway-write-order';
 import { ipcFailure, storageFailure } from './storage-envelope';
 
 export type GatewayStorageHandlers = Pick<
   IpcHandlers,
-  'gateways:list' | 'gateways:save' | 'gateways:update'
+  'gateways:list' | 'gateways:save' | 'gateways:update' | 'gateways:remove' | 'gateways:set-port'
 >;
 
 function noteGatewayWrite(ctx: StorageIpcContext, gateway: GatewayConfig): void {
@@ -69,11 +73,31 @@ async function saveGateway(
   }
 }
 
-function noSuchGateway(slug: string) {
+function restartIfServing(ctx: StorageIpcContext, serving: EngineGateway): void {
+  if (ctx.isServing(serving.slug)) {
+    ctx.restartGateway(serving);
+  }
+}
+
+function noSuchGateway(slug: string, consequence = 'has nothing to rewrite') {
   return ipcFailure(
     'storage-failed',
-    `recompose stores no gateway under the slug "${slug}", so it has nothing to rewrite.`,
+    `recompose stores no gateway under the slug "${slug}", so it ${consequence}.`,
   );
+}
+
+async function servedRewrite(
+  ctx: StorageIpcContext,
+  paths: StoragePaths,
+  rewritten: GatewayConfig,
+) {
+  const serving = await engineGatewayOf(ctx.userDataPath, ctx.onCorrupt, rewritten);
+
+  await saveGatewayConfig(paths.gatewaysDir, rewritten);
+  noteGatewayWrite(ctx, rewritten);
+  restartIfServing(ctx, serving);
+
+  return { ok: true as const, value: await listGatewayConfigs(paths.gatewaysDir, ctx.onCorrupt) };
 }
 
 /**
@@ -108,15 +132,88 @@ async function updateGateway(
       return noSuchGateway(config.slug);
     }
 
-    const rewritten = { ...config, port: held.port };
-    const serving = await engineGatewayOf(ctx.userDataPath, ctx.onCorrupt, rewritten);
+    return await servedRewrite(ctx, paths, { ...config, port: held.port });
+  } catch (error) {
+    return storageFailure(error, ctx.homeFolder);
+  }
+}
 
-    await saveGatewayConfig(paths.gatewaysDir, rewritten);
-    noteGatewayWrite(ctx, rewritten);
+/**
+ * Moves a stored gateway onto the port a person chose, and serves it there if it was serving.
+ *
+ * @summary The chosen port refuses a seat another gateway already holds, exactly as the save
+ * refuses one. A serving gateway restarts because the port is the one field the running engine
+ * cannot follow in place; a stopped one just keeps the new number for its next start.
+ */
+async function setGatewayPort(
+  ctx: StorageIpcContext,
+  paths: StoragePaths,
+  request: IpcRequest<'gateways:set-port'>,
+) {
+  try {
+    const stored = await listGatewayConfigs(paths.gatewaysDir, ctx.onCorrupt);
+    const held = stored.find((one) => one.slug === request.slug);
 
-    if (ctx.isServing(rewritten.slug)) {
-      ctx.restartGateway(serving);
+    if (held === undefined) {
+      return ipcFailure(
+        'storage-failed',
+        `recompose stores no gateway under the slug "${request.slug}", so it has no port to move.`,
+      );
     }
+
+    if (held.port === request.port) {
+      return { ok: true as const, value: stored };
+    }
+
+    const holder = stored.find((one) => one.port === request.port);
+
+    if (holder !== undefined) {
+      return ipcFailure('port-conflict', `${holder.slug} already holds this port.`);
+    }
+
+    return await servedRewrite(ctx, paths, { ...held, port: request.port });
+  } catch (error) {
+    return storageFailure(error, ctx.homeFolder);
+  }
+}
+
+async function stopServingBeforeRemoval(ctx: StorageIpcContext, slug: string): Promise<void> {
+  if (ctx.removeGatewayRuntime === undefined) {
+    ctx.stopGateway(slug);
+
+    return;
+  }
+
+  await ctx.removeGatewayRuntime(slug);
+}
+
+/**
+ * Removes a stored gateway for good, stopping what it serves before its document leaves.
+ *
+ * @summary The stop lands before the delete, because an engine serving a gateway whose document
+ * has already gone is a server nothing on disk explains. The answer carries the remaining stored
+ * list, so the caller learns in one reading whether any gateway still stands.
+ */
+async function removeGateway(
+  ctx: StorageIpcContext,
+  paths: StoragePaths,
+  request: IpcRequest<'gateways:remove'>,
+) {
+  try {
+    const stored = await listGatewayConfigs(paths.gatewaysDir, ctx.onCorrupt);
+    const held = stored.find((one) => one.slug === request.slug);
+
+    if (held === undefined) {
+      return noSuchGateway(request.slug, 'has nothing to remove');
+    }
+
+    if (ctx.isServing(held.slug)) {
+      await stopServingBeforeRemoval(ctx, held.slug);
+    } else {
+      ctx.forgetGateway?.(held.slug);
+    }
+
+    await removeGatewayConfig(paths.gatewaysDir, held.slug);
 
     return { ok: true as const, value: await listGatewayConfigs(paths.gatewaysDir, ctx.onCorrupt) };
   } catch (error) {
@@ -141,5 +238,9 @@ export function createGatewayStorageHandlers(
       inGatewayWriteOrder(async () => saveGateway(ctx, paths, config)),
     'gateways:update': async (config) =>
       inGatewayWriteOrder(async () => updateGateway(ctx, paths, config)),
+    'gateways:remove': async (request) =>
+      inGatewayWriteOrder(async () => removeGateway(ctx, paths, request)),
+    'gateways:set-port': async (request) =>
+      inGatewayWriteOrder(async () => setGatewayPort(ctx, paths, request)),
   };
 }

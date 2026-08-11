@@ -13,6 +13,8 @@ export type AppMenuConduct = {
   reflectSettings: (settings: Settings) => void;
   /** Reads the surface a window navigated to, so the Gateway menu comes and goes with it. */
   standOnUrl: (url: string) => void;
+  /** Carries the renderer's logs drawer standing into the Show Logs tick. */
+  reflectLogsDrawer: (open: boolean) => void;
 };
 
 type AppMenuSeams = {
@@ -32,7 +34,11 @@ type AppMenuSeams = {
  * than mutating one, so every change lands as a fresh install from the same view value.
  */
 export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
-  const view: AppMenuView = { checklistShown: true, onGatewayDetail: false };
+  const view: AppMenuView = {
+    checklistShown: true,
+    onGatewayDetail: false,
+    logsDrawerOpen: false,
+  };
 
   const handlers: AppMenuHandlers = {
     onOpenSettings: seams.onOpenSettings,
@@ -71,5 +77,10 @@ export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
     }
   }
 
-  return { repaint, reflectSettings, standOnUrl };
+  function reflectLogsDrawer(open: boolean): void {
+    view.logsDrawerOpen = open;
+    repaint();
+  }
+
+  return { repaint, reflectSettings, standOnUrl, reflectLogsDrawer };
 }

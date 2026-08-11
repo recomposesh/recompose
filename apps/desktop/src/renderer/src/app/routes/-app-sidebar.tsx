@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
-import { Link } from '@tanstack/react-router';
+import { Link, useMatchRoute, useNavigate } from '@tanstack/react-router';
 import { Suspense, useId, useSyncExternalStore } from 'react';
 
-import { panelWidth, subscribeToPanelWidths } from '../../shared/lib';
+import { focusDrivenByArrow, panelWidth, subscribeToPanelWidths } from '../../shared/lib';
 import { Icon } from '../../shared/ui';
 import { GatewaySidebar } from '../../widgets/gateway/sidebar';
 import { GetStartedPanel } from '../../widgets/get-started';
@@ -30,10 +30,50 @@ function sidebarWidth(): number {
   return panelWidth('sidebar');
 }
 
+function systemGroup(
+  systemId: string,
+  matchRoute: ReturnType<typeof useMatchRoute>,
+  navigate: ReturnType<typeof useNavigate>,
+): ReactNode {
+  return (
+    <div aria-labelledby={systemId} className="flex flex-col gap-px" role="group">
+      <h2 className="nav-group" id={systemId}>
+        System
+      </h2>
+      <Link
+        className="nav-item"
+        onFocus={() => {
+          if (focusDrivenByArrow() && matchRoute({ to: '/usage' }) === false) {
+            void navigate({ to: '/usage' });
+          }
+        }}
+        to="/usage"
+      >
+        <Icon name="gauge" />
+        Usage
+      </Link>
+      <Link
+        className="nav-item"
+        onFocus={() => {
+          if (focusDrivenByArrow() && matchRoute({ to: '/settings' }) === false) {
+            void navigate({ to: '/settings' });
+          }
+        }}
+        to="/settings"
+      >
+        <Icon name="gear" />
+        Settings
+      </Link>
+    </div>
+  );
+}
+
 export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
   const systemId = useId();
   const width = useSyncExternalStore(subscribeToPanelWidths, sidebarWidth);
   const standing = away ? undefined : { width };
+  const matchRoute = useMatchRoute();
+  const navigate = useNavigate();
 
   return (
     <aside
@@ -46,26 +86,14 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
         <div className="flex h-window-controls shrink-0 items-center justify-end">
           <span className="app-no-drag flex">{band}</span>
         </div>
-        <nav className="app-no-drag flex flex-1 flex-col overflow-y-auto">
+        <nav className="app-no-drag flex flex-1 flex-col overflow-y-auto" data-focus-group="">
           <Suspense fallback={null}>
             <GatewaySidebar onNewGateway={onNewGateway} />
           </Suspense>
           <Suspense fallback={null}>
             <ProviderSidebar />
           </Suspense>
-          <div aria-labelledby={systemId} className="flex flex-col gap-px" role="group">
-            <h2 className="nav-group" id={systemId}>
-              System
-            </h2>
-            <Link className="nav-item" to="/usage">
-              <Icon name="gauge" />
-              Usage
-            </Link>
-            <Link className="nav-item" to="/settings">
-              <Icon name="gear" />
-              Settings
-            </Link>
-          </div>
+          {systemGroup(systemId, matchRoute, navigate)}
         </nav>
         <div className="app-no-drag pt-2.5">
           <Suspense fallback={null}>

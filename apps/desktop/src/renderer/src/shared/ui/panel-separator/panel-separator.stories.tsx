@@ -44,6 +44,42 @@ function SizedPanel({ standing }: { standing: number }) {
   );
 }
 
+function StackedPanel({ standing }: { standing: number }) {
+  const [height, setHeight] = useState(standing);
+  const [shut, setShut] = useState(false);
+
+  return (
+    <div className="flex h-120 w-160 flex-col bg-surface-content">
+      <div className="flex-1" />
+      <PanelSeparator
+        axis="block"
+        bounds={bounds}
+        label="Drawer height"
+        onCollapse={() => {
+          setShut(true);
+        }}
+        onResize={setHeight}
+        onRestore={() => {
+          setShut(false);
+        }}
+        onSettled={() => {}}
+        panelEdge="leading"
+        shut={shut}
+        width={height}
+      />
+      {shut ? null : (
+        <section
+          className="shrink-0 border-t border-line-subtle bg-surface-toolbar p-3"
+          style={{ height }}
+        >
+          <p className="text-caption font-bold text-ink-secondary">Logs</p>
+          <p className="mt-1 font-mono text-mono-value text-ink">{height}px</p>
+        </section>
+      )}
+    </div>
+  );
+}
+
 const meta = preview.meta({
   component: PanelSeparator,
   args: {
@@ -124,6 +160,40 @@ export const PanelRestored = meta.story({
 
     await expect(await canvas.findByText('Inspector')).toBeVisible();
     await expect(handle).toHaveAttribute('aria-valuenow', String(bounds.max));
+  },
+});
+
+/**
+ * The border of a panel that sits under the surface rather than beside it.
+ *
+ * @summary Reach for the block axis whenever the panel stacks under what it belongs to, such as a
+ * drawer under a canvas. The strip lies across the column, the pointer reads as a north-south resize,
+ * and the separator announces itself horizontal, so a person meets the same border turned a quarter
+ * rather than a second control that behaves almost like the first.
+ */
+export const PanelBelow = meta.story({
+  args: { axis: 'block' as const, width: bounds.standing },
+  render: (standing) => <StackedPanel standing={standing.width} />,
+  play: async ({ canvas }) => {
+    const handle = await canvas.findByRole('separator', { name: 'Drawer height' });
+    const strip = handle.getBoundingClientRect();
+
+    await expect(handle).toHaveAttribute('aria-orientation', 'horizontal');
+    await expect(getComputedStyle(handle).cursor).toBe('ns-resize');
+    await expect(strip.height).toBeGreaterThan(0);
+    await expect(strip.width).toBeGreaterThan(strip.height);
+  },
+});
+
+/** Sizing a panel below from the keyboard, where the arrows of its own axis move it. */
+export const PanelBelowSizedByKeyboard = meta.story({
+  args: { axis: 'block' as const, width: bounds.standing },
+  render: (standing) => <StackedPanel standing={standing.width} />,
+  play: async ({ canvas, userEvent }) => {
+    const found = { role: 'separator', name: 'Drawer height' };
+    const handle = await pressedByKeyboard(canvas, found, userEvent.keyboard, '{ArrowUp}');
+
+    await expect(handle).toHaveAttribute('aria-valuenow', String(bounds.standing + bounds.step));
   },
 });
 

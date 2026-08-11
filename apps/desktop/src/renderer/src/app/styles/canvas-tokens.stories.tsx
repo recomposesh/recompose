@@ -6,9 +6,9 @@ import { paintedBox, paintedStyle } from '../../shared/testing';
 import { Icon } from '../../shared/ui';
 
 const nodeRoles = [
-  { name: 'Gateway', detail: 'localhost:51234', tint: 'node-tint-gateway' },
+  { name: 'Gateway', detail: '127.0.0.1:51234', tint: 'node-tint-gateway' },
   { name: 'Virtual model', detail: 'sonnet-latest', tint: 'node-tint-virtual-model' },
-  { name: 'Target', detail: 'claude-sonnet-4', tint: 'node-tint-target' },
+  { name: 'API key target', detail: 'claude-sonnet-4', tint: 'node-tint-api-key' },
 ];
 
 const cableStandings = ['resting', 'live', 'served', 'failed', 'broken', 'draft', 'pending'].map(
@@ -29,8 +29,8 @@ function NodeRoles() {
           <span className="absolute -inset-e-1 top-port-offset port-dot" />
         </article>
       ))}
-      <button aria-pressed className="size-20 node-card node-tint-target" type="button">
-        Selected target
+      <button aria-pressed className="size-20 node-card node-tint-aggregator" type="button">
+        Selected aggregator
       </button>
     </section>
   );
@@ -74,7 +74,7 @@ function CanvasFurniture() {
       <div className="h-minimap-height w-minimap-width rounded-canvas-card border border-line-subtle bg-canvas-card p-2 shadow-canvas-card">
         <svg aria-hidden className="size-full bg-minimap-mask" viewBox="0 0 40 20">
           <rect className="minimap-node node-tint-gateway" height="8" width="8" x="4" y="4" />
-          <rect className="minimap-node-dim node-tint-target" height="8" width="8" x="20" y="4" />
+          <rect className="minimap-node-dim node-tint-local" height="8" width="8" x="20" y="4" />
         </svg>
       </div>
       <div className="flex gap-1 rounded-canvas-card border border-line-subtle bg-canvas-card p-zoom-tools font-mono text-mono-caption text-ink">
@@ -109,23 +109,11 @@ function forScheme(light: string, dark: string): string {
   return document.documentElement.classList.contains('scheme-dark') ? dark : light;
 }
 
-function nodeCards(canvasElement: HTMLElement): HTMLElement[] {
-  return [...canvasElement.querySelectorAll<HTMLElement>('article')];
+function drawnIn(canvasElement: HTMLElement, selector: string): Element[] {
+  return [...canvasElement.querySelectorAll(selector)];
 }
 
-function drawnCables(canvasElement: HTMLElement): SVGPathElement[] {
-  return [...canvasElement.querySelectorAll<SVGPathElement>('[aria-label="Cable standings"] path')];
-}
-
-function loosePorts(canvasElement: HTMLElement): HTMLElement[] {
-  return [...canvasElement.querySelectorAll<HTMLElement>('[aria-label="Ports"] > span')];
-}
-
-function furniture(canvasElement: HTMLElement): HTMLElement[] {
-  return [...canvasElement.querySelectorAll<HTMLElement>('[aria-label="Canvas furniture"] > div')];
-}
-
-function targetTintAt(alpha: string): string {
+function aggregatorTintAt(alpha: string): string {
   const channels = forScheme('0.686275 0.321569 0.870588', '0.74902 0.352941 0.94902');
 
   return `color(srgb ${channels} / ${alpha})`;
@@ -139,11 +127,11 @@ export const NodeRolesTakeTheirTint = meta.story({
   play: async ({ canvasElement }) => {
     const tints = [
       forScheme('rgb(23, 134, 155)', 'rgb(64, 200, 224)'),
-      forScheme('rgb(0, 122, 255)', 'rgb(10, 132, 255)'),
-      forScheme('rgb(175, 82, 222)', 'rgb(191, 90, 242)'),
+      forScheme('rgb(173, 45, 117)', 'rgb(255, 114, 196)'),
+      forScheme('rgb(163, 116, 0)', 'rgb(255, 214, 10)'),
     ];
 
-    for (const [place, card] of nodeCards(canvasElement).entries()) {
+    for (const [place, card] of drawnIn(canvasElement, 'article').entries()) {
       await expect(paintedStyle(card).borderColor).toBe(tints[place]);
     }
   },
@@ -166,7 +154,7 @@ export const AnUntintedCardKeepsTheAccent = meta.story({
 /** A node's second line reads as mono at eleven, the size the template sets it in. */
 export const SubtitlesReadAsElevenPixelMono = meta.story({
   play: async ({ canvasElement }) => {
-    const subtitle = nodeCards(canvasElement)[0]?.querySelectorAll('span')[1];
+    const subtitle = drawnIn(canvasElement, 'article')[0]?.querySelectorAll('span')[1];
 
     await expect(paintedStyle(subtitle).fontSize).toBe('11px');
     await expect(paintedStyle(subtitle).fontFamily).toContain('SF Mono');
@@ -187,7 +175,7 @@ export const CablesPaintTheirStanding = meta.story({
       draft,
       draft,
     ];
-    const cables = drawnCables(canvasElement);
+    const cables = drawnIn(canvasElement, '[aria-label="Cable standings"] path');
 
     await expect(cables).toHaveLength(7);
 
@@ -201,14 +189,14 @@ export const CablesPaintTheirStanding = meta.story({
 /** A port is a nine-pixel dot on its own ring, and a bound one fills with the node tint. */
 export const PortsFillWhenTheyAreBound = meta.story({
   play: async ({ canvasElement }) => {
-    const [resting, live] = loosePorts(canvasElement);
+    const [resting, live] = drawnIn(canvasElement, '[aria-label="Ports"] > span');
 
     await expect(paintedBox(resting).width).toBe(9);
     await expect(paintedStyle(resting).borderColor).toBe(
       forScheme('rgba(0, 0, 0, 0.56)', 'rgba(255, 255, 255, 0.55)'),
     );
     await expect(paintedStyle(live).backgroundColor).toBe(
-      forScheme('rgb(0, 122, 255)', 'rgb(10, 132, 255)'),
+      forScheme('rgb(173, 45, 117)', 'rgb(255, 114, 196)'),
     );
   },
 });
@@ -216,7 +204,7 @@ export const PortsFillWhenTheyAreBound = meta.story({
 /** The card's own port hangs at the offset the template measures down the card. */
 export const ACardHangsItsPortAtTheTemplateOffset = meta.story({
   play: async ({ canvasElement }) => {
-    const port = nodeCards(canvasElement)[0]?.querySelector('span:last-of-type');
+    const port = drawnIn(canvasElement, 'article')[0]?.querySelector('span:last-of-type');
 
     await expect(paintedStyle(port).top).toBe('34px');
     await expect(paintedBox(port).height).toBe(9);
@@ -238,7 +226,7 @@ export const ThePlusAffordanceFillsThePointerTarget = meta.story({
 /** The minimap takes the template's card: its size, its radius, its wash, and its shadow. */
 export const TheMinimapTakesTheFurnitureCard = meta.story({
   play: async ({ canvasElement }) => {
-    const minimap = furniture(canvasElement)[0];
+    const minimap = drawnIn(canvasElement, '[aria-label="Canvas furniture"] > div')[0];
     const drawn = paintedBox(minimap);
 
     await expect(drawn.width).toBe(172);
@@ -254,7 +242,8 @@ export const TheMinimapTakesTheFurnitureCard = meta.story({
 /** The map keeps the template's undimmed look and draws each node in its own role tint. */
 export const TheMinimapDrawsNodesInTheirRoleTint = meta.story({
   play: async ({ canvasElement }) => {
-    const mask = furniture(canvasElement)[0]?.firstElementChild;
+    const mask = drawnIn(canvasElement, '[aria-label="Canvas furniture"] > div')[0]
+      ?.firstElementChild;
     const [placed, dimmed] = [...(mask?.children ?? [])];
 
     await expect(paintedStyle(mask).backgroundColor).toBe(
@@ -266,17 +255,25 @@ export const TheMinimapDrawsNodesInTheirRoleTint = meta.story({
         'color(srgb 0.25098 0.784314 0.878431 / 0.85)',
       ),
     );
-    await expect(paintedStyle(dimmed).fill).toBe(targetTintAt('0.45'));
+    await expect(paintedStyle(dimmed).fill).toBe(
+      forScheme(
+        'color(srgb 0.74902 0.243137 0.184314 / 0.45)',
+        'color(srgb 1 0.501961 0.407843 / 0.45)',
+      ),
+    );
   },
 });
 
 /** A selected card rings and washes in its own tint, never in the standing accent. */
 export const ASelectedCardRingsInItsTint = meta.story({
   play: async ({ canvas }) => {
-    const selected = await canvas.findByRole('button', { name: 'Selected target', pressed: true });
+    const selected = await canvas.findByRole('button', {
+      name: 'Selected aggregator',
+      pressed: true,
+    });
 
     await expect(paintedStyle(selected).boxShadow).toContain(
-      `${targetTintAt('0.55')} 0px 0px 0px 3.5px`,
+      `${aggregatorTintAt('0.55')} 0px 0px 0px 3.5px`,
     );
     await expect(paintedStyle(selected).backgroundColor).toBe(
       forScheme('color(srgb 0.962353 0.918588 0.984471)', 'color(srgb 0.227922 0.180392 0.265725)'),
@@ -287,7 +284,7 @@ export const ASelectedCardRingsInItsTint = meta.story({
 /** The zoom cluster shares that card and pads its segments by the template's three. */
 export const TheZoomClusterSharesTheCard = meta.story({
   play: async ({ canvasElement }) => {
-    const cluster = furniture(canvasElement)[1];
+    const cluster = drawnIn(canvasElement, '[aria-label="Canvas furniture"] > div')[1];
 
     await expect(paintedStyle(cluster).padding).toBe('3px');
     await expect(paintedStyle(cluster).borderRadius).toBe('9px');

@@ -12,7 +12,7 @@ beforeEach(freshCanvasRun);
 
 const REFUSED = 'The gateway could not reach the target.';
 
-const served: GatewayTraffic = { 'my-gateway': { fast: { outcome: 'served', at: 1 } } };
+const served: GatewayTraffic = { 'my-gateway': { fast: { outcome: 'served', at: Date.now() } } };
 
 const failed: GatewayTraffic = {
   'my-gateway': { fast: { outcome: 'failed', at: 2, status: 502, detail: REFUSED } },
@@ -31,9 +31,11 @@ function standingsOn(container: HTMLElement, modelId: string): readonly string[]
 test('a gateway nothing has flowed through leaves every cable resting, because green is earned', async () => {
   const screen = await canvasPageOn();
 
-  for (const standing of standingsOn(screen.container, 'fast')) {
-    expect(standing).toContain('stroke-cable-resting');
-  }
+  await expect
+    .poll(() =>
+      standingsOn(screen.container, 'fast').every((held) => held.includes('stroke-cable-resting')),
+    )
+    .toBe(true);
 });
 
 test('a request the gateway served paints both cables of the model it flowed through', async () => {
@@ -63,7 +65,7 @@ test('one failed virtual model stands one error, so the gateway wire never repea
   emitEngineTraffic(failed);
 
   await expect.element(screen.getByRole('button', { name: /last error/i })).toBeVisible();
-  expect(screen.container.querySelectorAll('[aria-expanded]')).toHaveLength(1);
+  expect(screen.getByRole('button', { name: /last error/i }).elements()).toHaveLength(1);
 });
 
 test('traffic through one virtual model leaves the cables of the others at rest', async () => {

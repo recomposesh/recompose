@@ -47,6 +47,7 @@ async function freshContext(started: EngineGateway[]): Promise<StorageIpcContext
     restartGateway: (gateway) => {
       started.push(gateway);
     },
+    stopGateway: () => undefined,
     isServing: () => true,
     releaseSubscription: async () => Promise.resolve({ ok: true }),
   };

@@ -42,28 +42,38 @@ function watching(note: NoteTraffic) {
 async function spendingOn(virtualModel: string, answer: Response): Promise<Noted[]> {
   const { noted, note } = noting();
 
-  await watching(note)(async (spendGrantFor) => {
+  const answered = await watching(note)(async (spendGrantFor) => {
     await spendGrantFor('personal', virtualModel);
 
     return answer;
   });
 
+  await answered.arrayBuffer();
+
   return noted;
 }
 
-async function outcomeOf(status: number): Promise<RequestOutcome | undefined> {
-  return (await spendingOn('fast', answering(status))).at(0)?.request;
+async function settlingOn(
+  virtualModel: string,
+  answer: Response,
+): Promise<RequestOutcome | undefined> {
+  return (await spendingOn(virtualModel, answer)).at(-1)?.request;
+}
+
+async function settledOutcomeOf(status: number): Promise<RequestOutcome | undefined> {
+  return settlingOn('fast', answering(status));
 }
 
 describe('what one finished request tells the parent', () => {
-  test('a request that answered well is noted as served under the model it asked for', async () => {
+  test('a request that answered well is noted live and then served under the model it asked for', async () => {
     expect(await spendingOn('fast', answering(200))).toEqual([
+      { slug: 'personal', virtualModel: 'fast', request: { outcome: 'live', at: answeredAt } },
       { slug: 'personal', virtualModel: 'fast', request: { outcome: 'served', at: answeredAt } },
     ]);
   });
 
-  test('a request the target turned away is noted as failed, carrying the status', async () => {
-    expect(await outcomeOf(429)).toEqual({
+  test('a request the target turned away settles as failed, carrying the status', async () => {
+    expect(await settledOutcomeOf(429)).toEqual({
       outcome: 'failed',
       at: answeredAt,
       status: 429,
@@ -72,25 +82,32 @@ describe('what one finished request tells the parent', () => {
   });
 
   test('the last answer that still counts as served is the one before the four hundreds', async () => {
-    expect((await outcomeOf(399))?.outcome).toBe('served');
-    expect((await outcomeOf(400))?.outcome).toBe('failed');
+    expect((await settledOutcomeOf(399))?.outcome).toBe('served');
+    expect((await settledOutcomeOf(400))?.outcome).toBe('failed');
   });
 });
 
 describe('the sentence a red cable offers', () => {
   test('a gateway that could not reach the target explains that rather than the status alone', async () => {
-    expect(await outcomeOf(502)).toMatchObject({
+    expect(await settledOutcomeOf(502)).toMatchObject({
       detail: 'The gateway could not reach the target.',
     });
   });
 
   test('a refused credential reads as a credential the target would not take', async () => {
-    expect(await outcomeOf(401)).toMatchObject({ detail: 'The target refused the credential.' });
-    expect(await outcomeOf(403)).toMatchObject({ detail: 'The target refused the credential.' });
+    expect(await settledOutcomeOf(401)).toMatchObject({
+      detail: 'The target refused the credential.',
+    });
+    expect(await settledOutcomeOf(403)).toMatchObject({
+      detail: 'The target refused the credential.',
+    });
   });
 
   test('a status no sentence is written for still reads as the answer the target gave', async () => {
-    expect(await outcomeOf(503)).toMatchObject({ status: 503, detail: 'The target answered 503.' });
+    expect(await settledOutcomeOf(503)).toMatchObject({
+      status: 503,
+      detail: 'The target answered 503.',
+    });
   });
 });
 
@@ -100,41 +117,54 @@ describe('the words the target itself offered', () => {
       error: { message: 'This request requires more credits, or fewer max_tokens.' },
     });
 
-    expect((await spendingOn('fast', answer)).at(0)?.request).toMatchObject({
+    expect(await settlingOn('fast', answer)).toMatchObject({
       status: 402,
       detail: 'This request requires more credits, or fewer max_tokens.',
     });
   });
 
   test('an explanation the target wrote as a bare string still reads', async () => {
-    const noted = await spendingOn('fast', failingWith({ error: 'quota exhausted' }));
+    const settled = await settlingOn('fast', failingWith({ error: 'quota exhausted' }));
 
-    expect(noted.at(0)?.request).toMatchObject({ detail: 'quota exhausted' });
+    expect(settled).toMatchObject({ detail: 'quota exhausted' });
   });
 
   test('a wordless error body falls back to the written sentence', async () => {
-    const noted = await spendingOn('fast', failingWith({ error: { code: 'over_limit' } }));
+    const settled = await settlingOn('fast', failingWith({ error: { code: 'over_limit' } }));
 
-    expect(noted.at(0)?.request).toMatchObject({ detail: 'The target answered 402.' });
+    expect(settled).toMatchObject({ detail: 'The target answered 402.' });
   });
 
   test('a message of nothing but whitespace is no quote, so the sentence stands', async () => {
-    const noted = await spendingOn('fast', failingWith({ error: { message: ' \n\t ' } }));
+    const settled = await settlingOn('fast', failingWith({ error: { message: ' \n\t ' } }));
 
-    expect(noted.at(0)?.request).toMatchObject({ detail: 'The target answered 402.' });
+    expect(settled).toMatchObject({ detail: 'The target answered 402.' });
   });
 });
 
+function answerHoldingItsBody(): { holding: Response; release: () => void } {
+  let holdingTheBody: ReadableStreamDefaultController<Uint8Array> | undefined;
+  const holding = new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"error":{"message":"slow'));
+        holdingTheBody = controller;
+      },
+    }),
+    { status: 429, headers: { 'content-type': 'application/json' } },
+  );
+
+  return {
+    holding,
+    release: () => {
+      holdingTheBody?.close();
+    },
+  };
+}
+
 describe('what a failed answer may never do to the request that carried it', () => {
-  test('an answer whose body never ends still comes back, noted from the status alone', async () => {
-    const holding = new Response(
-      new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('{"error":{"message":"slow'));
-        },
-      }),
-      { status: 429, headers: { 'content-type': 'application/json' } },
-    );
+  test('an answer whose body outlives the quote deadline still comes back, noted from the status alone', async () => {
+    const { holding, release } = answerHoldingItsBody();
     const { noted, note } = noting();
 
     const answered = await watching(note)(async (spendGrantFor) => {
@@ -144,15 +174,19 @@ describe('what a failed answer may never do to the request that carried it', () 
     });
 
     expect(answered.status).toBe(429);
-    expect(noted.at(0)?.request).toMatchObject({
+
+    release();
+    await answered.arrayBuffer();
+
+    expect(noted.at(-1)?.request).toMatchObject({
       detail: 'The target is turning requests away for now.',
     });
   });
 
   test('an explanation longer than a card holds is cut to its span', async () => {
-    const noted = await spendingOn('fast', failingWith({ error: { message: 'w'.repeat(500) } }));
+    const settled = await settlingOn('fast', failingWith({ error: { message: 'w'.repeat(500) } }));
 
-    expect(noted.at(0)?.request).toMatchObject({ detail: 'w'.repeat(280) });
+    expect(settled).toMatchObject({ detail: 'w'.repeat(280) });
   });
 
   test('the answer still carries its whole body to the caller after the note', async () => {
@@ -166,13 +200,13 @@ describe('what a failed answer may never do to the request that carried it', () 
     });
 
     expect(await out.json()).toEqual({ error: { message: 'no credits' } });
-    expect(noted).toHaveLength(1);
+    expect(noted.map((one) => one.request.outcome)).toEqual(['live', 'failed']);
   });
 
   test('a served answer is never read for a quote', async () => {
     const answer = failingWith({ error: { message: 'ignore me' } }, 200);
 
-    expect((await spendingOn('fast', answer)).at(0)?.request).toEqual({
+    expect(await settlingOn('fast', answer)).toEqual({
       outcome: 'served',
       at: answeredAt,
     });
@@ -236,15 +270,14 @@ describe('what the watch leaves exactly as it found it', () => {
       return answering(500);
     });
 
-    await Promise.all([slow, quick]);
+    const [slowAnswer, quickAnswer] = await Promise.all([slow, quick]);
 
-    const outcomes = new Map(noted.map((one) => [one.virtualModel, one.request.outcome]));
+    await Promise.all([slowAnswer.arrayBuffer(), quickAnswer.arrayBuffer()]);
 
-    expect(outcomes).toEqual(
-      new Map([
-        ['deep', 'failed'],
-        ['fast', 'served'],
-      ]),
-    );
+    const outcomesFor = (virtualModel: string) =>
+      noted.filter((one) => one.virtualModel === virtualModel).map((one) => one.request.outcome);
+
+    expect(outcomesFor('fast')).toEqual(['live', 'served']);
+    expect(outcomesFor('deep')).toEqual(['live', 'failed']);
   });
 });

@@ -21,6 +21,7 @@ export type AppMenuHandlers = {
 export type AppMenuView = {
   checklistShown: boolean;
   onGatewayDetail: boolean;
+  logsDrawerOpen: boolean;
 };
 
 function settingsItem(handlers: AppMenuHandlers): AppMenuItem {
@@ -114,7 +115,17 @@ function canvasCommandClick(
   };
 }
 
-function gatewayMenu(handlers: AppMenuHandlers): AppMenuItem {
+function showLogsItem(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
+  return {
+    label: 'Show Logs',
+    accelerator: 'CmdOrCtrl+Shift+L',
+    type: 'checkbox',
+    checked: view.logsDrawerOpen,
+    click: canvasCommandClick(handlers, 'toggle-logs'),
+  };
+}
+
+function gatewayMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
   return {
     label: 'Gateway',
     submenu: [
@@ -135,6 +146,8 @@ function gatewayMenu(handlers: AppMenuHandlers): AppMenuItem {
       },
       { type: 'separator' },
       { label: 'Tidy', click: canvasCommandClick(handlers, 'tidy') },
+      { type: 'separator' },
+      showLogsItem(handlers, view),
     ],
   };
 }
@@ -160,7 +173,7 @@ export function buildAppMenuTemplate(
     ...leadingMenus(platform, handlers, view),
     { role: 'editMenu' },
     viewMenu(platform, handlers, view),
-    ...(view.onGatewayDetail ? [gatewayMenu(handlers)] : []),
+    ...(view.onGatewayDetail ? [gatewayMenu(handlers, view)] : []),
     { role: 'windowMenu' },
   ];
 }

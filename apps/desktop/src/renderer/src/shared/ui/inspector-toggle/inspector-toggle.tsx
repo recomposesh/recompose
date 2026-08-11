@@ -27,7 +27,7 @@ export function InspectorToggle({ where }: InspectorToggleProps) {
       data-panel-control=""
       aria-expanded={open}
       aria-label="Inspector"
-      className={`app-no-drag flex items-center justify-center text-ink-secondary focus-ring ${STATES} ${toolbarShape[where]}`}
+      className={`app-no-drag flex items-center justify-center focus-ring text-ink-secondary ${STATES} ${toolbarShape[where]}`}
       onClick={toggleInspector}
       type="button"
     >

@@ -4,5 +4,6 @@ export * from './gateways';
 export * from './provider-models';
 export * from './subscriptions';
 export * from './engine';
+export * from './engine-logs';
 export * from './settings';
 export * from './system';

@@ -71,7 +71,7 @@ const meta = preview.meta({
 const asked = { name: 'Pick an account' };
 
 function scrollRegion(canvasElement: HTMLElement): HTMLElement | null {
-  return canvasElement.querySelector('dialog > div');
+  return canvasElement.querySelector('[data-picker-body]');
 }
 
 /** The accounts a dropped cable can bind to, standing on the card it landed as. */

@@ -54,7 +54,7 @@ export function FieldBoxRow({
     <Field.Root className="field-box-row">
       <Field.Label>{label}</Field.Label>
       <Field.Control
-        className={`ms-auto sheet-field focus-ring placeholder:text-ink-tertiary ${controlClasses}`}
+        className={`ms-auto sheet-field placeholder:text-ink-tertiary ${controlClasses}`}
         onBlur={(event) => {
           settle(event.currentTarget.value);
         }}

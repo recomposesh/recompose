@@ -3,10 +3,13 @@ import type {
   GatewayConfig,
   GatewayTraffic,
   RequestOutcome,
+  SubscriptionAccountView,
   VirtualModel,
 } from '@recompose/contracts';
 
 import type { XY } from './canvas-positions';
+
+import { accountDetail } from '../../../entities/account';
 
 const GATEWAY_NODE_ID = 'gateway';
 const DRAFT_NODE_ID = 'draft';
@@ -22,8 +25,8 @@ export type CanvasNode =
       displayName: string;
       providerModel: string;
     }
-  | { id: string; kind: 'target'; account: Account }
-  | { id: string; kind: 'ghost-target'; accountId: string }
+  | { id: string; kind: 'target'; account: Account; modelId: string; detail?: string }
+  | { id: string; kind: 'ghost-target'; accountId: string; modelId: string }
   | { id: string; kind: 'draft-model'; modelId: string; displayName: string }
   | { id: string; kind: 'pending-target' };
 
@@ -72,24 +75,63 @@ function modelNodeId(modelId: string): string {
   return `model:${modelId}`;
 }
 
-function targetNode(model: VirtualModel, accounts: readonly Account[]): CanvasNode {
+function targetNode(
+  model: VirtualModel,
+  accounts: readonly Account[],
+  subscriptions: readonly SubscriptionAccountView[],
+): CanvasNode {
   const { accountId } = model.target;
   const account = accounts.find((held) => held.id === accountId);
 
-  return account === undefined
-    ? { id: `ghost:${accountId}`, kind: 'ghost-target', accountId }
-    : { id: `target:${account.id}`, kind: 'target', account };
+  if (account === undefined) {
+    return { id: `ghost:${model.id}`, kind: 'ghost-target', accountId, modelId: model.id };
+  }
+
+  const signedInAs =
+    account.kind === 'subscription'
+      ? subscriptions.find((view) => view.id === account.id)?.signedInAs
+      : undefined;
+
+  return {
+    id: `target:${model.id}`,
+    kind: 'target',
+    account,
+    modelId: model.id,
+    detail: accountDetail(account, signedInAs),
+  };
 }
 
 type CarriedTraffic = Readonly<Record<string, RequestOutcome>>;
 
-function carriedBy(gateway: GatewayConfig, traffic: GatewayTraffic): CarriedTraffic {
-  return traffic[gateway.slug] ?? {};
+const CABLE_TRAFFIC_MEMORY_MS = 60_000;
+
+/**
+ * Whether a carried outcome still deserves its tint: a live request always, a served one for a
+ * minute, and a failure until newer traffic answers it, because a break needs a person to see it.
+ */
+function stillWarm(carried: RequestOutcome, now: number): boolean {
+  if (carried.outcome === 'served') {
+    return now - carried.at <= CABLE_TRAFFIC_MEMORY_MS;
+  }
+
+  return true;
+}
+
+function carriedBy(gateway: GatewayConfig, traffic: GatewayTraffic, now: number): CarriedTraffic {
+  const flowed = traffic[gateway.slug] ?? {};
+
+  return Object.fromEntries(
+    Object.entries(flowed).filter(([, carried]) => stillWarm(carried, now)),
+  );
 }
 
 function standingCarried(carried: RequestOutcome | undefined): CableStanding | undefined {
   if (carried === undefined) {
     return undefined;
+  }
+
+  if (carried.outcome === 'live') {
+    return 'live';
   }
 
   return carried.outcome === 'served' ? 'served' : 'failed';
@@ -131,6 +173,7 @@ function servedGraph(
   gateway: GatewayConfig,
   accounts: readonly Account[],
   carried: CarriedTraffic,
+  subscriptions: readonly SubscriptionAccountView[],
 ): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
   const nodes: CanvasNode[] = [
     {
@@ -141,10 +184,9 @@ function servedGraph(
     },
   ];
   const edges: CanvasEdge[] = [];
-  const seated = new Set<string>();
 
   for (const model of gateway.virtualModels) {
-    const target = targetNode(model, accounts);
+    const target = targetNode(model, accounts, subscriptions);
     const flowed = target.kind === 'target' ? carried[model.id] : undefined;
 
     nodes.push({
@@ -155,26 +197,11 @@ function servedGraph(
       providerModel: model.target.providerModel,
     });
 
-    if (!seated.has(target.id)) {
-      seated.add(target.id);
-      nodes.push(target);
-    }
-
+    nodes.push(target);
     edges.push(structuralWire(modelNodeId(model.id), flowed), bindingCable(model, target, flowed));
   }
 
   return { nodes, edges };
-}
-
-function draftAppending(
-  gateway: GatewayConfig,
-  draft: DraftStanding | undefined,
-): DraftStanding | undefined {
-  if (draft === undefined) {
-    return undefined;
-  }
-
-  return gateway.virtualModels.some((model) => model.id === draft.modelId) ? undefined : draft;
 }
 
 /**
@@ -185,59 +212,78 @@ function draftAppending(
  * registry keeps its cable onto a ghost card, because a broken binding is what a person came back
  * to repair and a blank space says nothing about it. The gateway wires to every virtual model and
  * draft it serves, so the template's spine reads on the canvas; a wire is structural, which no
- * gesture selects, reconnects, or deletes. The overlay cards append last and a draft naming a
- * model the gateway already serves stands down, so nothing the renderer holds can shadow a stored
- * binding. The overlay cables carry their own `overlay:` namespace and every wire carries the node
- * id it reaches, because a person may legally alias a virtual model `draft`, and two cables under
- * one id would let a press, a reconnect, or a delete land on the wrong one.
+ * gesture selects, reconnects, or deletes. The overlay card keeps its own `draft` identity while
+ * the person edits the client-facing model id, so temporarily matching a stored id never makes the
+ * draft disappear. Every stored model and cable keeps its namespaced node id.
  *
  * Traffic paints both cables of the virtual model it flowed through, and a virtual model nothing
  * has flowed through yet stays at rest, so a cable reading served says a request truly came back.
- * A binding whose account left the registry keeps reading broken whatever last flowed through it,
- * because it cannot serve the next request and stale green would say it could. Only the binding
- * cable carries the failure a person reads, so one failed request stands one error to press
- * rather than repeating itself along the wire.
+ * A served reading cools back to rest once the minute passes it by, because a warm tint is a claim
+ * about now rather than a plaque about ever; a failure stays until newer traffic answers it, since
+ * a break is a thing a person has to see. A binding whose account left the registry keeps reading
+ * broken whatever last flowed through it, because it cannot serve the next request and stale green
+ * would say it could. Only the binding cable carries the failure a person reads, so one failed
+ * request stands one error to press rather than repeating itself along the wire.
  */
 export function canvasGraph(
   gateway: GatewayConfig,
   accounts: readonly Account[],
   overlay: CanvasOverlay,
   traffic: GatewayTraffic = {},
+  subscriptions: readonly SubscriptionAccountView[] = [],
+  now: number = Date.now(),
 ): CanvasGraph {
-  const { nodes, edges } = servedGraph(gateway, accounts, carriedBy(gateway, traffic));
-  const drafting = draftAppending(gateway, overlay.draft);
+  const { nodes, edges } = servedGraph(
+    gateway,
+    accounts,
+    carriedBy(gateway, traffic, now),
+    subscriptions,
+  );
 
-  if (drafting !== undefined) {
-    nodes.push({
-      id: DRAFT_NODE_ID,
-      kind: 'draft-model',
-      modelId: drafting.modelId,
-      displayName: drafting.displayName,
-    });
-    edges.push(structuralWire(DRAFT_NODE_ID, undefined), {
-      id: 'overlay:draft',
-      source: GATEWAY_NODE_ID,
-      target: DRAFT_NODE_ID,
-      standing: 'draft',
+  appendDraftCard(nodes, edges, overlay.draft);
+  appendPendingCard(nodes, edges, overlay.pending);
+
+  return { nodes, edges };
+}
+
+function appendDraftCard(
+  nodes: CanvasNode[],
+  edges: CanvasEdge[],
+  drafting: DraftStanding | undefined,
+): void {
+  if (drafting === undefined) {
+    return;
+  }
+
+  nodes.push({
+    id: DRAFT_NODE_ID,
+    kind: 'draft-model',
+    modelId: drafting.modelId,
+    displayName: drafting.displayName,
+  });
+  edges.push(structuralWire(DRAFT_NODE_ID, undefined));
+}
+
+function appendPendingCard(
+  nodes: CanvasNode[],
+  edges: CanvasEdge[],
+  pending: PendingStanding | undefined,
+): void {
+  if (pending === undefined) {
+    return;
+  }
+
+  const { from } = pending;
+
+  nodes.push({ id: PENDING_NODE_ID, kind: 'pending-target' });
+
+  if (nodes.some((node) => node.id === from)) {
+    edges.push({
+      id: 'overlay:pending',
+      source: from,
+      target: PENDING_NODE_ID,
+      standing: 'pending',
       failure: undefined,
     });
   }
-
-  if (overlay.pending !== undefined) {
-    const { from } = overlay.pending;
-
-    nodes.push({ id: PENDING_NODE_ID, kind: 'pending-target' });
-
-    if (nodes.some((node) => node.id === from)) {
-      edges.push({
-        id: 'overlay:pending',
-        source: from,
-        target: PENDING_NODE_ID,
-        standing: 'pending',
-        failure: undefined,
-      });
-    }
-  }
-
-  return { nodes, edges };
 }

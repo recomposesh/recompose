@@ -8,13 +8,14 @@ describe('the lifecycle push', () => {
   const eventNames: IpcEvent[] = [
     'engine:state',
     'engine:traffic',
+    'engine:logs',
     'accounts:changed',
     'canvas:command',
     'settings:changed',
     'devtools:toggle',
   ];
 
-  test('exactly the state, traffic, account-change, canvas, settings, and devtools pushes exist', () => {
+  test('exactly the state, traffic, logs, account-change, canvas, settings, and devtools pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -38,8 +39,8 @@ describe('the lifecycle push', () => {
     expect(Object.keys(ipcChannels)).not.toContain('engine:state');
   });
 
-  test('a canvas push carries one of the four acts the Canvas menu offers', () => {
-    const acts = ['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy'];
+  test('a canvas push carries one of the five acts the Gateway menu offers', () => {
+    const acts = ['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs'];
 
     expect(acts.map((act) => ipcEvents['canvas:command'].payload.parse(act))).toEqual(acts);
   });
@@ -80,6 +81,41 @@ describe('the traffic push', () => {
 
   test('it rides beside the invoke surface, so no window asks for traffic', () => {
     expect(Object.keys(ipcChannels)).not.toContain('engine:traffic');
+  });
+});
+
+describe('the logs push', () => {
+  const appended = {
+    kind: 'append',
+    rows: [
+      {
+        id: 'log-1',
+        at: 1_754_600_000_000,
+        gateway: 'personal',
+        virtualModel: 'fast',
+        origin: 'provider',
+        method: 'POST',
+        provider: 'anthropic',
+        accountId: 'work',
+        providerModel: 'claude-sonnet-4-5',
+        status: 200,
+        durationMs: 912,
+        tokens: 1_820,
+        clientKey: 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c',
+      },
+    ],
+  };
+
+  test('it carries a run of rows, because a snapshot would replace what a person is reading', () => {
+    expect(ipcEvents['engine:logs'].payload.parse(appended)).toEqual(appended);
+  });
+
+  test('it refuses a bare row a subscriber would have to wrap', () => {
+    expect(() => ipcEvents['engine:logs'].payload.parse(appended.rows[0])).toThrow();
+  });
+
+  test('it rides beside the invoke surface, so no window asks for logs', () => {
+    expect(Object.keys(ipcChannels)).not.toContain('engine:logs');
   });
 });
 

@@ -47,19 +47,14 @@ describe('what a cable paints for its standing', () => {
     ]);
   });
 
-  it('breaks the line into a march for the failure alone, because a broken line reads broken', () => {
-    expect(everyStanding.filter((standing) => marchForStanding(standing) !== '')).toEqual([
-      'failed',
-    ]);
-    expect(marchForStanding('failed')).toBe('cable-march');
+  it('keeps every line whole, because a break in the drawing would claim a break in the wire', () => {
+    expect(everyStanding.filter((standing) => marchForStanding(standing) !== '')).toEqual([]);
   });
 
-  it('travels a pulse along the served cable, which keeps its line whole while it flows', () => {
-    expect(everyStanding.filter((standing) => pulseForStanding(standing) !== '')).toEqual([
-      'served',
-    ]);
-    expect(pulseForStanding('served')).toBe('cable-pulse');
-    expect(marchForStanding('served')).toBe('');
+  it('travels a pulse along the live cable alone, which is the request still in flight', () => {
+    expect(everyStanding.filter((standing) => pulseForStanding(standing) !== '')).toEqual(['live']);
+    expect(pulseForStanding('live')).toBe('cable-pulse');
+    expect(marchForStanding('live')).toBe('');
   });
 
   it('mutes a structural wire down to the resting treatment, so the frame never outshines a binding', () => {

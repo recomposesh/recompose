@@ -90,6 +90,15 @@ function spokenAfterAsking(attempted: boolean, spoken: string | undefined): stri
   return attempted ? spoken : undefined;
 }
 
+function untouchedDefinition(definition: SettledDefinition): boolean {
+  return (
+    definition.displayName === '' &&
+    definition.id === '' &&
+    definition.accountId === '' &&
+    definition.providerModel === ''
+  );
+}
+
 function nameOfPicked(
   targets: readonly OptionGroup[],
   accountId: string | undefined,
@@ -111,6 +120,10 @@ function refusedSave(refusal: string | undefined): ReactNode {
       {refusal}
     </p>
   );
+}
+
+function saveWithheld(settled: boolean, saving: boolean): boolean {
+  return !settled || saving;
 }
 
 function draftFoot(disabled: boolean, onSave: () => void): ReactNode {
@@ -190,6 +203,9 @@ function draftFields(view: DraftFieldsView): ReactNode {
       onPickTarget={(picked) => {
         edited({ ...definition, accountId: picked, providerModel: '' });
       }}
+      onSelectDifferentProvider={() => {
+        edited({ ...definition, accountId: '', providerModel: '' });
+      }}
       providerModel={definition.providerModel}
       target={view.picked.target}
       targetName={view.picked.targetName}
@@ -213,9 +229,13 @@ export function DraftInspector({ gateway, onDefined }: DraftInspectorProps) {
   const models = useOfferedModels(definition.accountId);
   const saving = useDraftSaving(gateway, definition, onDefined);
   const nameField = useRef<HTMLInputElement>(null);
+  const newlyAdded = untouchedDefinition(definition);
+  const focusNameOnMount = useRef(newlyAdded);
 
   useEffect(() => {
-    placeFocus(nameField.current);
+    if (focusNameOnMount.current) {
+      placeFocus(nameField.current);
+    }
   }, []);
 
   const edited = (next: SettledDefinition): void => {
@@ -247,7 +267,7 @@ export function DraftInspector({ gateway, onDefined }: DraftInspectorProps) {
         }),
       )}
       {refusedSave(saving.refusal)}
-      {draftFoot(!picked.settled || saving.saving, saving.save)}
+      {draftFoot(saveWithheld(picked.settled, saving.saving), saving.save)}
     </>
   );
 }

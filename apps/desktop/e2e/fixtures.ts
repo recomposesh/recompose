@@ -84,7 +84,13 @@ async function restoreLoginItem(
   }
 
   await app.evaluate(({ app: runningApp }, enabled) => {
-    runningApp.setLoginItemSettings({ path: process.execPath, args: [], openAtLogin: enabled });
+    const target = { path: process.execPath, args: [] };
+
+    if (runningApp.getLoginItemSettings(target).openAtLogin === enabled) {
+      return;
+    }
+
+    runningApp.setLoginItemSettings({ ...target, openAtLogin: enabled });
   }, openAtLogin);
 }
 

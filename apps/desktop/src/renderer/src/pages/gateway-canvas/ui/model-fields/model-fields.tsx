@@ -5,7 +5,8 @@ import { Link } from '@tanstack/react-router';
 
 import type { OptionGroup } from '../option-list/option-list';
 
-import { CopyButton } from '../../../../shared/ui';
+import { useStepTransition } from '../../../../shared/lib';
+import { Button, CopyButton } from '../../../../shared/ui';
 import { discoveryHint } from '../../lib/model-draft';
 import { OptionList } from '../option-list/option-list';
 
@@ -36,6 +37,8 @@ export type ModelFieldsProps = {
   target?: string | undefined;
   /** Receives the account the person picked. */
   onPickTarget: (accountId: string) => void;
+  /** Returns the routing step to the provider choices. */
+  onSelectDifferentProvider: () => void;
   /** What the picked account reads as, which names whose list the models come from. */
   targetName?: string | undefined;
   /** The model ids the picked account serves as of this look. */
@@ -56,7 +59,7 @@ function nameField(props: ModelFieldsProps): ReactNode {
           Name
         </Field.Label>
         <Field.Control
-          className="field-control w-full focus-ring placeholder:text-ink-tertiary"
+          className="field-control w-full placeholder:text-ink-tertiary"
           onChange={(event) => {
             props.onNameChange(event.currentTarget.value);
           }}
@@ -104,7 +107,7 @@ function modelIdField(props: ModelFieldsProps): ReactNode {
           <CopyButton announcement="Model id copied." label="Copy model id" value={props.id} />
         </div>
         <Field.Control
-          className="field-control w-full font-mono focus-ring placeholder:text-ink-tertiary"
+          className="field-control w-full font-mono placeholder:text-ink-tertiary"
           onChange={(event) => {
             props.onIdChange(event.currentTarget.value);
           }}
@@ -120,14 +123,10 @@ function modelIdField(props: ModelFieldsProps): ReactNode {
 function pickedFrom(label: ReactNode, control: ReactNode): ReactNode {
   return (
     <div className="px-3 py-2.5">
-      <p className="mb-1 text-caption font-semibold text-ink-secondary">{label}</p>
-      {control}
+      <p className="mb-1 drawer-picker-heading">{label}</p>
+      <div className="max-h-64 overflow-y-auto overscroll-contain">{control}</div>
     </div>
   );
-}
-
-function pickedFromBelow(label: ReactNode, control: ReactNode): ReactNode {
-  return <div className="border-t border-line-faint">{pickedFrom(label, control)}</div>;
 }
 
 function nothingCanServe(): ReactNode {
@@ -166,20 +165,6 @@ function targetControl(props: ModelFieldsProps): ReactNode {
   );
 }
 
-function modelLabel(targetName: string | undefined): ReactNode {
-  return (
-    <>
-      <span>Model</span>
-      {targetName === undefined ? null : (
-        <span className="font-normal text-ink-secondary">
-          {' '}
-          · from {targetName}&apos;s live list
-        </span>
-      )}
-    </>
-  );
-}
-
 function modelControl(props: ModelFieldsProps): ReactNode {
   if (props.modelRefusal !== undefined) {
     return (
@@ -198,12 +183,31 @@ function modelControl(props: ModelFieldsProps): ReactNode {
 
   return (
     <OptionList
+      focusSearch
       groups={[{ options: props.models.map((id) => ({ id, name: id })) }]}
       nothingMatched="No model matches that."
       onPick={props.onPickModel}
       picked={props.providerModel === '' ? undefined : props.providerModel}
       searchLabel="Search models"
     />
+  );
+}
+
+function modelStep(props: ModelFieldsProps): ReactNode {
+  return (
+    <div className="px-3 py-2.5">
+      <div className="mb-2 flex items-center gap-1.5">
+        <Button
+          aria-label="Select different provider"
+          glyph="chevron"
+          glyphClassName="-translate-y-px rotate-90"
+          onPress={props.onSelectDifferentProvider}
+          variant="icon-secondary"
+        />
+        <p className="drawer-picker-heading">Pick a model</p>
+      </div>
+      <div className="max-h-64 overflow-y-auto overscroll-contain">{modelControl(props)}</div>
+    </div>
   );
 }
 
@@ -219,6 +223,9 @@ function modelControl(props: ModelFieldsProps): ReactNode {
  * that failed rather than as a step not taken yet.
  */
 export function ModelFields(props: ModelFieldsProps) {
+  const step = props.target === undefined ? 'provider' : 'model';
+  const transition = useStepTransition(step, ['provider', 'model']);
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="field-box">
@@ -226,8 +233,11 @@ export function ModelFields(props: ModelFieldsProps) {
         {modelIdField(props)}
       </div>
       <div className="field-box">
-        {pickedFrom('Target', targetControl(props))}
-        {pickedFromBelow(modelLabel(props.targetName), modelControl(props))}
+        <div className={transition} key={step}>
+          {step === 'provider'
+            ? pickedFrom('Pick a provider', targetControl(props))
+            : modelStep(props)}
+        </div>
       </div>
     </div>
   );

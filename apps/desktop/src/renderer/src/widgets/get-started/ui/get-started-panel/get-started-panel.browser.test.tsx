@@ -3,7 +3,7 @@ import type { AccountsDocument } from '@recompose/contracts';
 import { ACCOUNTS_VERSION, defaultSettings } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Suspense } from 'react';
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../../shared/testing';
@@ -58,6 +58,10 @@ async function renderPanel(parameters: BridgeParameters = {}) {
 
 beforeEach(() => {
   localStorage.clear();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 test('the checklist names all four steps of a first session', async () => {
@@ -161,11 +165,12 @@ test('a stored skip keeps the checklist away on the next session', async () => {
     .not.toBeInTheDocument();
 });
 
-test('finishing the last step celebrates with confetti and puts the checklist away', async () => {
+test('finishing the last step celebrates, leaves, then stores the hidden checklist', async () => {
   const screen = await renderPanel({
     gateways: [composedGateway],
     accounts: oneConnectedAccount,
   });
+  const saveSettings = vi.spyOn(window.recompose, 'settings:save');
 
   await expect.element(screen.getByText('3 of 4')).toBeVisible();
 
@@ -174,9 +179,15 @@ test('finishing the last step celebrates with confetti and puts the checklist aw
   await expect
     .poll(() => screen.container.querySelectorAll('.confetti-piece').length)
     .toBeGreaterThan(0);
+  expect(saveSettings).not.toHaveBeenCalled();
+  await expect
+    .poll(() => screen.container.querySelector('[data-get-started-panel]'), { timeout: 3_000 })
+    .toBeNull();
   await expect
     .element(screen.getByRole('heading', { name: 'Get started' }))
     .not.toBeInTheDocument();
+  await expect.poll(() => saveSettings.mock.calls.length).toBe(1);
+  expect(saveSettings).toHaveBeenCalledWith({ showOnboardingChecklist: false });
 });
 
 test('a checklist reopened after completion stands still rather than vanishing again', async () => {

@@ -121,11 +121,11 @@ describe('where a refusal the main process sent lands on the sheet', () => {
 
 describe('the address the sheet previews', () => {
   test('the preview carries the port the field holds', () => {
-    expect(previewAddressFor('9000')).toBe('http://localhost:9000');
+    expect(previewAddressFor('9000')).toBe('http://127.0.0.1:9000');
   });
 
   test('an empty port field drops the port rather than previewing half an address', () => {
-    expect(previewAddressFor('')).toBe('http://localhost');
+    expect(previewAddressFor('')).toBe('http://127.0.0.1');
   });
 
   test('the preview names no path, because the gateway serves at its root', () => {
