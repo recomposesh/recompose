@@ -84,6 +84,34 @@ test('Delete on a selected target asks, and confirming releases the binding into
   await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
 });
 
+test('the drawer delete link asks the same question before a virtual model leaves', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Virtual Model' }));
+
+  await expect.element(screen.getByText(/Delete the virtual model "Fast"/)).toBeVisible();
+
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Cancel' }));
+
+  await expect.element(screen.getByText(/Delete the virtual model/)).not.toBeInTheDocument();
+  expect(await storedBindingOf('fast')).toBeDefined();
+});
+
+test('the drawer delete on a target asks, and confirming releases the binding', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /work/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Target' }));
+
+  await expect.element(screen.getByText(/Delete the target "work"/)).toBeVisible();
+
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
+
+  await expect.poll(async () => storedBindingOf('fast')).toBeUndefined();
+  await expect.poll(() => draftCardOn(screen.container)?.textContent).toContain('Fast');
+});
+
 test('Cancel on the target question leaves the binding exactly as it stood', async () => {
   const screen = await canvasPageOn();
 

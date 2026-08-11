@@ -106,14 +106,16 @@ async function connectKeyAccount(page: Page, label: string): Promise<void> {
  * than was asked for on a small display.
  */
 async function theWindowStandsWide(app: ElectronApplication, page: Page): Promise<void> {
-  await app.evaluate(({ BrowserWindow }, measure) => {
-    for (const window of BrowserWindow.getAllWindows()) {
-      window.setContentSize(measure.width, measure.height);
-    }
-  }, WINDOW_MEASURE);
-
   await expect
-    .poll(async () => page.evaluate(() => window.innerWidth))
+    .poll(async () => {
+      await app.evaluate(({ BrowserWindow }, measure) => {
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.setContentSize(measure.width, measure.height);
+        }
+      }, WINDOW_MEASURE);
+
+      return page.evaluate(() => window.innerWidth);
+    })
     .toBeGreaterThanOrEqual(WIDE_ENOUGH_FOR_THE_WHOLE_FOOTER);
 }
 

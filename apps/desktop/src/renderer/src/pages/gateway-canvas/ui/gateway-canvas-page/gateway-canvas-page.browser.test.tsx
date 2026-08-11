@@ -104,6 +104,22 @@ test('selecting a node opens a closed inspector back up on that subject', async 
   await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
+test('a saved id rename keeps the drawer on the renamed definition', async () => {
+  const screen = await canvasPageOn();
+
+  await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
+
+  const drawer = screen.getByRole('complementary');
+
+  await userEvent.click(drawer.getByRole('button', { name: 'Edit' }));
+  await drawer.getByRole('textbox', { name: 'Model id' }).fill('rapid');
+  await userEvent.click(drawer.getByRole('button', { name: 'Save' }));
+
+  await expect.poll(async () => storedBindingOf('rapid')).toBeDefined();
+  await expect.element(drawer.getByText('Virtual model', { exact: true })).toBeVisible();
+  await expect.element(drawer.getByText('rapid', { exact: true })).toBeVisible();
+});
+
 test('a draft in flight survives leaving the screen and coming back', async () => {
   const first = await canvasPageOn();
 

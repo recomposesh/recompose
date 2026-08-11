@@ -159,6 +159,23 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
   expect((await storedModels()).length).toBe(2);
 });
 
+test('stepping back from the models returns the ask to the account choice', async () => {
+  const screen = await canvasPageOn();
+
+  screen.getByLabelText('Choose a target').first().element().focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+
+  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect
+    .element(screen.getByRole('dialog').getByRole('button', { name: 'openrouter' }))
+    .toBeVisible();
+});
+
 test('a target born past the pane zooms the view out until it shows', async () => {
   const screen = await canvasPageOn({
     providerModels: { k1: ['claude-haiku-4-5'], s1: ['claude-sonnet-5'] },

@@ -107,6 +107,7 @@ function bindAddressField(address: BindAddressDraft): ReactNode {
       }}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {
+          event.preventDefault();
           address.settleDraft();
         }
 

@@ -82,6 +82,32 @@ test('dragging a cable target endpoint onto another stored target rebinds throug
     .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
 });
 
+test('stepping back mid-rebind reopens the accounts, and the fresh pick still lands', async () => {
+  seatedInsideThePane();
+
+  const screen = await canvasPageOn();
+
+  await draggedCable(
+    await reconnectAnchorOf(screen.container, 'cable:creative'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+
+  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect
+    .poll(async () => storedBindingOf('creative'))
+    .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
+});
+
 test('a click along the gateway wire reaches the pane, so it still dismisses the selection', async () => {
   const screen = await canvasPageOn();
 
