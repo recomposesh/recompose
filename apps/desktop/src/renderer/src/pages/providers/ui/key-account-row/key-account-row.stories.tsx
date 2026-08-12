@@ -166,6 +166,9 @@ export const WithAServedDay = meta.story({
   play: async ({ canvas }) => {
     const summary = await canvas.findByRole('link', { name: /17 requests/ });
 
-    await expect(summary).toHaveAttribute('href', expect.stringContaining('account=a1'));
+    await expect(summary).toHaveAttribute(
+      'href',
+      expect.stringContaining('providers=%5B%22a1%22%5D'),
+    );
   },
 });

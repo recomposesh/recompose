@@ -19,6 +19,8 @@
   --color-scrim: light-dark(var(--black-a18), var(--black-a42));
   --color-dot-grid: light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 6%));
   --color-surface-track: light-dark(var(--gray-200), var(--gray-800));
+  --color-surface-field: light-dark(var(--black-a04), var(--white-a06));
+  --color-surface-selected: light-dark(var(--blue-a08), var(--blue-a16));
   --color-surface-chip: light-dark(var(--white), var(--gray-700));
   --color-track-off: light-dark(var(--gray-200), var(--gray-800));
   --color-track-off-hover: light-dark(var(--black-a28), var(--gray-700));
@@ -97,6 +99,8 @@
   --text-detail: 12px;
   --text-detail--line-height: 1.5;
   --text-mono-value: 12px;
+  --text-mono-figure: 22px;
+  --text-mono-figure--font-weight: 500;
   --text-mono-caption: 11px;
   --text-caption: 11px;
   --text-footnote: 10px;
@@ -259,6 +263,25 @@
   }
 }
 
+@utility chart-arrival {
+  @media (prefers-reduced-motion: no-preference) {
+    & rect {
+      transform-origin: center bottom;
+      animation: chart-arrival 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+    }
+  }
+}
+
+@keyframes chart-arrival {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
 @utility sheet-scrim {
   position: fixed;
   inset: 0;
@@ -343,6 +366,44 @@
       opacity: 0;
       scale: 0.95;
     }
+  }
+}
+
+@utility usage-calendar {
+  /* The library sets its own defaults on the calendar root, so an override has to reach it. */
+  & .rdp-root {
+    --rdp-accent-color: var(--color-accent-fill);
+    --rdp-accent-background-color: var(--color-surface-selected);
+    --rdp-day-height: calc(var(--spacing) * 6.5);
+    --rdp-day-width: calc(var(--spacing) * 6.5);
+    --rdp-day_button-height: calc(var(--spacing) * 6);
+    --rdp-day_button-width: calc(var(--spacing) * 6);
+    --rdp-day_button-border-radius: var(--radius-control);
+    --rdp-months-gap: calc(var(--spacing) * 5);
+    --rdp-month_caption-font: 500 var(--text-detail) / 1.4 var(--font-sans);
+    --rdp-nav-height: calc(var(--spacing) * 6);
+    --rdp-selected-border: none;
+    --rdp-today-color: var(--color-accent-ink);
+    --rdp-outside-opacity: 1;
+    --rdp-weekday-opacity: 1;
+    --rdp-weekday-text-transform: none;
+    --rdp-weekday-padding: 0;
+  }
+
+  & .rdp-day_button {
+    color: var(--color-ink);
+  }
+
+  & .rdp-outside .rdp-day_button {
+    color: var(--color-ink-secondary);
+  }
+
+  & .rdp-selected .rdp-day_button {
+    color: var(--color-highlight-ink);
+  }
+
+  & .rdp-range_middle .rdp-day_button {
+    color: var(--color-ink);
   }
 }
 

@@ -36,6 +36,7 @@ import { AppSidebar } from './-app-sidebar';
 import { AppToolbar } from './-app-toolbar';
 import { NotFound } from './-not-found';
 import { surfaceRequest, withSheet, withoutSheet } from './-surface-request';
+import { UsageFiltersAct } from './-usage-filters-act';
 import { UsageRangeAct } from './-usage-range-act';
 
 const noDevtools = () => null;
@@ -76,6 +77,11 @@ function providersAct(kind: AccountKind | undefined): ReactNode {
 /** The act the window strip carries over the usage screen, and nothing anywhere else. */
 function usageAct(search: UsageSearch | undefined): ReactNode {
   return search === undefined ? null : <UsageRangeAct search={search} />;
+}
+
+/** The acts the window strip carries at its leading edge, which only usage stands any at. */
+function leadingActs(search: UsageSearch | undefined): ReactNode {
+  return search === undefined ? null : <UsageFiltersAct search={search} />;
 }
 
 /** Which act the current surface stands at the strip's trailing edge. */
@@ -119,6 +125,25 @@ function useDevtoolsAsked(): boolean {
   return asked;
 }
 
+function surfaceMain(
+  slug: string | undefined,
+  usageSearch: UsageSearch | undefined,
+  providerKind: AccountKind | undefined,
+): ReactNode {
+  return (
+    <main className="relative flex flex-1 flex-col overflow-hidden bg-surface-content text-body">
+      <AppToolbar
+        leading={leadingActs(usageSearch)}
+        slug={slug}
+        trailing={surfaceAct(usageSearch, providerKind)}
+      />
+      <div className="relative flex-1 overflow-y-auto">
+        <Outlet />
+      </div>
+    </main>
+  );
+}
+
 function RootLayout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -146,12 +171,7 @@ function RootLayout() {
         }}
       />
       <SidebarEdge />
-      <main className="relative flex flex-1 flex-col overflow-hidden bg-surface-content text-body">
-        <AppToolbar slug={slug} trailing={surfaceAct(usage?.search, providers?.search.kind)} />
-        <div className="relative flex-1 overflow-y-auto">
-          <Outlet />
-        </div>
-      </main>
+      {surfaceMain(slug, usage?.search, providers?.search.kind)}
       <CreateGatewaySheet
         onCreated={(slug) => {
           void navigate({ to: '/gateways/$slug', params: { slug }, search: {} });

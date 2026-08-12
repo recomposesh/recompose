@@ -37,7 +37,7 @@ const meta = preview.meta({
 /** A served scope summarizes its day and links into the pre-filtered explorer. */
 export const AServedDay = meta.story({
   parameters: { bridge: { usageReport: servedDay } },
-  render: () => <UsageSummaryLink scope={{ param: 'gateway', value: 'relay' }} />,
+  render: () => <UsageSummaryLink scope={{ param: 'gateways', value: 'relay' }} />,
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('link', { name: /42 requests/ })).toBeVisible();
   },
@@ -45,7 +45,7 @@ export const AServedDay = meta.story({
 
 /** A zero card reads zero and offers no dead end. */
 export const AQuietDay = meta.story({
-  render: () => <UsageSummaryLink scope={{ param: 'gateway', value: 'quiet' }} />,
+  render: () => <UsageSummaryLink scope={{ param: 'gateways', value: 'quiet' }} />,
   play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByText(/No requests in the last 24 hours/)).toBeVisible();
     await expect(canvasElement.querySelector('a')).toBeNull();

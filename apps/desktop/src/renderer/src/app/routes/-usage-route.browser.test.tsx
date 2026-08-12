@@ -31,18 +31,23 @@ describe('the usage route reads its view from the address', () => {
     const { router } = mountedAt('/usage?range=junk&metric=7');
 
     await vi.waitFor(() => {
-      expect(router.state.location.search).toEqual({ range: '24h', metric: 'requests' });
+      expect(router.state.location.search).toEqual({
+        range: '24h',
+        metric: 'requests',
+        stackedBy: 'gateway',
+      });
     });
   });
 
-  it('keeps a whole drilled view across the address boundary', async () => {
-    const { router } = mountedAt('/usage?range=7d&metric=tokens&gateway=relay');
+  it('keeps a whole filtered view across the address boundary', async () => {
+    const { router } = mountedAt('/usage?range=7d&metric=tokens&gateways=relay');
 
     await vi.waitFor(() => {
       expect(router.state.location.search).toEqual({
         range: '7d',
         metric: 'tokens',
-        gateway: 'relay',
+        stackedBy: 'gateway',
+        gateways: ['relay'],
       });
     });
   });
@@ -51,7 +56,14 @@ describe('the usage route reads its view from the address', () => {
     const { queryClient } = mountedAt('/usage?range=7d');
 
     await vi.waitFor(() => {
-      expect(queryClient.getQueryData(usageReportQueryOptions('7d').queryKey)).toBeDefined();
+      expect(
+        queryClient.getQueryData(
+          usageReportQueryOptions({
+            range: '30d',
+            dayOffsetMinutes: new Date().getTimezoneOffset(),
+          }).queryKey,
+        ),
+      ).toBeDefined();
     });
   });
 });

@@ -1,48 +1,38 @@
-import { expect, test, vi } from 'vitest';
+import { expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import type { MetricFaces } from './metric-tiles';
+import type { MetricFaces } from '../../lib/usage-faces';
 
 import { MetricTiles } from './metric-tiles';
 
 const faces: MetricFaces = {
-  requests: { reading: '1,204' },
-  errors: { reading: '3' },
+  requests: { reading: '1,204', detail: '+12% vs prev 24h' },
+  errors: { reading: '3', detail: '0.2% of requests' },
   latency: { reading: '840ms', detail: 'average' },
   tokens: { reading: '45.1M', detail: '38% cached' },
   spend: { reading: '$1.92', detail: 'today so far' },
 };
 
-test('the five tiles stand as one radio group with their faces printed', async () => {
-  const screen = await render(
-    <MetricTiles faces={faces} metric="requests" onMetricChange={() => {}} />,
-  );
+test('the five readings headline the window, each with the line qualifying it', async () => {
+  const screen = await render(<MetricTiles faces={faces} />);
 
-  await expect.element(screen.getByRole('radiogroup', { name: 'Chart metric' })).toBeVisible();
-  await expect.element(screen.getByRole('radio', { name: /Requests/ })).toBeChecked();
-  await expect.element(screen.getByRole('radio', { name: /Tokens/ })).not.toBeChecked();
+  await expect.element(screen.getByRole('region', { name: 'Window readings' })).toBeVisible();
+  await expect.element(screen.getByText('1,204')).toBeVisible();
+  await expect.element(screen.getByText('+12% vs prev 24h')).toBeVisible();
+  await expect.element(screen.getByText('0.2% of requests')).toBeVisible();
   await expect.element(screen.getByText('38% cached')).toBeVisible();
   await expect.element(screen.getByText('today so far')).toBeVisible();
 });
 
-test('picking a tile hands the choice up rather than keeping it', async () => {
-  const onMetricChange = vi.fn<(metric: string) => void>();
-  const screen = await render(
-    <MetricTiles faces={faces} metric="requests" onMetricChange={onMetricChange} />,
-  );
+test('the tiles read the window rather than choosing what the chart draws', async () => {
+  const screen = await render(<MetricTiles faces={faces} />);
 
-  await screen.getByRole('radio', { name: /Spend/ }).click();
-
-  expect(onMetricChange).toHaveBeenCalledWith('spend');
+  expect(screen.container.querySelector('[role="radio"]')).toBeNull();
 });
 
-test('the latency face names its statistic', async () => {
-  const screen = await render(
-    <MetricTiles faces={faces} metric="latency" onMetricChange={() => {}} />,
-  );
+test('a face with nothing to qualify it prints the figure alone', async () => {
+  const screen = await render(<MetricTiles faces={{ ...faces, requests: { reading: '1,204' } }} />);
 
-  const latency = screen.getByRole('radio', { name: /Latency/ });
-
-  await expect.element(latency).toBeChecked();
-  await expect.element(screen.getByText('average')).toBeVisible();
+  await expect.element(screen.getByText('1,204')).toBeVisible();
+  await expect.element(screen.getByText('+12% vs prev 24h')).not.toBeInTheDocument();
 });

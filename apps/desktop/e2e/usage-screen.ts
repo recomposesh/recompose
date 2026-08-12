@@ -116,32 +116,31 @@ export async function openUsageScreen(page: Page): Promise<void> {
   });
 }
 
-/** The requests tile, whose accessible face carries its label and its figure. */
+/** The requests tile, a named group holding its figure and the line qualifying it. */
 function requestsTile(page: Page): Locator {
-  return page.getByRole('radio', { name: /^Requests/ });
+  return page.getByRole('group', { name: 'Requests' });
 }
 
 /**
  * Waits for the requests tile to print one exact figure.
  *
- * @summary The tile's accessible name is its label beside its printed reading, so the whole name
- * is the claim: asserting it exactly keeps a `1` from passing as a `10`, and the poll rides out
- * the live tick and the report's own fetch.
+ * @summary The figure is matched whole rather than as a substring, so a `1` never passes as a
+ * `10`, and the wait rides out the live tick and the report's own fetch.
  */
 export async function requestsTileCounts(page: Page, requests: number): Promise<void> {
-  await expect(requestsTile(page)).toHaveAccessibleName(`Requests ${String(requests)}`, {
+  await expect(requestsTile(page).getByText(String(requests), { exact: true })).toBeVisible({
     timeout: USAGE_SETTLE_MS,
   });
 }
 
-/** The breakdown section under the chart, which pivots the domain hierarchy. */
+/** The panel folding the window by gateway, which every other panel folds beside. */
 export function breakdownSection(page: Page): Locator {
-  return page.getByRole('region', { name: 'Breakdown' });
+  return page.getByRole('region', { name: 'By gateway' });
 }
 
-/** The scope path over the readings, which names every standing level. */
-export function scopePath(page: Page): Locator {
-  return page.getByRole('navigation', { name: 'Scope' });
+/** The sentence under the title, naming what the readings below it stand for. */
+export function scopeSentence(page: Page): Locator {
+  return page.getByText(/local time$/u);
 }
 
 /** Selects one range on the toolbar control that governs every reading. */

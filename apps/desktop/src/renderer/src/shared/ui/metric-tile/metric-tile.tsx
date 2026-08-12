@@ -1,8 +1,4 @@
-import { Radio } from '@base-ui/react/radio';
-
 type MetricTileProps = {
-  /** Value committed when this tile wins the group. */
-  value: string;
   /** The metric the tile stands for. */
   label: string;
   /** The headline figure, already printed. */
@@ -12,23 +8,23 @@ type MetricTileProps = {
 };
 
 /**
- * A stat card that doubles as the choice of what the chart draws.
+ * One stat card: what the figure counts, the figure, and the line qualifying it.
  *
- * @summary Reach for it inside a radio group where each headline figure also selects a view, the
- * way the usage tiles pick the chart's series. The face carries the metric's name, its figure,
- * and one qualifying line, and the checked frame names the standing choice.
+ * @summary Reach for it in a row of readings that headline a window. The tile reads rather than
+ * acts, so the choice of what a chart draws lives on the chart's own control instead.
  */
-export function MetricTile({ value, label, reading, detail }: MetricTileProps) {
+export function MetricTile({ label, reading, detail }: MetricTileProps) {
   return (
-    <Radio.Root
-      className="flex min-w-28 flex-col items-start gap-0.5 rounded-card border border-line-subtle bg-surface-card p-3 text-start focus-ring-wide data-checked:border-line-selected"
-      value={value}
+    <div
+      aria-label={label}
+      className="flex min-w-28 flex-1 flex-col items-start gap-1 rounded-card border border-line-subtle bg-surface-card px-3.5 py-3"
+      role="group"
     >
-      <span className="text-detail text-ink-secondary">{label}</span>
-      <span className="font-mono text-invitation text-ink tabular-nums">{reading}</span>
+      <span className="text-caption text-ink-secondary">{label}</span>
+      <span className="font-mono text-mono-figure text-ink tabular-nums">{reading}</span>
       {detail === undefined ? null : (
-        <span className="text-detail text-ink-secondary">{detail}</span>
+        <span className="text-caption text-ink-secondary">{detail}</span>
       )}
-    </Radio.Root>
+    </div>
   );
 }

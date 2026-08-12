@@ -36,7 +36,7 @@ const servedReport: UsageReport = {
   pricing: { source: 'bundled' },
 };
 
-const at7d: UsageSearch = { range: '7d', metric: 'requests' };
+const at7d: UsageSearch = { range: '7d', metric: 'requests', stackedBy: 'gateway' };
 
 async function mounted(ui: ReactNode) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -50,26 +50,33 @@ test('a range command from the menu moves the address', async () => {
   const onSearchChange = vi.fn<(next: UsageSearch) => void>();
   const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
 
-  await expect.element(screen.getByRole('radio', { name: /Requests/ })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'Requests over time' })).toBeVisible();
 
   emitUsageCommand('range-30d');
 
-  expect(onSearchChange).toHaveBeenCalledWith({ range: '30d', metric: 'requests' });
+  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, range: '30d' });
 });
 
-test('a metric command selects the tile, snapping spend onto day width', async () => {
+test('a measure command moves the chart, snapping spend onto day width', async () => {
   installFakeBridge({ usageReport: servedReport });
 
   const onSearchChange = vi.fn<(next: UsageSearch) => void>();
   const screen = await mounted(
-    <UsagePage onSearchChange={onSearchChange} search={{ range: '24h', metric: 'requests' }} />,
+    <UsagePage
+      onSearchChange={onSearchChange}
+      search={{ range: '24h', metric: 'requests', stackedBy: 'gateway' }}
+    />,
   );
 
-  await expect.element(screen.getByRole('radio', { name: /Requests/ })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'Requests over time' })).toBeVisible();
 
   emitUsageCommand('metric-spend');
 
-  expect(onSearchChange).toHaveBeenCalledWith({ range: '7d', metric: 'spend' });
+  expect(onSearchChange).toHaveBeenCalledWith({
+    range: '7d',
+    metric: 'spend',
+    stackedBy: 'gateway',
+  });
 });
 
 test('the table twin toggles from the menu and reports its standing back', async () => {
@@ -92,7 +99,9 @@ test('the table twin toggles from the menu and reports its standing back', async
 
   emitUsageCommand('toggle-table-twin');
 
-  await expect.element(screen.getByRole('table', { name: /chart/ })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('table', { name: 'Requests over time' }))
+    .toBeInTheDocument();
   await vi.waitFor(() => {
     expect(reported).toContain(true);
   });
@@ -120,7 +129,7 @@ test('refresh asks the ledger again', async () => {
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByRole('radio', { name: /Requests/ })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'Requests over time' })).toBeVisible();
 
   const before = answered;
 

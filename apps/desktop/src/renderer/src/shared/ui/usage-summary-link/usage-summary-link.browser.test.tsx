@@ -51,25 +51,25 @@ async function mounted(ui: ReactNode) {
 }
 
 test('a served gateway summarizes its day and links into the pre-filtered explorer', async () => {
-  const screen = await mounted(<UsageSummaryLink scope={{ param: 'gateway', value: 'relay' }} />);
+  const screen = await mounted(<UsageSummaryLink scope={{ param: 'gateways', value: 'relay' }} />);
 
   const link = screen.getByRole('link', { name: /42 requests/ });
 
   await expect.element(link).toBeVisible();
-  expect(link.element().getAttribute('href')).toContain('gateway=relay');
+  expect(link.element().getAttribute('href')).toContain('gateways=%5B%22relay%22%5D');
 });
 
 test('a served account links by its own level', async () => {
-  const screen = await mounted(<UsageSummaryLink scope={{ param: 'account', value: 'work' }} />);
+  const screen = await mounted(<UsageSummaryLink scope={{ param: 'providers', value: 'work' }} />);
 
   const link = screen.getByRole('link', { name: /42 requests/ });
 
   await expect.element(link).toBeVisible();
-  expect(link.element().getAttribute('href')).toContain('account=work');
+  expect(link.element().getAttribute('href')).toContain('providers=%5B%22work%22%5D');
 });
 
 test('a zero card reads zero and carries no link', async () => {
-  const screen = await mounted(<UsageSummaryLink scope={{ param: 'gateway', value: 'quiet' }} />);
+  const screen = await mounted(<UsageSummaryLink scope={{ param: 'gateways', value: 'quiet' }} />);
 
   await expect.element(screen.getByText(/No requests in the last 24 hours/)).toBeVisible();
   expect(screen.container.querySelector('a')).toBeNull();
