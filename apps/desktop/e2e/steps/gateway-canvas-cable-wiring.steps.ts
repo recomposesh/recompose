@@ -275,7 +275,7 @@ Then('the drag cancels', async ({ page }) => {
 });
 
 Then('the composition stands unchanged', async ({ page }) => {
-  expect(await composition(page)).toEqual(compositionBefore(page));
+  await expect.poll(async () => composition(page)).toEqual(compositionBefore(page));
 });
 
 Then(
