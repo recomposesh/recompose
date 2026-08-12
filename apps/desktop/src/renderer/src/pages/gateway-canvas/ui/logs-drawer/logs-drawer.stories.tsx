@@ -5,7 +5,7 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { gatewaySeed } from '../../../../shared/testing';
-import { servedRequest, servedRun, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import { servedAcrossTwoModels, storedAccounts } from '../../testing/gateway-canvas.testkit';
 import { LogsDrawer } from './logs-drawer';
 
 type DrawerStanding = ComponentProps<typeof LogsDrawer>;
@@ -26,27 +26,6 @@ const theRemovedTarget: DrawerStanding['subject'] = {
 const aDraft: DrawerStanding['subject'] = { kind: 'draft' };
 const answering: DrawerStanding['serving'] = 'running';
 const notAnswering: DrawerStanding['serving'] = 'stopped';
-
-const acrossTwoModels = [
-  servedRequest({ id: 'a', virtualModel: 'fast' }),
-  servedRequest({
-    id: 'b',
-    at: servedRequest().at - 1000,
-    virtualModel: 'creative',
-    provider: 'openrouter',
-    accountId: 'g1',
-    providerModel: 'openai/gpt-5',
-    status: 429,
-  }),
-  servedRequest({
-    id: 'c',
-    at: servedRequest().at - 2000,
-    virtualModel: 'fast',
-    status: 500,
-    durationMs: undefined,
-  }),
-  ...servedRun(30).map((row) => ({ ...row, id: `older-${row.id}`, at: row.at - 10_000 })),
-];
 
 const meta = preview.meta({
   component: LogsDrawer,
@@ -69,7 +48,7 @@ const meta = preview.meta({
       ],
     }),
     accounts: storedAccounts.accounts,
-    rows: acrossTwoModels,
+    rows: servedAcrossTwoModels,
     serving: answering,
     subject: wholeGateway,
   },

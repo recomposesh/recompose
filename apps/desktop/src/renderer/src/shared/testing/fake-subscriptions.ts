@@ -15,6 +15,16 @@ export type SubscriptionHandlers = Pick<
 export const noSubscriptions: readonly SubscriptionAccountView[] = [];
 export const noTools: readonly SubscriptionTool[] = [];
 
+export const connectedSubscription: SubscriptionAccountView = {
+  id: 's1',
+  provider: 'anthropic',
+  label: 'Anthropic',
+  signedInAs: 'dev@example.com',
+  plan: 'Max',
+  standing: 'connected',
+  active: true,
+};
+
 /**
  * The subscription half of the fake bridge, answering every act with the list it left behind.
  *

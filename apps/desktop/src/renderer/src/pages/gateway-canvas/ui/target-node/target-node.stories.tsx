@@ -99,7 +99,7 @@ export const TheFrameCarriesTheAccountKindTint = meta.story({
   play: async ({ canvas }) => {
     const painted = paintedStyle(await canvas.findByRole('button', { name: /Work key/ }));
 
-    await expect(painted.borderColor).toBe(inScheme('rgb(163, 116, 0)', 'rgb(255, 214, 10)'));
+    await expect(painted.borderColor).toBe(inScheme('rgb(122, 86, 0)', 'rgb(255, 214, 10)'));
     await expect(painted.borderStyle).toBe('solid');
   },
 });
@@ -110,7 +110,7 @@ export const AKeyChipReadsAsAKey = meta.story({
   play: async ({ canvas }) => {
     const card = await canvas.findByRole('button', { name: /Acme key/ });
 
-    await expect(chipInk(card)).toBe(inScheme('rgb(163, 116, 0)', 'rgb(255, 214, 10)'));
+    await expect(chipInk(card)).toBe(inScheme('rgb(122, 86, 0)', 'rgb(255, 214, 10)'));
     await expect(chipGlyph(card)).toBe(keyGlyph);
   },
 });

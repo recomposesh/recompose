@@ -258,6 +258,7 @@ sess
 setstate
 Shadowsocks
 shellcheck
+smoothstep
 snapcraft
 spinbuttons
 Squarespace

@@ -77,6 +77,7 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
 
   return (
     <aside
+      aria-label="Sidebar"
       className="sidebar-slot border-e border-line-subtle bg-surface-sidebar text-body text-ink-secondary"
       data-away={away ? '' : undefined}
       inert={away}

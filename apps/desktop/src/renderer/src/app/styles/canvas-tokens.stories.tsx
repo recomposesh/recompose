@@ -128,7 +128,7 @@ export const NodeRolesTakeTheirTint = meta.story({
     const tints = [
       forScheme('rgb(23, 134, 155)', 'rgb(64, 200, 224)'),
       forScheme('rgb(173, 45, 117)', 'rgb(255, 114, 196)'),
-      forScheme('rgb(163, 116, 0)', 'rgb(255, 214, 10)'),
+      forScheme('rgb(122, 86, 0)', 'rgb(255, 214, 10)'),
     ];
 
     for (const [place, card] of drawnIn(canvasElement, 'article').entries()) {

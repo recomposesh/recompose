@@ -9,7 +9,9 @@ export {
 } from './fake-engine-pushes';
 export { gatewaySeed } from './fake-gateways';
 export { emitSettingsChanged } from './fake-settings';
+export { connectedSubscription } from './fake-subscriptions';
 export { emitUsageCommand } from './fake-usage-pushes';
+export { servedReport } from './fake-usage-report';
 export { edgeRuleDrawn, hourChartBars, tokenChartSeries } from './chart-fixtures';
 export { paintedBox, paintedStyle } from './measuring';
 export { pressedByKeyboard } from './pressing';

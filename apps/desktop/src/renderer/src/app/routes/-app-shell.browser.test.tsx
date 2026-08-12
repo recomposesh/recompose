@@ -8,7 +8,7 @@ const codex = gatewaySeed({ slug: 'codex', displayName: 'Codex', port: 51234 });
 
 /** The sidebar controls a person can actually press, which excludes any the shell put out of reach. */
 function reachableSidebarControls(container: HTMLElement): Element[] {
-  return [...container.querySelectorAll('[aria-label="Sidebar"]')].filter(
+  return [...container.querySelectorAll('button[aria-label="Sidebar"]')].filter(
     (control) => control.closest('[inert]') === null,
   );
 }
@@ -84,6 +84,15 @@ test('a surface with no gateway selected leaves the toolbar empty chrome', async
   await expect
     .element(screen.getByRole('button', { name: 'Copy address' }))
     .not.toBeInTheDocument();
+});
+
+test('the sidebar and the inspector name themselves apart while both stand', async () => {
+  const screen = await renderAt('/gateways/codex', { gateways: [codex] });
+
+  await screen.getByRole('button', { name: 'Inspector' }).click();
+
+  await expect.element(screen.getByRole('complementary', { name: 'Sidebar' })).toBeVisible();
+  await expect.element(screen.getByRole('complementary', { name: 'Inspector' })).toBeVisible();
 });
 
 test('a surface holding no gateway carries no Inspector control', async () => {

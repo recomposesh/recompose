@@ -1,25 +1,14 @@
-import type { SubscriptionAccountView } from '@recompose/contracts';
-
 import { expect, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { connectedSubscription } from '../../../../shared/testing';
 import { SubscriptionAccountRow } from './subscription-account-row';
-
-const connected: SubscriptionAccountView = {
-  id: 's1',
-  provider: 'anthropic',
-  label: 'Anthropic',
-  signedInAs: 'dev@example.com',
-  plan: 'Max',
-  standing: 'connected',
-  active: true,
-};
 
 const meta = preview.meta({
   component: SubscriptionAccountRow,
-  args: { view: connected },
-  parameters: { bridge: { subscriptions: [connected] } },
+  args: { view: connectedSubscription },
+  parameters: { bridge: { subscriptions: [connectedSubscription] } },
   decorators: [
     (Story) => (
       <ul className="mx-auto w-full max-w-column p-4">
@@ -53,7 +42,7 @@ export const Connected = meta.story({
  * once would leave a person choosing between two controls that sound identical.
  */
 export const Lapsed = meta.story({
-  args: { view: { ...connected, standing: 'lapsed' } },
+  args: { view: { ...connectedSubscription, standing: 'lapsed' } },
   play: async ({ canvas }) => {
     const names = (await canvas.findAllByRole('button')).map((control) =>
       (control.getAttribute('aria-label') ?? control.textContent).trim(),
@@ -72,7 +61,7 @@ export const Lapsed = meta.story({
  * rather than a menu act.
  */
 export const QuieterActions = meta.story({
-  args: { view: { ...connected, active: false } },
+  args: { view: { ...connectedSubscription, active: false } },
   play: async ({ canvas }) => {
     await userEvent.click(await canvas.findByRole('button', { name: 'Actions for Anthropic' }));
 

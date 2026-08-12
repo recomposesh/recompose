@@ -204,6 +204,7 @@ export function GatewayDrawer({
 
   return (
     <aside
+      aria-label="Inspector"
       data-panel-control=""
       data-focus-group=""
       className={`shrink-0 overflow-hidden border-s border-line-subtle bg-surface-toolbar ${leaving ? 'inspector-panel-leaving' : 'inspector-panel'}`}
