@@ -6,6 +6,7 @@
   },
   "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.test-d.ts"],
   "coverageAnalysis": "perTest",
+  "dryRunTimeoutMinutes": 30,
   "incremental": true,
   "incrementalFile": "reports/stryker-incremental.json",
   "reporters": ["html", "clear-text", "progress"],

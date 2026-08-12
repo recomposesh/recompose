@@ -140,12 +140,15 @@ jobs:
           contracts=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)packages/contracts/src/**/*.ts' | grep -vE '\.(test(-d)?|d)\.ts$' | sed 's|^packages/contracts/||' | paste -sd, -) || true
           engine=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)packages/engine/src/**/*.ts' | grep -vE '\.(test|testkit|d)\.ts$' | sed 's|^packages/engine/||' | paste -sd, -) || true
           canvas_lib=apps/desktop/src/renderer/src/pages/gateway-canvas/lib
+          usage_lib=apps/desktop/src/renderer/src/pages/usage/lib
           desktop=$(git diff --name-only "$BASE_SHA"...HEAD \
             -- ':(glob)apps/desktop/src/main/**/*.ts' ':(glob)apps/desktop/scripts/**/*.mts' \
             "$canvas_lib/node-graph.ts" "$canvas_lib/tidy-layout.ts" \
             "$canvas_lib/canvas-positions.ts" "$canvas_lib/model-draft.ts" \
             "$canvas_lib/cable-announcements.ts" "$canvas_lib/cable-standing.ts" \
             "$canvas_lib/traffic-aggregates.ts" "$canvas_lib/log-scope.ts" \
+            "$usage_lib/live-window.ts" "$usage_lib/usage-groups.ts" \
+            "$usage_lib/usage-search.ts" \
             | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
           if [ -z "$contracts" ] && [ -z "$engine" ] && [ -z "$desktop" ]; then
             echo "mutation scope untouched, skipping"
