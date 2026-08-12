@@ -1,4 +1,4 @@
-import type { LogRow, UsageBucket, UsageReport } from '@recompose/contracts';
+import type { UsageBucket, UsageReport } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,8 +7,7 @@ import { render } from 'vitest-browser-react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
-import { engineLogsQueryOptions } from '../../../../shared/api';
-import { edgeRuleDrawn, gatewaySeed, installFakeBridge } from '../../../../shared/testing';
+import { edgeRuleDrawn, installFakeBridge } from '../../../../shared/testing';
 import { UsagePage } from './usage-page';
 
 const HOUR_MS = 3_600_000;
@@ -19,7 +18,7 @@ const DAY_START = NOW_HOUR - (NOW_HOUR % DAY_MS);
 function servedBucket(start: number, gateway: string, requests: number): UsageBucket {
   return {
     start,
-    tuple: { gateway, virtualModel: 'creative' },
+    tuple: { gateway, virtualModel: 'creative', accountId: 'k1', providerModel: 'claude-sonnet-5' },
     measures: {
       requests,
       failed: 1,
@@ -55,22 +54,6 @@ const servedReport: UsageReport = {
   pricing: { source: 'bundled' },
 };
 
-const A_CALLER_DIGEST = `sha256:${'a'.repeat(64)}`;
-
-function liveRow(id: string, at: number): LogRow {
-  return {
-    id,
-    at,
-    gateway: 'relay',
-    virtualModel: 'creative',
-    origin: 'provider',
-    method: 'POST',
-    status: 200,
-    durationMs: 400,
-    clientKey: A_CALLER_DIGEST,
-  };
-}
-
 function freshQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
@@ -79,7 +62,7 @@ async function mounted(ui: ReactNode, queryClient: QueryClient = freshQueryClien
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
 
-const at7d: UsageSearch = { range: '7d', metric: 'requests' };
+const at7d: UsageSearch = { range: '7d', metric: 'requests', stackedBy: 'gateway' };
 
 test('before any traffic the promise card stands as the whole body', async () => {
   installFakeBridge({});
@@ -90,38 +73,58 @@ test('before any traffic the promise card stands as the whole body', async () =>
     .element(screen.getByRole('heading', { level: 2, name: 'No requests yet' }))
     .toBeVisible();
   expect(screen.container.querySelector('table')).toBeNull();
-  expect(screen.container.querySelector('[role="radiogroup"]')).toBeNull();
 });
 
-test('served history lands in the tiles, the chart, and the breakdown together', async () => {
+test('served history lands in the tiles, the chart, and all three panels together', async () => {
   installFakeBridge({ usageReport: servedReport });
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByRole('radio', { name: /Requests/ })).toBeVisible();
-  await expect.element(screen.getByText('12', { exact: true })).toBeVisible();
-  await expect.element(screen.getByRole('img', { name: /Requests/ })).toBeInTheDocument();
-  await expect.element(screen.getByRole('table', { name: 'Breakdown' })).toBeInTheDocument();
-  await expect.element(screen.getByRole('cell', { name: 'relay', exact: true })).toBeVisible();
+  const readings = screen.getByRole('region', { name: 'Window readings' });
+
+  await expect.element(readings.getByText('12', { exact: true })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'Requests over time' })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'By gateway' })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'By virtual model' })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'By target' })).toBeVisible();
   await expect
-    .element(screen.getByText(/Last 7 days.*hour buckets.*12 requests total.*peak 9.*UTC/))
+    .element(
+      screen.getByText(
+        'Every panel folds the same buckets · hour buckets · days break at your local midnight',
+      ),
+    )
     .toBeVisible();
 });
 
-test('a retention window wider than the served history draws no edge', async () => {
-  installFakeBridge({
-    usageReport: { ...servedReport, oldestRetainedStart: NOW_HOUR - 30 * DAY_MS },
-  });
+test('the header names the window and what the readings stand for', async () => {
+  installFakeBridge({ usageReport: servedReport });
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByRole('img', { name: /Requests/ })).toBeInTheDocument();
-  expect(screen.container.querySelector('[stroke-dasharray]')).toBeNull();
+  await expect.element(screen.getByRole('heading', { level: 1, name: 'Usage' })).toBeVisible();
+  await expect
+    .element(screen.getByText('All gateways · All providers · Last 7 days · local time'))
+    .toBeVisible();
+});
+
+test('a standing filter narrows every reading and the sentence says so', async () => {
+  installFakeBridge({ usageReport: servedReport });
+
+  const screen = await mounted(
+    <UsagePage onSearchChange={() => {}} search={{ ...at7d, gateways: ['backup'] }} />,
+  );
+
+  const readings = screen.getByRole('region', { name: 'Window readings' });
+
+  await expect.element(readings.getByText('3', { exact: true })).toBeVisible();
+  await expect
+    .element(screen.getByText('backup · All providers · Last 7 days · local time'))
+    .toBeVisible();
 });
 
 test('the chart marks where retained history begins when the window cut it', async () => {
   installFakeBridge({
-    usageReport: { ...servedReport, oldestRetainedStart: NOW_HOUR - 2 * HOUR_MS + 60_000 },
+    usageReport: { ...servedReport, oldestRetainedStart: NOW_HOUR - 2 * HOUR_MS },
   });
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
@@ -135,79 +138,31 @@ test('selecting spend snaps a sub-day range onto day width', async () => {
 
   const onSearchChange = vi.fn<(next: UsageSearch) => void>();
   const screen = await mounted(
-    <UsagePage onSearchChange={onSearchChange} search={{ range: '24h', metric: 'requests' }} />,
+    <UsagePage
+      onSearchChange={onSearchChange}
+      search={{ range: '24h', metric: 'requests', stackedBy: 'gateway' }}
+    />,
   );
 
-  await screen.getByRole('radio', { name: /Spend/ }).click();
+  await screen.getByRole('radio', { name: 'Spend' }).click();
 
-  expect(onSearchChange).toHaveBeenCalledWith({ range: '7d', metric: 'spend' });
+  expect(onSearchChange).toHaveBeenCalledWith({
+    range: '7d',
+    metric: 'spend',
+    stackedBy: 'gateway',
+  });
 });
 
-test('selecting a counting metric keeps the range as it stands', async () => {
+test('picking a stack dimension moves the whole view onto it', async () => {
   installFakeBridge({ usageReport: servedReport });
 
   const onSearchChange = vi.fn<(next: UsageSearch) => void>();
   const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
 
-  await screen.getByRole('radio', { name: /Errors/ }).click();
+  await screen.getByRole('button', { name: 'Stacked by Gateway' }).click();
+  await screen.getByRole('menuitem', { name: 'Virtual model' }).click();
 
-  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, metric: 'errors' });
-});
-
-test('drilling a breakdown row narrows the scope by its level', async () => {
-  installFakeBridge({ usageReport: servedReport });
-
-  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
-  const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
-
-  await screen.getByRole('button', { name: 'Drill into relay' }).click();
-
-  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, gateway: 'relay' });
-});
-
-test('a narrowed scope with traffic keeps its readings and the root presses back out', async () => {
-  installFakeBridge({ usageReport: servedReport });
-
-  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
-  const screen = await mounted(
-    <UsagePage onSearchChange={onSearchChange} search={{ ...at7d, gateway: 'relay' }} />,
-  );
-
-  await expect.element(screen.getByRole('cell', { name: 'relay', exact: true })).toBeVisible();
-
-  await screen.getByRole('button', { name: 'All traffic' }).click();
-
-  expect(onSearchChange).toHaveBeenCalledWith(at7d);
-});
-
-test('a scope with no traffic names its recovery and clears from it', async () => {
-  installFakeBridge({ usageReport: servedReport });
-
-  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
-  const screen = await mounted(
-    <UsagePage onSearchChange={onSearchChange} search={{ ...at7d, gateway: 'quiet' }} />,
-  );
-
-  await expect
-    .element(screen.getByText('Nothing served through this gateway in the last 7 days'))
-    .toBeVisible();
-
-  await screen.getByRole('button', { name: 'Clear scope' }).click();
-
-  expect(onSearchChange).toHaveBeenCalledWith(at7d);
-});
-
-test('a scope with no traffic widens the range from its own card', async () => {
-  installFakeBridge({ usageReport: servedReport });
-
-  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
-  const screen = await mounted(
-    <UsagePage onSearchChange={onSearchChange} search={{ ...at7d, gateway: 'quiet' }} />,
-  );
-
-  await screen.getByRole('button', { name: 'Widen range' }).click();
-
-  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, gateway: 'quiet', range: '30d' });
+  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, stackedBy: 'virtualModel' });
 });
 
 test('history loads as placeholders, never zeros', async () => {
@@ -220,11 +175,13 @@ test('history loads as placeholders, never zeros', async () => {
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByRole('radio', { name: /Requests.*—/ })).toBeVisible();
+  await expect
+    .element(screen.getByRole('region', { name: 'Window readings' }).getByText('—').first())
+    .toBeVisible();
   expect(screen.container.textContent).not.toContain('0 requests');
 });
 
-test('a refused history read names itself and moves the control to the live plane', async () => {
+test('a refused history read names itself and offers the read again', async () => {
   installFakeBridge({
     usageReport: servedReport,
     overrides: {
@@ -236,50 +193,81 @@ test('a refused history read names itself and moves the control to the live plan
     },
   });
 
-  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
-  const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
   await expect.element(screen.getByText('The stored usage history cannot be read.')).toBeVisible();
   await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
-  expect(onSearchChange).toHaveBeenCalledWith({ range: '1h', metric: 'requests' });
 });
 
-test('retry returns the control to the range the refusal took away', async () => {
+test('a panel reprints in the unit its control names', async () => {
+  installFakeBridge({ usageReport: servedReport });
+
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+  const panel = screen.getByRole('region', { name: 'By gateway' });
+
+  await expect.element(panel.getByText('9', { exact: true })).toBeVisible();
+
+  await panel.getByRole('radio', { name: 'Tokens' }).click();
+
+  await expect.element(panel.getByText('1.0k', { exact: true }).first()).toBeVisible();
+  await expect.element(panel.getByText('9', { exact: true })).not.toBeInTheDocument();
+});
+
+test('the header refresh asks the ledger for the window again', async () => {
+  const asks: number[] = [];
+
   installFakeBridge({
     usageReport: servedReport,
     overrides: {
-      'usage:report': async () =>
-        Promise.resolve({
-          ok: false,
-          error: { code: 'storage-failed', message: 'The stored usage history cannot be read.' },
-        }),
+      'usage:report': async () => {
+        asks.push(asks.length);
+
+        return Promise.resolve({ ok: true, value: servedReport });
+      },
     },
   });
 
-  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
-  const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+
+  await vi.waitFor(() => {
+    expect(asks.length).toBeGreaterThan(0);
+  });
+
+  const before = asks.length;
+
+  await screen.getByRole('button', { name: 'Refresh', exact: true }).click();
+
+  await vi.waitFor(() => {
+    expect(asks.length).toBeGreaterThan(before);
+  });
+});
+
+test('the retry beside a refused read asks for the window again', async () => {
+  const asks: number[] = [];
+
+  installFakeBridge({
+    usageReport: servedReport,
+    overrides: {
+      'usage:report': async () => {
+        asks.push(asks.length);
+
+        return Promise.resolve({
+          ok: false,
+          error: { code: 'storage-failed', message: 'The stored usage history cannot be read.' },
+        });
+      },
+    },
+  });
+
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+
+  await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+
+  const before = asks.length;
 
   await screen.getByRole('button', { name: 'Retry' }).click();
 
-  expect(onSearchChange).toHaveBeenCalledWith(at7d);
-});
-
-test('the live hour folds the rows the renderer already holds', async () => {
-  installFakeBridge({
-    gateways: [gatewaySeed({ slug: 'relay', displayName: 'Relay', port: 4310 })],
+  await vi.waitFor(() => {
+    expect(asks.length).toBeGreaterThan(before);
   });
-
-  const queryClient = freshQueryClient();
-
-  queryClient.setQueryData(engineLogsQueryOptions('relay').queryKey, [
-    liveRow('earlier', Date.now() - 120_000),
-    liveRow('later', Date.now() - 60_000),
-  ]);
-
-  const screen = await mounted(
-    <UsagePage onSearchChange={() => {}} search={{ range: '1h', metric: 'requests' }} />,
-    queryClient,
-  );
-
-  await expect.element(screen.getByRole('radio', { name: /Requests.*2/ })).toBeVisible();
 });

@@ -226,7 +226,7 @@ export function SeriesChart({
   const dropped = bars.length - drawn.length;
 
   return (
-    <div className="w-full" ref={inner}>
+    <div className="w-full chart-arrival" data-chart-arrival="" ref={inner}>
       {hatchDefs(hatchId)}
       {width === 0 ? null : (
         <Chart

@@ -4,7 +4,12 @@ import type { UsageSearch } from '../../lib/usage-search';
 
 import { movedSearch } from './usage-page-moves';
 
-const standing: UsageSearch = { range: '24h', metric: 'requests', gateway: 'relay' };
+const standing: UsageSearch = {
+  range: '24h',
+  metric: 'requests',
+  stackedBy: 'gateway',
+  gateways: ['relay'],
+};
 
 describe('a menu command moves the same address the controls write', () => {
   it('moves the range for every range command', () => {
@@ -15,24 +20,29 @@ describe('a menu command moves the same address the controls write', () => {
     expect(moved).toEqual(['24h', '7d', '30d']);
   });
 
-  it('selects the metric for every metric command, keeping the scope', () => {
-    const moved = (
-      ['metric-requests', 'metric-errors', 'metric-latency', 'metric-tokens'] as const
-    ).map((command) => movedSearch(command, { ...standing, range: '7d', metric: 'spend' }));
+  it('selects the measure for every measure command, keeping the filters', () => {
+    const moved = (['metric-requests', 'metric-latency', 'metric-tokens'] as const).map((command) =>
+      movedSearch(command, { ...standing, range: '7d', metric: 'spend' }),
+    );
 
     expect(moved).toEqual([
-      { range: '7d', metric: 'requests', gateway: 'relay' },
-      { range: '7d', metric: 'errors', gateway: 'relay' },
-      { range: '7d', metric: 'latency', gateway: 'relay' },
-      { range: '7d', metric: 'tokens', gateway: 'relay' },
+      { ...standing, range: '7d', metric: 'requests' },
+      { ...standing, range: '7d', metric: 'latency' },
+      { ...standing, range: '7d', metric: 'tokens' },
     ]);
+  });
+
+  it('drops the custom edges a preset range no longer stands on', () => {
+    const custom: UsageSearch = { ...standing, range: 'custom', from: 1, to: 2 };
+
+    expect(movedSearch('range-7d', custom)).toEqual({ ...standing, range: '7d' });
   });
 
   it('snaps a sub-day range onto day width when spend is picked', () => {
     expect(movedSearch('metric-spend', standing)).toEqual({
+      ...standing,
       range: '7d',
       metric: 'spend',
-      gateway: 'relay',
     });
   });
 

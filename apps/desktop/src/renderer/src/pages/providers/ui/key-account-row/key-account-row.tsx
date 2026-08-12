@@ -111,7 +111,7 @@ export function KeyAccountRow({ account }: KeyAccountRowProps) {
     <li className="flex min-h-row items-center gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
       {mark === undefined ? null : <BrandMark name={mark} />}
       {keyIdentity(account, check.refusal ?? forget.refusal, check.data?.verdict)}
-      <UsageSummaryLink scope={{ param: 'account', value: account.id }} />
+      <UsageSummaryLink scope={{ param: 'providers', value: account.id }} />
       <OverflowMenu
         items={quieterActions({
           account,

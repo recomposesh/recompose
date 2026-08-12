@@ -5,8 +5,7 @@ import { modelAliasFromName } from '@recompose/contracts';
 
 import {
   dragCableOnto,
-  dropCableAt,
-  emptyCanvasSpot,
+  dropCableOnEmptyCanvas,
   fitCanvasToView,
   pullCableTo,
   releaseCable,
@@ -27,6 +26,7 @@ import {
   thePendingSeat,
   virtualModelInFocus,
 } from '../canvas-memory';
+import { emptyCanvasSpot } from '../canvas-room';
 import {
   accountPicker,
   cableBetween,
@@ -100,10 +100,7 @@ async function draftNamed(page: Page, name: string): Promise<void> {
 }
 
 async function letGoOnEmptyCanvas(page: Page, nodeId: string): Promise<void> {
-  const spot = await emptyCanvasSpot(page);
-
-  await dropCableAt(page, sourcePort(page, nodeId), spot);
-  rememberDropPoint(page, spot);
+  rememberDropPoint(page, await dropCableOnEmptyCanvas(page, sourcePort(page, nodeId)));
 }
 
 async function standsBoundToTheKeyAccount(page: Page, name: string): Promise<void> {
@@ -275,7 +272,7 @@ Then('the drag cancels', async ({ page }) => {
 });
 
 Then('the composition stands unchanged', async ({ page }) => {
-  expect(await composition(page)).toEqual(compositionBefore(page));
+  await expect.poll(async () => composition(page)).toEqual(compositionBefore(page));
 });
 
 Then(

@@ -1,103 +1,44 @@
-import type { ChartBar } from '../../../shared/ui';
-import type { MetricFaces } from './usage-faces';
-import type { UsageMetric, UsageSearchRange } from './usage-search';
+export type BucketWidthWord = 'minute' | 'hour' | 'day';
 
-import { compactCount, readDuration } from '../../../shared/lib';
-import { MICRO_DOLLARS, printedMicroDollars } from './usage-faces';
-
-const RANGE_WORDING: Record<UsageSearchRange, string> = {
-  '1h': 'Last hour',
-  '24h': 'Last 24 hours',
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
+type ScopeReading = {
+  /** The gateway names the filter stands on, empty while it stands on everything. */
+  gateways: readonly string[];
+  /** The provider names the filter stands on, empty while it stands on everything. */
+  providers: readonly string[];
+  /** The window as the range control names it. */
+  window: string;
 };
 
-const METRIC_UNIT: Record<UsageMetric, string> = {
-  requests: 'requests',
-  errors: 'errors',
-  latency: '',
-  tokens: 'tokens',
-  spend: '',
-};
-
-function barTotal(bar: ChartBar): number {
-  return Object.values(bar.values).reduce((sum, value) => sum + value, 0);
+/** The sentence under the chart title, naming the width and what a column height means. */
+export function chartSubCaption(width: BucketWidthWord): string {
+  return `${width} buckets · the column height is the window total`;
 }
 
-function highestValue(bars: readonly ChartBar[], series: string): number {
-  return bars.reduce((highest, bar) => Math.max(highest, bar.values[series] ?? 0), 0);
+/** The sentence under the panels, naming the shared fold and where a day breaks. */
+export function panelsCaption(width: BucketWidthWord): string {
+  return `Every panel folds the same buckets · ${width} buckets · days break at your local midnight`;
+}
+
+function filterWording(members: readonly string[], everything: string, plural: string): string {
+  if (members.length === 0) {
+    return everything;
+  }
+
+  return members.length === 1 ? (members[0] ?? everything) : `${String(members.length)} ${plural}`;
 }
 
 /**
- * The spend peak on one basis at a time, because billed and equivalent never add together.
+ * The sentence under the title, naming what the readings below it stand for.
  *
- * @summary The peak follows the basis the total leads with: the tallest billed day where any
- * billed traffic stands, and the tallest equivalent day under the approximation prefix where the
- * window served only seat traffic.
+ * @summary A filter standing on everything says so, one member reads by name, and several read as
+ * a count, so the sentence stays one line whatever the filter holds. Every figure on the screen is
+ * printed in the reader's own zone, which the sentence ends by saying.
  */
-function spendPeak(bars: readonly ChartBar[]): string {
-  const billedPeak = highestValue(bars, 'billed');
-
-  if (billedPeak > 0) {
-    return printedMicroDollars(Math.round(billedPeak * MICRO_DOLLARS));
-  }
-
-  return `≈${printedMicroDollars(Math.round(highestValue(bars, 'equivalent') * MICRO_DOLLARS))}`;
-}
-
-function peakReading(metric: UsageMetric, bars: readonly ChartBar[]): string {
-  if (metric === 'spend') {
-    return spendPeak(bars);
-  }
-
-  const peak = bars.reduce((highest, bar) => Math.max(highest, barTotal(bar)), 0);
-
-  if (metric === 'latency') {
-    return readDuration(peak);
-  }
-
-  return compactCount(peak);
-}
-
-function totalWording(metric: UsageMetric, faces: MetricFaces): string {
-  if (metric === 'latency') {
-    return `${faces.latency.reading} average`;
-  }
-
-  const unit = METRIC_UNIT[metric];
-
-  return unit === '' ? `${faces[metric].reading} total` : `${faces[metric].reading} ${unit} total`;
-}
-
-function bucketWording(metric: UsageMetric, range: UsageSearchRange): string {
-  if (range === '1h') {
-    return 'minute';
-  }
-
-  if (range === '30d' || metric === 'spend') {
-    return 'day';
-  }
-
-  return 'hour';
-}
-
-/**
- * The printed sentence stating what the chart claims: range, width, total, peak, and the UTC rule.
- *
- * @summary The caption is a conformance path, not a garnish: losing the vector loses nothing a
- * reader needs, because the caption and the table twin carry every figure as text.
- */
-export function captionFor(
-  metric: UsageMetric,
-  range: UsageSearchRange,
-  faces: MetricFaces,
-  bars: readonly ChartBar[],
-): string {
+export function scopeSentence(reading: ScopeReading): string {
   return [
-    RANGE_WORDING[range],
-    `${bucketWording(metric, range)} buckets`,
-    totalWording(metric, faces),
-    `peak ${peakReading(metric, bars)}`,
-    'day boundaries follow UTC',
+    filterWording(reading.gateways, 'All gateways', 'gateways'),
+    filterWording(reading.providers, 'All providers', 'providers'),
+    reading.window,
+    'local time',
   ].join(' · ');
 }

@@ -74,7 +74,7 @@ export function BalanceCard({ balances, accountNameOf, now, onRefresh }: Balance
       {balances.map((balance) => balanceRow(balance, accountNameOf(balance.accountId), now))}
       <div>
         <Button onPress={onRefresh} variant="secondary">
-          Refresh
+          Refresh credits
         </Button>
       </div>
     </section>

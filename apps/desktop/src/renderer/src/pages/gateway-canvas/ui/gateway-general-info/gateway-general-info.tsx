@@ -85,7 +85,7 @@ export function GatewayGeneralInfo({ gateway }: GatewayGeneralInfoProps) {
       </div>
       {editing ? editFooter({ onCancel: leaveEditing, onSave: save }, refused) : null}
       <div className="mt-2 px-1">
-        <UsageSummaryLink scope={{ param: 'gateway', value: gateway.slug }} />
+        <UsageSummaryLink scope={{ param: 'gateways', value: gateway.slug }} />
       </div>
     </>
   );

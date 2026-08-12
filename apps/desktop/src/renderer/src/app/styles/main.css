@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '@xyflow/react/dist/base.css' layer(base);
+@import 'react-day-picker/style.css' layer(base);
 @import './primitives.css';
 @import './theme.css';
 

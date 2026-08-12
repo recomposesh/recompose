@@ -46,7 +46,10 @@ export const WithAServedDay = meta.story({
     const summary = await canvas.findByRole('link', { name: /42 requests/ });
 
     await expect(summary).toBeVisible();
-    await expect(summary).toHaveAttribute('href', expect.stringContaining('gateway=my-gateway'));
+    await expect(summary).toHaveAttribute(
+      'href',
+      expect.stringContaining('gateways=%5B%22my-gateway%22%5D'),
+    );
   },
 });
 

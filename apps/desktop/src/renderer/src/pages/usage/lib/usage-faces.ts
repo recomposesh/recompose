@@ -1,10 +1,12 @@
 import type { UsageBucket, UsageDayCost, UsageMeasures } from '@recompose/contracts';
 
+import { summedUsageMeasures } from '@recompose/contracts';
+import { emptyUsageMeasures } from '@recompose/contracts';
+
 import type { ChartBar, ChartSeries } from '../../../shared/ui';
 import type { UsageMetric } from './usage-search';
 
 import { compactCount, exactCount, readDuration } from '../../../shared/lib';
-import { tokenChartSeries } from '../../../shared/ui';
 
 type MetricFace = {
   reading: string;
@@ -15,9 +17,11 @@ export type MetricFaces = Readonly<Record<UsageMetric, MetricFace>>;
 
 type FaceInputs = {
   buckets: readonly UsageBucket[];
+  previous: readonly UsageBucket[];
   dayCosts: readonly UsageDayCost[];
   dayWidth: boolean;
   todayStart: number;
+  windowWord: string;
 };
 
 export type SpendFigures = {
@@ -28,6 +32,7 @@ export type SpendFigures = {
 export type DrawnChart = {
   series: readonly ChartSeries[];
   bars: readonly ChartBar[];
+  totals: Readonly<Record<string, number>>;
 };
 
 export const MICRO_DOLLARS = 1_000_000;
@@ -39,31 +44,12 @@ const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'U
 
 function summedMeasures(buckets: readonly UsageBucket[]): UsageMeasures {
   return buckets.reduce<UsageMeasures>(
-    (held, bucket) => ({
-      requests: held.requests + bucket.measures.requests,
-      failed: held.failed + bucket.measures.failed,
-      answered: held.answered + bucket.measures.answered,
-      durationMsSum: held.durationMsSum + bucket.measures.durationMsSum,
-      tokens: {
-        input: held.tokens.input + bucket.measures.tokens.input,
-        output: held.tokens.output + bucket.measures.tokens.output,
-        cacheRead: held.tokens.cacheRead + bucket.measures.tokens.cacheRead,
-        cacheWrite: held.tokens.cacheWrite + bucket.measures.tokens.cacheWrite,
-        reasoning: held.tokens.reasoning + bucket.measures.tokens.reasoning,
-        total: held.tokens.total + bucket.measures.tokens.total,
-      },
-    }),
-    {
-      requests: 0,
-      failed: 0,
-      answered: 0,
-      durationMsSum: 0,
-      tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, total: 0 },
-    },
+    (held, bucket) => summedUsageMeasures(held, bucket.measures),
+    emptyUsageMeasures(),
   );
 }
 
-export function printedMicroDollars(micro: number): string {
+function printedMicroDollars(micro: number): string {
   if (micro > 0 && micro < ONE_CENT_MICRO) {
     return '<$0.01';
   }
@@ -115,6 +101,35 @@ function tokensFace(folded: UsageMeasures): MetricFace {
   };
 }
 
+function requestsFace(
+  folded: UsageMeasures,
+  earlier: UsageMeasures,
+  windowWord: string,
+): MetricFace {
+  const reading = exactCount(folded.requests);
+
+  if (earlier.requests === 0) {
+    return { reading };
+  }
+
+  const moved = Math.round(((folded.requests - earlier.requests) / earlier.requests) * 100);
+
+  return { reading, detail: `${moved >= 0 ? '+' : ''}${String(moved)}% vs prev ${windowWord}` };
+}
+
+function errorsFace(folded: UsageMeasures): MetricFace {
+  const reading = exactCount(folded.failed);
+
+  if (folded.requests === 0) {
+    return { reading };
+  }
+
+  const share = (folded.failed / folded.requests) * 100;
+  const printed = share < 1 && share > 0 ? share.toFixed(1) : String(Math.round(share));
+
+  return { reading, detail: `${printed}% of requests` };
+}
+
 function equivalentDetail(figures: SpendFigures): Pick<MetricFace, 'detail'> {
   if (figures.billed === undefined || figures.equivalent === undefined) {
     return {};
@@ -137,139 +152,20 @@ function spendFace(inputs: FaceInputs): MetricFace {
   return { reading, ...equivalentDetail(figures) };
 }
 
-/** The five tile faces folded from the same buckets everything else reads. */
+/**
+ * The five tile faces folded from the same buckets everything else reads.
+ *
+ * @summary The requests face compares its window against the one standing before it, and says
+ * nothing where that window served nothing rather than claiming a rise out of zero.
+ */
 export function metricFaces(inputs: FaceInputs): MetricFaces {
   const folded = summedMeasures(inputs.buckets);
 
   return {
-    requests: { reading: exactCount(folded.requests) },
-    errors: { reading: exactCount(folded.failed) },
+    requests: requestsFace(folded, summedMeasures(inputs.previous), inputs.windowWord),
+    errors: errorsFace(folded),
     latency: latencyFace(folded),
     tokens: tokensFace(folded),
     spend: spendFace(inputs),
   };
-}
-
-const TOKEN_SERIES: readonly ChartSeries[] = tokenChartSeries;
-
-const SPEND_SERIES: readonly ChartSeries[] = [
-  { key: 'billed', label: 'Billed', fill: 'var(--color-series-cost)' },
-  {
-    key: 'equivalent',
-    label: 'Equivalent',
-    fill: 'var(--color-series-cost-equivalent)',
-    hatched: true,
-  },
-];
-
-const SINGLE_SERIES: Readonly<Partial<Record<UsageMetric, ChartSeries>>> = {
-  requests: { key: 'requests', label: 'Requests', fill: 'var(--color-series-input)' },
-  errors: { key: 'errors', label: 'Errors', fill: 'var(--color-series-errors)' },
-  latency: { key: 'latency', label: 'Average latency', fill: 'var(--color-series-input)' },
-};
-
-function hourLabel(start: number): string {
-  return new Date(start).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC',
-  });
-}
-
-function dayLabel(start: number): string {
-  return new Date(start).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
-
-function tokenValues(folded: UsageMeasures): ChartBar['values'] {
-  const split = folded.tokens;
-
-  return {
-    input: split.input,
-    cached: split.cacheRead + split.cacheWrite,
-    output: split.output + split.reasoning,
-  };
-}
-
-function singleValue(metric: UsageMetric, folded: UsageMeasures): number {
-  if (metric === 'errors') {
-    return folded.failed;
-  }
-
-  if (metric === 'latency') {
-    return folded.answered === 0 ? 0 : folded.durationMsSum / folded.answered;
-  }
-
-  return folded.requests;
-}
-
-function measureBars(metric: UsageMetric, buckets: readonly UsageBucket[]): readonly ChartBar[] {
-  const byStart = new Map<number, UsageBucket[]>();
-
-  for (const bucket of buckets) {
-    byStart.set(bucket.start, [...(byStart.get(bucket.start) ?? []), bucket]);
-  }
-
-  return [...byStart.entries()]
-    .toSorted(([earlier], [later]) => earlier - later)
-    .map(([start, held]) => {
-      const folded = summedMeasures(held);
-
-      return {
-        at: start,
-        label: hourLabel(start),
-        values:
-          metric === 'tokens' ? tokenValues(folded) : { [metric]: singleValue(metric, folded) },
-      };
-    });
-}
-
-function spendBars(dayCosts: readonly UsageDayCost[]): readonly ChartBar[] {
-  const byDay = new Map<number, UsageDayCost[]>();
-
-  for (const cost of dayCosts) {
-    byDay.set(cost.dayStart, [...(byDay.get(cost.dayStart) ?? []), cost]);
-  }
-
-  return [...byDay.entries()]
-    .toSorted(([earlier], [later]) => earlier - later)
-    .map(([dayStart, held]) => ({
-      at: dayStart,
-      label: dayLabel(dayStart),
-      values: {
-        billed: held.reduce((sum, cost) => sum + (cost.billedMicroDollars ?? 0), 0) / MICRO_DOLLARS,
-        equivalent:
-          held.reduce((sum, cost) => sum + (cost.equivalentMicroDollars ?? 0), 0) / MICRO_DOLLARS,
-      },
-    }));
-}
-
-/**
- * What the chart draws for one selected tile: its series and its folded bars.
- *
- * @summary Spend draws by day on two labelled series with the equivalent hatched, tokens stack
- * the measured split, and every other tile draws one series, so the chart and the tile that
- * selected it can never disagree.
- */
-export function chartFor(
-  metric: UsageMetric,
-  buckets: readonly UsageBucket[],
-  dayCosts: readonly UsageDayCost[],
-  _todayStart: number,
-): DrawnChart {
-  if (metric === 'spend') {
-    return { series: SPEND_SERIES, bars: spendBars(dayCosts) };
-  }
-
-  if (metric === 'tokens') {
-    return { series: TOKEN_SERIES, bars: measureBars(metric, buckets) };
-  }
-
-  const series = SINGLE_SERIES[metric];
-
-  return { series: series === undefined ? [] : [series], bars: measureBars(metric, buckets) };
 }

@@ -2,6 +2,9 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
+import type { Point } from './canvas-room';
+
+import { emptyCanvasSpot } from './canvas-room';
 import { canvasTool, portAskOn } from './canvas-screen';
 
 /**
@@ -15,18 +18,8 @@ export async function takeUpThePortAsk(page: Page, nodeId: string): Promise<void
   await page.keyboard.press('Enter');
 }
 
-/** A spot in the window a pointer can be put at, which is not where the canvas seats its cards. */
-export type Point = { x: number; y: number };
-
 /** What chasing a port that keeps sliding away may spend before the drag is called lost. */
 const CHASE_MS = 5000;
-
-/** How much clearance a spot keeps from anything already standing, in window pixels. */
-const CLEARANCE = 24;
-
-const ACROSS = [0.5, 0.62, 0.74, 0.38, 0.86];
-
-const DOWN = [0.55, 0.68, 0.42, 0.8, 0.3];
 
 /** Where a card is taken hold of, clear of the plus that hangs off its far edge. */
 const GRIP = { x: 12, y: 12 };
@@ -225,10 +218,22 @@ export async function dragCableOnto(page: Page, port: Locator, onto: Locator): P
   await page.mouse.up();
 }
 
-/** Pulls a cable out of a port and lets it go at a spot on the canvas. */
-export async function dropCableAt(page: Page, port: Locator, at: Point): Promise<void> {
-  await pullCableTo(page, port, at);
+/**
+ * Pulls a cable out of a port and lets it go where the canvas has room, answering with the spot.
+ *
+ * @operation The room is read again once the cable is in flight, because taking hold of a port can
+ * fit the canvas first, and a fit walks every card out from under a spot read before it. The
+ * answer is the spot the drop actually happened at, which is what a scenario asserts the pending
+ * card seats at.
+ */
+export async function dropCableOnEmptyCanvas(page: Page, port: Locator): Promise<Point> {
+  const start = await grippedCable(page, port, await emptyCanvasSpot(page));
+  const spot = await emptyCanvasSpot(page);
+
+  await travel(page, start, spot);
   await page.mouse.up();
+
+  return spot;
 }
 
 /** Takes hold of a card and moves it across the canvas, the way a person rearranges it. */
@@ -245,48 +250,4 @@ export async function dragCardBy(page: Page, card: Locator, by: Point): Promise<
   await page.mouse.down();
   await travel(page, start, { x: start.x + by.x, y: start.y + by.y });
   await page.mouse.up();
-}
-
-/**
- * A spot on the canvas nothing already covers, measured off the pane rather than guessed at.
- *
- * @summary A drop on empty canvas means empty wherever the arrangement happens to stand, so the
- * spot is chosen against the cards and the corner furniture as they are, with room to spare on
- * every side. A canvas with no room left is a scenario that cannot mean what it says.
- */
-export async function emptyCanvasSpot(page: Page): Promise<Point> {
-  const spot = await page.locator('.react-flow__pane').evaluate(
-    (pane, { across, down, clearance }) => {
-      const field = pane.getBoundingClientRect();
-      const taken = [...document.querySelectorAll('.react-flow__node, .react-flow__panel')].map(
-        (held) => held.getBoundingClientRect(),
-      );
-      const spots = across.flatMap((sideways) =>
-        down.map((downward) => ({
-          x: field.left + field.width * sideways,
-          y: field.top + field.height * downward,
-        })),
-      );
-
-      return (
-        spots.find(
-          (at) =>
-            !taken.some(
-              (box) =>
-                at.x > box.left - clearance &&
-                at.x < box.right + clearance &&
-                at.y > box.top - clearance &&
-                at.y < box.bottom + clearance,
-            ),
-        ) ?? null
-      );
-    },
-    { across: ACROSS, down: DOWN, clearance: CLEARANCE },
-  );
-
-  if (spot === null) {
-    throw new Error('the canvas leaves no empty spot a cable could be let go on');
-  }
-
-  return spot;
 }

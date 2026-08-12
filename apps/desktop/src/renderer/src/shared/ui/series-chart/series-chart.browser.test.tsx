@@ -35,3 +35,18 @@ test('a series paints no slice for a bucket that holds nothing of it', async () 
     .toHaveLength(3);
   expect(slicesPainted(screen.container, 'var(--color-series-cached)')).toHaveLength(1);
 });
+
+test('the bars arrive still where a reader asked for less motion', async () => {
+  const screen = await render(
+    <div style={{ width: 480 }}>
+      <SeriesChart bars={bars} label="Tokens over three hours" series={series} />
+    </div>,
+  );
+
+  await expect.element(screen.getByRole('img', { name: 'Tokens over three hours' })).toBeVisible();
+
+  const [arrival] = [...screen.container.querySelectorAll('[data-chart-arrival] rect')];
+
+  expect(arrival).toBeDefined();
+  expect(arrival === undefined ? '' : getComputedStyle(arrival).animationName).toBe('none');
+});

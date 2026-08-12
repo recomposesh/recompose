@@ -8,7 +8,7 @@ import type { UsageSearch } from '../../lib/usage-search';
 import { servedReport } from '../../../../shared/testing';
 import { UsagePage } from './usage-page';
 
-const at7d: UsageSearch = { range: '7d', metric: 'requests' };
+const at7d: UsageSearch = { range: '7d', metric: 'requests', stackedBy: 'gateway' };
 
 const meta = preview.meta({
   component: UsagePage,
@@ -25,22 +25,27 @@ export const NothingServedYet = meta.story({
   },
 });
 
-/** A week of history: tiles, chart, and breakdown reading the same buckets. */
+/** A week of history: tiles, chart, and three panels reading the same buckets. */
 export const SevenDaysOfTraffic = meta.story({
   parameters: { bridge: { usageReport: servedReport } },
   render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radio', { name: /Requests/ })).toBeVisible();
-    await expect(await canvas.findByRole('table', { name: 'Breakdown' })).toBeInTheDocument();
+    await expect(await canvas.findByRole('region', { name: 'Requests over time' })).toBeVisible();
+    await expect(await canvas.findByRole('region', { name: 'By target' })).toBeVisible();
   },
 });
 
 /** Spend by day: billed and equivalent as two labelled figures that never merge. */
 export const SpendByDay = meta.story({
   parameters: { bridge: { usageReport: servedReport } },
-  render: () => <UsagePage onSearchChange={() => {}} search={{ range: '7d', metric: 'spend' }} />,
+  render: () => (
+    <UsagePage
+      onSearchChange={() => {}}
+      search={{ range: '7d', metric: 'spend', stackedBy: 'gateway' }}
+    />
+  ),
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radio', { name: /Spend/ })).toBeChecked();
+    await expect(await canvas.findByRole('radio', { name: 'Spend' })).toBeChecked();
 
     const equivalents = await canvas.findAllByText(/≈\$0\.80/);
 
@@ -48,29 +53,27 @@ export const SpendByDay = meta.story({
   },
 });
 
+function servedThrough(answer: () => Promise<never>) {
+  return { bridge: { usageReport: servedReport, overrides: { 'usage:report': answer } } };
+}
+
 /** History still loading: placeholders hold the shape, never false zeros. */
 export const LoadingPlaceholders = meta.story({
-  parameters: {
-    bridge: {
-      usageReport: servedReport,
-      overrides: { 'usage:report': async () => new Promise<never>(() => {}) },
-    },
-  },
+  parameters: servedThrough(async () => new Promise<never>(() => {})),
   render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radio', { name: /Requests.*—/ })).toBeVisible();
+    await expect(await canvas.findByText('Reading history')).toBeVisible();
   },
 });
 
-/** A scope with nothing served names its own way out. */
-export const ScopedEmpty = meta.story({
+/** A filter narrowed onto one gateway, which every reading below follows. */
+export const NarrowedToOneGateway = meta.story({
   parameters: { bridge: { usageReport: servedReport } },
-  render: () => <UsagePage onSearchChange={() => {}} search={{ ...at7d, gateway: 'quiet' }} />,
+  render: () => <UsagePage onSearchChange={() => {}} search={{ ...at7d, gateways: ['relay'] }} />,
   play: async ({ canvas }) => {
     await expect(
-      await canvas.findByText('Nothing served through this gateway in the last 7 days'),
+      await canvas.findByText('relay · All providers · Last 7 days · local time'),
     ).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Clear scope' })).toBeVisible();
   },
 });
 

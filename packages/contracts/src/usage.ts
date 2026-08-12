@@ -16,6 +16,24 @@ export const usageBucketWidthSchema = z.enum(['hour', 'day']);
 
 export type UsageBucketWidth = z.infer<typeof usageBucketWidthSchema>;
 
+const MINUTES_IN_A_DAY = 1440;
+
+/**
+ * What one report read asks for.
+ *
+ * @summary The range names how far back to reach. A window narrower than the range's own default
+ * width asks for hours, so a custom afternoon inside last week still reads hour by hour. The day
+ * offset is the reader's own minutes from UTC, which is what lets a folded day break at the
+ * reader's midnight instead of at UTC's.
+ */
+export const usageReportAskSchema = z.strictObject({
+  range: usageRangeSchema,
+  bucketWidth: usageBucketWidthSchema.optional(),
+  dayOffsetMinutes: z.number().int().gt(-MINUTES_IN_A_DAY).lt(MINUTES_IN_A_DAY).optional(),
+});
+
+export type UsageReportAsk = z.infer<typeof usageReportAskSchema>;
+
 /**
  * The domain tuple one bucket accrues under.
  *

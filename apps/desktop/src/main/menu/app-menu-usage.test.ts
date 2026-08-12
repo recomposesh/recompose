@@ -62,21 +62,21 @@ describe('driving the usage explorer from the menu bar', () => {
 });
 
 describe('the metric submenu and the table twin tick', () => {
-  test('the metric submenu carries every tile the explorer offers', () => {
+  test('the metric submenu carries every series the chart can draw', () => {
     const taken: string[] = [];
     const template = buildAppMenuTemplate('darwin', recordingHandlers(taken), atUsage);
 
-    for (const label of ['Requests', 'Errors', 'Latency', 'Tokens', 'Spend']) {
+    for (const label of ['Requests', 'Latency', 'Tokens', 'Spend']) {
       itemLabelled(template, label)?.click?.();
     }
 
-    expect(taken).toEqual([
-      'metric-requests',
-      'metric-errors',
-      'metric-latency',
-      'metric-tokens',
-      'metric-spend',
-    ]);
+    expect(taken).toEqual(['metric-requests', 'metric-latency', 'metric-tokens', 'metric-spend']);
+  });
+
+  test('the metric submenu offers no series the chart cannot draw', () => {
+    const template = buildAppMenuTemplate('darwin', idleHandlers, atUsage);
+
+    expect(itemLabelled(template, 'Errors')).toBeUndefined();
   });
 
   test('the data table tick reads whether the twin stands open', () => {

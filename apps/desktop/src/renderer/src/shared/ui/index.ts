@@ -27,7 +27,6 @@ export { HoverReading } from './hover-reading/hover-reading';
 export { MetricTile } from './metric-tile/metric-tile';
 export { NumericCell } from './numeric-cell/numeric-cell';
 export { ProportionFill } from './proportion-fill/proportion-fill';
-export { ScopePath } from './scope-path/scope-path';
 export { type ChartBar, type ChartSeries, SeriesChart } from './series-chart/series-chart';
 export { newestThatFit } from './series-chart/newest-that-fit';
 export { rankedChartSeries, tokenChartSeries } from './series-chart/series-presets';

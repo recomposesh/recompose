@@ -35,7 +35,7 @@ const openrouterCredits: AccountBalance = {
   reading: { totalCredits: 25, totalUsage: 5, readAt: Date.now() - 5 * MINUTE_MS },
 };
 
-const atLiveHour: UsageSearch = { range: '1h', metric: 'requests' };
+const atLiveHour: UsageSearch = { range: '1h', metric: 'requests', stackedBy: 'gateway' };
 
 async function mounted(ui: ReactNode) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -72,7 +72,7 @@ test('the credits refresh asks upstream for a fresh read', async () => {
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={atLiveHour} />);
 
-  await screen.getByRole('button', { name: 'Refresh' }).click();
+  await screen.getByRole('button', { name: 'Refresh credits', exact: true }).click();
 
   await vi.waitFor(() => {
     expect(refreshes).toContain(true);

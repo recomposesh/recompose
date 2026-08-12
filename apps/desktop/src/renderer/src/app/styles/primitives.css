@@ -83,6 +83,10 @@
   --black-a16: rgb(0 0 0 / 16%);
   --black-a09: rgb(0 0 0 / 9%);
   --black-a06: rgb(0 0 0 / 5.5%);
+  --black-a04: rgb(0 0 0 / 4%);
+
+  --blue-a08: rgb(0 122 255 / 8%);
+  --blue-a16: rgb(10 132 255 / 16%);
 
   --gray-50: #f9f9fb;
   --gray-75-a80: rgb(246 246 250 / 80%);

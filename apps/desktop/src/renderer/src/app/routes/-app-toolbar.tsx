@@ -11,6 +11,8 @@ const emptyChrome = <div aria-hidden className="h-toolbar" />;
 type AppToolbarProps = {
   /** The gateway the person has selected, absent on every surface that selects none. */
   slug: string | undefined;
+  /** The acts the current surface stands at the strip's leading edge, nothing on most surfaces. */
+  leading?: ReactNode;
   /** The act the current surface stands at the strip's trailing edge, nothing on most surfaces. */
   trailing?: ReactNode;
 };
@@ -28,7 +30,7 @@ type AppToolbarProps = {
  * nothing shifts when the sidebar goes and scrolled content passes under a bar rather than
  * under a floating control.
  */
-export function AppToolbar({ slug, trailing }: AppToolbarProps) {
+export function AppToolbar({ slug, leading, trailing }: AppToolbarProps) {
   const away = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
 
   if (slug === undefined) {
@@ -41,6 +43,7 @@ export function AppToolbar({ slug, trailing }: AppToolbarProps) {
             <SidebarToggle where="standing" />
           </span>
         )}
+        <span className="app-no-drag flex items-center gap-2 ps-4">{leading}</span>
         <span className="app-no-drag ms-auto flex items-center gap-2 pe-3.5">{trailing}</span>
       </div>
     );

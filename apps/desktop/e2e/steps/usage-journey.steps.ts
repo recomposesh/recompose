@@ -12,7 +12,7 @@ import {
   requestsTileCounts,
   requestsYoungerThan,
   retentionShortenedTo,
-  scopePath,
+  scopeSentence,
   SEEDED_DAY_REQUESTS,
   SEEDED_OLD_DAYS_AGO,
   usageDataDirOf,
@@ -92,7 +92,7 @@ Then(
 
 Then('the usage screen opens scoped to {string}', async ({ page }, gateway: string) => {
   await expect(page.getByRole('heading', { name: 'Usage' })).toBeVisible();
-  await expect(scopePath(page)).toContainText(gateway);
+  await expect(scopeSentence(page)).toContainText(gateway);
   await requestsTileCounts(page, SEEDED_DAY_REQUESTS);
 });
 

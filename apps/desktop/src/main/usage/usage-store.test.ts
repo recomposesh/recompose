@@ -79,7 +79,7 @@ describe('accruing and reading', () => {
 
     store.accrue(served('one', NOW - 2 * HOUR));
 
-    const report = await store.report('24h');
+    const report = await store.report({ range: '24h' });
 
     expect(report.bucketWidth).toBe('hour');
     expect(report.buckets).toHaveLength(1);
@@ -92,7 +92,7 @@ describe('accruing and reading', () => {
 
     store.accrue(served('open', NOW - 60_000));
 
-    expect((await store.report('24h')).buckets).toHaveLength(0);
+    expect((await store.report({ range: '24h' })).buckets).toHaveLength(0);
   });
 
   test('the held buckets hand the open hour to the quota fold, which a report never does', async () => {
@@ -110,17 +110,50 @@ describe('accruing and reading', () => {
     store.accrue(served('two', NOW - 3 * HOUR));
     store.accrue(served('one', NOW - 2 * HOUR));
 
-    const report = await store.report('7d');
+    const report = await store.report({ range: '7d' });
 
     expect(report.bucketWidth).toBe('day');
     expect(report.buckets.length).toBeLessThanOrEqual(2);
     expect(report.buckets.reduce((sum, bucket) => sum + bucket.measures.requests, 0)).toBe(2);
   });
+});
+
+describe('what one reader asks a report for', () => {
+  test('a week read hands back hours when the reader asks for them', async () => {
+    const store = await anOpenStore(await aStoreFile());
+
+    store.accrue(served('two', NOW - 3 * HOUR));
+    store.accrue(served('one', NOW - 2 * HOUR));
+
+    const report = await store.report({ range: '7d', bucketWidth: 'hour' });
+
+    expect(report.bucketWidth).toBe('hour');
+    expect(report.buckets).toHaveLength(2);
+  });
+
+  test('a folded day breaks at the reader own midnight', async () => {
+    const store = await anOpenStore(await aStoreFile());
+
+    store.accrue(served('one', NOW - 2 * HOUR));
+
+    const report = await store.report({ range: '7d', dayOffsetMinutes: -180 });
+
+    expect(report.bucketWidth).toBe('day');
+    expect(report.buckets.at(0)?.start).toBe(
+      (() => {
+        const at = NOW - 2 * HOUR;
+        const hourStart = at - (at % HOUR);
+        const local = hourStart + 3 * HOUR;
+
+        return local - (local % DAY) - 3 * HOUR;
+      })(),
+    );
+  });
 
   test('a report names the retention edge it can see back to', async () => {
     const store = await anOpenStore(await aStoreFile());
 
-    expect((await store.report('24h')).oldestRetainedStart).toBe(NOW - 30 * DAY);
+    expect((await store.report({ range: '24h' })).oldestRetainedStart).toBe(NOW - 30 * DAY);
   });
 });
 
@@ -170,7 +203,7 @@ describe('the document on disk', () => {
 
     const reopened = await anOpenStore(file);
 
-    expect((await reopened.report('24h')).buckets).toHaveLength(1);
+    expect((await reopened.report({ range: '24h' })).buckets).toHaveLength(1);
   });
 
   test('a document from a newer recompose refuses rather than being rewritten', async () => {
@@ -196,7 +229,7 @@ describe('the document on disk', () => {
 
     const store = await anOpenStore(file);
 
-    expect((await store.report('24h')).buckets).toHaveLength(0);
+    expect((await store.report({ range: '24h' })).buckets).toHaveLength(0);
   });
 });
 

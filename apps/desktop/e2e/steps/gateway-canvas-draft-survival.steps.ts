@@ -5,7 +5,8 @@ import { modelAliasFromName } from '@recompose/contracts';
 
 import type { Seat } from '../canvas-screen';
 
-import { emptyCanvasSpot, takeUpThePortAsk } from '../canvas-gestures';
+import { takeUpThePortAsk } from '../canvas-gestures';
+import { emptyCanvasSpot } from '../canvas-room';
 import {
   canvasNode,
   DRAFT_NODE,
