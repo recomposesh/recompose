@@ -168,8 +168,18 @@ export function stackedChart(inputs: StackInputs): DrawnChart {
 
   if (inputs.measure === 'latency') {
     const bars = averagedBars(inputs.buckets, inputs.bucketWidth);
+    const folded = inputs.buckets.reduce<UsageMeasures>(
+      (sum, bucket) => summedUsageMeasures(sum, bucket.measures),
+      emptyUsageMeasures(),
+    );
 
-    return { series: [LATENCY_SERIES], bars, totals: seriesTotals(bars) };
+    return {
+      series: [LATENCY_SERIES],
+      bars,
+      totals: {
+        latency: folded.answered === 0 ? 0 : folded.durationMsSum / folded.answered,
+      },
+    };
   }
 
   const folded = groupedBy(inputs.buckets, inputs.stackedBy);
