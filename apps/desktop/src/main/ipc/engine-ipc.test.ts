@@ -42,6 +42,7 @@ function hostAnswering(
     replayLogs: () => {
       replays.asked += 1;
     },
+    retainedLogRows: () => [],
     start: async (gateway) => {
       started.push(gateway);
 

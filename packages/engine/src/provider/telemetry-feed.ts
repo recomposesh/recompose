@@ -1,4 +1,5 @@
 import type { ProviderRequestLog } from './provider-observation';
+import type { ProviderUsage } from './provider-usage';
 import type { ServedFor, ServingTurn } from './serving-turn';
 
 import { onServingTurnAbort, servedFor } from './serving-turn';
@@ -24,10 +25,11 @@ export type ProviderAttempt = {
   status: number;
   durationMs?: number | undefined;
   tokens?: number | undefined;
+  usage?: ProviderUsage | undefined;
   failure?: string | undefined;
 };
 
-type AttemptMeasure = { durationMs: number; tokens: number };
+type AttemptMeasure = { durationMs: number; tokens: number; usage?: ProviderUsage };
 
 export type AttemptInFlight = { answered: (status: number, measure?: AttemptMeasure) => void };
 

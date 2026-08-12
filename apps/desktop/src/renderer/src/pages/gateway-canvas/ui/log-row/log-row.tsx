@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useEffect, useState } from 'react';
 
-import { requestFailed, requestInFlight } from '../../lib/log-scope';
+import { requestFailed, requestInFlight } from '../../../../entities/request-log';
 import { servedAt, servedByAccount, servedByProvider, tookFor } from './logged-request';
 
 const TOO_MANY_REQUESTS = 429;

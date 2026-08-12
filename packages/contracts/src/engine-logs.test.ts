@@ -69,6 +69,38 @@ describe('one request as the drawer lists it', () => {
   });
 });
 
+describe('the token split beside the total', () => {
+  const split = { input: 1_200, output: 480, cacheRead: 96, cacheWrite: 32, reasoning: 12 };
+
+  test('a served request carries its five-way split beside the total it already carried', () => {
+    const measured = { ...served, usage: split };
+
+    expect(logRowSchema.parse(measured)).toEqual(measured);
+  });
+
+  test('a row without a split still parses, because older rows never measured one', () => {
+    expect(logRowSchema.parse(served)).toEqual(served);
+  });
+
+  test('a split missing a kind is refused, so a partial reading never poses as a whole one', () => {
+    const { reasoning: _unmeasured, ...partial } = split;
+
+    expect(() => logRowSchema.parse({ ...served, usage: partial })).toThrow();
+  });
+
+  test('a split with a negative reading is refused', () => {
+    expect(() => logRowSchema.parse({ ...served, usage: { ...split, input: -1 } })).toThrow();
+  });
+
+  test('a split with a fractional reading is refused, because tokens count whole', () => {
+    expect(() => logRowSchema.parse({ ...served, usage: { ...split, output: 0.5 } })).toThrow();
+  });
+
+  test('a split naming a kind this contract never defined is refused', () => {
+    expect(() => logRowSchema.parse({ ...served, usage: { ...split, audioTokens: 5 } })).toThrow();
+  });
+});
+
 describe('what no row carries', () => {
   test('no row carries what was asked', () => {
     expect(() => logRowSchema.parse({ ...served, prompt: 'my secret plan' })).toThrow();

@@ -97,6 +97,41 @@ describe('requests the child logs on its own', () => {
   });
 });
 
+describe('the retained rows a quota read borrows', () => {
+  test('the host hands back the rows its desk holds', async () => {
+    vi.useFakeTimers();
+    const { host, scripted } = aHostWatchingLogs();
+
+    await host.start(aGatewayServing('fast'));
+    scripted.send(loggedRequest('log-1'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+
+    expect(host.retainedLogRows().map((row) => row.id)).toEqual(['log-1']);
+  });
+});
+
+describe('the settled rows the host hands the usage ledger', () => {
+  test('a finished request reaches the settled observer through the host', async () => {
+    vi.useFakeTimers();
+    const scripted = scriptedChild(running);
+    const settled: LogRow[] = [];
+    const host = createEngineHost({
+      knownSlugs: ['codex'],
+      grantFor: grantsNothing,
+      spawnChild: () => scripted.child,
+      onSettledRow: (row) => {
+        settled.push(row);
+      },
+    });
+
+    await host.start(aGatewayServing('fast'));
+    scripted.send(loggedRequest('log-1'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+
+    expect(settled).toEqual([aRow('log-1')]);
+  });
+});
+
 describe('what a gateway starting hands the windows', () => {
   test('the requests logged before it started cross again as backfill', async () => {
     vi.useFakeTimers();

@@ -2,7 +2,11 @@ import { z } from 'zod';
 
 import { migrateDocument, type Migration } from './migration';
 
-export const SETTINGS_VERSION = 5;
+export const SETTINGS_VERSION = 6;
+
+export const usageRetentionDaysSchema = z.union([z.literal(7), z.literal(30), z.literal(90)]);
+
+export type UsageRetentionDays = z.infer<typeof usageRetentionDaysSchema>;
 
 export const DEFAULT_GATEWAY_BIND_ADDRESS = '127.0.0.1';
 
@@ -22,6 +26,7 @@ export const settingsSchema = z.strictObject({
   showOnboardingChecklist: z.boolean(),
   bindAddress: gatewayBindAddressSchema.optional(),
   startGatewaysOnLaunch: z.boolean().optional(),
+  usageRetentionDays: usageRetentionDaysSchema,
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -79,11 +84,21 @@ const recordTheFirstSession: Migration = {
   }),
 };
 
+const keepAMonthOfUsage: Migration = {
+  from: 5,
+  migrate: (doc) => ({
+    ...doc,
+    schemaVersion: 6,
+    usageRetentionDays: 30,
+  }),
+};
+
 const settingsMigrations: readonly Migration[] = [
   addVersionTwoSwitches,
   retireTheAppWidePort,
   retireTheAppWideTokenRequirement,
   recordTheFirstSession,
+  keepAMonthOfUsage,
 ];
 
 export function loadSettings(doc: unknown): Settings {
@@ -100,5 +115,6 @@ export function defaultSettings(): Settings {
     showOnboardingChecklist: true,
     bindAddress: DEFAULT_GATEWAY_BIND_ADDRESS,
     startGatewaysOnLaunch: false,
+    usageRetentionDays: 30,
   };
 }

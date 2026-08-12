@@ -8,12 +8,13 @@ import type { IpcHandlers } from './ipc/dispatch';
 import type { StorageIpcContext } from './ipc/storage-context';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
+import bundledPrices from '../../resources/model-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
 import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { probeFreePort } from './engine-host/probe-free-port';
-import { storedEngineGateway } from './engine-host/stored-gateway';
 import {
+  restartServingGateways,
   serveRewrittenGateway,
   startStoredGateway,
   stopRemovedGateway,
@@ -22,13 +23,14 @@ import { createEngineIpcHandlers } from './ipc/engine-ipc';
 import { createKeyCheckIpcHandlers, keyCheckReach } from './ipc/key-check-ipc';
 import { createLocalRuntimesIpcHandlers } from './ipc/local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/provider-models-ipc';
-import { pushCanvasCommand, pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
+import { pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
 import { registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { createStorageIpcHandlers } from './ipc/storage-ipc';
 import { createSubscriptionsIpcHandlers } from './ipc/subscriptions-ipc';
 import { createSystemIpcHandlers } from './ipc/system-ipc';
-import { conductAppMenu } from './menu/app-menu-conductor';
+import { createUsageIpcHandlers, type UsageIpcDeps } from './ipc/usage-ipc';
+import { bootAppMenu } from './menu/app-menu-boot';
 import { resolvePasswordStoreOverride } from './password-store-override';
 import { registerAppScheme, serveRenderer } from './protocol/app-protocol';
 import {
@@ -47,6 +49,7 @@ import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
 import { trayRepainter } from './tray/tray-repaint';
 import { trayMenuWiring } from './tray/tray-wiring';
+import { openUsageIpcDeps } from './usage/usage-wiring';
 import { resolveUserDataOverride } from './user-data-override';
 import {
   createMainWindow,
@@ -89,10 +92,9 @@ if (process.platform === 'linux') {
 const loginItemAvailability = loginItemAvailabilityFor(process.platform, app.isPackaged);
 const loginItem = createLoginItem(app, loginItemAvailability, process.execPath);
 
-const appMenu = conductAppMenu({
+const appMenu = bootAppMenu({
   onOpenSettings: openSettingsSurface,
   onNewGateway: openNewGatewaySurface,
-  onCanvasCommand: pushCanvasCommand,
   settingsFile: () => storagePathsFor(recomposeHome()).settingsFile,
   onCorrupt: onStorageCorrupt,
   pushSettings: (settings) => {
@@ -146,19 +148,7 @@ function storageContext(
     },
     onSettingsWritten: appMenu.reflectSettings,
     restartServingGateways: () => {
-      for (const [slug, state] of Object.entries(engineHost.states())) {
-        if (state.status !== 'running') {
-          continue;
-        }
-
-        void storedEngineGateway(reach.userDataPath, onStorageCorrupt, slug)
-          .then(async (gateway) =>
-            gateway === undefined ? undefined : engineHost.restart(gateway),
-          )
-          .catch((error: unknown) => {
-            console.error(`recompose could not move ${slug} to the new bind address`, error);
-          });
-      }
+      restartServingGateways(engineHost, reach.userDataPath, onStorageCorrupt);
     },
     startGateway: startStoredGateway(engineHost),
     restartGateway: serveRewrittenGateway(engineHost),
@@ -187,6 +177,7 @@ function storageContext(
 function assembleIpcHandlers(
   engineHost: EngineHost,
   custody: CredentialCustody | null,
+  usage: UsageIpcDeps,
 ): IpcHandlers {
   const userDataPath = recomposeHome();
   const homeFolder = app.getPath('home');
@@ -227,6 +218,7 @@ function assembleIpcHandlers(
       },
       noteLogsDrawer: appMenu.reflectLogsDrawer,
     }),
+    ...createUsageIpcHandlers(usage),
   };
 }
 
@@ -263,7 +255,19 @@ async function startRecompose(): Promise<void> {
     lifecycle: gatewayLifecycle,
   });
 
-  registerIpcHandlers(assembleIpcHandlers(booted.engineHost, booted.custody));
+  registerIpcHandlers(
+    assembleIpcHandlers(
+      booted.engineHost,
+      booted.custody,
+      await openUsageIpcDeps({
+        reach: storageReach,
+        store: booted.usageStore,
+        retainedRows: booted.engineHost.retainedLogRows,
+        bundledPricesFile: bundledPrices,
+        noteUsageTable: appMenu.reflectUsageTable,
+      }),
+    ),
+  );
 
   electronApp.setAppUserModelId('sh.recompose.app');
 

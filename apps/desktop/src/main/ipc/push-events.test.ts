@@ -11,6 +11,7 @@ import {
   pushEngineStates,
   pushEngineTraffic,
   pushSettingsChanged,
+  pushUsageCommand,
 } from './push-events';
 
 type Delivery = { channel: string; payload: unknown };
@@ -169,5 +170,25 @@ describe('driving the canvas from the menu bar', () => {
 
     expect(first).toEqual([]);
     expect(second).toEqual([]);
+  });
+});
+
+describe('driving the usage explorer from the menu bar', () => {
+  test('a usage command reaches the window in front and no other', () => {
+    const background = openWindow();
+    const inFront = focusWindow();
+
+    pushUsageCommand('range-7d');
+
+    expect(inFront).toEqual([{ channel: 'usage:command', payload: 'range-7d' }]);
+    expect(background).toEqual([]);
+  });
+
+  test('a usage command with no window in front reaches the one window standing', () => {
+    const only = openWindow();
+
+    pushUsageCommand('refresh');
+
+    expect(only).toEqual([{ channel: 'usage:command', payload: 'refresh' }]);
   });
 });

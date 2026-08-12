@@ -14,6 +14,24 @@ const loggedTokensSchema = z.number().int().nonnegative();
 const clientKeySchema = z.string().regex(/^sha256:[0-9a-f]{64}$/, 'must be a sha256 digest');
 
 /**
+ * The five-way token reading a provider answer carried, beside the total the row already keeps.
+ *
+ * @summary The engine parses this split per dialect the moment an answer lands, and the row is
+ * where it survives the trip to every reader: the ledger prices cached input apart from uncached,
+ * and the usage screen prints the cached share. A row without a split read totals only, which is
+ * how every row before this field reads.
+ */
+export const tokenSplitSchema = z.strictObject({
+  input: loggedTokensSchema,
+  output: loggedTokensSchema,
+  cacheRead: loggedTokensSchema,
+  cacheWrite: loggedTokensSchema,
+  reasoning: loggedTokensSchema,
+});
+
+export type TokenSplit = z.infer<typeof tokenSplitSchema>;
+
+/**
  * One request a gateway answered, as the drawer lists it and the footer counts it.
  *
  * @summary No prompt, no completion, and no body of any kind ever rides a row. A failure carries
@@ -40,6 +58,7 @@ export const logRowSchema = z.strictObject({
   status: loggedStatusSchema,
   durationMs: loggedDurationSchema.optional(),
   tokens: loggedTokensSchema.optional(),
+  usage: tokenSplitSchema.optional(),
   clientKey: clientKeySchema,
   failure: nonBlankString.optional(),
 });

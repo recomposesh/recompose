@@ -11,11 +11,12 @@ describe('the lifecycle push', () => {
     'engine:logs',
     'accounts:changed',
     'canvas:command',
+    'usage:command',
     'settings:changed',
     'devtools:toggle',
   ];
 
-  test('exactly the state, traffic, logs, account-change, canvas, settings, and devtools pushes exist', () => {
+  test('exactly the state, traffic, logs, account-change, command, settings, and devtools pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -122,12 +123,13 @@ describe('the logs push', () => {
 describe('the settings push', () => {
   test('it carries the whole document, so a missed push heals on the next', () => {
     const document = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       theme: 'dark',
       launchAtLogin: false,
       showInMenuBar: true,
       firstRequestServed: true,
       showOnboardingChecklist: false,
+      usageRetentionDays: 30,
     };
 
     expect(ipcEvents['settings:changed'].payload.parse(document)).toEqual(document);

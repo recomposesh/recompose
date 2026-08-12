@@ -41,3 +41,12 @@ export function onGatewayDetailUrl(url: string): boolean {
 
   return new URL(url).hash.startsWith('#/gateways/');
 }
+
+/** Whether an address stands on the usage explorer, wherever its search params point it. */
+export function onUsageUrl(url: string): boolean {
+  if (!URL.canParse(url)) {
+    return false;
+  }
+
+  return new URL(url).hash.startsWith('#/usage');
+}

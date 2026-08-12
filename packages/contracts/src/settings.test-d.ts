@@ -3,8 +3,12 @@ import { describe, expectTypeOf, test } from 'vitest';
 import type { Settings } from './index';
 
 describe('the settings document contract', () => {
-  test('the document pins itself to schema version 5', () => {
-    expectTypeOf<Settings['schemaVersion']>().toEqualTypeOf<5>();
+  test('the document pins itself to schema version 6', () => {
+    expectTypeOf<Settings['schemaVersion']>().toEqualTypeOf<6>();
+  });
+
+  test('the retention window is one of the three offered, never a free number', () => {
+    expectTypeOf<Settings['usageRetentionDays']>().toEqualTypeOf<7 | 30 | 90>();
   });
 
   test('the two switches the screen writes are plain booleans', () => {
@@ -35,6 +39,7 @@ describe('the settings document contract', () => {
       | 'showOnboardingChecklist'
       | 'bindAddress'
       | 'startGatewaysOnLaunch'
+      | 'usageRetentionDays'
     >();
   });
 

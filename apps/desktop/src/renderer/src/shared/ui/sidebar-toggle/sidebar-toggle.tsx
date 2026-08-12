@@ -5,7 +5,7 @@ import {
   showSidebar,
   sidebarHidden,
   subscribeToSidebarVisibility,
-} from '../../lib/sidebar-visibility';
+} from '../../lib/visibility/sidebar-visibility';
 import { Icon } from '../icon/icon';
 
 const shape = {

@@ -29,21 +29,26 @@ export type LogsDesk = {
   resume: (slug: string) => void;
   interrupt: (slug: string) => void;
   forget: (slug: string) => void;
+  retainedRows: () => readonly LogRow[];
 };
+
+type SettledObserver = (row: LogRow) => void;
 
 type Desk = {
   retained: Map<string, LogRow>;
   waiting: Map<string, LogRow>;
   pending: ReturnType<typeof setTimeout> | null;
   inactive: Set<string>;
+  settledIds: Set<string>;
 };
 
 const INTERRUPTED_STATUS = 503;
 const INTERRUPTED_FAILURE = 'The gateway stopped before the request finished.';
 
-function forgetTheOldest(retained: Map<string, LogRow>): void {
-  for (const id of retained.keys()) {
-    retained.delete(id);
+function forgetTheOldest(desk: Desk): void {
+  for (const id of desk.retained.keys()) {
+    desk.retained.delete(id);
+    desk.settledIds.delete(id);
     break;
   }
 }
@@ -52,7 +57,33 @@ function retain(desk: Desk, row: LogRow): void {
   desk.retained.set(row.id, row);
 
   if (desk.retained.size > LOGS_RETAINED_MAX) {
-    forgetTheOldest(desk.retained);
+    forgetTheOldest(desk);
+  }
+}
+
+/**
+ * Tells the observer one settled row, exactly once per row id.
+ *
+ * @summary A row settles when its measure lands, on arrival for a gateway-raised one, or through
+ * an interrupt rewrite. The desk is the one place that sees every one of those transitions, so the
+ * usage ledger downstream never re-derives the settled predicate. An observer that throws is that
+ * observer's own defect: the row still reaches the windows, and the failure is written down.
+ */
+function rowSettled(row: LogRow): boolean {
+  return row.origin === 'gateway' || row.durationMs !== undefined;
+}
+
+function tellSettled(desk: Desk, row: LogRow, observer: SettledObserver | undefined): void {
+  if (observer === undefined || desk.settledIds.has(row.id) || !rowSettled(row)) {
+    return;
+  }
+
+  desk.settledIds.add(row.id);
+
+  try {
+    observer(row);
+  } catch (failure) {
+    console.error('recompose could not hand the usage observer one settled row.', failure);
   }
 }
 
@@ -76,7 +107,11 @@ function tellTheWindowsSoon(desk: Desk, push: (batch: LogBatch) => void): void {
   }, TRAFFIC_PUSH_MS);
 }
 
-function failTheUnfinishedRows(desk: Desk, slug: string): void {
+function failTheUnfinishedRows(
+  desk: Desk,
+  slug: string,
+  observer: SettledObserver | undefined,
+): void {
   for (const [id, row] of desk.retained) {
     if (row.gateway !== slug || row.origin !== 'provider' || row.durationMs !== undefined) {
       continue;
@@ -91,7 +126,32 @@ function failTheUnfinishedRows(desk: Desk, slug: string): void {
 
     desk.retained.set(id, interrupted);
     desk.waiting.set(id, interrupted);
+    tellSettled(desk, interrupted, observer);
   }
+}
+
+function hearOneReport(
+  desk: Desk,
+  message: unknown,
+  push: (batch: LogBatch) => void,
+  onSettled: SettledObserver | undefined,
+): boolean {
+  const report = engineLogReportSchema.safeParse(message);
+
+  if (!report.success) {
+    return false;
+  }
+
+  if (desk.inactive.has(report.data.row.gateway)) {
+    return true;
+  }
+
+  retain(desk, report.data.row);
+  desk.waiting.set(report.data.row.id, report.data.row);
+  tellSettled(desk, report.data.row, onSettled);
+  tellTheWindowsSoon(desk, push);
+
+  return true;
 }
 
 function handOverTheHistory(desk: Desk, push: (batch: LogBatch) => void): void {
@@ -123,32 +183,20 @@ function handOverTheHistory(desk: Desk, push: (batch: LogBatch) => void): void {
  * reports, so a two-phase commit cannot halve the history, and one flush carries one row per
  * request rather than one per report.
  */
-export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
+export function openLogsDesk(
+  push: (batch: LogBatch) => void,
+  onSettled?: SettledObserver,
+): LogsDesk {
   const desk: Desk = {
     retained: new Map(),
     waiting: new Map(),
     pending: null,
     inactive: new Set(),
+    settledIds: new Set(),
   };
 
   return {
-    hears: (message) => {
-      const report = engineLogReportSchema.safeParse(message);
-
-      if (!report.success) {
-        return false;
-      }
-
-      if (desk.inactive.has(report.data.row.gateway)) {
-        return true;
-      }
-
-      retain(desk, report.data.row);
-      desk.waiting.set(report.data.row.id, report.data.row);
-      tellTheWindowsSoon(desk, push);
-
-      return true;
-    },
+    hears: (message) => hearOneReport(desk, message, push, onSettled),
     backfill: () => {
       handOverTheHistory(desk, push);
     },
@@ -157,7 +205,7 @@ export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
     },
     interrupt: (slug) => {
       desk.inactive.add(slug);
-      failTheUnfinishedRows(desk, slug);
+      failTheUnfinishedRows(desk, slug, onSettled);
 
       if (desk.waiting.size > 0) {
         tellTheWindowsSoon(desk, push);
@@ -178,5 +226,6 @@ export function openLogsDesk(push: (batch: LogBatch) => void): LogsDesk {
         }
       }
     },
+    retainedRows: () => [...desk.retained.values()],
   };
 }

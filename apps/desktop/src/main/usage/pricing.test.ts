@@ -1,0 +1,166 @@
+import type { UsageBucket } from '@recompose/contracts';
+
+import { describe, expect, test } from 'vitest';
+
+import type { PriceMap } from './pricing';
+
+import { dayCostsOf } from './pricing';
+
+const DAY_START = 1_754_524_800_000;
+
+const prices: PriceMap = new Map([
+  [
+    'claude-sonnet-4-5',
+    {
+      inputPerToken: 0.000003,
+      outputPerToken: 0.000015,
+      cacheReadPerToken: 3e-7,
+      cacheWritePerToken: 0.00000375,
+    },
+  ],
+  ['gpt-5-mini', { inputPerToken: 2.5e-7, outputPerToken: 0.000002 }],
+]);
+
+type BucketStanding = {
+  accountKind?: UsageBucket['tuple']['accountKind'];
+  providerModel?: string | undefined;
+  tokens?: Partial<UsageBucket['measures']['tokens']>;
+  requests?: number;
+};
+
+function aTupleOf(standing: BucketStanding): UsageBucket['tuple'] {
+  const providerModel = 'providerModel' in standing ? standing.providerModel : 'claude-sonnet-4-5';
+
+  return {
+    gateway: 'relay',
+    virtualModel: 'creative',
+    provider: 'anthropic',
+    ...(providerModel === undefined ? {} : { providerModel }),
+    accountId: 'work',
+    accountKind: standing.accountKind ?? 'api-key',
+  };
+}
+
+function aDay(standing: BucketStanding = {}): UsageBucket {
+  const requests = standing.requests ?? 4;
+
+  return {
+    start: DAY_START,
+    tuple: aTupleOf(standing),
+    measures: {
+      requests,
+      failed: 0,
+      answered: requests,
+      durationMsSum: 4_000,
+      tokens: {
+        input: 1_000_000,
+        output: 100_000,
+        cacheRead: 0,
+        cacheWrite: 0,
+        reasoning: 0,
+        total: 1_100_000,
+        ...standing.tokens,
+      },
+    },
+  };
+}
+
+describe('pricing a day of traffic by its basis', () => {
+  test('key-served traffic prices as billed micro-dollars, exact and integer', () => {
+    const { dayCosts, priceMisses } = dayCostsOf([aDay()], prices);
+
+    expect(priceMisses).toEqual([]);
+    expect(dayCosts).toEqual([
+      {
+        dayStart: DAY_START,
+        tuple: aDay().tuple,
+        billedMicroDollars: 4_500_000,
+      },
+    ]);
+  });
+
+  test('subscription traffic prices as the equivalent figure, never as a bill', () => {
+    const { dayCosts } = dayCostsOf([aDay({ accountKind: 'subscription' })], prices);
+
+    expect(dayCosts.at(0)?.equivalentMicroDollars).toBe(4_500_000);
+    expect(dayCosts.at(0)?.billedMicroDollars).toBeUndefined();
+  });
+
+  test('aggregator traffic bills the way a key does', () => {
+    const { dayCosts } = dayCostsOf([aDay({ accountKind: 'aggregator' })], prices);
+
+    expect(dayCosts.at(0)?.billedMicroDollars).toBe(4_500_000);
+  });
+
+  test('local traffic carries no cost row at all', () => {
+    const { dayCosts, priceMisses } = dayCostsOf([aDay({ accountKind: 'local' })], prices);
+
+    expect(dayCosts).toEqual([]);
+    expect(priceMisses).toEqual([]);
+  });
+
+  test('cached input prices at the cache rates and reasoning carries no price of its own', () => {
+    const measured = {
+      input: 0,
+      output: 0,
+      cacheRead: 1_000_000,
+      cacheWrite: 100_000,
+      reasoning: 500_000,
+    };
+
+    const { dayCosts } = dayCostsOf([aDay({ tokens: measured })], prices);
+
+    expect(dayCosts.at(0)?.billedMicroDollars).toBe(675_000);
+  });
+});
+
+describe('what the map cannot or need not price', () => {
+  test('a model the map cannot name surfaces by request count rather than as zero dollars', () => {
+    const { dayCosts, priceMisses } = dayCostsOf(
+      [aDay({ providerModel: 'claude-mystery', requests: 7 })],
+      prices,
+    );
+
+    expect(dayCosts).toEqual([]);
+    expect(priceMisses).toEqual([
+      { provider: 'anthropic', providerModel: 'claude-mystery', requests: 7 },
+    ]);
+  });
+
+  test('a provider-prefixed key resolves, the way the LiteLLM map often writes one', () => {
+    const prefixed: PriceMap = new Map([
+      ['anthropic/claude-sonnet-4-5', { inputPerToken: 0.000003, outputPerToken: 0.000015 }],
+    ]);
+
+    expect(dayCostsOf([aDay()], prefixed).priceMisses).toEqual([]);
+  });
+
+  test('a dated model name resolves through its undated twin', () => {
+    const { priceMisses } = dayCostsOf(
+      [aDay({ providerModel: 'claude-sonnet-4-5-20250929' })],
+      prices,
+    );
+
+    expect(priceMisses).toEqual([]);
+  });
+
+  test('a bucket that reached no model at all is not a miss, because nothing was served', () => {
+    const raised = aDay({ providerModel: undefined, tokens: { input: 0, output: 0, total: 0 } });
+
+    const { dayCosts, priceMisses } = dayCostsOf([raised], prices);
+
+    expect(dayCosts).toEqual([]);
+    expect(priceMisses).toEqual([]);
+  });
+
+  test('a missing cache rate prices cached tokens at nothing rather than guessing', () => {
+    const measured = { input: 1_000_000, output: 0, cacheRead: 1_000_000 };
+
+    const { dayCosts } = dayCostsOf(
+      [aDay({ providerModel: 'gpt-5-mini', tokens: measured })],
+      prices,
+    );
+
+    expect(dayCosts.at(0)?.billedMicroDollars).toBe(250_000);
+  });
+});

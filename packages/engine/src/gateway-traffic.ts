@@ -102,6 +102,22 @@ function named(value: string | undefined): string | undefined {
   return spoken === '' ? undefined : spoken;
 }
 
+function measuredSplit(usage: ProviderAttempt['usage']): Pick<LogRow, 'usage'> {
+  if (usage === undefined || usage.totalTokens === 0) {
+    return {};
+  }
+
+  return {
+    usage: {
+      input: usage.inputTokens,
+      output: usage.outputTokens,
+      cacheRead: usage.cacheReadTokens,
+      cacheWrite: usage.cacheWriteTokens,
+      reasoning: usage.reasoningTokens,
+    },
+  };
+}
+
 function attemptRow(attempt: ProviderAttempt): LogRow {
   const { servedFor, status } = attempt;
 
@@ -117,6 +133,7 @@ function attemptRow(attempt: ProviderAttempt): LogRow {
     providerModel: named(attempt.providerModel),
     status,
     tokens: attempt.tokens,
+    ...measuredSplit(attempt.usage),
     clientKey: servedFor.clientKey,
     ...(failed(status)
       ? { failure: attempt.failure ?? detailFor(status), durationMs: attempt.durationMs }

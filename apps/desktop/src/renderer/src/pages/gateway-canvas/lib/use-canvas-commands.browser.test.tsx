@@ -27,6 +27,7 @@ beforeEach(() => {
     'accounts:changed': () => () => undefined,
     'settings:changed': () => () => undefined,
     'devtools:toggle': () => () => undefined,
+    'usage:command': () => () => undefined,
     'canvas:command': (listener) => {
       listeners.add(listener);
 

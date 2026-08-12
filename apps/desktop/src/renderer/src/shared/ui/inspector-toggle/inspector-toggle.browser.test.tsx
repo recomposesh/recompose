@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { inspectorOpen, toggleInspector } from '../../lib/inspector-visibility';
+import { inspectorOpen, toggleInspector } from '../../lib/visibility/inspector-visibility';
 import { InspectorToggle } from './inspector-toggle';
 
 beforeEach(() => {

@@ -203,3 +203,43 @@ describe('two requests in flight at once', () => {
     expect(gatewayThrough(rows(), 'deep')).toBe('relay');
   });
 });
+
+describe('the token split a provider answer carried', () => {
+  test('a measured answer lands its five-way split on the row beside the total', async () => {
+    const app = gatewayAnswering(() =>
+      Response.json({
+        choices: [],
+        usage: {
+          prompt_tokens: 1_200,
+          completion_tokens: 480,
+          total_tokens: 1_680,
+          prompt_tokens_details: { cached_tokens: 96 },
+          completion_tokens_details: { reasoning_tokens: 12 },
+        },
+      }),
+    );
+    const { rows, forget } = collecting();
+
+    await (await ask(app, 'fast', 'curl/8.7.1')).text();
+    forget();
+
+    expect(rows().at(0)?.tokens).toBe(1_680);
+    expect(rows().at(0)?.usage).toEqual({
+      input: 1_200,
+      output: 480,
+      cacheRead: 96,
+      cacheWrite: 0,
+      reasoning: 12,
+    });
+  });
+
+  test('an answer that measured nothing leaves the split off the row', async () => {
+    const app = gatewayAnswering(() => Response.json({ choices: [] }));
+    const { rows, forget } = collecting();
+
+    await (await ask(app, 'fast', 'curl/8.7.1')).text();
+    forget();
+
+    expect(rows().at(0)?.usage).toBeUndefined();
+  });
+});

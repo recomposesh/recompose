@@ -9,5 +9,7 @@ export {
 } from './fake-engine-pushes';
 export { gatewaySeed } from './fake-gateways';
 export { emitSettingsChanged } from './fake-settings';
+export { emitUsageCommand } from './fake-usage-pushes';
+export { edgeRuleDrawn, hourChartBars, tokenChartSeries } from './chart-fixtures';
 export { paintedBox, paintedStyle } from './measuring';
 export { pressedByKeyboard } from './pressing';

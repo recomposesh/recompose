@@ -1,7 +1,7 @@
 import type { Account, LogRow as LoggedRequest } from '@recompose/contracts';
 
 import { accountName } from '../../../../entities/account';
-import { requestInFlight } from '../../lib/log-scope';
+import { requestInFlight } from '../../../../entities/request-log';
 
 const TWO_DIGITS = 2;
 const MS_PER_SECOND = 1000;

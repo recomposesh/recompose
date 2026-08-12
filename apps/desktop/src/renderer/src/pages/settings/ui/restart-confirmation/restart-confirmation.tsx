@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { ConsequenceDialog } from '../../../../shared/ui';
 
 type RestartConfirmationProps = {
   /** The bind address awaiting the person's word, or nothing while no change waits. */
@@ -23,8 +23,6 @@ export function RestartConfirmation({
   onCancel,
   onConfirm,
 }: RestartConfirmationProps) {
-  const headingId = useId();
-
   if (address === undefined) {
     return null;
   }
@@ -32,36 +30,16 @@ export function RestartConfirmation({
   const gateways = running === 1 ? '1 running gateway' : `${String(running)} running gateways`;
 
   return (
-    <dialog
-      aria-labelledby={headingId}
-      className="m-auto w-96 menu-surface p-4"
+    <ConsequenceDialog
+      confirmLabel="Restart gateways"
+      heading="Restart running gateways?"
       onCancel={onCancel}
-      ref={(dialog) => {
-        if (dialog !== null && !dialog.open) {
-          dialog.showModal();
-        }
+      onConfirm={() => {
+        onConfirm(address);
       }}
+      open
     >
-      <h3 className="text-heading text-ink" id={headingId}>
-        Restart running gateways?
-      </h3>
-      <p className="mt-1 text-detail text-ink-secondary">
-        Changing the bind address to {address} restarts {gateways}.
-      </p>
-      <div className="mt-4 flex justify-end gap-2">
-        <button className="push-button" onClick={onCancel} type="button">
-          Cancel
-        </button>
-        <button
-          className="push-button-primary"
-          onClick={() => {
-            onConfirm(address);
-          }}
-          type="button"
-        >
-          Restart gateways
-        </button>
-      </div>
-    </dialog>
+      Changing the bind address to {address} restarts {gateways}.
+    </ConsequenceDialog>
   );
 }

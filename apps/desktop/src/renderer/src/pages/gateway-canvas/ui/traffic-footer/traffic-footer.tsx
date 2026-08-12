@@ -2,13 +2,13 @@ import type { LogRow } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useState } from 'react';
+import { useId } from 'react';
 
-import type { TrafficAggregates } from '../../lib/traffic-aggregates';
+import type { TrafficAggregates } from '../../../../entities/request-log';
 
+import { trafficAggregates } from '../../../../entities/request-log';
 import { engineLogsQueryOptions } from '../../../../shared/api';
-import { trafficAggregates } from '../../lib/traffic-aggregates';
-import { compactCount, pluralized, readDuration } from './footer-readings';
+import { compactCount, pluralized, readDuration, useDisplayTick } from '../../../../shared/lib';
 
 const DISPLAY_TICK_MS = 1_000;
 
@@ -30,29 +30,6 @@ type TrafficFooterProps = {
   /** Cables standing between those cards, which the composition tally counts. */
   wires: number;
 };
-
-/**
- * The instant the strip reads its window against, moved along once a second while it stands.
- *
- * @summary The rows arrive on the transport's own cadence, which is far faster than anybody reads,
- * and a quiet gateway sends nothing at all. A clock of the strip's own settles both: a busy gateway
- * repaints once a second rather than per frame, and a quiet one still decays to zeros.
- */
-function useDisplayTick(): number {
-  const [instant, setInstant] = useState(() => Date.now());
-
-  useEffect(() => {
-    const beat = setInterval(() => {
-      setInstant(Date.now());
-    }, DISPLAY_TICK_MS);
-
-    return () => {
-      clearInterval(beat);
-    };
-  }, []);
-
-  return instant;
-}
 
 function reading(children: ReactNode): ReactNode {
   return <b className="font-medium text-ink">{children}</b>;
@@ -125,7 +102,7 @@ function compositionTally(nodes: number, wires: number): ReactNode {
 export function TrafficFooter({ slug, nodes, wires }: TrafficFooterProps) {
   const { data: rows } = useQuery(engineLogsQueryOptions(slug));
   const meaning = useId();
-  const traffic = trafficAggregates(rows ?? NOTHING_SERVED, useDisplayTick());
+  const traffic = trafficAggregates(rows ?? NOTHING_SERVED, useDisplayTick(DISPLAY_TICK_MS));
 
   return (
     <footer className="@container flex h-status-bar shrink-0 items-center gap-3.5 border-t border-line-subtle bg-surface-toolbar px-3.5 font-mono text-mono-value whitespace-nowrap text-ink-secondary select-text">

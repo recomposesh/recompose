@@ -51,6 +51,14 @@
   --color-danger: var(--red-700);
   --color-danger-ink: light-dark(var(--red-900), var(--red-200));
 
+  --color-series-input: light-dark(var(--indigo-600), var(--indigo-500));
+  --color-series-cached: light-dark(var(--slate-600), var(--slate-300));
+  --color-series-output: light-dark(var(--lime-700), var(--lime-400));
+  --color-series-cost: light-dark(var(--bronze-700), var(--bronze-400));
+  --color-series-cost-equivalent: light-dark(var(--bronze-600), var(--bronze-300));
+  --color-series-errors: light-dark(var(--red-900), var(--red-300));
+  --color-meter-fill: light-dark(var(--slate-700), var(--slate-200));
+
   --color-gateway: light-dark(var(--teal-700), var(--teal-500));
   --color-gateway-ink: light-dark(var(--teal-800), var(--teal-500));
   --color-virtual-model: light-dark(var(--pink-700), var(--pink-400));
@@ -87,6 +95,10 @@
   --text-footnote: 10px;
 
   --spacing-column: 720px;
+  --spacing-data-column: 960px;
+  --hatch-pitch: 6px;
+  --hatch-stroke: 1.5px;
+  --hatch-angle: 45deg;
   --spacing-row: 48px;
   --spacing-track: 38px;
   --spacing-track-height: 22px;

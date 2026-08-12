@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { compactCount, pluralized, readDuration } from './footer-readings';
+import { compactCount, exactCount, pluralized, readDuration } from './readings';
 
 test('a count the cell can hold in full reads in full', () => {
   expect(compactCount(999)).toBe('999');
@@ -12,6 +12,26 @@ test('a count past a thousand reads compact with one decimal, so the cell keeps 
 
 test('a thousand exactly reads compact too, because it is already four digits wide', () => {
   expect(compactCount(1_000)).toBe('1.0k');
+});
+
+test('a count past a million climbs the ladder rather than printing thousands of k', () => {
+  expect(compactCount(45_000_000)).toBe('45.0M');
+});
+
+test('a million exactly crosses into the next magnitude', () => {
+  expect(compactCount(1_000_000)).toBe('1.0M');
+});
+
+test('a count past a billion reads in billions, so a long month never overflows its cell', () => {
+  expect(compactCount(2_100_000_000)).toBe('2.1B');
+});
+
+test('a headline reads the exact count with grouping, because the one big number is the point', () => {
+  expect(exactCount(45_123_456)).toBe('45,123,456');
+});
+
+test('a headline small enough to read plain carries no separator', () => {
+  expect(exactCount(999)).toBe('999');
 });
 
 test('a quiet minute reads no latency rather than leaving the cell blank', () => {

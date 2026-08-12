@@ -40,6 +40,30 @@ export function stopRemovedGateway(engineHost: EngineHost): StorageIpcContext['s
  * @summary Each start rides on its own, because one gateway whose account left the registry must
  * not keep the rest of the fleet from serving.
  */
+/**
+ * Restarts every serving gateway from its stored shape, so a global change reaches them all.
+ *
+ * @summary Each restart rides on its own, because one gateway whose stored file went missing must
+ * not keep the rest of the fleet on the old bind address.
+ */
+export function restartServingGateways(
+  engineHost: EngineHost,
+  userDataPath: string,
+  onCorrupt: (quarantinedPath: string) => void,
+): void {
+  for (const [slug, state] of Object.entries(engineHost.states())) {
+    if (state.status !== 'running') {
+      continue;
+    }
+
+    void storedEngineGateway(userDataPath, onCorrupt, slug)
+      .then(async (gateway) => (gateway === undefined ? undefined : engineHost.restart(gateway)))
+      .catch((error: unknown) => {
+        console.error(`recompose could not move ${slug} to the new bind address`, error);
+      });
+  }
+}
+
 export function startAllStoredGateways(
   engineHost: EngineHost,
   userDataPath: string,

@@ -9,6 +9,7 @@ import type {
   KeyCheckReport,
   KeyProviderId,
   LogBatch,
+  LogRow,
   LookCustody,
   ModelListing,
   RuntimeReachability,
@@ -37,6 +38,7 @@ export type EngineHostDeps = {
   ) => Promise<void>;
   onTraffic?: (traffic: GatewayTraffic) => void;
   onLogs?: (batch: LogBatch) => void;
+  onSettledRow?: (row: LogRow) => void;
 };
 
 export type EngineHost = {
@@ -47,6 +49,7 @@ export type EngineHost = {
   probeRuntime: (address: string) => Promise<RuntimeReachability>;
   listModels: (origin: string, custody: LookCustody) => Promise<ModelListing>;
   states: () => EngineStates;
+  retainedLogRows: () => readonly LogRow[];
   /**
    * Sends the retained request log to the windows again, as backfill runs.
    *

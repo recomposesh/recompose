@@ -144,6 +144,51 @@ export const RoleTinted = meta.story({
   },
 });
 
+type Range = '1h' | '24h' | '7d' | '30d';
+
+const rangeOptions = [
+  { value: '1h', label: '1h' },
+  { value: '24h', label: '24h' },
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d', inertReason: 'Usage retention holds 7 days' },
+] as const satisfies readonly { value: Range; label: string; inertReason?: string }[];
+
+function ControlledRange() {
+  const [range, setRange] = useState<Range>('24h');
+
+  return (
+    <>
+      <SegmentedControl
+        label="Range"
+        onChangeValue={setRange}
+        options={rangeOptions}
+        value={range}
+      />
+      <p>stored: {range}</p>
+    </>
+  );
+}
+
+/** One segment past what the machinery holds: reachable and explained, never movable. */
+export const AnInertSegment = meta.story({
+  render: () => <ControlledRange />,
+  play: async ({ canvas, userEvent }) => {
+    const month = await canvas.findByRole('radio', { name: /30d/ });
+    const week = await canvas.findByRole('radio', { name: '7d' });
+
+    await expect(month).toHaveAttribute('aria-disabled', 'true');
+    await expect(month).toHaveAccessibleDescription('Usage retention holds 7 days');
+
+    await userEvent.click(month);
+
+    await expect(await canvas.findByText('stored: 24h')).toBeInTheDocument();
+
+    await userEvent.click(week);
+
+    await expect(await canvas.findByText('stored: 7d')).toBeInTheDocument();
+  },
+});
+
 type Outcome = 'quiet' | 'passing' | 'failing';
 
 const outcomeOptions = [

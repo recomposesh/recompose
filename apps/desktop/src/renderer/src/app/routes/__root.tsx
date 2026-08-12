@@ -14,6 +14,7 @@ import {
 import { Suspense, lazy, useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { AccountKind } from '../../entities/account';
+import type { UsageSearch } from '../../pages/usage';
 
 import { AddProviderAct } from '../../pages/providers';
 import {
@@ -35,6 +36,7 @@ import { AppSidebar } from './-app-sidebar';
 import { AppToolbar } from './-app-toolbar';
 import { NotFound } from './-not-found';
 import { surfaceRequest, withSheet, withoutSheet } from './-surface-request';
+import { UsageRangeAct } from './-usage-range-act';
 
 const noDevtools = () => null;
 
@@ -69,6 +71,16 @@ function bandFor(slug: string | undefined): ReactNode {
 /** The act the window strip carries over a providers screen, and nothing anywhere else. */
 function providersAct(kind: AccountKind | undefined): ReactNode {
   return kind === undefined ? null : <AddProviderAct kind={kind} />;
+}
+
+/** The act the window strip carries over the usage screen, and nothing anywhere else. */
+function usageAct(search: UsageSearch | undefined): ReactNode {
+  return search === undefined ? null : <UsageRangeAct search={search} />;
+}
+
+/** Which act the current surface stands at the strip's trailing edge. */
+function surfaceAct(search: UsageSearch | undefined, kind: AccountKind | undefined): ReactNode {
+  return usageAct(search) ?? providersAct(kind);
 }
 
 function useWindowBand(sidebarAway: boolean): void {
@@ -114,6 +126,7 @@ function RootLayout() {
   const { create } = Route.useSearch();
   const { slug } = useParams({ strict: false });
   const providers = useMatch({ from: '/providers', shouldThrow: false });
+  const usage = useMatch({ from: '/usage', shouldThrow: false });
   const sidebarAway = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
   const devtoolsAsked = useDevtoolsAsked();
 
@@ -134,7 +147,7 @@ function RootLayout() {
       />
       <SidebarEdge />
       <main className="relative flex flex-1 flex-col overflow-hidden bg-surface-content text-body">
-        <AppToolbar slug={slug} trailing={providersAct(providers?.search.kind)} />
+        <AppToolbar slug={slug} trailing={surfaceAct(usage?.search, providers?.search.kind)} />
         <div className="relative flex-1 overflow-y-auto">
           <Outlet />
         </div>

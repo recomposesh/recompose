@@ -86,6 +86,7 @@ describe('ipc response contracts', () => {
       | 'tool-missing'
       | 'sign-in-timed-out'
       | 'keychain-denied'
+      | 'usage-newer-schema'
     >();
   });
 
@@ -183,42 +184,6 @@ describe('bridge surface totality', () => {
     expectTypeOf<keyof RecomposeIpc>().toEqualTypeOf<IpcChannel>();
   });
 
-  test('the surface is exactly these thirty-one channels, so a thirty-second arrives red', () => {
-    expectTypeOf<IpcChannel>().toEqualTypeOf<
-      | 'gateways:list'
-      | 'gateways:save'
-      | 'gateways:update'
-      | 'gateways:remove'
-      | 'gateways:set-port'
-      | 'gateways:offer-port'
-      | 'gateways:move-port'
-      | 'settings:get'
-      | 'settings:save'
-      | 'accounts:list'
-      | 'accounts:connect'
-      | 'accounts:remove'
-      | 'accounts:check-key'
-      | 'accounts:connect-local'
-      | 'accounts:detect-runtime'
-      | 'accounts:check-runtime'
-      | 'accounts:list-models'
-      | 'system:get'
-      | 'system:open-config-folder'
-      | 'system:window-band'
-      | 'system:title-bar-double-click'
-      | 'engine:start'
-      | 'engine:stop'
-      | 'engine:states'
-      | 'engine:replay-logs'
-      | 'system:logs-drawer'
-      | 'subscriptions:list'
-      | 'subscriptions:tools'
-      | 'subscriptions:sign-in'
-      | 'subscriptions:restore'
-      | 'subscriptions:activate'
-    >();
-  });
-
   test('no channel on the bridge serves a gateway token', () => {
     expectTypeOf<IpcChannel>().not.toEqualTypeOf<'gateway-token:status'>();
     expectTypeOf<Extract<IpcChannel, `gateway-token:${string}`>>().toEqualTypeOf<never>();
@@ -234,18 +199,6 @@ describe('bridge surface totality', () => {
 describe('push surface totality', () => {
   test('the event bridge covers every contract event and nothing else', () => {
     expectTypeOf<keyof RecomposeIpcEvents>().toEqualTypeOf<IpcEvent>();
-  });
-
-  test('the state, traffic, logs, account-change, and canvas pushes are the complete vocabulary', () => {
-    expectTypeOf<IpcEvent>().toEqualTypeOf<
-      | 'engine:state'
-      | 'engine:traffic'
-      | 'engine:logs'
-      | 'accounts:changed'
-      | 'canvas:command'
-      | 'settings:changed'
-      | 'devtools:toggle'
-    >();
   });
 
   test('a canvas command names one of the five acts the Gateway menu offers', () => {

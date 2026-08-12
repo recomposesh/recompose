@@ -42,6 +42,7 @@ function recordingHost() {
 
   const host: EngineHost = {
     replayLogs: () => undefined,
+    retainedLogRows: () => [],
     start: async (gateway) => {
       started.push(gateway);
 

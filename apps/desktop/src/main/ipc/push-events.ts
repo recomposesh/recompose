@@ -38,6 +38,12 @@ export function pushCanvasCommand(command: IpcEventPayload<'canvas:command'>): v
   standing?.webContents.send('canvas:command', command);
 }
 
+export function pushUsageCommand(command: IpcEventPayload<'usage:command'>): void {
+  const standing = BrowserWindow.getFocusedWindow() ?? theOnlyWindow();
+
+  standing?.webContents.send('usage:command', command);
+}
+
 function theOnlyWindow(): BrowserWindow | undefined {
   const open = BrowserWindow.getAllWindows();
 
