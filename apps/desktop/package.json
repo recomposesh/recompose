@@ -42,9 +42,9 @@
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
     "@lobehub/icons": "^5.15.0",
-    "@tanstack/charts": "^0.7.2",
-    "@tanstack/charts-scales": "^0.7.2",
-    "@tanstack/react-charts": "^0.7.2",
+    "@tanstack/charts": "0.7.2",
+    "@tanstack/charts-scales": "0.7.2",
+    "@tanstack/react-charts": "0.7.2",
     "@tanstack/react-form": "1.33.2",
     "@tanstack/react-router": "1.170.18",
     "@tanstack/react-virtual": "3.14.9",
