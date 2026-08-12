@@ -59,6 +59,13 @@
   --color-series-errors: light-dark(var(--red-900), var(--red-300));
   --color-meter-fill: light-dark(var(--slate-700), var(--slate-200));
 
+  --color-series-slot-1: light-dark(var(--indigo-600), var(--indigo-500));
+  --color-series-slot-2: light-dark(var(--lime-700), var(--lime-400));
+  --color-series-slot-3: light-dark(var(--bronze-700), var(--bronze-400));
+  --color-series-slot-4: light-dark(var(--teal-700), var(--teal-500));
+  --color-series-slot-5: light-dark(var(--pink-700), var(--pink-400));
+  --color-series-rest: light-dark(var(--slate-600), var(--slate-300));
+
   --color-gateway: light-dark(var(--teal-700), var(--teal-500));
   --color-gateway-ink: light-dark(var(--teal-800), var(--teal-500));
   --color-virtual-model: light-dark(var(--pink-700), var(--pink-400));

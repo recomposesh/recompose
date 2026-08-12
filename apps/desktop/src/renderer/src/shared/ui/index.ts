@@ -30,7 +30,7 @@ export { ProportionFill } from './proportion-fill/proportion-fill';
 export { ScopePath } from './scope-path/scope-path';
 export { type ChartBar, type ChartSeries, SeriesChart } from './series-chart/series-chart';
 export { newestThatFit } from './series-chart/newest-that-fit';
-export { tokenChartSeries } from './series-chart/series-presets';
+export { rankedChartSeries, tokenChartSeries } from './series-chart/series-presets';
 export { UsageSummaryLink } from './usage-summary-link/usage-summary-link';
 export { StatusChip } from './status-chip/status-chip';
 export { TableShell } from './table-shell/table-shell';

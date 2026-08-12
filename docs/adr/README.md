@@ -93,3 +93,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0085](0085-window-chrome-drags-and-its-controls-opt-out.md)                    | Window Chrome Drags, and Its Controls Opt Out                                       | Accepted   | 2026-08-10 |
 | [0086](0086-the-log-list-adopts-tanstack-react-virtual.md)                      | The Log List Adopts `@tanstack/react-virtual`                                       | Accepted   | 2026-08-10 |
 | [0087](0087-usage-ledger-pricing-and-chart-tokens.md)                           | Usage Ledger in Main, LiteLLM Pricing, Poll-Over-Push, and the Chart Tokens         | Accepted   | 2026-08-12 |
+| [0088](0088-the-categorical-series-scale.md)                                    | The Categorical Series Scale                                                        | Accepted   | 2026-08-12 |
