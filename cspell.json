@@ -21,6 +21,7 @@
     "openspec/schemas",
     "openspec/changes/**/discovery",
     "apps/desktop/resources/model-prices.json",
+    "designs/*.pen",
     ".vale/styles",
     "docs/superpowers/plans",
     "pnpm-lock.yaml",
