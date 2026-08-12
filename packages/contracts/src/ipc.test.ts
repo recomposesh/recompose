@@ -191,6 +191,16 @@ describe('the system state crossing the bridge', () => {
     expect(() => systemStateSchema.parse({ ...observedSystemState, loginItem: 'maybe' })).toThrow();
   });
 
+  test('every platform reads its own file browser and login-item standing', () => {
+    for (const fileBrowser of ['finder', 'explorer', 'file-manager']) {
+      for (const loginItem of ['available', 'unpackaged', 'unsupported']) {
+        const reading = { ...observedSystemState, fileBrowser, loginItem };
+
+        expect(systemStateSchema.parse(reading)).toEqual(reading);
+      }
+    }
+  });
+
   test('a blank config folder is rejected', () => {
     expect(() =>
       systemStateSchema.parse({ ...observedSystemState, configFolder: '   ' }),

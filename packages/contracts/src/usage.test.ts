@@ -84,6 +84,13 @@ describe('the report a window asks for', () => {
     expect(usageReportSchema.parse(report)).toEqual(report);
   });
 
+  test('prices come from the synced map or the bundled snapshot, and nowhere else', () => {
+    const offline = { ...report, pricing: { source: 'bundled' } };
+
+    expect(usageReportSchema.parse(offline)).toEqual(offline);
+    expect(() => usageReportSchema.parse({ ...report, pricing: { source: '' } })).toThrow();
+  });
+
   test('a day cost may carry either basis or both, and never a negative amount', () => {
     const negative = { dayStart: hourStart, tuple, billedMicroDollars: -1 };
 

@@ -54,7 +54,6 @@ const addVersionTwoSwitches: Migration = {
     schemaVersion: 2,
     launchAtLogin: false,
     showInMenuBar: false,
-    requireGatewayToken: false,
   }),
 };
 
