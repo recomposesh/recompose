@@ -6,6 +6,7 @@ import { tooltip } from '@tanstack/charts/tooltip';
 import { Chart } from '@tanstack/react-charts';
 import { useId, useLayoutEffect, useMemo, useState } from 'react';
 
+import { labelledSlots } from './labelled-slots';
 import { newestThatFit } from './newest-that-fit';
 
 type ChartSeries = {
@@ -54,6 +55,8 @@ type SeriesRow = {
 const HATCH_PITCH = 6;
 const HATCH_ANGLE = 45;
 const DEFAULT_HEIGHT = 160;
+const COLUMN_RADIUS = 2;
+const BAND_PADDING = 0.1;
 
 function useMeasuredWidth() {
   const [width, setWidth] = useState(0);
@@ -114,6 +117,7 @@ function seriesMarks(rows: readonly SeriesRow[], edgeAt: number | undefined) {
     z: 'seriesKey',
     key: 'key',
     fill: (row) => row.paint,
+    radius: COLUMN_RADIUS,
   });
   const hatchOverlay = decorative(
     barY(rows, {
@@ -188,10 +192,15 @@ function chartDefinitionOf(
     focus: 'group-x',
     marks: seriesMarks(rows, standingEdge),
     x: {
-      scale: () => scaleBand().padding(0.2),
-      axis: { ticks: { format: (at) => labels.get(at) ?? String(at) } },
+      scale: () => scaleBand().padding(BAND_PADDING),
+      axis: {
+        ticks: {
+          values: labelledSlots(drawn.map((bar) => bar.at)),
+          format: (at) => labels.get(at) ?? String(at),
+        },
+      },
     },
-    y: { scale: scaleLinear, nice: true },
+    y: { scale: scaleLinear, nice: true, axis: false },
     tooltip: {
       use: tooltip,
       formatGroup: (points) => bucketReading(points, series),

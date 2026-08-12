@@ -1,5 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
+import { userEvent } from 'vitest/browser';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
@@ -114,13 +115,37 @@ test('walking the calendar to another month draws the window there', async () =>
   const screen = await render(control({ onSearchChange }));
 
   await screen.getByRole('button', { name: 'Custom' }).click();
-  await screen.getByRole('button', { name: /Previous Month/ }).click();
+  await screen.getByRole('button', { name: 'Previous month' }).click();
   await screen.getByRole('button', { name: /July 6/ }).click();
   await screen.getByRole('button', { name: 'Apply' }).click();
 
   const drawn = onSearchChange.mock.calls[0]?.[0];
 
   expect(new Date(drawn?.from ?? 0).getMonth()).toBe(6);
+});
+
+test('walking the calendar forward draws the window in the month after it', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await render(control({ onSearchChange }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: 'Next month' }).click();
+  await screen.getByRole('button', { name: /September 8/ }).click();
+  await screen.getByRole('button', { name: 'Apply' }).click();
+
+  const drawn = onSearchChange.mock.calls[0]?.[0];
+
+  expect(new Date(drawn?.to ?? 0).getMonth()).toBe(8);
+});
+
+test('walking a day off the edge of a month draws the month it lands in', async () => {
+  const screen = await render(control());
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: /August 1st/ }).click();
+  await userEvent.keyboard('{ArrowLeft}');
+
+  await expect.element(screen.getByText('July 2026')).toBeVisible();
 });
 
 test('the clock beside an edge moves that edge to the hour it names', async () => {

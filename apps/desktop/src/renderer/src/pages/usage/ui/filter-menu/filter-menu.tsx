@@ -39,7 +39,7 @@ function memberRow(member: FilterMember, selected: readonly string[], onPick: Me
     <Checkbox.Root
       aria-label={member.name}
       checked={checked}
-      className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-start text-detail text-ink focus-ring-wide row-hover ${checked ? 'bg-surface-selected' : ''}`}
+      className={`flex w-full items-center gap-2.25 px-2.5 py-1.5 text-start text-detail text-ink focus-ring-wide row-hover ${checked ? 'bg-surface-selected' : ''}`}
       key={member.key}
       onCheckedChange={() => {
         onPick(withMember(selected, member.key));
@@ -63,16 +63,19 @@ function memberRow(member: FilterMember, selected: readonly string[], onPick: Me
 function searchField(searchLabel: string, sought: string, onSought: (next: string) => void) {
   return (
     <div className="px-2.5 pb-2">
-      <input
-        aria-label={searchLabel}
-        className="h-control w-full rounded-control bg-surface-field px-2 text-detail text-ink focus-ring-wide placeholder:text-ink-secondary"
-        onInput={(event) => {
-          onSought(event.currentTarget.value);
-        }}
-        placeholder={searchLabel}
-        type="search"
-        value={sought}
-      />
+      <div className="flex h-control items-center gap-1.5 rounded-control bg-surface-field px-2 has-[:focus-visible]:brightness-112">
+        <Icon aria-hidden className="size-3 shrink-0 text-ink-secondary" name="search" />
+        <input
+          aria-label={searchLabel}
+          className="w-full bg-transparent text-detail text-ink outline-none placeholder:text-ink-secondary"
+          onInput={(event) => {
+            onSought(event.currentTarget.value);
+          }}
+          placeholder={searchLabel}
+          type="search"
+          value={sought}
+        />
+      </div>
     </div>
   );
 }

@@ -145,11 +145,13 @@
   --spacing-window-controls: 36px;
   --spacing-window-controls-width: 90px;
   --spacing-page-top: 68px;
+  --spacing-explorer-top: 62px;
   --spacing-status-bar: 38px;
   --spacing-ghost-width: 436px;
   --spacing-ghost-height: 114px;
   --spacing-hairline: 2px;
 
+  --radius-mark: 2px;
   --radius-chip: 4px;
   --radius-control: 6px;
   --radius-field-group: 9px;
@@ -369,6 +371,13 @@
   }
 }
 
+@utility clock-field {
+  /* Chromium paints a picker glyph inside a time field, which the window's own step already does. */
+  &::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+}
+
 @utility usage-calendar {
   /* The library sets its own defaults on the calendar root, so an override has to reach it. */
   & .rdp-root {
@@ -388,6 +397,10 @@
     --rdp-weekday-opacity: 1;
     --rdp-weekday-text-transform: none;
     --rdp-weekday-padding: 0;
+  }
+
+  & .rdp-month_caption {
+    justify-content: center;
   }
 
   & .rdp-day_button {

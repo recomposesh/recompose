@@ -62,7 +62,7 @@ function rangeOptions(retentionDays: number) {
 
 function presetList(onPick: (key: PresetKey) => void, custom: boolean) {
   return (
-    <div className="flex w-38 flex-col gap-0.5 border-e border-line-faint p-2">
+    <div className="flex w-37.5 flex-col gap-0.5 border-e border-line-faint px-2 py-2.5">
       {presetWindows.map((preset) => (
         <button
           className="rounded-control focus-ring px-2 py-1.5 text-start text-detail text-ink row-hover"
@@ -119,7 +119,7 @@ function drawingPopup({ search, now, drawing, onSettle }: DrawingProps) {
   const { drafted, month } = drawing;
 
   return (
-    <Popover.Popup aria-label="Custom window" className="z-40 w-145 menu-surface">
+    <Popover.Popup aria-label="Custom window" className="z-40 w-144.25 menu-surface">
       <div className="flex">
         {presetList((key) => {
           onSettle(searchForPreset(search, key, now));

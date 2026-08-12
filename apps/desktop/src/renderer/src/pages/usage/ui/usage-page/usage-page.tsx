@@ -90,7 +90,6 @@ type BodyMoves = {
   search: UsageSearch;
   onSearchChange: (next: UsageSearch) => void;
   tableOpen: boolean;
-  onTableOpenChange: (open: boolean) => void;
   units: PanelUnits;
   onUnitChange: (panel: keyof UsagePanels, unit: PanelUnit) => void;
   onRetry: () => void;
@@ -119,7 +118,6 @@ function readingsBody(props: ReadingsProps) {
         onStackedByChange={(stackedBy) => {
           onSearchChange({ ...search, stackedBy });
         }}
-        onTableOpenChange={props.onTableOpenChange}
         stackedBy={search.stackedBy}
         subCaption={chartSubCaption(view.widthWord)}
         tableOpen={props.tableOpen}
@@ -219,10 +217,7 @@ export function UsagePage({ search, onSearchChange }: UsagePageProps) {
   }, [tableOpen]);
 
   return (
-    <section
-      className="mx-auto flex w-full max-w-data-column flex-col gap-4 px-6 pt-page-top pb-6"
-      data-focus-group=""
-    >
+    <section className="flex w-full flex-col gap-4 px-6 pt-explorer-top pb-6" data-focus-group="">
       <UsageHeader
         now={strips.now}
         onRefresh={() => {
@@ -242,7 +237,6 @@ export function UsagePage({ search, onSearchChange }: UsagePageProps) {
         search,
         onSearchChange,
         tableOpen,
-        onTableOpenChange: setTableOpen,
         units,
         onUnitChange: (panel, unit) => {
           setUnits((held) => ({ ...held, [panel]: unit }));

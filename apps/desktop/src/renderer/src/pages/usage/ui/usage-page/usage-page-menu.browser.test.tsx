@@ -95,7 +95,8 @@ test('the table twin toggles from the menu and reports its standing back', async
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByRole('button', { name: /Data table/ })).toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'Requests over time' })).toBeVisible();
+  expect(screen.container.querySelector('table')).toBeNull();
 
   emitUsageCommand('toggle-table-twin');
 
@@ -110,6 +111,7 @@ test('the table twin toggles from the menu and reports its standing back', async
 
   await vi.waitFor(() => {
     expect(reported).toContain(false);
+    expect(screen.container.querySelector('table')).toBeNull();
   });
 });
 

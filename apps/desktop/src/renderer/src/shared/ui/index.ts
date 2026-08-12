@@ -22,7 +22,6 @@ export { SegmentedControl } from './segmented-control/segmented-control';
 export { FieldBoxRow } from './field-box-row/field-box-row';
 export { Sheet, SheetActionSlot } from './sheet/sheet';
 export { stateMark, stateWord } from './gateway-state';
-export { Disclosure } from './disclosure/disclosure';
 export { HoverReading } from './hover-reading/hover-reading';
 export { MetricTile } from './metric-tile/metric-tile';
 export { NumericCell } from './numeric-cell/numeric-cell';

@@ -5,7 +5,6 @@ import type { DrawnChart } from '../../lib/usage-faces';
 import type { ChartMeasure, StackDimension } from '../../lib/usage-search';
 
 import {
-  Disclosure,
   Icon,
   NumericCell,
   SegmentedControl,
@@ -28,10 +27,8 @@ type ChartPanelProps = {
   subCaption: string;
   /** The bucket whose slot marks where retained history begins. */
   edgeAt?: number | undefined;
-  /** The twin's standing when the page owns it, so the menu tick can drive it. */
+  /** Whether the printed twin stands under the drawing, which the View menu governs. */
   tableOpen?: boolean | undefined;
-  /** Receives the standing the trigger asks for. */
-  onTableOpenChange?: ((open: boolean) => void) | undefined;
 };
 
 const MEASURE_OPTIONS = [
@@ -64,10 +61,15 @@ const STACK_DIMENSIONS: readonly StackDimension[] = [
 
 const AVERAGES_NEVER_STACK = 'Latency averages, so it never stacks';
 
+const PLOT_HEIGHT = 150;
+
+/** What the bucket labels under the plot take, which the drawing's own height has to carry. */
+const AXIS_ALLOWANCE = 21;
+
 function legendItem(key: string, label: string, fill: string, total: number) {
   return (
     <li className="flex items-center gap-1.5" key={key}>
-      <span aria-hidden className="size-2 rounded-chip" style={{ backgroundColor: fill }} />
+      <span aria-hidden className="size-2 rounded-mark" style={{ backgroundColor: fill }} />
       <span className="text-caption text-ink-secondary">{label}</span>
       <span className="font-mono text-mono-caption text-ink tabular-nums">
         {total.toLocaleString('en-US', { maximumFractionDigits: 2 })}
@@ -216,7 +218,6 @@ export function ChartPanel({
   subCaption,
   edgeAt,
   tableOpen,
-  onTableOpenChange,
 }: ChartPanelProps) {
   const title = MEASURE_TITLES[measure];
   const reasonId = `stack-reason-${useId().replaceAll(':', '')}`;
@@ -243,13 +244,11 @@ export function ChartPanel({
       <SeriesChart
         bars={drawn.bars}
         edgeAt={edgeAt}
-        height={150}
+        height={PLOT_HEIGHT + AXIS_ALLOWANCE}
         label={title}
         series={drawn.series}
       />
-      <Disclosure label="Data table" onOpenChange={onTableOpenChange} open={tableOpen}>
-        {tableTwin(title, drawn)}
-      </Disclosure>
+      {tableOpen === true ? tableTwin(title, drawn) : null}
     </section>
   );
 }
