@@ -95,3 +95,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0087](0087-usage-ledger-pricing-and-chart-tokens.md)                           | Usage Ledger in Main, LiteLLM Pricing, Poll-Over-Push, and the Chart Tokens         | Accepted   | 2026-08-12 |
 | [0088](0088-the-categorical-series-scale.md)                                    | The Categorical Series Scale                                                        | Accepted   | 2026-08-12 |
 | [0089](0089-the-mutation-scope-follows-the-test-world.md)                       | The Mutation Scope Follows the Test World                                           | Accepted   | 2026-08-12 |
+| [0090](0090-the-usage-window-filters-and-its-calendar.md)                       | The Usage Window, Its Filters, and the Calendar That Draws It                       | Accepted   | 2026-08-12 |
