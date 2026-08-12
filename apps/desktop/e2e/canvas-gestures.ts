@@ -24,9 +24,9 @@ const CHASE_MS = 5000;
 /** How much clearance a spot keeps from anything already standing, in window pixels. */
 const CLEARANCE = 24;
 
-const ACROSS = [0.5, 0.62, 0.74, 0.38, 0.86];
+const ACROSS = [0.5, 0.62, 0.74, 0.38, 0.86, 0.44, 0.56, 0.68, 0.8, 0.32];
 
-const DOWN = [0.55, 0.68, 0.42, 0.8, 0.3];
+const DOWN = [0.55, 0.68, 0.42, 0.8, 0.3, 0.62, 0.48, 0.74, 0.36, 0.86];
 
 /** Where a card is taken hold of, clear of the plus that hangs off its far edge. */
 const GRIP = { x: 12, y: 12 };
@@ -268,18 +268,22 @@ export async function emptyCanvasSpot(page: Page): Promise<Point> {
         })),
       );
 
-      return (
-        spots.find(
-          (at) =>
-            !taken.some(
-              (box) =>
-                at.x > box.left - clearance &&
-                at.x < box.right + clearance &&
-                at.y > box.top - clearance &&
-                at.y < box.bottom + clearance,
-            ),
-        ) ?? null
-      );
+      const roomAround = (at: { x: number; y: number }) =>
+        Math.min(
+          ...taken.map((box) =>
+            Math.max(box.left - at.x, at.x - box.right, box.top - at.y, at.y - box.bottom),
+          ),
+          field.right - at.x,
+          at.x - field.left,
+          field.bottom - at.y,
+          at.y - field.top,
+        );
+      const roomiest = spots
+        .map((at) => ({ at, room: taken.length === 0 ? clearance : roomAround(at) }))
+        .toSorted((wider, narrower) => narrower.room - wider.room)
+        .at(0);
+
+      return roomiest !== undefined && roomiest.room >= clearance ? roomiest.at : null;
     },
     { across: ACROSS, down: DOWN, clearance: CLEARANCE },
   );

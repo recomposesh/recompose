@@ -29,18 +29,9 @@ const WELL_BELOW = 220;
 async function settledBorderBox(page: Page) {
   const border = logsHeightHandle(page);
 
-  let resting = await border.boundingBox();
+  await border.hover();
 
-  await expect
-    .poll(async () => {
-      const next = await border.boundingBox();
-      const still = next !== null && resting !== null && next.y === resting.y;
-
-      resting = next;
-
-      return still;
-    })
-    .toBe(true);
+  const resting = await border.boundingBox();
 
   if (resting === null) {
     throw new Error('the drawer stands with no border a drag could take hold of');
