@@ -31,6 +31,7 @@
     "src/renderer/src/pages/usage/lib/live-window.ts",
     "src/renderer/src/pages/usage/lib/usage-groups.ts",
     "src/renderer/src/pages/usage/lib/usage-search.ts",
+    "src/renderer/src/shared/ui/series-chart/series-presets.ts",
     "scripts/**/*.mts",
     "!scripts/**/*.test.mts",
     "!scripts/generate-icons.mts",

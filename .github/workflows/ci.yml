@@ -149,6 +149,7 @@ jobs:
             "$canvas_lib/traffic-aggregates.ts" "$canvas_lib/log-scope.ts" \
             "$usage_lib/live-window.ts" "$usage_lib/usage-groups.ts" \
             "$usage_lib/usage-search.ts" \
+            "apps/desktop/src/renderer/src/shared/ui/series-chart/series-presets.ts" \
             | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
           if [ -z "$contracts" ] && [ -z "$engine" ] && [ -z "$desktop" ]; then
             echo "mutation scope untouched, skipping"
