@@ -2,6 +2,9 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
+import type { Point } from './canvas-room';
+
+import { emptyCanvasSpot } from './canvas-room';
 import { canvasTool, portAskOn } from './canvas-screen';
 
 /**
@@ -14,9 +17,6 @@ export async function takeUpThePortAsk(page: Page, nodeId: string): Promise<void
   await portAskOn(page, nodeId).focus();
   await page.keyboard.press('Enter');
 }
-
-/** A spot in the window a pointer can be put at, which is not where the canvas seats its cards. */
-export type Point = { x: number; y: number };
 
 /** What chasing a port that keeps sliding away may spend before the drag is called lost. */
 const CHASE_MS = 5000;
@@ -218,10 +218,22 @@ export async function dragCableOnto(page: Page, port: Locator, onto: Locator): P
   await page.mouse.up();
 }
 
-/** Pulls a cable out of a port and lets it go at a spot on the canvas. */
-export async function dropCableAt(page: Page, port: Locator, at: Point): Promise<void> {
-  await pullCableTo(page, port, at);
+/**
+ * Pulls a cable out of a port and lets it go where the canvas has room, answering with the spot.
+ *
+ * @operation The room is read again once the cable is in flight, because taking hold of a port can
+ * fit the canvas first, and a fit walks every card out from under a spot read before it. The
+ * answer is the spot the drop actually happened at, which is what a scenario asserts the pending
+ * card seats at.
+ */
+export async function dropCableOnEmptyCanvas(page: Page, port: Locator): Promise<Point> {
+  const start = await grippedCable(page, port, await emptyCanvasSpot(page));
+  const spot = await emptyCanvasSpot(page);
+
+  await travel(page, start, spot);
   await page.mouse.up();
+
+  return spot;
 }
 
 /** Takes hold of a card and moves it across the canvas, the way a person rearranges it. */

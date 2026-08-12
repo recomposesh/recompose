@@ -5,7 +5,7 @@ import { modelAliasFromName } from '@recompose/contracts';
 
 import {
   dragCableOnto,
-  dropCableAt,
+  dropCableOnEmptyCanvas,
   fitCanvasToView,
   pullCableTo,
   releaseCable,
@@ -100,10 +100,7 @@ async function draftNamed(page: Page, name: string): Promise<void> {
 }
 
 async function letGoOnEmptyCanvas(page: Page, nodeId: string): Promise<void> {
-  const spot = await emptyCanvasSpot(page);
-
-  await dropCableAt(page, sourcePort(page, nodeId), spot);
-  rememberDropPoint(page, spot);
+  rememberDropPoint(page, await dropCableOnEmptyCanvas(page, sourcePort(page, nodeId)));
 }
 
 async function standsBoundToTheKeyAccount(page: Page, name: string): Promise<void> {

@@ -108,3 +108,31 @@ test('the window names the zone its edges are read in', async () => {
   await expect.element(screen.getByLabelText('Window opens at')).toBeVisible();
   await expect.element(screen.getByLabelText('Window closes at')).toBeVisible();
 });
+
+test('walking the calendar to another month draws the window there', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await render(control({ onSearchChange }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: /Previous Month/ }).click();
+  await screen.getByRole('button', { name: /July 6/ }).click();
+  await screen.getByRole('button', { name: 'Apply' }).click();
+
+  const drawn = onSearchChange.mock.calls[0]?.[0];
+
+  expect(new Date(drawn?.from ?? 0).getMonth()).toBe(6);
+});
+
+test('the clock beside an edge moves that edge to the hour it names', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await render(control({ onSearchChange }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByLabelText('Window opens at').fill('08:30');
+  await screen.getByRole('button', { name: 'Apply' }).click();
+
+  const drawn = onSearchChange.mock.calls[0]?.[0];
+  const opened = new Date(drawn?.from ?? 0);
+
+  expect([opened.getHours(), opened.getMinutes()]).toEqual([8, 30]);
+});

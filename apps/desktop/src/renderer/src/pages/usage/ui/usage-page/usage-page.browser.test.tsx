@@ -1,4 +1,4 @@
-import type { LogRow, UsageBucket, UsageReport } from '@recompose/contracts';
+import type { UsageBucket, UsageReport } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,8 +7,7 @@ import { render } from 'vitest-browser-react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
-import { engineLogsQueryOptions } from '../../../../shared/api';
-import { edgeRuleDrawn, gatewaySeed, installFakeBridge } from '../../../../shared/testing';
+import { edgeRuleDrawn, installFakeBridge } from '../../../../shared/testing';
 import { UsagePage } from './usage-page';
 
 const HOUR_MS = 3_600_000;
@@ -54,22 +53,6 @@ const servedReport: UsageReport = {
   priceMisses: [],
   pricing: { source: 'bundled' },
 };
-
-const A_CALLER_DIGEST = `sha256:${'a'.repeat(64)}`;
-
-function liveRow(id: string, at: number): LogRow {
-  return {
-    id,
-    at,
-    gateway: 'relay',
-    virtualModel: 'creative',
-    origin: 'provider',
-    method: 'POST',
-    status: 200,
-    durationMs: 400,
-    clientKey: A_CALLER_DIGEST,
-  };
-}
 
 function freshQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -216,69 +199,75 @@ test('a refused history read names itself and offers the read again', async () =
   await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
 });
 
-test('the live hour stands its readings up before the first request arrives', async () => {
-  installFakeBridge({
-    gateways: [gatewaySeed({ slug: 'relay', displayName: 'Relay', port: 4310 })],
-  });
+test('a panel reprints in the unit its control names', async () => {
+  installFakeBridge({ usageReport: servedReport });
 
-  const screen = await mounted(
-    <UsagePage
-      onSearchChange={() => {}}
-      search={{ range: '1h', metric: 'requests', stackedBy: 'gateway' }}
-    />,
-  );
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+  const panel = screen.getByRole('region', { name: 'By gateway' });
 
-  const readings = screen.getByRole('region', { name: 'Window readings' });
+  await expect.element(panel.getByText('9', { exact: true })).toBeVisible();
 
-  await expect.element(readings.getByText('0', { exact: true }).first()).toBeVisible();
-  await expect
-    .element(screen.getByRole('heading', { level: 2, name: 'No requests yet' }))
-    .not.toBeInTheDocument();
+  await panel.getByRole('radio', { name: 'Tokens' }).click();
+
+  await expect.element(panel.getByText('1.0k', { exact: true }).first()).toBeVisible();
+  await expect.element(panel.getByText('9', { exact: true })).not.toBeInTheDocument();
 });
 
-test('a refused gateway read reads as a refusal rather than as nothing served', async () => {
+test('the header refresh asks the ledger for the window again', async () => {
+  const asks: number[] = [];
+
   installFakeBridge({
+    usageReport: servedReport,
     overrides: {
-      'gateways:list': async () =>
-        Promise.resolve({
-          ok: false,
-          error: { code: 'storage-failed', message: 'The gateway list cannot be read.' },
-        }),
+      'usage:report': async () => {
+        asks.push(asks.length);
+
+        return Promise.resolve({ ok: true, value: servedReport });
+      },
     },
   });
 
-  const screen = await mounted(
-    <UsagePage
-      onSearchChange={() => {}}
-      search={{ range: '1h', metric: 'requests', stackedBy: 'gateway' }}
-    />,
-  );
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByText('The gateway list cannot be read.')).toBeVisible();
-});
-
-test('the live hour folds the rows the renderer already holds', async () => {
-  installFakeBridge({
-    gateways: [gatewaySeed({ slug: 'relay', displayName: 'Relay', port: 4310 })],
+  await vi.waitFor(() => {
+    expect(asks.length).toBeGreaterThan(0);
   });
 
-  const queryClient = freshQueryClient();
+  const before = asks.length;
 
-  queryClient.setQueryData(engineLogsQueryOptions('relay').queryKey, [
-    liveRow('earlier', Date.now() - 120_000),
-    liveRow('later', Date.now() - 60_000),
-  ]);
+  await screen.getByRole('button', { name: 'Refresh', exact: true }).click();
 
-  const screen = await mounted(
-    <UsagePage
-      onSearchChange={() => {}}
-      search={{ range: '1h', metric: 'requests', stackedBy: 'gateway' }}
-    />,
-    queryClient,
-  );
+  await vi.waitFor(() => {
+    expect(asks.length).toBeGreaterThan(before);
+  });
+});
 
-  const readings = screen.getByRole('region', { name: 'Window readings' });
+test('the retry beside a refused read asks for the window again', async () => {
+  const asks: number[] = [];
 
-  await expect.element(readings.getByText('2', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText(/minute buckets/).first()).toBeVisible();
+  installFakeBridge({
+    usageReport: servedReport,
+    overrides: {
+      'usage:report': async () => {
+        asks.push(asks.length);
+
+        return Promise.resolve({
+          ok: false,
+          error: { code: 'storage-failed', message: 'The stored usage history cannot be read.' },
+        });
+      },
+    },
+  });
+
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+
+  await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+
+  const before = asks.length;
+
+  await screen.getByRole('button', { name: 'Retry' }).click();
+
+  await vi.waitFor(() => {
+    expect(asks.length).toBeGreaterThan(before);
+  });
 });

@@ -7,7 +7,7 @@ import { page } from 'vitest/browser';
 
 import type { BridgeParameters } from '../../shared/testing';
 
-import { installFakeBridge } from '../../shared/testing';
+import { installFakeBridge, servedReport } from '../../shared/testing';
 import { createQueryClient } from '../query-client';
 import { createAppRouter } from '../router';
 
@@ -56,4 +56,15 @@ test('other surfaces carry no range control', async () => {
 
   await expect.element(page.getByRole('main')).toBeInTheDocument();
   expect(document.querySelector('[aria-label="Range"]')).toBeNull();
+});
+
+test('picking a gateway in the toolbar filter moves the address', async () => {
+  const { router } = mountedAt('/usage?range=7d', { usageReport: servedReport });
+
+  await page.getByRole('button', { name: /Gateways/ }).click();
+  await page.getByRole('checkbox', { name: 'relay' }).click();
+
+  await vi.waitFor(() => {
+    expect(router.state.location.search).toMatchObject({ gateways: ['relay'] });
+  });
 });

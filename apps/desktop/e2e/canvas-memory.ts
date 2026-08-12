@@ -3,7 +3,7 @@ import type { VirtualModel } from '@recompose/contracts';
 
 import { expect } from '@playwright/test';
 
-import type { Point } from './canvas-gestures';
+import type { Point } from './canvas-room';
 import type { Seat } from './canvas-screen';
 
 import { standingCables, standingNodes } from './canvas-screen';

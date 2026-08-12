@@ -36,3 +36,19 @@ export const StillReading = meta.story({
     await expect(await canvas.findByText('Reading history')).toBeVisible();
   },
 });
+
+/** Past a minute the stamp counts in minutes, floored, so it never reads ahead of itself. */
+export const MinutesOld = meta.story({
+  args: { updatedAt: NOW - 119_000 },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Updated 1m ago')).toBeVisible();
+  },
+});
+
+/** Past an hour it counts in hours, which is where a paused poll shows plainly. */
+export const HoursOld = meta.story({
+  args: { updatedAt: NOW - 7_500_000 },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Updated 2h ago')).toBeVisible();
+  },
+});
