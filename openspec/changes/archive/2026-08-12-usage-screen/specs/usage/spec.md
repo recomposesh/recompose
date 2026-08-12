@@ -20,13 +20,19 @@ Main MUST keep a usage ledger of tuple-keyed hour buckets in `userData/usage.jso
 
 ### Requirement: Reports answer closed hours only, and the live plane folds in the renderer
 
-The `usage:report` channel MUST answer one range of closed hour buckets, folded to day width for the month range, and the hour still filling MUST never ride an answer. The renderer MUST fold the trailing hour into minute buckets from its own log-row cache through the same accrual rule the ledger uses. The seam between the two planes is a bucket boundary, so no request may count twice across it. Freshness MUST poll rather than push, at the bucket width's own pace.
+The `usage:report` channel MUST answer one range of closed hour buckets, folded to day width where the ask asks for days, and the hour still filling MUST never ride an answer. The ask MUST carry the range, an optional bucket width, and the reader's own day offset. A window spanning two days or less MUST ask for hour buckets. Every folded day MUST break at the reader's midnight, and an ask naming no offset MUST fold at Coordinated Universal Time (UTC). Each view MUST ask the narrowest range reaching over its window and the window standing before it, because the tiles compare the two. The renderer MUST fold the trailing hour into minute buckets from its own log-row cache through the same accrual rule the ledger uses. The seam between the two planes is a bucket boundary, so no request may count twice across it. Freshness MUST poll rather than push, at the bucket width's own pace.
 
-#### Scenario: each range draws its own bucket width
+#### Scenario: a short window asks for hours
 
 - Given a month of served history
-- When a person selects a range
-- Then the chart caption names minute buckets at 1h, hour buckets at 24h and 7d, and day buckets at 30d
+- When the person stands the window at the last 24 hours
+- Then the ask names hour buckets and the caption says so
+
+#### Scenario: a folded day breaks where the reader lives
+
+- Given a reader whose midnight stands hours off Coordinated Universal Time (UTC)
+- When the explorer folds a window into days
+- Then each day holds the traffic of that reader's own day
 
 #### Scenario: the live hour never reads from the ledger
 
@@ -36,19 +42,19 @@ The `usage:report` channel MUST answer one range of closed hour buckets, folded 
 
 ### Requirement: One explorer answers every usage question
 
-The usage screen MUST stand as one explorer: five metric tiles headline the standing window, the selected tile drives a series chart, and a breakdown table pivots the domain hierarchy. Every reading MUST also exist as printed text. The caption MUST state the range, the bucket width, the total, the peak, and the UTC day-boundary rule. A folded data table MUST print every bucket the chart draws. The whole view MUST live in typed search params. A reload then lands on the same view, back walks the drill history, and summary links deep-link through the same address.
+The usage screen MUST stand as one explorer: a filter bar over the window, five metric tiles reading it, one chart, and three breakdown panels. The panels MUST fold by gateway, by virtual model, and by target. The tiles MUST read rather than steer, and the chart MUST carry its own measure and stacking controls. The requests tile MUST compare its window against the window standing before it, and the errors tile MUST read as a share of the requests beside it. Every reading MUST also exist as printed text: the legend prints each series' window total, and a folded data table prints every bucket the chart draws. The caption MUST name the bucket width and say that days break at the reader's local midnight. The whole view MUST live in typed search params, so a reload lands on the same view and a summary link deep-links through the same address.
 
-#### Scenario: a tile selects what the chart draws
+#### Scenario: the chart moves without moving the tiles
 
-- Given a gateway that has served requests
-- When the person selects the errors tile
-- Then the chart draws the error series under the tile's own label
+- Given the tiles headline the standing window
+- When the person picks tokens on the chart's own measure control
+- Then the chart draws tokens and every tile figure stands unchanged
 
 #### Scenario: a reload lands on the same view
 
-- Given the person drilled into a gateway with the range at 7d
+- Given the person filtered to one gateway with the window at 7 days
 - When the screen reloads
-- Then the same scope, range, and metric stand
+- Then the same filters, window, measure, and stacking stand
 
 #### Scenario: the table twin prints every reading as text
 
@@ -56,21 +62,43 @@ The usage screen MUST stand as one explorer: five metric tiles headline the stan
 - When the person discloses the chart's data table
 - Then every bucket the chart draws prints as a row of text values
 
-### Requirement: The scope path narrows the page and names its own way out
+### Requirement: Filters narrow the window and name what they can reach
 
-The active scope MUST draw as a path over the domain hierarchy, and pressing a segment MUST truncate the scope to it. A scope with no traffic in the range MUST name the quiet and offer clearing the scope or widening the range, rather than drawing an empty chart. A summary card reading zero MUST NOT link into the empty view.
+The address MUST carry a gateway filter and a provider filter. Each is a list, and each stands empty while it stands on everything. A provider MUST be a connected account rather than a provider kind, which is what the sidebar and the catalog both call a provider. Each menu MUST list the members the standing window served under the other filter, so narrowing one never hides what a person could still reach for. A search matching no member MUST say so rather than standing empty. The sentence under the title MUST name both filters, the window, and the reader's own zone. A window with no traffic MUST name the quiet and offer clearing the filters or widening the window, rather than drawing an empty chart. A summary card reading zero MUST NOT link into the empty view.
 
-#### Scenario: pressing a path segment truncates the scope
+#### Scenario: picking a member narrows every reading at once
 
-- Given the scope stands at a gateway and then a virtual model
-- When the person presses the gateway segment
-- Then the virtual model leaves the scope and every reading widens
+- Given traffic served through two gateways
+- When the person picks one gateway in the filter menu
+- Then the tiles, the chart, and every panel read that gateway alone
 
-#### Scenario: a scope with no traffic names its recovery
+#### Scenario: a menu lists what the other filter still reaches
+
+- Given the gateway filter stands on one gateway
+- When the person opens the provider menu
+- Then it lists the accounts that gateway served and nothing else
+
+#### Scenario: a window with no traffic names its recovery
 
 - Given a running gateway that served nothing in the last 7 days
-- When the person scopes to it over the 7d range
-- Then the page names the quiet and offers clearing the scope or widening the range
+- When the person filters to it over that window
+- Then the page names the quiet and offers clearing the filters or widening the window
+
+### Requirement: A window is a preset or a range a person draws
+
+The range control MUST offer the live hour, the last 24 hours, the last 7 days, the last 30 days, and a custom window. A custom window MUST come from a calendar a person draws a range on, with a clock field at each edge. The calendar MUST also offer the standing presets, including this week and this month, which land as custom windows over the reader's own week and month. The calendar grid, its keyboard walk, its month navigation, and its accessible day names MUST come from a library rather than a hand-built grid. The control MUST render segments wider than the retention window inert, with the window named as the reason.
+
+#### Scenario: a drawn range moves every reading
+
+- Given a month of served history
+- When the person draws a two-day range on the calendar and applies it
+- Then every reading stands over those two days and the header prints both edges
+
+#### Scenario: this week lands on the reader's own week
+
+- Given the window stands at the last 24 hours
+- When the person picks This week
+- Then the window opens at the local week start and reaches the present
 
 ### Requirement: Cost tells the truth about its basis
 
@@ -124,7 +152,7 @@ OpenRouter credits MUST print as an account balance beside the instant of the re
 
 ### Requirement: Missing data reads as missing, never as zero
 
-While history loads, tiles MUST hold placeholders instead of zeros and the chart MUST draw its furniture without bars. An idle live hour MUST read a true zero. A refused history read MUST surface as an inline card that names the failure and offers Retry. The range control MUST then move to the live plane, so it matches what draws. Range segments wider than the retention window MUST render inert with the window named as the reason.
+While history loads, tiles MUST hold placeholders instead of zeros and the chart MUST draw its furniture without bars. An idle live hour MUST read a true zero. A refused read MUST surface as an inline card that names the failure and offers Retry, on the live plane as much as on the ledger plane. The range control MUST then move to the live plane, so it matches what draws. Range segments wider than the retention window MUST render inert with the window named as the reason.
 
 #### Scenario: a history-backed range loads as placeholders
 
@@ -151,13 +179,18 @@ The ledger MUST prune on every flush to the retention window the settings docume
 
 ### Requirement: A route-scoped Usage menu drives the explorer
 
-While the usage surface stands, the application menu MUST carry a Usage menu. The menu holds the ledger ranges under accelerators, a metric submenu, a checkbox item for the chart's data table, and a Refresh item. Refresh takes its own accelerator and leaves the renderer reload untouched. Menu picks MUST reach the page over the `usage:command` event and travel the same search the on-screen controls write. The page MUST report the data table's standing back over `system:usage-table`, so the tick reads what the person sees.
+While the usage surface stands, the application menu MUST carry a Usage menu. The menu holds the ledger ranges under accelerators, a metric submenu naming the series the chart draws, a checkbox item for the chart's data table, and a Refresh item. Refresh takes its own accelerator and leaves the renderer reload untouched. Menu picks MUST reach the page over the `usage:command` event and travel the same search the on-screen controls write. The page MUST report the data table's standing back over `system:usage-table`, so the tick reads what the person sees.
 
 #### Scenario: a menu pick moves the same address a press would
 
 - Given the usage surface stands at 24h
 - When the person picks Last 7 Days from the Usage menu
 - Then the explorer reads the last 7 days exactly as if the range control moved
+
+#### Scenario: the metric submenu names only what the chart draws
+
+- When the person opens the metric submenu
+- Then it offers the chart's own measures and no reading the chart can't draw
 
 #### Scenario: the data table tick follows the twin
 
