@@ -107,10 +107,13 @@ test('the table twin toggles from the menu and reports its standing back', async
     expect(reported).toContain(true);
   });
 
+  const reportedBeforeClosing = reported.length;
+
   emitUsageCommand('toggle-table-twin');
 
   await vi.waitFor(() => {
-    expect(reported).toContain(false);
+    expect(reported.length).toBeGreaterThan(reportedBeforeClosing);
+    expect(reported.at(-1)).toBe(false);
     expect(screen.container.querySelector('table')).toBeNull();
   });
 });

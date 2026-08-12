@@ -62,9 +62,7 @@ const STACK_DIMENSIONS: readonly StackDimension[] = [
 const AVERAGES_NEVER_STACK = 'Latency averages, so it never stacks';
 
 const PLOT_HEIGHT = 150;
-
-/** What the bucket labels under the plot take, which the drawing's own height has to carry. */
-const AXIS_ALLOWANCE = 21;
+const BUCKET_LABEL_HEIGHT = 21;
 
 function legendItem(key: string, label: string, fill: string, total: number) {
   return (
@@ -244,7 +242,7 @@ export function ChartPanel({
       <SeriesChart
         bars={drawn.bars}
         edgeAt={edgeAt}
-        height={PLOT_HEIGHT + AXIS_ALLOWANCE}
+        height={PLOT_HEIGHT + BUCKET_LABEL_HEIGHT}
         label={title}
         series={drawn.series}
       />

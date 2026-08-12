@@ -5,7 +5,7 @@
 
 ## Context
 
-Record 0090 built the usage explorer from the `Usage v2` frames in `designs/recompose.pen`. The built screen and those frames then read differently. Measured from the running window at the frames' own 1440 by 900, the content column stood 960 wide against the drawing's 1152. The two filters sat 90 pixels inside the surface against the drawing's 16. The chart carried a value axis, a label under all 24 hour buckets, and a disclosure row the frames never draw.
+Record 0090 built the usage explorer from the `Usage v2` frames in `designs/recompose.pen`. The built screen and those frames then read differently. Measured from the running window at the frames' own 1440 by 900, the content column stood 960 wide against the drawing's 1152. The two filters sat 90 pixels inside the surface against the drawing's 16. The chart carried a value axis, a label under all 24 of its hour buckets, and a disclosure row the frames never draw.
 
 Frames 20, 21, and 22 are the reference the maintainer reads the screen against, so the differences read as faults rather than as license.
 

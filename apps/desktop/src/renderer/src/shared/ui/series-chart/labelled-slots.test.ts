@@ -16,6 +16,12 @@ describe('given a week of day slots', () => {
   });
 });
 
+describe('given a half day of hour slots, where the pace misses the newest slot', () => {
+  it('adds the newest slot to the paced ones rather than dropping a pace', () => {
+    expect(labelledSlots(hours(14))).toEqual([0, 2, 4, 6, 8, 10, 12, 13]);
+  });
+});
+
 describe('given a month of day slots', () => {
   it('keeps the reading count while still naming the newest day', () => {
     expect(labelledSlots(hours(30))).toEqual([0, 5, 10, 15, 20, 25, 29]);
