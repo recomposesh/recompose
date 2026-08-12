@@ -2,7 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-import { emptyCanvasSpot, fitCanvasToView } from './canvas-gestures';
+import { fitCanvasToView } from './canvas-gestures';
+import { emptyCanvasSpot } from './canvas-room';
 import { canvasCable, canvasNode } from './canvas-screen';
 
 /** The frame of a card, which is the one thing on it that carries whether it stands selected. */

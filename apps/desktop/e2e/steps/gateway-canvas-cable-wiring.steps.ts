@@ -6,7 +6,6 @@ import { modelAliasFromName } from '@recompose/contracts';
 import {
   dragCableOnto,
   dropCableAt,
-  emptyCanvasSpot,
   fitCanvasToView,
   pullCableTo,
   releaseCable,
@@ -27,6 +26,7 @@ import {
   thePendingSeat,
   virtualModelInFocus,
 } from '../canvas-memory';
+import { emptyCanvasSpot } from '../canvas-room';
 import {
   accountPicker,
   cableBetween,
