@@ -15,6 +15,7 @@ import { fakeKeyProbe } from './key-probe-stub';
 import { dropServer, holdPort, LOOPBACK_HOSTS } from './loopback-ports';
 import { fakeLocalRuntime } from './runtime-stub';
 import { fakeSubscriptionTools } from './subscription-tools';
+import { seededUsageHistoryWritten } from './usage-screen';
 
 const appRoot = join(__dirname, '..');
 
@@ -127,6 +128,11 @@ export const test = base.extend<ElectronFixtures>({
 
     await rm(userDataDir, { force: true, recursive: true });
     await mkdir(userDataDir, { recursive: true });
+
+    if ($tags.includes('@seeded-usage-history')) {
+      await seededUsageHistoryWritten(userDataDir);
+    }
+
     const app = await electron.launch({
       args: [appRoot],
       env: subscriptionTools.env({
