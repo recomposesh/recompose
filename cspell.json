@@ -20,6 +20,7 @@
     ".claude/worktrees",
     "openspec/schemas",
     "openspec/changes/**/discovery",
+    "apps/desktop/resources/model-prices.json",
     ".vale/styles",
     "docs/superpowers/plans",
     "pnpm-lock.yaml",

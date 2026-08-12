@@ -83,7 +83,7 @@ function breakdownRow(face: BreakdownFace, spendColumn: boolean, onDrill: (key: 
 /**
  * The group-by pivot over the same buckets every other reading folds from.
  *
- * @summary The control regroups rather than refetches, so the pivot can never disagree with the
+ * @summary The control regroups rather than fetching again, so the pivot can never disagree with the
  * tiles or the chart. Every reading prints as text, the share meter is decoration over the printed
  * count, and a drillable row narrows the scope by one level.
  */

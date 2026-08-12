@@ -123,7 +123,7 @@ describe('the accounts whose balance a card can hold', () => {
         },
         {
           id: 'other-agg',
-          provider: 'requesty',
+          provider: 'other-router',
           kind: 'aggregator',
           label: 'Other',
           credentialRef: 'vault:other-agg',

@@ -80,6 +80,7 @@ dotless
 DPAPI
 DPLUGIN
 dragless
+drillable
 dyld
 dynamiclib
 edgelabel

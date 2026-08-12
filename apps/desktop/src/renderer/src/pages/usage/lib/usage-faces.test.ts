@@ -78,11 +78,11 @@ describe('the five faces headline the window', () => {
   });
 
   it('keeps the tokens face silent about the split it never measured', () => {
-    const splitless = measured({
+    const withoutSplit = measured({
       tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, total: 1_000 },
     });
     const faces = metricFaces({
-      buckets: [bucket(TODAY, {}, splitless)],
+      buckets: [bucket(TODAY, {}, withoutSplit)],
       dayCosts: [],
       dayWidth: false,
       todayStart: TODAY,

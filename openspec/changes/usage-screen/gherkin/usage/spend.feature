@@ -2,7 +2,7 @@ Feature: Cost tells the truth about its basis
 
   Billed traffic shows estimated cost, subscription traffic shows an
   equivalent figure marked approximate, and local traffic costs nothing.
-  The two figures never merge, and a small or unpriceable number never
+  The two figures never merge, and a small or unpriced number never
   hides behind a zero.
 
   Background:
