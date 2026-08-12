@@ -225,7 +225,6 @@ export const ipcEvents = {
       'metric-tokens',
       'metric-spend',
       'metric-latency',
-      'metric-errors',
       'toggle-table-twin',
       'refresh',
     ]),

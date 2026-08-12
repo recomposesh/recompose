@@ -169,7 +169,6 @@ function metricSubmenu(handlers: AppMenuHandlers): AppMenuItem {
     label: 'Metric',
     submenu: [
       { label: 'Requests', click: usageCommandClick(handlers, 'metric-requests') },
-      { label: 'Errors', click: usageCommandClick(handlers, 'metric-errors') },
       { label: 'Latency', click: usageCommandClick(handlers, 'metric-latency') },
       { label: 'Tokens', click: usageCommandClick(handlers, 'metric-tokens') },
       { label: 'Spend', click: usageCommandClick(handlers, 'metric-spend') },

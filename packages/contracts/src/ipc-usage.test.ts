@@ -62,7 +62,6 @@ describe('the usage menu command event', () => {
     'metric-tokens',
     'metric-spend',
     'metric-latency',
-    'metric-errors',
     'toggle-table-twin',
     'refresh',
   ];
@@ -76,5 +75,9 @@ describe('the usage menu command event', () => {
   test('a command outside the vocabulary is refused', () => {
     expect(() => ipcEvents['usage:command'].payload.parse('range-90d')).toThrow();
     expect(() => ipcEvents['usage:command'].payload.parse('zoom-in')).toThrow();
+  });
+
+  test('the chart draws no error series, so no command asks it to', () => {
+    expect(() => ipcEvents['usage:command'].payload.parse('metric-errors')).toThrow();
   });
 });
