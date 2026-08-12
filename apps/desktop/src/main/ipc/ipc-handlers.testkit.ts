@@ -1,10 +1,19 @@
-import type { AccountsDocument, Settings, SystemState } from '@recompose/contracts';
+import type { AccountsDocument, Settings, SystemState, UsageReport } from '@recompose/contracts';
 
 import { ACCOUNTS_VERSION, defaultSettings } from '@recompose/contracts';
 
 import type { IpcHandlers } from './dispatch';
 
 const emptyAccounts: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accounts: [] };
+
+const quietReport: UsageReport = {
+  range: '24h',
+  bucketWidth: 'hour',
+  buckets: [],
+  dayCosts: [],
+  priceMisses: [],
+  pricing: { source: 'bundled' },
+};
 
 const observedSystem: SystemState = {
   fileBrowser: 'finder',
@@ -53,6 +62,10 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'engine:stop': refuses,
     'engine:states': refuses,
     'engine:replay-logs': refuses,
+    'usage:report': refuses,
+    'usage:quota-windows': refuses,
+    'usage:balances': refuses,
+    'system:usage-table': refuses,
     'subscriptions:list': refuses,
     'subscriptions:tools': refuses,
     'subscriptions:sign-in': refuses,
@@ -100,6 +113,10 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
     'engine:stop': async () => Promise.resolve({ ok: true, value: { status: 'stopped' } }),
     'engine:states': async () => Promise.resolve({ ok: true, value: {} }),
     'engine:replay-logs': nothing,
+    'usage:report': async () => Promise.resolve({ ok: true, value: quietReport }),
+    'usage:quota-windows': noGateways,
+    'usage:balances': noGateways,
+    'system:usage-table': nothing,
     'subscriptions:list': noGateways,
     'subscriptions:tools': noGateways,
     'subscriptions:sign-in': noGateways,

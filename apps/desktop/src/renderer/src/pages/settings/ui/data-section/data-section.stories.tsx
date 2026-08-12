@@ -42,5 +42,15 @@ export const OnLinux = meta.story({
   },
 });
 
+/** The retention row offers three windows with the stored one standing. */
+export const TheRetentionRow = meta.story({
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByRole('radiogroup', { name: 'Usage retention' }),
+    ).toBeInTheDocument();
+    await expect(await canvas.findByRole('radio', { name: '30 days' })).toBeChecked();
+  },
+});
+
 /** The same group under the dark scheme. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

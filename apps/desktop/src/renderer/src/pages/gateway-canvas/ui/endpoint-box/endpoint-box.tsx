@@ -4,12 +4,9 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import { useSetGatewayPort } from '../../../../shared/api';
-import { shownAsAskModal } from '../../../../shared/lib';
-import { CopyButton, stateMark, stateWord } from '../../../../shared/ui';
+import { ConsequenceDialog, CopyButton, stateMark, stateWord } from '../../../../shared/ui';
 import { PortField } from '../port-field/port-field';
 import { factRow } from '../subject-shell/subject-shell';
-
-const PORT_ASK_HEADING = 'port-restart-heading';
 
 type PortRestartAsk = {
   port: number;
@@ -25,27 +22,15 @@ function portRestartDialog(ask: PortRestartAsk | undefined): ReactNode {
   const { port, onConfirm, onCancel } = ask;
 
   return (
-    <dialog
-      aria-labelledby={PORT_ASK_HEADING}
-      className="m-auto w-80 menu-surface p-4"
+    <ConsequenceDialog
+      confirmLabel="Restart"
+      heading={`Move the gateway to port ${String(port)}?`}
       onCancel={onCancel}
-      ref={shownAsAskModal}
+      onConfirm={onConfirm}
+      open
     >
-      <p className="text-control font-semibold text-ink" id={PORT_ASK_HEADING}>
-        Move the gateway to port {port}?
-      </p>
-      <p className="mt-1 text-detail text-ink-secondary">
-        The gateway is serving right now, and restarts to answer on the new port.
-      </p>
-      <div className="mt-3 flex justify-end gap-2">
-        <button className="push-button" onClick={onCancel} type="button">
-          Cancel
-        </button>
-        <button className="push-button-primary" onClick={onConfirm} type="button">
-          Restart
-        </button>
-      </div>
-    </dialog>
+      The gateway is serving right now, and restarts to answer on the new port.
+    </ConsequenceDialog>
   );
 }
 

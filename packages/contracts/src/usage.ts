@@ -1,0 +1,191 @@
+import { z } from 'zod';
+
+import { accountKindSchema } from './accounts';
+import { gatewaySlugSchema, modelAliasSchema } from './gateway-config';
+import { nonBlankString } from './non-blank';
+
+const wholeCount = z.number().int().nonnegative();
+
+/** The ranges the usage explorer offers, which is the whole vocabulary a report answers. */
+export const usageRangeSchema = z.enum(['24h', '7d', '30d']);
+
+export type UsageRange = z.infer<typeof usageRangeSchema>;
+
+/** The widths a bucket comes in: hours as stored, days as folded at answer time. */
+export const usageBucketWidthSchema = z.enum(['hour', 'day']);
+
+export type UsageBucketWidth = z.infer<typeof usageBucketWidthSchema>;
+
+/**
+ * The domain tuple one bucket accrues under.
+ *
+ * @summary The tuple is the whole domain hierarchy, so every group-by the explorer offers folds
+ * out of the same buckets. A gateway-raised request reached no account, which is why everything
+ * past the gateway stays optional, and `accountKind` is stamped at accrual time so a cost basis
+ * survives the account's later deletion or rename.
+ */
+export const usageTupleSchema = z.strictObject({
+  gateway: gatewaySlugSchema,
+  virtualModel: modelAliasSchema.optional(),
+  provider: nonBlankString.optional(),
+  providerModel: nonBlankString.optional(),
+  accountId: nonBlankString.optional(),
+  accountKind: accountKindSchema.optional(),
+});
+
+export type UsageTuple = z.infer<typeof usageTupleSchema>;
+
+/**
+ * What one bucket counted.
+ *
+ * @summary Counts only ever accrue, so every measure reads nonnegative. `answered` counts the
+ * requests that carried a duration, which is the denominator an average latency divides by, and
+ * the token object keeps the five-way split beside its total so a cached share never needs a
+ * second reading.
+ */
+export const usageMeasuresSchema = z.strictObject({
+  requests: wholeCount,
+  failed: wholeCount,
+  answered: wholeCount,
+  durationMsSum: z.number().nonnegative(),
+  tokens: z.strictObject({
+    input: wholeCount,
+    output: wholeCount,
+    cacheRead: wholeCount,
+    cacheWrite: wholeCount,
+    reasoning: wholeCount,
+    total: wholeCount,
+  }),
+});
+
+export type UsageMeasures = z.infer<typeof usageMeasuresSchema>;
+
+/** One hour of one tuple, keyed by the UTC hour it opened at. */
+export const usageBucketSchema = z.strictObject({
+  start: wholeCount,
+  tuple: usageTupleSchema,
+  measures: usageMeasuresSchema,
+});
+
+export type UsageBucket = z.infer<typeof usageBucketSchema>;
+
+/** Where the prices behind a cost figure came from, and how fresh they stood. */
+export const pricingProvenanceSchema = z.strictObject({
+  source: z.enum(['synced', 'bundled']),
+  fetchedAt: wholeCount.optional(),
+});
+
+export type PricingProvenance = z.infer<typeof pricingProvenanceSchema>;
+
+/**
+ * One day of cost for one tuple, in integer micro-dollars.
+ *
+ * @summary Cost exists at day width only, which this shape enforces by never appearing on an hour
+ * bucket. A billed figure prices key-served traffic, an equivalent figure prices
+ * subscription-served traffic and always prints behind the approximation prefix, and the two never
+ * merge into one number. Integer micro-dollars keep summed figures exact until the one rounding a
+ * print takes.
+ */
+export const usageDayCostSchema = z.strictObject({
+  dayStart: wholeCount,
+  tuple: usageTupleSchema,
+  billedMicroDollars: wholeCount.optional(),
+  equivalentMicroDollars: wholeCount.optional(),
+});
+
+export type UsageDayCost = z.infer<typeof usageDayCostSchema>;
+
+/** A model the price map could not name, surfaced by request count rather than as zero dollars. */
+export const priceMissSchema = z.strictObject({
+  provider: nonBlankString.optional(),
+  providerModel: nonBlankString,
+  requests: wholeCount,
+});
+
+export type PriceMiss = z.infer<typeof priceMissSchema>;
+
+/**
+ * Everything one range read answers.
+ *
+ * @summary The report returns closed buckets only, so the live plane the renderer already holds
+ * can never double count against it. Tuple-keyed buckets ride whole and the renderer folds its own
+ * group-bys, which is why no group-by parameter exists. `oldestRetainedStart` names the retention
+ * edge so the chart can annotate where history genuinely ends.
+ */
+export const usageReportSchema = z.strictObject({
+  range: usageRangeSchema,
+  bucketWidth: usageBucketWidthSchema,
+  buckets: z.array(usageBucketSchema).readonly(),
+  dayCosts: z.array(usageDayCostSchema).readonly(),
+  priceMisses: z.array(priceMissSchema).readonly(),
+  pricing: pricingProvenanceSchema,
+  oldestRetainedStart: wholeCount.optional(),
+});
+
+export type UsageReport = z.infer<typeof usageReportSchema>;
+
+/**
+ * One subscription account's window burn, derived from local logs.
+ *
+ * @summary No first-party quota endpoint exists, so a window never claims official remaining
+ * quota: it reads what this machine sent, anchored where traffic followed five quiet hours, and
+ * carries the account's own busiest window as the record a meter measures against. A window that
+ * never opened carries burn alone.
+ */
+export const quotaWindowSchema = z.strictObject({
+  accountId: nonBlankString,
+  provider: nonBlankString,
+  length: z.enum(['5h', 'week']),
+  openedAt: wholeCount.optional(),
+  closesAt: wholeCount.optional(),
+  burnTokens: wholeCount,
+  record: z
+    .strictObject({
+      burnTokens: wholeCount,
+      openedAt: wholeCount,
+    })
+    .optional(),
+});
+
+export type QuotaWindow = z.infer<typeof quotaWindowSchema>;
+
+/** One credits read as the upstream answered it, stamped with the instant it was taken. */
+export const balanceReadingSchema = z.strictObject({
+  totalCredits: z.number().nonnegative(),
+  totalUsage: z.number().nonnegative(),
+  readAt: wholeCount,
+});
+
+export type BalanceReading = z.infer<typeof balanceReadingSchema>;
+
+/**
+ * One aggregator account's balance card, either a stamped reading or the failure that met it.
+ *
+ * @summary A failed read carries its failure sentence and no reading, so a stale number never
+ * poses as a fresh one, and the staleness label on a good reading is data rather than guesswork.
+ */
+export const accountBalanceSchema = z.strictObject({
+  accountId: nonBlankString,
+  reading: balanceReadingSchema.optional(),
+  failure: nonBlankString.optional(),
+});
+
+export type AccountBalance = z.infer<typeof accountBalanceSchema>;
+
+export const USAGE_LEDGER_VERSION = 1;
+
+/**
+ * The usage ledger as `usage.json` holds it.
+ *
+ * @summary `accruedThrough` is the watermark no replayed row crosses twice, and `recentRowIds`
+ * guards the rows near it, so a restart backfill can never double count. The version opens its own
+ * migration chain, and a newer document refuses loudly rather than being reinterpreted.
+ */
+export const usageLedgerSchema = z.strictObject({
+  schemaVersion: z.literal(USAGE_LEDGER_VERSION),
+  accruedThrough: wholeCount,
+  recentRowIds: z.array(nonBlankString).readonly(),
+  buckets: z.array(usageBucketSchema).readonly(),
+});
+
+export type UsageLedger = z.infer<typeof usageLedgerSchema>;

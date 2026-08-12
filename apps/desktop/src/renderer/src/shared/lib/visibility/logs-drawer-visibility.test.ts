@@ -3,7 +3,7 @@ import { expect, test, vi } from 'vitest';
 async function aFreshDrawer() {
   vi.resetModules();
 
-  return import('.');
+  return import('..');
 }
 
 test('the drawer stands shut with the app, because a person opens it when they want to read', async () => {

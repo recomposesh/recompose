@@ -128,3 +128,44 @@ export const UnknownProvider = meta.story({
 
 /** The same key row in the dark scheme, where the mask has to hold against the raised card. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/** A served day summarizes on the row and links into the pre-filtered explorer. */
+export const WithAServedDay = meta.story({
+  parameters: {
+    bridge: {
+      accounts: { schemaVersion: ACCOUNTS_VERSION, accounts: [stored] },
+      usageReport: {
+        range: '24h',
+        bucketWidth: 'hour',
+        buckets: [
+          {
+            start: Date.now() - (Date.now() % 3_600_000) - 3_600_000,
+            tuple: { gateway: 'relay', provider: 'anthropic', accountId: 'a1' },
+            measures: {
+              requests: 17,
+              failed: 0,
+              answered: 17,
+              durationMsSum: 8_500,
+              tokens: {
+                input: 0,
+                output: 0,
+                cacheRead: 0,
+                cacheWrite: 0,
+                reasoning: 0,
+                total: 400,
+              },
+            },
+          },
+        ],
+        dayCosts: [],
+        priceMisses: [],
+        pricing: { source: 'bundled' },
+      },
+    },
+  },
+  play: async ({ canvas }) => {
+    const summary = await canvas.findByRole('link', { name: /17 requests/ });
+
+    await expect(summary).toHaveAttribute('href', expect.stringContaining('account=a1'));
+  },
+});

@@ -2,7 +2,7 @@ import type { CredentialedAccount, KeyCheckVerdict } from '@recompose/contracts'
 import type { ReactNode } from 'react';
 
 import { useVerifyKey, useRemoveAccount, withRefusal } from '../../../../shared/api';
-import { BrandMark, OverflowMenu } from '../../../../shared/ui';
+import { BrandMark, OverflowMenu, UsageSummaryLink } from '../../../../shared/ui';
 import { checkableKey, keyTitleFor, markFor } from '../../model/provider-catalog';
 
 type KeyAccountRowProps = {
@@ -111,6 +111,7 @@ export function KeyAccountRow({ account }: KeyAccountRowProps) {
     <li className="flex min-h-row items-center gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
       {mark === undefined ? null : <BrandMark name={mark} />}
       {keyIdentity(account, check.refusal ?? forget.refusal, check.data?.verdict)}
+      <UsageSummaryLink scope={{ param: 'account', value: account.id }} />
       <OverflowMenu
         items={quieterActions({
           account,

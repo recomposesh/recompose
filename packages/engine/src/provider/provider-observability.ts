@@ -181,7 +181,7 @@ export class ProviderObservationSpan {
       generate: this.request.generate ?? true,
       media: clonedMedia(this.request.media),
     });
-    this.attempt.answered(status, { durationMs, tokens: usage.totalTokens });
+    this.attempt.answered(status, { durationMs, tokens: usage.totalTokens, usage });
   }
 }
 

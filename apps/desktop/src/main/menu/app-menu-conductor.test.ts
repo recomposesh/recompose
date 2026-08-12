@@ -31,6 +31,7 @@ type Conducted = {
   settingsFile: string;
   pushed: Settings[];
   commanded: IpcEventPayload<'canvas:command'>[];
+  usageCommanded: IpcEventPayload<'usage:command'>[];
   asked: ('settings' | 'new-gateway')[];
 };
 
@@ -41,6 +42,7 @@ async function freshSettingsFile(): Promise<string> {
 function conductOver(settingsFile: string): Conducted {
   const pushed: Settings[] = [];
   const commanded: IpcEventPayload<'canvas:command'>[] = [];
+  const usageCommanded: IpcEventPayload<'usage:command'>[] = [];
   const asked: ('settings' | 'new-gateway')[] = [];
 
   const menu = conductAppMenu({
@@ -53,6 +55,9 @@ function conductOver(settingsFile: string): Conducted {
     onCanvasCommand: (command) => {
       commanded.push(command);
     },
+    onUsageCommand: (command) => {
+      usageCommanded.push(command);
+    },
     settingsFile: () => settingsFile,
     onCorrupt: () => undefined,
     pushSettings: (settings) => {
@@ -60,7 +65,7 @@ function conductOver(settingsFile: string): Conducted {
     },
   });
 
-  return { menu, settingsFile, pushed, commanded, asked };
+  return { menu, settingsFile, pushed, commanded, usageCommanded, asked };
 }
 
 function installedMenu(): AppMenuItem[] {

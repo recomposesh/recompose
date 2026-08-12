@@ -1,8 +1,10 @@
 import type {
+  AccountBalance,
   AccountsDocument,
   EngineStates,
   GatewayConfig,
   KeyCheckVerdict,
+  QuotaWindow,
   RecomposeIpc,
   RecomposeIpcEvents,
   RuntimeReachability,
@@ -10,6 +12,7 @@ import type {
   SubscriptionAccountView,
   SubscriptionTool,
   SystemState,
+  UsageReport,
 } from '@recompose/contracts';
 
 import { ACCOUNTS_VERSION, withSettingsPatch, defaultSettings } from '@recompose/contracts';
@@ -27,6 +30,7 @@ import { gatewayHandlers } from './fake-gateways';
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
 import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
+import { forgetUsageCommandListeners, listenForUsageCommands } from './fake-usage-pushes';
 
 const emptyDocument: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accounts: [] };
 
@@ -51,6 +55,12 @@ export type BridgeParameters = {
   engineStates?: EngineStates;
   subscriptions?: readonly SubscriptionAccountView[];
   tools?: readonly SubscriptionTool[];
+  /** The report every usage read answers, standing for what the ledger holds this run. */
+  usageReport?: UsageReport;
+  /** The windows the quota strip reads this run. */
+  quotaWindows?: readonly QuotaWindow[];
+  /** The balance cards the aggregator section reads this run. */
+  balances?: readonly AccountBalance[];
   overrides?: Partial<RecomposeIpc>;
 };
 
@@ -95,12 +105,43 @@ function eventBridge(): RecomposeIpcEvents {
     'engine:logs': (listener) => listenForEngineLogs(listener),
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
+    'usage:command': (listener) => listenForUsageCommands(listener),
     'settings:changed': (listener) => listenForSettingsChanges(listener),
     'devtools:toggle': () => () => undefined,
   };
 }
 
+const quietReport: UsageReport = {
+  range: '24h',
+  bucketWidth: 'hour',
+  buckets: [],
+  dayCosts: [],
+  priceMisses: [],
+  pricing: { source: 'bundled' },
+};
+
+type UsageHandlers = Pick<
+  RecomposeIpc,
+  'usage:report' | 'usage:quota-windows' | 'usage:balances' | 'system:usage-table'
+>;
+
+function usageHandlers(
+  report: UsageReport,
+  windows: readonly QuotaWindow[],
+  balances: readonly AccountBalance[],
+): UsageHandlers {
+  return {
+    'usage:report': async (request) =>
+      Promise.resolve({ ok: true, value: { ...report, range: request.range } }),
+    'usage:quota-windows': async () => Promise.resolve({ ok: true, value: windows }),
+    'usage:balances': async () => Promise.resolve({ ok: true, value: balances }),
+    'system:usage-table': async () => Promise.resolve({ ok: true, value: undefined }),
+  };
+}
+
 const noGateways: readonly GatewayConfig[] = [];
+const noWindows: readonly QuotaWindow[] = [];
+const noBalances: readonly AccountBalance[] = [];
 const noEngineStates: EngineStates = {};
 const unreachableProvider: KeyCheckVerdict = 'could-not-check';
 const silentRuntime: RuntimeReachability = { verdict: 'unreachable' };
@@ -116,6 +157,9 @@ function seedsFrom(parameters: BridgeParameters) {
     engineStates: noEngineStates,
     subscriptions: noSubscriptions,
     tools: noTools,
+    usageReport: quietReport,
+    quotaWindows: noWindows,
+    balances: noBalances,
     ...parameters,
   };
 }
@@ -126,6 +170,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   forgetEngineStateListeners();
   forgetEngineTrafficListeners();
   forgetEngineLogsListeners();
+  forgetUsageCommandListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(
     seeds.accounts,
@@ -140,6 +185,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
     ...gatewayHandlers(seeds.gateways, seeds.engineStates),
     ...modelListHandlers(seeds.providerModels),
     ...subscriptionHandlers(seeds.subscriptions, seeds.tools, landSubscription),
+    ...usageHandlers(seeds.usageReport, seeds.quotaWindows, seeds.balances),
     ...parameters.overrides,
   };
   window.recomposeEvents = eventBridge();

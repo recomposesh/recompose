@@ -55,6 +55,10 @@ const recompose: RecomposeIpc = Object.freeze({
   'engine:states': bridgeEntry('engine:states'),
   'engine:replay-logs': bridgeEntry('engine:replay-logs'),
   'system:logs-drawer': bridgeEntry('system:logs-drawer'),
+  'usage:report': bridgeEntry('usage:report'),
+  'usage:quota-windows': bridgeEntry('usage:quota-windows'),
+  'usage:balances': bridgeEntry('usage:balances'),
+  'system:usage-table': bridgeEntry('system:usage-table'),
   'subscriptions:list': bridgeEntry('subscriptions:list'),
   'subscriptions:tools': bridgeEntry('subscriptions:tools'),
   'subscriptions:sign-in': bridgeEntry('subscriptions:sign-in'),
@@ -68,6 +72,7 @@ const recomposeEvents: RecomposeIpcEvents = Object.freeze({
   'engine:logs': eventEntry('engine:logs'),
   'accounts:changed': eventEntry('accounts:changed'),
   'canvas:command': eventEntry('canvas:command'),
+  'usage:command': eventEntry('usage:command'),
   'settings:changed': eventEntry('settings:changed'),
   'devtools:toggle': eventEntry('devtools:toggle'),
 });

@@ -1,6 +1,6 @@
 import type { LogRow } from '@recompose/contracts';
 
-import { requestFailed } from './log-scope';
+import { requestFailed } from './request-standing';
 
 const WINDOW_MS = 60_000;
 const NINETY_FIFTH = 0.95;

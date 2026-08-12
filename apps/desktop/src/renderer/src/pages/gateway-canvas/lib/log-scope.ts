@@ -1,6 +1,6 @@
 import type { LogRow } from '@recompose/contracts';
 
-const FIRST_FAILING_STATUS = 400;
+import { requestFailed } from '../../../entities/request-log';
 
 /** What stands selected on the canvas, which is the one thing the rows narrow to. */
 export type LogSubject =
@@ -10,21 +10,6 @@ export type LogSubject =
   | { kind: 'target'; accountId: string }
   | { kind: 'ghost-target'; accountId: string }
   | { kind: 'draft' };
-
-/** Whether a provider response has started but its body has not finished or failed yet. */
-export function requestInFlight(row: LogRow): boolean {
-  return row.origin === 'provider' && row.durationMs === undefined;
-}
-
-/**
- * Whether a request failed, which is where this slice decides what counts as an error.
- *
- * @summary The footer's error count and the drawer's errors toggle both read the answer from here,
- * so a tally and a filtered list can never disagree about the same request.
- */
-export function requestFailed(row: LogRow): boolean {
-  return !requestInFlight(row) && row.status >= FIRST_FAILING_STATUS;
-}
 
 /**
  * Whether a request reached the target a selection stands for.

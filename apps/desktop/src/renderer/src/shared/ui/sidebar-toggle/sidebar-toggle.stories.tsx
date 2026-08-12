@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { showSidebar } from '../../lib/sidebar-visibility';
+import { showSidebar } from '../../lib/visibility/sidebar-visibility';
 import { SidebarToggle } from './sidebar-toggle';
 
 const meta = preview.meta({

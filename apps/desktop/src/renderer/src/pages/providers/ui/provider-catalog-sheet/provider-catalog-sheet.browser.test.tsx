@@ -52,18 +52,33 @@ async function renderCatalog(kind: AccountKind = 'subscription') {
   );
 }
 
+async function focusHeldBy(control: ReturnType<typeof page.getByRole>): Promise<boolean> {
+  control.element().focus();
+
+  if (document.activeElement !== control.element()) {
+    return false;
+  }
+
+  await new Promise((settle) => {
+    setTimeout(settle, 50);
+  });
+
+  return document.activeElement === control.element();
+}
+
+/**
+ * Reaches a control the way a keyboard does, pressing Enter only once focus holds still.
+ *
+ * @summary The sheet's own mount effects move focus while the panel settles, so a press right
+ * after a single focus check can land on nothing. Focus has to survive a beat before the key
+ * goes, which is also the only moment a person's Enter could arrive.
+ */
 async function press(name: RegExp | string) {
   const control = page.getByRole('button', { name });
 
   await expect.element(control).toBeVisible();
 
-  await expect
-    .poll(() => {
-      control.element().focus();
-
-      return document.activeElement === control.element();
-    })
-    .toBe(true);
+  await expect.poll(async () => focusHeldBy(control), { timeout: 10_000 }).toBe(true);
 
   await userEvent.keyboard('{Enter}');
 }
@@ -248,7 +263,7 @@ test('an account the catalog connected closes it', async () => {
   await press(/^Claude/);
   await press('Sign in to Anthropic');
 
-  await expect.element(screen.getByText('The catalog closed.')).toBeVisible();
+  await expect.element(screen.getByText('The catalog closed.'), { timeout: 10_000 }).toBeVisible();
 });
 
 function closingActNames() {

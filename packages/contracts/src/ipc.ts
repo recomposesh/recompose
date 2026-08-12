@@ -19,6 +19,12 @@ import {
   subscriptionProviderIdSchema,
   subscriptionToolSchema,
 } from './subscriptions';
+import {
+  accountBalanceSchema,
+  quotaWindowSchema,
+  usageRangeSchema,
+  usageReportSchema,
+} from './usage';
 
 export const ipcErrorSchema = z.strictObject({
   code: z.enum([
@@ -26,6 +32,7 @@ export const ipcErrorSchema = z.strictObject({
     'vault-newer-schema',
     'settings-newer-schema',
     'accounts-newer-schema',
+    'usage-newer-schema',
     'validation-failed',
     'storage-failed',
     'folder-open-failed',
@@ -145,6 +152,29 @@ export const ipcChannels = {
     request: z.strictObject({ open: z.boolean() }),
     response: ipcResult(z.void()),
   },
+  /**
+   * Asks main for one range of closed usage buckets, priced at day width.
+   *
+   * @summary The answer carries tuple-keyed buckets whole and the renderer folds its own
+   * group-bys, so no group-by parameter exists. The open bucket never rides the answer, which is
+   * what keeps the live plane and the ledger from ever counting one request twice.
+   */
+  'usage:report': {
+    request: z.strictObject({ range: usageRangeSchema }),
+    response: ipcResult(usageReportSchema),
+  },
+  'usage:quota-windows': {
+    request: z.void(),
+    response: ipcResult(z.array(quotaWindowSchema).readonly()),
+  },
+  'usage:balances': {
+    request: z.strictObject({ refresh: z.boolean() }),
+    response: ipcResult(z.array(accountBalanceSchema).readonly()),
+  },
+  'system:usage-table': {
+    request: z.strictObject({ open: z.boolean() }),
+    response: ipcResult(z.void()),
+  },
   'subscriptions:list': { request: z.void(), response: subscriptionViewsResponse },
   'subscriptions:tools': {
     request: z.void(),
@@ -183,6 +213,20 @@ export const ipcEvents = {
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': {
     payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs']),
+  },
+  'usage:command': {
+    payload: z.enum([
+      'range-24h',
+      'range-7d',
+      'range-30d',
+      'metric-requests',
+      'metric-tokens',
+      'metric-spend',
+      'metric-latency',
+      'metric-errors',
+      'toggle-table-twin',
+      'refresh',
+    ]),
   },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },

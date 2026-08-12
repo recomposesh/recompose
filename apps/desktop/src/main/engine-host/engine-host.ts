@@ -237,7 +237,7 @@ function residentFor(deps: EngineHostDeps): Resident {
     awaitingReport: new Map(),
     looks: openEngineLooks(),
     traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
-    logs: openLogsDesk(deps.onLogs ?? (() => undefined)),
+    logs: openLogsDesk(deps.onLogs ?? (() => undefined), deps.onSettledRow),
   };
 }
 
@@ -263,6 +263,7 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     listModels: async (origin, custody) =>
       listModelsThroughTheChild(resident.looks, () => runningChild(resident), origin, custody),
     states: () => resident.states,
+    retainedLogRows: () => resident.logs.retainedRows(),
     replayLogs: () => {
       resident.logs.backfill();
     },

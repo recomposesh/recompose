@@ -3,7 +3,7 @@ import type { IpcEventPayload, Settings } from '@recompose/contracts';
 import type { AppMenuHandlers, AppMenuView } from './app-menu-template';
 
 import { amendStoredSettings } from '../storage/settings-amend';
-import { onGatewayDetailUrl } from '../windows/renderer-url';
+import { onGatewayDetailUrl, onUsageUrl } from '../windows/renderer-url';
 import { installAppMenu } from './app-menu';
 
 export type AppMenuConduct = {
@@ -11,26 +11,44 @@ export type AppMenuConduct = {
   repaint: () => void;
   /** Carries a saved settings document into the menu tick and out to every window. */
   reflectSettings: (settings: Settings) => void;
-  /** Reads the surface a window navigated to, so the Gateway menu comes and goes with it. */
+  /** Reads the surface a window navigated to, so the surface menus come and go with it. */
   standOnUrl: (url: string) => void;
   /** Carries the renderer's logs drawer standing into the Show Logs tick. */
   reflectLogsDrawer: (open: boolean) => void;
+  /** Carries the renderer's data-table twin standing into the Show Data Table tick. */
+  reflectUsageTable: (open: boolean) => void;
 };
 
 type AppMenuSeams = {
   onOpenSettings: () => void;
   onNewGateway: () => void;
   onCanvasCommand: (command: IpcEventPayload<'canvas:command'>) => void;
+  onUsageCommand: (command: IpcEventPayload<'usage:command'>) => void;
   settingsFile: () => string;
   onCorrupt: (quarantinedPath: string) => void;
   pushSettings: (settings: Settings) => void;
 };
 
+function storedChecklistChoice(
+  seams: AppMenuSeams,
+  reflect: (settings: Settings) => void,
+): (shown: boolean) => void {
+  return (shown) => {
+    amendStoredSettings(seams.settingsFile(), seams.onCorrupt, {
+      showOnboardingChecklist: shown,
+    })
+      .then(reflect)
+      .catch((error: unknown) => {
+        console.error('recompose could not store the checklist choice, so the menu stands.', error);
+      });
+  };
+}
+
 /**
  * Holds the application menu's view of the world and repaints it on every change.
  *
  * @summary The menu is the one surface main owns that reads renderer-shaped state, so this is
- * where the checklist tick and the Gateway menu's presence live. Electron rebuilds a menu rather
+ * where the checklist tick and the surface menus' presence live. Electron rebuilds a menu rather
  * than mutating one, so every change lands as a fresh install from the same view value.
  */
 export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
@@ -38,23 +56,17 @@ export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
     checklistShown: true,
     onGatewayDetail: false,
     logsDrawerOpen: false,
+    onUsage: false,
+    usageTableOpen: false,
   };
 
   const handlers: AppMenuHandlers = {
     onOpenSettings: seams.onOpenSettings,
     onNewGateway: seams.onNewGateway,
     onCanvasCommand: seams.onCanvasCommand,
+    onUsageCommand: seams.onUsageCommand,
     onToggleChecklist: (shown) => {
-      amendStoredSettings(seams.settingsFile(), seams.onCorrupt, {
-        showOnboardingChecklist: shown,
-      })
-        .then(reflectSettings)
-        .catch((error: unknown) => {
-          console.error(
-            'recompose could not store the checklist choice, so the menu stands.',
-            error,
-          );
-        });
+      storedChecklistChoice(seams, reflectSettings)(shown);
     },
   };
 
@@ -70,9 +82,11 @@ export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
 
   function standOnUrl(url: string): void {
     const onGatewayDetail = onGatewayDetailUrl(url);
+    const onUsage = onUsageUrl(url);
 
-    if (view.onGatewayDetail !== onGatewayDetail) {
+    if (view.onGatewayDetail !== onGatewayDetail || view.onUsage !== onUsage) {
       view.onGatewayDetail = onGatewayDetail;
+      view.onUsage = onUsage;
       repaint();
     }
   }
@@ -82,5 +96,10 @@ export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
     repaint();
   }
 
-  return { repaint, reflectSettings, standOnUrl, reflectLogsDrawer };
+  function reflectUsageTable(open: boolean): void {
+    view.usageTableOpen = open;
+    repaint();
+  }
+
+  return { repaint, reflectSettings, standOnUrl, reflectLogsDrawer, reflectUsageTable };
 }

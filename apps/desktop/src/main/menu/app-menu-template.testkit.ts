@@ -30,6 +30,9 @@ export function recordingHandlers(taken: string[]): AppMenuHandlers {
     onCanvasCommand: (command) => {
       taken.push(command);
     },
+    onUsageCommand: (command) => {
+      taken.push(command);
+    },
   };
 }
 
@@ -39,12 +42,24 @@ export const atHome: AppMenuView = {
   checklistShown: true,
   onGatewayDetail: false,
   logsDrawerOpen: false,
+  onUsage: false,
+  usageTableOpen: false,
 };
 
 export const atGatewayDetail: AppMenuView = {
   checklistShown: true,
   onGatewayDetail: true,
   logsDrawerOpen: false,
+  onUsage: false,
+  usageTableOpen: false,
+};
+
+export const atUsage: AppMenuView = {
+  checklistShown: true,
+  onGatewayDetail: false,
+  logsDrawerOpen: false,
+  onUsage: true,
+  usageTableOpen: false,
 };
 
 export const everyPlatform: NodeJS.Platform[] = ['darwin', 'win32', 'linux'];

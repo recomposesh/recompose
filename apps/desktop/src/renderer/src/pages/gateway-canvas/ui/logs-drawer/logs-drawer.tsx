@@ -6,6 +6,7 @@ import { useState, useSyncExternalStore } from 'react';
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 
 import { accountName } from '../../../../entities/account';
+import { requestFailed, requestInFlight } from '../../../../entities/request-log';
 import {
   closeLogsDrawer,
   keepPanelWidth,
@@ -16,7 +17,7 @@ import {
   toggleLogsDrawer,
 } from '../../../../shared/lib';
 import { Icon, PanelSeparator, SegmentedControl, StatusChip } from '../../../../shared/ui';
-import { logScope, requestFailed, requestInFlight } from '../../lib/log-scope';
+import { logScope } from '../../lib/log-scope';
 import { LogList } from '../log-list/log-list';
 
 const NOTHING_YET: Record<InspectorSubject['kind'], string> = {

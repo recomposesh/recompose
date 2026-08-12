@@ -17,7 +17,7 @@ import {
   subscriptionsQueryOptions,
   useDefineVirtualModel,
 } from '../../../../shared/api';
-import { closeInspector } from '../../../../shared/lib';
+import { closeInspector, useDisplayTick } from '../../../../shared/lib';
 import {
   canvasPositions,
   keepCanvasPositions,
@@ -26,7 +26,6 @@ import {
 } from '../../lib/canvas-position-store';
 import { canvasGraph } from '../../lib/node-graph';
 import { targetSeatBeside } from '../../lib/tidy-layout';
-import { useCanvasClock } from '../../lib/use-canvas-clock';
 import { heldDraft, leaveDrafting, useHeldDraft } from '../../lib/use-held-draft';
 import { askedTargetRemoval, spokenNameOf, targetNameIn } from './binding-acts';
 import { flowWiring } from './canvas-gestures';
@@ -41,6 +40,8 @@ import {
 import { subjectOf, targetModelIdOf } from './canvas-wiring';
 import { pickerOnCanvas } from './picker-on-canvas';
 import { removalAsked, useGatewayRemoval } from './removal-flow';
+
+const CANVAS_CLOCK_TICK_MS = 10_000;
 
 /** Everything the page renders the canvas from, wired in one place. */
 export type ComposedCanvas = {
@@ -138,7 +139,7 @@ export function useGatewayCanvas(
   const pickerModels = usePickerModels(standings.picker);
   const { data: traffic } = useQuery(engineTrafficQueryOptions);
   const { data: subscriptions = [] } = useQuery(subscriptionsQueryOptions);
-  const now = useCanvasClock();
+  const now = useDisplayTick(CANVAS_CLOCK_TICK_MS);
   const dragging = useRef<DragWatch>({ inFlight: false, escaped: false });
   const view = useRef<ReactFlowInstance | null>(null);
   const deleteGateway = useGatewayRemoval(slug, standings.refuse, onGatewayRemoved);

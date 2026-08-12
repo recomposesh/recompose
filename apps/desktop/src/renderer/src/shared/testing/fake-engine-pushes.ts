@@ -12,7 +12,7 @@ type PushLine<Payload> = {
  * @summary Every push works the same way, so the knowledge of how one behaves lives here once and
  * each line is only its payload and its name.
  */
-function aPushLine<Payload>(): PushLine<Payload> {
+export function aPushLine<Payload>(): PushLine<Payload> {
   const listeners = new Set<(payload: Payload) => void>();
 
   return {

@@ -7,6 +7,7 @@ import type {
   LogBatch,
   LogRow,
   RecomposeIpcEvents,
+  TokenSplit,
 } from './index';
 
 describe('one request as every surface reads it', () => {
@@ -24,8 +25,19 @@ describe('one request as every surface reads it', () => {
       status: number;
       durationMs?: number | undefined;
       tokens?: number | undefined;
+      usage?: TokenSplit | undefined;
       clientKey: string;
       failure?: string | undefined;
+    }>();
+  });
+
+  test('the split names its five token kinds and nothing else', () => {
+    expectTypeOf<TokenSplit>().toEqualTypeOf<{
+      input: number;
+      output: number;
+      cacheRead: number;
+      cacheWrite: number;
+      reasoning: number;
     }>();
   });
 

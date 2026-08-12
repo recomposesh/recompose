@@ -142,6 +142,7 @@ test('no waiting row owns a field in the settings document', async () => {
     'showOnboardingChecklist',
     'startGatewaysOnLaunch',
     'theme',
+    'usageRetentionDays',
   ]);
 });
 

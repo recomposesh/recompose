@@ -7,3 +7,4 @@ export * from './engine';
 export * from './engine-logs';
 export * from './settings';
 export * from './system';
+export * from './usage';

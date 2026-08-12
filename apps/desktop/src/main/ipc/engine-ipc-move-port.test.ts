@@ -43,6 +43,7 @@ function hostAnswering(refusal?: Error) {
 
   const host: EngineHost = {
     replayLogs: () => undefined,
+    retainedLogRows: () => [],
     start: async () => Promise.resolve({ status: 'running' }),
     stop: async () => Promise.resolve({ status: 'stopped' }),
     restart: async (gateway) => {

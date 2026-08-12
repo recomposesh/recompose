@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
+import { UsageSummaryLink } from '../../../../shared/ui';
 import {
   editFooter,
   editRow,
@@ -83,6 +84,9 @@ export function GatewayGeneralInfo({ gateway }: GatewayGeneralInfoProps) {
         {editing ? gatewayNameRow(name, setName) : factRow('Name', gateway.displayName)}
       </div>
       {editing ? editFooter({ onCancel: leaveEditing, onSave: save }, refused) : null}
+      <div className="mt-2 px-1">
+        <UsageSummaryLink scope={{ param: 'gateway', value: gateway.slug }} />
+      </div>
     </>
   );
 }

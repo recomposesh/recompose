@@ -35,10 +35,14 @@ const channelNames: IpcChannel[] = [
   'gateways:remove',
   'engine:replay-logs',
   'system:logs-drawer',
+  'usage:report',
+  'usage:quota-windows',
+  'usage:balances',
+  'system:usage-table',
 ];
 
 describe('ipc channel registry', () => {
-  test('exactly the thirty-one specified channels exist', () => {
+  test('exactly the thirty-five specified channels exist', () => {
     expect(Object.keys(ipcChannels).sort()).toEqual([...channelNames].sort());
   });
 
@@ -187,6 +191,16 @@ describe('the system state crossing the bridge', () => {
     expect(() => systemStateSchema.parse({ ...observedSystemState, loginItem: 'maybe' })).toThrow();
   });
 
+  test('every platform reads its own file browser and login-item standing', () => {
+    for (const fileBrowser of ['finder', 'explorer', 'file-manager']) {
+      for (const loginItem of ['available', 'unpackaged', 'unsupported']) {
+        const reading = { ...observedSystemState, fileBrowser, loginItem };
+
+        expect(systemStateSchema.parse(reading)).toEqual(reading);
+      }
+    }
+  });
+
   test('a blank config folder is rejected', () => {
     expect(() =>
       systemStateSchema.parse({ ...observedSystemState, configFolder: '   ' }),
@@ -228,6 +242,7 @@ describe('ipc error codes', () => {
     'vault-newer-schema',
     'settings-newer-schema',
     'accounts-newer-schema',
+    'usage-newer-schema',
     'validation-failed',
     'storage-failed',
     'folder-open-failed',
@@ -246,7 +261,7 @@ describe('ipc error codes', () => {
     expect(() => ipcErrorSchema.parse({ code: 'other', message: 'x' })).toThrow();
   });
 
-  test('the set holds exactly twelve codes, so a thirteenth arrives through a failing test', () => {
+  test('the set holds exactly thirteen codes, so a fourteenth arrives through a failing test', () => {
     expect(ipcErrorSchema.shape.code.options).toEqual(everyCode);
   });
 

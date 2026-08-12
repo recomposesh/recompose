@@ -2,7 +2,7 @@ import { expect, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { inspectorOpen, toggleInspector } from '../../lib/inspector-visibility';
+import { inspectorOpen, toggleInspector } from '../../lib/visibility/inspector-visibility';
 import { InspectorToggle } from './inspector-toggle';
 
 function standAs(open: boolean) {

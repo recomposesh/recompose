@@ -48,3 +48,49 @@ test('a folder that refuses to open says so on the row', async () => {
 
   await expect.element(screen.getByRole('alert')).toBeVisible();
 });
+
+test('the Data section offers three retention windows with 30 days standing', async () => {
+  const screen = await renderAgainstBridge(<SettingsPage />);
+
+  await expect
+    .element(screen.getByRole('radiogroup', { name: 'Usage retention' }))
+    .toBeInTheDocument();
+  await expect.element(screen.getByRole('radio', { name: '30 days' })).toBeChecked();
+});
+
+test('widening the window applies with no confirmation', async () => {
+  const screen = await renderAgainstBridge(<SettingsPage />);
+
+  await screen.getByRole('radio', { name: '90 days' }).click();
+
+  await expect.element(screen.getByRole('radio', { name: '90 days' })).toBeChecked();
+  expect(document.querySelector('dialog[open]')).toBeNull();
+});
+
+test('a shortening states its cost and holds until answered', async () => {
+  const screen = await renderAgainstBridge(<SettingsPage />);
+
+  await screen.getByRole('radio', { name: '7 days' }).click();
+
+  await expect.element(screen.getByText(/drops usage older than 7 days for good/)).toBeVisible();
+  await expect.element(screen.getByRole('radio', { name: '30 days' })).toBeChecked();
+});
+
+test('declining keeps the window and the history', async () => {
+  const screen = await renderAgainstBridge(<SettingsPage />);
+
+  await screen.getByRole('radio', { name: '7 days' }).click();
+  await screen.getByRole('button', { name: 'Cancel' }).click();
+
+  await expect.element(screen.getByRole('radio', { name: '30 days' })).toBeChecked();
+  expect(document.querySelector('dialog[open]')).toBeNull();
+});
+
+test('accepting saves the shorter window', async () => {
+  const screen = await renderAgainstBridge(<SettingsPage />);
+
+  await screen.getByRole('radio', { name: '7 days' }).click();
+  await screen.getByRole('button', { name: 'Drop history' }).click();
+
+  await expect.element(screen.getByRole('radio', { name: '7 days' })).toBeChecked();
+});
