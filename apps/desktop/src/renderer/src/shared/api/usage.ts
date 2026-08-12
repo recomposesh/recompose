@@ -1,4 +1,4 @@
-import type { UsageRange } from '@recompose/contracts';
+import type { UsageReportAsk } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { queryOptions } from '@tanstack/react-query';
@@ -8,23 +8,23 @@ import { unwrapIpcResult } from './ipc-result';
 const MINUTE_MS = 60_000;
 const FIVE_MINUTES_MS = 300_000;
 
-function reportFreshness(range: UsageRange): number {
-  return range === '30d' ? FIVE_MINUTES_MS : MINUTE_MS;
+function reportFreshness(ask: UsageReportAsk): number {
+  return ask.range === '30d' ? FIVE_MINUTES_MS : MINUTE_MS;
 }
 
 /**
- * One range of closed usage buckets, priced at day width, polled at the width's own pace.
+ * One ask of closed usage buckets, priced at day width, polled at the width's own pace.
  *
  * @summary Reports answer closed buckets only, so nothing changes faster than a bucket closes:
- * hour-wide ranges poll every minute, the day-wide range every five. Each range holds its own key,
- * so switching ranges never repaints one view with another's answer.
+ * hour-wide ranges poll every minute, the day-wide range every five. Every ask holds its own key,
+ * so a narrower window asking the same range for hours never repaints the folded view.
  */
-export function usageReportQueryOptions(range: UsageRange) {
-  const freshness = reportFreshness(range);
+export function usageReportQueryOptions(ask: UsageReportAsk) {
+  const freshness = reportFreshness(ask);
 
   return queryOptions({
-    queryKey: ['usage-report', range],
-    queryFn: async () => unwrapIpcResult(await window.recompose['usage:report']({ range })),
+    queryKey: ['usage-report', ask.range, ask.bucketWidth ?? 'default', ask.dayOffsetMinutes ?? 0],
+    queryFn: async () => unwrapIpcResult(await window.recompose['usage:report'](ask)),
     staleTime: freshness,
     refetchInterval: freshness,
   });
@@ -38,13 +38,13 @@ export function usageReportQueryOptions(range: UsageRange) {
  */
 export async function warmedUsageReport(
   queryClient: QueryClient,
-  range: UsageRange | '1h',
+  ask: UsageReportAsk | undefined,
 ): Promise<void> {
-  if (range === '1h') {
+  if (ask === undefined) {
     return;
   }
 
-  await queryClient.ensureQueryData(usageReportQueryOptions(range));
+  await queryClient.ensureQueryData(usageReportQueryOptions(ask));
 }
 
 /** The standing quota windows per subscription account, moved along by the open hour. */

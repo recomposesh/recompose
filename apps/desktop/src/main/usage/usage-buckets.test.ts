@@ -250,6 +250,20 @@ describe('pruning and reading', () => {
     expect(closed.at(0)?.start).toBe(anHourStart + 2 * HOUR);
   });
 
+  test('a day breaks where the reader lives, not where UTC does', () => {
+    const utcMidnight = anHourStart - (anHourStart % DAY);
+    const ledger = ledgerOf(
+      served('late-evening', { at: utcMidnight - 2 * HOUR }),
+      served('after-midnight', { at: utcMidnight + HOUR }),
+    );
+
+    const aheadByThree = dayFolded(ledger.buckets, -180);
+
+    expect(aheadByThree).toHaveLength(1);
+    expect(aheadByThree.at(0)?.start).toBe(utcMidnight - 3 * HOUR);
+    expect(aheadByThree.at(0)?.measures.requests).toBe(2);
+  });
+
   test('folding hours into days keeps tuples apart and sums their measures', () => {
     const dayStart = anHourStart - (anHourStart % DAY);
     const ledger = ledgerOf(

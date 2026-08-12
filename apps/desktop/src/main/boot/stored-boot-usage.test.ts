@@ -72,7 +72,7 @@ async function storedUsage(home: string): Promise<UsageLedger> {
 }
 
 async function aStampedBucket(boot: StoredBoot) {
-  const report = await boot.usageStore.report('24h');
+  const report = await boot.usageStore.report({ range: '24h' });
   const stamped = report.buckets.findLast((bucket) => bucket.tuple.accountKind !== undefined);
 
   if (stamped === undefined) {
@@ -134,7 +134,7 @@ describe('the usage ledger the boot stands up', () => {
 
     openBoots.push(boot);
 
-    const report = await boot.usageStore.report('24h');
+    const report = await boot.usageStore.report({ range: '24h' });
 
     expect(report.buckets).toEqual([]);
     expect(report.oldestRetainedStart).toBeGreaterThan(0);

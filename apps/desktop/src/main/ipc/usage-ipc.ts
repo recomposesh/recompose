@@ -25,8 +25,9 @@ export type UsageIpcDeps = {
 function coveringDays(
   buckets: readonly UsageBucket[],
   width: 'hour' | 'day',
+  dayOffsetMinutes: number | undefined,
 ): readonly UsageBucket[] {
-  return width === 'day' ? buckets : dayFolded(buckets);
+  return width === 'day' ? buckets : dayFolded(buckets, dayOffsetMinutes);
 }
 
 /**
@@ -39,11 +40,11 @@ function coveringDays(
  */
 export function createUsageIpcHandlers(deps: UsageIpcDeps): UsageIpcHandlers {
   return {
-    'usage:report': async ({ range }) => {
-      const answer = await deps.store.report(range);
+    'usage:report': async (ask) => {
+      const answer = await deps.store.report(ask);
       const { prices, provenance } = deps.standingPrices();
       const { dayCosts, priceMisses } = dayCostsOf(
-        coveringDays(answer.buckets, answer.bucketWidth),
+        coveringDays(answer.buckets, answer.bucketWidth, ask.dayOffsetMinutes),
         prices,
       );
 

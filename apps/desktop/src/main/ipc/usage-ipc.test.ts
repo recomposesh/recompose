@@ -66,7 +66,8 @@ function handlersOver(standing: {
 }) {
   return createUsageIpcHandlers({
     store: {
-      report: async (range) => Promise.resolve({ ...aQuietReport(standing.reported ?? []), range }),
+      report: async (ask) =>
+        Promise.resolve({ ...aQuietReport(standing.reported ?? []), range: ask.range }),
       heldBuckets: () => standing.held ?? [],
     },
     standingPrices: () => ({

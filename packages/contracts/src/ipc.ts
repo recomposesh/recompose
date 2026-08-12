@@ -22,7 +22,7 @@ import {
 import {
   accountBalanceSchema,
   quotaWindowSchema,
-  usageRangeSchema,
+  usageReportAskSchema,
   usageReportSchema,
 } from './usage';
 
@@ -157,10 +157,12 @@ export const ipcChannels = {
    *
    * @summary The answer carries tuple-keyed buckets whole and the renderer folds its own
    * group-bys, so no group-by parameter exists. The open bucket never rides the answer, which is
-   * what keeps the live plane and the ledger from ever counting one request twice.
+   * what keeps the live plane and the ledger from ever counting one request twice. A reader whose
+   * window is narrower than the range's own width asks for hours, and a reader carries its day
+   * boundary so a folded day breaks at the reader's midnight rather than at UTC.
    */
   'usage:report': {
-    request: z.strictObject({ range: usageRangeSchema }),
+    request: usageReportAskSchema,
     response: ipcResult(usageReportSchema),
   },
   'usage:quota-windows': {

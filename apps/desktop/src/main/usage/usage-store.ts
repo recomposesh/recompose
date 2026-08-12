@@ -3,8 +3,8 @@ import type {
   LogRow,
   UsageBucket,
   UsageLedger,
-  UsageRange,
   UsageReport,
+  UsageReportAsk,
   UsageRetentionDays,
 } from '@recompose/contracts';
 
@@ -41,7 +41,7 @@ export type UsageStoreDeps = {
 
 export type UsageStore = {
   accrue: (row: LogRow) => void;
-  report: (range: UsageRange) => Promise<UsageReport>;
+  report: (ask: UsageReportAsk) => Promise<UsageReport>;
   heldBuckets: () => readonly UsageBucket[];
   flushNow: () => Promise<void>;
 };
@@ -122,13 +122,15 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
       dirty = true;
       watchForQuiet();
     },
-    report: async (range) => {
+    report: async (ask) => {
+      const { range } = ask;
       const closed = closedHourBuckets(ledger, range, Date.now());
+      const width = ask.bucketWidth ?? (range === '24h' ? ('hour' as const) : ('day' as const));
 
       return {
         range,
-        bucketWidth: range === '24h' ? ('hour' as const) : ('day' as const),
-        buckets: range === '24h' ? closed : dayFolded(closed),
+        bucketWidth: width,
+        buckets: width === 'hour' ? closed : dayFolded(closed, ask.dayOffsetMinutes),
         dayCosts: [],
         priceMisses: [],
         pricing: { source: 'bundled' as const },

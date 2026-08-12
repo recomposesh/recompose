@@ -51,40 +51,71 @@ describe('the loader warms the report the view will read', () => {
 
     const queryClient = new QueryClient();
 
-    await warmedUsageReport(queryClient, '7d');
+    await warmedUsageReport(queryClient, { range: '7d' });
 
-    expect(queryClient.getQueryData(usageReportQueryOptions('7d').queryKey)).toEqual(emptyReport);
+    expect(queryClient.getQueryData(usageReportQueryOptions({ range: '7d' }).queryKey)).toEqual(
+      emptyReport,
+    );
   });
 
-  it('warms nothing for the live-plane range, which never reads the ledger', async () => {
+  it('warms nothing when the view reads the live plane rather than the ledger', async () => {
     const queryClient = new QueryClient();
 
-    await warmedUsageReport(queryClient, '1h');
+    await warmedUsageReport(queryClient, undefined);
 
     expect(queryClient.getQueryCache().getAll()).toEqual([]);
   });
 });
 
-describe('the report query keeps each range under its own key', () => {
+describe('the report query keeps each ask under its own key', () => {
   it('never lets two ranges share a cache entry', () => {
     const keys = (['24h', '7d', '30d'] as const).map(
-      (range) => usageReportQueryOptions(range).queryKey,
+      (range) => usageReportQueryOptions({ range }).queryKey,
     );
 
     expect(new Set(keys.map((key) => JSON.stringify(key))).size).toBe(3);
+  });
+
+  it('never lets two widths of one range share a cache entry', () => {
+    const folded = usageReportQueryOptions({ range: '7d' }).queryKey;
+    const hourly = usageReportQueryOptions({ range: '7d', bucketWidth: 'hour' }).queryKey;
+
+    expect(JSON.stringify(folded)).not.toBe(JSON.stringify(hourly));
+  });
+
+  it('carries the whole ask to main, day boundary and all', async () => {
+    const asked: unknown[] = [];
+
+    vi.stubGlobal('window', {
+      recompose: {
+        'usage:report': async (ask: unknown) => {
+          asked.push(ask);
+
+          return Promise.resolve({ ok: true, value: emptyReport });
+        },
+      },
+    });
+
+    const queryClient = new QueryClient();
+
+    await queryClient.ensureQueryData(
+      usageReportQueryOptions({ range: '30d', dayOffsetMinutes: -180 }),
+    );
+
+    expect(asked).toEqual([{ range: '30d', dayOffsetMinutes: -180 }]);
   });
 });
 
 describe('freshness follows the bucket width', () => {
   it('polls hour-wide ranges every minute', () => {
-    expect(usageReportQueryOptions('24h').refetchInterval).toBe(60_000);
-    expect(usageReportQueryOptions('7d').refetchInterval).toBe(60_000);
-    expect(usageReportQueryOptions('24h').staleTime).toBe(60_000);
+    expect(usageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(60_000);
+    expect(usageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(60_000);
+    expect(usageReportQueryOptions({ range: '24h' }).staleTime).toBe(60_000);
   });
 
   it('polls the day-wide range every five minutes', () => {
-    expect(usageReportQueryOptions('30d').refetchInterval).toBe(300_000);
-    expect(usageReportQueryOptions('30d').staleTime).toBe(300_000);
+    expect(usageReportQueryOptions({ range: '30d' }).refetchInterval).toBe(300_000);
+    expect(usageReportQueryOptions({ range: '30d' }).staleTime).toBe(300_000);
   });
 
   it('polls the quota windows every minute, since the open hour moves them', () => {

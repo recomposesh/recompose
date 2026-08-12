@@ -3,9 +3,30 @@ import { describe, expect, test } from 'vitest';
 import { ipcChannels, ipcErrorSchema, ipcEvents } from './ipc';
 
 describe('what the usage channels ask for', () => {
-  test('a report read names its range and nothing else', () => {
+  test('a report read names its range', () => {
     expect(ipcChannels['usage:report'].request.parse({ range: '7d' })).toEqual({ range: '7d' });
     expect(() => ipcChannels['usage:report'].request.parse({ range: '90d' })).toThrow();
+  });
+
+  test('a report read may ask for hours where the default width would fold days', () => {
+    expect(ipcChannels['usage:report'].request.parse({ range: '7d', bucketWidth: 'hour' })).toEqual(
+      {
+        range: '7d',
+        bucketWidth: 'hour',
+      },
+    );
+    expect(() =>
+      ipcChannels['usage:report'].request.parse({ range: '7d', bucketWidth: 'minute' }),
+    ).toThrow();
+  });
+
+  test('a report read carries the reader own day boundary, so days break where the reader lives', () => {
+    expect(
+      ipcChannels['usage:report'].request.parse({ range: '30d', dayOffsetMinutes: -180 }),
+    ).toEqual({ range: '30d', dayOffsetMinutes: -180 });
+    expect(() =>
+      ipcChannels['usage:report'].request.parse({ range: '30d', dayOffsetMinutes: 1500 }),
+    ).toThrow();
   });
 
   test('the quota read asks for nothing, because main derives every window it answers', () => {
