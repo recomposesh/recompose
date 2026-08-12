@@ -144,6 +144,33 @@ export function servedRun(count: number, differing: Partial<LogRow> = {}): reado
 }
 
 /**
+ * A history spanning both virtual models, with a refusal and a failure among the answers.
+ *
+ * @summary The three leading rows differ in model, provider, and status, and the run behind them
+ * fills the drawer past its first screen, so scrolling and filtering both have something to bite.
+ */
+export const servedAcrossTwoModels: readonly LogRow[] = [
+  servedRequest({ id: 'a', virtualModel: 'fast' }),
+  servedRequest({
+    id: 'b',
+    at: servedRequest().at - 1000,
+    virtualModel: 'creative',
+    provider: 'openrouter',
+    accountId: 'g1',
+    providerModel: 'openai/gpt-5',
+    status: 429,
+  }),
+  servedRequest({
+    id: 'c',
+    at: servedRequest().at - 2000,
+    virtualModel: 'fast',
+    status: 500,
+    durationMs: undefined,
+  }),
+  ...servedRun(30).map((row) => ({ ...row, id: `older-${row.id}`, at: row.at - 10_000 })),
+];
+
+/**
  * Stands a draft on the serving gateway, and hands back the act that lets it go.
  *
  * @summary Reach for it in a story or a spec about the draft subject, so the draft arrives the
