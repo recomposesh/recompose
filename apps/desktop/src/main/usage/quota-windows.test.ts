@@ -46,7 +46,7 @@ function anHour(start: number, standing: BucketStanding = {}): UsageBucket {
   };
 }
 
-function aLiveRow(at: number, tokens: number): LogRow {
+function aLiveRow(at: number, tokens?: number, accountId = 'sub-1'): LogRow {
   return {
     id: `live-${String(at)}`,
     at,
@@ -55,7 +55,7 @@ function aLiveRow(at: number, tokens: number): LogRow {
     origin: 'provider',
     method: 'POST',
     provider: 'anthropic',
-    accountId: 'sub-1',
+    accountId,
     providerModel: 'claude-sonnet-4-5',
     status: 200,
     durationMs: 912,
@@ -93,6 +93,19 @@ describe('the five hour window', () => {
     });
   });
 
+  test('a quiet account reads zero burn with no countdown, keeping its record', () => {
+    const buckets = [anHour(BASE, { tokens: 5_000 })];
+
+    const window = fiveHourOf(quotaWindowsOf(buckets, [], BASE + 12 * HOUR));
+
+    expect(window?.burnTokens).toBe(0);
+    expect(window?.openedAt).toBeUndefined();
+    expect(window?.closesAt).toBeUndefined();
+    expect(window?.record).toEqual({ burnTokens: 5_000, openedAt: BASE });
+  });
+});
+
+describe('the record of the busiest window', () => {
   test('activity after a window closes opens the next one, and the record keeps the biggest', () => {
     const buckets = [
       anHour(BASE, { tokens: 5_000 }),
@@ -109,22 +122,43 @@ describe('the five hour window', () => {
     });
   });
 
-  test('a quiet account reads zero burn with no countdown, keeping its record', () => {
-    const buckets = [anHour(BASE, { tokens: 5_000 })];
+  test('a burn into the open window leaves the closed record untouched', () => {
+    const buckets = [
+      anHour(BASE, { tokens: 5_000 }),
+      anHour(BASE + 6 * HOUR, { tokens: 1_000 }),
+      anHour(BASE + 7 * HOUR, { tokens: 2_000 }),
+    ];
 
-    const window = fiveHourOf(quotaWindowsOf(buckets, [], BASE + 12 * HOUR));
+    const window = fiveHourOf(quotaWindowsOf(buckets, [], BASE + 8 * HOUR));
 
-    expect(window?.burnTokens).toBe(0);
-    expect(window?.openedAt).toBeUndefined();
-    expect(window?.closesAt).toBeUndefined();
-    expect(window?.record).toEqual({ burnTokens: 5_000, openedAt: BASE });
+    expect(window).toMatchObject({
+      openedAt: BASE + 6 * HOUR,
+      burnTokens: 3_000,
+      record: { burnTokens: 5_000, openedAt: BASE },
+    });
   });
+});
 
-  test('a row the ledger has not folded yet still burns into the open window', () => {
+describe('rows the ledger has not folded yet', () => {
+  test('a live row still burns into the open window', () => {
     const buckets = [anHour(BASE, { tokens: 1_000 })];
     const live = [aLiveRow(BASE + 90 * 60_000, 500)];
 
     expect(fiveHourOf(quotaWindowsOf(buckets, live, BASE + 2 * HOUR))?.burnTokens).toBe(1_500);
+  });
+
+  test('a live row of another account never burns into this window', () => {
+    const buckets = [anHour(BASE, { tokens: 1_000 })];
+    const live = [aLiveRow(BASE + 90 * 60_000, 500, 'someone-else')];
+
+    expect(fiveHourOf(quotaWindowsOf(buckets, live, BASE + 2 * HOUR))?.burnTokens).toBe(1_000);
+  });
+
+  test('a live row that reported no token count burns nothing extra', () => {
+    const buckets = [anHour(BASE, { tokens: 1_000 })];
+    const live = [aLiveRow(BASE + 90 * 60_000)];
+
+    expect(fiveHourOf(quotaWindowsOf(buckets, live, BASE + 2 * HOUR))?.burnTokens).toBe(1_000);
   });
 });
 

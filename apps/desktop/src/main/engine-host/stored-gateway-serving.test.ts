@@ -9,6 +9,7 @@ import { createEngineHost } from './engine-host';
 import { grantsNothing, hostOver, running, scriptedChild } from './engine-host.testkit';
 import { gatewayHolding, storageHolding } from './spend-grant.testkit';
 import {
+  restartServingGateways,
   serveRewrittenGateway,
   startAllStoredGateways,
   startRememberedGateways,
@@ -19,6 +20,15 @@ import {
 const codex: EngineGateway = { slug: 'codex', displayName: 'Codex', port: 8397, virtualModels: [] };
 
 const movedCodex: EngineGateway = { ...codex, port: 8399 };
+
+const strayPersonal: EngineGateway = {
+  slug: 'personal',
+  displayName: 'Personal',
+  port: 8401,
+  virtualModels: [],
+};
+
+const ghost: EngineGateway = { slug: 'ghost', displayName: 'Ghost', port: 8402, virtualModels: [] };
 
 const noComplaint = (): void => undefined;
 
@@ -203,6 +213,79 @@ describe('the remembered gateways standing back up at launch', () => {
 
     await vi.waitFor(() => {
       expect(spokenIn(complaint.mock.calls)).toContain('remembered personal serving');
+    });
+  });
+});
+
+describe('a global change reaching the serving gateways', () => {
+  test('a serving gateway moves to the shape the store holds', async () => {
+    const userDataPath = await storageHolding([], []);
+    const scripted = scriptedChild(running);
+    const { host } = hostOver(scripted);
+
+    await host.start(strayPersonal);
+    restartServingGateways(host, userDataPath, noComplaint);
+
+    await vi.waitFor(() => {
+      expect(scripted.directives.at(-1)).toMatchObject({
+        kind: 'start',
+        gateway: { slug: 'personal', port: 8397 },
+      });
+    });
+  });
+
+  test('a gateway standing stopped is left where it is', async () => {
+    const userDataPath = await storageHolding([], []);
+    const scripted = scriptedChild(running);
+    const { host } = hostOver(scripted, ['codex']);
+
+    await host.start(strayPersonal);
+    restartServingGateways(host, userDataPath, noComplaint);
+
+    await vi.waitFor(() => {
+      expect(scripted.directives.at(-1)).toMatchObject({ kind: 'start', gateway: { port: 8397 } });
+    });
+
+    expect(JSON.stringify(scripted.directives)).not.toContain('codex');
+  });
+});
+
+describe('a serving gateway the change cannot reach', () => {
+  test('a gateway whose document left the store keeps serving as it is', async () => {
+    const userDataPath = await storageHolding([], []);
+    const scripted = scriptedChild(running);
+    const { host } = hostOver(scripted);
+
+    await host.start(strayPersonal);
+    await host.start(ghost);
+    restartServingGateways(host, userDataPath, noComplaint);
+
+    await vi.waitFor(() => {
+      expect(scripted.directives.at(-1)).toMatchObject({ kind: 'start', gateway: { port: 8397 } });
+    });
+
+    const ghostStops = scripted.directives.filter(
+      (heard) => heard.kind === 'stop' && heard.slug === 'ghost',
+    );
+
+    expect(ghostStops).toEqual([]);
+  });
+
+  test('a registry beyond reading is written down naming the gateway', async () => {
+    const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const userDataPath = await storageHolding([], []);
+    const { host } = hostOver(scriptedChild(running));
+
+    await host.start(strayPersonal);
+    await writeFile(
+      join(userDataPath, 'accounts.json'),
+      JSON.stringify({ schemaVersion: 99, accounts: [] }),
+      'utf8',
+    );
+    restartServingGateways(host, userDataPath, noComplaint);
+
+    await vi.waitFor(() => {
+      expect(spokenIn(complaint.mock.calls)).toContain('could not move personal');
     });
   });
 });

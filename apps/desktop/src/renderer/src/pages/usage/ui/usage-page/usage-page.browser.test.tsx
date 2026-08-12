@@ -1,4 +1,4 @@
-import type { UsageBucket, UsageReport } from '@recompose/contracts';
+import type { LogRow, UsageBucket, UsageReport } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,7 +7,8 @@ import { render } from 'vitest-browser-react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
-import { edgeRuleDrawn, installFakeBridge } from '../../../../shared/testing';
+import { engineLogsQueryOptions } from '../../../../shared/api';
+import { edgeRuleDrawn, gatewaySeed, installFakeBridge } from '../../../../shared/testing';
 import { UsagePage } from './usage-page';
 
 const HOUR_MS = 3_600_000;
@@ -54,9 +55,27 @@ const servedReport: UsageReport = {
   pricing: { source: 'bundled' },
 };
 
-async function mounted(ui: ReactNode) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+const A_CALLER_DIGEST = `sha256:${'a'.repeat(64)}`;
 
+function liveRow(id: string, at: number): LogRow {
+  return {
+    id,
+    at,
+    gateway: 'relay',
+    virtualModel: 'creative',
+    origin: 'provider',
+    method: 'POST',
+    status: 200,
+    durationMs: 400,
+    clientKey: A_CALLER_DIGEST,
+  };
+}
+
+function freshQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
+async function mounted(ui: ReactNode, queryClient: QueryClient = freshQueryClient()) {
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
 
@@ -124,6 +143,17 @@ test('selecting spend snaps a sub-day range onto day width', async () => {
   expect(onSearchChange).toHaveBeenCalledWith({ range: '7d', metric: 'spend' });
 });
 
+test('selecting a counting metric keeps the range as it stands', async () => {
+  installFakeBridge({ usageReport: servedReport });
+
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
+
+  await screen.getByRole('radio', { name: /Errors/ }).click();
+
+  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, metric: 'errors' });
+});
+
 test('drilling a breakdown row narrows the scope by its level', async () => {
   installFakeBridge({ usageReport: servedReport });
 
@@ -133,6 +163,21 @@ test('drilling a breakdown row narrows the scope by its level', async () => {
   await screen.getByRole('button', { name: 'Drill into relay' }).click();
 
   expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, gateway: 'relay' });
+});
+
+test('a narrowed scope with traffic keeps its readings and the root presses back out', async () => {
+  installFakeBridge({ usageReport: servedReport });
+
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await mounted(
+    <UsagePage onSearchChange={onSearchChange} search={{ ...at7d, gateway: 'relay' }} />,
+  );
+
+  await expect.element(screen.getByRole('cell', { name: 'relay', exact: true })).toBeVisible();
+
+  await screen.getByRole('button', { name: 'All traffic' }).click();
+
+  expect(onSearchChange).toHaveBeenCalledWith(at7d);
 });
 
 test('a scope with no traffic names its recovery and clears from it', async () => {
@@ -150,6 +195,19 @@ test('a scope with no traffic names its recovery and clears from it', async () =
   await screen.getByRole('button', { name: 'Clear scope' }).click();
 
   expect(onSearchChange).toHaveBeenCalledWith(at7d);
+});
+
+test('a scope with no traffic widens the range from its own card', async () => {
+  installFakeBridge({ usageReport: servedReport });
+
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await mounted(
+    <UsagePage onSearchChange={onSearchChange} search={{ ...at7d, gateway: 'quiet' }} />,
+  );
+
+  await screen.getByRole('button', { name: 'Widen range' }).click();
+
+  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, gateway: 'quiet', range: '30d' });
 });
 
 test('history loads as placeholders, never zeros', async () => {
@@ -184,4 +242,44 @@ test('a refused history read names itself and moves the control to the live plan
   await expect.element(screen.getByText('The stored usage history cannot be read.')).toBeVisible();
   await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
   expect(onSearchChange).toHaveBeenCalledWith({ range: '1h', metric: 'requests' });
+});
+
+test('retry returns the control to the range the refusal took away', async () => {
+  installFakeBridge({
+    usageReport: servedReport,
+    overrides: {
+      'usage:report': async () =>
+        Promise.resolve({
+          ok: false,
+          error: { code: 'storage-failed', message: 'The stored usage history cannot be read.' },
+        }),
+    },
+  });
+
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await mounted(<UsagePage onSearchChange={onSearchChange} search={at7d} />);
+
+  await screen.getByRole('button', { name: 'Retry' }).click();
+
+  expect(onSearchChange).toHaveBeenCalledWith(at7d);
+});
+
+test('the live hour folds the rows the renderer already holds', async () => {
+  installFakeBridge({
+    gateways: [gatewaySeed({ slug: 'relay', displayName: 'Relay', port: 4310 })],
+  });
+
+  const queryClient = freshQueryClient();
+
+  queryClient.setQueryData(engineLogsQueryOptions('relay').queryKey, [
+    liveRow('earlier', Date.now() - 120_000),
+    liveRow('later', Date.now() - 60_000),
+  ]);
+
+  const screen = await mounted(
+    <UsagePage onSearchChange={() => {}} search={{ range: '1h', metric: 'requests' }} />,
+    queryClient,
+  );
+
+  await expect.element(screen.getByRole('radio', { name: /Requests.*2/ })).toBeVisible();
 });

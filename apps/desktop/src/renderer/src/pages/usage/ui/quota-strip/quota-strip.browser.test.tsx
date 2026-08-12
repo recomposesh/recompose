@@ -7,6 +7,7 @@ import { QuotaStrip } from './quota-strip';
 
 const NOW = 1_755_000_000_000;
 const HOUR_MS = 3_600_000;
+const MINUTE_MS = 60_000;
 
 const fiveHour: QuotaWindow = {
   accountId: 'work',
@@ -60,6 +61,26 @@ test('a record window says so instead of claiming exhaustion', async () => {
   const filled = Number(gauge.element().getAttribute('aria-valuenow'));
 
   expect(filled).toBeLessThan(1);
+});
+
+test('a reset inside the hour reads minutes alone', async () => {
+  const closing: QuotaWindow = { ...fiveHour, closesAt: NOW + 25 * MINUTE_MS };
+  const screen = await render(<QuotaStrip accountNameOf={named} now={NOW} windows={[closing]} />);
+
+  await expect.element(screen.getByText(/~25m until reset/)).toBeVisible();
+});
+
+test('a reset between whole hours reads hours and minutes together', async () => {
+  const closing: QuotaWindow = { ...fiveHour, closesAt: NOW + 2 * HOUR_MS + 30 * MINUTE_MS };
+  const screen = await render(<QuotaStrip accountNameOf={named} now={NOW} windows={[closing]} />);
+
+  await expect.element(screen.getByText(/~2h 30m until reset/)).toBeVisible();
+});
+
+test('an account with no proven windows draws no strip at all', async () => {
+  const screen = await render(<QuotaStrip accountNameOf={named} now={NOW} windows={[]} />);
+
+  expect(screen.container.textContent).toBe('');
 });
 
 test('the weekly gauge shows burn without a countdown', async () => {

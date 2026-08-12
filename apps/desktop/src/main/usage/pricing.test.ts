@@ -23,19 +23,29 @@ const prices: PriceMap = new Map([
 
 type BucketStanding = {
   accountKind?: UsageBucket['tuple']['accountKind'];
+  provider?: string | undefined;
   providerModel?: string | undefined;
   tokens?: Partial<UsageBucket['measures']['tokens']>;
   requests?: number;
 };
 
-function aTupleOf(standing: BucketStanding): UsageBucket['tuple'] {
+function servedNamesOf(
+  standing: BucketStanding,
+): Pick<UsageBucket['tuple'], 'provider' | 'providerModel'> {
+  const provider = 'provider' in standing ? standing.provider : 'anthropic';
   const providerModel = 'providerModel' in standing ? standing.providerModel : 'claude-sonnet-4-5';
 
   return {
+    ...(provider === undefined ? {} : { provider }),
+    ...(providerModel === undefined ? {} : { providerModel }),
+  };
+}
+
+function aTupleOf(standing: BucketStanding): UsageBucket['tuple'] {
+  return {
     gateway: 'relay',
     virtualModel: 'creative',
-    provider: 'anthropic',
-    ...(providerModel === undefined ? {} : { providerModel }),
+    ...servedNamesOf(standing),
     accountId: 'work',
     accountKind: standing.accountKind ?? 'api-key',
   };
@@ -162,5 +172,46 @@ describe('what the map cannot or need not price', () => {
     );
 
     expect(dayCosts.at(0)?.billedMicroDollars).toBe(250_000);
+  });
+});
+
+describe('how price misses accumulate', () => {
+  test('two days missing the same model fold into one miss with summed requests', () => {
+    const { priceMisses } = dayCostsOf(
+      [
+        aDay({ providerModel: 'claude-mystery', requests: 7 }),
+        aDay({ providerModel: 'claude-mystery', requests: 5 }),
+      ],
+      prices,
+    );
+
+    expect(priceMisses).toStrictEqual([
+      { provider: 'anthropic', providerModel: 'claude-mystery', requests: 12 },
+    ]);
+  });
+
+  test('folding one model leaves every other miss standing untouched', () => {
+    const { priceMisses } = dayCostsOf(
+      [
+        aDay({ providerModel: 'claude-mystery', requests: 7 }),
+        aDay({ providerModel: 'gpt-mystery', requests: 2 }),
+        aDay({ providerModel: 'claude-mystery', requests: 5 }),
+      ],
+      prices,
+    );
+
+    expect(priceMisses).toStrictEqual([
+      { provider: 'anthropic', providerModel: 'claude-mystery', requests: 12 },
+      { provider: 'anthropic', providerModel: 'gpt-mystery', requests: 2 },
+    ]);
+  });
+
+  test('a miss whose day names no provider surfaces without inventing one', () => {
+    const { priceMisses } = dayCostsOf(
+      [aDay({ provider: undefined, providerModel: 'claude-mystery', requests: 3 })],
+      prices,
+    );
+
+    expect(priceMisses).toStrictEqual([{ providerModel: 'claude-mystery', requests: 3 }]);
   });
 });

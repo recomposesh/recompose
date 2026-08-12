@@ -55,19 +55,19 @@ function costRowOf(day: UsageBucket, priced: number): UsageDayCost {
   return { dayStart: day.start, tuple: day.tuple, ...basis };
 }
 
-function missedWith(misses: readonly PriceMiss[], day: UsageBucket): readonly PriceMiss[] {
-  if (day.tuple.providerModel === undefined) {
-    return misses;
-  }
-
-  const named = misses.find((miss) => miss.providerModel === day.tuple.providerModel);
+function missedWith(
+  misses: readonly PriceMiss[],
+  day: UsageBucket,
+  providerModel: string,
+): readonly PriceMiss[] {
+  const named = misses.find((miss) => miss.providerModel === providerModel);
 
   if (named === undefined) {
     return [
       ...misses,
       {
         ...(day.tuple.provider === undefined ? {} : { provider: day.tuple.provider }),
-        providerModel: day.tuple.providerModel,
+        providerModel,
         requests: day.measures.requests,
       },
     ];
@@ -99,7 +99,7 @@ export function dayCostsOf(days: readonly UsageBucket[], prices: PriceMap): DayC
       const entry = priceEntryFor(prices, day.tuple.provider, providerModel);
 
       if (entry === undefined) {
-        return { ...priced, priceMisses: missedWith(priced.priceMisses, day) };
+        return { ...priced, priceMisses: missedWith(priced.priceMisses, day, providerModel) };
       }
 
       return {

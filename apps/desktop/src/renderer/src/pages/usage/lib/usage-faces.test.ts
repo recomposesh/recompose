@@ -6,6 +6,7 @@ import { captionFor } from './usage-caption';
 import { chartFor, metricFaces, spendReading } from './usage-faces';
 
 const DAY_MS = 86_400_000;
+const HOUR_MS = 3_600_000;
 const TODAY = 1_754_956_800_000;
 
 function measured(overrides: Partial<UsageMeasures> = {}): UsageMeasures {
@@ -236,6 +237,15 @@ describe('the chart draws the selected tile', () => {
     expect(drawn.bars[0]?.values['latency']).toBe(850);
   });
 
+  it('draws a latency bucket that answered nothing as zero, never dividing by it', () => {
+    const unanswered = bucket(TODAY, {}, measured({ answered: 0, durationMsSum: 0 }));
+    const drawn = chartFor('latency', [unanswered], [], TODAY);
+
+    expect(drawn.bars[0]?.values['latency']).toBe(0);
+  });
+});
+
+describe('the chart folds buckets into bars', () => {
   it('folds two tuples in one hour into one bar', () => {
     const drawn = chartFor(
       'requests',
@@ -246,6 +256,19 @@ describe('the chart draws the selected tile', () => {
 
     expect(drawn.bars).toHaveLength(1);
     expect(drawn.bars[0]?.values['requests']).toBe(20);
+  });
+
+  it('orders hour buckets oldest first however the fold arrives', () => {
+    const drawn = chartFor('requests', [bucket(TODAY + HOUR_MS), bucket(TODAY)], [], TODAY);
+
+    expect(drawn.bars.map((bar) => bar.at)).toEqual([TODAY, TODAY + HOUR_MS]);
+  });
+
+  it('orders spend days oldest first however the fold arrives', () => {
+    const earlier: UsageDayCost = { ...keyedCost, dayStart: TODAY - DAY_MS };
+    const drawn = chartFor('spend', [], [keyedCost, earlier], TODAY);
+
+    expect(drawn.bars.map((bar) => bar.at)).toEqual([TODAY - DAY_MS, TODAY]);
   });
 
   it('labels hour buckets by clock and day buckets by date', () => {
