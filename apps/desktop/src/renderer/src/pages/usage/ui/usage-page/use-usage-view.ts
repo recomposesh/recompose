@@ -118,11 +118,13 @@ function quietView(
 }
 
 function retentionEdge(chart: DrawnChart, edge: number | undefined): number | undefined {
-  if (edge === undefined) {
+  const oldestDrawn = chart.bars[0];
+
+  if (edge === undefined || oldestDrawn === undefined || oldestDrawn.at > edge) {
     return undefined;
   }
 
-  return chart.bars.find((bar) => bar.at >= edge)?.at;
+  return oldestDrawn.at;
 }
 
 function readingsView(search: UsageSearch, sourced: SourcedWindow, now: number): UsageView {

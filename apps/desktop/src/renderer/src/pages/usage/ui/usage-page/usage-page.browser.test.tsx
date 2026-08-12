@@ -7,7 +7,7 @@ import { render } from 'vitest-browser-react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
-import { installFakeBridge } from '../../../../shared/testing';
+import { edgeRuleDrawn, installFakeBridge } from '../../../../shared/testing';
 import { UsagePage } from './usage-page';
 
 const HOUR_MS = 3_600_000;
@@ -87,6 +87,28 @@ test('served history lands in the tiles, the chart, and the breakdown together',
   await expect
     .element(screen.getByText(/Last 7 days.*hour buckets.*12 requests total.*peak 9.*UTC/))
     .toBeVisible();
+});
+
+test('a retention window wider than the served history draws no edge', async () => {
+  installFakeBridge({
+    usageReport: { ...servedReport, oldestRetainedStart: NOW_HOUR - 30 * DAY_MS },
+  });
+
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+
+  await expect.element(screen.getByRole('img', { name: /Requests/ })).toBeInTheDocument();
+  expect(screen.container.querySelector('[stroke-dasharray]')).toBeNull();
+});
+
+test('the chart marks where retained history begins when the window cut it', async () => {
+  installFakeBridge({
+    usageReport: { ...servedReport, oldestRetainedStart: NOW_HOUR - 2 * HOUR_MS + 60_000 },
+  });
+
+  const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
+
+  await expect.element(screen.getByRole('img', { name: /Requests/ })).toBeInTheDocument();
+  await edgeRuleDrawn(screen.container);
 });
 
 test('selecting spend snaps a sub-day range onto day width', async () => {
