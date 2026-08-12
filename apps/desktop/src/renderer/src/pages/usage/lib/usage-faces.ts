@@ -30,7 +30,8 @@ export type DrawnChart = {
   bars: readonly ChartBar[];
 };
 
-const MICRO_DOLLARS = 1_000_000;
+export const MICRO_DOLLARS = 1_000_000;
+
 const ONE_CENT_MICRO = 10_000;
 const NOTHING_YET = '—';
 
@@ -62,7 +63,7 @@ function summedMeasures(buckets: readonly UsageBucket[]): UsageMeasures {
   );
 }
 
-function printedMicroDollars(micro: number): string {
+export function printedMicroDollars(micro: number): string {
   if (micro > 0 && micro < ONE_CENT_MICRO) {
     return '<$0.01';
   }

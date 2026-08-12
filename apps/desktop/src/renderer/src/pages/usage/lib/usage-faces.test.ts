@@ -153,13 +153,38 @@ describe('the caption states what the chart claims', () => {
     );
   });
 
-  it('names spend by day with dollar figures at both slots', () => {
+  it('names the spend peak on the billed basis and never adds the bases', () => {
     const faces = metricFaces({ ...inputs, dayWidth: true, todayStart: TODAY });
     const drawn = chartFor('spend', [], inputs.dayCosts, TODAY);
 
     expect(captionFor('spend', '7d', faces, drawn.bars)).toBe(
-      'Last 7 days · day buckets · $1.92 total · peak $2.72 · day boundaries follow UTC',
+      'Last 7 days · day buckets · $1.92 total · peak $1.92 · day boundaries follow UTC',
     );
+  });
+
+  it('carries the approximation prefix onto an equivalent-only peak', () => {
+    const faces = metricFaces({
+      buckets: [],
+      dayCosts: [seatCost],
+      dayWidth: true,
+      todayStart: TODAY,
+    });
+    const drawn = chartFor('spend', [], [seatCost], TODAY);
+
+    expect(captionFor('spend', '7d', faces, drawn.bars)).toContain('peak ≈$0.80');
+  });
+
+  it('prints a sub-cent spend peak as less than one cent, never as zero dollars', () => {
+    const tinyDay = { ...keyedCost, billedMicroDollars: 4_000 };
+    const faces = metricFaces({
+      buckets: [],
+      dayCosts: [tinyDay],
+      dayWidth: true,
+      todayStart: TODAY,
+    });
+    const drawn = chartFor('spend', [], [tinyDay], TODAY);
+
+    expect(captionFor('spend', '7d', faces, drawn.bars)).toContain('peak <$0.01');
   });
 
   it('names the latency figure an average with a duration peak', () => {
