@@ -106,7 +106,7 @@ describe('the report query keeps each ask under its own key', () => {
   });
 });
 
-describe('freshness follows the bucket width', () => {
+describe('freshness follows the range', () => {
   it('polls hour-wide ranges every minute', () => {
     expect(usageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(60_000);
     expect(usageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(60_000);

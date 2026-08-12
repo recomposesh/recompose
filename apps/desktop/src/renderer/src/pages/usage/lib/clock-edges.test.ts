@@ -27,9 +27,15 @@ describe('moving an edge onto another clock', () => {
     expect([moved.getSeconds(), moved.getMilliseconds()]).toEqual([0, 0]);
   });
 
-  it('reads a blank clock as the day own midnight', () => {
-    const moved = new Date(atClock(AFTERNOON, ''));
+  it('leaves the edge where it stood when the clock reads as nothing', () => {
+    expect(atClock(AFTERNOON, '')).toBe(AFTERNOON);
+    expect(atClock(AFTERNOON, 'ab')).toBe(AFTERNOON);
+    expect(atClock(AFTERNOON, 'not a clock')).toBe(AFTERNOON);
+  });
 
-    expect([moved.getHours(), moved.getMinutes()]).toEqual([0, 0]);
+  it('keeps the hour a clock names even where its minutes read as nothing', () => {
+    const moved = new Date(atClock(AFTERNOON, '07:oops'));
+
+    expect([moved.getHours(), moved.getMinutes()]).toEqual([7, 0]);
   });
 });

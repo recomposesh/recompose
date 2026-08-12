@@ -1,4 +1,5 @@
 import { Menu } from '@base-ui/react/menu';
+import { useId } from 'react';
 
 import type { DrawnChart } from '../../lib/usage-faces';
 import type { ChartMeasure, StackDimension } from '../../lib/usage-search';
@@ -79,11 +80,12 @@ function stackMenu(
   stackedBy: StackDimension,
   onStackedByChange: (next: StackDimension) => void,
   inertReason: string | undefined,
+  reasonId: string,
 ) {
   return (
     <Menu.Root>
       <Menu.Trigger
-        aria-describedby={undefined}
+        aria-describedby={inertReason === undefined ? undefined : reasonId}
         aria-label={`Stacked by ${STACK_LABELS[stackedBy]}`}
         className="flex h-control items-center gap-1.5 rounded-control border border-line-subtle bg-surface-card px-2 text-detail focus-ring-wide aria-disabled:opacity-60"
         aria-disabled={inertReason === undefined ? undefined : true}
@@ -95,6 +97,11 @@ function stackMenu(
           {STACK_LABELS[stackedBy]}
         </span>
         <Icon aria-hidden className="size-3 text-ink-secondary" name="chevron" />
+        {inertReason === undefined ? null : (
+          <span className="sr-only" id={reasonId}>
+            {inertReason}
+          </span>
+        )}
       </Menu.Trigger>
       {inertReason === undefined ? (
         <Menu.Portal>
@@ -133,6 +140,7 @@ function twinRow(bar: DrawnChart['bars'][number], series: DrawnChart['series']) 
 }
 
 type HeaderProps = {
+  reasonId: string;
   title: string;
   subCaption: string;
   measure: ChartMeasure;
@@ -155,6 +163,7 @@ function panelHeader(props: HeaderProps) {
           props.stackedBy,
           props.onStackedByChange,
           stacks ? undefined : AVERAGES_NEVER_STACK,
+          props.reasonId,
         )}
         <SegmentedControl
           label="Chart measure"
@@ -210,13 +219,22 @@ export function ChartPanel({
   onTableOpenChange,
 }: ChartPanelProps) {
   const title = MEASURE_TITLES[measure];
+  const reasonId = `stack-reason-${useId().replaceAll(':', '')}`;
 
   return (
     <section
       aria-label={title}
       className="flex flex-col gap-2.5 rounded-card border border-line-subtle bg-surface-card p-3.5"
     >
-      {panelHeader({ title, subCaption, measure, onMeasureChange, stackedBy, onStackedByChange })}
+      {panelHeader({
+        reasonId,
+        title,
+        subCaption,
+        measure,
+        onMeasureChange,
+        stackedBy,
+        onStackedByChange,
+      })}
       <ul className="flex flex-wrap items-center gap-3.5">
         {drawn.series.map((one) =>
           legendItem(one.key, one.label, one.fill, drawn.totals[one.key] ?? 0),

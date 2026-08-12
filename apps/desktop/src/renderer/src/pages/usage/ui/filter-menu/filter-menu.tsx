@@ -142,7 +142,13 @@ export function FilterMenu({
         <Popover.Positioner align="start" sideOffset={6}>
           <Popover.Popup aria-label={`${label} filter`} className="z-40 w-66 menu-surface">
             {searchField(searchLabel, sought, setSought)}
-            {listed.map((member) => memberRow(member, selected, onSelectedChange))}
+            {listed.length === 0 ? (
+              <p className="px-2.5 py-1.5 text-detail text-ink-secondary">
+                {`No ${label.toLowerCase()} by that name`}
+              </p>
+            ) : (
+              listed.map((member) => memberRow(member, selected, onSelectedChange))
+            )}
             {standingFooter(selected.length, members.length, () => {
               onSelectedChange([]);
             })}

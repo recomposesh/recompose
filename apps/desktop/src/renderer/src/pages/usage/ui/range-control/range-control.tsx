@@ -76,6 +76,7 @@ function presetList(onPick: (key: PresetKey) => void, custom: boolean) {
         </button>
       ))}
       <span
+        aria-current={custom ? 'true' : undefined}
         className={`rounded-control px-2 py-1.5 text-start text-detail ${custom ? 'bg-surface-selected text-accent-ink' : 'text-ink-secondary'}`}
       >
         Custom range

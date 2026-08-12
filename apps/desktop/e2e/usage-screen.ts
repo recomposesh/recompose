@@ -116,7 +116,6 @@ export async function openUsageScreen(page: Page): Promise<void> {
   });
 }
 
-/** The requests tile, a named group holding its figure and the line qualifying it. */
 function requestsTile(page: Page): Locator {
   return page.getByRole('group', { name: 'Requests' });
 }

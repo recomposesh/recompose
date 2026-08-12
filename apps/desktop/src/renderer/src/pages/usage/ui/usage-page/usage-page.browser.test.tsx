@@ -236,6 +236,27 @@ test('the live hour stands its readings up before the first request arrives', as
     .not.toBeInTheDocument();
 });
 
+test('a refused gateway read reads as a refusal rather than as nothing served', async () => {
+  installFakeBridge({
+    overrides: {
+      'gateways:list': async () =>
+        Promise.resolve({
+          ok: false,
+          error: { code: 'storage-failed', message: 'The gateway list cannot be read.' },
+        }),
+    },
+  });
+
+  const screen = await mounted(
+    <UsagePage
+      onSearchChange={() => {}}
+      search={{ range: '1h', metric: 'requests', stackedBy: 'gateway' }}
+    />,
+  );
+
+  await expect.element(screen.getByText('The gateway list cannot be read.')).toBeVisible();
+});
+
 test('the live hour folds the rows the renderer already holds', async () => {
   installFakeBridge({
     gateways: [gatewaySeed({ slug: 'relay', displayName: 'Relay', port: 4310 })],

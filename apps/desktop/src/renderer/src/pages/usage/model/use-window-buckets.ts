@@ -47,14 +47,17 @@ type ReadingPlane = {
   updatedAt: number | undefined;
 };
 
-function readingPlane(
-  ask: UsageReportAsk | undefined,
-  report: LedgerAnswer,
-  liveRows: readonly LogRow[],
-  now: number,
-): ReadingPlane {
+type PlaneReading = {
+  ask: UsageReportAsk | undefined;
+  report: LedgerAnswer;
+  liveRows: readonly LogRow[];
+  gateways: Error | null;
+  now: number;
+};
+
+function readingPlane({ ask, report, liveRows, gateways, now }: PlaneReading): ReadingPlane {
   if (ask === undefined) {
-    return { held: liveWindowFold(liveRows, now), failure: null, updatedAt: now };
+    return { held: liveWindowFold(liveRows, now), failure: gateways, updatedAt: now };
   }
 
   return {
@@ -83,11 +86,12 @@ export function useWindowBuckets(search: UsageSearch): WindowBuckets {
     enabled: ask !== undefined,
   });
   const gateways = useQuery(gatewaysQueryOptions);
+  const live = ask === undefined;
   const liveRows = useQueries({
-    queries: (gateways.data ?? []).map((gateway) => engineLogsQueryOptions(gateway.slug)),
+    queries: live ? (gateways.data ?? []).map((one) => engineLogsQueryOptions(one.slug)) : [],
     combine: (results) => results.flatMap((result) => result.data ?? []),
   });
-  const plane = readingPlane(ask, report, liveRows, now);
+  const plane = readingPlane({ ask, report, liveRows, gateways: gateways.error, now });
   const window = windowFor(search, now);
 
   return {

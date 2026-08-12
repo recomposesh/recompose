@@ -95,6 +95,15 @@ test('select all stands the filter back on everything', async () => {
   expect(onSelectedChange).toHaveBeenCalledWith([]);
 });
 
+test('a search that matches nothing says so rather than leaving a gap', async () => {
+  const screen = await render(menu());
+
+  await screen.getByRole('button', { name: 'Gateways All' }).click();
+  await screen.getByRole('searchbox', { name: 'Search gateways' }).fill('nothing by that name');
+
+  await expect.element(screen.getByText('No gateways by that name')).toBeVisible();
+});
+
 test('the footer counts what the filter keeps against what it could keep', async () => {
   const screen = await render(menu({ selected: ['cursor', 'raycast'] }));
 

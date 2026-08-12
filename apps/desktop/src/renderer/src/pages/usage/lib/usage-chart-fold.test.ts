@@ -118,6 +118,27 @@ describe('the measures each fold their own way', () => {
   });
 });
 
+describe('the chart keeps every bucket the tiles count', () => {
+  it('paints traffic that never reached the dimension under its own named series', () => {
+    const drawn = drawing({
+      buckets: [bucket(TODAY, { virtualModel: 'fast' }), bucket(TODAY, {})],
+      stackedBy: 'virtualModel',
+    });
+
+    expect(drawn.series.map((one) => one.label)).toContain('Not named');
+    expect(Object.values(drawn.bars[0]?.values ?? {}).reduce((sum, one) => sum + one, 0)).toBe(20);
+  });
+
+  it('folds an unnamed member into the rest where the scale has run out', () => {
+    const many = ['a', 'b', 'c', 'd', 'e'].map((gateway, place) =>
+      bucket(TODAY, { virtualModel: gateway }, measured({ requests: 10 - place })),
+    );
+    const drawn = drawing({ buckets: [...many, bucket(TODAY, {})], stackedBy: 'virtualModel' });
+
+    expect(Object.values(drawn.bars[0]?.values ?? {}).reduce((sum, one) => sum + one, 0)).toBe(50);
+  });
+});
+
 describe('the chart folds buckets into bars', () => {
   it('orders buckets oldest first however the fold arrives', () => {
     const drawn = drawing({ buckets: [bucket(TODAY + HOUR_MS), bucket(TODAY)] });
@@ -133,5 +154,17 @@ describe('the chart folds buckets into bars', () => {
     const drawn = drawing({ measure: 'spend', buckets: [], dayCosts: [keyedCost] });
 
     expect(drawn.bars[0]?.label).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/u);
+  });
+
+  it('labels a counted bucket by the width it was folded at', () => {
+    const daily = drawing({ bucketWidth: 'day' });
+
+    expect(daily.bars[0]?.label).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/u);
+  });
+
+  it('labels an averaged bucket by that same width', () => {
+    const daily = drawing({ measure: 'latency', bucketWidth: 'day' });
+
+    expect(daily.bars[0]?.label).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/u);
   });
 });

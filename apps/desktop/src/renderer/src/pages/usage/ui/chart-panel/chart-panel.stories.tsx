@@ -4,6 +4,7 @@ import preview from '#.storybook/preview';
 
 import type { DrawnChart } from '../../lib/usage-faces';
 
+import { seriesTotals } from '../../lib/usage-chart-fold';
 import { ChartPanel } from './chart-panel';
 
 const HOUR = 3_600_000;
@@ -15,19 +16,22 @@ const series = [
   { key: 'api-playground', label: 'api-playground', fill: 'var(--color-series-slot-3)' },
 ];
 
-const drawn: DrawnChart = {
-  series,
-  bars: Array.from({ length: 12 }, (_unused, hour) => ({
-    at: OPENING + hour * HOUR,
-    label: `${String(hour).padStart(2, '0')}:00`,
-    values: {
-      'claude-code': 120 + ((hour * 37) % 90),
-      cursor: 60 + ((hour * 17) % 40),
-      'api-playground': 30 + ((hour * 11) % 25),
-    },
-  })),
-  totals: { 'claude-code': 6_120, cursor: 3_240, 'api-playground': 2_100 },
-};
+const hourlyBars: DrawnChart['bars'] = Array.from({ length: 12 }, (_unused, hour) => ({
+  at: OPENING + hour * HOUR,
+  label: `${String(hour).padStart(2, '0')}:00`,
+  values: {
+    'claude-code': 120 + ((hour * 37) % 90),
+    cursor: 60 + ((hour * 17) % 40),
+    'api-playground': 30 + ((hour * 11) % 25),
+  },
+}));
+
+const drawn: DrawnChart = { series, bars: hourlyBars, totals: seriesTotals(hourlyBars) };
+
+const averagedBars: DrawnChart['bars'] = hourlyBars.map((bar) => ({
+  ...bar,
+  values: { latency: 480 + (bar.at % 300) },
+}));
 
 const meta = preview.meta({
   component: ChartPanel,
@@ -44,7 +48,9 @@ const meta = preview.meta({
 /** The window over time, stacked by gateway, every series total printed in the legend. */
 export const StackedByGateway = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('6,120')).toBeVisible();
+    const total = drawn.totals['claude-code'] ?? 0;
+
+    await expect(await canvas.findByText(total.toLocaleString('en-US'))).toBeVisible();
   },
 });
 
@@ -54,8 +60,8 @@ export const AveragedLatency = meta.story({
     measure: 'latency' as const,
     drawn: {
       series: [{ key: 'latency', label: 'Average latency', fill: 'var(--color-series-input)' }],
-      bars: drawn.bars.map((bar) => ({ ...bar, values: { latency: 480 + (bar.at % 300) } })),
-      totals: { latency: 640 },
+      bars: averagedBars,
+      totals: seriesTotals(averagedBars),
     },
   },
   play: async ({ canvas }) => {

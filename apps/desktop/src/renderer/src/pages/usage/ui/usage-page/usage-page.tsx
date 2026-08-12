@@ -7,11 +7,7 @@ import type { UsageSearch } from '../../lib/usage-search';
 import type { PanelUnit } from '../breakdown-panel/breakdown-panel';
 import type { UsagePanels, UsageStrips, UsageView } from './use-usage-view';
 
-import {
-  balancesQueryOptions,
-  quotaWindowsQueryOptions,
-  refreshedBalances,
-} from '../../../../shared/api';
+import { quotaWindowsQueryOptions, refreshedBalances } from '../../../../shared/api';
 import { Button } from '../../../../shared/ui';
 import { chartSubCaption, panelsCaption, scopeSentence } from '../../lib/usage-caption';
 import { filteredMembers, spendSnappedRange } from '../../lib/usage-search';
@@ -57,7 +53,6 @@ function refusalCard(failure: string, retry: () => void) {
 function refreshedUsageReadings(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['usage-report'] });
   void queryClient.invalidateQueries({ queryKey: quotaWindowsQueryOptions.queryKey });
-  void queryClient.invalidateQueries({ queryKey: balancesQueryOptions.queryKey });
   void refreshedBalances(queryClient);
 }
 

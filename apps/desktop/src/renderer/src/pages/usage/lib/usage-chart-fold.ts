@@ -41,7 +41,12 @@ type StackInputs = {
   dayCosts: readonly UsageDayCost[];
   stackedBy: GroupDimension;
   nameOf: (key: string) => string;
+  bucketWidth?: 'minute' | 'hour' | 'day' | undefined;
 };
+
+const UNNAMED_KEY = 'unnamed';
+
+const UNNAMED_LABEL = 'Not named';
 
 function measureOf(measure: ChartMeasure, folded: UsageMeasures): number {
   return measure === 'tokens' ? folded.tokens.total : folded.requests;
@@ -65,7 +70,11 @@ function paintedKeyOf(
 ): string | undefined {
   const member = memberOf(bucket.tuple, inputs.stackedBy);
 
-  return member !== undefined && painted.has(member) ? member : restKey;
+  if (member !== undefined && painted.has(member)) {
+    return member;
+  }
+
+  return member === undefined && painted.has(UNNAMED_KEY) ? UNNAMED_KEY : restKey;
 }
 
 function stackedBars(
@@ -86,11 +95,18 @@ function stackedBars(
       }
     }
 
-    return { at: start, label: hourClock.format(start), values };
+    return { at: start, label: barLabel(start, inputs.bucketWidth), values };
   });
 }
 
-function averagedBars(buckets: readonly UsageBucket[]): readonly ChartBar[] {
+function barLabel(start: number, width: StackInputs['bucketWidth']): string {
+  return width === 'day' ? dayDate.format(start) : hourClock.format(start);
+}
+
+function averagedBars(
+  buckets: readonly UsageBucket[],
+  width: StackInputs['bucketWidth'],
+): readonly ChartBar[] {
   return bucketsByStart(buckets).map(([start, held]) => {
     const folded = held.reduce<UsageMeasures>(
       (sum, bucket) => summedUsageMeasures(sum, bucket.measures),
@@ -99,7 +115,7 @@ function averagedBars(buckets: readonly UsageBucket[]): readonly ChartBar[] {
 
     return {
       at: start,
-      label: hourClock.format(start),
+      label: barLabel(start, width),
       values: { latency: folded.answered === 0 ? 0 : folded.durationMsSum / folded.answered },
     };
   });
@@ -125,7 +141,8 @@ function spendBars(dayCosts: readonly UsageDayCost[]): readonly ChartBar[] {
     }));
 }
 
-function seriesTotals(bars: readonly ChartBar[]): Record<string, number> {
+/** Each series' window total, which the legend prints beside its paint. */
+export function seriesTotals(bars: readonly ChartBar[]): Record<string, number> {
   return bars.reduce<Record<string, number>>((totals, bar) => {
     for (const [key, value] of Object.entries(bar.values)) {
       totals[key] = (totals[key] ?? 0) + value;
@@ -150,17 +167,18 @@ export function stackedChart(inputs: StackInputs): DrawnChart {
   }
 
   if (inputs.measure === 'latency') {
-    const bars = averagedBars(inputs.buckets);
+    const bars = averagedBars(inputs.buckets, inputs.bucketWidth);
 
     return { series: [LATENCY_SERIES], bars, totals: seriesTotals(bars) };
   }
 
-  const ranked = groupedBy(inputs.buckets, inputs.stackedBy).flatMap((row) =>
-    row.key === undefined ? [] : [row.key],
-  );
+  const folded = groupedBy(inputs.buckets, inputs.stackedBy);
+  const ranked = folded.map((row) => row.key ?? UNNAMED_KEY);
   const named = new Set(ranked);
   const series = rankedChartSeries(ranked).map((one) =>
-    named.has(one.key) ? { ...one, label: inputs.nameOf(one.key) } : one,
+    named.has(one.key)
+      ? { ...one, label: one.key === UNNAMED_KEY ? UNNAMED_LABEL : inputs.nameOf(one.key) }
+      : one,
   );
   const restKey = series.find((one) => !named.has(one.key))?.key;
   const bars = stackedBars(

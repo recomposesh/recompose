@@ -20,7 +20,13 @@ import { metricFaces } from '../../lib/usage-faces';
 import { filteredBuckets } from '../../lib/usage-groups';
 import { useWindowBuckets } from '../../model/use-window-buckets';
 
-const DAY_MS = 86_400_000;
+function localMidnight(at: number): number {
+  const day = new Date(at);
+
+  day.setHours(0, 0, 0, 0);
+
+  return day.getTime();
+}
 
 const PLACEHOLDER_FACES: MetricFaces = {
   requests: { reading: '—' },
@@ -107,7 +113,7 @@ function readingsView(
       previous: filteredBuckets(sourced.previous, search),
       dayCosts: sourced.dayCosts,
       dayWidth: sourced.widthWord === 'day',
-      todayStart: now - (now % DAY_MS),
+      todayStart: localMidnight(now),
       windowWord: search.range === 'custom' ? 'window' : search.range,
     }),
     chart: stackedChart({
@@ -116,6 +122,7 @@ function readingsView(
       dayCosts: sourced.dayCosts,
       stackedBy: search.stackedBy,
       nameOf: (key) => (search.stackedBy === 'account' ? nameOfAccount(key) : key),
+      bucketWidth: sourced.widthWord,
     }),
     panels: panelsOf(kept, nameOfAccount),
     widthWord: sourced.widthWord,

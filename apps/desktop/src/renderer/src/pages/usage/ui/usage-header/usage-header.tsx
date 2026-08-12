@@ -22,14 +22,14 @@ function stampWording(updatedAt: number | undefined, now: number): string {
   const passed = Math.max(0, now - updatedAt);
 
   if (passed < MINUTE_MS) {
-    return `Updated ${String(Math.round(passed / 1_000))}s ago`;
+    return `Updated ${String(Math.floor(passed / 1_000))}s ago`;
   }
 
   if (passed < HOUR_MS) {
-    return `Updated ${String(Math.round(passed / MINUTE_MS))}m ago`;
+    return `Updated ${String(Math.floor(passed / MINUTE_MS))}m ago`;
   }
 
-  return `Updated ${String(Math.round(passed / HOUR_MS))}h ago`;
+  return `Updated ${String(Math.floor(passed / HOUR_MS))}h ago`;
 }
 
 /**

@@ -9,6 +9,8 @@ const chromium = () => ({
   enabled: true,
   headless: true,
   provider: playwright({
+    /* A shared runner gives chromium a 64MB /dev/shm, which a long run outgrows and dies on. */
+    launchOptions: { args: ['--disable-dev-shm-usage'] },
     contextOptions: {
       permissions: ['clipboard-read', 'clipboard-write'],
       reducedMotion: 'reduce',
