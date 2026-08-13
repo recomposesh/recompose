@@ -1,4 +1,8 @@
-import type { SubscriptionAccount, SubscriptionProviderId } from '@recompose/contracts';
+import type {
+  AccountsDocument,
+  SubscriptionAccount,
+  SubscriptionProviderId,
+} from '@recompose/contracts';
 
 import { randomUUID } from 'node:crypto';
 
@@ -13,7 +17,7 @@ import {
 } from '../subscriptions/machine-credential';
 import { machineStoreFor } from '../subscriptions/machine-store';
 import { subscriptionHomes } from '../subscriptions/subscription-homes';
-import { heldUnderTheAddress } from '../subscriptions/subscription-views';
+import { heldUnderTheAddress, isSubscription } from '../subscriptions/subscription-views';
 import { storagePathsFor } from './storage-context';
 import { ipcFailure } from './storage-envelope';
 import { readAccounts, recordTheAccount, refusalFailure, viewsOf } from './subscriptions-workshop';
@@ -23,6 +27,27 @@ export type SubscriptionsMachineIpcHandlers = Pick<
   'subscriptions:detect' | 'subscriptions:adopt'
 >;
 
+/**
+ * @summary Adoption makes no config home, so the identity records a sign-in leaves behind are not
+ * there to match on. The stored label carries the address instead, which is what keeps one address
+ * standing as one account however it arrived.
+ */
+function standingUnderTheAddress(
+  accounts: AccountsDocument,
+  provider: SubscriptionProviderId,
+  address: string | undefined,
+): string | null {
+  if (address === undefined) {
+    return null;
+  }
+
+  const held = accounts.accounts.find(
+    (row) => isSubscription(row) && row.provider === provider && row.label === address,
+  );
+
+  return held?.id ?? null;
+}
+
 function storeOn(shop: Workshop, provider: SubscriptionProviderId) {
   return machineStoreFor({
     provider,
@@ -30,6 +55,23 @@ function storeOn(shop: Workshop, provider: SubscriptionProviderId) {
     platform: shop.ctx.platform,
     custody: custodyOver(shop.ctx.custody, provider),
   });
+}
+
+/**
+ * @summary Adoption records the account and writes the credential into a home of its own, so the
+ * app reads its own item from here on and the item the person's install reads stays untouched.
+ */
+async function accountAdopting(
+  shop: Workshop,
+  provider: SubscriptionProviderId,
+  address: string | undefined,
+): Promise<string> {
+  const accounts = await readAccounts(shop);
+  const held =
+    standingUnderTheAddress(accounts, provider, address) ??
+    (await heldUnderTheAddress(shop.homes, accounts, provider, address));
+
+  return held ?? `acc-${randomUUID()}`;
 }
 
 /**
@@ -46,18 +88,10 @@ async function adopt(shop: Workshop, provider: SubscriptionProviderId): Promise<
     );
   }
 
-  const held = await heldUnderTheAddress(
-    shop.homes,
-    await readAccounts(shop),
-    provider,
-    material.signedInAs,
-  );
-  const id = held ?? `acc-${randomUUID()}`;
+  const id = await accountAdopting(shop, provider, material.signedInAs);
   const custody = custodyOver(shop.ctx.custody, provider);
 
-  if (custody !== null) {
-    await custody.writeForHome(shop.homes.homeFor(provider, id), material.blob);
-  }
+  await custody?.writeForHome(shop.homes.homeFor(provider, id), material.blob);
 
   const row: SubscriptionAccount = {
     id,
