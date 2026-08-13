@@ -3,6 +3,7 @@ import type { JsonObject } from '../gateway-wire';
 import { isJsonObject } from '../gateway-wire';
 import { canonicalJson } from '../subscription/canonical-json';
 import { normalizeKimiUpstreamModel } from './kimi-request';
+import { isValidKimiThinkingSignature } from './kimi-signature';
 
 type ReplayInjection = { body: JsonObject; applied: boolean };
 
@@ -116,7 +117,16 @@ export function restoreKimiThinkingContent(
     : { body: { ...body, messages: restored }, applied: true };
 }
 
-export function replayableKimiThinkingContent(content: unknown): boolean {
+/**
+ * Whether a turn may be held for replay, judged against the provider that will receive it.
+ *
+ * @summary A held turn is replayed back to one provider, so the signature it carries has to be
+ * one that provider itself produced. Accepting any non-blank string replays a foreign or corrupt
+ * signature into an upstream that either refuses it or reads someone else's state. Kimi is the
+ * only family whose signature is recognized by shape alone, so every other target keeps the
+ * looser rule its own validator already enforces further down the wire.
+ */
+export function replayableThinkingContent(content: unknown, target: 'kimi' | 'other'): boolean {
   const parts = contentParts(content);
 
   if (parts === null) return false;
@@ -125,7 +135,9 @@ export function replayableKimiThinkingContent(content: unknown): boolean {
     (part) =>
       part['type'] === 'thinking' &&
       typeof part['signature'] === 'string' &&
-      part['signature'].trim() !== '',
+      (target === 'kimi'
+        ? isValidKimiThinkingSignature(part['signature'])
+        : part['signature'].trim() !== ''),
   );
   const toolUse = parts.some(
     (part) =>
@@ -147,7 +159,7 @@ export class KimiThinkingReplay {
   public commit(model: string, scope: string, content: unknown): boolean {
     const parts = contentParts(content);
 
-    if (scope.trim() === '' || parts === null || !replayableKimiThinkingContent(parts))
+    if (scope.trim() === '' || parts === null || !replayableThinkingContent(parts, 'kimi'))
       return false;
 
     return this.store(replayKey(model, scope), parts);
@@ -177,7 +189,7 @@ export class KimiThinkingReplay {
   ): boolean {
     const parts = contentParts(content);
 
-    if (parts === null || !replayableKimiThinkingContent(parts)) return false;
+    if (parts === null || !replayableThinkingContent(parts, 'kimi')) return false;
 
     const key = replayKey(model, scope);
     const current = this.#entries.get(key);

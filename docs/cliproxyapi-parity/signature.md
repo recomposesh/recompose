@@ -7,10 +7,10 @@
 - Upstream: `router-for-me/CLIProxyAPI` v7.2.131, commit `d757063c`.
 - Corpus: every top-level `Test*` under `internal/signature`.
 - Inventory: **113** rows.
-- Final status: **89 covered**, **11 justified N/A**, **13 gaps**.
+- Final status: **102 covered**, **11 justified N/A**, **0 gaps**.
 - Excluded: plugins, routers, and ledger work.
 
-Rows 1 to 97 are the upstream inventory as it stood at v7.2.121. Rows 98 to 113 are the Kimi and Grok rows that arrived at v7.2.131. Claude, Gemini, xAI, and Codex signature validation, sanitation, replay, carrier, pairing, bounds, and observability are covered, and N/A there is limited to upstream compatibility-target modes and implementation-specific prefilters Recompose does not use. Kimi and Grok are a different story: Recompose serves both and validates neither, which is where the 13 gaps sit.
+Rows 1 to 97 are the upstream inventory as it stood at v7.2.121. Rows 98 to 113 are the Kimi and Grok rows that arrived at v7.2.131. Claude, Gemini, xAI, and Codex signature validation, sanitation, replay, carrier, pairing, bounds, and observability are covered, and N/A there is limited to upstream compatibility-target modes and implementation-specific prefilters Recompose does not use. Kimi and Grok are covered too since this resync: `kimi-signature.ts` reads the transport shape Kimi produces, and `signature-compatibility.ts` classifies a model, detects a signature without ever naming Grok, and decides what a target may keep.
 
 ## Evidence clusters
 
@@ -122,22 +122,22 @@ Rows 1 to 97 are the upstream inventory as it stood at v7.2.121. Rows 98 to 113 
 |  95 | TestSanitizeClaudeMessagesSignaturesForModel_DropsEmptyAssistantMessage                 | covered | CLAUDE                                                                                   |
 |  96 | TestSanitizeClaudeMessagesForClaudeUpstream_DropsInvalidThinkingAndCleansToolUse        | covered | CLAUDE                                                                                   |
 |  97 | TestSanitizeClaudeMessagesForClaudeUpstream_NormalizesValidThinkingAndDropsEmptyMessage | covered | CLAUDE                                                                                   |
-|  98 | TestKimiThinkingSignatureLengths_MatchDecodedSizes                                      | gap     | KIMI                                                                                     |
-|  99 | TestInspectKimiThinkingSignature_ReportsMode                                            | gap     | KIMI                                                                                     |
-| 100 | TestInspectKimiThinkingSignature_RejectsNeighbouringLengths                             | gap     | KIMI                                                                                     |
-| 101 | TestInspectKimiThinkingSignature_RejectsMalformedInput                                  | gap     | KIMI                                                                                     |
-| 102 | TestInspectKimiThinkingSignature_RejectsLowEntropyFiller                                | gap     | KIMI                                                                                     |
-| 103 | TestInspectKimiThinkingSignature_RejectsSelfDescribingEnvelope                          | gap     | KIMI                                                                                     |
+|  98 | TestKimiThinkingSignatureLengths_MatchDecodedSizes                                      | covered | KIMI                                                                                     |
+|  99 | TestInspectKimiThinkingSignature_ReportsMode                                            | covered | KIMI                                                                                     |
+| 100 | TestInspectKimiThinkingSignature_RejectsNeighbouringLengths                             | covered | KIMI                                                                                     |
+| 101 | TestInspectKimiThinkingSignature_RejectsMalformedInput                                  | covered | KIMI                                                                                     |
+| 102 | TestInspectKimiThinkingSignature_RejectsLowEntropyFiller                                | covered | KIMI                                                                                     |
+| 103 | TestInspectKimiThinkingSignature_RejectsSelfDescribingEnvelope                          | covered | KIMI                                                                                     |
 | 104 | TestInspectKimiThinkingSignature_NativeCorpus                                           | N/A     | KIMI                                                                                     |
-| 105 | TestDetectSignatureProvider_KimiRunsAfterEnvelopeProbes                                 | gap     | KIMI                                                                                     |
+| 105 | TestDetectSignatureProvider_KimiRunsAfterEnvelopeProbes                                 | covered | KIMI                                                                                     |
 | 106 | TestDetectSignatureProvider_KimiProbeDoesNotDisturbCatalog                              | N/A     | KIMI                                                                                     |
-| 107 | TestSignatureProviderFromModelName_Kimi                                                 | gap     | KIMI                                                                                     |
-| 108 | TestDecideSignatureCompatibility_KimiDropsSignatureNotBlock                             | gap     | KIMI                                                                                     |
-| 109 | TestDecideSignatureCompatibility_KimiPreservesNativeSignature                           | gap     | KIMI                                                                                     |
-| 110 | TestInspectGrokEncryptedContent_RejectsKimiLengths                                      | gap     | GROK                                                                                     |
-| 111 | TestSignatureProviderFromModelName_Grok                                                 | gap     | GROK                                                                                     |
+| 107 | TestSignatureProviderFromModelName_Kimi                                                 | covered | KIMI                                                                                     |
+| 108 | TestDecideSignatureCompatibility_KimiDropsSignatureNotBlock                             | covered | KIMI                                                                                     |
+| 109 | TestDecideSignatureCompatibility_KimiPreservesNativeSignature                           | covered | KIMI                                                                                     |
+| 110 | TestInspectGrokEncryptedContent_RejectsKimiLengths                                      | covered | GROK                                                                                     |
+| 111 | TestSignatureProviderFromModelName_Grok                                                 | covered | GROK                                                                                     |
 | 112 | TestDetectSignatureProvider_NeverClassifiesGrok                                         | N/A     | GROK                                                                                     |
-| 113 | TestDecideSignatureCompatibility_GrokDropsBlock                                         | gap     | GROK                                                                                     |
+| 113 | TestDecideSignatureCompatibility_GrokDropsBlock                                         | covered | GROK                                                                                     |
 
 ### Rationale for the rows added at v7.2.131
 

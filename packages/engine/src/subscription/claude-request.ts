@@ -14,6 +14,7 @@ import {
   payloadSystemPolicy,
   type ClaudePayloadPolicy,
 } from './claude-payload-policy';
+import { normalizedClaudeSampling } from './claude-sampling';
 import { sanitizeClaudeSignatures } from './claude-signatures';
 import { claudeCountTokensSystem, claudeMessagesSystem } from './claude-system';
 import { applyClaudeSystemPolicy, type ClaudeSystemPolicy } from './claude-system-policy';
@@ -189,7 +190,8 @@ function withoutForcedThinking(body: JsonObject): JsonObject {
 
 function normalizedClaudeBody(rawBody: JsonObject): JsonObject {
   const forcedSafe = withoutForcedThinking(rawBody);
-  const { betas: _betas, temperature: _temperature, top_p: _topP, ...body } = forcedSafe;
+  const { betas: _betas, ...sampled } = forcedSafe;
+  const body = normalizedClaudeSampling(sampled);
   const signatureSafe = sanitizeClaudeSignatures(body);
   const thinking = signatureSafe['thinking'];
   const type = isJsonObject(thinking) ? thinking['type'] : undefined;

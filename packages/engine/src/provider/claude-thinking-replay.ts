@@ -2,7 +2,7 @@ import type { JsonObject } from '../gateway-wire';
 
 import { isJsonObject } from '../gateway-wire';
 import { canonicalJson } from '../subscription/canonical-json';
-import { replayableKimiThinkingContent, restoreKimiThinkingContent } from './kimi-thinking-replay';
+import { replayableThinkingContent, restoreKimiThinkingContent } from './kimi-thinking-replay';
 import { reasoningModelBase } from './reasoning-capabilities';
 
 type ReplayInjection = { body: JsonObject; applied: boolean };
@@ -30,7 +30,8 @@ function replayKey(model: string, scope: string): string {
 function committableTurn(scope: string, content: unknown): ReplayTurn | null {
   const parts = contentParts(content);
 
-  if (scope.trim() === '' || parts === null || !replayableKimiThinkingContent(parts)) return null;
+  if (scope.trim() === '' || parts === null || !replayableThinkingContent(parts, 'other'))
+    return null;
 
   const cloned = structuredClone(parts);
   const bytes = Buffer.byteLength(JSON.stringify(cloned));
