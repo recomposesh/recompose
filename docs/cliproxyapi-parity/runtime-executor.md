@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 957**
-- **Covered: 778**
-- **N/A: 179**
-- **Gap: 0**
-- **Exact identities mapped: 957/957**
+- **Total upstream tests: 961**
+- **Covered: 779**
+- **N/A: 180**
+- **Gap: 2**
+- **Exact identities mapped: 961/961**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **957** | **778** | **179** | **0** |
+| **Total**          | **961** | **779** | **180** | **2** |
 
 ## Exact row mapping
 
@@ -998,6 +998,10 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 955 | `TestOpenAICompatExecutorResponsesStreamHandlesAdditionalErrorShapes`                                                                                     | stream errors    | OpenAI compatible  | N/A     | Recompose never parses a Server-Sent Event error frame back out of text to re-emit it. The answer path forwards the upstream body or re-serializes from typed hub events, which is the ground the Responses stream rows in `api.md` stand on, so there is no named error event to preserve, no end-of-file rule to fail on, and no extra error shape to recognise.                                                                                                                                                                                                                       |
 | 956 | `TestOpenAICompatExecutorResponsesStreamPreservesNamedErrorEvent`                                                                                         | stream errors    | OpenAI compatible  | N/A     | Recompose never parses a Server-Sent Event error frame back out of text to re-emit it. The answer path forwards the upstream body or re-serializes from typed hub events, which is the ground the Responses stream rows in `api.md` stand on, so there is no named error event to preserve, no end-of-file rule to fail on, and no extra error shape to recognise.                                                                                                                                                                                                                       |
 | 957 | `TestOpenAICompatExecutorResponsesStreamPreservesUpstreamDataError`                                                                                       | stream errors    | OpenAI compatible  | N/A     | Recompose never parses a Server-Sent Event error frame back out of text to re-emit it. The answer path forwards the upstream body or re-serializes from typed hub events, which is the ground the Responses stream rows in `api.md` stand on, so there is no named error event to preserve, no end-of-file rule to fail on, and no extra error shape to recognise.                                                                                                                                                                                                                       |
+| 958 | `TestReverseRemapOAuthToolNamesPreservesUnrelatedMCPName`                                                                                                 | tool aliases     | Claude             | Covered | `aliasableName` returns nothing for a name `isMcpName` already recognises, so an unrelated `mcp__` tool is never aliased and nothing rewrites it on the way back.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 959 | `TestReverseRemapOAuthToolNamesRecoversMangledAliases`                                                                                                    | tool aliases     | Claude             | Gap     | `restoreReference` restores a tool name through an exact lookup, `reverse[value]`, against the map recorded when `claudeMcpAlias` minted the alias. An alias that comes back altered misses the map, so the caller receives the altered name and its tool never matches. Upstream reconstructs the original instead.                                                                                                                                                                                                                                                                     |
+| 960 | `TestReverseRemapOAuthToolNamesRecoversRepeatedServerAlias`                                                                                               | tool aliases     | Claude             | Gap     | `restoreReference` restores a tool name through an exact lookup, `reverse[value]`, against the map recorded when `claudeMcpAlias` minted the alias. An alias that comes back altered misses the map, so the caller receives the altered name and its tool never matches. Upstream reconstructs the original instead. A repeated server alias is one of the shapes that recovery handles.                                                                                                                                                                                                 |
+| 961 | `TestReverseRemapOAuthToolNamesRejectsUnsafeMangledAliases`                                                                                               | tool aliases     | Claude             | N/A     | The row guards the recovery pass against reconstructing an unsafe name. Recompose attempts no reconstruction, so it has no unsafe candidate to refuse.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ## N/A boundary
 
