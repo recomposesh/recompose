@@ -87,21 +87,27 @@ describe('accruing and reading', () => {
     expect(report.buckets.at(0)?.tuple.accountKind).toBe('subscription');
   });
 
-  test('the hour still filling never rides a report', async () => {
+  test('a row served this minute rides the very next report', async () => {
     const store = await anOpenStore(await aStoreFile());
 
-    store.accrue(served('open', NOW - 60_000));
+    store.accrue(served('filling', NOW - 60_000));
 
-    expect((await store.report({ range: '24h' })).buckets).toHaveLength(0);
+    const report = await store.report({ range: '24h' });
+
+    expect(report.buckets).toHaveLength(1);
+    expect(report.buckets.at(0)?.measures.requests).toBe(1);
   });
 
-  test('the held buckets hand the open hour to the quota fold, which a report never does', async () => {
+  test('the filling hour folds onto today rather than opening a day of its own', async () => {
     const store = await anOpenStore(await aStoreFile());
 
-    store.accrue(served('open', NOW - 60_000));
+    store.accrue(served('earlier', NOW - 3 * HOUR));
+    store.accrue(served('filling', NOW - 60_000));
 
-    expect(store.heldBuckets()).toHaveLength(1);
-    expect(store.heldBuckets().at(0)?.measures.requests).toBe(1);
+    const report = await store.report({ range: '7d' });
+
+    expect(report.buckets).toHaveLength(1);
+    expect(report.buckets.at(0)?.measures.requests).toBe(2);
   });
 
   test('a week read folds onto days and says so', async () => {

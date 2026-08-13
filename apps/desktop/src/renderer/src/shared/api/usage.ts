@@ -6,27 +6,23 @@ import { queryOptions } from '@tanstack/react-query';
 import { unwrapIpcResult } from './ipc-result';
 
 const MINUTE_MS = 60_000;
-const FIVE_MINUTES_MS = 300_000;
-
-function reportFreshness(ask: UsageReportAsk): number {
-  return ask.range === '30d' ? FIVE_MINUTES_MS : MINUTE_MS;
-}
+const REPORT_POLL_MS = 5_000;
 
 /**
- * One ask of closed usage buckets, priced at day width, polled at the width's own pace.
+ * One ask of usage buckets, priced at day width, polled while a surface is reading it.
  *
- * @summary Reports answer closed buckets only, so nothing changes faster than a bucket closes:
- * hour-wide ranges poll every minute, the day-wide range every five. Every ask holds its own key,
- * so a narrower window asking the same range for hours never repaints the folded view.
+ * @summary A report carries the hour still filling, so a request landing now changes the answer
+ * now, and the poll stands at the pace a person watching the explorer sends requests at rather
+ * than at the pace a bucket closes. The interval only runs while a mounted surface reads the
+ * query, so leaving the explorer stops the polling. Every ask holds its own key, so a narrower
+ * window asking the same range for hours never repaints the folded view.
  */
 export function usageReportQueryOptions(ask: UsageReportAsk) {
-  const freshness = reportFreshness(ask);
-
   return queryOptions({
     queryKey: ['usage-report', ask.range, ask.bucketWidth ?? 'default', ask.dayOffsetMinutes ?? 0],
     queryFn: async () => unwrapIpcResult(await window.recompose['usage:report'](ask)),
-    staleTime: freshness,
-    refetchInterval: freshness,
+    staleTime: REPORT_POLL_MS,
+    refetchInterval: REPORT_POLL_MS,
   });
 }
 

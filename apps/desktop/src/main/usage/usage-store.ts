@@ -13,9 +13,9 @@ import { USAGE_LEDGER_VERSION, usageLedgerSchema } from '@recompose/contracts';
 import { newerSchemaVersion, readJsonWithQuarantine, writeJsonAtomic } from '../storage/json-file';
 import {
   accrued,
-  closedHourBuckets,
   dayFolded,
   emptyUsageLedger,
+  hourBucketsWithin,
   prunedBefore,
 } from './usage-buckets';
 
@@ -124,13 +124,13 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
     },
     report: async (ask) => {
       const { range } = ask;
-      const closed = closedHourBuckets(ledger, range, Date.now());
+      const hours = hourBucketsWithin(ledger, range, Date.now());
       const width = ask.bucketWidth ?? (range === '24h' ? ('hour' as const) : ('day' as const));
 
       return {
         range,
         bucketWidth: width,
-        buckets: width === 'hour' ? closed : dayFolded(closed, ask.dayOffsetMinutes),
+        buckets: width === 'hour' ? hours : dayFolded(hours, ask.dayOffsetMinutes),
         dayCosts: [],
         priceMisses: [],
         pricing: { source: 'bundled' as const },

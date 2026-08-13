@@ -153,7 +153,7 @@ jobs:
             "$usage_lib/usage-search.ts" "$usage_lib/usage-window.ts" \
             "$usage_lib/usage-faces.ts" "$usage_lib/usage-chart-fold.ts" \
             "$usage_lib/panel-rows.ts" "$usage_lib/usage-caption.ts" \
-            "$usage_lib/clock-edges.ts" \
+            "$usage_lib/clock-edges.ts" "$usage_lib/drawn-window.ts" \
             "apps/desktop/src/renderer/src/shared/ui/series-chart/series-presets.ts" \
             | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
           if [ -z "$contracts" ] && [ -z "$engine" ] && [ -z "$desktop" ]; then

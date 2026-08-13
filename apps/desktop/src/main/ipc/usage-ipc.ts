@@ -33,8 +33,8 @@ function coveringDays(
 /**
  * The usage channels, answering from the ledger, the price map, and the balances desk.
  *
- * @summary A report carries its closed buckets whole and prices the covering days at answer time,
- * so a corrected price recomputes every historical day on the next ask and no cost ever persists.
+ * @summary A report carries its buckets whole and prices the covering days at answer time, so a
+ * corrected price recomputes every historical day on the next ask and no cost ever persists.
  * The quota read folds the held buckets beside the rows still in flight, and the table twin note
  * lands where the menu reads its checkbox from.
  */

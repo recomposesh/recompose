@@ -106,16 +106,17 @@ describe('the report query keeps each ask under its own key', () => {
   });
 });
 
-describe('freshness follows the range', () => {
-  it('polls hour-wide ranges every minute', () => {
-    expect(usageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(60_000);
-    expect(usageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(60_000);
-    expect(usageReportQueryOptions({ range: '24h' }).staleTime).toBe(60_000);
+describe('freshness follows the hour a report now carries', () => {
+  it('polls every range at the pace a person watching one would want', () => {
+    expect(usageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(5_000);
+    expect(usageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(5_000);
+    expect(usageReportQueryOptions({ range: '30d' }).refetchInterval).toBe(5_000);
   });
 
-  it('polls the day-wide range every five minutes', () => {
-    expect(usageReportQueryOptions({ range: '30d' }).refetchInterval).toBe(300_000);
-    expect(usageReportQueryOptions({ range: '30d' }).staleTime).toBe(300_000);
+  it('holds a reading no longer than the poll that replaces it', () => {
+    expect(usageReportQueryOptions({ range: '24h' }).staleTime).toBe(5_000);
+    expect(usageReportQueryOptions({ range: '7d' }).staleTime).toBe(5_000);
+    expect(usageReportQueryOptions({ range: '30d' }).staleTime).toBe(5_000);
   });
 
   it('polls the quota windows every minute, since the open hour moves them', () => {
