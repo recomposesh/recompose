@@ -22,13 +22,17 @@ So recompose never renews an adopted credential. It reads the live store on each
 
 When the tool has gone or the run fails, the account reports itself stale and names what to open. The surface needs that state anyway, for a credential the vendor revoked.
 
-### One repair comes first
+### One repair comes first, and it fixes a live defect
 
-Today a sign-in parks the machine's own keychain item, clears it, and on success writes a recompose account's credential into it. That item is the one Claude Code reads. So recompose has been taking over the person's own login. The design critique caught what that does to adoption. An adopted account reading that item would serve as whichever account recompose last wrote there. Wrong account, no error, no way for the person to tell.
+Claude Code derives its keychain service name from the config home. `discovery/machine-probe.md` confirms the formula against three real homes, one of which is recompose's own.
 
-The cause is one constant doing two jobs. `credential-custody.ts` names a single vendor service for two different items. One is what the machine already holds, the other is what a recompose sign-in produces. Those aren't the same item. Claude Code derives the service name from the config home, so recompose's own sign-ins belong under their own derived names and never under the plain one.
+`credential-custody.ts` names a single vendor service for two different items. One is what the machine already holds, the other is what a recompose sign-in produces. Those aren't the same item, and treating them as one breaks both directions.
 
-This change separates the two. recompose addresses the item belonging to the home it created, and leaves the person's item alone. That repair lands before adoption reads anything, because adoption isn't safe without it.
+It breaks adoption, which the design critique caught. A sign-in parks the person's item, clears it, and on success writes a recompose account's credential there. An adopted account reading that item would serve as whichever account recompose last wrote. Wrong account, no error, nothing on screen.
+
+It also breaks the sign-in it exists to serve. The probe found no Anthropic subscription on a machine that has tried to connect one. It found a pending home the tool wrote to and left, and the credential sitting under the derived name. A sign-in clears the plain item, then polls the home and that same cleared item. Both stay empty until the poll gives up. Codex escapes only because its seeded config forces the credential into a file inside the home.
+
+So the repair isn't a precondition for a feature. It's a fix for a sign-in that can't currently succeed on macOS. recompose addresses the item belonging to the home it created, leaves the person's item alone, and falls back to the plain name for a version that never derived.
 
 ## Locked decisions
 
