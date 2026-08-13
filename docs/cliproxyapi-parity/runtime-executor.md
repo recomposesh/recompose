@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 973**
-- **Covered: 781**
+- **Total upstream tests: 976**
+- **Covered: 784**
 - **N/A: 190**
 - **Gap: 2**
-- **Exact identities mapped: 973/973**
+- **Exact identities mapped: 976/976**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **973** | **781** | **190** | **2** |
+| **Total**          | **976** | **784** | **190** | **2** |
 
 ## Exact row mapping
 
@@ -1014,6 +1014,9 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 971 | `TestClaudeExecutorStructuredNativeHelperPreservesStreamProfile`                                                                                          | helper profile     | Claude             | N/A     | The row turns on a caller Recompose never classifies. The Claude path wears one fixed `CLAUDE_CODE_220_PROFILE`, `resolveClaudeWirePolicy` reads a `confirmedClaudeCode` flag no production caller computes, and no helper identity is measured, so there is no confirmed, minimal, or structured native branch to behave differently in.                                                                                                                                                                                                                                                |
 | 972 | `TestNormalizeClaudeSamplingForUpstreamNativeKeepsMeasuredHelperTemperature`                                                                              | sampling           | Claude             | N/A     | The row turns on a caller Recompose never classifies. The Claude path wears one fixed `CLAUDE_CODE_220_PROFILE`, `resolveClaudeWirePolicy` reads a `confirmedClaudeCode` flag no production caller computes, and no helper identity is measured, so there is no confirmed, minimal, or structured native branch to behave differently in.                                                                                                                                                                                                                                                |
 | 973 | `TestClaudeCodeContextManagementNeverOutlivesEligibleThinking`                                                                                            | context management | Claude             | N/A     | The row turns on a caller Recompose never classifies. The Claude path wears one fixed `CLAUDE_CODE_220_PROFILE`, `resolveClaudeWirePolicy` reads a `confirmedClaudeCode` flag no production caller computes, and no helper identity is measured, so there is no confirmed, minimal, or structured native branch to behave differently in.                                                                                                                                                                                                                                                |
+| 974 | `TestClaudeExecutor_CacheTTLIsPairedWithExtendedCacheTTLBeta`                                                                                             | caching            | Claude             | Covered | `claude-betas.ts` pushes `extended-cache-ttl-2025-04-11` on every subscription request, so a one-hour marker can never travel without the beta that admits it. This also holds for the markers `upgradedClaudeCacheTtls` raises in this same resync.                                                                                                                                                                                                                                                                                                                                     |
+| 975 | `TestOpenAICompatExecutorUsesCompatibleClaudeTranslation`                                                                                                 | translation        | OpenAI compatible  | Covered | `gateway-outbound-body.ts` turns `crossing.isCompat` into `preserveIncompatibleReasoning`, so a compatible crossing takes the compat translation rather than the strict one.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 976 | `TestXAIExecutorPrepareNormalizesClaudeWebSearchToolChoice`                                                                                               | tools              | xAI                | Covered | `requiredWebSearchChoice` rewrites a Claude `web_search` choice into the xAI `allowed_tools` shape at `required` mode, and `normalizedWebSearch` normalizes the tool beside it.                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ## N/A boundary
 
