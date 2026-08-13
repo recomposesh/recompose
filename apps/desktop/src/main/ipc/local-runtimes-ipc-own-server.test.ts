@@ -74,3 +74,32 @@ describe('a server a person addressed themselves', () => {
     expect(ctx.looked).toEqual([loopbackAddressAt(9200)]);
   });
 });
+
+describe('a server a person addressed themselves that cannot stand', () => {
+  test('a second server on the same port refuses by address rather than by project name', async () => {
+    const ctx = await aFreshContext();
+    const handlers = createLocalRuntimesIpcHandlers(ctx);
+
+    await handlers['accounts:connect-local']({ runtime: 'custom', label: 'North', port: 9123 });
+
+    const again = await handlers['accounts:connect-local']({
+      runtime: 'custom',
+      label: 'South',
+      port: 9123,
+    });
+
+    expect(again).toMatchObject({ ok: false, error: { code: 'name-conflict' } });
+    expect(!again.ok && again.error.message).toContain(loopbackAddressAt(9123));
+  });
+
+  test('a server that reached the handler naming no port is refused loudly rather than given an address', async () => {
+    const ctx = await aFreshContext();
+
+    await expect(
+      createLocalRuntimesIpcHandlers(ctx)['accounts:connect-local']({
+        runtime: 'custom',
+        label: 'Portless',
+      }),
+    ).rejects.toThrow(/without naming its own port/);
+  });
+});

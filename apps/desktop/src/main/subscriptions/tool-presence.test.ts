@@ -46,6 +46,14 @@ describe('finding the file a provider tool is actually run from', () => {
     ).resolves.toBe(join(binFolder, 'claude'));
   });
 
+  test('given the plan no tool signs into, no file is named and no table is read', async () => {
+    await installed('claude');
+
+    await expect(
+      toolFileFor('copilot', [binFolder, '/nowhere'].join(delimiter), 'darwin'),
+    ).resolves.toBeNull();
+  });
+
   test('given a Windows machine, the name found carries the extension that makes it run', async () => {
     await installed('claude.cmd');
 

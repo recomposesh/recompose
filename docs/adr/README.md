@@ -108,3 +108,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0100](0100-a-coding-plan-stands-in-one-catalog-and-stores-as-another.md)       | A Coding Plan Stands in One Catalog and Stores as Another                           | Accepted   | 2026-08-13 |
 | [0101](0101-recompose-runs-copilot-device-flow.md)                              | recompose Runs Copilot's Device Flow Itself                                         | Accepted   | 2026-08-13 |
 | [0102](0102-the-browser-suite-collects-every-fifth-file.md)                     | The Browser Suite Collects Every Fifth File                                         | Accepted   | 2026-08-13 |
+| [0103](0103-the-patch-gate-asks-for-ninety.md)                                  | The Patch Gate Asks for Ninety                                                      | Accepted   | 2026-08-14 |

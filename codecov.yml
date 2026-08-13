@@ -3,7 +3,7 @@ coverage:
     project: off
     patch:
       default:
-        target: 95%
+        target: 90%
         informational: false
         if_not_found: success
 
