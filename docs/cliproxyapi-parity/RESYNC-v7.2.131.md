@@ -23,16 +23,20 @@ asserts the namespace on the restored custom tool call, so both arrive again in 
 
 ## New rows by family
 
+The last column reads `yes` once every row of that family carries a verdict, a count while a
+family is part way through, and `no` before it starts. A count names the rows that landed, and
+the owning document names which ones stayed open and why.
+
 | Family                                              | Rows | Document                                                      | Reconciled |
 | --------------------------------------------------- | ---: | ------------------------------------------------------------- | ---------- |
 | `internal/runtime/executor`                         |   87 | `runtime-executor.md` and the per-provider executor documents | no         |
-| `sdk/api/handlers/openai`                           |   40 | `api.md`                                                      | no         |
+| `sdk/api/handlers/openai`                           |   40 | `api.md`                                                      | 5 of 40    |
 | `internal/runtime/executor/helps`                   |   29 | `runtime-executor.md`                                         | no         |
-| `internal/translator/openai/openai/responses`       |   16 | the matching `translator-*.md`                                | no         |
+| `internal/translator/openai/openai/responses`       |   16 | `translator-openai.md`                                        | 8 of 16    |
 | `internal/signature`                                |   16 | `signature.md`                                                | yes        |
 | `internal/client/codex/live`                        |   16 | `client.md`                                                   | yes        |
 | `sdk/api/handlers`                                  |   10 | `api.md`                                                      | no         |
-| `internal/translator/openai/claude`                 |    8 | the matching `translator-*.md`                                | no         |
+| `internal/translator/openai/claude`                 |    8 | `translator-openai.md`                                        | yes        |
 | `sdk/cliproxy/auth`                                 |    5 | `auth.md`                                                     | yes        |
 | `internal/util`                                     |    5 | `util.md`                                                     | yes        |
 | `sdk/cliproxy`                                      |    4 | `store.md`                                                    | yes        |
