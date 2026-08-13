@@ -9,6 +9,19 @@ Feature: Signing in through the provider's own tool
     Then the app hands the sign-in to the provider's own tool
     And the account appears once that tool reports success
 
+  Scenario: Signing in rather than adopting skips the first-run questions
+    Given the "anthropic" command-line tool is installed
+    And the "anthropic" tool signed in on this machine as "old@example.com" on the "Pro" plan
+    When the maintainer connects an "anthropic" subscription by signing in
+    Then the tool asks only what it needs to sign in
+    And it skips the questions it asks on a first run
+
+  Scenario: A sign-in leaves the person's own login alone
+    Given the "anthropic" command-line tool is installed
+    And the "anthropic" tool signed in on this machine as "old@example.com" on the "Pro" plan
+    When the maintainer connects an "anthropic" subscription by signing in
+    Then the machine's own login still reads "old@example.com"
+
   Scenario: Signing the same address in again writes over the account
     Given a connected "anthropic" subscription
     When the maintainer connects an "anthropic" subscription by signing in

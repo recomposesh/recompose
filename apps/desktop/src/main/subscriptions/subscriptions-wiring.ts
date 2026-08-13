@@ -106,7 +106,10 @@ function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcCont
 export function subscriptionIpcHandlers(
   wiring: SubscriptionsWiring,
 ): SubscriptionsIpcHandlers & SubscriptionsMachineIpcHandlers {
-  const ctx = subscriptionsContext(wiring);
+  const ctx = subscriptionsContext({
+    ...wiring,
+    homeFolder: substituteFor('RECOMPOSE_FAKE_MACHINE_HOME') ?? wiring.homeFolder,
+  });
 
   return {
     ...createSubscriptionsIpcHandlers(ctx),
