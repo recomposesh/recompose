@@ -8,13 +8,45 @@ function isToolReference(block: JsonObject): boolean {
   return block['type'] === 'tool_use' || block['type'] === 'tool_reference';
 }
 
+function aliasPrefixOf(alias: string): string {
+  const seam = alias.indexOf('_', alias.indexOf('__', 5) + 2);
+
+  return seam < 0 ? alias : alias.slice(0, seam);
+}
+
+function soleAliasStartingWith(name: string, reverse: ClaudeToolMap): string | undefined {
+  const claiming = Object.keys(reverse).filter((alias) => alias.startsWith(name));
+
+  return claiming.length === 1 ? claiming[0] : undefined;
+}
+
+/**
+ * The tool name a caller declared, recovered from the alias an upstream sent back.
+ *
+ * @summary An exact match answers first, because that is what an untouched alias produces. An
+ * upstream that trims the semantic tail off the alias leaves a prefix that still identifies one
+ * declaration, so the prefix is followed only while exactly one alias claims it. Two aliases
+ * sharing a prefix are left alone: guessing between them would rename a caller's tool to the
+ * wrong one, which is worse than handing back a name they can see was never restored.
+ */
+export function restoredToolNames(name: string, reverse: ClaudeToolMap): string {
+  const exact = reverse[name];
+
+  if (exact !== undefined) return exact;
+
+  const alias = soleAliasStartingWith(name, reverse);
+
+  if (alias === undefined || aliasPrefixOf(alias) !== aliasPrefixOf(name)) return name;
+
+  return reverse[alias] ?? name;
+}
+
 function restoreReference(block: JsonObject, reverse: ClaudeToolMap): void {
   const field = block['type'] === 'tool_use' ? 'name' : 'tool_name';
   const value = block[field];
-  const original = typeof value === 'string' ? reverse[value] : undefined;
 
-  if (original !== undefined) {
-    block[field] = original;
+  if (typeof value === 'string') {
+    block[field] = restoredToolNames(value, reverse);
   }
 }
 

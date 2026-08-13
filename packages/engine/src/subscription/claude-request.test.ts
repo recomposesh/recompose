@@ -133,17 +133,20 @@ describe('Claude OAuth feature negotiation', () => {
 
 describe('Claude sampling compatibility', () => {
   test.each([
-    [{ temperature: 0 }, {}],
+    [{ temperature: 0 }, { temperature: 0 }],
     [
       { temperature: 0.2, thinking: { type: 'enabled', budget_tokens: 2048 } },
       { thinking: { type: 'enabled', budget_tokens: 2048 } },
     ],
-    [{ temperature: 0, top_p: 0.9, top_k: 40 }, { top_k: 40 }],
+    [
+      { temperature: 0, top_p: 0.9, top_k: 40 },
+      { temperature: 0, top_k: 40 },
+    ],
     [
       { temperature: 0.2, top_p: 0.9, top_k: 40, thinking: { type: 'adaptive' } },
       { thinking: { type: 'adaptive' } },
     ],
-  ])('removes unsupported controls', (input, expected) => {
+  ])('removes only the controls the native wire refuses', (input, expected) => {
     const request = requestFor({ model: 'claude-sonnet-4-5', messages: [], ...input });
 
     expect(semanticBodyOf(request)).toEqual({

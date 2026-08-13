@@ -8,6 +8,7 @@ import type {
   ResponsesToolChoice,
 } from './responses-wire';
 
+import { unwrappedCustomOutput } from './responses-custom-output';
 import { responsesToolChoiceName } from './responses-tools-wire';
 
 type CustomResponsesToolRef =
@@ -184,7 +185,11 @@ function normalizedCustomCall(
 function normalizedCustomOutput(
   item: Extract<ResponsesInputItem, { type: 'custom_tool_call_output' }>,
 ): ResponsesInputItem {
-  return { type: 'function_call_output', call_id: item.call_id, output: item.output ?? '' };
+  return {
+    type: 'function_call_output',
+    call_id: item.call_id,
+    output: unwrappedCustomOutput(item.output ?? ''),
+  };
 }
 
 function normalizedFunctionCall(

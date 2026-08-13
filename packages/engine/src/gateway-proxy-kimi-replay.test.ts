@@ -4,6 +4,9 @@ import { createGatewayApp } from './gateway-app';
 import { aGatewayHolding, aVirtualModel } from './gateway-app.testkit';
 import { isJsonObject, parsedJson } from './gateway-wire';
 import { clearKimiReplayCache } from './provider/kimi-replay-runtime';
+import { kimiThinkingSignature } from './provider/kimi-signature.testkit';
+
+const KIMI_SIGNATURE = kimiThinkingSignature();
 
 const grant = {
   verdict: 'resolved',
@@ -12,7 +15,7 @@ const grant = {
 } as const;
 
 const cachedContent = [
-  { type: 'thinking', thinking: 'full reasoning', signature: 'kimi-signature' },
+  { type: 'thinking', thinking: 'full reasoning', signature: KIMI_SIGNATURE },
   { type: 'text', text: 'I will inspect the file.' },
   { type: 'tool_use', id: 'toolu_1', name: 'Read', input: { path: 'README.md' } },
 ];
@@ -112,7 +115,7 @@ function completedThinkingStream(): Response {
     {
       type: 'content_block_delta',
       index: 0,
-      delta: { type: 'signature_delta', signature: 'stream-signature' },
+      delta: { type: 'signature_delta', signature: KIMI_SIGNATURE },
     },
     { type: 'content_block_stop', index: 0 },
     {
@@ -152,7 +155,7 @@ test.each([400, 422])('clears an applied Kimi replay after upstream status %s', 
   await ask(app, 'wide');
   await ask(app, 'wide');
 
-  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', 'kimi-signature');
+  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
   expect(bodies[2]).not.toHaveProperty('messages.1.content.0.signature');
 });
 
@@ -164,8 +167,8 @@ test('preserves an applied Kimi replay after an upstream server error', async ()
   await ask(app, 'wide');
   await ask(app, 'wide');
 
-  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', 'kimi-signature');
-  expect(bodies[2]).toHaveProperty('messages.1.content.0.signature', 'kimi-signature');
+  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
+  expect(bodies[2]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
 });
 
 test('replays Kimi thinking captured from a completed stream', async () => {
@@ -175,7 +178,7 @@ test('replays Kimi thinking captured from a completed stream', async () => {
   await (await ask(app, 'wide', true, streamCompactedMessages)).text();
 
   expect(bodies[1]).toHaveProperty('messages.1.content.0.thinking', 'stream reasoning');
-  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', 'stream-signature');
+  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
   expect(bodies[1]).toHaveProperty('messages.1.content.1.input.path', 'README.md');
 });
 
@@ -193,6 +196,6 @@ test('preserves previous Kimi cache after an unknown successful stream delta', a
   await (await ask(app, 'wide', true)).text();
   await ask(app, 'wide');
 
-  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', 'kimi-signature');
-  expect(bodies[2]).toHaveProperty('messages.1.content.0.signature', 'kimi-signature');
+  expect(bodies[1]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
+  expect(bodies[2]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
 });
