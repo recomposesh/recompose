@@ -47,7 +47,7 @@ export function signatureProviderFromModelName(modelName: string): SignatureProv
 /**
  * The family a signature came from, or unknown where nothing claims it.
  *
- * @summary Every self-describing envelope answers first, because Kimi is recognised by length
+ * @summary Every self-describing envelope answers first, because Kimi is recognized by length
  * alone and a foreign value of coincidental length must never be captured by it. Grok is never
  * returned: its encrypted content describes nothing, so a Grok blob and an unclaimed one are the
  * same reading.

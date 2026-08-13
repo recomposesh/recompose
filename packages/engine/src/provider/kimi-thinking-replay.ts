@@ -123,7 +123,7 @@ export function restoreKimiThinkingContent(
  * @summary A held turn is replayed back to one provider, so the signature it carries has to be
  * one that provider itself produced. Accepting any non-blank string replays a foreign or corrupt
  * signature into an upstream that either refuses it or reads someone else's state. Kimi is the
- * only family whose signature is recognised by shape alone, so every other target keeps the
+ * only family whose signature is recognized by shape alone, so every other target keeps the
  * looser rule its own validator already enforces further down the wire.
  */
 export function replayableThinkingContent(content: unknown, target: 'kimi' | 'other'): boolean {
