@@ -4,9 +4,9 @@
 
 The app MUST report, per provider, whether the machine already holds a credential that provider's own tool wrote. It MUST offer that credential as a way to connect without a sign-in.
 
-Producing that report MUST NOT require a sign-in. It MUST NOT run on every visit to a surface, because opening a credential store can ask the operating system for permission.
+That report MUST name the address and the plan, and MUST carry no credential material. Only a person's act to connect MAY read the material, because reading it can ask the operating system for permission. A permission prompt belongs to something the person did. The report MUST NOT run again on every mount of the surface that shows it.
 
-Adopting MUST record a managed account the same way a sign-in does, and that account MUST stand among a virtual model's targets like any other. The app MUST record that the account came from the machine, because renewal ownership follows that fact.
+Adopting MUST record a managed account the same way a sign-in does, and that account MUST stand among a virtual model's targets like any other. The app MUST record that the account came from the machine, because both the remedy the row offers and the renewal owner follow that fact.
 
 #### Scenario: a person connects the account already on the machine
 
@@ -17,16 +17,24 @@ Adopting MUST record a managed account the same way a sign-in does, and that acc
 
 #### Scenario: nothing on the machine to adopt
 
-- Given the provider's own tool never signed in on this machine
+- Given the provider's own tool signed in nowhere on this machine
 - When a person chooses to connect that provider
-- Then the surface offers the sign-in and says the machine holds nothing
+- Then the surface names that and offers the sign-in
+
+#### Scenario: the provider's tool isn't installed
+
+- Given the provider's command-line tool isn't installed
+- When a person chooses to connect that provider
+- Then the surface names the missing tool and what to do about it
+- And it offers nothing to adopt, because a tool that never ran left nothing
 
 #### Scenario: the credential store refuses to open
 
 - Given the operating system refuses to open the credential store
 - When a person chooses to connect that provider
-- Then the surface says it couldn't read the store
+- Then the surface says the operating system refused
 - And it doesn't claim the machine holds nothing
+- And it offers a way to ask again
 
 #### Scenario: what the machine holds carries no account
 
@@ -42,7 +50,7 @@ The app MUST read the live store on each serving turn rather than serve a copy i
 
 When an adopted credential nears expiry, the app MUST hand the renewal to the provider's own tool. That run MUST carry no window, and a lock MUST admit one renewal at a time.
 
-A delegated renewal that can't run MUST leave the credential as it stands and MUST report the account stale. A failed renewal MUST NOT delete a credential.
+A delegated renewal that can't run MUST leave the credential as it stands and MUST report the account lapsed. A failed renewal MUST NOT delete a credential.
 
 #### Scenario: an adopted credential nears expiry
 
@@ -71,19 +79,27 @@ A delegated renewal that can't run MUST leave the credential as it stands and MU
 - Given a connected account the app adopted from the machine
 - And nobody has the provider's command-line tool installed any longer
 - When its credential expires
-- Then the account reports itself stale and names the tool to open
+- Then the account reports itself lapsed
 - And the credential stands as it was
 
-### Requirement: A connected account reports when its credential stops working
+### Requirement: A sign-in leaves the person's own login alone
 
-An account whose credential stops working MUST read differently from an account nobody ever connected, and MUST name what to open to put it right. The app MUST NOT present a stale account as disconnected. The account, its home, and its place among a virtual model's targets all survive.
+The provider's tool keeps a separate credential per config home. A sign-in the app runs happens in a home the app created, so the app MUST address the credential belonging to that home. It MUST NOT read, overwrite, or remove the credential belonging to the home the person's own tool uses.
 
-#### Scenario: a person reads a stale account
+A read MUST tolerate a provider version that keeps one credential for every home, so it falls back to that credential when the home's own is absent.
 
-- Given a connected account whose credential stopped working
-- When the subscriptions surface lists it
-- Then the row reports the account stale rather than absent
-- And it names the tool to open
+#### Scenario: a sign-in runs while the machine holds its own login
+
+- Given the person's own tool signed in on this machine
+- When the app signs a different account in through that tool
+- Then the person's own login stands untouched
+- And running the person's own tool still reaches their own account
+
+#### Scenario: an adopted account survives a later sign-in
+
+- Given a connected account the app adopted from the machine
+- When the app signs a different account in for the same provider
+- Then the adopted account still serves as the account it adopted
 
 ## MODIFIED Requirements
 
@@ -120,3 +136,68 @@ A config home the app hands to the provider's tool for a sign-in MUST arrive pre
 - And its credential nears expiry
 - When a request needs that account
 - Then the app renews the credential itself
+
+### Requirement: A row reports the account and where it stands
+
+A row MUST carry the provider's mark, the plan product's name, and the plan the account holds. It MUST also carry the address it signs in as, its standing, and where the account came from. The identity MUST hold two lines, the product with its plan and the address, and nothing more. Standing MUST read as a word with a mark beside it rather than as color alone.
+
+Where the account came from MUST read on the row, because it decides both what the row's own act does and whether the app touches the credential.
+
+#### Scenario: a connected account reads as connected
+
+- When the surface lists an account whose authorization holds
+- Then the row reports it as connected
+- And the report carries a mark beside the word
+
+#### Scenario: a person tells an adopted account from a signed-in one
+
+- Given one account the app adopted from the machine and one the app signed in
+- When the surface lists them
+- Then each row reports where its account came from
+
+### Requirement: A lapsed account carries its own way back
+
+An account whose authorization lapsed MUST report that on its own row and MUST offer the way back on that row. The app MUST NOT report a lapse only as a banner over the list, and MUST NOT leave a lapsed account looking connected.
+
+The way back follows where the account came from. An account the app signed in MUST offer to sign in again. An account the app adopted MUST NOT offer that, because signing in reaches a different account than the one it adopted. It MUST name the person's own tool to open instead.
+
+#### Scenario: an account the app signed in loses its authorization
+
+- Given a connected account the app signed in whose authorization lapsed
+- When the subscriptions surface lists it
+- Then the row reports the lapse rather than reporting it as connected
+- And the row offers to sign the account in again
+
+#### Scenario: an account the app adopted loses its authorization
+
+- Given a connected account the app adopted from the machine whose authorization lapsed
+- When the subscriptions surface lists it
+- Then the row reports the lapse rather than reporting it as connected
+- And the row names the person's own tool to open
+- And the row offers no sign-in
+
+### Requirement: Picking a provider offers the one way the surface holds
+
+The surface opens the catalog for one kind, so a picked provider MUST offer only that kind's way of connecting. A subscription pick MUST hand the sign-in to the provider's own tool and MUST NOT offer a key beside it. A key pick MUST ask for a name and a key, because the provider rides in from the picked entry.
+
+A subscription pick MUST lead with the account the machine already holds, when it holds one. The sign-in MUST stay reachable as the quieter act rather than as the first thing a person meets. While either act runs, the other MUST stand inert rather than disappear, so the surface doesn't resize under the person's hand.
+
+#### Scenario: a person picks a provider from the subscriptions catalog
+
+- When a person picks "anthropic" in the catalog the subscriptions surface opened
+- Then the sign-in stands alone, yielding an account for the provider's own tool
+- And the surface asks for no key
+
+#### Scenario: a person picks a provider whose account sits on the machine
+
+- Given the provider's own tool signed in on this machine
+- When a person picks that provider in the subscriptions catalog
+- Then the account it holds leads the step
+- And the sign-in stands beneath it as the quieter act
+
+#### Scenario: a person waits while an act runs
+
+- Given a person picked a provider whose account sits on the machine
+- When one of the two acts runs
+- Then the other act stands inert
+- And it keeps its place on the step
