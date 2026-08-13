@@ -1,5 +1,25 @@
 ## ADDED Requirements
 
+### Requirement: Kimi Code signs in through the tool that owns its flow
+
+Kimi Code authenticates through a device authorization grant, and CLIProxyAPI implements that
+whole flow. recompose already runs that tool for another plan. The app MUST therefore delegate
+this sign-in to it rather than keeping a second copy of an authorization to maintain.
+
+The app MUST spend the resulting account against the endpoint the provider directory names for
+Kimi, which is the endpoint the engine already serves.
+
+#### Scenario: a person signs in to Kimi Code
+
+- Given the Subscriptions catalog stands open
+- When a person picks Kimi Code
+- Then the sign-in stands alone, and the tool that owns the flow runs it
+
+#### Scenario: the tool that owns the flow is the one already installed
+
+- When the surface reports which tools this machine can run
+- Then Kimi Code names the same tool the Gemini plan names
+
 ### Requirement: A plan that issues a token connects by taking one
 
 Three coding plans sell a monthly subscription and offer no sign-in: the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. Qwen ended its sign-in in April 2026, and the other two never published one.
@@ -34,12 +54,12 @@ The app MUST NOT run a sign-in, look for a tool, create a config home, or renew 
 
 ### Requirement: Adding a provider opens the catalog
 
-The Subscriptions surface MUST open a catalog holding Claude, Codex, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
+The Subscriptions surface MUST open a catalog holding Claude, Codex, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
 
 #### Scenario: a person opens the subscriptions catalog
 
 - When a person opens the catalog from the Subscriptions surface
-- Then it lists five plans
+- Then it lists six plans
 - And every entry answers a pointer and a keyboard
 
 ### Requirement: Picking a provider offers the one way the surface holds
@@ -48,7 +68,7 @@ The surface opens the catalog for one kind, so a picked provider MUST offer only
 
 #### Scenario: a plan with a sign-in offers the sign-in alone
 
-- When a person picks Claude
+- When a person picks Kimi Code
 - Then the sign-in stands alone, yielding an account for the provider's own tool
 
 #### Scenario: a plan with no sign-in offers the token alone

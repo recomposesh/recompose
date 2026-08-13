@@ -17,9 +17,8 @@ const storedRuntime = {
 };
 
 describe('what the local runtime channels ask for', () => {
-  test('connecting a runtime names the runtime and nothing else at all', () => {
+  test('connecting a documented runtime names it and at most a port', () => {
     expect(connectLocal.parse({ runtime: 'ollama' })).toEqual({ runtime: 'ollama' });
-    expect(connectLocal.safeParse({ runtime: 'ollama', label: 'My Ollama' }).success).toBe(false);
     expect(
       connectLocal.safeParse({ runtime: 'ollama', address: 'http://127.0.0.1:11434' }).success,
     ).toBe(false);
@@ -65,6 +64,23 @@ describe('what the local runtime channels ask for', () => {
     expect(check.parse({ id: storedRuntime.id })).toEqual({ id: storedRuntime.id });
     expect(check.safeParse({ runtime: 'ollama' }).success).toBe(false);
     expect(check.safeParse({ id: '   ' }).success).toBe(false);
+  });
+});
+
+describe('what a server nobody documents must name', () => {
+  test('it names its own port and the name a person gave it', () => {
+    const own = { runtime: 'custom', port: 9000, label: 'Bench box' };
+
+    expect(connectLocal.parse(own)).toEqual(own);
+  });
+
+  test('a port it never named is refused, because nothing documents one to assume', () => {
+    expect(connectLocal.safeParse({ runtime: 'custom', label: 'Bench box' }).success).toBe(false);
+    expect(detect.safeParse({ runtime: 'custom' }).success).toBe(false);
+  });
+
+  test('a name it never carried is refused, because no project names it instead', () => {
+    expect(connectLocal.safeParse({ runtime: 'custom', port: 9000 }).success).toBe(false);
   });
 });
 

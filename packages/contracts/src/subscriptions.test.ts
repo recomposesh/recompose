@@ -29,8 +29,22 @@ const presentTool = {
 };
 
 describe('the providers a subscription can name', () => {
-  test('exactly the two providers whose own tools sign a person in', () => {
-    expect(subscriptionProviderIdSchema.options).toEqual(['anthropic', 'openai', 'antigravity']);
+  test('every plan whose own tool signs a person in', () => {
+    expect(subscriptionProviderIdSchema.options).toEqual([
+      'anthropic',
+      'openai',
+      'antigravity',
+      'kimi',
+    ]);
+  });
+
+  test('Kimi Code delegates to the tool that already owns its device flow', () => {
+    expect(subscriptionProviders.kimi).toEqual({
+      toolBinary: 'cliproxyapi',
+      toolName: 'Kimi Code',
+      configHomeVariable: 'CLIPROXYAPI_HOME',
+      signInArguments: ['--kimi-login'],
+    });
   });
 
   test('a provider no tool signs in is refused', () => {

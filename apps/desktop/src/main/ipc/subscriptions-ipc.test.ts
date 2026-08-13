@@ -236,7 +236,7 @@ describe('the active account answers for the credential the tool actually spends
 });
 
 describe('reporting the provider tools this machine can run', () => {
-  test('given one tool installed, the report tells the two apart', async () => {
+  test('given one tool installed, the report tells the plans apart', async () => {
     await world.toolInstalled('claude');
 
     const answered = await handlersOn()['subscriptions:tools']();
@@ -245,6 +245,7 @@ describe('reporting the provider tools this machine can run', () => {
       ['anthropic', true],
       ['openai', false],
       ['antigravity', false],
+      ['kimi', false],
     ]);
   });
 

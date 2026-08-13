@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { nonBlankString } from './non-blank';
 
-export const subscriptionProviderIdSchema = z.enum(['anthropic', 'openai', 'antigravity']);
+export const subscriptionProviderIdSchema = z.enum(['anthropic', 'openai', 'antigravity', 'kimi']);
 
 export type SubscriptionProviderId = z.infer<typeof subscriptionProviderIdSchema>;
 
@@ -24,6 +24,12 @@ export const subscriptionProviders = {
     toolName: 'Gemini (Antigravity)',
     configHomeVariable: 'CLIPROXYAPI_HOME',
     signInArguments: ['--antigravity-login'],
+  },
+  kimi: {
+    toolBinary: 'cliproxyapi',
+    toolName: 'Kimi Code',
+    configHomeVariable: 'CLIPROXYAPI_HOME',
+    signInArguments: ['--kimi-login'],
   },
 } as const satisfies Record<
   SubscriptionProviderId,

@@ -16,7 +16,7 @@ import {
 } from './provider-transport';
 
 type PersistCredential = (
-  provider: 'anthropic' | 'openai' | 'antigravity',
+  provider: SubscriptionProviderId,
   accountId: string,
   credential: string,
 ) => Promise<void>;

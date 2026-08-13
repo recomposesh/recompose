@@ -41,8 +41,13 @@ describe('reporting which provider tools this machine can run', () => {
   test('given no tool anywhere on the search path, every tool reports absent', async () => {
     const tools = await reportTools({ homes, searchPath: binFolder, platform: 'darwin' });
 
-    expect(tools.map((tool) => tool.present)).toEqual([false, false, false]);
-    expect(tools.map((tool) => tool.provider)).toEqual(['anthropic', 'openai', 'antigravity']);
+    expect(tools.map((tool) => tool.present)).toEqual([false, false, false, false]);
+    expect(tools.map((tool) => tool.provider)).toEqual([
+      'anthropic',
+      'openai',
+      'antigravity',
+      'kimi',
+    ]);
   });
 
   test('given a tool installed on the search path, that tool reports present', async () => {
@@ -69,7 +74,7 @@ describe('reporting which provider tools this machine can run', () => {
   test('given a blank search path, every tool reports absent rather than failing', async () => {
     const tools = await reportTools({ homes, searchPath: '', platform: 'darwin' });
 
-    expect(tools.map((tool) => tool.present)).toEqual([false, false, false]);
+    expect(tools.map((tool) => tool.present)).toEqual([false, false, false, false]);
   });
 
   test('given any tool, the report carries its name and the two lines a person needs', async () => {
@@ -109,6 +114,6 @@ describe('reporting tools on Windows, where a shim stands in for the binary', ()
   test('given a folder holding no shim, the folder itself never counts as the tool', async () => {
     const tools = await reportTools({ homes, searchPath: binFolder, platform: 'win32' });
 
-    expect(tools.map((tool) => tool.present)).toEqual([false, false, false]);
+    expect(tools.map((tool) => tool.present)).toEqual([false, false, false, false]);
   });
 });

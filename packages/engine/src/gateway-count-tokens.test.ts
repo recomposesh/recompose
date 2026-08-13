@@ -1,3 +1,5 @@
+import type { SubscriptionProviderId } from '@recompose/contracts';
+
 import { describe, expect, test } from 'vitest';
 
 import { geminiClaudeToolUseId } from './dialect/gemini-tool-provenance';
@@ -25,7 +27,7 @@ function countBody() {
   };
 }
 
-function subscriptionCredential(provider: 'anthropic' | 'openai' | 'antigravity'): string {
+function subscriptionCredential(provider: SubscriptionProviderId): string {
   if (provider === 'anthropic') {
     return claudeCredential('claude-access', 1_800_000_000_000);
   }
@@ -39,7 +41,7 @@ function subscriptionCredential(provider: 'anthropic' | 'openai' | 'antigravity'
       });
 }
 
-async function countedBy(provider: 'anthropic' | 'openai' | 'antigravity') {
+async function countedBy(provider: SubscriptionProviderId) {
   const credential = subscriptionCredential(provider);
   const grants = granting(subscriptionGrant(provider, credential));
   const answering = runtimeAnswering(() =>

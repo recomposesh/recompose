@@ -12,13 +12,14 @@ grew when a feature grew with it.
 So the badge isn't a roadmap. It's a schema limit written as product copy, repeated
 twenty-two times.
 
-Nothing about twenty of them is hard. Five aggregators speak Chat Completions against a
+Nothing about twenty-one of them is hard. Five aggregators speak Chat Completions against a
 documented origin. Six key providers do the same, and two of them already carry an origin, a
 dialect and a credential header in the engine without ever standing in a catalog. Three local
 runtimes answer on a documented port. Three coding plans speak the Anthropic dialect against
-a plan token. Three escape hatches wait only on a field the row can't hold.
+a plan token. Three escape hatches wait only on a field the row can't hold. One plan signs in through a tool
+recompose already runs.
 
-The two that sign in are the exception, and they wait on a contract this change leaves alone.
+GitHub Copilot is the exception, and it waits on a flow nothing on this machine owns.
 
 The badge outlived its reason. This change removes it.
 
@@ -46,12 +47,14 @@ MiniMax never published one. Each keeps its place in the Subscriptions catalog, 
 that's where a person who bought a plan looks. Each stores as a key, because a pasted token
 is what a key account already holds.
 
-Two rows wait, and they're the two that sign in. Kimi Code and GitHub Copilot both need
-`SubscriptionProviderId` to admit a fourth and a fifth member, and that enum reaches through
-the engine's whole subscription runtime. That runtime serves neither of them: Kimi
-already serves through the credentialed path, and Copilot would. Widening the enum to reach a sign-in
-would drag a transport neither one uses. Both therefore land in their own change, and neither
-stands under a Soon badge in the meantime, because a badge is what this change removes.
+Kimi Code signs in, and it costs one row in the provider table. CLIProxyAPI owns its device
+flow and already ships the flag beside the one recompose runs for Gemini. The plan therefore
+reaches a sign-in without recompose keeping a second copy of one.
+
+One row waits. GitHub Copilot signs in through a flow nothing on the machine owns. It needs a
+device code, a poll, a GitHub token and a short-lived Copilot token bought again near expiry.
+That flow is its own change. It stands under no Soon badge in the meantime, because a badge is
+what this change removes.
 
 ## Locked decisions
 
@@ -72,23 +75,25 @@ stands under a Soon badge in the meantime, because a badge is what this change r
    version, so the reachability contract carries the version only when the runtime gives one.
 6. **A field hints a key shape only where the vendor documents an opening.** Three vendors do.
    The rest leave the field unhinted rather than teaching a shape nobody promised.
-7. **The two plans that sign in wait for their own change.** Both need a wider
-   `SubscriptionProviderId`, and that enum reaches the engine's subscription runtime, which
-   serves neither of them. The research that placed both stands in `discovery/`.
-8. **A coding plan stands in the Subscriptions catalog and stores as a key.** The catalog
+7. **Kimi Code signs in through CLIProxyAPI.** Porting its device flow into recompose would
+   duplicate a flow the tool recompose already launches implements and tests.
+8. **GitHub Copilot waits for its own change.** Nothing on the machine owns its flow, so it
+   needs a device code, a poll and a token trade. The research that places it stands in
+   `discovery/`.
+9. **A coding plan stands in the Subscriptions catalog and stores as a key.** The catalog
    column is where a person looks. The stored kind is what the credential is. Bending the
    subscription contract around a token that never renews would put a "this one has no tool"
    branch through sign-in launch, tool presence, config homes, custody and delegated renewal.
-9. **The probe speaks to every provider it has a credential header for.** The check act
-   stops being an Anthropic and OpenAI privilege, because the header and the models path
-   now stand in the table beside the origin.
+10. **The probe speaks to every provider it has a credential header for.** The check act
+    stops being an Anthropic and OpenAI privilege, because the header and the models path
+    now stand in the table beside the origin.
 
 ## Capabilities
 
 ### New capabilities
 
-- **Connecting every provider the catalog names.** Twenty rows that stood inert connect, each
-  against the endpoint its vendor documents.
+- **Connecting every provider the catalog names.** Twenty-one rows that stood inert connect,
+  each against the endpoint its vendor documents.
 - **An account pointed at an address a person chose.** A custom endpoint, a custom aggregator
   and a custom local server each carry the origin and dialect that person entered.
 

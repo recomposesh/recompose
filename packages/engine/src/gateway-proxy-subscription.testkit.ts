@@ -1,4 +1,4 @@
-import type { SpendGrant } from '@recompose/contracts';
+import type { SpendGrant, SubscriptionProviderId } from '@recompose/contracts';
 import type { Hono } from 'hono';
 
 import { vi } from 'vitest';
@@ -13,7 +13,7 @@ export const subscriptionModel = aVirtualModel({
 });
 
 export function subscriptionGrant(
-  provider: 'anthropic' | 'openai' | 'antigravity',
+  provider: SubscriptionProviderId,
   credential: string,
 ): SpendGrant {
   return {
@@ -29,7 +29,7 @@ export function subscriptionGrant(
   };
 }
 
-function subscriptionOrigin(provider: 'anthropic' | 'openai' | 'antigravity'): string {
+function subscriptionOrigin(provider: SubscriptionProviderId): string {
   if (provider === 'anthropic') return 'https://api.anthropic.com';
 
   return provider === 'openai'
@@ -47,7 +47,7 @@ export function runtimeAnswering(answer: () => Response) {
     sent,
     persist,
     runtime: {
-      send: async (provider: 'anthropic' | 'openai' | 'antigravity', request: ProviderRequest) => {
+      send: async (provider: SubscriptionProviderId, request: ProviderRequest) => {
         await Promise.resolve();
         sent.push({ provider, request });
 
@@ -116,9 +116,7 @@ export function claudeAnswer(content: readonly unknown[] = []): Response {
   });
 }
 
-export function subscriptionProviderAnswer(
-  provider: 'anthropic' | 'openai' | 'antigravity',
-): Response {
+export function subscriptionProviderAnswer(provider: SubscriptionProviderId): Response {
   if (provider === 'anthropic') return claudeAnswer();
 
   if (provider === 'antigravity') {
