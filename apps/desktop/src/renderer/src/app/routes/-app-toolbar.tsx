@@ -36,7 +36,7 @@ export function AppToolbar({ slug, leading, trailing }: AppToolbarProps) {
   if (slug === undefined) {
     return (
       <div
-        className={`app-drag absolute inset-x-0 top-0 z-10 flex h-toolbar items-center ps-window-controls-width ${away ? 'border-b border-line-subtle bg-surface-toolbar' : ''}`}
+        className={`app-drag absolute inset-x-0 top-0 z-10 flex h-toolbar items-center ${away ? 'border-b border-line-subtle bg-surface-toolbar ps-window-controls-width' : ''}`}
       >
         {away && (
           <span className="app-no-drag flex">

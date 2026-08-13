@@ -38,7 +38,6 @@ function panel(over: Partial<Parameters<typeof ChartPanel>[0]> = {}) {
       measure={props.measure}
       onMeasureChange={props.onMeasureChange}
       onStackedByChange={props.onStackedByChange}
-      onTableOpenChange={props.onTableOpenChange}
       stackedBy={props.stackedBy}
       subCaption={props.subCaption}
       tableOpen={props.tableOpen}

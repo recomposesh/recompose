@@ -5,18 +5,17 @@ import { useEffect, useState } from 'react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 import type { PanelUnit } from '../breakdown-panel/breakdown-panel';
-import type { UsagePanels, UsageStrips, UsageView } from './use-usage-view';
+import type { UsagePanels, UsageQuiet, UsageView } from './use-usage-view';
 
-import { quotaWindowsQueryOptions, refreshedBalances } from '../../../../shared/api';
 import { Button } from '../../../../shared/ui';
+import { quietRecovery, quietSentence } from '../../lib/quiet-recovery';
 import { chartSubCaption, panelsCaption, scopeSentence } from '../../lib/usage-caption';
 import { filteredMembers, spendSnappedRange } from '../../lib/usage-search';
 import { windowWording } from '../../lib/usage-window';
-import { BalanceCard } from '../balance-card/balance-card';
 import { BreakdownPanel } from '../breakdown-panel/breakdown-panel';
 import { ChartPanel } from '../chart-panel/chart-panel';
 import { MetricTiles } from '../metric-tiles/metric-tiles';
-import { QuotaStrip } from '../quota-strip/quota-strip';
+import { QuietReading } from '../quiet-reading/quiet-reading';
 import { UsageHeader } from '../usage-header/usage-header';
 import { movedSearch } from './usage-page-moves';
 import { useUsageView } from './use-usage-view';
@@ -28,14 +27,37 @@ type UsagePageProps = {
   onSearchChange: (next: UsageSearch) => void;
 };
 
-function promiseCard() {
+function quietReading(
+  quiet: UsageQuiet,
+  search: UsageSearch,
+  onSearchChange: (next: UsageSearch) => void,
+) {
+  if (quiet === 'never-served') {
+    return (
+      <QuietReading
+        sentence="Send a request through a gateway and it collects here."
+        title="No Requests Yet"
+      />
+    );
+  }
+
+  const recovery = quietRecovery(search);
+
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-card border border-line-subtle bg-surface-card px-6 py-12 text-center">
-      <h2 className="text-heading text-ink">No requests yet</h2>
-      <p className="max-w-102.5 text-body leading-normal text-ink-secondary">
-        Once a gateway serves its first request, its rate, latency, tokens, and spend collect here.
-      </p>
-    </div>
+    <QuietReading
+      act={
+        recovery === undefined
+          ? undefined
+          : {
+              label: recovery.label,
+              onPress: () => {
+                onSearchChange(recovery.next);
+              },
+            }
+      }
+      sentence={quietSentence(search)}
+      title="No Requests"
+    />
   );
 }
 
@@ -52,8 +74,6 @@ function refusalCard(failure: string, retry: () => void) {
 
 function refreshedUsageReadings(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['usage-report'] });
-  void queryClient.invalidateQueries({ queryKey: quotaWindowsQueryOptions.queryKey });
-  void refreshedBalances(queryClient);
 }
 
 type PanelUnits = Record<keyof UsagePanels, PanelUnit>;
@@ -90,7 +110,6 @@ type BodyMoves = {
   search: UsageSearch;
   onSearchChange: (next: UsageSearch) => void;
   tableOpen: boolean;
-  onTableOpenChange: (open: boolean) => void;
   units: PanelUnits;
   onUnitChange: (panel: keyof UsagePanels, unit: PanelUnit) => void;
   onRetry: () => void;
@@ -119,7 +138,9 @@ function readingsBody(props: ReadingsProps) {
         onStackedByChange={(stackedBy) => {
           onSearchChange({ ...search, stackedBy });
         }}
-        onTableOpenChange={props.onTableOpenChange}
+        quiet={
+          view.quiet === undefined ? undefined : quietReading(view.quiet, search, onSearchChange)
+        }
         stackedBy={search.stackedBy}
         subCaption={chartSubCaption(view.widthWord)}
         tableOpen={props.tableOpen}
@@ -130,27 +151,9 @@ function readingsBody(props: ReadingsProps) {
   );
 }
 
-function accountStrips(strips: UsageStrips, onRefreshCredits: () => void) {
-  return (
-    <>
-      <QuotaStrip accountNameOf={strips.accountNameOf} now={strips.now} windows={strips.windows} />
-      <BalanceCard
-        accountNameOf={strips.accountNameOf}
-        balances={strips.balances}
-        now={strips.now}
-        onRefresh={onRefreshCredits}
-      />
-    </>
-  );
-}
-
 function viewBody(view: UsageView, moves: BodyMoves) {
   if (view.state === 'refused') {
     return refusalCard(view.failure, moves.onRetry);
-  }
-
-  if (view.state === 'promise') {
-    return promiseCard();
   }
 
   if (view.state === 'loading') {
@@ -204,7 +207,7 @@ function useMenuCommands(
  */
 export function UsagePage({ search, onSearchChange }: UsagePageProps) {
   const queryClient = useQueryClient();
-  const { view, strips, updatedAt } = useUsageView(search);
+  const { view, now, updatedAt } = useUsageView(search);
   const [tableOpen, setTableOpen] = useState(false);
   const [units, setUnits] = useState<PanelUnits>({
     gateway: 'requests',
@@ -219,30 +222,23 @@ export function UsagePage({ search, onSearchChange }: UsagePageProps) {
   }, [tableOpen]);
 
   return (
-    <section
-      className="mx-auto flex w-full max-w-data-column flex-col gap-4 px-6 pt-page-top pb-6"
-      data-focus-group=""
-    >
+    <section className="flex w-full flex-col gap-4 px-6 pt-explorer-top pb-6" data-focus-group="">
       <UsageHeader
-        now={strips.now}
+        now={now}
         onRefresh={() => {
           refreshedUsageReadings(queryClient);
         }}
         scope={scopeSentence({
           gateways: filteredMembers(search, 'gateways'),
           providers: filteredMembers(search, 'providers'),
-          window: windowWording(search, strips.now),
+          window: windowWording(search, now),
         })}
         updatedAt={updatedAt}
       />
-      {accountStrips(strips, () => {
-        void refreshedBalances(queryClient);
-      })}
       {viewBody(view, {
         search,
         onSearchChange,
         tableOpen,
-        onTableOpenChange: setTableOpen,
         units,
         onUnitChange: (panel, unit) => {
           setUnits((held) => ({ ...held, [panel]: unit }));

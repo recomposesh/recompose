@@ -34,8 +34,8 @@ const UNIT_OPTIONS = [
 function panelRow(row: PanelRow, unit: PanelUnit) {
   return (
     <li className="flex items-center gap-2.5" key={row.key ?? row.name}>
-      <span className="w-30 shrink-0 truncate text-detail text-ink">{row.name}</span>
-      <span className="flex-1">
+      <span className="w-30 truncate text-detail text-ink">{row.name}</span>
+      <span className="min-w-16 flex-1">
         <ProportionFill label={`${row.name} share`} value={row.share} />
       </span>
       <span className="w-14 shrink-0 text-end font-mono text-mono-value text-ink tabular-nums">
@@ -67,7 +67,11 @@ export function BreakdownPanel({ title, rows, unit, onUnitChange }: BreakdownPan
           value={unit}
         />
       </div>
-      <ul className="flex flex-col gap-2.5">{rows.map((row) => panelRow(row, unit))}</ul>
+      {rows.length === 0 ? (
+        <p className="py-2 text-center text-detail text-ink-secondary">No Data</p>
+      ) : (
+        <ul className="flex flex-col gap-2.5">{rows.map((row) => panelRow(row, unit))}</ul>
+      )}
     </section>
   );
 }

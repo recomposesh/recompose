@@ -168,3 +168,58 @@ describe('the chart folds buckets into bars', () => {
     expect(daily.bars[0]?.label).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/u);
   });
 });
+
+describe('the chart draws the window a person asked for, not only the buckets that carry traffic', () => {
+  it('keeps a slot for every hour of the window, with nothing in the quiet ones', () => {
+    const drawn = drawing({
+      buckets: [bucket(TODAY + 2 * HOUR_MS)],
+      window: { from: TODAY, to: TODAY + 4 * HOUR_MS },
+      bucketWidth: 'hour',
+    });
+
+    expect(drawn.bars.map((bar) => bar.at)).toEqual([
+      TODAY,
+      TODAY + HOUR_MS,
+      TODAY + 2 * HOUR_MS,
+      TODAY + 3 * HOUR_MS,
+    ]);
+    expect(drawn.bars[0]?.values).toEqual({});
+    expect(drawn.bars[2]?.values['relay']).toBe(10);
+  });
+
+  it('names a quiet slot on the clock, the way it names a busy one', () => {
+    const drawn = drawing({
+      buckets: [bucket(TODAY)],
+      window: { from: TODAY, to: TODAY + 2 * HOUR_MS },
+      bucketWidth: 'hour',
+    });
+
+    expect(drawn.bars[1]?.label).toMatch(/^\d\d:\d\d$/u);
+  });
+
+  it('leaves the window totals alone, because a quiet slot adds nothing', () => {
+    const drawn = drawing({
+      buckets: [bucket(TODAY)],
+      window: { from: TODAY, to: TODAY + 6 * HOUR_MS },
+      bucketWidth: 'hour',
+    });
+
+    expect(drawn.totals['relay']).toBe(10);
+  });
+});
+
+describe('the chart draws a drawn window at day width', () => {
+  it('keeps a slot for every local day between the edges a person drew', () => {
+    const opened = new Date(2026, 7, 5, 9, 50).getTime();
+    const closed = new Date(2026, 7, 12, 9, 50).getTime();
+    const drawn = drawing({
+      buckets: [bucket(new Date(2026, 7, 11).getTime())],
+      window: { from: opened, to: closed },
+      bucketWidth: 'day',
+    });
+
+    expect(drawn.bars).toHaveLength(8);
+    expect(drawn.bars[0]?.label).toBe('Aug 5');
+    expect(drawn.bars.at(-1)?.label).toBe('Aug 12');
+  });
+});

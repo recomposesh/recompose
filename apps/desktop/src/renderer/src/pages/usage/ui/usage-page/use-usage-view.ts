@@ -1,4 +1,4 @@
-import type { AccountBalance, QuotaWindow, UsageBucket, UsageDayCost } from '@recompose/contracts';
+import type { UsageBucket, UsageDayCost } from '@recompose/contracts';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -10,14 +10,14 @@ import type { PanelRow } from '../breakdown-panel/breakdown-panel';
 
 import {
   accountsQueryOptions,
-  balancesQueryOptions,
-  quotaWindowsQueryOptions,
   refusalSentence,
+  settingsQueryOptions,
 } from '../../../../shared/api';
 import { panelRowsOf } from '../../lib/panel-rows';
 import { stackedChart } from '../../lib/usage-chart-fold';
 import { metricFaces } from '../../lib/usage-faces';
 import { filteredBuckets } from '../../lib/usage-groups';
+import { windowFor } from '../../lib/usage-window';
 import { useWindowBuckets } from '../../model/use-window-buckets';
 
 function localMidnight(at: number): number {
@@ -42,8 +42,10 @@ export type UsagePanels = {
   target: readonly PanelRow[];
 };
 
+/** Why a fold came back empty: the window served nothing, or nothing has ever been served. */
+export type UsageQuiet = 'quiet-window' | 'never-served';
+
 export type UsageView =
-  | { state: 'promise' }
   | { state: 'loading'; faces: MetricFaces }
   | { state: 'refused'; failure: string }
   | {
@@ -53,14 +55,8 @@ export type UsageView =
       panels: UsagePanels;
       widthWord: BucketWidthWord;
       edgeAt: number | undefined;
+      quiet: UsageQuiet | undefined;
     };
-
-export type UsageStrips = {
-  windows: readonly QuotaWindow[];
-  balances: readonly AccountBalance[];
-  accountNameOf: (accountId: string) => string;
-  now: number;
-};
 
 type Sourced = {
   buckets: readonly UsageBucket[];
@@ -98,16 +94,26 @@ function panelsOf(
   };
 }
 
+function quietOf(reading: { folded: number; everServed: boolean }): UsageQuiet | undefined {
+  if (reading.folded > 0) {
+    return undefined;
+  }
+
+  return reading.everServed ? 'quiet-window' : 'never-served';
+}
+
 function readingsView(
   search: UsageSearch,
   sourced: Sourced,
   nameOfAccount: (id: string) => string,
   now: number,
+  everServed: boolean,
 ): UsageView {
   const kept = filteredBuckets(sourced.buckets, search);
 
   return {
     state: 'readings',
+    quiet: quietOf({ folded: kept.length + sourced.dayCosts.length, everServed }),
     faces: metricFaces({
       buckets: kept,
       previous: filteredBuckets(sourced.previous, search),
@@ -123,6 +129,7 @@ function readingsView(
       stackedBy: search.stackedBy,
       nameOf: (key) => (search.stackedBy === 'account' ? nameOfAccount(key) : key),
       bucketWidth: sourced.widthWord,
+      window: windowFor(search, now),
     }),
     panels: panelsOf(kept, nameOfAccount),
     widthWord: sourced.widthWord,
@@ -145,22 +152,12 @@ function stillReading(held: WindowBuckets): boolean {
   return held.ask !== undefined && held.report === undefined;
 }
 
-function servedNothing(held: WindowBuckets): boolean {
-  const costs = held.report?.dayCosts.length ?? 0;
-
-  return held.ask !== undefined && held.buckets.length === 0 && costs === 0;
-}
-
-function quietView(held: WindowBuckets): UsageView | undefined {
+function unreadableView(held: WindowBuckets): UsageView | undefined {
   if (held.failure !== null) {
     return { state: 'refused', failure: refusalSentence(held.failure) };
   }
 
-  if (stillReading(held)) {
-    return { state: 'loading', faces: PLACEHOLDER_FACES };
-  }
-
-  return servedNothing(held) ? { state: 'promise' } : undefined;
+  return stillReading(held) ? { state: 'loading', faces: PLACEHOLDER_FACES } : undefined;
 }
 
 function sourcedFrom(search: UsageSearch, held: WindowBuckets): Sourced {
@@ -177,14 +174,16 @@ function viewOf(
   search: UsageSearch,
   held: WindowBuckets,
   nameOfAccount: (id: string) => string,
+  everServed: boolean,
 ): UsageView {
   return (
-    quietView(held) ?? readingsView(search, sourcedFrom(search, held), nameOfAccount, held.now)
+    unreadableView(held) ??
+    readingsView(search, sourcedFrom(search, held), nameOfAccount, held.now, everServed)
   );
 }
 
 /**
- * The whole view one address stands for, plus the strips that ride beside every state.
+ * The whole view one address stands for, the instant it reads against, and how fresh it stands.
  *
  * @summary Missing data reads as missing: pending history is a loading view of placeholders, a
  * refused read carries its sentence, and a ledger window that served nothing says so rather than
@@ -193,21 +192,18 @@ function viewOf(
  */
 export function useUsageView(search: UsageSearch): {
   view: UsageView;
-  strips: UsageStrips;
+  now: number;
   updatedAt: number | undefined;
 } {
   const held = useWindowBuckets(search);
-  const quota = useQuery(quotaWindowsQueryOptions);
-  const balances = useQuery(balancesQueryOptions);
   const accounts = useQuery(accountsQueryOptions);
+  const settings = useQuery(settingsQueryOptions);
   const nameOfAccount = (accountId: string) => accountLabelOf(accounts.data, accountId);
+  const everServed = settings.data?.firstRequestServed ?? true;
 
-  const strips: UsageStrips = {
-    windows: quota.data ?? [],
-    balances: balances.data ?? [],
-    accountNameOf: nameOfAccount,
+  return {
+    view: viewOf(search, held, nameOfAccount, everServed),
     now: held.now,
+    updatedAt: held.updatedAt,
   };
-
-  return { view: viewOf(search, held, nameOfAccount), strips, updatedAt: held.updatedAt };
 }

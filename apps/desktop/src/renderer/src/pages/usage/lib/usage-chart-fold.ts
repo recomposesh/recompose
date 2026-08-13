@@ -6,10 +6,13 @@ import type { ChartBar, ChartSeries } from '../../../shared/ui';
 import type { DrawnChart } from './usage-faces';
 import type { GroupDimension } from './usage-groups';
 import type { ChartMeasure } from './usage-search';
+import type { UsageWindow } from './usage-window';
+import type { SlotWidth } from './window-slots';
 
 import { rankedChartSeries } from '../../../shared/ui';
 import { MICRO_DOLLARS } from './usage-faces';
 import { groupedBy, memberOf } from './usage-groups';
+import { windowSlots } from './window-slots';
 
 const SPEND_SERIES: readonly ChartSeries[] = [
   { key: 'billed', label: 'Billed', fill: 'var(--color-series-cost)' },
@@ -41,7 +44,9 @@ type StackInputs = {
   dayCosts: readonly UsageDayCost[];
   stackedBy: GroupDimension;
   nameOf: (key: string) => string;
-  bucketWidth?: 'minute' | 'hour' | 'day' | undefined;
+  bucketWidth?: SlotWidth | undefined;
+  /** The window the axis stands for, so a slot that served nothing keeps its place. */
+  window?: UsageWindow | undefined;
 };
 
 const UNNAMED_KEY = 'unnamed';
@@ -141,6 +146,18 @@ function spendBars(dayCosts: readonly UsageDayCost[]): readonly ChartBar[] {
     }));
 }
 
+function overTheWindow(bars: readonly ChartBar[], inputs: StackInputs): readonly ChartBar[] {
+  if (inputs.window === undefined) {
+    return bars;
+  }
+
+  const drawn = new Map(bars.map((bar) => [bar.at, bar]));
+
+  return windowSlots(inputs.window, inputs.bucketWidth ?? 'hour').map(
+    (at) => drawn.get(at) ?? { at, label: barLabel(at, inputs.bucketWidth), values: {} },
+  );
+}
+
 /** Each series' window total, which the legend prints beside its paint. */
 export function seriesTotals(bars: readonly ChartBar[]): Record<string, number> {
   return bars.reduce<Record<string, number>>((totals, bar) => {
@@ -163,7 +180,7 @@ export function stackedChart(inputs: StackInputs): DrawnChart {
   if (inputs.measure === 'spend') {
     const bars = spendBars(inputs.dayCosts);
 
-    return { series: SPEND_SERIES, bars, totals: seriesTotals(bars) };
+    return { series: SPEND_SERIES, bars: overTheWindow(bars, inputs), totals: seriesTotals(bars) };
   }
 
   if (inputs.measure === 'latency') {
@@ -175,7 +192,7 @@ export function stackedChart(inputs: StackInputs): DrawnChart {
 
     return {
       series: [LATENCY_SERIES],
-      bars,
+      bars: overTheWindow(bars, inputs),
       totals: {
         latency: folded.answered === 0 ? 0 : folded.durationMsSum / folded.answered,
       },
@@ -197,5 +214,5 @@ export function stackedChart(inputs: StackInputs): DrawnChart {
     restKey,
   );
 
-  return { series, bars, totals: seriesTotals(bars) };
+  return { series, bars: overTheWindow(bars, inputs), totals: seriesTotals(bars) };
 }

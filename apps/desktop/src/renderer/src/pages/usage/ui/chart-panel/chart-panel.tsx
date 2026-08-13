@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Menu } from '@base-ui/react/menu';
 import { useId } from 'react';
 
@@ -5,7 +7,6 @@ import type { DrawnChart } from '../../lib/usage-faces';
 import type { ChartMeasure, StackDimension } from '../../lib/usage-search';
 
 import {
-  Disclosure,
   Icon,
   NumericCell,
   SegmentedControl,
@@ -28,10 +29,10 @@ type ChartPanelProps = {
   subCaption: string;
   /** The bucket whose slot marks where retained history begins. */
   edgeAt?: number | undefined;
-  /** The twin's standing when the page owns it, so the menu tick can drive it. */
+  /** Whether the printed twin stands under the drawing, which the View menu governs. */
   tableOpen?: boolean | undefined;
-  /** Receives the standing the trigger asks for. */
-  onTableOpenChange?: ((open: boolean) => void) | undefined;
+  /** What stands where the drawing would, on a window that folded to nothing. */
+  quiet?: ReactNode;
 };
 
 const MEASURE_OPTIONS = [
@@ -64,10 +65,13 @@ const STACK_DIMENSIONS: readonly StackDimension[] = [
 
 const AVERAGES_NEVER_STACK = 'Latency averages, so it never stacks';
 
+const PLOT_HEIGHT = 150;
+const BUCKET_LABEL_HEIGHT = 21;
+
 function legendItem(key: string, label: string, fill: string, total: number) {
   return (
     <li className="flex items-center gap-1.5" key={key}>
-      <span aria-hidden className="size-2 rounded-chip" style={{ backgroundColor: fill }} />
+      <span aria-hidden className="size-2 rounded-mark" style={{ backgroundColor: fill }} />
       <span className="text-caption text-ink-secondary">{label}</span>
       <span className="font-mono text-mono-caption text-ink tabular-nums">
         {total.toLocaleString('en-US', { maximumFractionDigits: 2 })}
@@ -176,6 +180,35 @@ function panelHeader(props: HeaderProps) {
   );
 }
 
+type DrawingProps = {
+  drawn: DrawnChart;
+  edgeAt: number | undefined;
+  title: string;
+  quiet: ReactNode;
+};
+
+function panelDrawing({ drawn, edgeAt, title, quiet }: DrawingProps) {
+  return (
+    <div className="relative">
+      <SeriesChart
+        bars={drawn.bars}
+        edgeAt={edgeAt}
+        height={PLOT_HEIGHT + BUCKET_LABEL_HEIGHT}
+        label={title}
+        series={drawn.series}
+      />
+      {quiet === undefined ? null : (
+        <div
+          className="absolute inset-x-0 top-0 flex items-center justify-center"
+          style={{ height: `${String(PLOT_HEIGHT)}px` }}
+        >
+          {quiet}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function tableTwin(title: string, drawn: DrawnChart) {
   return (
     <TableShell caption={title}>
@@ -216,7 +249,7 @@ export function ChartPanel({
   subCaption,
   edgeAt,
   tableOpen,
-  onTableOpenChange,
+  quiet,
 }: ChartPanelProps) {
   const title = MEASURE_TITLES[measure];
   const reasonId = `stack-reason-${useId().replaceAll(':', '')}`;
@@ -235,21 +268,15 @@ export function ChartPanel({
         stackedBy,
         onStackedByChange,
       })}
-      <ul className="flex flex-wrap items-center gap-3.5">
-        {drawn.series.map((one) =>
-          legendItem(one.key, one.label, one.fill, drawn.totals[one.key] ?? 0),
-        )}
-      </ul>
-      <SeriesChart
-        bars={drawn.bars}
-        edgeAt={edgeAt}
-        height={150}
-        label={title}
-        series={drawn.series}
-      />
-      <Disclosure label="Data table" onOpenChange={onTableOpenChange} open={tableOpen}>
-        {tableTwin(title, drawn)}
-      </Disclosure>
+      {drawn.series.length === 0 ? null : (
+        <ul className="flex flex-wrap items-center gap-3.5">
+          {drawn.series.map((one) =>
+            legendItem(one.key, one.label, one.fill, drawn.totals[one.key] ?? 0),
+          )}
+        </ul>
+      )}
+      {panelDrawing({ drawn, edgeAt, title, quiet })}
+      {tableOpen === true ? tableTwin(title, drawn) : null}
     </section>
   );
 }

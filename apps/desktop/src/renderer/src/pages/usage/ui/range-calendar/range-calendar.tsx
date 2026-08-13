@@ -2,6 +2,7 @@ import { DayPicker, getDefaultClassNames } from 'react-day-picker';
 
 import type { UsageWindow } from '../../lib/usage-window';
 
+import { Icon } from '../../../../shared/ui';
 import { atClock, clockOf } from '../../lib/clock-edges';
 
 type RangeCalendarProps = {
@@ -21,11 +22,32 @@ const painted = getDefaultClassNames();
 
 const classNames = {
   caption_label: `${painted.caption_label} text-detail font-medium text-ink`,
-  button_previous: `${painted.button_previous} rounded-control text-ink-secondary focus-ring`,
-  button_next: `${painted.button_next} rounded-control text-ink-secondary focus-ring`,
   weekday: `${painted.weekday} text-caption font-normal text-ink-secondary`,
   day_button: `${painted.day_button} rounded-control text-detail focus-ring`,
 };
+
+const MONTH_STEP = 1;
+
+function steppedMonth(month: number, months: number): number {
+  const stepped = new Date(month);
+
+  stepped.setMonth(stepped.getMonth() + months);
+
+  return stepped.getTime();
+}
+
+function monthStep(label: string, turn: string, onPress: () => void) {
+  return (
+    <button
+      aria-label={label}
+      className="flex size-5 items-center justify-center rounded-control focus-ring text-ink-secondary"
+      onClick={onPress}
+      type="button"
+    >
+      <Icon aria-hidden className={`size-3.5 ${turn}`} name="chevron" />
+    </button>
+  );
+}
 
 function keptClocks(
   window: UsageWindow,
@@ -53,10 +75,19 @@ export function RangeCalendar({
   spanWording,
 }: RangeCalendarProps) {
   return (
-    <div className="flex flex-col gap-1 px-3.5 py-2.5 usage-calendar">
-      <p className="text-center text-caption text-ink-secondary">{spanWording}</p>
+    <div className="flex flex-col usage-calendar gap-2.5 px-3.5 py-2.5">
+      <div className="flex items-center justify-between">
+        {monthStep('Previous month', 'rotate-90', () => {
+          onMonthChange(steppedMonth(month, -MONTH_STEP));
+        })}
+        <p className="text-caption text-ink-secondary">{spanWording}</p>
+        {monthStep('Next month', '-rotate-90', () => {
+          onMonthChange(steppedMonth(month, MONTH_STEP));
+        })}
+      </div>
       <DayPicker
         classNames={classNames}
+        hideNavigation
         mode="range"
         month={new Date(month)}
         numberOfMonths={2}
@@ -67,7 +98,6 @@ export function RangeCalendar({
           onWindowChange(keptClocks(window, range?.from, range?.to));
         }}
         selected={{ from: new Date(window.from), to: new Date(window.to) }}
-        showOutsideDays
       />
     </div>
   );

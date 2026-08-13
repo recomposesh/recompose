@@ -17,7 +17,7 @@ type RangeWindowFooterProps = {
 };
 
 const timeField =
-  'h-control rounded-control bg-surface-field px-2 font-mono text-mono-value text-ink focus-ring-wide';
+  'h-control rounded-control bg-surface-field px-2 font-mono text-mono-value text-ink focus-ring-wide clock-field';
 
 /**
  * The times both edges stand at, the zone they are read in, and the two acts that settle them.
@@ -33,7 +33,7 @@ export function RangeWindowFooter({
   onApply,
 }: RangeWindowFooterProps) {
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-line-faint px-3.5 py-2.5">
+    <div className="flex items-center justify-between gap-2.5 border-t border-line-faint px-3.5 py-2.5">
       <div className="flex items-center gap-2">
         <input
           aria-label="Window opens at"

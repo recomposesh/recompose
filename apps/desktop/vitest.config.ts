@@ -1,3 +1,5 @@
+import type { BrowserCommand } from 'vitest/node';
+
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
@@ -5,7 +7,16 @@ import { defaultExclude, defineConfig } from 'vitest/config';
 
 import { coverageDefaults } from '../../vitest.shared';
 
+// Chromium keeps every finished test file's memory as files on disk, so a long run fills the
+// runner and the browser dies mid-suite: https://github.com/vitest-dev/vitest/issues/9437
+const requestGC: BrowserCommand = async (context) => {
+  await context.page.requestGC();
+};
+
+const browserSetup = ['./vitest.browser-setup.ts'];
+
 const chromium = () => ({
+  commands: { requestGC },
   enabled: true,
   headless: true,
   provider: playwright({
@@ -72,6 +83,7 @@ export default defineConfig({
           name: 'browser',
           include: ['src/renderer/**/*.browser.test.{ts,tsx}'],
           browser: chromium(),
+          setupFiles: browserSetup,
           ...pacedForCi,
         },
       },
@@ -80,6 +92,7 @@ export default defineConfig({
         test: {
           name: 'storybook',
           browser: chromium(),
+          setupFiles: browserSetup,
           ...pacedForCi,
         },
       },
@@ -88,6 +101,7 @@ export default defineConfig({
         test: {
           name: 'storybook-dark',
           browser: chromium(),
+          setupFiles: browserSetup,
           ...pacedForCi,
         },
       },

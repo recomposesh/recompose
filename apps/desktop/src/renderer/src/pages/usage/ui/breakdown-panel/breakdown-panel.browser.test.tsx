@@ -62,3 +62,10 @@ test('traffic that never reached the dimension still reads, under a printed abse
 
   await expect.element(screen.getByText('No gateway')).toBeVisible();
 });
+
+test('a fold with nothing in it prints its own absence rather than an empty list', async () => {
+  const screen = await render(panel({ rows: [] }));
+
+  await expect.element(screen.getByText('No Data')).toBeVisible();
+  expect(screen.container.querySelector('li')).toBeNull();
+});
