@@ -1,5 +1,10 @@
 # usage Specification
 
+## RENAMED Requirements
+
+- FROM: `### Requirement: Reports answer closed hours only, and the live plane folds in the renderer`
+- TO: `### Requirement: Reports carry the hour still filling, and the live plane folds in the renderer`
+
 ## MODIFIED Requirements
 
 ### Requirement: Reports carry the hour still filling, and the live plane folds in the renderer
@@ -24,7 +29,13 @@ The `usage:report` channel MUST answer one range of hour buckets, the hour still
 - When the explorer folds a window into days
 - Then each day holds the traffic of that reader's own day
 
-### Requirement: The window either reaches back a fixed width or takes drawn edges
+#### Scenario: the live hour never reads from the ledger
+
+- Given a person watching the 1h range
+- When a request settles
+- Then the reading moves from the renderer's own row cache without a ledger read
+
+### Requirement: A window is a preset or a range a person draws
 
 The range control MUST offer the live hour, the last 24 hours, the last 7 days, the last 30 days, and a custom window. A custom window MUST come from a calendar a person draws a range on, with a clock field at each edge. The first day pressed on a settled window MUST open a new window over that day rather than move either standing edge. The press after it MUST close that window. A press behind the opening edge MUST reopen the window there. A press on a window already drawn MUST start a new one. Both edges MUST keep the clock they already stood at. The calendar MUST also offer the standing presets, including this week and this month, which land as custom windows over the reader's own week and month. The calendar grid, its keyboard walk, its month navigation, and its accessible day names MUST come from a library rather than a hand-built grid. The control MUST render segments wider than the retention window inert, with the window named as the reason.
 
