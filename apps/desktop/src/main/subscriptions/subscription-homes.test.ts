@@ -51,11 +51,21 @@ describe('where a subscription account keeps its own config home', () => {
     expect(seeded).toContain('cli_auth_credentials_store = "file"');
   });
 
-  test('given a Claude Code sign-in home, nothing is seeded ahead of the tool', async () => {
+  test('given a Claude Code sign-in home, the seeded config answers what a first run would ask', async () => {
     const pending = await homes.resetPending('anthropic');
 
+    const seeded: unknown = JSON.parse(await readFile(join(pending, '.claude.json'), 'utf8'));
+
+    expect(seeded).toMatchObject({ hasCompletedOnboarding: true, hasTrustDialogAccepted: true });
+  });
+
+  test('given a Claude Code sign-in home, the seeded config leaves the sign-in itself to the tool', async () => {
+    const pending = await homes.resetPending('anthropic');
+
+    const seeded: unknown = JSON.parse(await readFile(join(pending, '.claude.json'), 'utf8'));
+
+    expect(seeded).not.toHaveProperty('oauthAccount');
     await expect(stands(join(pending, 'config.toml'))).resolves.toBe(false);
-    await expect(stands(pending)).resolves.toBe(true);
   });
 
   test('given an abandoned sign-in, starting another one leaves nothing of the first behind', async () => {

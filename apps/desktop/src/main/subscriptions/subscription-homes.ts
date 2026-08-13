@@ -8,6 +8,17 @@ const ACTIVE = 'active';
 
 const codexSeededConfig = 'cli_auth_credentials_store = "file"\n';
 
+/**
+ * @summary An empty config home reads to Claude Code as a first run, so the tool asks its
+ * onboarding questions before it reaches the sign-in. Answering them here leaves the person
+ * the sign-in and nothing else.
+ */
+const claudeCodeSeededConfig = `${JSON.stringify(
+  { hasCompletedOnboarding: true, hasTrustDialogAccepted: true },
+  null,
+  2,
+)}\n`;
+
 export type SubscriptionHomes = {
   homeFor: (provider: SubscriptionProviderId, id: string) => string;
   pendingHomeFor: (provider: SubscriptionProviderId) => string;
@@ -27,6 +38,10 @@ export type SubscriptionHomes = {
 async function seedConfigHome(provider: SubscriptionProviderId, home: string): Promise<void> {
   if (provider === 'openai') {
     await writeFile(join(home, 'config.toml'), codexSeededConfig, 'utf8');
+  }
+
+  if (provider === 'anthropic') {
+    await writeFile(join(home, '.claude.json'), claudeCodeSeededConfig, 'utf8');
   }
 }
 
