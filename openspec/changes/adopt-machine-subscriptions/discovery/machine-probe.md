@@ -6,7 +6,9 @@ Run in the orchestrating session against the real tools on a real macOS machine,
 
 `security find-generic-password -s "Claude Code-credentials"` returns an item whose `svce` is `Claude Code-credentials` and whose `acct` is the OS login name. The item exists on this machine.
 
-`~/.claude/.credentials.json` does not exist on this machine. The file-backed store the community documents is the fallback for platforms without a keychain, not the macOS path. Adoption on macOS reads the keychain and nothing else.
+`~/.claude/.credentials.json` does not exist on this machine. The file-backed store the community documents is the fallback for platforms without a keychain, not the macOS path. So the credential itself lives in the keychain on macOS.
+
+The address and the plan don't. `subscription-standing.ts:71` already reads both from `.claude.json`, a plain file that asks the operating system for no permission at all. Detection can therefore name the account from a file read, and only the act of adopting need touch the keychain.
 
 `~/.codex/auth.json` exists, mode `0600`, 4316 bytes. Its top-level keys are `auth_mode`, `OPENAI_API_KEY`, `tokens`, and `last_refresh`. The `tokens` object holds `id_token`, `access_token`, `refresh_token`, and `account_id`.
 
@@ -64,7 +66,7 @@ Adoption reads the plain name, because adoption reads what the person's own Clau
 
 A recompose sign-in does not write the plain name. recompose hands the tool a config home under its own application-support directory, so that login lands under a derived name instead. Any code that watches for a recompose login, or that takes custody of what a recompose login produced, has to derive the name from the home rather than assume the plain one. `credential-custody.ts` names one constant, `VENDOR_SERVICE`, and uses it for both roles.
 
-The five suffixed entries were not traced back to their config homes. The packaged application's support directory holds no `subscriptions` directory at all, so they predate the current layout or come from development runs under a different application name. Tracing them is not worth the time: the derivation is confirmed, and that is what the design needs.
+A first pass failed to trace the suffixed entries, because it looked under the packaged application's support directory, which holds no `subscriptions` folder. The next section traces three of them by searching the whole home directory instead.
 
 `Codex Auth` existing as a keychain service means Codex on this machine may already keep its credential in the keyring rather than in `auth.json`, even though `auth.json` is present. Adoption must probe both rather than treat a missing file as a signed-out Codex.
 

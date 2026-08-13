@@ -12,13 +12,13 @@ No recompose subscription home exists on the probe machine, so none of the five 
 
 ## Finding 1: the demoted sign-in destroys what the promoted act reads
 
-Severity 1. Accepted, and it overturns locked decision 9.
+Severity 1. Accepted, and it overturns the rider the proposal first filed.
 
 `credential-custody.ts:5` names the plain service. `clear()` at line 106 removes that item, and `placeFrom` at line 78 overwrites it. `machine-probe.md` establishes that a recompose sign-in writes a derived name instead, so custody has been operating on the person's own Claude Code credential rather than on one recompose produced.
 
 The session found the consequence to be worse than the critique stated. A sign-in does not merely blank the item. On success, custody _places_ a recompose account's credential into it. An adopted account reading through would then serve as the wrong account, silently, with no error anywhere.
 
-The proposal filed the derived-name repair as a rider. That was wrong. It is a precondition, and the proposal now carries it as locked decision 9.
+The proposal filed the derived-name repair as a rider. That was wrong. It is a precondition, and the proposal now carries it as locked decision 7.
 
 ## Finding 2: the row offers the wrong remedy for an adopted account
 

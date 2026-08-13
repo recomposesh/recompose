@@ -20,7 +20,7 @@ An adopted account shares its credential with the tool a person uses every day. 
 
 So recompose never renews an adopted credential. It reads the live store on each serving turn. When the credential nears expiry, it runs the provider's own tool with no window, behind a lock, then reads the store again. Rotation stays with the program that owns it.
 
-When the tool has gone or the run fails, the account reports itself stale and names what to open. The surface needs that state anyway, for a credential the vendor revoked.
+When the tool has gone or the run fails, the account reports itself lapsed and names what to open. The surface needs that state anyway, for a credential the vendor revoked.
 
 ### One repair comes first, and it fixes a live defect
 
@@ -38,7 +38,7 @@ So the repair isn't a precondition for a feature. It's a fix for a sign-in that 
 
 1. **Adoption reads the live store on every serving turn.** recompose keeps no long-lived copy of an adopted refresh token.
 2. **recompose never calls a token endpoint for an adopted credential.** Near expiry it runs the provider's own tool, behind a lock that admits one renewal at a time.
-3. **A failed delegated renewal leaves the credential alone** and marks the account stale. Nothing deletes a credential because a renewal failed.
+3. **A failed delegated renewal leaves the credential alone** and marks the account lapsed. Nothing deletes a credential because a renewal failed.
 4. **Renewal ownership follows the account, not the provider.** recompose keeps renewing what it signed in, because it owns that config home alone.
 5. **A new field on the stored account row carries where the account came from.** `credentialPolicy` looked like the seam and isn't: it carries in-flight and concurrency tuning. This needs a version bump and a migration, and every stored account today answers "signed in."
 6. **Adoption never touches the custody machinery.** It never parks, clears, places, or takes over anything.
@@ -54,8 +54,8 @@ So the repair isn't a precondition for a feature. It's a fix for a sign-in that 
 ### New capabilities
 
 - **Adopting a credential already on the machine.** recompose reports what each provider's own store holds and connects it as an account with no sign-in.
-- **Renewal delegated to the owning tool.** recompose runs the provider's tool to renew an adopted credential near expiry, and never calls a token endpoint for one. A renewal that can't run reports a stale account rather than a broken one.
-- **A stale standing.** A connected account whose credential stopped working reads differently from an account nobody ever connected, and names the tool to open.
+- **Renewal delegated to the owning tool.** recompose runs the provider's tool to renew an adopted credential near expiry, and never calls a token endpoint for one. A renewal that can't run reports a lapsed account rather than a broken one.
+- **A lapse a person can act on.** A connected account whose credential stopped working reads differently from an account nobody ever connected, and names the tool to open.
 
 ### Modified capabilities
 

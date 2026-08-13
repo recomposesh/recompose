@@ -38,7 +38,7 @@ Paths are repository relative. Line numbers are against `origin/main` at `017736
 
 For a subscription recompose signed in itself, this is correct: recompose owns that credential alone, so rotating it races nobody. For an adopted credential it is exactly the behaviour the research arm found breaks the person's own tool. **Adoption therefore cannot reuse the existing serving path unchanged. The refresh decision has to become per-account rather than global.**
 
-`refreshing` at `refresh.ts:37` is a single-flight map inside one engine child. It is not a cross-process lock and gives no protection against the vendor's own tool refreshing at the same moment.
+`refreshing` at `refresh.ts:36` is a single-flight map inside one engine child. It is not a cross-process lock and gives no protection against the vendor's own tool refreshing at the same moment.
 
 ## The second finding: the plain service name is contested
 
