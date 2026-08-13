@@ -9,6 +9,7 @@ import {
   refreshedBalances,
   usageReportQueryOptions,
   warmedUsageReport,
+  watchedUsageReportQueryOptions,
 } from './usage';
 
 const emptyReport: UsageReport = {
@@ -106,17 +107,28 @@ describe('the report query keeps each ask under its own key', () => {
   });
 });
 
-describe('freshness follows the hour a report now carries', () => {
-  it('polls every range at the pace a person watching one would want', () => {
-    expect(usageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(5_000);
-    expect(usageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(5_000);
-    expect(usageReportQueryOptions({ range: '30d' }).refetchInterval).toBe(5_000);
+describe('freshness follows the surface rather than the range', () => {
+  it('polls a summary at the pace a card is worth reading again', () => {
+    expect(usageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(60_000);
+    expect(usageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(60_000);
+    expect(usageReportQueryOptions({ range: '30d' }).refetchInterval).toBe(60_000);
   });
 
-  it('holds a reading no longer than the poll that replaces it', () => {
-    expect(usageReportQueryOptions({ range: '24h' }).staleTime).toBe(5_000);
-    expect(usageReportQueryOptions({ range: '7d' }).staleTime).toBe(5_000);
-    expect(usageReportQueryOptions({ range: '30d' }).staleTime).toBe(5_000);
+  it('polls the watched explorer at the pace a person sends requests at', () => {
+    expect(watchedUsageReportQueryOptions({ range: '24h' }).refetchInterval).toBe(5_000);
+    expect(watchedUsageReportQueryOptions({ range: '7d' }).refetchInterval).toBe(5_000);
+    expect(watchedUsageReportQueryOptions({ range: '30d' }).refetchInterval).toBe(5_000);
+  });
+
+  it('holds each reading no longer than the poll that replaces it', () => {
+    expect(usageReportQueryOptions({ range: '24h' }).staleTime).toBe(60_000);
+    expect(watchedUsageReportQueryOptions({ range: '24h' }).staleTime).toBe(5_000);
+  });
+
+  it('watches under the key the summary already reads, so one read serves both', () => {
+    expect(watchedUsageReportQueryOptions({ range: '7d' }).queryKey).toEqual(
+      usageReportQueryOptions({ range: '7d' }).queryKey,
+    );
   });
 
   it('polls the quota windows every minute, since the open hour moves them', () => {
