@@ -104,6 +104,21 @@ test('a search that matches nothing says so rather than leaving a gap', async ()
   await expect.element(screen.getByText('No gateways by that name')).toBeVisible();
 });
 
+test('a window that served nobody names the quiet rather than blaming the search', async () => {
+  const screen = await render(menu({ members: [] }));
+
+  await screen.getByRole('button', { name: 'Gateways All' }).click();
+
+  await expect.element(screen.getByText('No gateways in this window')).toBeVisible();
+  await expect.element(screen.getByText('All 0 selected')).not.toBeInTheDocument();
+});
+
+test('a selection standing over a quiet window still counts itself', async () => {
+  const screen = await render(menu({ members: [], selected: ['cursor'] }));
+
+  await expect.element(screen.getByRole('button', { name: 'Gateways 1 of 1' })).toBeVisible();
+});
+
 test('the footer counts what the filter keeps against what it could keep', async () => {
   const screen = await render(menu({ selected: ['cursor', 'raycast'] }));
 

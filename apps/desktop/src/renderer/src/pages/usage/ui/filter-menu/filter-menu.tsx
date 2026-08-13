@@ -80,11 +80,15 @@ function searchField(searchLabel: string, sought: string, onSought: (next: strin
   );
 }
 
-function standingFooter(standingCount: number, total: number, onClear: () => void) {
+function standingFooter(selected: readonly string[], total: number, onClear: () => void) {
+  if (total === 0) {
+    return null;
+  }
+
   const counted =
-    standingCount === 0
+    selected.length === 0
       ? `All ${String(total)} selected`
-      : `${String(standingCount)} of ${String(total)} selected`;
+      : `${String(selected.length)} of ${String(total)} selected`;
 
   return (
     <div className="mt-2 border-t border-line-faint pt-2">
@@ -106,12 +110,34 @@ function standingWordOf(selected: readonly string[], total: number): string {
   return selected.length === 0 ? 'All' : `${String(selected.length)} of ${String(total)}`;
 }
 
+function filterTrigger(label: string, selected: readonly string[], total: number) {
+  const standing = selected.length === 0;
+  const standingWord = standingWordOf(selected, total);
+
+  return (
+    <Popover.Trigger
+      aria-label={`${label} ${standingWord}`}
+      className={`flex h-control items-center gap-1.5 rounded-control border bg-surface-card px-2 text-detail focus-ring-wide ${standing ? 'border-line-subtle' : 'border-accent'}`}
+    >
+      <span aria-hidden className={standing ? 'text-ink-secondary' : 'text-accent-ink'}>
+        {label}
+      </span>
+      <span aria-hidden className={`font-medium ${standing ? 'text-ink' : 'text-accent-ink'}`}>
+        {standingWord}
+      </span>
+      <Icon aria-hidden className="size-3 text-ink-secondary" name="chevron" />
+    </Popover.Trigger>
+  );
+}
+
 /**
  * One dimension's members behind a trigger that reads how many of them the view keeps.
  *
  * @summary The filter stands on everything until a member is checked, which is why the trigger
  * reads All rather than a full count: a person narrowing one member at a time never has to undo a
- * selection they never made. Unchecking the last member stands the filter back on everything.
+ * selection they never made. Unchecking the last member stands the filter back on everything. A
+ * window that served nobody names its own quiet rather than reading as a search that missed, and
+ * counts a standing selection the window never served so no trigger can read one of none.
  */
 export function FilterMenu({
   label,
@@ -121,38 +147,27 @@ export function FilterMenu({
   onSelectedChange,
 }: FilterMenuProps) {
   const [sought, setSought] = useState('');
-  const standing = selected.length === 0;
-  const standingWord = standingWordOf(selected, members.length);
+  const total = new Set([...members.map((member) => member.key), ...selected]).size;
   const listed = members.filter((member) =>
     member.name.toLowerCase().includes(sought.trim().toLowerCase()),
   );
+  const missing = members.length === 0 ? 'in this window' : 'by that name';
 
   return (
     <Popover.Root>
-      <Popover.Trigger
-        aria-label={`${label} ${standingWord}`}
-        className={`flex h-control items-center gap-1.5 rounded-control border bg-surface-card px-2 text-detail focus-ring-wide ${standing ? 'border-line-subtle' : 'border-accent'}`}
-      >
-        <span aria-hidden className={standing ? 'text-ink-secondary' : 'text-accent-ink'}>
-          {label}
-        </span>
-        <span aria-hidden className={`font-medium ${standing ? 'text-ink' : 'text-accent-ink'}`}>
-          {standingWord}
-        </span>
-        <Icon aria-hidden className="size-3 text-ink-secondary" name="chevron" />
-      </Popover.Trigger>
+      {filterTrigger(label, selected, total)}
       <Popover.Portal>
         <Popover.Positioner align="start" sideOffset={6}>
           <Popover.Popup aria-label={`${label} filter`} className="z-40 w-66 menu-surface">
             {searchField(searchLabel, sought, setSought)}
             {listed.length === 0 ? (
               <p className="px-2.5 py-1.5 text-detail text-ink-secondary">
-                {`No ${label.toLowerCase()} by that name`}
+                {`No ${label.toLowerCase()} ${missing}`}
               </p>
             ) : (
               listed.map((member) => memberRow(member, selected, onSelectedChange))
             )}
-            {standingFooter(selected.length, members.length, () => {
+            {standingFooter(selected, total, () => {
               onSelectedChange([]);
             })}
           </Popover.Popup>
