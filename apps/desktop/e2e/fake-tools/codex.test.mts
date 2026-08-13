@@ -113,7 +113,7 @@ describe('the fake Codex', () => {
   });
 
   test('given a keyring store, the entry is named after the home it wrote from and no file holds it', async () => {
-    const home = await codexHome('keyringed');
+    const home = await codexHome('kept-in-the-keyring');
 
     await runTool(bed, 'codex', [], {
       CODEX_HOME: home,
