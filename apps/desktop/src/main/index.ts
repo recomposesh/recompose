@@ -17,9 +17,8 @@ import {
   startStoredGateway,
   stopRemovedGateway,
 } from './engine-host/stored-gateway-serving';
-import { assembleIpcHandlers } from './ipc/assemble-handlers';
 import { pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
-import { registerIpcHandlers } from './ipc/register-ipc';
+import { assembleIpcHandlers, registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { bootAppMenu } from './menu/app-menu-boot';
 import { resolvePasswordStoreOverride } from './password-store-override';
