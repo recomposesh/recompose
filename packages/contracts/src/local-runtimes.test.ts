@@ -3,6 +3,7 @@ import { describe, expect } from 'vitest';
 
 import {
   documentedRuntimePort,
+  localProviderIdSchema,
   localRuntimeIdSchema,
   localRuntimes,
   loopbackAddressSchema,
@@ -12,7 +13,6 @@ import {
   runtimeAddressFor,
   runtimeLookBoundMs,
   runtimePortSchema,
-  runtimeReachabilitySchema,
 } from './local-runtimes';
 import { nonBlankString } from './non-blank';
 
@@ -28,20 +28,42 @@ const addressParts = fc.record({
 });
 
 describe('the runtimes a local account can name', () => {
-  test('exactly the one runtime this release reaches', () => {
-    expect(localRuntimeIdSchema.options).toEqual(['ollama']);
+  test('every runtime whose port and identity its own project documents', () => {
+    expect(localRuntimeIdSchema.options).toEqual(['ollama', 'lmstudio', 'llamacpp', 'vllm']);
   });
 
-  test('a runtime nothing detects yet is refused', () => {
-    for (const awaited of ['llama.cpp', 'vllm', 'openai']) {
-      expect(() => localRuntimeIdSchema.parse(awaited)).toThrow();
+  test('a server nobody documents is refused as a documented runtime', () => {
+    for (const undocumented of ['custom', 'openai', 'text-generation-webui']) {
+      expect(() => localRuntimeIdSchema.parse(undocumented)).toThrow();
     }
+  });
+
+  test('a stored local row also admits the server a person addressed themselves', () => {
+    expect(localProviderIdSchema.options).toEqual([
+      'ollama',
+      'lmstudio',
+      'llamacpp',
+      'vllm',
+      'custom',
+    ]);
   });
 });
 
 describe('the address a runtime documents itself at', () => {
   test('Ollama stands at the loopback address its own documentation publishes', () => {
     expect(localRuntimes.ollama.address).toBe('http://127.0.0.1:11434');
+  });
+
+  test('each runtime stands at the port its own project documents', () => {
+    expect(localRuntimes.lmstudio.address).toBe('http://127.0.0.1:1234');
+    expect(localRuntimes.llamacpp.address).toBe('http://127.0.0.1:8080');
+    expect(localRuntimes.vllm.address).toBe('http://127.0.0.1:8000');
+  });
+
+  test('no two runtimes documented themselves onto the same port', () => {
+    const ports = localRuntimeIdSchema.options.map((id) => documentedRuntimePort(id));
+
+    expect(new Set(ports).size).toBe(ports.length);
   });
 
   test('every runtime the vocabulary names has one address to reach it at', () => {
@@ -64,6 +86,12 @@ describe('the address a runtime documents itself at', () => {
 describe('the name a runtime goes by on screen', () => {
   test('Ollama reads as its own project spells it', () => {
     expect(localRuntimes.ollama.name).toBe('Ollama');
+  });
+
+  test('every runtime reads as its own project spells it, dots and casing kept', () => {
+    expect(localRuntimes.lmstudio.name).toBe('LM Studio');
+    expect(localRuntimes.llamacpp.name).toBe('llama.cpp');
+    expect(localRuntimes.vllm.name).toBe('vLLM');
   });
 
   test('every runtime the vocabulary names carries one name to read it by', () => {
@@ -223,74 +251,6 @@ describe('what the loopback address schema turns away', () => {
   test('text that is no address at all is refused rather than crashing the parse', () => {
     for (const nothing of ['', '   ', '127.0.0.1:11434', 'not an address', '//127.0.0.1:11434']) {
       expect(loopbackAddressSchema.safeParse(nothing)).toMatchObject({ success: false });
-    }
-  });
-});
-
-describe('the reading a reachability look carries back', () => {
-  test('a runtime that answered carries the version it reported', () => {
-    const reading = { verdict: 'answers', version: '0.5.1' };
-
-    expect(runtimeReachabilitySchema.parse(reading)).toEqual(reading);
-  });
-
-  test('a stranger on the port carries the status it answered with', () => {
-    const reading = { verdict: 'unrecognized', status: 404 };
-
-    expect(runtimeReachabilitySchema.parse(reading)).toEqual(reading);
-  });
-
-  test('silence carries nothing at all, because nothing answered to be carried', () => {
-    const reading = { verdict: 'unreachable' };
-
-    expect(runtimeReachabilitySchema.parse(reading)).toEqual(reading);
-  });
-});
-
-describe('what a reachability reading refuses to carry', () => {
-  test('a verdict outside the three is refused', () => {
-    for (const verdict of ['running', 'stopped', 'reachable']) {
-      expect(() => runtimeReachabilitySchema.parse({ verdict })).toThrow();
-    }
-  });
-
-  test('the three verdicts stay disjoint from what a key check answers', () => {
-    for (const verdict of ['authenticates', 'not-accepted', 'could-not-check']) {
-      expect(() => runtimeReachabilitySchema.parse({ verdict })).toThrow();
-    }
-  });
-
-  test('an answer carrying no version is refused, because the version is the observation', () => {
-    expect(() => runtimeReachabilitySchema.parse({ verdict: 'answers' })).toThrow();
-    expect(() => runtimeReachabilitySchema.parse({ verdict: 'answers', version: '   ' })).toThrow();
-  });
-
-  test('a stranger carrying no status is refused, because the status is what names it strange', () => {
-    expect(() => runtimeReachabilitySchema.parse({ verdict: 'unrecognized' })).toThrow();
-    expect(() =>
-      runtimeReachabilitySchema.parse({ verdict: 'unrecognized', status: 404.5 }),
-    ).toThrow();
-  });
-
-  test('no reading can carry another reading fields', () => {
-    for (const smuggled of [
-      { verdict: 'answers', version: '0.5.1', status: 200 },
-      { verdict: 'unrecognized', status: 404, version: '0.5.1' },
-      { verdict: 'unreachable', version: '0.5.1' },
-      { verdict: 'unreachable', status: 0 },
-    ]) {
-      expect(() => runtimeReachabilitySchema.parse(smuggled)).toThrow();
-    }
-  });
-
-  test('no reading has a field the runtime body could ride home in', () => {
-    for (const smuggled of [
-      { body: '{"version":"0.5.1"}' },
-      { address: 'http://127.0.0.1:11434' },
-    ]) {
-      expect(() =>
-        runtimeReachabilitySchema.parse({ verdict: 'answers', version: '0.5.1', ...smuggled }),
-      ).toThrow();
     }
   });
 });

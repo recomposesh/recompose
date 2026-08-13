@@ -2,13 +2,77 @@ import { z } from 'zod';
 
 import { nonBlankString } from './non-blank';
 
-export const localRuntimeIdSchema = z.enum(['ollama']);
+export const localRuntimeIdSchema = z.enum(['ollama', 'lmstudio', 'llamacpp', 'vllm']);
 
 export type LocalRuntimeId = z.infer<typeof localRuntimeIdSchema>;
 
+/**
+ * Every server a local row may stand for, which is the documented runtimes and a person's own.
+ *
+ * @summary A documented runtime carries a port and an identity path its project publishes. A
+ * custom server carries neither, because the person supplies the address and recompose has no
+ * identity to hold it to, so it stands apart from the runtimes rather than among them.
+ */
+export const localProviderIdSchema = z.enum([...localRuntimeIdSchema.options, 'custom']);
+
+export type LocalProviderId = z.infer<typeof localProviderIdSchema>;
+
+type RuntimeLook = {
+  /** The path a look asks, which is the one the runtime's own project serves. */
+  identityPath: string;
+  /** Where the version sits in the answer, or absent where the runtime publishes none. */
+  versionField?: string;
+};
+
+type DocumentedRuntime = RuntimeLook & { name: string; address: string };
+
+/**
+ * Every runtime recompose looks for, with the port and the path its own project documents.
+ *
+ * @summary A look asks the runtime's own path rather than a shared one, because every server here
+ * answers `/v1/models` and a shared path would report whichever server holds the port as the
+ * runtime a person picked. LM Studio publishes no version anywhere in its surface, so it names no
+ * field and a look reports that it answers without claiming a version it never gave.
+ */
 export const localRuntimes = {
-  ollama: { name: 'Ollama', address: 'http://127.0.0.1:11434' },
-} as const satisfies Record<LocalRuntimeId, { name: string; address: string }>;
+  ollama: {
+    name: 'Ollama',
+    address: 'http://127.0.0.1:11434',
+    identityPath: '/api/version',
+    versionField: 'version',
+  },
+  lmstudio: {
+    name: 'LM Studio',
+    address: 'http://127.0.0.1:1234',
+    identityPath: '/api/v0/models',
+  },
+  llamacpp: {
+    name: 'llama.cpp',
+    address: 'http://127.0.0.1:8080',
+    identityPath: '/props',
+    versionField: 'build_info',
+  },
+  vllm: {
+    name: 'vLLM',
+    address: 'http://127.0.0.1:8000',
+    identityPath: '/version',
+    versionField: 'version',
+  },
+} as const satisfies Record<LocalRuntimeId, DocumentedRuntime>;
+
+/**
+ * How a look asks a server a person addressed themselves.
+ *
+ * @summary recompose knows nothing about what listens there, so the look asks the one path every
+ * model server serves and claims no version, rather than holding the address to an identity the
+ * person never promised.
+ */
+export const customRuntimeLook: RuntimeLook = { identityPath: '/v1/models' };
+
+/** How a look asks whichever server a local row stands for. */
+export function runtimeLookFor(provider: LocalProviderId): RuntimeLook {
+  return provider === 'custom' ? customRuntimeLook : localRuntimes[provider];
+}
 
 /**
  * How long a look at a runtime waits for the loopback answer before it counts as silence.
@@ -89,7 +153,7 @@ export const loopbackAddressSchema = z
   .refine(isItsOwnLoopbackOrigin, 'the address must be a loopback origin');
 
 export const runtimeReachabilitySchema = z.discriminatedUnion('verdict', [
-  z.strictObject({ verdict: z.literal('answers'), version: nonBlankString }),
+  z.strictObject({ verdict: z.literal('answers'), version: nonBlankString.optional() }),
   z.strictObject({ verdict: z.literal('unrecognized'), status: z.number().int() }),
   z.strictObject({ verdict: z.literal('unreachable') }),
 ]);

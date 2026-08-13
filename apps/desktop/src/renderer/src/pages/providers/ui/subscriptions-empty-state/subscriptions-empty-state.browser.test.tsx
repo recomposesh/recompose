@@ -8,7 +8,7 @@ test('a screen with nothing connected names what a subscription account is', asy
 
   await expect
     .element(screen.getByText(/A subscription account is/))
-    .toHaveTextContent("the provider's own command-line tool");
+    .toHaveTextContent("the provider's own tool");
 });
 
 test('the state itself offers no act, because the window strip already carries the one act', async () => {

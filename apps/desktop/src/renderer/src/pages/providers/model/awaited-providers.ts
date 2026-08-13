@@ -1,5 +1,5 @@
 import type { AccountKind } from '../../../entities/account';
-import type { CatalogLead } from './provider-catalog';
+import type { CatalogLead } from './catalog-lead';
 
 import { providerNames } from './provider-catalog';
 

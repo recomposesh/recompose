@@ -30,7 +30,7 @@ function pickedProduct(provider: BrandMarkName): ReactNode {
   const host = keyHostFor(provider);
 
   return (
-    <PickedIdentity provider={provider} title={keyTitleFor(provider)}>
+    <PickedIdentity lead={{ mark: provider }} title={keyTitleFor(provider)}>
       {host === undefined ? null : (
         <p className="text-detail text-ink-secondary">
           This key reaches <span className="font-mono text-mono-value">{host}</span>

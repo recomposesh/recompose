@@ -53,7 +53,7 @@ describe('what the local runtime channels ask for', () => {
 
   test('connecting or detecting a runtime nothing reaches is refused', () => {
     for (const request of [connectLocal, detect]) {
-      expect(request.safeParse({ runtime: 'vllm' }).success).toBe(false);
+      expect(request.safeParse({ runtime: 'text-generation-webui' }).success).toBe(false);
       expect(request.safeParse({ runtime: '' }).success).toBe(false);
       expect(request.safeParse(undefined).success).toBe(false);
     }

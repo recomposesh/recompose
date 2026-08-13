@@ -9,8 +9,8 @@ import {
   useRemoveAccount,
   withRefusal,
 } from '../../../../shared/api';
-import { BrandMark, OverflowMenu, StatusChip } from '../../../../shared/ui';
-import { providerName } from '../../model/provider-catalog';
+import { BrandMark, Icon, OverflowMenu, StatusChip } from '../../../../shared/ui';
+import { localLeadFor, localRuntimeName } from '../../model/local-catalog';
 
 type LocalRuntimeRowProps = {
   /** The stored runtime as the registry holds it, which is a name and an address alone. */
@@ -55,12 +55,17 @@ export function LocalRuntimeRow({ account }: LocalRuntimeRowProps) {
   const standing = useQuery(runtimeStandingQueryOptions(account.id));
   const forget = withRefusal(useRemoveAccount());
 
-  const name = providerName(account.provider);
+  const lead = localLeadFor(account.provider);
+  const name = localRuntimeName(account.provider, account.label);
   const refusal = standing.error === null ? forget.refusal : refusalSentence(standing.error);
 
   return (
     <li className="flex min-h-row items-center gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
-      <BrandMark name={account.provider} />
+      {'mark' in lead ? (
+        <BrandMark name={lead.mark} />
+      ) : (
+        <Icon className="size-4.5 text-ink-secondary" name={lead.glyph} />
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-card-title text-ink">{name}</span>
         <span className="font-mono text-mono-value text-ink-secondary">{account.address}</span>

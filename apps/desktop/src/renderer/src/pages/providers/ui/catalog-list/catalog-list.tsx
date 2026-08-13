@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 
 import type { AccountKind } from '../../../../entities/account';
 import type { AwaitedProvider } from '../../model/awaited-providers';
-import type { CatalogEntry, CatalogLead, ConnectionWay } from '../../model/provider-catalog';
+import type { CatalogLead } from '../../model/catalog-lead';
+import type { CatalogEntry, ConnectionWay } from '../../model/provider-catalog';
 
 import { Badge, BrandMark, Icon } from '../../../../shared/ui';
 import { awaitedFor } from '../../model/awaited-providers';

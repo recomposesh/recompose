@@ -106,13 +106,15 @@ describe('the local row a runtime stands as', () => {
     expect(() => loadAccountsDocument(stored)).toThrow();
   });
 
-  test('a local row carrying a label is refused, because the runtime name is the row name', () => {
-    const stored = {
-      schemaVersion: ACCOUNTS_VERSION,
-      accounts: [{ ...localRow, label: 'My Ollama' }],
-    };
+  test('a local row carrying a blank label is refused, because a blank names nothing', () => {
+    for (const blank of ['', '   ']) {
+      const stored = {
+        schemaVersion: ACCOUNTS_VERSION,
+        accounts: [{ ...localRow, provider: 'custom', label: blank }],
+      };
 
-    expect(() => loadAccountsDocument(stored)).toThrow();
+      expect(() => loadAccountsDocument(stored)).toThrow();
+    }
   });
 
   test('a local row carrying a secret of any name is refused', () => {
@@ -126,13 +128,15 @@ describe('the local row a runtime stands as', () => {
     }
   });
 
-  test('a local row naming a runtime nothing reaches is refused', () => {
-    const stored = {
-      schemaVersion: ACCOUNTS_VERSION,
-      accounts: [{ ...localRow, provider: 'vllm' }],
-    };
+  test('a local row naming a server the vocabulary never held is refused', () => {
+    for (const unheld of ['text-generation-webui', 'openai', 'localai']) {
+      const stored = {
+        schemaVersion: ACCOUNTS_VERSION,
+        accounts: [{ ...localRow, provider: unheld }],
+      };
 
-    expect(() => loadAccountsDocument(stored)).toThrow();
+      expect(() => loadAccountsDocument(stored)).toThrow();
+    }
   });
 });
 

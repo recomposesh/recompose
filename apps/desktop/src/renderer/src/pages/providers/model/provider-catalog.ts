@@ -17,22 +17,16 @@ import {
 } from '@recompose/contracts';
 
 import type { AccountKind } from '../../../entities/account';
-import type { BrandMarkName, IconName } from '../../../shared/ui';
+import type { BrandMarkName } from '../../../shared/ui';
+import type { CatalogLead } from './catalog-lead';
+
+import { runtimeHostOf } from './local-catalog';
 
 /** A way an account reaches a provider, which is every kind the registry holds one under. */
 export type ConnectionWay = AccountKind;
 
 /** A provider identity the catalog offers a way to connect, which is narrower than the marks. */
 export type CatalogProviderId = 'anthropic' | 'openai' | 'openrouter' | 'ollama';
-
-/**
- * What a row is drawn with: a vendor's own mark, or the glyph its category stands under.
- *
- * @summary A mark recompose can draw is not a provider recompose can connect, so the drawing is
- * stated per row rather than derived from the identity. A category and a product publishing no
- * mark both name a glyph here, which is the rule rather than a fallback.
- */
-export type CatalogLead = { mark: BrandMarkName } | { glyph: IconName };
 
 export type CatalogOffer = {
   way: ConnectionWay;
@@ -95,10 +89,6 @@ const keyHosts: Record<KeyProviderId, string> = {
   'gemini-interactions': 'generativelanguage.googleapis.com',
 };
 
-const runtimeHosts: Record<LocalRuntimeId, string> = {
-  ollama: new URL(localRuntimes.ollama.address).host,
-};
-
 /**
  * Every provider the catalog offers, with the ways each one connects.
  *
@@ -140,7 +130,7 @@ export const catalogEntries: readonly CatalogEntry[] = [
       {
         way: 'local',
         title: providerNames.ollama,
-        benefit: `${runtimeHosts.ollama}, models on this machine`,
+        benefit: `${runtimeHostOf('ollama')}, models on this machine`,
       },
     ],
   },

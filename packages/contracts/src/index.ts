@@ -11,6 +11,7 @@ export * from './usage';
 export * from './usage-measures';
 export * from './api-keys';
 export * from './local-runtimes';
+export * from './provider-directory';
 export * from './engine-protocol';
 export * from './subscriptions';
 export * from './accounts';

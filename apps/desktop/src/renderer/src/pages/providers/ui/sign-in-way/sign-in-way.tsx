@@ -32,7 +32,10 @@ export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
 
   return (
     <div className="mx-auto flex w-80 flex-col items-center gap-2.5 py-4 text-center">
-      <PickedIdentity provider={subscriptionMarkFor(provider)} title={`An account for ${toolName}`}>
+      <PickedIdentity
+        lead={{ mark: subscriptionMarkFor(provider) }}
+        title={`An account for ${toolName}`}
+      >
         <p className="text-detail text-ink-secondary">
           {toolName} signs in on its own and spends your {name} plan, under {name}&apos;s terms.
           {` ${toolName} serves one account at a time.`}

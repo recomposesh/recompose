@@ -1,4 +1,9 @@
-import type { AccountsDocument, LocalRuntimeId, RuntimeReachability } from '@recompose/contracts';
+import type {
+  AccountsDocument,
+  LocalProviderId,
+  LocalRuntimeId,
+  RuntimeReachability,
+} from '@recompose/contracts';
 
 import { localRuntimes, runtimeAddressFor } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
@@ -21,8 +26,8 @@ type LocalRuntimesIpcHandlers = Pick<
   'accounts:connect-local' | 'accounts:detect-runtime' | 'accounts:check-runtime'
 >;
 
-function runtimesStandingIn(accounts: AccountsDocument): Set<LocalRuntimeId> {
-  const standing = new Set<LocalRuntimeId>();
+function runtimesStandingIn(accounts: AccountsDocument): Set<LocalProviderId> {
+  const standing = new Set<LocalProviderId>();
 
   for (const held of accounts.accounts) {
     if (held.kind === 'local') {

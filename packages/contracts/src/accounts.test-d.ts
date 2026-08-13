@@ -8,7 +8,7 @@ import type {
   CredentialedAccountKind,
   IpcRequest,
   LocalAccount,
-  LocalRuntimeId,
+  LocalProviderId,
   SubscriptionAccount,
   SubscriptionProviderId,
 } from './index';
@@ -16,8 +16,8 @@ import type {
 import { defaultAccountsDocument, loadAccountsDocument } from './accounts';
 
 describe('the account row the document stores', () => {
-  test('the document pins itself to schema version 8', () => {
-    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<8>();
+  test('the document pins itself to schema version 9', () => {
+    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<9>();
   });
 
   test('a stored row is a subscription, a credentialed account, or a local runtime', () => {
@@ -103,14 +103,15 @@ describe('the local row a runtime stands as', () => {
     expectTypeOf<Extract<Account, { kind: 'local' }>>().not.toHaveProperty('credentialRef');
   });
 
-  test('a local row structurally cannot carry a label, because the runtime name is the row name', () => {
-    expectTypeOf<LocalAccount>().not.toHaveProperty('label');
-    expectTypeOf<Extract<Account, { kind: 'local' }>>().not.toHaveProperty('label');
+  test('a local row carries a name only where recompose never named the server', () => {
+    expectTypeOf<LocalAccount['label']>().toEqualTypeOf<string | undefined>();
   });
 
-  test('a local row carries the runtime, the address, and nothing else at all', () => {
-    expectTypeOf<keyof LocalAccount>().toEqualTypeOf<'id' | 'provider' | 'kind' | 'address'>();
-    expectTypeOf<LocalAccount['provider']>().toEqualTypeOf<LocalRuntimeId>();
+  test('a local row carries the server, the address, the name, and nothing else at all', () => {
+    expectTypeOf<keyof LocalAccount>().toEqualTypeOf<
+      'id' | 'provider' | 'kind' | 'address' | 'label'
+    >();
+    expectTypeOf<LocalAccount['provider']>().toEqualTypeOf<LocalProviderId>();
     expectTypeOf<LocalAccount['address']>().toEqualTypeOf<string>();
   });
 

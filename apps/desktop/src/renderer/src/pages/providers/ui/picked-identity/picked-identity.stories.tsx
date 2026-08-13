@@ -6,7 +6,7 @@ import { PickedIdentity } from './picked-identity';
 
 const meta = preview.meta({
   component: PickedIdentity,
-  args: { provider: 'anthropic' as const, title: 'Anthropic API' },
+  args: { lead: { mark: 'anthropic' as const }, title: 'Anthropic API' },
   decorators: [
     (Story) => (
       <div className="w-sheet p-4">

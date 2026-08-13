@@ -1,14 +1,15 @@
 import { z } from 'zod';
 
 import { credentialPolicySchema } from './credential-policy';
-import { localRuntimeIdSchema, loopbackAddressSchema } from './local-runtimes';
+import { localProviderIdSchema, loopbackAddressSchema } from './local-runtimes';
 import { migrateDocument, type Migration } from './migration';
 import { providerModelPoliciesSchema } from './model-policy';
 import { nonBlankString } from './non-blank';
+import { providerDialectSchema } from './provider-directory';
 import { subscriptionProvenanceSchema, subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
-export const ACCOUNTS_VERSION = 8;
+export const ACCOUNTS_VERSION = 9;
 
 export const accountKindSchema = z.enum(['subscription', 'api-key', 'aggregator', 'local']);
 
@@ -30,6 +31,20 @@ const subscriptionAccountSchema = z.strictObject({
 
 export type SubscriptionAccount = z.infer<typeof subscriptionAccountSchema>;
 
+/**
+ * Where a row is spent and how its turn is spelled, for a provider recompose knows neither of.
+ *
+ * @summary Only a row a person addressed themselves carries one. Every other row reads both from
+ * the provider directory, so a vendor recompose ships is described once rather than copied into
+ * every account stored under it.
+ */
+export const accountEndpointSchema = z.strictObject({
+  origin: z.url(),
+  dialect: providerDialectSchema,
+});
+
+export type AccountEndpoint = z.infer<typeof accountEndpointSchema>;
+
 const credentialedAccountSchema = z.strictObject({
   id: nonBlankString,
   provider: nonBlankString,
@@ -37,15 +52,17 @@ const credentialedAccountSchema = z.strictObject({
   label: z.string().trim().min(1),
   credentialRef: nonBlankString,
   keyTail: z.string().length(4).optional(),
+  endpoint: accountEndpointSchema.optional(),
 });
 
 export type CredentialedAccount = z.infer<typeof credentialedAccountSchema>;
 
 const localAccountSchema = z.strictObject({
   id: nonBlankString,
-  provider: localRuntimeIdSchema,
+  provider: localProviderIdSchema,
   kind: z.literal('local'),
   address: loopbackAddressSchema,
+  label: z.string().trim().min(1).optional(),
 });
 
 export type LocalAccount = z.infer<typeof localAccountSchema>;
@@ -132,6 +149,11 @@ const subscriptionRowsPredateTheirOrigin: Migration = {
   migrate: (doc) => rewritingEveryRow(doc, 8, subscriptionCameFromASignIn),
 };
 
+const rowsPredateAnEndpointOfTheirOwn: Migration = {
+  from: 8,
+  migrate: (doc) => ({ ...doc, schemaVersion: 9 }),
+};
+
 const accountsMigrations: readonly Migration[] = [
   subscriptionRowsHeldPastedSecrets,
   rowsPredateTheMaskNoMigrationCanMint,
@@ -140,6 +162,7 @@ const accountsMigrations: readonly Migration[] = [
   rowsPredateAccountTransportPolicy,
   rowsPredateModelCompatibility,
   subscriptionRowsPredateTheirOrigin,
+  rowsPredateAnEndpointOfTheirOwn,
 ];
 
 export function loadAccountsDocument(doc: unknown): AccountsDocument {
