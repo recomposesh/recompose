@@ -1,4 +1,4 @@
-import type { AccountBalance, QuotaWindow, UsageBucket, UsageDayCost } from '@recompose/contracts';
+import type { UsageBucket, UsageDayCost } from '@recompose/contracts';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -8,12 +8,7 @@ import type { UsageSearch } from '../../lib/usage-search';
 import type { WindowBuckets } from '../../model/use-window-buckets';
 import type { PanelRow } from '../breakdown-panel/breakdown-panel';
 
-import {
-  accountsQueryOptions,
-  balancesQueryOptions,
-  quotaWindowsQueryOptions,
-  refusalSentence,
-} from '../../../../shared/api';
+import { accountsQueryOptions, refusalSentence } from '../../../../shared/api';
 import { panelRowsOf } from '../../lib/panel-rows';
 import { stackedChart } from '../../lib/usage-chart-fold';
 import { metricFaces } from '../../lib/usage-faces';
@@ -54,13 +49,6 @@ export type UsageView =
       widthWord: BucketWidthWord;
       edgeAt: number | undefined;
     };
-
-export type UsageStrips = {
-  windows: readonly QuotaWindow[];
-  balances: readonly AccountBalance[];
-  accountNameOf: (accountId: string) => string;
-  now: number;
-};
 
 type Sourced = {
   buckets: readonly UsageBucket[];
@@ -184,7 +172,7 @@ function viewOf(
 }
 
 /**
- * The whole view one address stands for, plus the strips that ride beside every state.
+ * The whole view one address stands for, the instant it reads against, and how fresh it stands.
  *
  * @summary Missing data reads as missing: pending history is a loading view of placeholders, a
  * refused read carries its sentence, and a ledger window that served nothing says so rather than
@@ -193,21 +181,12 @@ function viewOf(
  */
 export function useUsageView(search: UsageSearch): {
   view: UsageView;
-  strips: UsageStrips;
+  now: number;
   updatedAt: number | undefined;
 } {
   const held = useWindowBuckets(search);
-  const quota = useQuery(quotaWindowsQueryOptions);
-  const balances = useQuery(balancesQueryOptions);
   const accounts = useQuery(accountsQueryOptions);
   const nameOfAccount = (accountId: string) => accountLabelOf(accounts.data, accountId);
 
-  const strips: UsageStrips = {
-    windows: quota.data ?? [],
-    balances: balances.data ?? [],
-    accountNameOf: nameOfAccount,
-    now: held.now,
-  };
-
-  return { view: viewOf(search, held, nameOfAccount), strips, updatedAt: held.updatedAt };
+  return { view: viewOf(search, held, nameOfAccount), now: held.now, updatedAt: held.updatedAt };
 }

@@ -5,18 +5,15 @@ import { useEffect, useState } from 'react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 import type { PanelUnit } from '../breakdown-panel/breakdown-panel';
-import type { UsagePanels, UsageStrips, UsageView } from './use-usage-view';
+import type { UsagePanels, UsageView } from './use-usage-view';
 
-import { quotaWindowsQueryOptions, refreshedBalances } from '../../../../shared/api';
 import { Button } from '../../../../shared/ui';
 import { chartSubCaption, panelsCaption, scopeSentence } from '../../lib/usage-caption';
 import { filteredMembers, spendSnappedRange } from '../../lib/usage-search';
 import { windowWording } from '../../lib/usage-window';
-import { BalanceCard } from '../balance-card/balance-card';
 import { BreakdownPanel } from '../breakdown-panel/breakdown-panel';
 import { ChartPanel } from '../chart-panel/chart-panel';
 import { MetricTiles } from '../metric-tiles/metric-tiles';
-import { QuotaStrip } from '../quota-strip/quota-strip';
 import { UsageHeader } from '../usage-header/usage-header';
 import { movedSearch } from './usage-page-moves';
 import { useUsageView } from './use-usage-view';
@@ -52,8 +49,6 @@ function refusalCard(failure: string, retry: () => void) {
 
 function refreshedUsageReadings(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['usage-report'] });
-  void queryClient.invalidateQueries({ queryKey: quotaWindowsQueryOptions.queryKey });
-  void refreshedBalances(queryClient);
 }
 
 type PanelUnits = Record<keyof UsagePanels, PanelUnit>;
@@ -128,20 +123,6 @@ function readingsBody(props: ReadingsProps) {
   );
 }
 
-function accountStrips(strips: UsageStrips, onRefreshCredits: () => void) {
-  return (
-    <>
-      <QuotaStrip accountNameOf={strips.accountNameOf} now={strips.now} windows={strips.windows} />
-      <BalanceCard
-        accountNameOf={strips.accountNameOf}
-        balances={strips.balances}
-        now={strips.now}
-        onRefresh={onRefreshCredits}
-      />
-    </>
-  );
-}
-
 function viewBody(view: UsageView, moves: BodyMoves) {
   if (view.state === 'refused') {
     return refusalCard(view.failure, moves.onRetry);
@@ -202,7 +183,7 @@ function useMenuCommands(
  */
 export function UsagePage({ search, onSearchChange }: UsagePageProps) {
   const queryClient = useQueryClient();
-  const { view, strips, updatedAt } = useUsageView(search);
+  const { view, now, updatedAt } = useUsageView(search);
   const [tableOpen, setTableOpen] = useState(false);
   const [units, setUnits] = useState<PanelUnits>({
     gateway: 'requests',
@@ -219,20 +200,17 @@ export function UsagePage({ search, onSearchChange }: UsagePageProps) {
   return (
     <section className="flex w-full flex-col gap-4 px-6 pt-explorer-top pb-6" data-focus-group="">
       <UsageHeader
-        now={strips.now}
+        now={now}
         onRefresh={() => {
           refreshedUsageReadings(queryClient);
         }}
         scope={scopeSentence({
           gateways: filteredMembers(search, 'gateways'),
           providers: filteredMembers(search, 'providers'),
-          window: windowWording(search, strips.now),
+          window: windowWording(search, now),
         })}
         updatedAt={updatedAt}
       />
-      {accountStrips(strips, () => {
-        void refreshedBalances(queryClient);
-      })}
       {viewBody(view, {
         search,
         onSearchChange,

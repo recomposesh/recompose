@@ -29,3 +29,13 @@ The usage screen MUST stand as one explorer: a filter bar over the window, five 
 - Given a window a day wide drawn in hour buckets
 - When the chart draws its axis
 - Then a label stands every fourth bucket and the newest bucket keeps its own
+
+## REMOVED Requirements
+
+### Requirement: The quota strip claims only what local logs can prove
+
+**Reason**: No frame draws the strip. The `Usage v2` frames redraw the whole explorer as a filter bar, five tiles, one chart, and three panels, and none of the six carries a burn gauge. The strip stood above the tiles in the build alone, where it pushed the drawn grid down the screen. The window fold and its record marker stay in main behind `usage:quota-windows`, ready for a drawing that gives the reading a home.
+
+### Requirement: An aggregator balance is a reading at a moment
+
+**Reason**: No frame draws the credits card either, and it followed the strip off the explorer. The cached reading, its read-at stamp, and the refusal sentence stay in main behind `usage:balances`. An account's own surface is where the reading belongs once a frame draws it.

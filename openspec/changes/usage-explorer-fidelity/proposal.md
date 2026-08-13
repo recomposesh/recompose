@@ -32,9 +32,13 @@ no magnifier, and the picker prints surrounding months a person can't pick.
 - The window picker draws its own month step beside a centered span, keeps its months to the ones a
   person can pick, and drops the picker glyph inside each clock field.
 
+- The quota strip and the credits card leave the explorer. No frame in `designs/recompose.pen`
+  draws either one, and above the tiles they pushed the drawn grid down the screen. Their folds,
+  their channels, and their main-side laws stay where they are.
+
 ## Non-goals
 
-- The quota strip and the balance card keep their place above the tiles. The drawings show neither,
-  because the drawn session holds no subscription quota, and neither reading loses its home here.
+- The quota fold and the balance desk keep working in main. Only the two surfaces leave, so a
+  drawing that gives either reading a home gets it back without rebuilding anything behind it.
 - The metric tile keeps the 22-pixel figure the type scale offers. The drawing sets 20, which the
   macOS text-style scale doesn't carry, and the scale governs.

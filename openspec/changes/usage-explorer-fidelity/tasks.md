@@ -16,3 +16,7 @@
 - [x] 3.1 Carry a magnifier in the filter menu's search field
 - [x] 3.2 Draw the window picker's own month step beside a centered span
 - [x] 3.3 Keep the picker's months to the ones a person can pick, and drop the glyph inside each clock field
+
+## 4. What no frame draws
+
+- [x] 4.1 Take the quota strip and the credits card off the explorer, leaving their folds in main
