@@ -10,7 +10,7 @@ import { KindEmptyState } from '../kind-empty-state/kind-empty-state';
 export function SubscriptionsEmptyState() {
   return (
     <KindEmptyState
-      explanation="A subscription account is a plan you already pay for, connected by signing in through the provider's own command-line tool."
+      explanation="A subscription account is a plan you already pay for. Connect the one this machine already signs into, or sign in with another through the provider's own tool."
       title="Nothing connected yet"
     />
   );

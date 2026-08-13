@@ -5,6 +5,13 @@ import preview from '#.storybook/preview';
 import { connectedSubscription } from '../../../../shared/testing';
 import { SubscriptionAccountRow } from './subscription-account-row';
 
+/** @summary Names every control the row stands, so a reading counts what a person can press. */
+async function controlNames(canvas: { findAllByRole: (role: string) => Promise<HTMLElement[]> }) {
+  return (await canvas.findAllByRole('button')).map((control) =>
+    (control.getAttribute('aria-label') ?? control.textContent).trim(),
+  );
+}
+
 const meta = preview.meta({
   component: SubscriptionAccountRow,
   args: { view: connectedSubscription },
@@ -44,12 +51,43 @@ export const Connected = meta.story({
 export const Lapsed = meta.story({
   args: { view: { ...connectedSubscription, standing: 'lapsed' } },
   play: async ({ canvas }) => {
-    const names = (await canvas.findAllByRole('button')).map((control) =>
-      (control.getAttribute('aria-label') ?? control.textContent).trim(),
-    );
+    const names = await controlNames(canvas);
 
     await expect(names).toEqual(['Sign in again', 'Actions for Anthropic']);
     await expect(await canvas.findByText('Signed out')).toBeVisible();
+  },
+});
+
+const adopted = { ...connectedSubscription, provenance: 'machine' as const };
+
+/**
+ * An account adopted from the machine, which says so where the address is read.
+ *
+ * @summary Where an account came from decides both what its row offers and whether the app ever
+ * touches its credential, so a person who cannot see it cannot predict what the row does.
+ */
+export const Adopted = meta.story({
+  args: { view: adopted },
+  parameters: { bridge: { subscriptions: [adopted] } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText(/from this machine/)).toBeVisible();
+  },
+});
+
+/**
+ * An adopted account that lapsed, which names the tool rather than offering a sign-in.
+ *
+ * @summary Signing in reaches whichever account the person picks in the tool, not the one this row
+ * stands for, so the row never offers it. Only the tool that wrote the credential can renew it.
+ */
+export const AdoptedAndLapsed = meta.story({
+  args: { view: { ...adopted, standing: 'lapsed' as const } },
+  parameters: { bridge: { subscriptions: [{ ...adopted, standing: 'lapsed' as const }] } },
+  play: async ({ canvas }) => {
+    const names = await controlNames(canvas);
+
+    await expect(names).toEqual(['Actions for Anthropic']);
+    await expect(await canvas.findByText('Open Claude to sign in again')).toBeVisible();
   },
 });
 
