@@ -218,6 +218,7 @@ export async function reachSubscription(
     attempt,
     provider: spend.provider,
     credential: identified.credential,
+    renewal: spend.renewal,
     requestBody: body,
     wait: runtime.wait,
     ...attemptCallbacks(grant, spend, body, identified, runtime, scope, pluginContext),

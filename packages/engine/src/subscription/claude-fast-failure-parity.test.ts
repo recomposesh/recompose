@@ -107,6 +107,7 @@ async function completed(
   return completeSubscriptionAttempt({
     attempt: { answer, terminated: false },
     provider: 'anthropic',
+    renewal: 'app',
     credential: { accessToken: 'token', refreshToken: 'refresh' },
     requestBody,
     resend: async () => {
