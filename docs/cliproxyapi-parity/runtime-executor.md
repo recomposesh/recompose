@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 980**
+- **Total upstream tests: 982**
 - **Covered: 788**
-- **N/A: 190**
+- **N/A: 192**
 - **Gap: 2**
-- **Exact identities mapped: 980/980**
+- **Exact identities mapped: 982/982**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **980** | **788** | **190** | **2** |
+| **Total**          | **982** | **788** | **192** | **2** |
 
 ## Exact row mapping
 
@@ -1021,6 +1021,8 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 978 | `TestClaudeExecutor_LegacyMidSystemMessageRejectedOnEveryUpstreamPath`                                                                                    | system prompt      | Claude             | Covered | `rebuiltMidSystem` finds every `role: system` message through `isSystemMessage`, lifts its text parts into `body.system` with `midSystemParts`, and drops those messages from the turn list. Recompose reaches the same end by a different route: it rebuilds rather than rejects, so no upstream path can receive a mid-conversation system message on a legacy model, and no request has to fail for it.                                                                                                                                                                               |
 | 979 | `TestClaudeExecutor_LegacyMidSystemMessageForwardedToThirdPartyGateway`                                                                                   | system prompt      | Claude             | Covered | The policy runs on the Claude subscription path in `claude-request.ts`. A third-party Claude-compatible gateway is an API-key provider reached through `credentialed-target.ts`, which never applies it, so the caller's message rides through untouched.                                                                                                                                                                                                                                                                                                                                |
 | 980 | `TestClaudeBodyNeedsBillingFallbackTracksSystemPresence`                                                                                                  | billing            | Claude             | Covered | `withBilling` reads the system field through `systemBlocks`, which answers for a missing field, a bare string, and an array alike, then asks `existingBilling` whether the first block already carries the `x-anthropic-billing-header:` prefix. The fallback therefore turns on whether a system block is present and already billing-shaped, which is what the row tracks.                                                                                                                                                                                                             |
+| 981 | `TestCodexWebsocketsExecutorRestoresMultiAgentV2NamespaceAcrossIncrementalTurns`                                                                          | websocket          | Codex              | N/A     | `CodexWebSocketExecutor` is referenced by its own specs alone and reaches no serving path, so no request crosses it. The multi-agent namespace restore that does run lives on the HTTP completion stream, where `restoredEvent` calls `restoreCodexMultiAgentValue`, and the compact path calls it too.                                                                                                                                                                                                                                                                                  |
+| 982 | `TestCodexAutoExecutorHTTPFallbackForwardsSequentialCutoffReasoningSummaryDelivery`                                                                       | websocket          | Codex              | N/A     | There is no auto executor that opens a websocket and falls back to HTTP. Codex serving goes through the HTTP completion stream, so no fallback exists for a reasoning summary to survive across.                                                                                                                                                                                                                                                                                                                                                                                         |
 
 ## N/A boundary
 
