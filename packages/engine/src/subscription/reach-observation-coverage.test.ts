@@ -16,7 +16,7 @@ function subscriptionGrant(provider: SubscriptionProvider, accountId = 'account-
   return {
     verdict: 'resolved',
     providerOrigin: 'https://example.test',
-    spend: { custody: 'subscription', provider, accountId, credential: '{}' },
+    spend: { custody: 'subscription', renewal: 'app', provider, accountId, credential: '{}' },
   };
 }
 

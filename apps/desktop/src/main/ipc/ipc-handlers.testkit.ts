@@ -71,6 +71,8 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'subscriptions:sign-in': refuses,
     'subscriptions:restore': refuses,
     'subscriptions:activate': refuses,
+    'subscriptions:detect': refuses,
+    'subscriptions:adopt': refuses,
     ...overrides,
   };
 }
@@ -122,5 +124,8 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
     'subscriptions:sign-in': noGateways,
     'subscriptions:restore': noGateways,
     'subscriptions:activate': noGateways,
+    'subscriptions:detect': async () =>
+      Promise.resolve({ ok: true as const, value: { holds: 'nothing' as const } }),
+    'subscriptions:adopt': noGateways,
   };
 }

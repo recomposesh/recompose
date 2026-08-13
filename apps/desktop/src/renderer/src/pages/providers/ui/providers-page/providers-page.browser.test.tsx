@@ -20,6 +20,7 @@ const anthropic: SubscriptionAccountView = {
   signedInAs: 'dev@example.com',
   plan: 'Max',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 
@@ -28,6 +29,7 @@ const openai: SubscriptionAccountView = {
   provider: 'openai',
   label: 'OpenAI',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 

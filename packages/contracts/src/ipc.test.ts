@@ -39,10 +39,12 @@ const channelNames: IpcChannel[] = [
   'usage:quota-windows',
   'usage:balances',
   'system:usage-table',
+  'subscriptions:detect',
+  'subscriptions:adopt',
 ];
 
 describe('ipc channel registry', () => {
-  test('exactly the thirty-five specified channels exist', () => {
+  test('exactly the thirty-seven specified channels exist', () => {
     expect(Object.keys(ipcChannels).sort()).toEqual([...channelNames].sort());
   });
 
@@ -100,6 +102,7 @@ const connectedView = {
   plan: 'Max',
   standing: 'connected',
   active: true,
+  provenance: 'sign-in',
 };
 
 describe('what the subscription channels ask for', () => {
@@ -160,6 +163,7 @@ describe('what the subscription channels answer', () => {
       'subscriptions:sign-in',
       'subscriptions:restore',
       'subscriptions:activate',
+      'subscriptions:adopt',
     ] as const) {
       expect(ipcChannels[channel].response.parse({ ok: true, value: [connectedView] })).toEqual({
         ok: true,
@@ -251,6 +255,7 @@ describe('ipc error codes', () => {
     'tool-missing',
     'sign-in-timed-out',
     'keychain-denied',
+    'nothing-to-adopt',
   ];
 
   test('error codes are the closed set', () => {
@@ -261,7 +266,7 @@ describe('ipc error codes', () => {
     expect(() => ipcErrorSchema.parse({ code: 'other', message: 'x' })).toThrow();
   });
 
-  test('the set holds exactly thirteen codes, so a fourteenth arrives through a failing test', () => {
+  test('the set holds exactly fourteen codes, so a fifteenth arrives through a failing test', () => {
     expect(ipcErrorSchema.shape.code.options).toEqual(everyCode);
   });
 

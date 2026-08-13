@@ -3,7 +3,7 @@ import { describe, expectTypeOf, test } from 'vitest';
 import type { IpcChannel, IpcEvent } from './index';
 
 describe('the channel vocabulary', () => {
-  test('the surface is exactly these thirty-five channels, so a thirty-sixth arrives red', () => {
+  test('the surface is exactly these thirty-seven channels, so a thirty-eighth arrives red', () => {
     expectTypeOf<IpcChannel>().toEqualTypeOf<
       | 'gateways:list'
       | 'gateways:save'
@@ -40,6 +40,8 @@ describe('the channel vocabulary', () => {
       | 'subscriptions:sign-in'
       | 'subscriptions:restore'
       | 'subscriptions:activate'
+      | 'subscriptions:detect'
+      | 'subscriptions:adopt'
     >();
   });
 });

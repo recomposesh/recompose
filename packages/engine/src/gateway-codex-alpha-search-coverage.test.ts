@@ -16,7 +16,13 @@ function subscriptionGrant(credential: string): SpendGrant {
   return {
     verdict: 'resolved',
     providerOrigin: 'https://chatgpt.com/backend-api/codex',
-    spend: { custody: 'subscription', provider: 'openai', accountId: 'acc', credential },
+    spend: {
+      custody: 'subscription',
+      renewal: 'app',
+      provider: 'openai',
+      accountId: 'acc',
+      credential,
+    },
   };
 }
 

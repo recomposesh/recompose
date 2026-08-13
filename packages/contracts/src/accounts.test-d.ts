@@ -16,8 +16,8 @@ import type {
 import { defaultAccountsDocument, loadAccountsDocument } from './accounts';
 
 describe('the account row the document stores', () => {
-  test('the document pins itself to schema version 7', () => {
-    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<7>();
+  test('the document pins itself to schema version 8', () => {
+    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<8>();
   });
 
   test('a stored row is a subscription, a credentialed account, or a local runtime', () => {
@@ -31,7 +31,7 @@ describe('the account row the document stores', () => {
     expectTypeOf<SubscriptionAccount>().not.toHaveProperty('credentialRef');
     expectTypeOf<Extract<Account, { kind: 'subscription' }>>().not.toHaveProperty('credentialRef');
     expectTypeOf<keyof SubscriptionAccount>().toEqualTypeOf<
-      'id' | 'provider' | 'kind' | 'label' | 'credentialPolicy' | 'transportPolicy'
+      'id' | 'provider' | 'kind' | 'label' | 'provenance' | 'credentialPolicy' | 'transportPolicy'
     >();
   });
 
@@ -39,6 +39,22 @@ describe('the account row the document stores', () => {
     expectTypeOf<SubscriptionAccount['provider']>().toEqualTypeOf<SubscriptionProviderId>();
   });
 
+  test('no arm of a stored row has a field the key itself could occupy', () => {
+    expectTypeOf<Account>().not.toHaveProperty('secret');
+    expectTypeOf<Account>().not.toHaveProperty('key');
+    expectTypeOf<CredentialedAccount>().not.toHaveProperty('secret');
+    expectTypeOf<CredentialedAccount>().not.toHaveProperty('key');
+    expectTypeOf<SubscriptionAccount>().not.toHaveProperty('secret');
+    expectTypeOf<SubscriptionAccount>().not.toHaveProperty('key');
+  });
+
+  test('every kind the vocabulary names is a kind a stored row can be', () => {
+    expectTypeOf<AccountKind>().toEqualTypeOf<Account['kind']>();
+    expectTypeOf<CredentialedAccountKind>().toEqualTypeOf<'api-key' | 'aggregator'>();
+  });
+});
+
+describe('the reference a credentialed row carries in place of its secret', () => {
   test('a credentialed row carries the reference the vault answers to', () => {
     expectTypeOf<
       Extract<Account, { kind: CredentialedAccountKind }>
@@ -57,19 +73,22 @@ describe('the account row the document stores', () => {
       credentialRef: string;
     }>().toExtend<CredentialedAccount>();
   });
+});
 
-  test('no arm of a stored row has a field the key itself could occupy', () => {
-    expectTypeOf<Account>().not.toHaveProperty('secret');
-    expectTypeOf<Account>().not.toHaveProperty('key');
-    expectTypeOf<CredentialedAccount>().not.toHaveProperty('secret');
-    expectTypeOf<CredentialedAccount>().not.toHaveProperty('key');
-    expectTypeOf<SubscriptionAccount>().not.toHaveProperty('secret');
-    expectTypeOf<SubscriptionAccount>().not.toHaveProperty('key');
+describe('where a stored subscription row says its account came from', () => {
+  test('a subscription row says where its account came from, and never leaves the answer out', () => {
+    expectTypeOf<SubscriptionAccount['provenance']>().toEqualTypeOf<'sign-in' | 'machine'>();
+    expectTypeOf<{
+      id: string;
+      provider: SubscriptionProviderId;
+      kind: 'subscription';
+      label: string;
+    }>().not.toExtend<SubscriptionAccount>();
   });
 
-  test('every kind the vocabulary names is a kind a stored row can be', () => {
-    expectTypeOf<AccountKind>().toEqualTypeOf<Account['kind']>();
-    expectTypeOf<CredentialedAccountKind>().toEqualTypeOf<'api-key' | 'aggregator'>();
+  test('no other kind of row says where it came from, because only a subscription can be adopted', () => {
+    expectTypeOf<CredentialedAccount>().not.toHaveProperty('provenance');
+    expectTypeOf<LocalAccount>().not.toHaveProperty('provenance');
   });
 });
 

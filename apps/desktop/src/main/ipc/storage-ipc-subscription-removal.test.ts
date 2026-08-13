@@ -59,7 +59,7 @@ function aSubscriptionRow(
   id: string,
   provider: SubscriptionAccount['provider'],
 ): SubscriptionAccount {
-  return { id, provider, kind: 'subscription', label: `Ada on ${provider}` };
+  return { id, provider, kind: 'subscription', provenance: 'sign-in', label: `Ada on ${provider}` };
 }
 
 async function withHomes(

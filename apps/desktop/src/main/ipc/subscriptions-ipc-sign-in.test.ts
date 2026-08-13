@@ -116,7 +116,13 @@ describe('bringing a lapsed account back', () => {
   test('given a lapsed account, restoring signs it back in under the same account', async () => {
     await world.toolInstalled('claude');
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Ada' },
+      {
+        id: 'acc-one',
+        provider: 'anthropic',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Ada',
+      },
     ]);
     const homes = world.homesOn('linux');
     const launch = world.toolSigningIn(homes, 'anthropic', claudeCodeSignedIn('ada@ex.com', 'pro'));

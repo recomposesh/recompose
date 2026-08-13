@@ -36,11 +36,24 @@ export type EngineGateway = z.infer<typeof engineGatewaySchema>;
 
 export const directiveIdSchema = z.string().trim().min(1);
 
+/**
+ * Who spends the refresh token when a subscription credential nears expiry.
+ *
+ * @summary Both vendors rotate the refresh token on every renewal and reject the one that went
+ * before, so a second renewer signs the person out of their own tool. The parent resolves this from
+ * the stored account and stamps it on the grant, and the child obeys the answer rather than
+ * inferring one it has no way to know.
+ */
+export const subscriptionRenewalOwnerSchema = z.enum(['app', 'owning-tool']);
+
+export type SubscriptionRenewalOwner = z.infer<typeof subscriptionRenewalOwnerSchema>;
+
 const subscriptionCustodyShape = {
   custody: z.literal('subscription'),
   provider: subscriptionProviderIdSchema,
   accountId: nonBlankString,
   credential: nonBlankString,
+  renewal: subscriptionRenewalOwnerSchema,
   transportPolicy: accountTransportPolicySchema.optional(),
 };
 

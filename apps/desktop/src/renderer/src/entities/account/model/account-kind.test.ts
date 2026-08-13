@@ -14,7 +14,7 @@ type StoredAccount = AccountsDocument['accounts'][number];
 
 function account(id: string, kind: StoredAccount['kind']): StoredAccount {
   if (kind === 'subscription') {
-    return { id, provider: 'anthropic', kind, label: id };
+    return { id, provider: 'anthropic', kind, label: id, provenance: 'sign-in' };
   }
 
   if (kind === 'local') {

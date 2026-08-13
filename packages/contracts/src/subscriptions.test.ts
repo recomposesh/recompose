@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   subscriptionAccountViewSchema,
+  subscriptionProvenanceSchema,
   subscriptionProviderIdSchema,
   subscriptionProviders,
   subscriptionStandingSchema,
@@ -16,6 +17,7 @@ const connectedView = {
   plan: 'Max',
   standing: 'connected',
   active: true,
+  provenance: 'sign-in',
 };
 
 const presentTool = {
@@ -111,6 +113,37 @@ describe('the view a subscription row renders from', () => {
     expect(() =>
       subscriptionAccountViewSchema.parse({ ...connectedView, standing: 'connecting' }),
     ).toThrow();
+  });
+});
+
+describe('where the row says its account came from', () => {
+  test('a view the app signed in reports the sign-in it came from', () => {
+    const signedIn = { ...connectedView, provenance: 'sign-in' };
+
+    expect(subscriptionAccountViewSchema.parse(signedIn)).toEqual(signedIn);
+  });
+
+  test('a view the app adopted reports the machine it came from', () => {
+    const adopted = { ...connectedView, provenance: 'machine' };
+
+    expect(subscriptionAccountViewSchema.parse(adopted)).toEqual(adopted);
+  });
+
+  test('a view saying nothing about where it came from is refused, because every row reports it', () => {
+    const { provenance, ...withoutTheOrigin } = connectedView;
+
+    expect(provenance).toBe('sign-in');
+    expect(() => subscriptionAccountViewSchema.parse(withoutTheOrigin)).toThrow();
+  });
+
+  test('an origin outside the pair is refused', () => {
+    expect(() =>
+      subscriptionAccountViewSchema.parse({ ...connectedView, provenance: 'keychain' }),
+    ).toThrow();
+  });
+
+  test('the vocabulary names the sign-in and the machine, and nothing else', () => {
+    expect(subscriptionProvenanceSchema.options).toEqual(['sign-in', 'machine']);
   });
 });
 

@@ -63,6 +63,7 @@ describe('Refusing a xAI socket request the gateway cannot serve', () => {
       providerOrigin: 'https://api.x.ai',
       spend: {
         custody: 'subscription',
+        renewal: 'app',
         provider: 'openai',
         accountId: 'acc',
         credential: '{}',

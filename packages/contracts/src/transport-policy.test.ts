@@ -7,6 +7,7 @@ const subscription = {
   provider: 'anthropic',
   kind: 'subscription',
   label: 'Claude Max',
+  provenance: 'sign-in',
 } as const;
 
 describe('subscription account transport policy', () => {

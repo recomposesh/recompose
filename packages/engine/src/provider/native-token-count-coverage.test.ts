@@ -108,6 +108,7 @@ describe('counting tokens through an Antigravity subscription', () => {
       providerOrigin: 'https://cloudcode-pa.googleapis.com',
       spend: {
         custody: 'subscription',
+        renewal: 'app',
         provider: 'antigravity',
         accountId: 'acc-antigravity',
         credential: '{}',

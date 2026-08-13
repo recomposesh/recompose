@@ -1,5 +1,6 @@
 import type {
   AccountsDocument,
+  SubscriptionAccount,
   SubscriptionAccountView,
   SubscriptionProviderId,
 } from '@recompose/contracts';
@@ -9,7 +10,7 @@ import type { SignInLaunch } from '../subscriptions/sign-in-launch';
 import type { SubscriptionHomes } from '../subscriptions/subscription-homes';
 import type { Clock } from '../subscriptions/subscription-sign-in';
 
-import { loadAccountsFile } from '../storage/accounts-store';
+import { amendAccountsFile, loadAccountsFile } from '../storage/accounts-store';
 import { subscriptionViews } from '../subscriptions/subscription-views';
 import { reportTools } from '../subscriptions/tool-presence';
 import { ipcFailure } from './storage-envelope';
@@ -74,4 +75,18 @@ export async function settleUnder(
   to: string,
 ): Promise<CustodyOutcome> {
   return custody === null ? { ok: true } : custody.moveBetweenHomes(from, to);
+}
+
+/**
+ * @summary One account row, written whole over any row already standing under its id, so a
+ * sign-in and an adoption of the same address settle on one account rather than two.
+ */
+export async function recordTheAccount(
+  shop: Workshop,
+  row: SubscriptionAccount,
+): Promise<AccountsDocument> {
+  return amendAccountsFile(shop.accountsFile, shop.ctx.onCorrupt, (accounts) => ({
+    ...accounts,
+    accounts: [...accounts.accounts.filter((one) => one.id !== row.id), row],
+  }));
 }

@@ -15,6 +15,7 @@ import {
 import { nonBlankString } from './non-blank';
 import { settingsPatchSchema, settingsSchema } from './settings';
 import {
+  machineCredentialReadingSchema,
   subscriptionAccountViewSchema,
   subscriptionProviderIdSchema,
   subscriptionToolSchema,
@@ -41,6 +42,7 @@ export const ipcErrorSchema = z.strictObject({
     'tool-missing',
     'sign-in-timed-out',
     'keychain-denied',
+    'nothing-to-adopt',
   ]),
   message: z.string().min(1),
 });
@@ -192,6 +194,27 @@ export const ipcChannels = {
   },
   'subscriptions:activate': {
     request: z.strictObject({ id: nonBlankString }),
+    response: subscriptionViewsResponse,
+  },
+  /**
+   * Asks main what the provider's own tool already left on this machine.
+   *
+   * @summary The answer names the account and how its credential stands, and carries none of the
+   * material, because reading the material can ask the operating system for permission and a prompt
+   * belongs to something a person did. A person's pick causes this read; a mount never does.
+   */
+  'subscriptions:detect': {
+    request: z.strictObject({ provider: subscriptionProviderIdSchema }),
+    response: ipcResult(machineCredentialReadingSchema),
+  },
+  /**
+   * Records the account the machine already holds, with no sign-in.
+   *
+   * @summary Main re-reads the material under this act and refuses `nothing-to-adopt` when the
+   * credential left the store between the look and the click.
+   */
+  'subscriptions:adopt': {
+    request: z.strictObject({ provider: subscriptionProviderIdSchema }),
     response: subscriptionViewsResponse,
   },
 } as const;

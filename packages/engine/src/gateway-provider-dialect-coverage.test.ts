@@ -21,6 +21,7 @@ describe('dialectFor: a resolved subscription target', () => {
       providerOrigin: 'https://example.test',
       spend: {
         custody: 'subscription',
+        renewal: 'app',
         provider: 'antigravity',
         accountId: 'account-1',
         credential: '{"type":"antigravity"}',

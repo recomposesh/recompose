@@ -13,7 +13,6 @@ import type { SubscriptionObservation } from '../subscriptions/subscription-stan
 import type { IpcHandlers } from './dispatch';
 import type { Answered, SubscriptionsIpcContext, Workshop } from './subscriptions-workshop';
 
-import { amendAccountsFile } from '../storage/accounts-store';
 import { oneAtATime } from '../storage/one-at-a-time';
 import { custodyOver } from '../subscriptions/credential-custody';
 import { signInCommandFor } from '../subscriptions/subscription-commands';
@@ -27,6 +26,7 @@ import { ipcFailure, storageFailure } from './storage-envelope';
 import {
   settleUnder,
   readAccounts,
+  recordTheAccount,
   refusalFailure,
   toolPresent,
   viewsOf,
@@ -113,10 +113,7 @@ async function reclaimAnOldToolsWrite(what: Reclaim): Promise<ToolRun> {
 }
 
 async function keepTheAccount(shop: Workshop, row: SubscriptionAccount): Promise<AccountsDocument> {
-  const updated = await amendAccountsFile(shop.accountsFile, shop.ctx.onCorrupt, (accounts) => ({
-    ...accounts,
-    accounts: [...accounts.accounts.filter((one) => one.id !== row.id), row],
-  }));
+  const updated = await recordTheAccount(shop, row);
 
   await shop.homes.pointActiveAt(row.provider, row.id);
 
@@ -150,7 +147,13 @@ async function afterTheToolAnswers(
   }
 
   const label = observed.signedInAs ?? subscriptionProviders[provider].toolName;
-  const kept = await keepTheAccount(shop, { id, provider, kind: 'subscription', label });
+  const kept = await keepTheAccount(shop, {
+    id,
+    provider,
+    kind: 'subscription',
+    label,
+    provenance: 'sign-in',
+  });
 
   return { ok: true, value: await viewsOf(shop, kept) };
 }

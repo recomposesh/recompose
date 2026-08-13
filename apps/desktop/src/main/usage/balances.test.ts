@@ -128,7 +128,13 @@ describe('the accounts whose balance a card can hold', () => {
           label: 'Other',
           credentialRef: 'vault:other-agg',
         },
-        { id: 'sub-1', provider: 'anthropic', kind: 'subscription', label: 'Personal' },
+        {
+          id: 'sub-1',
+          provider: 'anthropic',
+          kind: 'subscription',
+          provenance: 'sign-in',
+          label: 'Personal',
+        },
       ],
     };
 

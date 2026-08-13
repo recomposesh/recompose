@@ -40,6 +40,7 @@ const claudeSubscription = {
       provider: 'anthropic',
       accountId: 'acc-claude-max',
       credential: '{"claudeAiOauth":{"accessToken":"oauth-token"}}',
+      renewal: 'app',
     },
   },
 };
@@ -55,6 +56,7 @@ const codexSubscription = {
       provider: 'openai',
       accountId: 'acc-codex-plus',
       credential: '{"tokens":{"access_token":"oauth-token"}}',
+      renewal: 'app',
     },
   },
 };
@@ -151,7 +153,7 @@ describe('the spend a resolved grant authorizes', () => {
   test('a subscription spend missing any part of its custody is refused', () => {
     const spend = claudeSubscription.grant.spend;
 
-    for (const field of ['provider', 'accountId', 'credential'] as const) {
+    for (const field of ['provider', 'accountId', 'credential', 'renewal'] as const) {
       const { [field]: omitted, ...incomplete } = spend;
 
       expect(omitted).toBeDefined();

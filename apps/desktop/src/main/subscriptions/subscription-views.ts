@@ -64,6 +64,7 @@ async function viewOf(
     id: row.id,
     provider: row.provider,
     label: row.label,
+    provenance: row.provenance,
     standing: observed.standing,
     active: active.get(row.provider) === row.id,
     ...(observed.signedInAs === undefined ? {} : { signedInAs: observed.signedInAs }),

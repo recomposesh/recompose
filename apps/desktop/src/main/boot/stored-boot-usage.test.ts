@@ -169,7 +169,15 @@ describe('the usage ledger the boot stands up', () => {
       join(home, 'accounts.json'),
       JSON.stringify({
         schemaVersion: ACCOUNTS_VERSION,
-        accounts: [{ id: 'sub-1', provider: 'anthropic', kind: 'subscription', label: 'Personal' }],
+        accounts: [
+          {
+            id: 'sub-1',
+            provider: 'anthropic',
+            kind: 'subscription',
+            label: 'Personal',
+            provenance: 'sign-in',
+          },
+        ],
       }),
     );
 

@@ -257,6 +257,7 @@ test('subscription transport replays a learned tool call on the next request', a
     providerOrigin: 'https://daily-cloudcode-pa.googleapis.com',
     spend: {
       custody: 'subscription',
+      renewal: 'app',
       provider: 'antigravity',
       accountId: 'account-1',
       credential: JSON.stringify({

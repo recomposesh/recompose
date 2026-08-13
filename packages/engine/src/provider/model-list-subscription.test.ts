@@ -10,6 +10,7 @@ const neverFetches: typeof fetch = async () => {
 
 const claudeSubscription = {
   custody: 'subscription',
+  renewal: 'app',
   provider: 'anthropic',
   accountId: 'acc-claude',
   credential: '{"claudeAiOauth":{"accessToken":"oauth"}}',
@@ -22,6 +23,7 @@ function codexSubscription(plan: string) {
 
   return {
     custody: 'subscription' as const,
+    renewal: 'app' as const,
     provider: 'openai' as const,
     accountId: 'acc-codex',
     credential: JSON.stringify({

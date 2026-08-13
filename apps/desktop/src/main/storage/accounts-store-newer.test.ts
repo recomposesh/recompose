@@ -12,6 +12,7 @@ const maxRow = {
   id: 'acc-1',
   provider: 'anthropic',
   kind: 'subscription',
+  provenance: 'sign-in',
   label: 'Max',
 };
 

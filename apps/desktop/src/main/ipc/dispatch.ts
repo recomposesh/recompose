@@ -47,6 +47,8 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'subscriptions:sign-in',
   'subscriptions:restore',
   'subscriptions:activate',
+  'subscriptions:detect',
+  'subscriptions:adopt',
 ];
 
 async function callHandler<Channel extends IpcChannel>(

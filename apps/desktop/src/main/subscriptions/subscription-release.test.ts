@@ -18,7 +18,7 @@ let homes: SubscriptionHomes;
 let keychain: FakeKeychain;
 
 function anAccount(id: string, provider: SubscriptionAccount['provider']): SubscriptionAccount {
-  return { id, provider, kind: 'subscription', label: 'Ada' };
+  return { id, provider, kind: 'subscription', provenance: 'sign-in', label: 'Ada' };
 }
 
 async function homeExists(provider: SubscriptionAccount['provider'], id: string): Promise<boolean> {

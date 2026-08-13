@@ -63,6 +63,7 @@ async function subscriptionTarget(
           provider: account.provider,
           accountId: account.id,
           credential,
+          renewal: account.provenance === 'machine' ? 'owning-tool' : 'app',
           ...(account.transportPolicy === undefined
             ? {}
             : { transportPolicy: account.transportPolicy }),

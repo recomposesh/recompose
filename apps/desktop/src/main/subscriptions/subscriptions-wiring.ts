@@ -2,8 +2,13 @@ import { app } from 'electron';
 import { userInfo } from 'node:os';
 
 import type { SubscriptionsIpcContext } from '../ipc/subscriptions-ipc';
+import type { SubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
+import type { SubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
 import type { CredentialCustody } from './credential-custody';
 
+import { createSubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
+import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
+import { oneAtATime } from '../storage/one-at-a-time';
 import { credentialCustody } from './credential-custody';
 import { loginShellPath } from './login-shell-path';
 import { securityKeychain } from './macos-keychain';
@@ -50,7 +55,7 @@ async function toolSearchPath(): Promise<string> {
   });
 }
 
-export function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcContext {
+function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcContext {
   return {
     userDataPath: wiring.userDataPath,
     homeFolder: wiring.homeFolder,
@@ -62,5 +67,20 @@ export function subscriptionsContext(wiring: SubscriptionsWiring): Subscriptions
     signInBoundMs: SIGN_IN_BOUND_MS,
     signInEveryMs: SIGN_IN_EVERY_MS,
     onCorrupt: wiring.onCorrupt,
+  };
+}
+
+/**
+ * @summary Both subscription handler sets share one context and one write lane, so a sign-in and
+ * an adoption never record an account at the same moment.
+ */
+export function subscriptionIpcHandlers(
+  wiring: SubscriptionsWiring,
+): SubscriptionsIpcHandlers & SubscriptionsMachineIpcHandlers {
+  const ctx = subscriptionsContext(wiring);
+
+  return {
+    ...createSubscriptionsIpcHandlers(ctx),
+    ...createSubscriptionsMachineIpcHandlers(ctx, oneAtATime()),
   };
 }

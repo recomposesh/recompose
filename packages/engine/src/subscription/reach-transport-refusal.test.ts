@@ -27,7 +27,13 @@ function subscriptionGrant(provider: Custody, credential = '{}'): ResolvedGrant 
   return {
     verdict: 'resolved',
     providerOrigin: 'https://example.test',
-    spend: { custody: 'subscription', provider, accountId: 'account-1', credential },
+    spend: {
+      custody: 'subscription',
+      renewal: 'app',
+      provider,
+      accountId: 'account-1',
+      credential,
+    },
   };
 }
 

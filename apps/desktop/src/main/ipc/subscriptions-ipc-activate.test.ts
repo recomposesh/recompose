@@ -23,8 +23,20 @@ async function twoAnthropicAccounts(platform: NodeJS.Platform): Promise<Subscrip
   await homes.promotePending('anthropic', 'acc-two');
   await homes.pointActiveAt('anthropic', 'acc-one');
   await world.alreadyHolding([
-    { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Ada' },
-    { id: 'acc-two', provider: 'anthropic', kind: 'subscription', label: 'Grace' },
+    {
+      id: 'acc-one',
+      provider: 'anthropic',
+      kind: 'subscription',
+      provenance: 'sign-in',
+      label: 'Ada',
+    },
+    {
+      id: 'acc-two',
+      provider: 'anthropic',
+      kind: 'subscription',
+      provenance: 'sign-in',
+      label: 'Grace',
+    },
   ]);
 
   return homes;

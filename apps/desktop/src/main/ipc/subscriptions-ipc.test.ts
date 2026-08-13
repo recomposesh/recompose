@@ -57,7 +57,13 @@ function itsOwnKeychainItem(): string {
 
 async function anAnthropicRow(): Promise<void> {
   await world.alreadyHolding([
-    { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Ada' },
+    {
+      id: 'acc-one',
+      provider: 'anthropic',
+      kind: 'subscription',
+      provenance: 'sign-in',
+      label: 'Ada',
+    },
   ]);
 }
 
@@ -74,7 +80,13 @@ describe('listing the subscription accounts a person holds', () => {
 
   test('given a pasted-key account beside a subscription, only the subscription is listed', async () => {
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Claude Code' },
+      {
+        id: 'acc-one',
+        provider: 'anthropic',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Claude Code',
+      },
       {
         id: 'acc-two',
         provider: 'openrouter',
@@ -88,11 +100,19 @@ describe('listing the subscription accounts a person holds', () => {
 
     expect(viewsIn(answered).map((view) => view.id)).toEqual(['acc-one']);
   });
+});
 
+describe('what a listed row carries', () => {
   test('given a signed-in account, the row carries who it signs in as, its plan, and its standing', async () => {
     await aClaudeCodeHomeUnder('acc-one', 'ada@ex.com', 'max');
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Ada' },
+      {
+        id: 'acc-one',
+        provider: 'anthropic',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Ada',
+      },
     ]);
 
     const answered = await handlersOn()['subscriptions:list']();
@@ -105,6 +125,7 @@ describe('listing the subscription accounts a person holds', () => {
         signedInAs: 'ada@ex.com',
         plan: 'max',
         standing: 'connected',
+        provenance: 'sign-in',
         active: true,
       },
     ]);
@@ -112,7 +133,13 @@ describe('listing the subscription accounts a person holds', () => {
 
   test('given an account whose home holds no credential, the row reads as lapsed and inactive', async () => {
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'openai', kind: 'subscription', label: 'Codex' },
+      {
+        id: 'acc-one',
+        provider: 'openai',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Codex',
+      },
     ]);
 
     const answered = await handlersOn()['subscriptions:list']();
@@ -125,7 +152,13 @@ describe('a row reads connected only where a credential stands', () => {
   test('given a Codex account signed in, the row carries no address and no plan', async () => {
     await aCodexHomeUnder('acc-one');
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'openai', kind: 'subscription', label: 'Codex' },
+      {
+        id: 'acc-one',
+        provider: 'openai',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Codex',
+      },
     ]);
 
     const [view] = viewsIn(await handlersOn()['subscriptions:list']());
@@ -135,6 +168,7 @@ describe('a row reads connected only where a credential stands', () => {
       'active',
       'id',
       'label',
+      'provenance',
       'provider',
       'standing',
     ]);
@@ -157,7 +191,9 @@ describe('a row reads connected only where a credential stands', () => {
 
     expect(view).toMatchObject({ standing: 'lapsed' });
   });
+});
 
+describe('a row with nothing behind it', () => {
   test('given no credential in the home and none in the keychain, the row reads lapsed', async () => {
     await anAnthropicRow();
 

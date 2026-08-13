@@ -36,13 +36,22 @@ const seededSubscription: SubscriptionAccountView = {
   signedInAs: 'dev@example.com',
   plan: 'Max',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 
 function seededAccounts(): AccountsDocument {
   return {
     schemaVersion: ACCOUNTS_VERSION,
-    accounts: [{ id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Claude Max' }],
+    accounts: [
+      {
+        id: 'a1',
+        provider: 'anthropic',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Claude Max',
+      },
+    ],
   };
 }
 

@@ -21,7 +21,13 @@ const registry: AccountsDocument = {
   schemaVersion: ACCOUNTS_VERSION,
   accounts: [
     { id: 'acc-key', provider: 'anthropic', kind: 'api-key', label: 'work', credentialRef: 'c1' },
-    { id: 'acc-plan', provider: 'anthropic', kind: 'subscription', label: 'Max' },
+    {
+      id: 'acc-plan',
+      provider: 'anthropic',
+      kind: 'subscription',
+      provenance: 'sign-in',
+      label: 'Max',
+    },
   ],
 };
 

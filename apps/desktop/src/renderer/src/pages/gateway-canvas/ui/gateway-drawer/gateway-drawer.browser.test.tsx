@@ -109,6 +109,7 @@ test('a subscription target reads the signed-in email', async () => {
           label: 'Claude',
           signedInAs: 'ada@example.com',
           standing: 'connected',
+          provenance: 'sign-in',
           active: true,
         },
       ],
@@ -132,7 +133,13 @@ test('a local runtime target reads the address a person pointed it at', async ()
 const personalPlan: AccountsDocument = {
   ...storedAccounts,
   accounts: [
-    { id: 's1', provider: 'anthropic', kind: 'subscription', label: 'personal plan' },
+    {
+      id: 's1',
+      provider: 'anthropic',
+      kind: 'subscription',
+      provenance: 'sign-in',
+      label: 'personal plan',
+    },
     ...storedAccounts.accounts.filter((held) => held.id !== 's1'),
   ],
 };

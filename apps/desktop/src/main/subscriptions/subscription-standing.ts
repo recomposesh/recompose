@@ -3,6 +3,8 @@ import type { SubscriptionProviderId } from '@recompose/contracts';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { claudeOauthIn, credentialFactsFor, documentIn } from './credential-records';
+
 export type SubscriptionObservation = {
   standing: 'connected' | 'lapsed';
   signedInAs?: string;
@@ -23,93 +25,25 @@ type Reading = {
   plan: string | undefined;
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+async function blobIn(home: string, file: string): Promise<string | null> {
+  return readFile(join(home, file), 'utf8').then(
+    (found) => found,
+    () => null,
+  );
 }
 
-function recordAt(value: unknown, key: string): Record<string, unknown> | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const found = value[key];
-
-  return isRecord(found) ? found : null;
-}
-
-function spokenAt(value: unknown, key: string): string | undefined {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const found = value[key];
-  const said = typeof found === 'string' ? found.trim() : '';
-
-  return said === '' ? undefined : said;
-}
-
-function documentIn(blob: string): unknown {
-  try {
-    return JSON.parse(blob);
-  } catch {
-    return null;
-  }
-}
-
-async function recordIn(home: string, file: string): Promise<unknown> {
-  return readFile(join(home, file), 'utf8').then(documentIn, () => null);
-}
-
-function claudeOauthIn(document: unknown): Record<string, unknown> | null {
-  return recordAt(document, 'claudeAiOauth');
-}
-
-function planNamedByRateTier(tier: string | undefined): string | undefined {
-  return tier?.match(/claude_(?<plan>max|pro|enterprise)/)?.groups?.['plan'];
-}
-
-async function readClaudeCode(home: string): Promise<Reading> {
+async function readFromHome(provider: SubscriptionProviderId, home: string): Promise<Reading> {
+  const credentialFile = provider === 'openai' ? 'auth.json' : '.credentials.json';
   const [credential, identity] = await Promise.all([
-    recordIn(home, '.credentials.json'),
-    recordIn(home, '.claude.json'),
+    blobIn(home, credentialFile),
+    blobIn(home, '.claude.json'),
   ]);
-  const oauth = claudeOauthIn(credential);
-  const account = recordAt(identity, 'oauthAccount');
+  const facts = credentialFactsFor(provider, documentIn(credential), documentIn(identity));
 
   return {
-    evidence: oauth !== null,
-    signedInAs: spokenAt(account, 'emailAddress'),
-    plan:
-      spokenAt(oauth, 'subscriptionType') ??
-      spokenAt(identity, 'subscriptionType') ??
-      planNamedByRateTier(spokenAt(account, 'userRateLimitTier')),
-  };
-}
-
-function sessionClaims(token: string | undefined): unknown {
-  const payload = token?.split('.')[1];
-
-  if (payload === undefined) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-  } catch {
-    return null;
-  }
-}
-
-async function readCodex(home: string): Promise<Reading> {
-  const credential = await recordIn(home, 'auth.json');
-  const session = recordAt(credential, 'tokens');
-  const key = spokenAt(credential, 'OPENAI_API_KEY');
-  const claims = sessionClaims(spokenAt(session, 'id_token'));
-
-  return {
-    evidence: session !== null || key !== undefined,
-    signedInAs: spokenAt(claims, 'email'),
-    plan: spokenAt(recordAt(claims, 'https://api.openai.com/auth'), 'chatgpt_plan_type'),
+    evidence: facts.holdsAccount || facts.holdsKey,
+    signedInAs: facts.signedInAs,
+    plan: facts.plan,
   };
 }
 
@@ -133,11 +67,7 @@ function onlyWhatTheRecordsSay(reading: Reading): Omit<SubscriptionObservation, 
 export async function observeSubscription(
   request: StandingRequest,
 ): Promise<SubscriptionObservation> {
-  const reading =
-    request.provider === 'anthropic'
-      ? await readClaudeCode(request.home)
-      : await readCodex(request.home);
-
+  const reading = await readFromHome(request.provider, request.home);
   const held = reading.evidence || (await keptOutsideTheHome(request.outsideCredential));
 
   return { standing: held ? 'connected' : 'lapsed', ...onlyWhatTheRecordsSay(reading) };

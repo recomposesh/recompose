@@ -16,7 +16,13 @@ function stored(kinds: StoredKind[]): AccountsDocument {
     schemaVersion: ACCOUNTS_VERSION,
     accounts: kinds.map((kind, index) =>
       kind === 'subscription'
-        ? { id: `a${index}`, provider: 'anthropic' as const, kind, label: `Account ${index}` }
+        ? {
+            id: `a${index}`,
+            provider: 'anthropic' as const,
+            kind,
+            label: `Account ${index}`,
+            provenance: 'sign-in' as const,
+          }
         : {
             id: `a${index}`,
             provider: 'anthropic',

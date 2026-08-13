@@ -109,6 +109,7 @@ export function accountHandlers(
         id,
         provider,
         kind: 'subscription',
+        provenance: 'sign-in',
         label: subscriptionProviders[provider].toolName,
       });
     },
