@@ -5,7 +5,7 @@ import type {
   SubscriptionProviderId,
 } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionPlanNames, toolBacked, type ToolBackedProviderId } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
 
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
@@ -56,7 +56,7 @@ type ToolRun = { landed: SubscriptionObservation | null; reclaimed: CustodyOutco
  */
 async function runTheTool(
   shop: Workshop,
-  provider: SubscriptionProviderId,
+  provider: ToolBackedProviderId,
   custody: CredentialCustody | null,
 ): Promise<ToolRun> {
   const snapshot = custody === null ? null : await custody.readMachineItem();
@@ -146,7 +146,7 @@ async function afterTheToolAnswers(
     return refusalFailure(settled);
   }
 
-  const label = observed.signedInAs ?? subscriptionProviders[provider].toolName;
+  const label = observed.signedInAs ?? subscriptionPlanNames[provider];
   const kept = await keepTheAccount(shop, {
     id,
     provider,
@@ -163,12 +163,19 @@ async function signIn(
   provider: SubscriptionProviderId,
   existingId: string | null,
 ): Promise<Answered> {
-  const { toolName } = subscriptionProviders[provider];
+  const toolName = subscriptionPlanNames[provider];
 
   if (!(await toolPresent(shop, provider))) {
     return ipcFailure(
       'tool-missing',
       `${toolName} is not installed on this machine, so no sign-in can begin.`,
+    );
+  }
+
+  if (!toolBacked(provider)) {
+    return ipcFailure(
+      'tool-missing',
+      `${toolName} signs in through recompose itself rather than through a tool.`,
     );
   }
 

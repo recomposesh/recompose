@@ -1,6 +1,6 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionProviders, toolBacked } from '@recompose/contracts';
 
 import type { OneAtATime } from '../storage/one-at-a-time';
 
@@ -53,6 +53,10 @@ export async function delegatedRenewal(
     }
 
     if (!(await run.present())) {
+      return { verdict: 'tool-missing' };
+    }
+
+    if (!toolBacked(provider)) {
       return { verdict: 'tool-missing' };
     }
 

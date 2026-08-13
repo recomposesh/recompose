@@ -1,7 +1,12 @@
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { subscriptionProviderIdSchema, subscriptionProviders } from '@recompose/contracts';
+import {
+  subscriptionPlanNames,
+  subscriptionProviderIdSchema,
+  subscriptionProviders,
+  toolBackedProviderIdSchema,
+} from '@recompose/contracts';
 import { join } from 'node:path';
 
 const CATALOG = 'Add provider';
@@ -226,11 +231,11 @@ export async function placementOf(locator: Locator): Promise<Placement> {
 }
 
 export function toolBinaryFor(provider: string): string {
-  return subscriptionProviders[subscriptionProviderIdSchema.parse(provider)].toolBinary;
+  return subscriptionProviders[toolBackedProviderIdSchema.parse(provider)].toolBinary;
 }
 
 export function toolNameFor(provider: string): string {
-  return subscriptionProviders[subscriptionProviderIdSchema.parse(provider)].toolName;
+  return subscriptionPlanNames[subscriptionProviderIdSchema.parse(provider)];
 }
 
 export async function userDataFolder(app: ElectronApplication): Promise<string> {

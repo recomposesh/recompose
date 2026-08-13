@@ -7,6 +7,7 @@ const subscriptionOrigins: Record<SubscriptionProviderId, string> = {
   openai: 'https://chatgpt.com/backend-api/codex',
   antigravity: 'https://daily-cloudcode-pa.googleapis.com',
   kimi: 'https://api.kimi.com/coding',
+  copilot: 'https://api.githubcopilot.com',
 };
 
 const loopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]']);

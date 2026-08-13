@@ -6,7 +6,7 @@ import type {
   SubscriptionTool,
 } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionPlanNames } from '@recompose/contracts';
 
 export type SubscriptionHandlers = Pick<
   RecomposeIpc,
@@ -58,7 +58,7 @@ export function subscriptionHandlers(
       {
         id,
         provider,
-        label: subscriptionProviders[provider].toolName,
+        label: subscriptionPlanNames[provider],
         standing: 'connected',
         provenance,
         active: held.length === 0,

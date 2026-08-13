@@ -1,6 +1,6 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionPlanNames } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useId } from 'react';
 
@@ -26,7 +26,7 @@ type SignInWayProps = {
 export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
   const reasonId = useId();
   const { data: tools } = useSuspenseQuery(subscriptionToolsQueryOptions);
-  const { toolName } = subscriptionProviders[provider];
+  const toolName = subscriptionPlanNames[provider];
   const reported = tools.find((tool) => tool.provider === provider);
   const command = reported?.present === true ? reported.signInCommand : undefined;
 

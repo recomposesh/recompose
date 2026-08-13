@@ -35,6 +35,13 @@ export type TargetCustodyContext = {
    * and reads the live store on every serving turn. Rotation stays with the program that owns it.
    */
   readAdoptedCredential: (provider: SubscriptionAccount['provider']) => Promise<string | null>;
+  /**
+   * Buys the short-lived credential a Copilot turn carries, or answers nothing where it cannot.
+   *
+   * @summary GitHub issues a long-lived credential the vault holds, and a request spends one
+   * bought with it. Every other plan spends what it stored, so only this provider asks.
+   */
+  copilotCredential: (accountId: string, githubCredential: string) => Promise<string | null>;
 };
 
 /** Where one account is reached and how the credential opening it is spelled, or why neither. */
@@ -65,13 +72,38 @@ async function credentialFor(
     : ctx.readSubscriptionCredential(account.provider, account.id);
 }
 
+/**
+ * The credential one Copilot turn carries, which is not the one the vault holds.
+ *
+ * @summary GitHub issues a long-lived credential, and a turn spends a short-lived one bought with
+ * it. Every other plan spends what it stored, so the trade stands here rather than in the reader.
+ */
+async function spendableCredential(
+  ctx: TargetCustodyContext,
+  account: SubscriptionAccount,
+  credential: string,
+): Promise<string | null> {
+  return account.provider === 'copilot'
+    ? ctx.copilotCredential(account.id, credential)
+    : credential;
+}
+
+async function spendableCredentialFor(
+  ctx: TargetCustodyContext,
+  account: SubscriptionAccount,
+): Promise<string | null> {
+  const stored = await credentialFor(ctx, account);
+
+  return stored === null ? null : spendableCredential(ctx, account, stored);
+}
+
 async function subscriptionTarget(
   ctx: TargetCustodyContext,
   providerOrigin: string,
   account: SubscriptionAccount,
   modelPolicy: ProviderModelPolicy | undefined,
 ): Promise<ResolvedTarget> {
-  const credential = await credentialFor(ctx, account);
+  const credential = await spendableCredentialFor(ctx, account);
 
   return credential === null
     ? { verdict: 'missing-credential' }

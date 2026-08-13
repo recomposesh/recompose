@@ -13,6 +13,7 @@ import { registerAppLifecycle } from './app-lifecycle';
 import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { probeFreePort } from './engine-host/probe-free-port';
+import { storageReachFor } from './engine-host/storage-reach';
 import {
   restartServingGateways,
   serveRewrittenGateway,
@@ -39,13 +40,9 @@ import {
 import { createSettingsEffects } from './settings/settings-effects';
 import { resolveConfigHome } from './storage/config-home';
 import { createSafeStorageCodec } from './storage/safe-storage-codec';
-import { subscriptionCredentialStore } from './subscriptions/subscription-credential-store';
 import { subscriptionHomes } from './subscriptions/subscription-homes';
 import { subscriptionRelease } from './subscriptions/subscription-release';
-import {
-  adoptedCredentialFor,
-  subscriptionIpcHandlers,
-} from './subscriptions/subscriptions-wiring';
+import { subscriptionIpcHandlers } from './subscriptions/subscriptions-wiring';
 import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
@@ -123,17 +120,16 @@ function recomposeHome(): string {
 }
 
 function storageReach(custody: CredentialCustody | null = null): SpendGrantContext {
-  const userDataPath = recomposeHome();
-
-  return {
-    userDataPath,
-    homeFolder: app.getPath('home'),
-    getCodec: () => createSafeStorageCodec(),
-    onCorrupt: onStorageCorrupt,
-    readSubscriptionCredential: subscriptionCredentialStore(userDataPath, process.platform, custody)
-      .read,
-    readAdoptedCredential: adoptedCredentialFor(userDataPath, app.getPath('home'), custody),
-  };
+  return storageReachFor(
+    {
+      userDataPath: recomposeHome(),
+      homeFolder: app.getPath('home'),
+      platform: process.platform,
+      getCodec: () => createSafeStorageCodec(),
+      onCorrupt: onStorageCorrupt,
+    },
+    custody,
+  );
 }
 
 function storageContext(

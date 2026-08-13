@@ -14,7 +14,7 @@ import {
   loopbackAddressAt,
   runtimeAddressFor,
   runtimePortSchema,
-  subscriptionProviders,
+  subscriptionPlanNames,
 } from '@recompose/contracts';
 
 /** A registry nobody has connected anything to, which every install starts as. */
@@ -121,7 +121,7 @@ export function accountHandlers(
         provider,
         kind: 'subscription',
         provenance: 'sign-in',
-        label: subscriptionProviders[provider].toolName,
+        label: subscriptionPlanNames[provider],
       });
     },
     'accounts:list': async () => Promise.resolve({ ok: true, value: registry }),

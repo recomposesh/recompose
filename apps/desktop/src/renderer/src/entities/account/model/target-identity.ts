@@ -12,6 +12,7 @@ const subscriptionProducts: Record<Extract<Account, { kind: 'subscription' }>['p
     openai: 'Codex',
     antigravity: 'Gemini',
     kimi: 'Kimi Code',
+    copilot: 'GitHub Copilot',
   };
 
 const providerProducts: Readonly<Record<string, string>> = {

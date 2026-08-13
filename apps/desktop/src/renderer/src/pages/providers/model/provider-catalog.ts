@@ -72,7 +72,9 @@ export function subscriptionTitleFor(id: string): string {
 
 /** The vendor mark used for a subscription product whose transport has its own provider id. */
 export function subscriptionMarkFor(id: SubscriptionProviderId): BrandMarkName {
-  return id === 'antigravity' ? 'gemini' : id;
+  if (id === 'antigravity') return 'gemini';
+
+  return id === 'copilot' ? 'githubCopilot' : id;
 }
 
 /**

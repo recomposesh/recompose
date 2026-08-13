@@ -150,5 +150,6 @@ export function contextFor(userDataPath: string): SpendGrantContext {
     onCorrupt: () => undefined,
     readSubscriptionCredential: subscriptionCredentialStore(userDataPath, 'linux', null).read,
     readAdoptedCredential: async () => Promise.resolve(null),
+    copilotCredential: async (_id, githubCredential) => Promise.resolve(githubCredential),
   };
 }

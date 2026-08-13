@@ -2,7 +2,27 @@ import { z } from 'zod';
 
 import { nonBlankString } from './non-blank';
 
-export const subscriptionProviderIdSchema = z.enum(['anthropic', 'openai', 'antigravity', 'kimi']);
+/**
+ * The plans a tool on the machine signs into on recompose's behalf.
+ *
+ * @summary Each one ships a command-line tool that owns its flow, so recompose runs that tool
+ * rather than keeping a second copy of an authorization it would then have to maintain.
+ */
+export const toolBackedProviderIdSchema = z.enum(['anthropic', 'openai', 'antigravity', 'kimi']);
+
+export type ToolBackedProviderId = z.infer<typeof toolBackedProviderIdSchema>;
+
+/**
+ * Every plan a subscription account can stand for.
+ *
+ * @summary GitHub Copilot stands apart from the rest: nothing on the machine owns its flow, so
+ * recompose runs the device authorization itself. Keeping it out of the tool table means the
+ * compiler asks every tool-delegating path what it does about the one plan that has no tool.
+ */
+export const subscriptionProviderIdSchema = z.enum([
+  ...toolBackedProviderIdSchema.options,
+  'copilot',
+]);
 
 export type SubscriptionProviderId = z.infer<typeof subscriptionProviderIdSchema>;
 
@@ -32,7 +52,7 @@ export const subscriptionProviders = {
     signInArguments: ['--kimi-login'],
   },
 } as const satisfies Record<
-  SubscriptionProviderId,
+  ToolBackedProviderId,
   {
     toolBinary: string;
     toolName: string;
@@ -40,6 +60,25 @@ export const subscriptionProviders = {
     signInArguments: readonly string[];
   }
 >;
+
+/** The name every plan goes by on screen, including the one no tool signs into. */
+export const subscriptionPlanNames: Record<SubscriptionProviderId, string> = {
+  anthropic: subscriptionProviders.anthropic.toolName,
+  openai: subscriptionProviders.openai.toolName,
+  antigravity: subscriptionProviders.antigravity.toolName,
+  kimi: subscriptionProviders.kimi.toolName,
+  copilot: 'GitHub Copilot',
+};
+
+/**
+ * Whether a tool on the machine owns this plan's sign-in, which decides who runs it.
+ *
+ * @summary Reach for it wherever a path is about to run a tool, read a config home, or ask a tool
+ * to renew. GitHub Copilot answers no to all three, because recompose owns its flow itself.
+ */
+export function toolBacked(provider: SubscriptionProviderId): provider is ToolBackedProviderId {
+  return toolBackedProviderIdSchema.safeParse(provider).success;
+}
 
 export const subscriptionStandingSchema = z.enum(['connected', 'lapsed']);
 
