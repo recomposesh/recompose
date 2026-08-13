@@ -99,7 +99,7 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0091](0091-the-explorer-conforms-to-its-drawings.md)                           | The Explorer Conforms to Its Drawings                                               | Accepted   | 2026-08-13 |
 | [0092](0092-the-axis-stands-for-the-window.md)                                  | The Axis Stands for the Window, and a Quiet Window Says So                          | Accepted   | 2026-08-13 |
 | [0093](0093-the-browser-suite-collects-between-files.md)                        | The Browser Suite Collects Between Files                                            | Superseded | 2026-08-13 |
-| [0094](0094-the-browser-suite-collects-every-tenth-file.md)                     | The Browser Suite Collects Every Tenth File                                         | Accepted   | 2026-08-13 |
+| [0094](0094-the-browser-suite-collects-every-tenth-file.md)                     | The Browser Suite Collects Every Tenth File                                         | Superseded | 2026-08-13 |
 | [0095](0095-the-pipeline-reads-what-the-diff-touched.md)                        | The Pipeline Reads What the Diff Touched                                            | Accepted   | 2026-08-13 |
 | [0096](0096-the-report-carries-its-open-hour.md)                                | The Report Carries Its Open Hour                                                    | Accepted   | 2026-08-13 |
 | [0097](0097-the-poll-pace-follows-the-surface.md)                               | The Poll Pace Follows the Surface, Not the Range                                    | Accepted   | 2026-08-13 |
@@ -107,3 +107,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0099](0099-a-look-asks-the-runtime-own-path.md)                                | A Look Asks the Runtime's Own Path                                                  | Accepted   | 2026-08-13 |
 | [0100](0100-a-coding-plan-stands-in-one-catalog-and-stores-as-another.md)       | A Coding Plan Stands in One Catalog and Stores as Another                           | Accepted   | 2026-08-13 |
 | [0101](0101-recompose-runs-copilot-device-flow.md)                              | recompose Runs Copilot's Device Flow Itself                                         | Accepted   | 2026-08-13 |
+| [0102](0102-the-browser-suite-collects-every-fifth-file.md)                     | The Browser Suite Collects Every Fifth File                                         | Accepted   | 2026-08-13 |

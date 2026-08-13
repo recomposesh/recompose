@@ -1,6 +1,6 @@
 # 0094: The browser suite collects every tenth file
 
-**Status**: Accepted
+**Status**: Superseded by [0102](0102-the-browser-suite-collects-every-fifth-file.md)
 **Date**: 2026-08-13
 
 Supersedes [0093](0093-the-browser-suite-collects-between-files.md).
