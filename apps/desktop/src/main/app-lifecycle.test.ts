@@ -3,65 +3,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { TrayMenuHandlers } from './tray/tray-menu-template';
 
 import { registerAppLifecycle } from './app-lifecycle';
+import { aFreshDesktop, desktop, fire } from './app-lifecycle.testkit';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
 
-type Desktop = {
-  ready: Promise<void>;
-  announceReady: () => void;
-  listeners: Map<string, () => void>;
-  windowCount: number;
-  quits: number;
-};
-
-const desktop = vi.hoisted(
-  (): Desktop => ({
-    ready: Promise.resolve(),
-    announceReady: () => {},
-    listeners: new Map(),
-    windowCount: 0,
-    quits: 0,
-  }),
-);
-
-vi.mock('electron', () => {
-  class TrayFake {
-    private destroyed = false;
-
-    setToolTip(): void {}
-
-    setContextMenu(): void {}
-
-    destroy(): void {
-      this.destroyed = true;
-    }
-
-    isDestroyed(): boolean {
-      return this.destroyed;
-    }
-  }
-
-  const icon = {
-    addRepresentation: () => {},
-    setTemplateImage: () => {},
-    toDataURL: () => 'data:image/png;base64,',
-  };
-
-  return {
-    app: {
-      whenReady: async () => desktop.ready,
-      on: (event: string, listener: () => void) => {
-        desktop.listeners.set(event, listener);
-      },
-      quit: () => {
-        desktop.quits += 1;
-      },
-    },
-    BrowserWindow: { getAllWindows: () => Array.from({ length: desktop.windowCount }) },
-    Menu: { buildFromTemplate: () => null },
-    nativeImage: { createFromPath: () => icon },
-    Tray: TrayFake,
-  };
-});
+vi.mock('electron', async () => (await import('./app-lifecycle.testkit')).electronFake());
 
 type Lifecycle = {
   start: () => Promise<void>;
@@ -116,16 +61,6 @@ function trayHandlers(): TrayMenuHandlers {
   };
 }
 
-function fire(event: string): void {
-  const listener = desktop.listeners.get(event);
-
-  if (listener === undefined) {
-    throw new Error(`the app registered no ${event} listener`);
-  }
-
-  listener();
-}
-
 function runOn(platform: NodeJS.Platform): void {
   Object.defineProperty(process, 'platform', { value: platform, configurable: true });
 }
@@ -134,12 +69,7 @@ let platformOfThisMachine: PropertyDescriptor | undefined;
 
 beforeEach(() => {
   platformOfThisMachine = Object.getOwnPropertyDescriptor(process, 'platform');
-  desktop.ready = new Promise<void>((resolve) => {
-    desktop.announceReady = resolve;
-  });
-  desktop.listeners.clear();
-  desktop.windowCount = 0;
-  desktop.quits = 0;
+  aFreshDesktop();
 });
 
 afterEach(() => {
