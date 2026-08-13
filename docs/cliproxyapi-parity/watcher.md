@@ -88,7 +88,7 @@ Every row is either **Covered** by concrete local behavior or **N/A** because th
 |  60 | `TestReloadClientsFiltersOAuthProvidersWithoutRescan`          | N/A     | N1.                                                                               |
 |  61 | `TestScheduleProcessEventsStopsOnContextDone`                  | Covered | C1 AbortSignal parity test.                                                       |
 
-## Synthesizer — 51 tests
+## Synthesizer — 53 tests
 
 |   # | Upstream test                                                    | Status  | Evidence                                                                                         |
 | --: | ---------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
@@ -208,7 +208,7 @@ Every row is either **Covered** by concrete local behavior or **N/A** because th
 
 ## Final result
 
-- Total upstream tests: **167**
+- Total upstream tests: **169**
 - Covered: **47**
 - N/A: **120**
 - Gap: **0**

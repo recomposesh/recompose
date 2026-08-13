@@ -10,7 +10,7 @@
 - Final status: **89 covered**, **11 justified N/A**, **13 gaps**.
 - Excluded: plugins, routers, and ledger work.
 
-N/A is limited to upstream compatibility-target modes and implementation-specific first-character/lookup-table prefilters that Recompose does not use. All provider signature validation, sanitation, replay, carrier, pairing, bounds, and observability behavior in scope is covered.
+Rows 1 to 97 are the upstream inventory as it stood at v7.2.121. Rows 98 to 113 are the Kimi and Grok rows that arrived at v7.2.131. Claude, Gemini, xAI, and Codex signature validation, sanitation, replay, carrier, pairing, bounds, and observability are covered, and N/A there is limited to upstream compatibility-target modes and implementation-specific prefilters Recompose does not use. Kimi and Grok are a different story: Recompose serves both and validates neither, which is where the 13 gaps sit.
 
 ## Evidence clusters
 

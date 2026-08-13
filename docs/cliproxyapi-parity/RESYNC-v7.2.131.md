@@ -11,8 +11,10 @@ header is the truth about that document rather than an oversight.
 
 ## Rows that left upstream
 
-The last two are renames rather than removals. Each gained a `Namespace` segment and now
-asserts the namespace on the restored custom tool call, so both arrive again in the new list.
+Four of the six are renames rather than removals, and each arrives again in the new list under
+its new name. The two `RestoresAdditionalCustomToolCall` rows gained a `Namespace` segment and
+now assert the namespace on the restored custom tool call. The two `StreamingTool_Mixed` rows
+traded `Suppressed` for `EmptyName`, which is the shape they always exercised.
 
 - `TestAntigravityRequestHasMatchingFunctionResponseWhitespaceCallID`
 - `TestConvertClaudeResponseToOpenAIResponses_RestoresAdditionalCustomToolCall`

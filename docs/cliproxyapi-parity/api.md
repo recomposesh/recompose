@@ -9,7 +9,7 @@ Scope: all 256 upstream `Test*` functions under `internal/api`, its management h
 - Upstream: `go test ./internal/api/...` passed.
 - Recompose final route implementation includes `/healthz` and Codex alpha search with direct parity tests.
 - Full Recompose contracts/engine/desktop unit suite passed.
-- Accounting: 199/199 upstream rows exactly once.
+- Accounting: 256/256 upstream rows exactly once.
 
 ## Rows 1–138: management handlers
 
