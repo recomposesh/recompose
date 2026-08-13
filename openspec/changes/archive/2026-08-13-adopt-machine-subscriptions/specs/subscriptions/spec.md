@@ -189,6 +189,13 @@ An account whose authorization lapsed MUST report that on its own row and MUST o
 
 The way back follows where the account came from. An account the app signed in MUST offer to sign in again. An account the app adopted MUST NOT offer that, because signing in reaches a different account than the one it adopted. It MUST name the person's own tool to open instead.
 
+#### Scenario: an account loses its authorization
+
+- Given a connected account whose authorization lapsed
+- When the subscriptions surface lists it
+- Then the row reports the lapse rather than reporting it as connected
+- And the row offers the way to restore the account
+
 #### Scenario: an account the app signed in loses its authorization
 
 - Given a connected account the app signed in whose authorization lapsed
