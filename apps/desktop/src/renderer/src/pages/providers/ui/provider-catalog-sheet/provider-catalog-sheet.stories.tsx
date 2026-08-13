@@ -19,9 +19,9 @@ export const Subscriptions = meta.story({
   play: async () => {
     await expect(await screen.findByRole('dialog', { name: 'Add provider' })).toBeVisible();
     await expect(await screen.findByRole('button', { name: /^Claude/ })).toBeVisible();
-    await expect(await screen.findByRole('button', { name: /Kimi Code/ })).not.toHaveAttribute(
-      'aria-disabled',
-    );
+    await expect(
+      await screen.findByRole('button', { name: /GLM Coding Plan/ }),
+    ).not.toHaveAttribute('aria-disabled');
     await expect(await screen.findByRole('button', { name: 'Cancel' })).toBeVisible();
   },
 });

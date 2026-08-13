@@ -12,12 +12,13 @@ grew when a feature grew with it.
 So the badge isn't a roadmap. It's a schema limit written as product copy, repeated
 twenty-two times.
 
-Nothing about the remaining providers is hard. Five aggregators speak Chat Completions
-against a documented origin. Six key providers do the same, and two of them already carry an
-origin, a dialect and a credential header in the engine without ever standing in a catalog.
-Three local runtimes answer on a documented port. Three coding plans speak the Anthropic
-dialect against a plan token. One subscription signs in through a tool recompose already
-runs. One signs in through a flow nothing on the machine owns.
+Nothing about twenty of them is hard. Five aggregators speak Chat Completions against a
+documented origin. Six key providers do the same, and two of them already carry an origin, a
+dialect and a credential header in the engine without ever standing in a catalog. Three local
+runtimes answer on a documented port. Three coding plans speak the Anthropic dialect against
+a plan token. Three escape hatches wait only on a field the row can't hold.
+
+The two that sign in are the exception, and they wait on a contract this change leaves alone.
 
 The badge outlived its reason. This change removes it.
 
@@ -40,15 +41,17 @@ llama.cpp answers `/props`, vLLM answers `/version`, and LM Studio answers a mod
 under a path only LM Studio serves. A runtime that publishes no version still reports that
 it answers, because a version it never had isn't a reason to call it absent.
 
-Two subscriptions sign in. Kimi Code costs a row in the provider table, because CLIProxyAPI
-owns its device flow and already ships the flag beside the one recompose runs for Gemini.
-GitHub Copilot costs a flow, because nothing on the machine owns it. That flow runs a device
-code, a poll, a GitHub token, and a short-lived Copilot token the app buys again near expiry.
-
-Three coding plans hand over a token instead. Qwen's sign-in ended in April 2026, and Z.ai
-and MiniMax never published one. Each keeps its place in the Subscriptions catalog, because
+Three coding plans hand over a token. Qwen's sign-in ended in April 2026, and Z.ai and
+MiniMax never published one. Each keeps its place in the Subscriptions catalog, because
 that's where a person who bought a plan looks. Each stores as a key, because a pasted token
 is what a key account already holds.
+
+Two rows wait, and they're the two that sign in. Kimi Code and GitHub Copilot both need
+`SubscriptionProviderId` to admit a fourth and a fifth member, and that enum reaches through
+the engine's whole subscription runtime. That runtime serves neither of them: Kimi
+already serves through the credentialed path, and Copilot would. Widening the enum to reach a sign-in
+would drag a transport neither one uses. Both therefore land in their own change, and neither
+stands under a Soon badge in the meantime, because a badge is what this change removes.
 
 ## Locked decisions
 
@@ -69,29 +72,25 @@ is what a key account already holds.
    version, so the reachability contract carries the version only when the runtime gives one.
 6. **A field hints a key shape only where the vendor documents an opening.** Three vendors do.
    The rest leave the field unhinted rather than teaching a shape nobody promised.
-7. **Kimi Code signs in through CLIProxyAPI.** Porting its device flow into recompose would
-   duplicate a flow the tool recompose already launches implements and tests.
-8. **GitHub Copilot's flow follows CC Switch.** The device code, the poll, the token trade
-   and the refresh margin come from a shipped implementation rather than from a reading of
-   the endpoints.
-9. **A coding plan stands in the Subscriptions catalog and stores as a key.** The catalog
+7. **The two plans that sign in wait for their own change.** Both need a wider
+   `SubscriptionProviderId`, and that enum reaches the engine's subscription runtime, which
+   serves neither of them. The research that placed both stands in `discovery/`.
+8. **A coding plan stands in the Subscriptions catalog and stores as a key.** The catalog
    column is where a person looks. The stored kind is what the credential is. Bending the
    subscription contract around a token that never renews would put a "this one has no tool"
    branch through sign-in launch, tool presence, config homes, custody and delegated renewal.
-10. **The probe speaks to every provider it has a credential header for.** The check act
-    stops being an Anthropic and OpenAI privilege, because the header and the models path
-    now stand in the table beside the origin.
+9. **The probe speaks to every provider it has a credential header for.** The check act
+   stops being an Anthropic and OpenAI privilege, because the header and the models path
+   now stand in the table beside the origin.
 
 ## Capabilities
 
 ### New capabilities
 
-- **Connecting every provider the catalog names.** Twenty-two rows that stood inert connect,
-  each against the endpoint its vendor documents.
+- **Connecting every provider the catalog names.** Twenty rows that stood inert connect, each
+  against the endpoint its vendor documents.
 - **An account pointed at an address a person chose.** A custom endpoint, a custom aggregator
   and a custom local server each carry the origin and dialect that person entered.
-- **Signing in to GitHub Copilot.** A device code, a poll, and a Copilot token refreshed
-  before it expires.
 
 ### Modified capabilities
 

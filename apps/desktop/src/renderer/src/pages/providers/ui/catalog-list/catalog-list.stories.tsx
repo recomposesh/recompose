@@ -28,9 +28,6 @@ export const Subscriptions = meta.story({
     await expect(await canvas.findByRole('button', { name: /^Claude/ })).not.toHaveAttribute(
       'aria-disabled',
     );
-    await expect(await canvas.findByRole('button', { name: /GitHub Copilot/ })).not.toHaveAttribute(
-      'aria-disabled',
-    );
     await expect(
       await canvas.findByRole('button', { name: /GLM Coding Plan/ }),
     ).not.toHaveAttribute('aria-disabled');

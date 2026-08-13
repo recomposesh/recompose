@@ -112,8 +112,6 @@ test('a way keeps the providers that connect by it and drops the rest', () => {
   expect(offeredUnder(catalogEntries, 'subscription').map((entry) => entry.id)).toEqual([
     'anthropic',
     'openai',
-    'copilot',
-    'kimi',
     'zhipu',
     'qwen-coding',
     'minimax',

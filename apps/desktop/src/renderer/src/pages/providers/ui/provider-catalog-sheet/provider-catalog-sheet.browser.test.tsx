@@ -109,7 +109,7 @@ test('every plan the subscriptions catalog holds connects', async () => {
 
   const screen = await renderCatalog('subscription');
 
-  for (const named of [/GitHub Copilot/, /Kimi Code/, /GLM Coding Plan/, /MiniMax Coding Plan/]) {
+  for (const named of [/^Claude/, /^Codex/, /GLM Coding Plan/, /MiniMax Coding Plan/]) {
     const entry = screen.getByRole('button', { name: named });
 
     await expect.element(entry).toBeVisible();
