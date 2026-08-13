@@ -5,6 +5,7 @@ coverage:
       default:
         target: 95%
         informational: false
+        if_not_found: success
 
 comment:
   layout: condensed_header, diff, files
