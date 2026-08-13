@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 919**
-- **Covered: 760**
+- **Total upstream tests: 924**
+- **Covered: 765**
 - **N/A: 159**
 - **Gap: 0**
-- **Exact identities mapped: 919/919**
+- **Exact identities mapped: 924/924**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **919** | **760** | **159** | **0** |
+| **Total**          | **924** | **765** | **159** | **0** |
 
 ## Exact row mapping
 
@@ -960,6 +960,11 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 917 | `TestAntigravityProxiedHTTP11TransportRejectsInvalidProxy`                                                                                                | transport        | Antigravity        | N/A     | Connection pooling belongs to `node-wreq`. Recompose builds options per call in `subscriptionTransportOptions`, which gives Antigravity `http1Only` and no default headers, and never holds a pool, a pool cache, or a per-identity pool scope of its own. There is nothing local to reuse, widen, evict, isolate, or key. A proxy arrives as the account policy URL and the transport library refuses an unusable one at connect time.                            |
 | 918 | `TestNewAntigravityHTTPClientKeepsForeignRoundTripper`                                                                                                    | transport        | Antigravity        | N/A     | Go round-tripper plumbing. Recompose passes an options object to `node-wreq` rather than composing an `http.RoundTripper`, so neither a foreign implementation nor a typed nil can reach it.                                                                                                                                                                                                                                                                       |
 | 919 | `TestNewAntigravityHTTPClientRejectsTypedNilContextTransport`                                                                                             | transport        | Antigravity        | N/A     | Go round-tripper plumbing. Recompose passes an options object to `node-wreq` rather than composing an `http.RoundTripper`, so neither a foreign implementation nor a typed nil can reach it.                                                                                                                                                                                                                                                                       |
+| 920 | `TestXAIStatusErr_BadCredentials403RemapsToUnauthorized`                                                                                                  | status           | xAI                | Covered | `withXaiRetryAfter` sends a 403 through `asUnauthorized`, which reads the body and rewrites the status to 401 only when `namesXaiBadCredentials` matches.                                                                                                                                                                                                                                                                                                          |
+| 921 | `TestXAIStatusErr_BadCredentialsByMessageOnly`                                                                                                            | status           | xAI                | Covered | `withXaiRetryAfter` sends a 403 through `asUnauthorized`, which reads the body and rewrites the status to 401 only when `namesXaiBadCredentials` matches. The match runs over the whole lowered body text against `BAD_CREDENTIAL_SIGNATURES`, which holds the `bad-credentials` code beside the `access token could not be validated` message, so either form is recognised wherever it sits in the payload.                                                      |
+| 922 | `TestXAIStatusErr_BadCredentialsNestedErrorCode`                                                                                                          | status           | xAI                | Covered | `withXaiRetryAfter` sends a 403 through `asUnauthorized`, which reads the body and rewrites the status to 401 only when `namesXaiBadCredentials` matches. The match runs over the whole lowered body text against `BAD_CREDENTIAL_SIGNATURES`, which holds the `bad-credentials` code beside the `access token could not be validated` message, so either form is recognised wherever it sits in the payload.                                                      |
+| 923 | `TestXAIStatusErr_EmptyBodyForbiddenUnchanged`                                                                                                            | status           | xAI                | Covered | No signature matches, so `asUnauthorized` returns the original response and the 403 stands. An empty body matches nothing.                                                                                                                                                                                                                                                                                                                                         |
+| 924 | `TestXAIStatusErr_Generic403Unchanged`                                                                                                                    | status           | xAI                | Covered | No signature matches, so `asUnauthorized` returns the original response and the 403 stands.                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## N/A boundary
 
