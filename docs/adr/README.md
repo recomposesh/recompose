@@ -99,3 +99,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0091](0091-the-explorer-conforms-to-its-drawings.md)                           | The Explorer Conforms to Its Drawings                                               | Accepted   | 2026-08-13 |
 | [0092](0092-the-axis-stands-for-the-window.md)                                  | The Axis Stands for the Window, and a Quiet Window Says So                          | Accepted   | 2026-08-13 |
 | [0093](0093-the-browser-suite-collects-between-files.md)                        | The Browser Suite Collects Between Files                                            | Accepted   | 2026-08-13 |
+| [0095](0095-the-pipeline-reads-what-the-diff-touched.md)                        | The Pipeline Reads What the Diff Touched                                            | Accepted   | 2026-08-13 |
