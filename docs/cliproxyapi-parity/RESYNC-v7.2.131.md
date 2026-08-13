@@ -23,19 +23,17 @@ asserts the namespace on the restored custom tool call, so both arrive again in 
 
 ## New rows by family
 
-The last column reads `yes` once every row of that family carries a verdict, a count while a
-family is part way through, and `no` before it starts. A count names the rows that landed, and
-the owning document names which ones stayed open and why.
+Every family now reads `yes`: all 264 rows carry a verdict in the document that owns them.
 
 | Family                                              | Rows | Document                                                      | Reconciled |
 | --------------------------------------------------- | ---: | ------------------------------------------------------------- | ---------- |
-| `internal/runtime/executor`                         |   87 | `runtime-executor.md` and the per-provider executor documents | no         |
-| `sdk/api/handlers/openai`                           |   40 | `api.md`                                                      | 5 of 40    |
+| `internal/runtime/executor`                         |   87 | `runtime-executor.md` and the per-provider executor documents | yes        |
+| `sdk/api/handlers/openai`                           |   40 | `api.md`                                                      | yes        |
 | `internal/runtime/executor/helps`                   |   29 | `runtime-executor.md`                                         | yes        |
-| `internal/translator/openai/openai/responses`       |   16 | `translator-openai.md`                                        | 8 of 16    |
+| `internal/translator/openai/openai/responses`       |   16 | `translator-openai.md`                                        | yes        |
 | `internal/signature`                                |   16 | `signature.md`                                                | yes        |
 | `internal/client/codex/live`                        |   16 | `client.md`                                                   | yes        |
-| `sdk/api/handlers`                                  |   10 | `api.md`                                                      | no         |
+| `sdk/api/handlers`                                  |   10 | `api.md`                                                      | yes        |
 | `internal/translator/openai/claude`                 |    8 | `translator-openai.md`                                        | yes        |
 | `sdk/cliproxy/auth`                                 |    5 | `auth.md`                                                     | yes        |
 | `internal/util`                                     |    5 | `util.md`                                                     | yes        |
@@ -50,7 +48,7 @@ the owning document names which ones stayed open and why.
 | `internal/translator/openai/gemini`                 |    1 | `translator-openai.md`                                        | yes        |
 | `internal/translator/gemini/gemini`                 |    1 | `translator-gemini.md`                                        | yes        |
 | `internal/translator/common`                        |    1 | `translator-common.md`                                        | yes        |
-| `internal/translator/codex/openai/chat-completions` |    1 | the matching `translator-*.md`                                | no         |
+| `internal/translator/codex/openai/chat-completions` |    1 | `translator-codex.md`                                         | yes        |
 | `internal/translator/codex/gemini`                  |    1 | `translator-codex.md`                                         | yes        |
 | `internal/translator/claude/gemini`                 |    1 | `translator-claude.md`                                        | yes        |
 | `internal/translator/antigravity/gemini`            |    1 | `translator-antigravity.md`                                   | yes        |

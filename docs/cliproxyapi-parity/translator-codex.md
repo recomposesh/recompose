@@ -2,7 +2,7 @@
 
 # Codex translator durable-ready completion
 
-Scope: the 41 upstream codex translator rows not already present in durable repository tables. Existing durable rows are intentionally omitted to prevent duplication.
+Scope: the 43 upstream codex translator rows not already present in durable repository tables. Existing durable rows are intentionally omitted to prevent duplication.
 
 - Covered: 38
 - N/A: 3
@@ -52,5 +52,6 @@ Scope: the 41 upstream codex translator rows not already present in durable repo
 |  40 | `codex/openai/responses/codex_openai-responses_response_test.go` | `TestConvertCodexResponseToOpenAIResponses_CreatedIncludesOriginalRequestModel`       | Covered | Covered by `codex Responses request/response parity suites`; complete local dialect suite passes.                                                                                                                                                                                                                                                                                                                                                        |
 |  41 | `codex/openai/responses/codex_openai-responses_response_test.go` | `TestConvertCodexResponseToOpenAIResponsesNonStreamIncomplete`                        | Covered | Covered by `codex Responses request/response parity suites`; complete local dialect suite passes.                                                                                                                                                                                                                                                                                                                                                        |
 |  42 | `codex/gemini/codex_gemini_request_test.go`                      | `TestConvertGeminiRequestToCodex_DropsHiddenThoughtParts`                             | Covered | Recompose drops the block on every one of these targets rather than carrying it. A Gemini `thoughtSignature` is not native to any of them, so the Claude path drops the thinking block in `sanitizeClaudeSignatures` and drops a message left empty, the chat path drops it in `dropChatBlock` and returns no assistant message without a payload, and the Responses path drops it in `encodeThinkingInto` unless the signature is Codex or Grok native. |
+|  43 | `codex/openai/chat-completions/codex_openai_response_test.go`    | `TestConvertCodexResponseToOpenAI_ToolCallStateFallsBackFromUnknownItemID`            | Covered | Recompose never keys tool state on the item id, so an unknown one cannot strand it. `chatToolIds` builds its map from `call_id` alone, and the streaming decoder resolves a pending tool by chunk index, then by id, then by the latest open one. The name therefore assembles across the added and done chunks and the done chunk repeats no identity.                                                                                                  |
 
 Verification: upstream translator suite 767/767 passed; local dialect suite 958/958 passed.

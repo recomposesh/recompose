@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 984**
+- **Total upstream tests: 985**
 - **Covered: 790**
 - **N/A: 192**
-- **Gap: 2**
-- **Exact identities mapped: 984/984**
+- **Gap: 3**
+- **Exact identities mapped: 985/985**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **984** | **790** | **192** | **2** |
+| **Total**          | **985** | **790** | **192** | **3** |
 
 ## Exact row mapping
 
@@ -1025,6 +1025,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 982 | `TestCodexAutoExecutorHTTPFallbackForwardsSequentialCutoffReasoningSummaryDelivery`                                                                       | websocket          | Codex              | N/A     | There is no auto executor that opens a websocket and falls back to HTTP. Codex serving goes through the HTTP completion stream, so no fallback exists for a reasoning summary to survive across.                                                                                                                                                                                                                                                                                                                                                                                         |
 | 983 | `TestKimiExecutorRequestToFormatMatchesWireProtocol`                                                                                                      | wire               | Kimi               | Covered | `credentialed-target.ts` picks the wire from the source: an anthropic crossing keeps the anthropic dialect and posts to `/v1/messages?beta=true`, anything else goes out as chat completions. `kimiProviderBody` then splits the requested model into its base and effort suffix and encodes the effort in whichever shape that wire takes, `withClaudeEffort` or `withChatEffort`.                                                                                                                                                                                                      |
 | 984 | `TestKimiExecutorPreservesAssistantContentAndToolCallsFromResponsesHistory`                                                                               | wire               | Kimi               | Covered | `normalizeKimiToolHistory` runs on the chat wire alone, and `normalizedAssistant` returns a message untouched when it carries no tool-call ids. Where it does act it spreads the original and adds `reasoning_content` alone, so assistant content and `tool_calls` both survive.                                                                                                                                                                                                                                                                                                        |
+| 985 | `TestNormalizeClaudeSamplingForUpstreamNativeDropsOnlyRejectedCombinations`                                                                               | sampling           | Claude             | Gap     | Upstream keeps every knob the native wire accepts and drops only the rejected pairing: with thinking off it holds `temperature` and `top_k`, drops `top_p` only when `temperature` stands beside it, and keeps a lone `top_p`. `normalizedClaudeBody` destructures `temperature` and `top_p` out of every body unconditionally, so a caller loses a temperature Anthropic would have taken and loses a lone `top_p` as well.                                                                                                                                                             |
 
 ## N/A boundary
 
