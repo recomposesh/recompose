@@ -71,6 +71,12 @@ const glyphOf = { network: { glyph: 'network' }, monitor: { glyph: 'monitor' } }
 
 const subscriptionEntries: readonly CatalogEntry[] = [
   {
+    id: 'copilot',
+    name: 'GitHub Copilot',
+    lead: { mark: 'githubCopilot' },
+    offers: [signsIn('GitHub Copilot', 'Sign in with your GitHub account')],
+  },
+  {
     id: 'kimi',
     name: 'Kimi',
     lead: { mark: 'kimi' },

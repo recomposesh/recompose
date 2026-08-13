@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
-import { ipcChannels, ipcErrorSchema } from './ipc';
+import { ipcChannels } from './ipc';
+import { ipcErrorSchema } from './ipc-result';
 
 describe('the channels that read and adopt what the machine holds', () => {
   test('both name the provider whose store the app looks at, and carry no secret', () => {

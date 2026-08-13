@@ -9,6 +9,7 @@ import {
 import { ConnectKeyForm } from '../connect-key-form/connect-key-form';
 import { ConnectOwnEndpoint } from '../connect-own-endpoint/connect-own-endpoint';
 import { ConnectOwnServer } from '../connect-own-server/connect-own-server';
+import { CopilotSignIn } from '../copilot-sign-in/copilot-sign-in';
 import { DetectRuntimeStep } from '../detect-runtime-step/detect-runtime-step';
 import { SignInWay } from '../sign-in-way/sign-in-way';
 
@@ -24,7 +25,13 @@ type ProviderConnectWayProps = {
 function signInArm(entry: CatalogEntry, onConnected: () => void) {
   const provider = signInProviderOf(entry);
 
-  return provider === undefined ? null : (
+  if (provider === undefined) {
+    return null;
+  }
+
+  return provider === 'copilot' ? (
+    <CopilotSignIn entry={entry} onConnected={onConnected} />
+  ) : (
     <SignInWay name={entry.name} onConnected={onConnected} provider={provider} />
   );
 }

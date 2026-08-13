@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import { ACCOUNTS_VERSION } from './accounts';
-import { ipcChannels, ipcErrorSchema } from './ipc';
+import { ipcChannels } from './ipc';
+import { ipcErrorSchema } from './ipc-result';
 
 const connect = ipcChannels['accounts:connect'].request;
 

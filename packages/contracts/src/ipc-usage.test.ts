@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
-import { ipcChannels, ipcErrorSchema, ipcEvents } from './ipc';
+import { ipcChannels, ipcEvents } from './ipc';
+import { ipcErrorSchema } from './ipc-result';
 
 describe('what the usage channels ask for', () => {
   test('a report read names its range', () => {

@@ -34,6 +34,38 @@ const refuses = async (): Promise<never> => Promise.reject(new Error('not under 
  * declared here once rather than in each of them, and a spec that forgot it cannot pass by
  * accident.
  */
+type SubscriptionChannels = Pick<
+  IpcHandlers,
+  | 'subscriptions:list'
+  | 'subscriptions:tools'
+  | 'subscriptions:sign-in'
+  | 'subscriptions:copilot-code'
+  | 'subscriptions:copilot-await'
+  | 'subscriptions:restore'
+  | 'subscriptions:activate'
+  | 'subscriptions:detect'
+>;
+
+function succeedingSubscriptions(): SubscriptionChannels {
+  const nothingHeld = async () => Promise.resolve({ ok: true as const, value: [] });
+
+  return {
+    'subscriptions:list': nothingHeld,
+    'subscriptions:tools': nothingHeld,
+    'subscriptions:sign-in': nothingHeld,
+    'subscriptions:copilot-code': async () =>
+      Promise.resolve({
+        ok: true as const,
+        value: { userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device' },
+      }),
+    'subscriptions:copilot-await': nothingHeld,
+    'subscriptions:restore': nothingHeld,
+    'subscriptions:activate': nothingHeld,
+    'subscriptions:detect': async () =>
+      Promise.resolve({ ok: true as const, value: { holds: 'nothing' as const } }),
+  };
+}
+
 export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
   return {
     'gateways:list': refuses,
@@ -69,6 +101,8 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'subscriptions:list': refuses,
     'subscriptions:tools': refuses,
     'subscriptions:sign-in': refuses,
+    'subscriptions:copilot-code': refuses,
+    'subscriptions:copilot-await': refuses,
     'subscriptions:restore': refuses,
     'subscriptions:activate': refuses,
     'subscriptions:detect': refuses,
@@ -119,13 +153,7 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
     'usage:quota-windows': noGateways,
     'usage:balances': noGateways,
     'system:usage-table': nothing,
-    'subscriptions:list': noGateways,
-    'subscriptions:tools': noGateways,
-    'subscriptions:sign-in': noGateways,
-    'subscriptions:restore': noGateways,
-    'subscriptions:activate': noGateways,
-    'subscriptions:detect': async () =>
-      Promise.resolve({ ok: true as const, value: { holds: 'nothing' as const } }),
+    ...succeedingSubscriptions(),
     'subscriptions:adopt': noGateways,
   };
 }

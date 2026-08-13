@@ -20,6 +20,7 @@ import { loginShellPath } from './login-shell-path';
 import { securityKeychain } from './macos-keychain';
 import { runCommand } from './run-command';
 import { terminalSignInLaunch } from './sign-in-launch';
+import { subscriptionCredentialStore } from './subscription-credential-store';
 import { subscriptionHomes } from './subscription-homes';
 import { wallClock } from './subscription-sign-in';
 import { reportTools } from './tool-presence';
@@ -89,6 +90,12 @@ async function toolSearchPath(): Promise<string> {
   });
 }
 
+async function sleepFor(ms: number): Promise<void> {
+  return new Promise((settle) => {
+    setTimeout(settle, ms);
+  });
+}
+
 function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcContext {
   return {
     userDataPath: wiring.userDataPath,
@@ -98,6 +105,12 @@ function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcCont
     searchPath: toolSearchPath,
     launch: terminalSignInLaunch(process.platform, substituteFor('RECOMPOSE_SIGN_IN_LAUNCHER')),
     clock: wallClock,
+    copilot: { fetchLike: fetch, sleep: sleepFor, nowMs: () => Date.now() },
+    writeSubscriptionCredential: subscriptionCredentialStore(
+      wiring.userDataPath,
+      process.platform,
+      wiring.custody,
+    ).write,
     signInBoundMs: SIGN_IN_BOUND_MS,
     signInEveryMs: SIGN_IN_EVERY_MS,
     onCorrupt: wiring.onCorrupt,

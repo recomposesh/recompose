@@ -11,6 +11,15 @@ import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 
 const tokenMaterial = 'sk-ant-oat01-verysecret-subscription-token';
 
+const quietCopilot = {
+  copilot: {
+    fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
+    sleep: async () => Promise.resolve(),
+    nowMs: () => 0,
+  },
+  writeSubscriptionCredential: async () => Promise.resolve(),
+};
+
 async function aSignedInSubscription(): Promise<SubscriptionsIpcContext> {
   const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-subs-hygiene-'));
   const homes = subscriptionHomes(userDataPath, process.platform);
@@ -53,6 +62,7 @@ async function aSignedInSubscription(): Promise<SubscriptionsIpcContext> {
     searchPath: async () => Promise.resolve(''),
     launch: async () => Promise.resolve(),
     clock: () => ({ elapsed: () => 0, sleep: async () => Promise.resolve() }),
+    ...quietCopilot,
     signInBoundMs: 0,
     signInEveryMs: 0,
     onCorrupt: () => undefined,

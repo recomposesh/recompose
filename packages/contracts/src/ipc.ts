@@ -11,6 +11,8 @@ import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
 import { gatewayConfigSchema, gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
+import { ipcResult } from './ipc-result';
+import { subscriptionChannels } from './ipc-subscriptions';
 import {
   localProviderIdSchema,
   runtimePortSchema,
@@ -19,46 +21,11 @@ import {
 import { nonBlankString } from './non-blank';
 import { settingsPatchSchema, settingsSchema } from './settings';
 import {
-  machineCredentialReadingSchema,
-  subscriptionAccountViewSchema,
-  subscriptionProviderIdSchema,
-  subscriptionToolSchema,
-} from './subscriptions';
-import {
   accountBalanceSchema,
   quotaWindowSchema,
   usageReportAskSchema,
   usageReportSchema,
 } from './usage';
-
-export const ipcErrorSchema = z.strictObject({
-  code: z.enum([
-    'vault-unavailable',
-    'vault-newer-schema',
-    'settings-newer-schema',
-    'accounts-newer-schema',
-    'usage-newer-schema',
-    'validation-failed',
-    'storage-failed',
-    'folder-open-failed',
-    'name-conflict',
-    'port-conflict',
-    'tool-missing',
-    'sign-in-timed-out',
-    'keychain-denied',
-    'nothing-to-adopt',
-  ]),
-  message: z.string().min(1),
-});
-
-export type IpcError = z.infer<typeof ipcErrorSchema>;
-
-export function ipcResult<Value extends z.ZodType>(value: Value) {
-  return z.union([
-    z.strictObject({ ok: z.literal(true), value }),
-    z.strictObject({ ok: z.literal(false), error: ipcErrorSchema }),
-  ]);
-}
 
 export const connectAccountRequestSchema = z.strictObject({
   provider: nonBlankString,
@@ -78,8 +45,6 @@ export const connectAccountRequestSchema = z.strictObject({
 function namesItsOwnPort(asked: { runtime: string; port?: number | undefined }): boolean {
   return asked.runtime !== 'custom' || asked.port !== undefined;
 }
-
-const subscriptionViewsResponse = ipcResult(z.array(subscriptionAccountViewSchema));
 
 export const systemStateSchema = z.strictObject({
   fileBrowser: z.enum(['finder', 'explorer', 'file-manager']),
@@ -210,44 +175,7 @@ export const ipcChannels = {
     request: z.strictObject({ open: z.boolean() }),
     response: ipcResult(z.void()),
   },
-  'subscriptions:list': { request: z.void(), response: subscriptionViewsResponse },
-  'subscriptions:tools': {
-    request: z.void(),
-    response: ipcResult(z.array(subscriptionToolSchema)),
-  },
-  'subscriptions:sign-in': {
-    request: z.strictObject({ provider: subscriptionProviderIdSchema }),
-    response: subscriptionViewsResponse,
-  },
-  'subscriptions:restore': {
-    request: z.strictObject({ id: nonBlankString }),
-    response: subscriptionViewsResponse,
-  },
-  'subscriptions:activate': {
-    request: z.strictObject({ id: nonBlankString }),
-    response: subscriptionViewsResponse,
-  },
-  /**
-   * Asks main what the provider's own tool already left on this machine.
-   *
-   * @summary The answer names the account and how its credential stands, and carries none of the
-   * material, because reading the material can ask the operating system for permission and a prompt
-   * belongs to something a person did. A person's pick causes this read; a mount never does.
-   */
-  'subscriptions:detect': {
-    request: z.strictObject({ provider: subscriptionProviderIdSchema }),
-    response: ipcResult(machineCredentialReadingSchema),
-  },
-  /**
-   * Records the account the machine already holds, with no sign-in.
-   *
-   * @summary Main re-reads the material under this act and refuses `nothing-to-adopt` when the
-   * credential left the store between the look and the click.
-   */
-  'subscriptions:adopt': {
-    request: z.strictObject({ provider: subscriptionProviderIdSchema }),
-    response: subscriptionViewsResponse,
-  },
+  ...subscriptionChannels,
 } as const;
 
 export type IpcChannel = keyof typeof ipcChannels;

@@ -16,5 +16,7 @@ export * from './engine-protocol';
 export * from './subscriptions';
 export * from './accounts';
 export * from './settings';
+export * from './ipc-result';
+export * from './ipc-subscriptions';
 export * from './ipc';
 export * from './plugin-store';

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import { GATEWAY_CONFIG_VERSION } from './gateway-config';
-import { ipcChannels, ipcErrorSchema, systemStateSchema, type IpcChannel } from './ipc';
+import { ipcChannels, systemStateSchema, type IpcChannel } from './ipc';
+import { ipcErrorSchema } from './ipc-result';
 
 const channelNames: IpcChannel[] = [
   'gateways:list',

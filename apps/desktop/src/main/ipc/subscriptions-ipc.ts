@@ -1,9 +1,4 @@
-import type {
-  AccountsDocument,
-  IpcRequest,
-  SubscriptionAccount,
-  SubscriptionProviderId,
-} from '@recompose/contracts';
+import type { IpcRequest, SubscriptionAccount, SubscriptionProviderId } from '@recompose/contracts';
 
 import { subscriptionPlanNames, toolBacked, type ToolBackedProviderId } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
@@ -21,12 +16,13 @@ import { awaitSignIn } from '../subscriptions/subscription-sign-in';
 import { observeSubscription } from '../subscriptions/subscription-standing';
 import { heldUnderTheAddress, isSubscription } from '../subscriptions/subscription-views';
 import { reportTools } from '../subscriptions/tool-presence';
+import { copilotHandlers } from './copilot-ipc';
 import { storagePathsFor } from './storage-context';
 import { ipcFailure, storageFailure } from './storage-envelope';
 import {
   settleUnder,
   readAccounts,
-  recordTheAccount,
+  keepTheAccount,
   refusalFailure,
   toolPresent,
   viewsOf,
@@ -39,6 +35,8 @@ export type SubscriptionsIpcHandlers = Pick<
   | 'subscriptions:list'
   | 'subscriptions:tools'
   | 'subscriptions:sign-in'
+  | 'subscriptions:copilot-code'
+  | 'subscriptions:copilot-await'
   | 'subscriptions:restore'
   | 'subscriptions:activate'
 >;
@@ -110,14 +108,6 @@ async function reclaimAnOldToolsWrite(what: Reclaim): Promise<ToolRun> {
   const observed = await what.observe();
 
   return { landed: observed.standing === 'connected' ? observed : null, reclaimed };
-}
-
-async function keepTheAccount(shop: Workshop, row: SubscriptionAccount): Promise<AccountsDocument> {
-  const updated = await recordTheAccount(shop, row);
-
-  await shop.homes.pointActiveAt(row.provider, row.id);
-
-  return updated;
 }
 
 async function afterTheToolAnswers(
@@ -273,6 +263,8 @@ export function createSubscriptionsIpcHandlers(
 
     'subscriptions:sign-in': async (request: IpcRequest<'subscriptions:sign-in'>) =>
       inTurn(guarded(async () => signIn(shop, request.provider, null))),
+
+    ...copilotHandlers(shop, inTurn, guarded),
 
     'subscriptions:restore': async (request: IpcRequest<'subscriptions:restore'>) =>
       inTurn(guarded(async () => restore(shop, request.id))),
