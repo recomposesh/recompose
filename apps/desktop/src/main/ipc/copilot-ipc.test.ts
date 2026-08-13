@@ -149,3 +149,41 @@ describe('the sign-in a person finishes', () => {
     expect(held.ok && held.value).toEqual([]);
   });
 });
+
+describe('a network that never answered at all', () => {
+  test('an ask that threw crosses as a typed refusal rather than a throw', async () => {
+    const world = await aFreshWorld();
+    const context = world.contextOn('linux', world.nothingHappens);
+    const handlers = createSubscriptionsIpcHandlers({
+      ...context,
+      copilot: {
+        nowMs: () => 0,
+        sleep: async () => Promise.resolve(),
+        fetchLike: async () => Promise.reject(new Error('the network is down')),
+      },
+    });
+
+    const answered = await handlers['subscriptions:copilot-code']();
+
+    expect(answered.ok).toBe(false);
+  });
+
+  test('a wait that threw records no account', async () => {
+    const world = await aFreshWorld();
+    const context = world.contextOn('linux', world.nothingHappens);
+    const handlers = createSubscriptionsIpcHandlers({
+      ...context,
+      copilot: {
+        nowMs: () => 0,
+        sleep: async () => Promise.resolve(),
+        fetchLike: async () => Promise.reject(new Error('the network is down')),
+      },
+    });
+
+    await handlers['subscriptions:copilot-await']();
+
+    const held = await handlers['subscriptions:list']();
+
+    expect(held.ok && held.value).toEqual([]);
+  });
+});
