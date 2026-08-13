@@ -41,9 +41,23 @@ Given(
   },
 );
 
+/**
+ * @summary Only macOS keeps a vendor credential outside the config home, so a machine without one
+ * has no second store for these scenarios to stand a record in. Every other machine reads the file,
+ * which the scenarios beside these already cover.
+ */
+function onlyWhereACredentialStoreStands(): void {
+  test.skip(
+    process.platform !== 'darwin',
+    'this machine keeps vendor credentials in files, so it holds no credential store to open',
+  );
+}
+
 Given(
   'the operating system refuses to open the credential store',
   async ({ page, subscriptionTools }) => {
+    onlyWhereACredentialStoreStands();
+
     await theMachineHoldsFor(page, subscriptionTools, { provider: 'anthropic' });
     await subscriptionTools.keychainRefusesToOpen();
   },
@@ -82,18 +96,6 @@ Given('the credential it left has since lapsed', async ({ page, subscriptionTool
     expiresAt: spentExpiry(),
   });
 });
-
-/**
- * @summary Only macOS keeps a vendor credential outside the config home, so a machine without one
- * has no second store for these scenarios to stand a record in. Every other machine reads the file,
- * which the scenarios beside these already cover.
- */
-function onlyWhereACredentialStoreStands(): void {
-  test.skip(
-    process.platform !== 'darwin',
-    'this machine keeps vendor credentials in files, so it holds no credential store to open',
-  );
-}
 
 Given(
   'the machine holds the {string} account in two stores that disagree',

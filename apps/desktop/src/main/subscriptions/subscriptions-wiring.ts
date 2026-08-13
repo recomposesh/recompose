@@ -25,7 +25,7 @@ import { runCommand } from './run-command';
 import { terminalSignInLaunch } from './sign-in-launch';
 import { subscriptionHomes } from './subscription-homes';
 import { wallClock } from './subscription-sign-in';
-import { reportTools } from './tool-presence';
+import { toolFileFor } from './tool-presence';
 import { codexVendorItem } from './vendor-item';
 
 const SIGN_IN_BOUND_MS = 5 * 60 * 1000;
@@ -171,23 +171,14 @@ const RENEWAL_BOUND_MS = 60_000;
  * store. A run that renews nothing leaves the credential exactly as it stands.
  */
 export function adoptedCredentialFor(
-  userDataPath: string,
   homeFolder: string,
   custody: CredentialCustody | null,
 ): (provider: SubscriptionProviderId) => Promise<string | null> {
   return adoptedCredentialReader({
     reach: machineReachFor(homeFolder, custody),
-    toolPresent: async (provider) => {
-      const found = await reportTools({
-        homes: subscriptionHomes(userDataPath, process.platform),
-        searchPath: await toolSearchPath(),
-        platform: process.platform,
-      });
-
-      return found.find((tool) => tool.provider === provider)?.present === true;
-    },
-    runTool: async (binary, args) => {
-      await runCommand(binary, [...args], RENEWAL_BOUND_MS);
+    toolFile: async (provider) => toolFileFor(provider, await toolSearchPath(), process.platform),
+    runTool: async (toolFile, args) => {
+      await runCommand(toolFile, [...args], RENEWAL_BOUND_MS);
     },
     now: Date.now,
   });

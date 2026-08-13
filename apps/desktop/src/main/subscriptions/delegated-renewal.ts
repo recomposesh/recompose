@@ -7,10 +7,11 @@ import type { OneAtATime } from '../storage/one-at-a-time';
 import { oneAtATime } from '../storage/one-at-a-time';
 
 export type RenewalRun = {
-  present: () => Promise<boolean>;
+  /** The file the tool runs from, or nothing where this machine carries none. */
+  toolFile: () => Promise<string | null>;
   /** Re-reads the live store, because the owning tool may have rotated it since the ask. */
   stale: () => Promise<boolean>;
-  renew: (binary: string, args: readonly string[]) => Promise<void>;
+  renew: (toolFile: string, args: readonly string[]) => Promise<void>;
 };
 
 export type DelegatedRenewalOutcome =
@@ -49,7 +50,7 @@ export async function delegatedRenewal(
   provider: SubscriptionProviderId,
   run: RenewalRun,
 ): Promise<DelegatedRenewalOutcome> {
-  const { toolBinary, renewArguments } = subscriptionProviders[provider];
+  const { renewArguments } = subscriptionProviders[provider];
 
   if (renewArguments.length === 0) {
     return { verdict: 'no-headless-run' };
@@ -60,12 +61,14 @@ export async function delegatedRenewal(
       return { verdict: 'renewed' };
     }
 
-    if (!(await run.present())) {
+    const toolFile = await run.toolFile();
+
+    if (toolFile === null) {
       return { verdict: 'tool-missing' };
     }
 
     return run
-      .renew(toolBinary, renewArguments)
+      .renew(toolFile, renewArguments)
       .then<DelegatedRenewalOutcome>(() => ({ verdict: 'renewed' }))
       .catch((cause: unknown) => ({
         verdict: 'run-failed',

@@ -6,7 +6,7 @@ import { delimiter, join } from 'node:path';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { subscriptionHomes, type SubscriptionHomes } from './subscription-homes';
-import { reportTools } from './tool-presence';
+import { reportTools, toolFileFor } from './tool-presence';
 
 let userDataPath: string;
 let binFolder: string;
@@ -35,6 +35,28 @@ beforeEach(async () => {
   userDataPath = await mkdtemp(join(tmpdir(), 'recompose-tools-'));
   binFolder = await mkdtemp(join(tmpdir(), 'recompose-bin-'));
   homes = subscriptionHomes(userDataPath, 'darwin');
+});
+
+describe('finding the file a provider tool is actually run from', () => {
+  test('given a tool on the search path, the whole path back is what a caller spawns', async () => {
+    await installed('claude');
+
+    await expect(
+      toolFileFor('anthropic', [binFolder, '/nowhere'].join(delimiter), 'darwin'),
+    ).resolves.toBe(join(binFolder, 'claude'));
+  });
+
+  test('given a Windows machine, the name found carries the extension that makes it run', async () => {
+    await installed('claude.cmd');
+
+    await expect(toolFileFor('anthropic', binFolder, 'win32')).resolves.toBe(
+      join(binFolder, 'claude.cmd'),
+    );
+  });
+
+  test('given no tool anywhere, nothing comes back rather than a name that spawns nothing', async () => {
+    await expect(toolFileFor('anthropic', binFolder, 'darwin')).resolves.toBeNull();
+  });
 });
 
 describe('reporting which provider tools this machine can run', () => {

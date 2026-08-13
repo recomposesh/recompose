@@ -132,7 +132,7 @@ function storageReach(custody: CredentialCustody | null = null): SpendGrantConte
     onCorrupt: onStorageCorrupt,
     readSubscriptionCredential: subscriptionCredentialStore(userDataPath, process.platform, custody)
       .read,
-    readAdoptedCredential: adoptedCredentialFor(userDataPath, app.getPath('home'), custody),
+    readAdoptedCredential: adoptedCredentialFor(app.getPath('home'), custody),
   };
 }
 

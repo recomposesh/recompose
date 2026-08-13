@@ -10,7 +10,7 @@ function aTool(over: Partial<RenewalRun> = {}) {
   return {
     runs,
     run: {
-      present: async () => Promise.resolve(true),
+      toolFile: async () => Promise.resolve('/usr/local/bin/claude'),
       stale: async () => Promise.resolve(runs.length === 0),
       renew: async (binary: string, args: readonly string[]) => {
         runs.push([binary, ...args].join(' '));
@@ -27,7 +27,7 @@ describe('renewing a credential the provider tool owns', () => {
     const { run, runs } = aTool();
 
     await expect(delegatedRenewal('anthropic', run)).resolves.toEqual({ verdict: 'renewed' });
-    expect(runs).toEqual(['claude auth status']);
+    expect(runs).toEqual(['/usr/local/bin/claude auth status']);
   });
 
   test('given two asks at once, the tool runs once and both hear the same answer', async () => {
@@ -45,7 +45,7 @@ describe('renewing a credential the provider tool owns', () => {
 
     await delegatedRenewal('anthropic', run);
 
-    expect(runs).toEqual(['claude auth status']);
+    expect(runs).toEqual(['/usr/local/bin/claude auth status']);
   });
 
   test('given the store already freshened, the tool is never run again', async () => {
@@ -58,7 +58,7 @@ describe('renewing a credential the provider tool owns', () => {
 
 describe('a renewal that cannot happen', () => {
   test('given the tool is gone, the run reports it rather than pretending', async () => {
-    const { run, runs } = aTool({ present: async () => Promise.resolve(false) });
+    const { run, runs } = aTool({ toolFile: async () => Promise.resolve(null) });
 
     await expect(delegatedRenewal('anthropic', run)).resolves.toEqual({ verdict: 'tool-missing' });
     expect(runs).toEqual([]);
@@ -77,7 +77,7 @@ describe('a renewal that cannot happen', () => {
   test('given a run that fails, a later ask still tries again rather than staying poisoned', async () => {
     let attempts = 0;
     const run: RenewalRun = {
-      present: async () => Promise.resolve(true),
+      toolFile: async () => Promise.resolve('/usr/local/bin/claude'),
       stale: async () => Promise.resolve(true),
       renew: async () => {
         attempts += 1;

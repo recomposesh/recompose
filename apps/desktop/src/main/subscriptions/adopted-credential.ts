@@ -10,8 +10,8 @@ import { machineStoreFor } from './machine-store';
 
 export type AdoptedCredentialDeps = {
   reach: MachineReach;
-  toolPresent: (provider: SubscriptionProviderId) => Promise<boolean>;
-  runTool: (binary: string, args: readonly string[]) => Promise<void>;
+  toolFile: (provider: SubscriptionProviderId) => Promise<string | null>;
+  runTool: (toolFile: string, args: readonly string[]) => Promise<void>;
   now: () => number;
 };
 
@@ -60,7 +60,7 @@ export function adoptedCredentialReader(
     }
 
     const run: RenewalRun = {
-      present: async () => deps.toolPresent(provider),
+      toolFile: async () => deps.toolFile(provider),
       stale: async () => nearsExpiry(provider, await blobFor(provider, deps), deps.now),
       renew: deps.runTool,
     };

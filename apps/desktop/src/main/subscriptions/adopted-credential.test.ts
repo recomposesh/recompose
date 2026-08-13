@@ -24,7 +24,7 @@ function aReader(over: Partial<AdoptedCredentialDeps> = {}) {
   const runs: string[] = [];
   const deps: AdoptedCredentialDeps = {
     reach: { homeFolder, platform: 'linux', custody: null, keyringHolds: null },
-    toolPresent: async () => Promise.resolve(true),
+    toolFile: async () => Promise.resolve('/usr/local/bin/claude'),
     runTool: async (binary, args) => {
       runs.push([binary, ...args].join(' '));
 
@@ -77,7 +77,7 @@ describe('renewing through the tool that owns the credential', () => {
 
     await read('anthropic');
 
-    expect(runs).toEqual(['claude auth status']);
+    expect(runs).toEqual(['/usr/local/bin/claude auth status']);
   });
 
   test('given a provider whose tool names no headless run, nothing is spawned', async () => {
@@ -116,7 +116,7 @@ describe('renewing through the tool that owns the credential', () => {
     const standing = aClaudeLoginExpiring(NOW + 1_000);
 
     await theMachineHolds(standing);
-    const { read, runs } = aReader({ toolPresent: async () => Promise.resolve(false) });
+    const { read, runs } = aReader({ toolFile: async () => Promise.resolve(null) });
 
     await expect(read('anthropic')).resolves.toBe(standing);
     expect(runs).toEqual([]);
