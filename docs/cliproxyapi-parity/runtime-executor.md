@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 979**
-- **Covered: 787**
+- **Total upstream tests: 980**
+- **Covered: 788**
 - **N/A: 190**
 - **Gap: 2**
-- **Exact identities mapped: 979/979**
+- **Exact identities mapped: 980/980**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **979** | **787** | **190** | **2** |
+| **Total**          | **980** | **788** | **190** | **2** |
 
 ## Exact row mapping
 
@@ -1020,6 +1020,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 977 | `TestClaudePayloadHasMidSystemMessage`                                                                                                                    | system prompt      | Claude             | Covered | `rebuiltMidSystem` finds every `role: system` message through `isSystemMessage`, lifts its text parts into `body.system` with `midSystemParts`, and drops those messages from the turn list. That detection is what the row asks for.                                                                                                                                                                                                                                                                                                                                                    |
 | 978 | `TestClaudeExecutor_LegacyMidSystemMessageRejectedOnEveryUpstreamPath`                                                                                    | system prompt      | Claude             | Covered | `rebuiltMidSystem` finds every `role: system` message through `isSystemMessage`, lifts its text parts into `body.system` with `midSystemParts`, and drops those messages from the turn list. Recompose reaches the same end by a different route: it rebuilds rather than rejects, so no upstream path can receive a mid-conversation system message on a legacy model, and no request has to fail for it.                                                                                                                                                                               |
 | 979 | `TestClaudeExecutor_LegacyMidSystemMessageForwardedToThirdPartyGateway`                                                                                   | system prompt      | Claude             | Covered | The policy runs on the Claude subscription path in `claude-request.ts`. A third-party Claude-compatible gateway is an API-key provider reached through `credentialed-target.ts`, which never applies it, so the caller's message rides through untouched.                                                                                                                                                                                                                                                                                                                                |
+| 980 | `TestClaudeBodyNeedsBillingFallbackTracksSystemPresence`                                                                                                  | billing            | Claude             | Covered | `withBilling` reads the system field through `systemBlocks`, which answers for a missing field, a bare string, and an array alike, then asks `existingBilling` whether the first block already carries the `x-anthropic-billing-header:` prefix. The fallback therefore turns on whether a system block is present and already billing-shaped, which is what the row tracks.                                                                                                                                                                                                             |
 
 ## N/A boundary
 
