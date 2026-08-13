@@ -6,23 +6,38 @@ import { queryOptions } from '@tanstack/react-query';
 import { unwrapIpcResult } from './ipc-result';
 
 const MINUTE_MS = 60_000;
-const REPORT_POLL_MS = 5_000;
+const WATCHED_POLL_MS = 5_000;
 
 /**
  * One ask of usage buckets, priced at day width, polled while a surface is reading it.
  *
  * @summary A report carries the hour still filling, so a request landing now changes the answer
- * now, and the poll stands at the pace a person watching the explorer sends requests at rather
- * than at the pace a bucket closes. The interval only runs while a mounted surface reads the
- * query, so leaving the explorer stops the polling. Every ask holds its own key, so a narrower
- * window asking the same range for hours never repaints the folded view.
+ * now. This pace is the one a card's day summary wants: the reading beside it moves once a
+ * minute, and a whole range of buckets crosses the channel each time it does. The interval only
+ * runs while a mounted surface reads the query. Every ask holds its own key, so a narrower window
+ * asking the same range for hours never repaints the folded view.
  */
 export function usageReportQueryOptions(ask: UsageReportAsk) {
   return queryOptions({
     queryKey: ['usage-report', ask.range, ask.bucketWidth ?? 'default', ask.dayOffsetMinutes ?? 0],
     queryFn: async () => unwrapIpcResult(await window.recompose['usage:report'](ask)),
-    staleTime: REPORT_POLL_MS,
-    refetchInterval: REPORT_POLL_MS,
+    staleTime: MINUTE_MS,
+    refetchInterval: MINUTE_MS,
+  });
+}
+
+/**
+ * The same ask, at the pace of someone watching the explorer rather than reading a card.
+ *
+ * @summary A person standing at the explorer sends a request and looks straight back, so the
+ * window they are watching polls every five seconds. Only that surface pays for the pace: the
+ * key is the summary's own, so the two share one cached read rather than opening two.
+ */
+export function watchedUsageReportQueryOptions(ask: UsageReportAsk) {
+  return queryOptions({
+    ...usageReportQueryOptions(ask),
+    staleTime: WATCHED_POLL_MS,
+    refetchInterval: WATCHED_POLL_MS,
   });
 }
 
@@ -40,7 +55,7 @@ export async function warmedUsageReport(
     return;
   }
 
-  await queryClient.ensureQueryData(usageReportQueryOptions(ask));
+  await queryClient.ensureQueryData(watchedUsageReportQueryOptions(ask));
 }
 
 /** The standing quota windows per subscription account, moved along by the open hour. */

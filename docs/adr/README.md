@@ -102,3 +102,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0094](0094-the-browser-suite-collects-every-tenth-file.md)                     | The Browser Suite Collects Every Tenth File                                         | Accepted   | 2026-08-13 |
 | [0095](0095-the-pipeline-reads-what-the-diff-touched.md)                        | The Pipeline Reads What the Diff Touched                                            | Accepted   | 2026-08-13 |
 | [0096](0096-the-report-carries-its-open-hour.md)                                | The Report Carries Its Open Hour                                                    | Accepted   | 2026-08-13 |
+| [0097](0097-the-poll-pace-follows-the-surface.md)                               | The Poll Pace Follows the Surface, Not the Range                                    | Accepted   | 2026-08-13 |
