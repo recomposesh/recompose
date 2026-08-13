@@ -259,6 +259,7 @@ sess
 setstate
 Shadowsocks
 shellcheck
+sjson
 smoothstep
 snapcraft
 spinbuttons

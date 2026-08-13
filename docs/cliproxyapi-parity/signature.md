@@ -4,10 +4,10 @@
 
 ## Scope and result
 
-- Upstream: `router-for-me/CLIProxyAPI` commit `8392b180ce3789eba9fd06ebc812b4fc237876e1`.
+- Upstream: `router-for-me/CLIProxyAPI` v7.2.131, commit `d757063c`.
 - Corpus: every top-level `Test*` under `internal/signature`.
-- Inventory: **97** rows.
-- Final status: **89 covered**, **8 justified N/A**, **0 gaps**.
+- Inventory: **113** rows.
+- Final status: **89 covered**, **11 justified N/A**, **13 gaps**.
 - Excluded: plugins, routers, and ledger work.
 
 N/A is limited to upstream compatibility-target modes and implementation-specific first-character/lookup-table prefilters that Recompose does not use. All provider signature validation, sanitation, replay, carrier, pairing, bounds, and observability behavior in scope is covered.
@@ -122,6 +122,28 @@ N/A is limited to upstream compatibility-target modes and implementation-specifi
 |  95 | TestSanitizeClaudeMessagesSignaturesForModel_DropsEmptyAssistantMessage                 | covered | CLAUDE                                                                                   |
 |  96 | TestSanitizeClaudeMessagesForClaudeUpstream_DropsInvalidThinkingAndCleansToolUse        | covered | CLAUDE                                                                                   |
 |  97 | TestSanitizeClaudeMessagesForClaudeUpstream_NormalizesValidThinkingAndDropsEmptyMessage | covered | CLAUDE                                                                                   |
+|  98 | TestKimiThinkingSignatureLengths_MatchDecodedSizes                                      | gap     | KIMI                                                                                     |
+|  99 | TestInspectKimiThinkingSignature_ReportsMode                                            | gap     | KIMI                                                                                     |
+| 100 | TestInspectKimiThinkingSignature_RejectsNeighbouringLengths                             | gap     | KIMI                                                                                     |
+| 101 | TestInspectKimiThinkingSignature_RejectsMalformedInput                                  | gap     | KIMI                                                                                     |
+| 102 | TestInspectKimiThinkingSignature_RejectsLowEntropyFiller                                | gap     | KIMI                                                                                     |
+| 103 | TestInspectKimiThinkingSignature_RejectsSelfDescribingEnvelope                          | gap     | KIMI                                                                                     |
+| 104 | TestInspectKimiThinkingSignature_NativeCorpus                                           | N/A     | KIMI                                                                                     |
+| 105 | TestDetectSignatureProvider_KimiRunsAfterEnvelopeProbes                                 | gap     | KIMI                                                                                     |
+| 106 | TestDetectSignatureProvider_KimiProbeDoesNotDisturbCatalog                              | N/A     | KIMI                                                                                     |
+| 107 | TestSignatureProviderFromModelName_Kimi                                                 | gap     | KIMI                                                                                     |
+| 108 | TestDecideSignatureCompatibility_KimiDropsSignatureNotBlock                             | gap     | KIMI                                                                                     |
+| 109 | TestDecideSignatureCompatibility_KimiPreservesNativeSignature                           | gap     | KIMI                                                                                     |
+| 110 | TestInspectGrokEncryptedContent_RejectsKimiLengths                                      | gap     | GROK                                                                                     |
+| 111 | TestSignatureProviderFromModelName_Grok                                                 | gap     | GROK                                                                                     |
+| 112 | TestDetectSignatureProvider_NeverClassifiesGrok                                         | N/A     | GROK                                                                                     |
+| 113 | TestDecideSignatureCompatibility_GrokDropsBlock                                         | gap     | GROK                                                                                     |
+
+### Rationale for the rows added at v7.2.131
+
+Recompose serves both providers. It replays Kimi thinking blocks through `provider/kimi-thinking-replay.ts` and serves Grok through the xAI paths, so neither family is out of scope. Neither carries any signature validation today: `replayableKimiThinkingContent` accepts any non-blank string, and no provider-detection or compatibility-decision layer exists at all. A foreign or corrupt signature therefore replays where upstream now drops it, which is why these rows read as gaps rather than as N/A.
+
+The three N/A rows are upstream test scaffolding rather than behavior. `TestInspectKimiThinkingSignature_NativeCorpus` and `TestDetectSignatureProvider_NeverClassifiesGrok` both skip unless a harvested corpus file is present, and `TestDetectSignatureProvider_KimiProbeDoesNotDisturbCatalog` is a regression harness over upstream's own signature catalog. The behavior each would prove is pinned by the deterministic rows beside it.
 
 ## Final implementation summary
 

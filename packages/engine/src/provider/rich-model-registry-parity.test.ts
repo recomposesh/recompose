@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { CLAUDE_SONNET_5, modelOverrideHeaders, xaiBuiltinVideoModels } from './model-metadata';
+import {
+  CLAUDE_SONNET_5,
+  modelOverrideHeaders,
+  xaiBuiltinImageModels,
+  xaiBuiltinVideoModels,
+} from './model-metadata';
 import { RichModelRegistry } from './rich-model-registry';
 
 function model(id: string) {
@@ -27,6 +32,10 @@ describe('static provider model metadata parity', () => {
   test('TestWithXAIBuiltinsIncludesVideo15GAAndPreviewAlias', () => {
     expect(xaiBuiltinVideoModels).toContain('grok-imagine-video-1.5');
     expect(xaiBuiltinVideoModels).toContain('grok-imagine-video-1.5-preview');
+  });
+
+  test('TestWithXAIBuiltinsIncludesImage20', () => {
+    expect(xaiBuiltinImageModels).toContain('grok-imagine-image-2.0');
   });
 
   test('TestLookupModelInfoIncludesClaudeSonnet5', () => {

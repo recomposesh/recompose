@@ -2,13 +2,13 @@
 
 # Internal registry parity audit
 
-Scope: all 26 upstream `Test*` functions under `internal/registry`, compared with Recompose provider/subscription model catalogs, model limits and metadata, account model policies, watcher diffs, and gateway target validation. Plugin hooks and router weighting are excluded.
+Scope: all 27 upstream `Test*` functions under `internal/registry`, compared with Recompose provider/subscription model catalogs, model limits and metadata, account model policies, watcher diffs, and gateway target validation. Plugin hooks and router weighting are excluded.
 
 ## Verification
 
 - Upstream: `go test ./internal/registry/...` passed.
 - Recompose focused suite: 78/78 passed across provider/subscription listing, Claude/Gemini limits, Antigravity web-search capability, xAI video routing, model policies, watcher diffs, and gateway targets.
-- Accounting: 26/26 rows exactly once.
+- Accounting: 27/27 rows exactly once.
 
 ## Codex client-model catalog
 
@@ -59,20 +59,21 @@ These are plugin-style extension hooks and are outside this audit's scope.
 
 ## Defensive-copy and model metadata safety
 
-|   # | Upstream test                                             | Status  | Evidence / concrete gap                                                                                                                               |
-| --: | --------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  19 | `TestGetModelInfoReturnsClone`                            | N/A     | Recompose has no mutable `ModelInfo` registry object or accessor; schemas and request-local objects replace this ownership model.                     |
-|  20 | `TestGetModelsForClientReturnsClones`                     | N/A     | No global client-to-model mutable registry exists.                                                                                                    |
-|  21 | `TestGetAvailableModelsByProviderReturnsClones`           | Covered | Subscription catalogs return new arrays and network catalogs are parsed into request-local ID arrays; model-policy filtering also returns new arrays. |
-|  22 | `TestCleanupExpiredQuotasInvalidatesAvailableModelsCache` | N/A     | No registry quota-expiry cache exists; provider rate/quota behavior is request-scoped.                                                                |
-|  23 | `TestGetAvailableModelsReturnsClonedSupportedParameters`  | Covered | Exact test proves supported-parameter arrays are preserved and cloned per snapshot.                                                                   |
-|  24 | `TestGetAvailableModelsIncludesMaxContextLengthOverride`  | Covered | Exact test proves context and max-context overrides travel in rich metadata.                                                                          |
-|  25 | `TestLookupModelInfoReturnsCloneForStaticDefinitions`     | N/A     | No mutable static-definition lookup API exists.                                                                                                       |
-|  26 | `TestLookupModelInfoIncludesClaudeSonnet5`                | Covered | Exact test pins 1M context, 128k completion, five reasoning levels, zero allowance, and dynamic thinking.                                             |
+|   # | Upstream test                                             | Status  | Evidence / concrete gap                                                                                                                                                 |
+| --: | --------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  19 | `TestGetModelInfoReturnsClone`                            | N/A     | Recompose has no mutable `ModelInfo` registry object or accessor; schemas and request-local objects replace this ownership model.                                       |
+|  20 | `TestGetModelsForClientReturnsClones`                     | N/A     | No global client-to-model mutable registry exists.                                                                                                                      |
+|  21 | `TestGetAvailableModelsByProviderReturnsClones`           | Covered | Subscription catalogs return new arrays and network catalogs are parsed into request-local ID arrays; model-policy filtering also returns new arrays.                   |
+|  22 | `TestCleanupExpiredQuotasInvalidatesAvailableModelsCache` | N/A     | No registry quota-expiry cache exists; provider rate/quota behavior is request-scoped.                                                                                  |
+|  23 | `TestGetAvailableModelsReturnsClonedSupportedParameters`  | Covered | Exact test proves supported-parameter arrays are preserved and cloned per snapshot.                                                                                     |
+|  24 | `TestGetAvailableModelsIncludesMaxContextLengthOverride`  | Covered | Exact test proves context and max-context overrides travel in rich metadata.                                                                                            |
+|  25 | `TestLookupModelInfoReturnsCloneForStaticDefinitions`     | N/A     | No mutable static-definition lookup API exists.                                                                                                                         |
+|  26 | `TestLookupModelInfoIncludesClaudeSonnet5`                | Covered | Exact test pins 1M context, 128k completion, five reasoning levels, zero allowance, and dynamic thinking.                                                               |
+|  27 | `TestWithXAIBuiltinsIncludesImage20`                      | Covered | Exact test pins `grok-imagine-image-2.0` in the xAI builtin image catalog. The upstream row also pins a `Created` stamp, which Recompose model metadata does not carry. |
 
 ## Summary
 
-- Covered: 18
+- Covered: 19
 - Gap: 0
 - N/A: 8
 
