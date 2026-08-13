@@ -2,7 +2,7 @@
 
 # Internal store parity audit
 
-Scope: all 32 upstream `Test*` functions under `internal/store`, compared with Recompose local accounts, gateways, vault, subscription credentials, atomic JSON persistence, quarantine, migrations, watchers, and serialized read-modify-write custody. Redis, PostgreSQL, Home, plugin stores, and Git-specific remote repository behavior are excluded.
+Scope: all 36 upstream `Test*` functions under `internal/store` and the `sdk/cliproxy` executor registry, compared with Recompose local accounts, gateways, vault, subscription credentials, atomic JSON persistence, quarantine, migrations, watchers, and serialized read-modify-write custody. Redis, PostgreSQL, Home, plugin stores, and Git-specific remote repository behavior are excluded.
 
 ## Verification
 
@@ -68,10 +68,14 @@ Recompose quarantines corrupt local JSON/vault/gateway files under timestamped b
 
 PostgreSQL is explicitly excluded; Recompose keeps provider retry/rate-limit state in process rather than a shared database.
 
-|   # | Upstream test                                              | Status | Evidence / rationale                          |
-| --: | ---------------------------------------------------------- | ------ | --------------------------------------------- |
-|  31 | `TestPostgresCooldownStateStore_SaveLoad`                  | N/A    | No PostgreSQL cooldown store.                 |
-|  32 | `TestPostgresCooldownStateStore_MergesConcurrentInstances` | N/A    | No cross-instance PostgreSQL merge semantics. |
+|   # | Upstream test                                                                | Status | Evidence / rationale                                                                           |
+| --: | ---------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+|  31 | `TestPostgresCooldownStateStore_SaveLoad`                                    | N/A    | No PostgreSQL cooldown store.                                                                  |
+|  32 | `TestPostgresCooldownStateStore_MergesConcurrentInstances`                   | N/A    | No cross-instance PostgreSQL merge semantics.                                                  |
+|  33 | `TestRegisterExecutorForAuth_PluginAuthProviderWrapsOpenAICompatRefresh`     | N/A    | Plugin host wiring is explicitly excluded, the same ground every sibling plugin row stands on. |
+|  34 | `TestRegisterExecutorForAuth_OpenAICompatWithoutPluginAuthProviderStaysBare` | N/A    | Plugin host wiring is explicitly excluded, the same ground every sibling plugin row stands on. |
+|  35 | `TestRegisterExecutorForAuth_OpenAICompatInfoPathAlsoWrapsPluginRefresh`     | N/A    | Plugin host wiring is explicitly excluded, the same ground every sibling plugin row stands on. |
+|  36 | `TestUnregisterOpenAICompatExecutorRemovesPluginRefreshWrapper`              | N/A    | Plugin host wiring is explicitly excluded, the same ground every sibling plugin row stands on. |
 
 ## Summary
 

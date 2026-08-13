@@ -74,6 +74,8 @@ export const xaiBuiltinVideoModels = [
   'grok-imagine-video-1.5-preview',
 ] as const;
 
+export const xaiBuiltinImageModels = ['grok-imagine-image-2.0'] as const;
+
 export function cloneModelMetadata(model: ProviderModelMetadata): ProviderModelMetadata {
   return {
     ...model,

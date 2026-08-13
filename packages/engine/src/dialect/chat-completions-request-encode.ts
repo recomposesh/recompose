@@ -69,7 +69,7 @@ function assistantReasoning(
 }
 
 function carriesReasoning(signature: string | undefined, preserve: boolean): boolean {
-  if (preserve && (signature === '' || signature === undefined)) return true;
+  if (preserve) return true;
 
   return isCodexReasoningSignature(signature);
 }

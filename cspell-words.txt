@@ -10,6 +10,7 @@ aistudio
 AKIAIOSFODNN
 aliasable
 alikes
+Alloced
 Alpcan
 alpcanaydin
 amsg
@@ -259,6 +260,7 @@ sess
 setstate
 Shadowsocks
 shellcheck
+sjson
 smoothstep
 snapcraft
 spinbuttons

@@ -2,13 +2,13 @@
 
 # Internal client parity audit
 
-Scope: all 82 upstream `Test*` functions under `internal/client`, compared with Recompose provider transports, model-list handling, Codex Responses WebSocket support, SSE/JSON stream codecs, compression, request/response rewriting, headers, retries, and errors. Plugin clients, Home selection, interactive CLI-only model endpoints, and Codex Live WebRTC/media clients are explicitly excluded.
+Scope: all 98 upstream `Test*` functions under `internal/client`, compared with Recompose provider transports, model-list handling, Codex Responses WebSocket support, SSE/JSON stream codecs, compression, request/response rewriting, headers, retries, and errors. Plugin clients, Home selection, interactive CLI-only model endpoints, and Codex Live WebRTC/media clients are explicitly excluded.
 
 ## Verification
 
 - Upstream: `go test ./internal/client/...` passed for all five packages.
 - Recompose focused suite: 105/105 passed across Codex multi-agent parity, Responses WebSocket, provider transport, Claude compression, Responses streaming, model-list, and gateway-discovery tests.
-- Accounting: 82/82 rows exactly once.
+- Accounting: 98/98 rows exactly once.
 
 ## Claude CLI model-response client
 
@@ -130,16 +130,32 @@ Recompose's `codex-multi-agent.ts` rewrites collaboration namespaces/tools and a
 
 ## GrokShell CLI model-response client
 
-|   # | Upstream test              | Status | Evidence / rationale                                                               |
-| --: | -------------------------- | ------ | ---------------------------------------------------------------------------------- |
-|  81 | `TestIsGrokShellUserAgent` | N/A    | GrokShell CLI user-agent detection is not a Recompose client surface.              |
-|  82 | `TestBuildResponse`        | N/A    | Recompose does not implement the GrokShell-specific client model-response builder. |
+|   # | Upstream test                                                           | Status | Evidence / rationale                                                                                                                                                                                                                                                        |
+| --: | ----------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  81 | `TestIsGrokShellUserAgent`                                              | N/A    | GrokShell CLI user-agent detection is not a Recompose client surface.                                                                                                                                                                                                       |
+|  82 | `TestBuildResponse`                                                     | N/A    | Recompose does not implement the GrokShell-specific client model-response builder.                                                                                                                                                                                          |
+|  83 | `TestCreateClientSecretMapsStandardRealtimeModel`                       | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  84 | `TestCreateClientSecretRejectsUnsupportedSessionType`                   | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  85 | `TestClientSecretStoreRejectsExpiredToken`                              | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  86 | `TestApplyClientSecretCallSession`                                      | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  87 | `TestNormalizeClientSecretSessionHandlesWhitespaceNullAndRejectsArrays` | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  88 | `TestReadClientSecretBodyRejectsOversizedSession`                       | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  89 | `TestLiveSelectionHeadersRemoveLocalClientSecret`                       | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  90 | `TestHandleDirectWebsocketAppliesClientSecretSession`                   | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  91 | `TestHandleDirectWebsocketRejectsClientSecretModelMismatch`             | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  92 | `TestHandleDirectWebsocketRelaysStandardRealtimeFrames`                 | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  93 | `TestStandardRealtimeCallMapsModelAndLocation`                          | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  94 | `TestUnsupportedRealtimeCapabilitiesUseStandardError`                   | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  95 | `TestHandleHangupForwardsPinnedOAuthCall`                               | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  96 | `TestHandleHangupRejectsDifferentAPIPrincipal`                          | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  97 | `TestSidebandRejectsClientSecretScopeMismatch`                          | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
+|  98 | `TestSidebandRejectsStandardPrincipalScopeMismatch`                     | N/A    | Recompose opens no realtime session. It mints no ephemeral client secret, relays no realtime frame, and answers no hangup or sideband call. Its websocket work is the xAI and Codex completion transport that `websocket-executor.md` covers, which is a different surface. |
 
 ## Summary
 
 - Covered: 27
 - Gap: 0
-- N/A: 55
+- N/A: 71
 
 ## Grouped implementation seams
 
