@@ -1,8 +1,11 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, appendFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const ITEM_NOT_FOUND = 44;
 const UNKNOWN_REQUEST = 2;
+const STORE_REFUSED = 51;
+
+const desk = process.env['RECOMPOSE_FAKE_TOOLS_DESK'] ?? '';
 
 type Request = {
   operation: string;
@@ -41,6 +44,37 @@ async function heldBlob(store: string, request: Request): Promise<string | null>
   );
 }
 
+/**
+ * Whether the scenario put the store behind the refusal a locked keychain answers with.
+ *
+ * @summary The marker is a file rather than a variable, because the app inherits its environment
+ * once at launch and a scenario locks the store while the app already stands.
+ */
+async function deskCarries(marker: string): Promise<boolean> {
+  if (desk === '') {
+    return false;
+  }
+
+  return access(join(desk, marker)).then(
+    () => true,
+    () => false,
+  );
+}
+
+/**
+ * Records the one read that would raise a permission prompt on a real keychain.
+ *
+ * @summary A metadata read asks the operating system for nothing, so only a read that reveals the
+ * secret lands here. A scenario proving a second look asked nothing new counts these lines.
+ */
+async function recordOpen(request: Request): Promise<void> {
+  if (desk === '') {
+    return;
+  }
+
+  await appendFile(join(desk, 'keychain-opens.log'), `${request.service}\n`, 'utf8');
+}
+
 async function findGenericPassword(store: string, request: Request): Promise<number> {
   const held = await heldBlob(store, request);
 
@@ -49,6 +83,7 @@ async function findGenericPassword(store: string, request: Request): Promise<num
   }
 
   if (request.asksForTheSecret) {
+    await recordOpen(request);
     process.stdout.write(`${held}\n`);
   }
 
@@ -73,6 +108,12 @@ async function deleteGenericPassword(store: string, request: Request): Promise<n
 }
 
 async function answer(store: string, request: Request): Promise<number> {
+  if (await deskCarries('keychain-refuses')) {
+    process.stderr.write('the fake security cannot open the store\n');
+
+    return STORE_REFUSED;
+  }
+
   if (request.operation === 'find-generic-password') {
     return findGenericPassword(store, request);
   }

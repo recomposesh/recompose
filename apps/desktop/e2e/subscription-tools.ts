@@ -1,28 +1,69 @@
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { spawn } from 'node:child_process';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir, userInfo } from 'node:os';
 import { delimiter, join } from 'node:path';
 
+import { shimName, shimScript } from './tool-shim';
+
 const fakeTools = join(__dirname, 'fake-tools');
+
+const vendorServices = {
+  anthropic: 'Claude Code-credentials',
+  openai: 'Codex Auth',
+} as const;
+
+const toolBinaries = { anthropic: 'claude', openai: 'codex' } as const;
+
+const recordFiles = { anthropic: '.credentials.json', openai: 'auth.json' } as const;
+
+const machineFolders = { anthropic: '.claude', openai: '.codex' } as const;
+
+/** The two providers whose tools a scenario can stand a machine credential up for. */
+type MachineProvider = keyof typeof vendorServices;
+
+/** Where a vendor keeps a record: the operating system's store, or a file beside the home. */
+type CredentialStore = 'keychain' | 'file';
+
+/**
+ * A login the person's own tool left on the machine before recompose ever ran.
+ *
+ * @summary An account with no credential is the empty shell a vendor leaves behind, which reads as
+ * a record carrying nothing to adopt rather than as a machine holding nothing.
+ */
+type MachineRecord = {
+  provider: MachineProvider;
+  signedInAs: string;
+  plan: string;
+  expiresAt: number;
+  carriesAccountCredential: boolean;
+  store?: CredentialStore;
+};
 
 /** Stands in for the provider command-line tools and the macOS keychain a scenario must not touch. */
 export type SubscriptionTools = {
   env: (inherited: Record<string, string>) => Record<string, string>;
   install: (binary: string) => Promise<void>;
   uninstall: (binary: string) => Promise<void>;
+  /** The home the machine's own tools read, standing in for the person's home folder. */
+  machineHome: string;
+  /** Writes a vendor-shaped login onto the machine, the way the person's own tool would have. */
+  plantMachineCredential: (record: MachineRecord) => Promise<void>;
+  /** The record the machine's store holds now, so a step can prove one stood untouched. */
+  machineCredential: (provider: MachineProvider) => Promise<string | null>;
+  /** Whether a fresh run of the provider's own tool still reads as signed in. */
+  machineToolReadsSignedIn: (provider: MachineProvider) => Promise<boolean>;
+  /** How many renewals the provider's own tool ran, so one run reads apart from two. */
+  renewalRuns: (provider: MachineProvider) => Promise<number>;
+  /** Makes the provider's own tool fail every renewal from here on. */
+  toolFailsToRenew: (provider: MachineProvider) => Promise<void>;
+  /** Locks the credential store, the way a keychain over a remote session refuses to open. */
+  keychainRefusesToOpen: () => Promise<void>;
+  /** How many reads asked the operating system for a secret, which is what would prompt. */
+  keychainOpens: () => Promise<number>;
   /** Empties the keychain, the way a provider revoking an authorization would. */
   revokeKeptCredentials: () => Promise<void>;
   dispose: () => Promise<void>;
 };
-
-function shimName(binary: string): string {
-  return process.platform === 'win32' ? `${binary}.cmd` : binary;
-}
-
-function shimScript(target: string): string {
-  return process.platform === 'win32'
-    ? `@echo off\r\n"${process.execPath}" "${target}" %*\r\n`
-    : `#!/bin/sh\nexec "${process.execPath}" "${target}" "$@"\n`;
-}
 
 /**
  * The folders a machine with no provider tool installed still has.
@@ -55,31 +96,182 @@ function searchPathKeyIn(inherited: Record<string, string>): string {
   return Object.keys(inherited).find((key) => key.toUpperCase() === 'PATH') ?? 'PATH';
 }
 
-export async function fakeSubscriptionTools(): Promise<SubscriptionTools> {
-  const root = await mkdtemp(join(tmpdir(), 'recompose-subscription-tools-'));
+function settingsFor(record: MachineRecord): Record<string, string> {
+  return {
+    RECOMPOSE_FAKE_TOOL_ADDRESS: record.signedInAs,
+    RECOMPOSE_FAKE_TOOL_PLAN: record.plan,
+    RECOMPOSE_FAKE_TOOL_EXPIRES_AT: String(record.expiresAt),
+    RECOMPOSE_FAKE_TOOL_CARRIES_CREDENTIAL: record.carriesAccountCredential ? 'yes' : 'no',
+    ...(record.store === undefined ? {} : { RECOMPOSE_FAKE_TOOL_STORE: record.store }),
+  };
+}
+
+/**
+ * The environment a tool run outside the app gets.
+ *
+ * @summary A config home override would send the run's credential to a derived keychain name, so
+ * a machine-side run drops whatever the session that started the suite happened to carry.
+ */
+function machineRunEnv(machine: Record<string, string>): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, ...machine };
+
+  delete env['CLAUDE_CONFIG_DIR'];
+  delete env['CODEX_HOME'];
+
+  return env;
+}
+
+async function runFakeTool(
+  binary: string,
+  argv: readonly string[],
+  env: NodeJS.ProcessEnv,
+): Promise<{ status: number; said: string }> {
+  const child = spawn(process.execPath, [join(fakeTools, `${binary}.mts`), ...argv], { env });
+  let said = '';
+
+  child.stdout.setEncoding('utf8');
+  child.stdout.on('data', (chunk: string) => {
+    said += chunk;
+  });
+  child.stderr.pipe(process.stderr);
+
+  const status = await new Promise<number>((resolve) => {
+    child.on('close', (code) => {
+      resolve(code ?? 0);
+    });
+  });
+
+  return { status, said };
+}
+
+async function linesIn(path: string): Promise<number> {
+  const written = await readFile(path, 'utf8').catch(() => '');
+
+  return written.split('\n').filter((line) => line !== '').length;
+}
+
+async function keychainItem(store: string, service: string): Promise<string | null> {
+  const shelf = Buffer.from(`${service}\n${userInfo().username}`).toString('base64url');
+
+  return readFile(join(store, shelf), 'utf8').then(
+    (blob) => blob,
+    () => null,
+  );
+}
+
+/** The folders one scenario's machine is built from, and the variables that point at them. */
+type Bench = {
+  keychainDir: string;
+  desk: string;
+  machineHome: string;
+  machine: Record<string, string>;
+};
+
+/** Every seam a scenario reaches the machine's own stores and tools through. */
+type MachineSeams = Pick<
+  SubscriptionTools,
+  | 'keychainOpens'
+  | 'keychainRefusesToOpen'
+  | 'machineCredential'
+  | 'machineHome'
+  | 'machineToolReadsSignedIn'
+  | 'plantMachineCredential'
+  | 'renewalRuns'
+  | 'toolFailsToRenew'
+>;
+
+function machineSeams(bench: Bench): MachineSeams {
+  const { desk, keychainDir, machine, machineHome } = bench;
+
+  const machineCredential: SubscriptionTools['machineCredential'] = async (provider) =>
+    (await keychainItem(keychainDir, vendorServices[provider])) ??
+    readFile(join(machineHome, machineFolders[provider], recordFiles[provider]), 'utf8').then(
+      (blob) => blob,
+      () => null,
+    );
+
+  return {
+    machineHome,
+
+    plantMachineCredential: async (record) => {
+      const env = machineRunEnv({ ...machine, ...settingsFor(record) });
+      const run = await runFakeTool(toolBinaries[record.provider], [], env);
+
+      if (run.status !== 0) {
+        throw new Error(
+          `planting the ${record.provider} login on the machine answered status ${String(run.status)}`,
+        );
+      }
+    },
+
+    machineCredential,
+
+    machineToolReadsSignedIn: async (provider) => {
+      if (provider === 'openai') {
+        return (await machineCredential(provider)) !== null;
+      }
+
+      const run = await runFakeTool('claude', ['config', 'ls'], machineRunEnv(machine));
+
+      return !run.said.includes('Not logged in');
+    },
+
+    renewalRuns: async (provider) => linesIn(join(desk, `renewals-${toolBinaries[provider]}.log`)),
+
+    toolFailsToRenew: async (provider) =>
+      writeFile(join(desk, `renewal-fails-${toolBinaries[provider]}`), '', 'utf8'),
+
+    keychainRefusesToOpen: async () => writeFile(join(desk, 'keychain-refuses'), '', 'utf8'),
+
+    keychainOpens: async () => linesIn(join(desk, 'keychain-opens.log')),
+  };
+}
+
+async function benchIn(root: string): Promise<Bench & { binDir: string }> {
   const binDir = join(root, 'bin');
   const keychainDir = join(root, 'keychain');
+  const desk = join(root, 'desk');
+  const machineHome = join(root, 'machine-home');
 
-  await mkdir(binDir, { recursive: true });
-  await mkdir(keychainDir, { recursive: true });
+  for (const folder of [binDir, keychainDir, desk, machineHome]) {
+    await mkdir(folder, { recursive: true });
+  }
+
   await writeShim(binDir, 'security', join(fakeTools, 'keychain.mts'));
   await writeShim(binDir, 'sign-in-launcher', join(fakeTools, 'sign-in-launcher.mts'));
 
   return {
-    env: (inherited) => {
-      const searchPathKey = searchPathKeyIn(inherited);
-
-      return {
-        ...inherited,
-        [searchPathKey]: [binDir, ...systemFolders()].join(delimiter),
-        SHELL: '',
-        RECOMPOSE_KEYCHAIN_COMMAND: join(binDir, shimName('security')),
-        RECOMPOSE_SIGN_IN_LAUNCHER: join(binDir, shimName('sign-in-launcher')),
-        RECOMPOSE_FAKE_KEYCHAIN_DIR: keychainDir,
-      };
+    binDir,
+    keychainDir,
+    desk,
+    machineHome,
+    machine: {
+      RECOMPOSE_KEYCHAIN_COMMAND: join(binDir, shimName('security')),
+      RECOMPOSE_SIGN_IN_LAUNCHER: join(binDir, shimName('sign-in-launcher')),
+      RECOMPOSE_FAKE_KEYCHAIN_DIR: keychainDir,
+      RECOMPOSE_FAKE_TOOLS_DESK: desk,
+      RECOMPOSE_FAKE_MACHINE_HOME: machineHome,
     },
+  };
+}
+
+export async function fakeSubscriptionTools(): Promise<SubscriptionTools> {
+  const root = await mkdtemp(join(tmpdir(), 'recompose-subscription-tools-'));
+  const bench = await benchIn(root);
+  const { binDir, keychainDir } = bench;
+
+  return {
+    ...machineSeams(bench),
+
+    env: (inherited) => ({
+      ...inherited,
+      [searchPathKeyIn(inherited)]: [binDir, ...systemFolders()].join(delimiter),
+      SHELL: '',
+      ...bench.machine,
+    }),
     install: async (binary) => writeShim(binDir, binary, join(fakeTools, `${binary}.mts`)),
     uninstall: async (binary) => rm(join(binDir, shimName(binary)), { force: true }),
+
     revokeKeptCredentials: async () => {
       await rm(keychainDir, { force: true, recursive: true });
       await mkdir(keychainDir, { recursive: true });
