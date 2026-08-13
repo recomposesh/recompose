@@ -36,11 +36,27 @@ Adopting MUST record a managed account the same way a sign-in does, and that acc
 - And it doesn't claim the machine holds nothing
 - And it offers a way to ask again
 
+The app MUST decide a record's moment from the token it spends on a turn. A record MAY carry a second token that names the account and lapses on a schedule of its own, and reading that one instead would report a working account lapsed.
+
+The app MUST look wherever the provider's own tool keeps its record. One vendor writes a file on one machine and the operating system's keyring on another. Two stores holding the same account MAY disagree. The later moment MUST win, because the owning tool already rotated past the earlier one.
+
 #### Scenario: what the machine holds carries no account
 
 - Given the machine holds a record for the provider that carries no account credential
 - When the app reports what it holds
 - Then it offers nothing to adopt
+
+#### Scenario: a record whose account name lapsed before the token it spends
+
+- Given the machine holds a record whose naming token lapsed and whose spent token holds
+- When the app reports what it holds
+- Then it reports the account as connected
+
+#### Scenario: the record sits in the keyring rather than a file
+
+- Given the provider's own tool keeps its record in the operating system keyring
+- When the app reports what it holds
+- Then it finds the account rather than reading the machine as empty
 
 ### Requirement: The app never renews a credential it adopted
 
@@ -50,7 +66,9 @@ The app MUST read the live store on each serving turn rather than serve a copy i
 
 When an adopted credential nears expiry, the app MUST hand the renewal to the provider's own tool. That run MUST carry no window, and a lock MUST admit one renewal at a time.
 
-A delegated renewal that can't run MUST leave the credential as it stands and MUST report the account lapsed. A failed renewal MUST NOT delete a credential.
+A tool that renews only by spending a turn names no run, because a background refresh MUST NOT cost a person a turn. The app MUST read that answer apart from a run that failed, and MUST spawn nothing for it.
+
+A delegated renewal that can't run MUST leave the credential as it stands and MUST report the account lapsed once its moment passes. A failed renewal MUST NOT delete a credential.
 
 #### Scenario: an adopted credential nears expiry
 
@@ -142,6 +160,8 @@ A config home the app hands to the provider's tool for a sign-in MUST arrive pre
 A row MUST carry the provider's mark, the plan product's name, and the plan the account holds. It MUST also carry the address it signs in as, its standing, and where the account came from. The identity MUST hold two lines, the product with its plan and the address, and nothing more. Standing MUST read as a word with a mark beside it rather than as color alone.
 
 Where the account came from MUST read on the row, because it decides both what the row's own act does and whether the app touches the credential.
+
+Where a row reads its standing MUST follow where its account came from. An adopted account keeps nothing in a home of the app's. The app MUST read its standing from the store the provider's own tool writes, which is the same reading a serving turn takes. Reading a home an adopted account never had would report every such row lapsed.
 
 #### Scenario: a connected account reads as connected
 

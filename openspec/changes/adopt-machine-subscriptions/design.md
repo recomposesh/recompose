@@ -397,7 +397,17 @@ Tasks 1, 2, and 8 run in parallel from the start: they own disjoint files, contr
 ## Open questions
 
 - The exact first-run key set beyond the two seeded flags. `machine-probe.md` couldn't enumerate the minified bundle's gates, so implementation drives a seeded home against the real CLI and adds what it observes. The seed mechanism and its location stand settled.
-- The exact headless argument vector that makes each provider's tool renew and exit. The fake tool's renewal entry fixes the contract either way, and implementation settles the real vector against the shipped binaries.
+
+## Settled during implementation
+
+**The headless renewal run, per provider.** `subscriptionProviders[provider].renewArguments` carries it, and an empty list means the tool names none.
+
+- Anthropic runs `claude auth status`. It answers the signed-in address, the organization, and the plan, which are facts the provider holds rather than the record does, so the run has to carry a token the provider still accepts. CodexBar reached the same path before the subcommand existed, driving an interactive session at `/status` and pressing return on a timer to make the tool touch its auth path (`ClaudeStatusProbe.touchOAuthAuthPath`). The shipped subcommand is that same touch without the terminal.
+- OpenAI names none. `codex login status` loads the record and prints which sign-in it carries, touching nothing (`codex-rs/cli/src/login.rs`, `run_login_status`). `codex doctor` leaves it alone too, proven against a record whose identity token lapsed five days earlier. Only a spent turn renews, and no background refresh may cost a person a turn. An adopted Codex account therefore stands on what Codex last wrote, and lapses openly when that runs out.
+
+**Where a Codex record lapses.** Codex decides its own freshness from the `access_token`'s claim, falling back to eight days past `last_refresh` when that token carries none (`codex-rs/login/src/auth/manager.rs`, `should_refresh_proactively`). The identity token beside it lapses an hour after issue, and Codex renews it only alongside the other. Reading its claim therefore reported every Codex account lapsed within the hour while Codex itself was content for days. `credential-records.ts` reads the spent token's claim, which is what `credentials.ts:68` in the engine already did.
+
+**Where a control-plane call lands under test.** The token endpoint and the profile lookup name the vendor's own host rather than an account's, so no target origin redirects them. `controlPlaneUrl` honours `RECOMPOSE_CONTROL_ORIGIN` on exactly the terms the probe and runtime origins already use: a loopback host or nothing.
 
 ## End-to-end verification
 
