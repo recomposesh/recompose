@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { accountsDocumentSchema, credentialedAccountKindSchema } from './accounts';
+import {
+  accountEndpointSchema,
+  accountsDocumentSchema,
+  credentialedAccountKindSchema,
+} from './accounts';
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
 import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
@@ -8,7 +12,7 @@ import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
 import { gatewayConfigSchema, gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import {
-  localRuntimeIdSchema,
+  localProviderIdSchema,
   runtimePortSchema,
   runtimeReachabilitySchema,
 } from './local-runtimes';
@@ -61,7 +65,19 @@ export const connectAccountRequestSchema = z.strictObject({
   kind: credentialedAccountKindSchema,
   label: z.string().trim().min(1),
   secret: pastedKeySchema,
+  endpoint: accountEndpointSchema.optional(),
 });
+
+/**
+ * Whether a look at a server carries the port it needs.
+ *
+ * @summary A documented runtime falls back to the port its own project publishes. A server nobody
+ * documents has no port to fall back to, so a request that names none would aim the look at
+ * nothing.
+ */
+function namesItsOwnPort(asked: { runtime: string; port?: number | undefined }): boolean {
+  return asked.runtime !== 'custom' || asked.port !== undefined;
+}
 
 const subscriptionViewsResponse = ipcResult(z.array(subscriptionAccountViewSchema));
 
@@ -105,11 +121,26 @@ export const ipcChannels = {
     response: ipcResult(keyCheckReportSchema),
   },
   'accounts:connect-local': {
-    request: z.strictObject({ runtime: localRuntimeIdSchema, port: runtimePortSchema.optional() }),
+    request: z
+      .strictObject({
+        runtime: localProviderIdSchema,
+        port: runtimePortSchema.optional(),
+        label: z.string().trim().min(1).optional(),
+      })
+      .refine(namesItsOwnPort, 'a server nobody documents must name its own port')
+      .refine(
+        (asked) => asked.runtime !== 'custom' || asked.label !== undefined,
+        'a server nobody documents must carry the name a person gave it',
+      ),
     response: ipcResult(accountsDocumentSchema),
   },
   'accounts:detect-runtime': {
-    request: z.strictObject({ runtime: localRuntimeIdSchema, port: runtimePortSchema.optional() }),
+    request: z
+      .strictObject({
+        runtime: localProviderIdSchema,
+        port: runtimePortSchema.optional(),
+      })
+      .refine(namesItsOwnPort, 'a server nobody documents must name its own port'),
     response: ipcResult(runtimeReachabilitySchema),
   },
   'accounts:check-runtime': {

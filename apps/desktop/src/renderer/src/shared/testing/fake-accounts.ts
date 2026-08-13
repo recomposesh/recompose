@@ -11,6 +11,7 @@ import type {
 import {
   ACCOUNTS_VERSION,
   keyTail,
+  loopbackAddressAt,
   runtimeAddressFor,
   runtimePortSchema,
   subscriptionProviders,
@@ -49,13 +50,23 @@ function keyRow(id: string, request: IpcRequest<'accounts:connect'>): Account {
   };
 }
 
+function fakeAddress(request: IpcRequest<'accounts:connect-local'>): string {
+  const port = runtimePortSchema.optional().parse(request.port);
+
+  return request.runtime === 'custom'
+    ? loopbackAddressAt(port ?? 8000)
+    : runtimeAddressFor(request.runtime, port);
+}
+
 function localRow(id: string, request: IpcRequest<'accounts:connect-local'>): Account {
-  return {
+  const row = {
     id,
     provider: request.runtime,
-    kind: 'local',
-    address: runtimeAddressFor(request.runtime, runtimePortSchema.optional().parse(request.port)),
+    kind: 'local' as const,
+    address: fakeAddress(request),
   };
+
+  return request.label === undefined ? row : { ...row, label: request.label };
 }
 
 /**

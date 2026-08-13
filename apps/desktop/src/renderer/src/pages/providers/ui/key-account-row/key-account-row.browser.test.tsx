@@ -102,9 +102,9 @@ test('the bare bullets still read as a stored key to a screen reader', async () 
 });
 
 test('a key the catalog never offered stands under the provider it was stored as', async () => {
-  const screen = await renderRow({ ...stored, provider: 'mistral' });
+  const screen = await renderRow({ ...stored, provider: 'a-plugin-vendor' });
 
-  await expect.element(screen.getByText('mistral', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('a-plugin-vendor', { exact: true })).toBeVisible();
 
   await press('Actions for build');
 

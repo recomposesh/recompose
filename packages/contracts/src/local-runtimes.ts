@@ -120,6 +120,17 @@ export function runtimeAddressFor(
   return `${documented.protocol}//${documented.hostname}:${String(runtimePortSchema.parse(port))}`;
 }
 
+/**
+ * The loopback address a server a person addressed themselves listens at.
+ *
+ * @summary A documented runtime mints its address from the table. A server nobody documented has
+ * no table row to mint from, so the port a person gave is the whole of it, and the host stays the
+ * loopback address recompose mints rather than one they could aim off this machine.
+ */
+export function loopbackAddressAt(port: number): string {
+  return `http://127.0.0.1:${String(runtimePortSchema.parse(port))}`;
+}
+
 const loopbackHost = '127.0.0.1';
 
 const probeableProtocols = ['http:', 'https:'];

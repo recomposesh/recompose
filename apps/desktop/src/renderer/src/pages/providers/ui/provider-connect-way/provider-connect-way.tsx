@@ -1,7 +1,14 @@
 import type { CatalogEntry, ConnectionWay } from '../../model/provider-catalog';
 
-import { keyKindOf, localRuntimeOf, signInProviderOf } from '../../model/provider-catalog';
+import {
+  keyKindOf,
+  localRuntimeOf,
+  offerFor,
+  signInProviderOf,
+} from '../../model/provider-catalog';
 import { ConnectKeyForm } from '../connect-key-form/connect-key-form';
+import { ConnectOwnEndpoint } from '../connect-own-endpoint/connect-own-endpoint';
+import { ConnectOwnServer } from '../connect-own-server/connect-own-server';
 import { DetectRuntimeStep } from '../detect-runtime-step/detect-runtime-step';
 import { SignInWay } from '../sign-in-way/sign-in-way';
 
@@ -30,28 +37,52 @@ function detectArm(entry: CatalogEntry, onConnected: () => void) {
   );
 }
 
+function ownAddressArm(entry: CatalogEntry, way: ConnectionWay, onConnected: () => void) {
+  if (way === 'local') {
+    return <ConnectOwnServer entry={entry} onConnected={onConnected} />;
+  }
+
+  const kind = keyKindOf(entry);
+
+  return kind === undefined ? null : (
+    <ConnectOwnEndpoint entry={entry} kind={kind} onConnected={onConnected} />
+  );
+}
+
 function keyArm(entry: CatalogEntry, onConnected: () => void) {
   const kind = keyKindOf(entry);
 
   return kind === undefined ? null : (
-    <ConnectKeyForm kind={kind} onConnected={onConnected} provider={entry.id} />
+    <ConnectKeyForm entry={entry} kind={kind} onConnected={onConnected} />
   );
 }
 
 /**
  * The one way a picked provider connects under the kind the catalog was opened for.
  *
- * @summary Reach for it once a person picks a provider out of the kind-locked catalog. The way
- * is already settled by the screen that opened the catalog, so the surface asks only for what
- * that way still needs rather than explaining the ways it was not asked for.
+ * @summary Reach for it once a person picks a provider out of the kind-locked catalog. The way is
+ * already settled by the screen that opened the catalog, so the surface asks only for what that
+ * way still needs. What it asks for follows the offer rather than the column: a coding plan stands
+ * among the subscriptions and asks for the token its plan issued, because no sign-in exists to
+ * offer it.
  */
 export function ProviderConnectWay({ entry, way, onConnected }: ProviderConnectWayProps) {
-  if (way === 'subscription') {
+  const offer = offerFor(entry, way);
+
+  if (offer === undefined) {
+    return null;
+  }
+
+  if (offer.takes === 'sign-in') {
     return signInArm(entry, onConnected);
   }
 
-  if (way === 'local') {
+  if (offer.takes === 'runtime') {
     return detectArm(entry, onConnected);
+  }
+
+  if (offer.takes === 'address') {
+    return ownAddressArm(entry, way, onConnected);
   }
 
   return keyArm(entry, onConnected);

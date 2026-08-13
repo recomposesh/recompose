@@ -1,140 +1,40 @@
 import type {
   CredentialedAccount,
   CredentialedAccountKind,
-  KeyProviderId,
   LocalRuntimeId,
-  RecognizedKeyShape,
   SubscriptionProviderId,
 } from '@recompose/contracts';
 
 import {
-  credentialedAccountKindSchema,
-  keyProviderIdSchema,
+  documentedKeyOpeningOf,
   localRuntimeIdSchema,
-  localRuntimes,
-  recognizedKeyShapeSchema,
   subscriptionProviderIdSchema,
+  vendorEndpointOf,
 } from '@recompose/contracts';
 
-import type { AccountKind } from '../../../entities/account';
 import type { BrandMarkName } from '../../../shared/ui';
-import type { CatalogLead } from './catalog-lead';
+import type { CatalogEntry, CatalogOffer, ConnectionWay } from './catalog-entries';
 
-import { runtimeHostOf } from './local-catalog';
+import { catalogEntries } from './catalog-entries';
 
-/** A way an account reaches a provider, which is every kind the registry holds one under. */
-export type ConnectionWay = AccountKind;
+export type { CatalogEntry, CatalogOffer, ConnectionWay, OfferTakes } from './catalog-entries';
+export { catalogEntries } from './catalog-entries';
 
-/** A provider identity the catalog offers a way to connect, which is narrower than the marks. */
-export type CatalogProviderId = 'anthropic' | 'openai' | 'openrouter' | 'ollama';
-
-export type CatalogOffer = {
-  way: ConnectionWay;
-  /** What the row reads as under this way, which is the product rather than the vendor. */
-  title: string;
-  /** One line saying what connecting this way gives. */
-  benefit: string;
-};
-
-export type CatalogEntry = {
-  /** The provider the entry stands for. */
-  id: CatalogProviderId;
-  /** The name the provider goes by on screen. */
-  name: string;
-  /** The mark or glyph the entry's cards lead with. */
-  lead: CatalogLead;
-  /** Every way this provider can be connected, in the order they are offered. */
-  offers: readonly CatalogOffer[];
-};
-
-/** The name each vendor recompose draws a mark for goes by on screen. */
-export const providerNames = {
-  anthropic: 'Anthropic',
-  cerebras: 'Cerebras',
-  deepinfra: 'DeepInfra',
-  deepseek: 'DeepSeek',
-  fireworks: 'Fireworks AI',
-  gemini: 'Gemini',
-  githubCopilot: 'GitHub Copilot',
-  grok: 'Grok',
-  groq: 'Groq',
-  kimi: 'Kimi',
-  lmstudio: 'LM Studio',
-  minimax: 'MiniMax',
-  mistral: 'Mistral',
-  moonshot: 'Moonshot AI',
-  ollama: localRuntimes.ollama.name,
-  openai: 'OpenAI',
-  openrouter: 'OpenRouter',
-  qwen: 'Qwen',
-  together: 'Together AI',
-  vllm: 'vLLM',
-  zhipu: 'Z.ai',
-} as const satisfies Record<BrandMarkName, string>;
+function entryFor(id: string): CatalogEntry | undefined {
+  return catalogEntries.find((entry) => entry.id === id);
+}
 
 /**
  * The name a provider goes by on screen.
  *
  * @summary Reach for it where a provider is read without a catalog row beside it, so a stored
- * account and the catalog it came from never disagree about what the provider is called.
+ * account and the catalog it came from never disagree about what the provider is called. A
+ * provider the catalog never named reads as the identity it was stored under, so a row that
+ * predates the catalog still says whose credential it holds rather than standing nameless.
  */
-export function providerName(id: BrandMarkName): string {
-  return providerNames[id];
+export function providerName(id: string): string {
+  return entryFor(id)?.name ?? id;
 }
-
-const keyHosts: Record<KeyProviderId, string> = {
-  anthropic: 'api.anthropic.com',
-  openai: 'api.openai.com',
-  gemini: 'generativelanguage.googleapis.com',
-  'gemini-interactions': 'generativelanguage.googleapis.com',
-};
-
-/**
- * Every provider the catalog offers, with the ways each one connects.
- *
- * @summary Reach for it from the catalog. A provider that both sells a plan and sells a key
- * stands under both ways, because the two yield different things and a person chooses between
- * them rather than being handed one. Each way carries its own title, because a plan reads as the
- * product a person pays for and a key reads as the endpoint it is spent against.
- */
-export const catalogEntries: readonly CatalogEntry[] = [
-  {
-    id: 'anthropic',
-    name: providerNames.anthropic,
-    lead: { mark: 'anthropic' },
-    offers: [
-      { way: 'subscription', title: 'Claude', benefit: 'Sign in with your Pro or Max plan' },
-      { way: 'api-key', title: 'Anthropic API', benefit: `${keyHosts.anthropic} with your key` },
-    ],
-  },
-  {
-    id: 'openai',
-    name: providerNames.openai,
-    lead: { mark: 'openai' },
-    offers: [
-      { way: 'subscription', title: 'Codex', benefit: 'Sign in with your ChatGPT plan' },
-      { way: 'api-key', title: 'OpenAI API', benefit: `${keyHosts.openai} with your key` },
-    ],
-  },
-  {
-    id: 'openrouter',
-    name: providerNames.openrouter,
-    lead: { mark: 'openrouter' },
-    offers: [{ way: 'aggregator', title: 'OpenRouter', benefit: 'One key, 300+ models' }],
-  },
-  {
-    id: 'ollama',
-    name: providerNames.ollama,
-    lead: { mark: 'ollama' },
-    offers: [
-      {
-        way: 'local',
-        title: providerNames.ollama,
-        benefit: `${runtimeHostOf('ollama')}, models on this machine`,
-      },
-    ],
-  },
-];
 
 /** The copy an entry's row reads as under one way, or nothing when the way is not offered. */
 export function offerFor(entry: CatalogEntry, way: ConnectionWay): CatalogOffer | undefined {
@@ -145,10 +45,12 @@ export function offerFor(entry: CatalogEntry, way: ConnectionWay): CatalogOffer 
  * The offer that hands over a secret, or nothing where the entry never asks for one.
  *
  * @summary Signing in and serving this machine both reach a provider without a stored secret, so
- * the ways that do are named here once instead of being guessed at by each caller.
+ * the ways that do are named here once instead of being guessed at by each caller. A coding plan
+ * hands over a secret while standing in the subscriptions column, so the question asked is what
+ * the offer takes rather than which column it stands in.
  */
 function keyOfferIn(entry: CatalogEntry): CatalogOffer | undefined {
-  return entry.offers.find((offer) => offer.way !== 'subscription' && offer.way !== 'local');
+  return entry.offers.find((offer) => offer.takes === 'key' || offer.takes === 'address');
 }
 
 /**
@@ -157,12 +59,12 @@ function keyOfferIn(entry: CatalogEntry): CatalogOffer | undefined {
  * @summary A person connected "Claude", so the row that lists the account keeps that word
  * rather than trading it for the vendor behind it.
  */
-export function subscriptionTitleFor(id: CatalogProviderId | SubscriptionProviderId): string {
+export function subscriptionTitleFor(id: string): string {
   if (id === 'antigravity') {
     return 'Gemini';
   }
 
-  const entry = catalogEntries.find((candidate) => candidate.id === id);
+  const entry = entryFor(id);
   const title = entry === undefined ? undefined : offerFor(entry, 'subscription')?.title;
 
   return title ?? providerName(id);
@@ -181,28 +83,23 @@ export function subscriptionMarkFor(id: SubscriptionProviderId): BrandMarkName {
  * row that predates the catalog still says whose key it holds rather than standing nameless.
  */
 export function keyTitleFor(provider: string): string {
-  const entry = catalogEntries.find((candidate) => candidate.id === provider);
+  const entry = entryFor(provider);
   const offer = entry === undefined ? undefined : keyOfferIn(entry);
 
   return offer?.title ?? provider;
 }
 
-const keyShapeHints: Record<RecognizedKeyShape, string> = {
-  anthropic: 'sk-ant-…',
-  openai: 'sk-proj-…',
-  openrouter: 'sk-or-v1-…',
-};
-
 /**
  * The shape a provider's keys are handed out in, or nothing where no shape is documented.
  *
  * @summary Reach for it where an empty key field wants a hint. The hint echoes the one documented
- * prefix family per vendor, so a person pasting recognizes at a glance which key belongs here.
+ * prefix family per vendor, so a person pasting recognizes at a glance which key belongs here. A
+ * vendor publishing no shape leaves the field unhinted rather than teaching one nobody promised.
  */
 export function keyShapeHintFor(provider: string): string | undefined {
-  const known = recognizedKeyShapeSchema.safeParse(provider);
+  const opening = documentedKeyOpeningOf(provider);
 
-  return known.success ? keyShapeHints[known.data] : undefined;
+  return opening === undefined ? undefined : `${opening}…`;
 }
 
 /**
@@ -210,17 +107,28 @@ export function keyShapeHintFor(provider: string): string | undefined {
  *
  * @summary Reach for it where a person is about to hand over a key, so the surface says which
  * host will hold it before it is stored. An aggregator reaches many hosts through one key, so it
- * names none of them rather than naming the wrong one.
+ * names none of them rather than naming the wrong one, and an address a person has yet to type
+ * names none either, because nothing knows it yet.
  */
-export function keyHostFor(provider: string): string | undefined {
-  const known = keyProviderIdSchema.safeParse(provider);
+function namesItsHost(offer: CatalogOffer | undefined): boolean {
+  return offer !== undefined && offer.way !== 'aggregator' && offer.takes !== 'address';
+}
 
-  return known.success ? keyHosts[known.data] : undefined;
+export function keyHostFor(provider: string): string | undefined {
+  const entry = entryFor(provider);
+
+  if (!namesItsHost(entry === undefined ? undefined : keyOfferIn(entry))) {
+    return undefined;
+  }
+
+  const origin = vendorEndpointOf(provider)?.origin;
+
+  return origin === undefined ? undefined : new URL(origin).host;
 }
 
 /** The mark a stored provider is drawn with, or nothing where the catalog draws a glyph. */
 export function markFor(provider: string): BrandMarkName | undefined {
-  const lead = catalogEntries.find((entry) => entry.id === provider)?.lead;
+  const lead = entryFor(provider)?.lead;
 
   return lead !== undefined && 'mark' in lead ? lead.mark : undefined;
 }
@@ -228,11 +136,18 @@ export function markFor(provider: string): BrandMarkName | undefined {
 /**
  * Whether a check can answer anything about a stored key.
  *
- * @summary The probe speaks two vendors' dialects, so a row under any other provider has nobody
- * to ask and offers no check rather than offering one that can only fail.
+ * @summary A check asks a vendor whether the key authenticates, so it needs an endpoint to ask
+ * and a header to ask with. The directory names both, so a key under a vendor it names offers a
+ * check, and a key under an address a person typed offers none, because nobody documented what
+ * lives there. An aggregator offers none whatever the directory holds, because its models list
+ * describes a catalog the vendor serves to anyone.
  */
 export function checkableKey(account: CredentialedAccount): boolean {
-  return account.kind === 'api-key' && keyProviderIdSchema.safeParse(account.provider).success;
+  return (
+    account.kind === 'api-key' &&
+    account.endpoint === undefined &&
+    vendorEndpointOf(account.provider) !== undefined
+  );
 }
 
 /** The entries that offer one way, in catalog order, which is what a kind-locked list holds. */
@@ -246,33 +161,41 @@ export function offeredUnder(
 /**
  * The provider identity an entry would sign in under, or nothing when it never signs in.
  *
- * @summary An entry offering the subscription way is a claim that its identity is one the
+ * @summary An entry whose offer takes a sign-in is a claim that its identity is one the
  * subscription contract knows, so the claim is checked here rather than trusted downstream.
  */
 export function signInProviderOf(entry: CatalogEntry): SubscriptionProviderId | undefined {
-  return offerFor(entry, 'subscription') === undefined
-    ? undefined
-    : subscriptionProviderIdSchema.parse(entry.id);
+  const signsIn = entry.offers.some((offer) => offer.takes === 'sign-in');
+
+  return signsIn ? subscriptionProviderIdSchema.parse(entry.id) : undefined;
 }
 
 /**
  * The runtime an entry would be detected and stored as, or nothing when it reaches off the machine.
  *
- * @summary An entry offering the local way is a claim that its identity is one the local-runtimes
- * contract knows an address for, so the claim is checked here rather than trusted downstream.
+ * @summary An entry whose offer takes a runtime is a claim that its identity is one the
+ * local-runtimes contract knows an address for, so the claim is checked here rather than trusted.
  */
 export function localRuntimeOf(entry: CatalogEntry): LocalRuntimeId | undefined {
-  return offerFor(entry, 'local') === undefined ? undefined : localRuntimeIdSchema.parse(entry.id);
+  const detected = entry.offers.some((offer) => offer.takes === 'runtime');
+
+  return detected ? localRuntimeIdSchema.parse(entry.id) : undefined;
 }
 
 /**
  * The kind an entry's key would be held under, or nothing when it hands over no secret.
  *
- * @summary The catalog's ways that hand over a secret are kept apart by kind in the registry, so
- * the claim is checked against the kinds that admit a secret rather than assumed.
+ * @summary An aggregator's one key reaches many models, and every other secret reaches one
+ * vendor, so the column the row stood in decides the kind. A coding plan stands among the
+ * subscriptions and holds a key, which is why the answer follows the offer rather than the column
+ * alone.
  */
 export function keyKindOf(entry: CatalogEntry): CredentialedAccountKind | undefined {
   const offer = keyOfferIn(entry);
 
-  return offer === undefined ? undefined : credentialedAccountKindSchema.parse(offer.way);
+  if (offer === undefined) {
+    return undefined;
+  }
+
+  return offer.way === 'aggregator' ? 'aggregator' : 'api-key';
 }

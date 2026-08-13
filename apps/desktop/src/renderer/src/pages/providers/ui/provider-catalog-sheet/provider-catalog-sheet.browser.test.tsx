@@ -104,16 +104,17 @@ test('a subscription row reads as the plan product and what signing in gives', a
     .toHaveTextContent('Sign in with your Pro or Max plan');
 });
 
-test('the plans the release does not connect yet stand disabled rather than hidden', async () => {
+test('every plan the subscriptions catalog holds connects', async () => {
   installFakeBridge({ tools: [claudeCode] });
 
   const screen = await renderCatalog('subscription');
 
-  const copilot = screen.getByRole('button', { name: /GitHub Copilot/ });
+  for (const named of [/GitHub Copilot/, /Kimi Code/, /GLM Coding Plan/, /MiniMax Coding Plan/]) {
+    const entry = screen.getByRole('button', { name: named });
 
-  await expect.element(copilot).toBeVisible();
-  await expect.element(copilot).toHaveAttribute('aria-disabled', 'true');
-  await expect.element(copilot.getByText('Soon')).toBeVisible();
+    await expect.element(entry).toBeVisible();
+    await expect.element(entry).not.toHaveAttribute('aria-disabled');
+  }
 });
 
 test('the keys screen catalog reads each row as the endpoint the key is spent against', async () => {
@@ -128,60 +129,16 @@ test('the keys screen catalog reads each row as the endpoint the key is spent ag
     .not.toBeInTheDocument();
 });
 
-test('the keys catalog stands the seven it cannot connect yet inert under a Soon badge', async () => {
-  installFakeBridge({ tools: [claudeCode] });
-
-  const screen = await renderCatalog('api-key');
-
-  const awaited = [
-    'Gemini API',
-    'Mistral',
-    'xAI Grok',
-    'DeepSeek',
-    'Moonshot AI',
-    'Qwen',
-    'Custom',
-  ];
-
-  for (const name of awaited) {
-    const entry = screen.getByRole('button', { name: new RegExp(name) });
-
-    await expect.element(entry).toHaveAttribute('aria-disabled', 'true');
-    await expect.element(entry.getByText('Soon')).toBeVisible();
-  }
-
-  await expect
-    .element(screen.getByRole('button', { name: /Anthropic API/ }))
-    .not.toHaveAttribute('aria-disabled');
-});
-
-test('an inert key entry opens nothing, by pointer or by keyboard', async () => {
-  installFakeBridge({ tools: [claudeCode] });
-
-  const screen = await renderCatalog('api-key');
-
-  screen
-    .getByRole('button', { name: /Gemini API/ })
-    .element()
-    .dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-  await press(/Gemini API/);
-
-  await expect.element(screen.getByLabelText('Key')).not.toBeInTheDocument();
-  await expect.element(screen.getByRole('button', { name: /Anthropic API/ })).toBeVisible();
-});
-
-test('the local screen catalog leads with the runtime that connects, then the ones that follow', async () => {
+test('every runtime the local catalog holds connects', async () => {
   installFakeBridge({ tools: [claudeCode] });
 
   const screen = await renderCatalog('local');
 
-  await expect
-    .element(screen.getByRole('button', { name: /^Ollama/ }))
-    .not.toHaveAttribute('aria-disabled');
-  await expect
-    .element(screen.getByRole('button', { name: /LM Studio/ }))
-    .toHaveAttribute('aria-disabled', 'true');
+  for (const named of [/^Ollama/, /LM Studio/, /llama\.cpp/, /vLLM/, /Custom local server/]) {
+    await expect
+      .element(screen.getByRole('button', { name: named }))
+      .not.toHaveAttribute('aria-disabled');
+  }
 });
 
 test('the local catalog says what it offers in its own sentence', async () => {

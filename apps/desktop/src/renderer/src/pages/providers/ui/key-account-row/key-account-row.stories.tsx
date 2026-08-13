@@ -26,7 +26,7 @@ const storedBeforeTheMask: CredentialedAccount = {
 
 const storedUnderAnUnknownProvider: CredentialedAccount = {
   id: 'a3',
-  provider: 'mistral',
+  provider: 'a-plugin-vendor',
   kind: 'api-key',
   label: 'scratch',
   credentialRef: 'c3',
@@ -116,7 +116,7 @@ export const UnknownProvider = meta.story({
     },
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('mistral')).toBeVisible();
+    await expect(await canvas.findByText('a-plugin-vendor')).toBeVisible();
 
     await userEvent.click(await canvas.findByRole('button', { name: 'Actions for scratch' }));
 

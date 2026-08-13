@@ -67,12 +67,12 @@ On authorization the app MUST record who signed in, so the row names an account 
 
 ### Requirement: Adding a provider opens the catalog
 
-The Subscriptions surface MUST open a catalog holding every plan the app connects. The plans are Claude, Codex, Gemini, GitHub Copilot, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
+The Subscriptions surface MUST open a catalog holding Claude, Codex, GitHub Copilot, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
 
 #### Scenario: a person opens the subscriptions catalog
 
 - When a person opens the catalog from the Subscriptions surface
-- Then it lists every plan the app connects
+- Then it lists seven plans
 - And every entry answers a pointer and a keyboard
 
 ### Requirement: Picking a provider offers the one way the surface holds

@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react';
 
 import type { AccountKind } from '../../../../entities/account';
-import type { AwaitedProvider } from '../../model/awaited-providers';
 import type { CatalogLead } from '../../model/catalog-lead';
 import type { CatalogEntry, ConnectionWay } from '../../model/provider-catalog';
 
-import { Badge, BrandMark, Icon } from '../../../../shared/ui';
-import { awaitedFor } from '../../model/awaited-providers';
+import { BrandMark, Icon } from '../../../../shared/ui';
 import { catalogEntries, offerFor, offeredUnder } from '../../model/provider-catalog';
 
 type CatalogListProps = {
@@ -20,14 +18,6 @@ function connectableLead(lead: CatalogLead): ReactNode {
     <BrandMark name={lead.mark} />
   ) : (
     <Icon className="size-4.5 text-ink-secondary" name={lead.glyph} />
-  );
-}
-
-function awaitedLead(lead: CatalogLead): ReactNode {
-  return 'mark' in lead ? (
-    <BrandMark className="size-5 text-ink-tertiary" name={lead.mark} variant="mono" />
-  ) : (
-    <Icon className="size-4.5 text-ink-tertiary" name={lead.glyph} />
   );
 }
 
@@ -71,36 +61,12 @@ function connectableCards(
   });
 }
 
-function awaitedCards(awaited: readonly AwaitedProvider[]): readonly ReactNode[] {
-  return awaited.map((provider) => (
-    <button
-      aria-disabled
-      className="relative flex items-center gap-2.5 rounded-card border border-line-subtle bg-surface-card p-3 text-start focus-ring-wide"
-      key={provider.name}
-      type="button"
-    >
-      {cardBody(awaitedLead(provider.lead), provider.name, provider.benefit)}
-      <span className="absolute inset-e-2 top-2">
-        <Badge>Soon</Badge>
-      </span>
-    </button>
-  ));
-}
-
 /**
- * The providers the screen's kind can connect to, as cards, with the ones that follow later.
+ * The providers the screen's kind can connect to, as cards.
  *
  * @summary Reach for it from the catalog. The grid holds one kind because the screen that opened
- * it holds one kind, and every kind reads the same way: the providers that connect today, then the
- * ones a Soon badge stands over, so the catalog says what it grows toward rather than hiding it.
- * Inertness reads through the badge and the quieter mark rather than by dimming a card, which
- * would fade the badge along with it.
+ * it holds one kind, and every card in it connects, so nothing on the surface stands inert.
  */
 export function CatalogList({ kind, onPick }: CatalogListProps) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {connectableCards(kind, onPick)}
-      {awaitedCards(awaitedFor(kind))}
-    </div>
-  );
+  return <div className="grid grid-cols-2 gap-2">{connectableCards(kind, onPick)}</div>;
 }

@@ -1,11 +1,6 @@
-import type {
-  AccountsDocument,
-  LocalProviderId,
-  LocalRuntimeId,
-  RuntimeReachability,
-} from '@recompose/contracts';
+import type { AccountsDocument, LocalProviderId, RuntimeReachability } from '@recompose/contracts';
 
-import { localRuntimes, runtimeAddressFor } from '@recompose/contracts';
+import { localRuntimes, loopbackAddressAt, runtimeAddressFor } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
 
 import type { IpcHandlers } from './dispatch';
@@ -38,39 +33,85 @@ function runtimesStandingIn(accounts: AccountsDocument): Set<LocalProviderId> {
   return standing;
 }
 
+/**
+ * The loopback address a look aims at, or a stored row holds, for whichever server was named.
+ *
+ * @summary A documented runtime mints from its own table row, defaulting to the port its project
+ * publishes. A server a person addressed themselves has no row to mint from, so the port they gave
+ * is the whole of it, and its absence falls back to the one port no documented runtime claims.
+ */
+function addressOf(provider: LocalProviderId, port: number | undefined): string {
+  if (provider !== 'custom') {
+    return runtimeAddressFor(provider, port);
+  }
+
+  if (port === undefined) {
+    throw new Error('a server nobody documents reached the handler without naming its own port');
+  }
+
+  return loopbackAddressAt(port);
+}
+
 function withTheRuntimeAppended(
   accounts: AccountsDocument,
-  runtime: LocalRuntimeId,
+  runtime: LocalProviderId,
   id: string,
   address: string,
+  label: string | undefined,
 ): AccountsDocument {
+  const row = { id, provider: runtime, kind: 'local' as const, address };
+
   return {
     ...accounts,
-    accounts: [...accounts.accounts, { id, provider: runtime, kind: 'local', address }],
+    accounts: [...accounts.accounts, label === undefined ? row : { ...row, label }],
   };
+}
+
+/**
+ * Whether this server already stands as a row, which decides whether a second one may join it.
+ *
+ * @summary A documented runtime stands once, because its row is the runtime and a second row would
+ * name the same server twice. A server a person addressed themselves stands once per address, so a
+ * person running two on different ports gets two rows.
+ */
+function alreadyStanding(
+  accounts: AccountsDocument,
+  runtime: LocalProviderId,
+  address: string,
+): boolean {
+  if (runtime !== 'custom') {
+    return runtimesStandingIn(accounts).has(runtime);
+  }
+
+  return accounts.accounts.some((held) => held.kind === 'local' && held.address === address);
+}
+
+function alreadyStandingRefusal(runtime: LocalProviderId, address: string): string {
+  return runtime === 'custom'
+    ? `A local server is already connected at ${address}. Remove the row to point it somewhere else.`
+    : `${localRuntimes[runtime].name} is already connected. Remove the row to point it at another port.`;
 }
 
 async function connectRuntime(
   ctx: LocalRuntimesIpcContext,
-  runtime: LocalRuntimeId,
+  runtime: LocalProviderId,
   port: number | undefined,
+  label: string | undefined,
 ) {
   const paths = storagePathsFor(ctx.userDataPath);
   const minted = `acc-${randomUUID()}`;
+  const address = addressOf(runtime, port);
 
   try {
     const amended = await amendAccountsFile(paths.accountsFile, ctx.onCorrupt, (fresh) =>
-      runtimesStandingIn(fresh).has(runtime)
+      alreadyStanding(fresh, runtime, address)
         ? fresh
-        : withTheRuntimeAppended(fresh, runtime, minted, runtimeAddressFor(runtime, port)),
+        : withTheRuntimeAppended(fresh, runtime, minted, address, label),
     );
 
     return amended.accounts.some((held) => held.id === minted)
       ? { ok: true as const, value: amended }
-      : ipcFailure(
-          'name-conflict',
-          `${localRuntimes[runtime].name} is already connected. Remove the row to point it at another port.`,
-        );
+      : ipcFailure('name-conflict', alreadyStandingRefusal(runtime, address));
   } catch (error) {
     return storageFailure(error, ctx.homeFolder);
   }
@@ -109,9 +150,10 @@ export function createLocalRuntimesIpcHandlers(
   return {
     'accounts:detect-runtime': async ({ runtime, port }) => ({
       ok: true as const,
-      value: await ctx.probeRuntime(runtimeAddressFor(runtime, port), runtime),
+      value: await ctx.probeRuntime(addressOf(runtime, port), runtime),
     }),
     'accounts:check-runtime': async ({ id }) => checkStoredRuntime(ctx, id),
-    'accounts:connect-local': async ({ runtime, port }) => connectRuntime(ctx, runtime, port),
+    'accounts:connect-local': async ({ runtime, port, label }) =>
+      connectRuntime(ctx, runtime, port, label),
   };
 }

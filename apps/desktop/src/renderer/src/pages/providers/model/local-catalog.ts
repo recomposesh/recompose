@@ -1,14 +1,9 @@
-import type { LocalProviderId, LocalRuntimeId } from '@recompose/contracts';
+import type { LocalProviderId } from '@recompose/contracts';
 
 import { localRuntimes } from '@recompose/contracts';
 
 import type { BrandMarkName } from '../../../shared/ui';
 import type { CatalogLead } from './catalog-lead';
-
-/** The host a runtime documents itself at, which is what a catalog row reads as its line. */
-export function runtimeHostOf(runtime: LocalRuntimeId): string {
-  return new URL(localRuntimes[runtime].address).host;
-}
 
 const runtimeMarks: Partial<Record<LocalProviderId, BrandMarkName>> = {
   ollama: 'ollama',

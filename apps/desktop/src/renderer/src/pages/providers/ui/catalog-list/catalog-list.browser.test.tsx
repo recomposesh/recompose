@@ -37,47 +37,65 @@ test('the runtime this machine can serve answers a pick like any other card', as
   expect(picked.map((entry) => entry.id)).toEqual(['ollama']);
 });
 
-test('a hosted catalog nothing connects yet stands beside the one that does', async () => {
+test('every hosted catalog stands beside the one that shipped first, and all of them connect', async () => {
   const { screen } = picksMadeOn('aggregator');
 
   const resolved = await screen;
 
-  await expect.element(resolved.getByRole('button', { name: /^OpenRouter/ })).toBeVisible();
-  await expect
-    .element(resolved.getByRole('button', { name: /Together AI/ }))
-    .toHaveAttribute('aria-disabled', 'true');
+  for (const named of [/^OpenRouter/, /Together AI/, /Cerebras/, /Custom aggregator/]) {
+    await expect.element(resolved.getByRole('button', { name: named })).toBeVisible();
+    await expect
+      .element(resolved.getByRole('button', { name: named }))
+      .not.toHaveAttribute('aria-disabled');
+  }
 });
 
-test('a card standing under a Soon badge answers neither a pointer nor the keyboard', async () => {
+test('a card that once stood inert now answers a pointer', async () => {
   const { picked, screen } = picksMadeOn('aggregator');
 
-  const soon = (await screen).getByRole('button', { name: /Cerebras/ }).element();
+  await (await screen).getByRole('button', { name: /Cerebras/ }).click();
 
-  if (!(soon instanceof HTMLElement)) {
-    throw new Error('the Soon card is not an element that can be pressed');
-  }
-
-  soon.click();
-  soon.focus();
-  await userEvent.keyboard('{Enter}');
-  await userEvent.keyboard(' ');
-
-  expect(picked).toEqual([]);
+  expect(picked.map((entry) => entry.id)).toEqual(['cerebras']);
 });
 
-test('a Soon card stays at full strength, so its badge reads as loudly as any other', async () => {
+test('a card that once stood inert now answers the keyboard as well', async () => {
+  const { picked, screen } = picksMadeOn('aggregator');
+
+  const card = (await screen).getByRole('button', { name: /Cerebras/ }).element();
+
+  if (!(card instanceof HTMLElement)) {
+    throw new Error('the card is not an element that can be pressed');
+  }
+
+  card.focus();
+  await userEvent.keyboard('{Enter}');
+
+  expect(picked.map((entry) => entry.id)).toEqual(['cerebras']);
+});
+
+test('nothing on the surface stands under a Soon badge any more', async () => {
+  for (const kind of ['subscription', 'api-key', 'aggregator', 'local'] as const) {
+    const { screen } = picksMadeOn(kind);
+    const resolved = await screen;
+
+    expect(resolved.container.textContent, kind).not.toContain('Soon');
+    expect(resolved.container.querySelector('[aria-disabled]'), kind).toBeNull();
+  }
+});
+
+test('every card stays at full strength, so none reads as inert', async () => {
   const { screen } = picksMadeOn('local');
 
-  const soon = (await screen).getByRole('button', { name: /Custom local server/ }).element();
+  const card = (await screen).getByRole('button', { name: /Custom local server/ }).element();
 
-  expect(getComputedStyle(soon).opacity).toBe('1');
+  expect(getComputedStyle(card).opacity).toBe('1');
 
-  for (const part of soon.querySelectorAll('*')) {
+  for (const part of card.querySelectorAll('*')) {
     expect(getComputedStyle(part).opacity).toBe('1');
   }
 });
 
-test('a Soon vendor draws its own mark rather than a shared glyph', async () => {
+test('a vendor draws its own mark rather than the glyph a category stands under', async () => {
   const { screen } = picksMadeOn('local');
 
   const withAMark = (await screen).getByRole('button', { name: /LM Studio/ }).element();
