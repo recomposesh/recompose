@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 976**
-- **Covered: 784**
+- **Total upstream tests: 979**
+- **Covered: 787**
 - **N/A: 190**
 - **Gap: 2**
-- **Exact identities mapped: 976/976**
+- **Exact identities mapped: 979/979**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **976** | **784** | **190** | **2** |
+| **Total**          | **979** | **787** | **190** | **2** |
 
 ## Exact row mapping
 
@@ -1017,6 +1017,9 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 974 | `TestClaudeExecutor_CacheTTLIsPairedWithExtendedCacheTTLBeta`                                                                                             | caching            | Claude             | Covered | `claude-betas.ts` pushes `extended-cache-ttl-2025-04-11` on every subscription request, so a one-hour marker can never travel without the beta that admits it. This also holds for the markers `upgradedClaudeCacheTtls` raises in this same resync.                                                                                                                                                                                                                                                                                                                                     |
 | 975 | `TestOpenAICompatExecutorUsesCompatibleClaudeTranslation`                                                                                                 | translation        | OpenAI compatible  | Covered | `gateway-outbound-body.ts` turns `crossing.isCompat` into `preserveIncompatibleReasoning`, so a compatible crossing takes the compat translation rather than the strict one.                                                                                                                                                                                                                                                                                                                                                                                                             |
 | 976 | `TestXAIExecutorPrepareNormalizesClaudeWebSearchToolChoice`                                                                                               | tools              | xAI                | Covered | `requiredWebSearchChoice` rewrites a Claude `web_search` choice into the xAI `allowed_tools` shape at `required` mode, and `normalizedWebSearch` normalizes the tool beside it.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 977 | `TestClaudePayloadHasMidSystemMessage`                                                                                                                    | system prompt      | Claude             | Covered | `rebuiltMidSystem` finds every `role: system` message through `isSystemMessage`, lifts its text parts into `body.system` with `midSystemParts`, and drops those messages from the turn list. That detection is what the row asks for.                                                                                                                                                                                                                                                                                                                                                    |
+| 978 | `TestClaudeExecutor_LegacyMidSystemMessageRejectedOnEveryUpstreamPath`                                                                                    | system prompt      | Claude             | Covered | `rebuiltMidSystem` finds every `role: system` message through `isSystemMessage`, lifts its text parts into `body.system` with `midSystemParts`, and drops those messages from the turn list. Recompose reaches the same end by a different route: it rebuilds rather than rejects, so no upstream path can receive a mid-conversation system message on a legacy model, and no request has to fail for it.                                                                                                                                                                               |
+| 979 | `TestClaudeExecutor_LegacyMidSystemMessageForwardedToThirdPartyGateway`                                                                                   | system prompt      | Claude             | Covered | The policy runs on the Claude subscription path in `claude-request.ts`. A third-party Claude-compatible gateway is an API-key provider reached through `credentialed-target.ts`, which never applies it, so the caller's message rides through untouched.                                                                                                                                                                                                                                                                                                                                |
 
 ## N/A boundary
 
