@@ -9,11 +9,11 @@ reconciliations.
 
 ## Durable accounting
 
-- **Total upstream tests: 924**
-- **Covered: 765**
-- **N/A: 159**
+- **Total upstream tests: 927**
+- **Covered: 766**
+- **N/A: 161**
 - **Gap: 0**
-- **Exact identities mapped: 924/924**
+- **Exact identities mapped: 927/927**
 - **Missing: 0; extra: 0; duplicate mappings: 0**
 
 The root Go package contains 698 tests. The nested `executor/helps` Go package contains 172. The
@@ -35,7 +35,7 @@ assignment to OpenAI compat yields 698 unique root rows.
 | OpenAI compat      |      23 |      20 |       3 |     0 |
 | Residual           |       7 |       5 |       2 |     0 |
 | Executor helps     |     172 |      89 |      83 |     0 |
-| **Total**          | **924** | **765** | **159** | **0** |
+| **Total**          | **927** | **766** | **161** | **0** |
 
 ## Exact row mapping
 
@@ -965,6 +965,9 @@ assignment to OpenAI compat yields 698 unique root rows.
 | 922 | `TestXAIStatusErr_BadCredentialsNestedErrorCode`                                                                                                          | status           | xAI                | Covered | `withXaiRetryAfter` sends a 403 through `asUnauthorized`, which reads the body and rewrites the status to 401 only when `namesXaiBadCredentials` matches. The match runs over the whole lowered body text against `BAD_CREDENTIAL_SIGNATURES`, which holds the `bad-credentials` code beside the `access token could not be validated` message, so either form is recognised wherever it sits in the payload.                                                      |
 | 923 | `TestXAIStatusErr_EmptyBodyForbiddenUnchanged`                                                                                                            | status           | xAI                | Covered | No signature matches, so `asUnauthorized` returns the original response and the 403 stands. An empty body matches nothing.                                                                                                                                                                                                                                                                                                                                         |
 | 924 | `TestXAIStatusErr_Generic403Unchanged`                                                                                                                    | status           | xAI                | Covered | No signature matches, so `asUnauthorized` returns the original response and the 403 stands.                                                                                                                                                                                                                                                                                                                                                                        |
+| 925 | `TestShouldEnsureCacheControl`                                                                                                                            | caching          | Claude             | N/A     | Both branches read `cloaked` and `confirmedClaudeCode`. Recompose wires neither: the Claude path wears one fixed `CLAUDE_CODE_220_PROFILE`, and `resolveClaudeWirePolicy` computes a `cloak` flag that no production caller reads. There is no cloaked mode for a marker rule or a rolling breakpoint to behave differently in.                                                                                                                                    |
+| 926 | `TestClaudeExecutorCloakedRollingCacheBreakpointAdvances`                                                                                                 | caching          | Claude             | N/A     | Both branches read `cloaked` and `confirmedClaudeCode`. Recompose wires neither: the Claude path wears one fixed `CLAUDE_CODE_220_PROFILE`, and `resolveClaudeWirePolicy` computes a `cloak` flag that no production caller reads. There is no cloaked mode for a marker rule or a rolling breakpoint to behave differently in.                                                                                                                                    |
+| 927 | `TestUpgradeClaudeCacheControlTTL`                                                                                                                        | caching          | Claude             | Covered | Closed here. `isOneHourControl` only read `ttl` and `normalizeCacheTtls` only deleted it, which is the downgrade half rows 233 to 235 cover, so nothing raised a marker and Claude traffic kept the shorter window where upstream extends it. `upgradedClaudeCacheTtls` now raises every marker the caller already carries and hands one to no block that carried none, pinned by `claude-cache-ttl-parity.test.ts`.                                               |
 
 ## N/A boundary
 
