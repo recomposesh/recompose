@@ -7,6 +7,7 @@ import type {
 
 import type { CopilotSignInPort } from '../subscriptions/copilot-sign-in';
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
+import type { MachineReach } from '../subscriptions/machine-store';
 import type { SignInLaunch } from '../subscriptions/sign-in-launch';
 import type { SubscriptionHomes } from '../subscriptions/subscription-homes';
 import type { Clock } from '../subscriptions/subscription-sign-in';
@@ -23,6 +24,8 @@ export type SubscriptionsIpcContext = {
   platform: NodeJS.Platform;
   /** Only macOS keeps the Claude Code credential outside the config home, so elsewhere this is absent. */
   custody: CredentialCustody | null;
+  /** How every reader reaches the stores the providers' own tools wrote. */
+  machine: MachineReach;
   searchPath: () => Promise<string>;
   launch: SignInLaunch;
   clock: () => Clock;
@@ -62,7 +65,10 @@ export async function viewsOf(
   shop: Workshop,
   accounts: AccountsDocument,
 ): Promise<SubscriptionAccountView[]> {
-  return subscriptionViews({ homes: shop.homes, custody: shop.ctx.custody }, accounts);
+  return subscriptionViews(
+    { homes: shop.homes, custody: shop.ctx.custody, machine: shop.ctx.machine },
+    accounts,
+  );
 }
 
 export async function toolPresent(

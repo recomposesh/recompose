@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { rm } from 'node:fs/promises';
 
-import { Given, Then, When } from '../fixtures';
+import { Given, test, Then, When } from '../fixtures';
 import { catalog, openProviderWays, toolNameFor } from '../provider-screen';
 import { focusedProvider, focusProvider } from '../scenario-memory';
 import {
@@ -41,9 +41,23 @@ Given(
   },
 );
 
+/**
+ * @summary Only macOS keeps a vendor credential outside the config home, so a machine without one
+ * has no second store for these scenarios to stand a record in. Every other machine reads the file,
+ * which the scenarios beside these already cover.
+ */
+function onlyWhereACredentialStoreStands(): void {
+  test.skip(
+    process.platform !== 'darwin',
+    'this machine keeps vendor credentials in files, so it holds no credential store to open',
+  );
+}
+
 Given(
   'the operating system refuses to open the credential store',
   async ({ page, subscriptionTools }) => {
+    onlyWhereACredentialStoreStands();
+
     await theMachineHoldsFor(page, subscriptionTools, { provider: 'anthropic' });
     await subscriptionTools.keychainRefusesToOpen();
   },
@@ -86,6 +100,8 @@ Given('the credential it left has since lapsed', async ({ page, subscriptionTool
 Given(
   'the machine holds the {string} account in two stores that disagree',
   async ({ page, subscriptionTools }, provider: string) => {
+    onlyWhereACredentialStoreStands();
+
     await theMachineHolds(subscriptionTools, {
       provider,
       signedInAs: STALE_ADDRESS,
@@ -104,6 +120,8 @@ Given(
 Given(
   'it keeps its credential in the operating system keyring rather than the file',
   async ({ page, subscriptionTools }) => {
+    onlyWhereACredentialStoreStands();
+
     const login = machineLoginHeld(page);
 
     await rm(machineRecordFile(subscriptionTools, login.provider), { force: true });
@@ -114,6 +132,8 @@ Given(
 Given(
   'the operating system asks before the credential store opens',
   async ({ page, subscriptionTools }) => {
+    onlyWhereACredentialStoreStands();
+
     await theMachineHoldsFor(page, subscriptionTools, { provider: 'anthropic', store: 'keychain' });
   },
 );

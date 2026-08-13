@@ -23,12 +23,10 @@ async function theMachineHolds(blob: string): Promise<void> {
 function aReader(over: Partial<AdoptedCredentialDeps> = {}) {
   const runs: string[] = [];
   const deps: AdoptedCredentialDeps = {
-    homeFolder,
-    platform: 'linux',
-    custody: null,
-    toolPresent: async () => Promise.resolve(true),
-    runTool: async (binary) => {
-      runs.push(binary);
+    reach: { homeFolder, platform: 'linux', custody: null, keyringHolds: null },
+    toolFile: async () => Promise.resolve('/usr/local/bin/claude'),
+    runTool: async (binary, args) => {
+      runs.push([binary, ...args].join(' '));
 
       return Promise.resolve();
     },
@@ -79,7 +77,28 @@ describe('renewing through the tool that owns the credential', () => {
 
     await read('anthropic');
 
-    expect(runs).toEqual(['claude']);
+    expect(runs).toEqual(['/usr/local/bin/claude auth status']);
+  });
+
+  test('given a provider whose tool names no headless run, nothing is spawned', async () => {
+    await mkdir(join(homeFolder, '.codex'), { recursive: true });
+    await writeFile(
+      join(homeFolder, '.codex', 'auth.json'),
+      JSON.stringify({
+        tokens: {
+          access_token: `header.${Buffer.from(
+            JSON.stringify({ exp: Math.floor((NOW + 1_000) / 1000) }),
+          ).toString('base64url')}.signature`,
+        },
+      }),
+      'utf8',
+    );
+
+    const { read, runs } = aReader();
+
+    await read('openai');
+
+    expect(runs).toEqual([]);
   });
 
   test('given the tool renewed it, the turn serves what the tool left behind', async () => {
@@ -97,7 +116,7 @@ describe('renewing through the tool that owns the credential', () => {
     const standing = aClaudeLoginExpiring(NOW + 1_000);
 
     await theMachineHolds(standing);
-    const { read, runs } = aReader({ toolPresent: async () => Promise.resolve(false) });
+    const { read, runs } = aReader({ toolFile: async () => Promise.resolve(null) });
 
     await expect(read('anthropic')).resolves.toBe(standing);
     expect(runs).toEqual([]);

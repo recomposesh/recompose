@@ -10,10 +10,10 @@ function aTool(over: Partial<RenewalRun> = {}) {
   return {
     runs,
     run: {
-      present: async () => Promise.resolve(true),
+      toolFile: async () => Promise.resolve('/usr/local/bin/claude'),
       stale: async () => Promise.resolve(runs.length === 0),
-      renew: async (binary: string) => {
-        runs.push(binary);
+      renew: async (binary: string, args: readonly string[]) => {
+        runs.push([binary, ...args].join(' '));
 
         return Promise.resolve();
       },
@@ -27,7 +27,7 @@ describe('renewing a credential the provider tool owns', () => {
     const { run, runs } = aTool();
 
     await expect(delegatedRenewal('anthropic', run)).resolves.toEqual({ verdict: 'renewed' });
-    expect(runs).toEqual(['claude']);
+    expect(runs).toEqual(['/usr/local/bin/claude auth status']);
   });
 
   test('given two asks at once, the tool runs once and both hear the same answer', async () => {
@@ -40,21 +40,12 @@ describe('renewing a credential the provider tool owns', () => {
     expect([first, second]).toEqual([{ verdict: 'renewed' }, { verdict: 'renewed' }]);
   });
 
-  test('given two providers, each keeps a lane of its own', async () => {
-    const runs: string[] = [];
-    const run: RenewalRun = {
-      present: async () => Promise.resolve(true),
-      stale: async () => Promise.resolve(true),
-      renew: async (binary: string) => {
-        runs.push(binary);
+  test('given the tool renews behind a named run, that run is the one spawned', async () => {
+    const { run, runs } = aTool();
 
-        return Promise.resolve();
-      },
-    };
+    await delegatedRenewal('anthropic', run);
 
-    await Promise.all([delegatedRenewal('anthropic', run), delegatedRenewal('openai', run)]);
-
-    expect(runs.sort()).toEqual(['claude', 'codex']);
+    expect(runs).toEqual(['/usr/local/bin/claude auth status']);
   });
 
   test('given the store already freshened, the tool is never run again', async () => {
@@ -67,7 +58,7 @@ describe('renewing a credential the provider tool owns', () => {
 
 describe('a renewal that cannot happen', () => {
   test('given the tool is gone, the run reports it rather than pretending', async () => {
-    const { run, runs } = aTool({ present: async () => Promise.resolve(false) });
+    const { run, runs } = aTool({ toolFile: async () => Promise.resolve(null) });
 
     await expect(delegatedRenewal('anthropic', run)).resolves.toEqual({ verdict: 'tool-missing' });
     expect(runs).toEqual([]);
@@ -86,7 +77,7 @@ describe('a renewal that cannot happen', () => {
   test('given a run that fails, a later ask still tries again rather than staying poisoned', async () => {
     let attempts = 0;
     const run: RenewalRun = {
-      present: async () => Promise.resolve(true),
+      toolFile: async () => Promise.resolve('/usr/local/bin/claude'),
       stale: async () => Promise.resolve(true),
       renew: async () => {
         attempts += 1;
@@ -95,8 +86,17 @@ describe('a renewal that cannot happen', () => {
       },
     };
 
-    await delegatedRenewal('openai', run);
+    await delegatedRenewal('anthropic', run);
 
-    await expect(delegatedRenewal('openai', run)).resolves.toEqual({ verdict: 'renewed' });
+    await expect(delegatedRenewal('anthropic', run)).resolves.toEqual({ verdict: 'renewed' });
+  });
+
+  test('given a tool that names no run, the outcome says so and nothing is spawned', async () => {
+    const { run, runs } = aTool();
+
+    await expect(delegatedRenewal('openai', run)).resolves.toEqual({
+      verdict: 'no-headless-run',
+    });
+    expect(runs).toEqual([]);
   });
 });

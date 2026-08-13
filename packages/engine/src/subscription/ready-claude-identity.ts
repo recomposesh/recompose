@@ -12,6 +12,7 @@ type ReadyCredential = {
 type SubscriptionSpend = {
   provider: SubscriptionProviderId;
   accountId: string;
+  renewal?: 'app' | 'owning-tool';
   transportPolicy?: AccountTransportPolicy | undefined;
 };
 
@@ -43,6 +44,12 @@ function claudeIdentityOf(credential: ReadyCredential['credential']): ClaudeIden
     : { accountUuid: credential.accountUuid, deviceId };
 }
 
+/**
+ * @summary Claude wants an account and a device named in the credential it is handed, and the app
+ * mints them where the record carries none. Keeping the stamped credential is only the app's to do
+ * for a home it owns alone. An adopted credential belongs to the tool that wrote it, so the stamp
+ * rides the turn and nothing writes it back, which is what keeps the app from holding a copy.
+ */
 async function initializeClaudeIdentity(
   spend: SubscriptionSpend,
   ready: ReadyCredential,
@@ -50,9 +57,14 @@ async function initializeClaudeIdentity(
 ): Promise<ClaudeIdentity> {
   const accountUuid = await accountUuidFor(ready.credential, runtime, spend.transportPolicy);
   const deviceId = deviceIdFor(ready.credential, runtime);
-  const blob = withClaudeCredentialIdentity(ready.blob, accountUuid, deviceId);
 
-  await runtime.persist(spend.provider, spend.accountId, blob);
+  if (spend.renewal !== 'owning-tool') {
+    await runtime.persist(
+      spend.provider,
+      spend.accountId,
+      withClaudeCredentialIdentity(ready.blob, accountUuid, deviceId),
+    );
+  }
 
   return { accountUuid, deviceId };
 }

@@ -1,7 +1,7 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
-import type { CredentialCustody } from './credential-custody';
 import type { RenewalRun } from './delegated-renewal';
+import type { MachineReach } from './machine-store';
 
 import { credentialFactsFor, documentIn } from './credential-records';
 import { delegatedRenewal } from './delegated-renewal';
@@ -9,11 +9,9 @@ import { machineCredentialMaterial } from './machine-credential';
 import { machineStoreFor } from './machine-store';
 
 export type AdoptedCredentialDeps = {
-  homeFolder: string;
-  platform: NodeJS.Platform;
-  custody: CredentialCustody | null;
-  toolPresent: (provider: SubscriptionProviderId) => Promise<boolean>;
-  runTool: (binary: string) => Promise<void>;
+  reach: MachineReach;
+  toolFile: (provider: SubscriptionProviderId) => Promise<string | null>;
+  runTool: (toolFile: string, args: readonly string[]) => Promise<void>;
   now: () => number;
 };
 
@@ -23,15 +21,7 @@ async function blobFor(
   provider: SubscriptionProviderId,
   deps: AdoptedCredentialDeps,
 ): Promise<string | null> {
-  const held = await machineCredentialMaterial(
-    provider,
-    machineStoreFor({
-      provider,
-      homeFolder: deps.homeFolder,
-      platform: deps.platform,
-      custody: deps.custody,
-    }),
-  );
+  const held = await machineCredentialMaterial(provider, machineStoreFor(provider, deps.reach));
 
   return held?.blob ?? null;
 }
@@ -70,7 +60,7 @@ export function adoptedCredentialReader(
     }
 
     const run: RenewalRun = {
-      present: async () => deps.toolPresent(provider),
+      toolFile: async () => deps.toolFile(provider),
       stale: async () => nearsExpiry(provider, await blobFor(provider, deps), deps.now),
       renew: deps.runTool,
     };

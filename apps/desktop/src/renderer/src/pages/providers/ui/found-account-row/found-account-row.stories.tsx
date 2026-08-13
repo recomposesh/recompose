@@ -10,6 +10,7 @@ const meta = preview.meta({
     signedInAs: 'dev@example.com',
     plan: 'max',
     toolName: 'Claude Code',
+    standing: 'connected' as const,
     inert: false,
     connecting: false,
     onConnect: () => undefined,
@@ -62,5 +63,15 @@ export const Inert = meta.story({
   args: { inert: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Connect' })).toBeDisabled();
+  },
+});
+
+/**
+ * An account whose credential stopped working, which says so before a person tries to connect it.
+ */
+export const Lapsed = meta.story({
+  args: { standing: 'lapsed' as const },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Signed out in Claude Code')).toBeVisible();
   },
 });

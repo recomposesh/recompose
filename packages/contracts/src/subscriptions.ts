@@ -26,30 +26,43 @@ export const subscriptionProviderIdSchema = z.enum([
 
 export type SubscriptionProviderId = z.infer<typeof subscriptionProviderIdSchema>;
 
+/**
+ * The tools each provider delegates to, and the runs those tools answer.
+ *
+ * @summary `renewArguments` names the run that makes a tool rotate the credential it owns and
+ * exit. Claude Code renews behind `auth status`, which reports the signed-in account and so has to
+ * hold a token the provider still accepts. Codex names none: `login status` and `doctor` both read
+ * the record without touching it, and only a spent turn renews, which is no price for a background
+ * refresh. An empty list means the app leaves such a credential exactly as it stands.
+ */
 export const subscriptionProviders = {
   anthropic: {
     toolBinary: 'claude',
     toolName: 'Claude Code',
     configHomeVariable: 'CLAUDE_CONFIG_DIR',
     signInArguments: [],
+    renewArguments: ['auth', 'status'],
   },
   openai: {
     toolBinary: 'codex',
     toolName: 'Codex',
     configHomeVariable: 'CODEX_HOME',
     signInArguments: ['login'],
+    renewArguments: [],
   },
   antigravity: {
     toolBinary: 'cliproxyapi',
     toolName: 'Gemini (Antigravity)',
     configHomeVariable: 'CLIPROXYAPI_HOME',
     signInArguments: ['--antigravity-login'],
+    renewArguments: [],
   },
   kimi: {
     toolBinary: 'cliproxyapi',
     toolName: 'Kimi Code',
     configHomeVariable: 'CLIPROXYAPI_HOME',
     signInArguments: ['--kimi-login'],
+    renewArguments: [],
   },
 } as const satisfies Record<
   ToolBackedProviderId,
@@ -58,6 +71,7 @@ export const subscriptionProviders = {
     toolName: string;
     configHomeVariable: string;
     signInArguments: readonly string[];
+    renewArguments: readonly string[];
   }
 >;
 

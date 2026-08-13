@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { homeVendorItem, machineVendorItem } from './vendor-item';
+import { codexVendorItem, homeVendorItem, machineVendorItem } from './vendor-item';
 
 const osUser = 'ada';
 
@@ -38,6 +38,22 @@ describe('which keychain item a Claude Code credential belongs to', () => {
   test("given a config home, its item is never the one the person's own install uses", () => {
     expect(homeVendorItem('/home/ada/one', osUser).service).not.toBe(
       machineVendorItem(osUser).service,
+    );
+  });
+});
+
+describe('which keyring entry a Codex record belongs to', () => {
+  test('given a config home, the entry is named after that home rather than the person', () => {
+    expect(codexVendorItem('/home/ada/.codex')).toEqual({
+      service: 'Codex Auth',
+      account: 'cli|09225bfea46805b1',
+    });
+  });
+
+  test('given two homes, each names an entry the other never reaches', () => {
+    expect(codexVendorItem('/home/bob/.codex').account).toBe('cli|bf1f1f221a153292');
+    expect(codexVendorItem('/home/ada/.codex').account).not.toBe(
+      codexVendorItem('/home/bob/.codex').account,
     );
   });
 });

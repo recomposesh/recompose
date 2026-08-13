@@ -7,6 +7,7 @@ import type { ProviderRequest } from './claude-request';
 import type { RefreshFetch } from './refresh';
 
 import { isJsonObject } from '../gateway-wire';
+import { controlPlaneUrl } from '../loopback-override';
 import { unwrapAntigravityResponse } from './antigravity-response';
 import { decodeClaudeResponse } from './claude-compression';
 import { restoreClaudeToolResponse } from './claude-tool-response';
@@ -20,6 +21,7 @@ import {
 export { CLAUDE_OAUTH_TLS_FINGERPRINT, CLAUDE_TLS_FINGERPRINT };
 
 const CLAUDE_OAUTH_HANDSHAKE_TIMEOUT_MS = 10_000;
+const CLAUDE_PROFILE_URL = 'https://api.anthropic.com/api/oauth/profile';
 
 function proxyOptions(policy: AccountTransportPolicy | undefined): Pick<WreqInit, 'proxy'> {
   if (policy?.mode === 'direct') return { proxy: false };
@@ -57,7 +59,6 @@ export function subscriptionTransportOptions(
       cipherList: CLAUDE_CIPHERS,
       sigalgsList: CLAUDE_SIGNATURES,
       keyShares: ['X25519'],
-      keySharesLimit: 1,
       sessionTicket: true,
       preSharedKey: true,
       pskDheKe: true,
@@ -220,7 +221,6 @@ export function subscriptionRefreshTransportOptions(
       cipherList: CLAUDE_CIPHERS,
       sigalgsList: CLAUDE_SIGNATURES,
       keyShares: ['X25519'],
-      keySharesLimit: 1,
       sessionTicket: true,
       preSharedKey: true,
       pskDheKe: true,
@@ -248,8 +248,9 @@ export async function fetchClaudeProfile(
   fetchLike: SubscriptionWireFetch = wreqFetch,
   policy?: AccountTransportPolicy,
 ): Promise<ClaudeProfile> {
-  const upstream = await fetchLike('https://api.anthropic.com/api/oauth/profile', {
-    ...subscriptionRefreshTransportOptions('https://api.anthropic.com/api/oauth/profile', policy),
+  const profileUrl = controlPlaneUrl(CLAUDE_PROFILE_URL);
+  const upstream = await fetchLike(profileUrl, {
+    ...subscriptionRefreshTransportOptions(CLAUDE_PROFILE_URL, policy),
     method: 'GET',
     headers: [
       ['Accept', 'application/json, text/plain, */*'],

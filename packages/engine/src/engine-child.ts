@@ -15,25 +15,10 @@ import { openCredentialUpdateLane, openSpendLane } from './engine-child-lanes';
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
+import { loopbackOverrideOrNull } from './loopback-override';
 import { firstPartyProbeOrigins, probeKey } from './provider/key-probe';
 import { listProviderModels } from './provider/model-list';
 import { probeRuntime } from './provider/runtime-probe';
-
-const loopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
-
-function loopbackOverrideOrNull(variable: string, override: string | undefined): string | null {
-  if (override === undefined) {
-    return null;
-  }
-
-  if (URL.canParse(override) && loopbackHosts.has(new URL(override).hostname)) {
-    return override;
-  }
-
-  console.error(`The engine child ignored ${variable}, because it does not name a loopback host.`);
-
-  return null;
-}
 
 function probeOriginFor(provider: KeyProviderId): string {
   return (

@@ -100,7 +100,7 @@ describe('the fake Claude Code signing in', () => {
     });
 
     const identity: unknown = JSON.parse(
-      await readFile(join(bed.machineHome, '.claude', '.claude.json'), 'utf8'),
+      await readFile(join(bed.machineHome, '.claude.json'), 'utf8'),
     );
 
     expect(identity).toMatchObject({
@@ -131,7 +131,7 @@ describe('the fake Claude Code renewing', () => {
     await runClaude([], { RECOMPOSE_FAKE_TOOL_EXPIRES_AT: '1000' });
     const before = await machineCredential();
 
-    const run = await runClaude(['refresh']);
+    const run = await runClaude(['auth', 'status']);
 
     expect(run.status).toBe(0);
     expect(await deskLines(bed, 'renewals-claude.log')).toHaveLength(1);
@@ -144,7 +144,7 @@ describe('the fake Claude Code renewing', () => {
     const before = await machineCredential();
 
     await writeFile(join(bed.desk, 'renewal-fails-claude'), '', 'utf8');
-    const run = await runClaude(['refresh']);
+    const run = await runClaude(['auth', 'status']);
 
     expect(run.status).not.toBe(0);
     expect(await machineCredential()).toEqual(before);
@@ -154,8 +154,8 @@ describe('the fake Claude Code renewing', () => {
   test('given two renewals, the trace carries a line for each so one run reads apart from two', async () => {
     await runClaude([]);
 
-    await runClaude(['refresh']);
-    await runClaude(['refresh']);
+    await runClaude(['auth', 'status']);
+    await runClaude(['auth', 'status']);
 
     expect(await deskLines(bed, 'renewals-claude.log')).toHaveLength(2);
   });

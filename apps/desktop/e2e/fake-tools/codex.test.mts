@@ -1,9 +1,11 @@
+import { realpathSync } from 'node:fs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import type { ToolBed } from './fake-tool-bed.testkit.mts';
 
+import { codexEntryFor } from '../keychain-shelf';
 import { fakeToolBed, keychainHolds, runTool } from './fake-tool-bed.testkit.mts';
 
 const CODEX_SERVICE = 'Codex Auth';
@@ -110,15 +112,18 @@ describe('the fake Codex', () => {
     expect(held).not.toHaveProperty('tokens');
   });
 
-  test('given a keyring store, the credential stands under the Codex service and no file holds it', async () => {
-    const home = await codexHome('keyringed');
+  test('given a keyring store, the entry is named after the home it wrote from and no file holds it', async () => {
+    const home = await codexHome('kept-in-the-keyring');
 
     await runTool(bed, 'codex', [], {
       CODEX_HOME: home,
       RECOMPOSE_FAKE_TOOL_STORE: 'keychain',
     });
 
-    expect(await keychainHolds(bed, CODEX_SERVICE)).not.toBeNull();
+    expect(
+      await keychainHolds(bed, CODEX_SERVICE, codexEntryFor(realpathSync(home))),
+    ).not.toBeNull();
+    expect(await keychainHolds(bed, CODEX_SERVICE)).toBeNull();
     await expect(authIn(home)).rejects.toThrow();
   });
 });

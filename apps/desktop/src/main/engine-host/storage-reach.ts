@@ -34,7 +34,7 @@ export function storageReachFor(
       paths.platform,
       custody,
     ).read,
-    readAdoptedCredential: adoptedCredentialFor(paths.userDataPath, paths.homeFolder, custody),
+    readAdoptedCredential: adoptedCredentialFor(paths.homeFolder, custody),
     copilotCredential: boughtCopilotCredential,
   };
 }

@@ -57,6 +57,7 @@ describe('the providers a subscription can name', () => {
       toolName: 'Kimi Code',
       configHomeVariable: 'CLIPROXYAPI_HOME',
       signInArguments: ['--kimi-login'],
+      renewArguments: [],
     });
   });
 
@@ -72,6 +73,7 @@ describe('the tool that performs each sign-in', () => {
       toolName: 'Claude Code',
       configHomeVariable: 'CLAUDE_CONFIG_DIR',
       signInArguments: [],
+      renewArguments: ['auth', 'status'],
     });
   });
 
@@ -81,6 +83,7 @@ describe('the tool that performs each sign-in', () => {
       toolName: 'Codex',
       configHomeVariable: 'CODEX_HOME',
       signInArguments: ['login'],
+      renewArguments: [],
     });
   });
 
@@ -89,6 +92,16 @@ describe('the tool that performs each sign-in', () => {
       expect(subscriptionProviders[provider].toolBinary).not.toBe('');
       expect(subscriptionProviders[provider].configHomeVariable).not.toBe('');
     }
+  });
+});
+
+describe('the tool run that hands a renewal back to the credential’s owner', () => {
+  test('Claude Code renews behind the command that reports who is signed in', () => {
+    expect(subscriptionProviders.anthropic.renewArguments).toEqual(['auth', 'status']);
+  });
+
+  test('Codex names no run, because none of its commands renews without spending a turn', () => {
+    expect(subscriptionProviders.openai.renewArguments).toEqual([]);
   });
 });
 

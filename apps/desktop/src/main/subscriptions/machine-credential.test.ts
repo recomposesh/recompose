@@ -17,6 +17,24 @@ const anMcpRecordAlone = JSON.stringify({ mcpOAuth: { server: { accessToken: 'op
 
 const anIdentity = JSON.stringify({ oauthAccount: { emailAddress: 'ada@ex.com' } });
 
+function aTokenExpiringIn(seconds: number): string {
+  const claims = Buffer.from(
+    JSON.stringify({ email: 'ada@ex.com', exp: Math.floor(Date.now() / 1000) + seconds }),
+  ).toString('base64url');
+
+  return `header.${claims}.signature`;
+}
+
+/** What Codex leaves after an hour: an identity token long lapsed beside a token still good. */
+function aCodexSessionWithALapsedIdentity(): string {
+  return JSON.stringify({
+    tokens: {
+      access_token: aTokenExpiringIn(10 * 24 * 60 * 60),
+      id_token: aTokenExpiringIn(-60 * 60),
+    },
+  });
+}
+
 function aStore(over: Partial<MachineStore> = {}): MachineStore {
   return {
     readBlob: async () => Promise.resolve(null),
@@ -118,6 +136,15 @@ describe('what the machine holds for Codex', () => {
     );
 
     expect(reading).toMatchObject({ holds: 'account', signedInAs: 'ada@ex.com', plan: 'plus' });
+  });
+
+  test('given a Codex session whose identity token lapsed, the reading follows the spent token', async () => {
+    const reading = await readMachineCredential(
+      'openai',
+      aStore({ readBlob: async () => Promise.resolve(aCodexSessionWithALapsedIdentity()) }),
+    );
+
+    expect(reading).toMatchObject({ holds: 'account', standing: 'connected' });
   });
 
   test('given a blob that is not readable at all, the reading says the machine holds nothing', async () => {

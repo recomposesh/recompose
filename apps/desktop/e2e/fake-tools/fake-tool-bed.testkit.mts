@@ -87,9 +87,18 @@ export async function runTool(
   return { status, said, complained };
 }
 
-/** What the fake credential store holds for one service, read the way the tools write it. */
-export async function keychainHolds(bed: ToolBed, service: string): Promise<string | null> {
-  const name = Buffer.from(`${service}\n${userInfo().username}`).toString('base64url');
+/**
+ * What the fake credential store holds for one service, read the way the tools write it.
+ *
+ * @summary Claude Code names its entry after the person and Codex after the config home it wrote
+ * from, so a reader asking about a Codex entry names that account rather than taking the default.
+ */
+export async function keychainHolds(
+  bed: ToolBed,
+  service: string,
+  account = userInfo().username,
+): Promise<string | null> {
+  const name = Buffer.from(`${service}\n${account}`).toString('base64url');
 
   return readFile(join(bed.keychainDir, name), 'utf8').then(
     (blob) => blob,

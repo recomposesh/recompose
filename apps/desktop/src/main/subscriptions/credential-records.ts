@@ -100,12 +100,14 @@ function sessionClaims(token: string | undefined): unknown {
 
 /**
  * @summary A Codex record in key mode carries a key and no session block, which is not a
- * subscription, so it never reads as an account this app can adopt or serve.
+ * subscription, so it never reads as an account this app can adopt or serve. The address and the
+ * plan come from the identity token, which Codex lets lapse within the hour and never renews, while
+ * the moment the record lapses is the spent token's own, the way Codex decides it too.
  */
 function codexFactsIn(credential: unknown): CredentialFacts {
   const session = recordAt(credential, 'tokens');
   const claims = sessionClaims(spokenAt(session, 'id_token'));
-  const seconds = countedAt(claims, 'exp');
+  const seconds = countedAt(sessionClaims(spokenAt(session, 'access_token')), 'exp');
 
   return {
     holdsAccount: session !== null,

@@ -3,6 +3,7 @@ import type { AccountTransportPolicy, SubscriptionProviderId } from '@recompose/
 import type { ParsedSubscriptionCredential, RefreshedTokens } from './credentials';
 
 import { isJsonObject } from '../gateway-wire';
+import { controlPlaneUrl } from '../loopback-override';
 import { parseSubscriptionCredential, refreshedCredentialBlob } from './credentials';
 
 type RefreshRequest = {
@@ -63,7 +64,7 @@ function refreshRequest(
 ): readonly [string, RefreshRequest] {
   if (provider === 'anthropic') {
     return [
-      CLAUDE_TOKEN_URL,
+      controlPlaneUrl(CLAUDE_TOKEN_URL),
       {
         method: 'POST',
         headers: [
@@ -85,7 +86,7 @@ function refreshRequest(
 
   if (provider === 'openai') {
     return [
-      CODEX_TOKEN_URL,
+      controlPlaneUrl(CODEX_TOKEN_URL),
       formRefreshRequest({
         client_id: CODEX_CLIENT_ID,
         grant_type: 'refresh_token',
@@ -96,7 +97,7 @@ function refreshRequest(
   }
 
   return [
-    GOOGLE_TOKEN_URL,
+    controlPlaneUrl(GOOGLE_TOKEN_URL),
     formRefreshRequest({
       client_id: ANTIGRAVITY_CLIENT_ID,
       client_secret: ANTIGRAVITY_CLIENT_SECRET,

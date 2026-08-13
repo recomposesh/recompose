@@ -20,6 +20,28 @@ const quietCopilot = {
   writeSubscriptionCredential: async () => Promise.resolve(),
 };
 
+function contextOver(userDataPath: string): SubscriptionsIpcContext {
+  return {
+    userDataPath,
+    homeFolder: '/Users/ada',
+    platform: process.platform,
+    custody: null,
+    machine: {
+      homeFolder: '/Users/ada',
+      platform: process.platform,
+      custody: null,
+      keyringHolds: null,
+    },
+    searchPath: async () => Promise.resolve(''),
+    launch: async () => Promise.resolve(),
+    clock: () => ({ elapsed: () => 0, sleep: async () => Promise.resolve() }),
+    signInBoundMs: 0,
+    signInEveryMs: 0,
+    onCorrupt: () => undefined,
+    ...quietCopilot,
+  };
+}
+
 async function aSignedInSubscription(): Promise<SubscriptionsIpcContext> {
   const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-subs-hygiene-'));
   const homes = subscriptionHomes(userDataPath, process.platform);
@@ -54,19 +76,7 @@ async function aSignedInSubscription(): Promise<SubscriptionsIpcContext> {
     'utf8',
   );
 
-  return {
-    userDataPath,
-    homeFolder: '/Users/ada',
-    platform: process.platform,
-    custody: null,
-    searchPath: async () => Promise.resolve(''),
-    launch: async () => Promise.resolve(),
-    clock: () => ({ elapsed: () => 0, sleep: async () => Promise.resolve() }),
-    ...quietCopilot,
-    signInBoundMs: 0,
-    signInEveryMs: 0,
-    onCorrupt: () => undefined,
-  };
+  return contextOver(userDataPath);
 }
 
 function carriesNoTokenMaterial(answer: unknown): boolean {

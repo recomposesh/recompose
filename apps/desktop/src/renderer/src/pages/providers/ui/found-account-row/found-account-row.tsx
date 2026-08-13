@@ -7,6 +7,8 @@ type FoundAccountRowProps = {
   plan?: string | undefined;
   /** @summary The tool that wrote this credential, named so the person knows where it came from. */
   toolName: string;
+  /** @summary How the credential stands, so a lapse reads before a person tries to connect it. */
+  standing: 'connected' | 'lapsed';
   /** @summary Stands inert while any act on the step runs, so the sheet never resizes under a hand. */
   inert: boolean;
   /** @summary True while this row's own act runs, which is what the label reports. */
@@ -24,6 +26,7 @@ export function FoundAccountRow({
   signedInAs,
   plan,
   toolName,
+  standing,
   inert,
   connecting,
   onConnect,
@@ -35,7 +38,11 @@ export function FoundAccountRow({
           <span className="truncate text-body text-ink">{signedInAs ?? toolName}</span>
           {plan === undefined ? null : <Badge>{plan}</Badge>}
         </span>
-        <span className="text-detail text-ink-secondary">Already signed in through {toolName}</span>
+        <span className="text-detail text-ink-secondary">
+          {standing === 'lapsed'
+            ? `Signed out in ${toolName}`
+            : `Already signed in through ${toolName}`}
+        </span>
       </div>
       <button
         className="push-button-primary focus-ring disabled:bg-surface-inert disabled:text-ink-secondary"

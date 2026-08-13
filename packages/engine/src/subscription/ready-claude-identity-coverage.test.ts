@@ -78,6 +78,54 @@ describe('a Claude identity that cannot be initialized', () => {
   });
 });
 
+describe('stamping an identity onto a credential the app does not own', () => {
+  function runtimeCounting(kept: string[]) {
+    return {
+      persist: async (
+        _provider: SubscriptionProviderId,
+        _accountId: string,
+        credential: string,
+      ) => {
+        kept.push(credential);
+
+        await Promise.resolve();
+      },
+      newClaudeDeviceId: () => 'b'.repeat(64),
+      fetchClaudeProfile: async () => {
+        await Promise.resolve();
+
+        return { account: { uuid: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' } };
+      },
+    };
+  }
+
+  it('serves the identified credential without keeping a copy of it', async () => {
+    const kept: string[] = [];
+    const spend = {
+      provider: anthropic,
+      accountId: 'adopted-account',
+      renewal: 'owning-tool',
+    } as const;
+    const ready = await readyClaudeIdentity(
+      spend,
+      readyFrom(blobFor('token-adopted')),
+      runtimeCounting(kept),
+    );
+
+    expect(ready.credential.deviceIds).toEqual(['b'.repeat(64)]);
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps the identified credential for an account the app signed in', async () => {
+    const kept: string[] = [];
+    const spend = { provider: anthropic, accountId: 'app-account', renewal: 'app' } as const;
+
+    await readyClaudeIdentity(spend, readyFrom(blobFor('token-owned')), runtimeCounting(kept));
+
+    expect(kept).toHaveLength(1);
+  });
+});
+
 describe('a Claude credential blob that lost its OAuth tokens', () => {
   it('refuses to hand back an identity it cannot read', async () => {
     const spend = { provider: anthropic, accountId: 'lossy-account' };

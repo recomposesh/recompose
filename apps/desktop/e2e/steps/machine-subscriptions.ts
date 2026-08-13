@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { SubscriptionTools } from '../subscription-tools';
@@ -56,26 +56,6 @@ export type MachineLogin = {
   store?: 'keychain' | 'file';
 };
 
-/**
- * Writes the identity file Claude Code keeps beside the home rather than inside it.
- *
- * @summary The vendor keeps the address and the plan at the home's root and the credential in a
- * folder under it, and the app reads them from those two places. The planting seam writes both
- * under the folder, so a scenario naming the address it expects to see puts the identity where the
- * vendor puts it.
- */
-async function identityStandsAtTheHomeRoot(
-  tools: SubscriptionTools,
-  signedInAs: string,
-  plan: string,
-): Promise<void> {
-  await writeFile(
-    join(tools.machineHome, '.claude.json'),
-    `${JSON.stringify({ oauthAccount: { emailAddress: signedInAs }, subscriptionType: plan }, null, 2)}\n`,
-    'utf8',
-  );
-}
-
 /** Who the machine's own tool signed in as, and on which plan, with anything unsaid filled in. */
 function identityOf(login: MachineLogin, provider: MachineProvider) {
   return {
@@ -93,20 +73,33 @@ function standingOf(login: MachineLogin) {
   };
 }
 
+/**
+ * Rewrites the record on the machine, leaving whatever tools stand there alone.
+ *
+ * @summary A scenario that already said a tool is gone must be able to move the record it left
+ * behind without the tool coming back, so standing the record apart from installing the tool is
+ * what keeps the two facts separate.
+ */
+export async function theMachineRecordStands(
+  tools: SubscriptionTools,
+  login: MachineLogin,
+): Promise<void> {
+  const provider = machineProviderFor(login.provider);
+
+  await tools.plantMachineCredential({
+    provider,
+    ...identityOf(login, provider),
+    ...standingOf(login),
+  });
+}
+
 /** Stands the provider's own tool on the machine, holding the login the scenario describes. */
 export async function theMachineHolds(
   tools: SubscriptionTools,
   login: MachineLogin,
 ): Promise<void> {
-  const provider = machineProviderFor(login.provider);
-  const identity = identityOf(login, provider);
-
-  await tools.install(toolBinaryFor(provider));
-  await tools.plantMachineCredential({ provider, ...identity, ...standingOf(login) });
-
-  if (provider === 'anthropic') {
-    await identityStandsAtTheHomeRoot(tools, identity.signedInAs, identity.plan);
-  }
+  await tools.install(toolBinaryFor(machineProviderFor(login.provider)));
+  await theMachineRecordStands(tools, login);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
