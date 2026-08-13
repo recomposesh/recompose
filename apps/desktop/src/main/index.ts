@@ -4,7 +4,6 @@ import { join } from 'path';
 
 import type { EngineHost } from './engine-host/engine-host';
 import type { SpendGrantContext } from './engine-host/spend-grant';
-import type { IpcHandlers } from './ipc/dispatch';
 import type { StorageIpcContext } from './ipc/storage-context';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
@@ -12,7 +11,6 @@ import bundledPrices from '../../resources/model-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
 import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
-import { probeFreePort } from './engine-host/probe-free-port';
 import { storageReachFor } from './engine-host/storage-reach';
 import {
   restartServingGateways,
@@ -20,16 +18,9 @@ import {
   startStoredGateway,
   stopRemovedGateway,
 } from './engine-host/stored-gateway-serving';
-import { createEngineIpcHandlers } from './ipc/engine-ipc';
-import { createKeyCheckIpcHandlers, keyCheckReach } from './ipc/key-check-ipc';
-import { createLocalRuntimesIpcHandlers } from './ipc/local-runtimes-ipc';
-import { createProviderModelsIpcHandlers, providerModelsReach } from './ipc/provider-models-ipc';
 import { pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
-import { registerIpcHandlers } from './ipc/register-ipc';
+import { assembleIpcHandlers, registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
-import { createStorageIpcHandlers } from './ipc/storage-ipc';
-import { createSystemIpcHandlers } from './ipc/system-ipc';
-import { createUsageIpcHandlers, type UsageIpcDeps } from './ipc/usage-ipc';
 import { bootAppMenu } from './menu/app-menu-boot';
 import { resolvePasswordStoreOverride } from './password-store-override';
 import { registerAppScheme, serveRenderer } from './protocol/app-protocol';
@@ -42,10 +33,8 @@ import { resolveConfigHome } from './storage/config-home';
 import { createSafeStorageCodec } from './storage/safe-storage-codec';
 import { subscriptionHomes } from './subscriptions/subscription-homes';
 import { subscriptionRelease } from './subscriptions/subscription-release';
-import { subscriptionIpcHandlers } from './subscriptions/subscriptions-wiring';
-import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
-import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
+import { hideMenuBarTray, showMenuBarTray } from './tray/menu-bar-tray';
 import { trayRepainter } from './tray/tray-repaint';
 import { trayMenuWiring } from './tray/tray-wiring';
 import { openUsageIpcDeps } from './usage/usage-wiring';
@@ -58,7 +47,6 @@ import {
   showMainWindow,
 } from './windows/main-window';
 import { registerPermissionHandlers } from './windows/permission-wiring';
-import { answerTitleBarDoubleClick, placeWindowButtons } from './windows/window-chrome';
 
 app.setName('Recompose');
 app.setAboutPanelOptions({ applicationName: 'Recompose' });
@@ -173,52 +161,6 @@ function storageContext(
   };
 }
 
-function assembleIpcHandlers(
-  engineHost: EngineHost,
-  custody: CredentialCustody | null,
-  usage: UsageIpcDeps,
-): IpcHandlers {
-  const userDataPath = recomposeHome();
-  const homeFolder = app.getPath('home');
-
-  return {
-    ...subscriptionIpcHandlers({ userDataPath, homeFolder, custody, onCorrupt: onStorageCorrupt }),
-    ...createEngineIpcHandlers({
-      host: engineHost,
-      userDataPath,
-      homeFolder,
-      onCorrupt: onStorageCorrupt,
-      probeFreePort,
-    }),
-    ...createStorageIpcHandlers(storageContext(engineHost, custody)),
-    ...createKeyCheckIpcHandlers(keyCheckReach(storageReach(), engineHost)),
-    ...createProviderModelsIpcHandlers(providerModelsReach(storageReach(custody), engineHost)),
-    ...createLocalRuntimesIpcHandlers({
-      userDataPath,
-      homeFolder,
-      onCorrupt: onStorageCorrupt,
-      probeRuntime: async (address, provider) => engineHost.probeRuntime(address, provider),
-    }),
-    ...createSystemIpcHandlers({
-      fileBrowser: fileBrowserFor(process.platform),
-      loginItem: loginItemAvailability,
-      configFolder: userDataPath,
-      homeFolder,
-      readLoginItem: () => loginItem.isEnabled(),
-      isMenuBarVisible: () => isMenuBarTrayVisible(),
-      openFolder: async (path) => shell.openPath(path),
-      placeWindowButtons: (position) => {
-        placeWindowButtons(process.platform, position);
-      },
-      answerTitleBarDoubleClick: () => {
-        answerTitleBarDoubleClick(process.platform);
-      },
-      noteLogsDrawer: appMenu.reflectLogsDrawer,
-    }),
-    ...createUsageIpcHandlers(usage),
-  };
-}
-
 const repaintTray = trayRepainter(
   () => storagePathsFor(recomposeHome()).gatewaysDir,
   onStorageCorrupt,
@@ -238,10 +180,43 @@ if (passwordStoreOverride !== null) {
 
 registerAppScheme();
 
-async function startRecompose(): Promise<void> {
+/**
+ * @summary A quit while the boot is still waiting disposes what the rest of the boot would reach
+ * for, so the start stops where it stands. Nothing here is worth doing for an app on its way out,
+ * and the profile it opened is already closed.
+ */
+async function answerEveryChannel(profile: StoredBoot): Promise<void> {
+  const usage = await openUsageIpcDeps({
+    reach: storageReach,
+    store: profile.usageStore,
+    retainedRows: profile.engineHost.retainedLogRows,
+    bundledPricesFile: bundledPrices,
+    noteUsageTable: appMenu.reflectUsageTable,
+  });
+
+  registerIpcHandlers(
+    assembleIpcHandlers({
+      engineHost: profile.engineHost,
+      custody: profile.custody,
+      usage,
+      userDataPath: recomposeHome(),
+      homeFolder: app.getPath('home'),
+      onCorrupt: onStorageCorrupt,
+      storageReach,
+      storageContext,
+      loginItem,
+      loginItemAvailability,
+      appMenu,
+      openFolder: async (path) => shell.openPath(path),
+      platform: process.platform,
+    }),
+  );
+}
+
+async function startRecompose(stillWanted: () => boolean): Promise<void> {
   serveRenderer(join(__dirname, '../renderer'));
 
-  booted = await bootFromStoredState({
+  const profile = await bootFromStoredState({
     legacyUserDataPath: app.getPath('userData'),
     platform: process.platform,
     recomposeHome,
@@ -252,19 +227,19 @@ async function startRecompose(): Promise<void> {
     lifecycle: gatewayLifecycle,
   });
 
-  registerIpcHandlers(
-    assembleIpcHandlers(
-      booted.engineHost,
-      booted.custody,
-      await openUsageIpcDeps({
-        reach: storageReach,
-        store: booted.usageStore,
-        retainedRows: booted.engineHost.retainedLogRows,
-        bundledPricesFile: bundledPrices,
-        noteUsageTable: appMenu.reflectUsageTable,
-      }),
-    ),
-  );
+  if (!stillWanted()) {
+    profile.close();
+
+    return;
+  }
+
+  booted = profile;
+
+  await answerEveryChannel(profile);
+
+  if (!stillWanted()) {
+    return;
+  }
 
   electronApp.setAppUserModelId('sh.recompose.app');
 
@@ -277,11 +252,11 @@ async function startRecompose(): Promise<void> {
 
   registerPermissionHandlers();
 
-  appMenu.reflectSettings(booted.settings);
+  appMenu.reflectSettings(profile.settings);
 
-  applyBootSettingsOrComplain(settingsEffects, booted.settings);
+  applyBootSettingsOrComplain(settingsEffects, profile.settings);
 
-  booted.serveStoredGateways();
+  profile.serveStoredGateways();
 
   createMainWindow(HOME_ROUTE);
 }
