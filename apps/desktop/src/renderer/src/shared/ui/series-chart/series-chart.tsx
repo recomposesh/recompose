@@ -192,7 +192,9 @@ function chartDefinitionOf(
     focus: 'group-x',
     marks: seriesMarks(rows, standingEdge),
     x: {
-      scale: () => scaleBand().padding(BAND_PADDING),
+      scale: scaleBand<number>()
+        .domain(drawn.map((bar) => bar.at))
+        .padding(BAND_PADDING),
       axis: {
         ticks: {
           values: labelledSlots(drawn.map((bar) => bar.at)),

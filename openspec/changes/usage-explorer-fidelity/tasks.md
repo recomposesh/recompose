@@ -20,3 +20,10 @@
 ## 4. What no frame draws
 
 - [x] 4.1 Take the quota strip and the credits card off the explorer, leaving their folds in main
+
+## 5. The window, and the silence inside it
+
+- [x] 5.1 Pad the fold across every slot the window opens over, with a spec at hour and day width
+- [x] 5.2 Hand the band scale a configured domain, so the marks stop re-inferring it
+- [x] 5.3 Draw the quiet reading over the axis, with No Data in each panel
+- [x] 5.4 Separate the two silences, with one act on the quiet window and none on a first launch

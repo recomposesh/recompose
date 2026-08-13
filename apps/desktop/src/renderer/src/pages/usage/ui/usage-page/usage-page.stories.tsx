@@ -19,9 +19,8 @@ const meta = preview.meta({
 export const NothingServedYet = meta.story({
   render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
   play: async ({ canvas }) => {
-    await expect(
-      await canvas.findByRole('heading', { level: 2, name: 'No requests yet' }),
-    ).toBeVisible();
+    await expect(await canvas.findByText('No Requests Yet')).toBeVisible();
+    await expect(await canvas.findByRole('region', { name: 'By target' })).toBeVisible();
   },
 });
 

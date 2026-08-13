@@ -36,6 +36,10 @@ no magnifier, and the picker prints surrounding months a person can't pick.
   draws either one, and above the tiles they pushed the drawn grid down the screen. Their folds,
   their channels, and their main-side laws stay where they are.
 
+- The chart draws the window rather than the buckets that carry traffic, and a window that folded
+  to nothing prints one reading over its own axis instead of an empty box. A first launch and a
+  quiet window say different things, because only one of them has a wider window to reach for.
+
 ## Non-goals
 
 - The quota fold and the balance desk keep working in main. Only the two surfaces leave, so a

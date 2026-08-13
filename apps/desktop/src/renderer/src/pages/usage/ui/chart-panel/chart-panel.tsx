@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Menu } from '@base-ui/react/menu';
 import { useId } from 'react';
 
@@ -29,6 +31,8 @@ type ChartPanelProps = {
   edgeAt?: number | undefined;
   /** Whether the printed twin stands under the drawing, which the View menu governs. */
   tableOpen?: boolean | undefined;
+  /** What stands where the drawing would, on a window that folded to nothing. */
+  quiet?: ReactNode;
 };
 
 const MEASURE_OPTIONS = [
@@ -176,6 +180,35 @@ function panelHeader(props: HeaderProps) {
   );
 }
 
+type DrawingProps = {
+  drawn: DrawnChart;
+  edgeAt: number | undefined;
+  title: string;
+  quiet: ReactNode;
+};
+
+function panelDrawing({ drawn, edgeAt, title, quiet }: DrawingProps) {
+  return (
+    <div className="relative">
+      <SeriesChart
+        bars={drawn.bars}
+        edgeAt={edgeAt}
+        height={PLOT_HEIGHT + BUCKET_LABEL_HEIGHT}
+        label={title}
+        series={drawn.series}
+      />
+      {quiet === undefined ? null : (
+        <div
+          className="absolute inset-x-0 top-0 flex items-center justify-center"
+          style={{ height: `${String(PLOT_HEIGHT)}px` }}
+        >
+          {quiet}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function tableTwin(title: string, drawn: DrawnChart) {
   return (
     <TableShell caption={title}>
@@ -216,6 +249,7 @@ export function ChartPanel({
   subCaption,
   edgeAt,
   tableOpen,
+  quiet,
 }: ChartPanelProps) {
   const title = MEASURE_TITLES[measure];
   const reasonId = `stack-reason-${useId().replaceAll(':', '')}`;
@@ -234,18 +268,14 @@ export function ChartPanel({
         stackedBy,
         onStackedByChange,
       })}
-      <ul className="flex flex-wrap items-center gap-3.5">
-        {drawn.series.map((one) =>
-          legendItem(one.key, one.label, one.fill, drawn.totals[one.key] ?? 0),
-        )}
-      </ul>
-      <SeriesChart
-        bars={drawn.bars}
-        edgeAt={edgeAt}
-        height={PLOT_HEIGHT + BUCKET_LABEL_HEIGHT}
-        label={title}
-        series={drawn.series}
-      />
+      {drawn.series.length === 0 ? null : (
+        <ul className="flex flex-wrap items-center gap-3.5">
+          {drawn.series.map((one) =>
+            legendItem(one.key, one.label, one.fill, drawn.totals[one.key] ?? 0),
+          )}
+        </ul>
+      )}
+      {panelDrawing({ drawn, edgeAt, title, quiet })}
       {tableOpen === true ? tableTwin(title, drawn) : null}
     </section>
   );

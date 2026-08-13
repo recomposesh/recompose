@@ -1,6 +1,7 @@
 import type { UsageBucket, UsageReport } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
+import { defaultSettings } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -64,15 +65,31 @@ async function mounted(ui: ReactNode, queryClient: QueryClient = freshQueryClien
 
 const at7d: UsageSearch = { range: '7d', metric: 'requests', stackedBy: 'gateway' };
 
-test('before any traffic the promise card stands as the whole body', async () => {
+test('before any traffic the grid stands, saying what it is waiting for', async () => {
   installFakeBridge({});
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
+  await expect.element(screen.getByText('No Requests Yet')).toBeVisible();
   await expect
-    .element(screen.getByRole('heading', { level: 2, name: 'No requests yet' }))
+    .element(screen.getByText('Send a request through a gateway and it collects here.'))
     .toBeVisible();
+  await expect.element(screen.getByRole('region', { name: 'By target' })).toBeVisible();
   expect(screen.container.querySelector('table')).toBeNull();
+});
+
+test('a window that served nothing offers the one way out of it', async () => {
+  installFakeBridge({ settings: { ...defaultSettings(), firstRequestServed: true } });
+
+  const moved = vi.fn<(next: UsageSearch) => void>();
+  const screen = await mounted(<UsagePage onSearchChange={moved} search={at7d} />);
+
+  await expect.element(screen.getByText('No Requests')).toBeVisible();
+  await expect.element(screen.getByText('Nothing served in the last 7 days.')).toBeVisible();
+
+  await screen.getByRole('button', { name: 'Widen to 30 days' }).click();
+
+  expect(moved).toHaveBeenCalledWith(expect.objectContaining({ range: '30d' }));
 });
 
 test('served history lands in the tiles, the chart, and all three panels together', async () => {

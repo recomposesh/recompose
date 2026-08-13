@@ -5,15 +5,17 @@ import { useEffect, useState } from 'react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 import type { PanelUnit } from '../breakdown-panel/breakdown-panel';
-import type { UsagePanels, UsageView } from './use-usage-view';
+import type { UsagePanels, UsageQuiet, UsageView } from './use-usage-view';
 
 import { Button } from '../../../../shared/ui';
+import { quietRecovery, quietSentence } from '../../lib/quiet-recovery';
 import { chartSubCaption, panelsCaption, scopeSentence } from '../../lib/usage-caption';
 import { filteredMembers, spendSnappedRange } from '../../lib/usage-search';
 import { windowWording } from '../../lib/usage-window';
 import { BreakdownPanel } from '../breakdown-panel/breakdown-panel';
 import { ChartPanel } from '../chart-panel/chart-panel';
 import { MetricTiles } from '../metric-tiles/metric-tiles';
+import { QuietReading } from '../quiet-reading/quiet-reading';
 import { UsageHeader } from '../usage-header/usage-header';
 import { movedSearch } from './usage-page-moves';
 import { useUsageView } from './use-usage-view';
@@ -25,14 +27,37 @@ type UsagePageProps = {
   onSearchChange: (next: UsageSearch) => void;
 };
 
-function promiseCard() {
+function quietReading(
+  quiet: UsageQuiet,
+  search: UsageSearch,
+  onSearchChange: (next: UsageSearch) => void,
+) {
+  if (quiet === 'never-served') {
+    return (
+      <QuietReading
+        sentence="Send a request through a gateway and it collects here."
+        title="No Requests Yet"
+      />
+    );
+  }
+
+  const recovery = quietRecovery(search);
+
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-card border border-line-subtle bg-surface-card px-6 py-12 text-center">
-      <h2 className="text-heading text-ink">No requests yet</h2>
-      <p className="max-w-102.5 text-body leading-normal text-ink-secondary">
-        Once a gateway serves its first request, its rate, latency, tokens, and spend collect here.
-      </p>
-    </div>
+    <QuietReading
+      act={
+        recovery === undefined
+          ? undefined
+          : {
+              label: recovery.label,
+              onPress: () => {
+                onSearchChange(recovery.next);
+              },
+            }
+      }
+      sentence={quietSentence(search)}
+      title="No Requests"
+    />
   );
 }
 
@@ -113,6 +138,9 @@ function readingsBody(props: ReadingsProps) {
         onStackedByChange={(stackedBy) => {
           onSearchChange({ ...search, stackedBy });
         }}
+        quiet={
+          view.quiet === undefined ? undefined : quietReading(view.quiet, search, onSearchChange)
+        }
         stackedBy={search.stackedBy}
         subCaption={chartSubCaption(view.widthWord)}
         tableOpen={props.tableOpen}
@@ -126,10 +154,6 @@ function readingsBody(props: ReadingsProps) {
 function viewBody(view: UsageView, moves: BodyMoves) {
   if (view.state === 'refused') {
     return refusalCard(view.failure, moves.onRetry);
-  }
-
-  if (view.state === 'promise') {
-    return promiseCard();
   }
 
   if (view.state === 'loading') {
