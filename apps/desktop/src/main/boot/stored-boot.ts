@@ -126,7 +126,7 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
   await adoptLegacyConfigHome(deps.legacyUserDataPath, deps.recomposeHome());
 
   const boot = await storedBootState(deps.recomposeHome(), deps.onCorrupt);
-  const custody = machineCustody();
+  const custody = machineCustody(deps.recomposeHome());
   const { accountKinds, usageStore } = await openUsageLedger(deps);
   const engineHost = createEngineHost({
     knownSlugs: boot.slugs,

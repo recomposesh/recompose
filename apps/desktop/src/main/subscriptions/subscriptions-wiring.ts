@@ -6,13 +6,17 @@ import type { SubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
 import type { SubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
 import type { CredentialCustody } from './credential-custody';
 
+import { storagePathsFor } from '../ipc/storage-context';
 import { createSubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
 import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
+import { loadAccountsFile } from '../storage/accounts-store';
 import { oneAtATime } from '../storage/one-at-a-time';
 import { credentialCustody } from './credential-custody';
+import { keychainCarriedOnce, repairCustody } from './custody-repair';
 import { loginShellPath } from './login-shell-path';
 import { securityKeychain } from './macos-keychain';
 import { terminalSignInLaunch } from './sign-in-launch';
+import { subscriptionHomes } from './subscription-homes';
 import { wallClock } from './subscription-sign-in';
 
 const SIGN_IN_BOUND_MS = 5 * 60 * 1000;
@@ -37,13 +41,38 @@ export type SubscriptionsWiring = {
   onCorrupt: (quarantinedPath: string) => void;
 };
 
-export function machineCustody(): CredentialCustody | null {
-  return process.platform === 'darwin'
-    ? credentialCustody(
-        securityKeychain(substituteFor('RECOMPOSE_KEYCHAIN_COMMAND') ?? SECURITY_COMMAND),
-        userInfo().username,
-      )
-    : null;
+/**
+ * @summary An install written before each home owned its item carries on the first custody read,
+ * so the person's own login goes back rather than staying under this app's chain.
+ */
+export function machineCustody(userDataPath: string): CredentialCustody | null {
+  if (process.platform !== 'darwin') {
+    return null;
+  }
+
+  const osUser = userInfo().username;
+  const seam = securityKeychain(substituteFor('RECOMPOSE_KEYCHAIN_COMMAND') ?? SECURITY_COMMAND);
+  const homes = subscriptionHomes(userDataPath, process.platform);
+  const accountsFile = storagePathsFor(userDataPath).accountsFile;
+  const anthropicRows = async (): Promise<readonly string[]> =>
+    loadAccountsFile(accountsFile, () => undefined).then((held) =>
+      held.accounts.flatMap((row) =>
+        row.kind === 'subscription' && row.provider === 'anthropic' ? [row.id] : [],
+      ),
+    );
+
+  return credentialCustody(
+    keychainCarriedOnce(seam, async () =>
+      repairCustody({
+        keychain: seam,
+        osUser,
+        homeFor: (id) => homes.homeFor('anthropic', id),
+        accountIds: anthropicRows,
+        activeId: async () => homes.readActive('anthropic'),
+      }),
+    ),
+    osUser,
+  );
 }
 
 async function toolSearchPath(): Promise<string> {
