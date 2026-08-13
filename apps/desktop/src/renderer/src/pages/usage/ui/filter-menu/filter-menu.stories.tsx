@@ -39,6 +39,16 @@ export const Narrowed = meta.story({
   },
 });
 
+/** A window that served nobody: the menu names the quiet and offers nothing to select. */
+export const Quiet = meta.story({
+  args: { members: [] },
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Gateways All' }));
+
+    await expect(await screen.findByText('No gateways in this window')).toBeVisible();
+  },
+});
+
 /** The open menu: every member with what it served, a search field, and the standing count. */
 export const Opened = meta.story({
   args: { selected: ['claude-code', 'cursor'] },
