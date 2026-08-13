@@ -47,6 +47,12 @@ export function commandLineFor(
     return { command: file, args: [...args], verbatim: false };
   }
 
+  if (!safeForTheCommandProcessor(file, args)) {
+    throw new Error(
+      `refused to start ${file}, because its line carries a character the command processor reads as its own`,
+    );
+  }
+
   return {
     command: process.env['ComSpec'] ?? 'cmd.exe',
     args: ['/d', '/s', '/c', [`"${file}"`, ...args].join(' ')],
@@ -60,12 +66,6 @@ export async function runCommand(
   boundMs: number,
 ): Promise<string> {
   const line = commandLineFor(command, args, process.platform);
-
-  if (line.verbatim && !safeForTheCommandProcessor(command, args)) {
-    throw new Error(
-      `refused to start ${command}, because its line carries a character the command processor reads as its own`,
-    );
-  }
 
   return new Promise((carry, refuse) => {
     execFile(

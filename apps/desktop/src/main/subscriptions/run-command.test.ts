@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { commandLineFor, safeForTheCommandProcessor } from './run-command';
 
@@ -31,6 +31,22 @@ describe('how a tool on this machine is actually run', () => {
     const line = commandLineFor('C:\\Program Files\\claude.cmd', ['auth'], 'win32');
 
     expect(line.args.at(-1)).toBe('"C:\\Program Files\\claude.cmd" auth');
+  });
+
+  test('given a file merely named like a batch shim elsewhere, it runs directly', () => {
+    expect(commandLineFor('/usr/local/bin/claude.cmd', ['auth'], 'darwin')).toEqual({
+      command: '/usr/local/bin/claude.cmd',
+      args: ['auth'],
+      verbatim: false,
+    });
+  });
+
+  test('given a machine naming its own processor, that one runs the shim', () => {
+    vi.stubEnv('ComSpec', 'D:\\Windows\\System32\\cmd.exe');
+
+    expect(commandLineFor('C:\\tools\\claude.cmd', [], 'win32').command).toBe(
+      'D:\\Windows\\System32\\cmd.exe',
+    );
   });
 });
 
@@ -69,5 +85,21 @@ describe('what the command processor is allowed to be handed', () => {
 
   test('a redirection into a file is refused', () => {
     expect(safeForTheCommandProcessor('C:\\tools\\claude.cmd', ['auth > stolen.txt'])).toBe(false);
+  });
+
+  test('a line the processor would read as two is never built at all', () => {
+    expect(() => commandLineFor('C:\\a"&calc&"b\\claude.cmd', [], 'win32')).toThrow(
+      /refused to start/,
+    );
+  });
+
+  test('an argument chaining a second command is never built at all', () => {
+    expect(() => commandLineFor('C:\\tools\\claude.cmd', ['auth & calc'], 'win32')).toThrow(
+      /refused to start/,
+    );
+  });
+
+  test('the same name off Windows builds a line, because nothing parses it', () => {
+    expect(commandLineFor('/usr/local/bin/a&b/claude', [], 'darwin').verbatim).toBe(false);
   });
 });
