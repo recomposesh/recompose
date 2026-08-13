@@ -3,7 +3,7 @@ import type { Crossing, JsonObject } from '../gateway-wire';
 import { isJsonObject } from '../gateway-wire';
 import { observingSseLines } from '../subscription/observing-sse';
 import { KimiStreamReplayAccumulator } from './kimi-stream-replay';
-import { KimiThinkingReplay, replayableKimiThinkingContent } from './kimi-thinking-replay';
+import { KimiThinkingReplay, replayableThinkingContent } from './kimi-thinking-replay';
 
 const replay = new KimiThinkingReplay();
 const applied = new WeakSet<Crossing>();
@@ -39,7 +39,8 @@ function responseContent(value: unknown): unknown[] | undefined {
 }
 
 function recordContent(crossing: Crossing, scope: string, content: unknown[]): void {
-  if (replayableKimiThinkingContent(content)) replay.commit(crossing.providerModel, scope, content);
+  if (replayableThinkingContent(content, 'kimi'))
+    replay.commit(crossing.providerModel, scope, content);
   else replay.clear(crossing.providerModel, scope);
 }
 

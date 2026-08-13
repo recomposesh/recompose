@@ -6,7 +6,10 @@ import { createGatewayApp } from './gateway-app';
 import { aGatewayHolding, aVirtualModel } from './gateway-app.testkit';
 import { isJsonObject, parsedJson } from './gateway-wire';
 import { clearKimiReplayCache } from './provider/kimi-replay-runtime';
+import { kimiThinkingSignature } from './provider/kimi-signature.testkit';
 import { providerObservability } from './provider/provider-observability';
+
+const KIMI_SIGNATURE = kimiThinkingSignature();
 
 const grant = {
   verdict: 'resolved',
@@ -15,7 +18,7 @@ const grant = {
 } as const;
 
 const signedContent = [
-  { type: 'thinking', thinking: 'full reasoning', signature: 'kimi-signature' },
+  { type: 'thinking', thinking: 'full reasoning', signature: KIMI_SIGNATURE },
   { type: 'tool_use', id: 'toolu_1', name: 'Read', input: { path: 'README.md' } },
 ];
 
@@ -128,7 +131,7 @@ test('TestKimiThinkingReplayScopeIsolatesClaudeCodeCallers', async () => {
   await ask(app, 'wide', undefined, false, compactedMessages);
 
   expect(bodies[1]).not.toHaveProperty('messages.1.content.0.signature');
-  expect(bodies[2]).toHaveProperty('messages.1.content.0.signature', 'kimi-signature');
+  expect(bodies[2]).toHaveProperty('messages.1.content.0.signature', KIMI_SIGNATURE);
   expect(bodies[3]).not.toHaveProperty('messages.1.content.0.signature');
 });
 

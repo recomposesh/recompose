@@ -18,6 +18,7 @@ import {
   type ResponsesOpenBlock,
 } from './responses-stream-done';
 import { responsesFailedEvent } from './responses-stream-failed';
+import { isTerminalHubEvent, reasonedWithoutAnswering } from './responses-stream-outcome';
 
 type HubStreamEndEvent = Extract<HubStreamEvent, { type: 'message-end' }>;
 
@@ -29,6 +30,7 @@ type EncodeState = {
   output: ResponsesOutputItem[];
   id: string | undefined;
   model: string | undefined;
+  reasoned: boolean;
 };
 
 type CarrierOutcome = {
@@ -135,6 +137,9 @@ function carrierEvents(index: number, opening: HubBlockOpening): CarrierOutcome 
 
 function openBlock(state: EncodeState, sourceIndex: number, opening: HubBlockOpening) {
   const carrier = carrierEvents(state.nextOutputIndex, opening);
+
+  if (opening.kind === 'thinking') state.reasoned = true;
+
   const outputIndex = state.nextOutputIndex + (carrier.item === undefined ? 0 : 1);
 
   if (carrier.item !== undefined) state.output.push(carrier.item);
@@ -207,7 +212,7 @@ function completedEvent(
 
   const response = completedResponse(state, outcome, usage, output);
 
-  return outcome.status === 'incomplete'
+  return outcome.status === 'incomplete' || reasonedWithoutAnswering(state, output)
     ? { type: 'response.incomplete', response }
     : { type: 'response.completed', response };
 }
@@ -270,10 +275,6 @@ function encodeNonMediaHubEvent(
   return encodeDeltaOrEnd(state, event);
 }
 
-function isTerminalHubEvent(event: HubStreamEvent): boolean {
-  return event.type === 'stream-error' || event.type === 'message-end';
-}
-
 export async function* encodeStream(
   source: AsyncIterable<HubStreamEvent>,
 ): AsyncIterable<ResponsesStreamEvent> {
@@ -283,6 +284,7 @@ export async function* encodeStream(
     output: [],
     id: undefined,
     model: undefined,
+    reasoned: false,
   };
 
   for await (const event of source) {

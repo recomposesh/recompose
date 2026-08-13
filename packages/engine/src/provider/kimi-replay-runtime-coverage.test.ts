@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import type { Crossing, JsonObject } from '../gateway-wire';
 
 import { clearKimiReplayCache, observeKimiReplay, prepareKimiReplay } from './kimi-replay-runtime';
+import { kimiThinkingSignature } from './kimi-signature.testkit';
 
 const cachedContent = [
-  { type: 'thinking', thinking: 'full reasoning', signature: 'kimi-signature' },
+  { type: 'thinking', thinking: 'full reasoning', signature: kimiThinkingSignature() },
   { type: 'text', text: 'I will inspect the file.' },
   { type: 'tool_use', id: 'toolu_1', name: 'Read', input: { path: 'README.md' } },
 ];

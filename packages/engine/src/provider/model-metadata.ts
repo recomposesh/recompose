@@ -76,6 +76,13 @@ export const xaiBuiltinVideoModels = [
 
 export const xaiBuiltinImageModels = ['grok-imagine-image-2.0'] as const;
 
+const XAI_BUILTIN_CREATED = new Map<string, number>([['grok-imagine-image-2.0', 1_786_060_800]]);
+
+/** When xAI published a builtin model, absent for a model it never published. */
+export function xaiBuiltinCreatedAt(model: string): number | undefined {
+  return XAI_BUILTIN_CREATED.get(model);
+}
+
 export function cloneModelMetadata(model: ProviderModelMetadata): ProviderModelMetadata {
   return {
     ...model,

@@ -4,7 +4,7 @@ import { isJsonObject } from '../gateway-wire';
 import { observingSseLines } from '../subscription/observing-sse';
 import { ClaudeThinkingReplay } from './claude-thinking-replay';
 import { KimiStreamReplayAccumulator } from './kimi-stream-replay';
-import { replayableKimiThinkingContent } from './kimi-thinking-replay';
+import { replayableThinkingContent } from './kimi-thinking-replay';
 
 type ReplaySession = { model: string; scope: string };
 
@@ -39,7 +39,7 @@ export function prepareClaudeReplay(crossing: Crossing, body: JsonObject): JsonO
 }
 
 function commitFinalTurn(session: ReplaySession, content: unknown[]): void {
-  if (replayableKimiThinkingContent(content)) {
+  if (replayableThinkingContent(content, 'other')) {
     replay.commit(session.model, session.scope, content);
   } else {
     replay.clear(session.model, session.scope);
