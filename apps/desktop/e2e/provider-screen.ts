@@ -253,3 +253,14 @@ export async function toolHomesFolder(app: ElectronApplication, provider: string
 export async function activeToolHome(app: ElectronApplication, provider: string): Promise<string> {
   return join(await toolHomesFolder(app, provider), 'active');
 }
+
+/**
+ * Proves nothing in the open catalog stands inert.
+ *
+ * @summary Every kind reads the same way now, so the three surfaces assert it through one helper
+ * rather than three copies that could drift apart.
+ */
+export async function everyEntryAnswersAPick(page: Page): Promise<void> {
+  await expect(catalog(page).locator('[aria-disabled]')).toHaveCount(0);
+  await expect(catalog(page).getByText('Soon', { exact: true })).toHaveCount(0);
+}

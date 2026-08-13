@@ -19,7 +19,8 @@ runtimes answer on a documented port. Three coding plans speak the Anthropic dia
 a plan token. Three escape hatches wait only on a field the row can't hold. One plan signs in through a tool
 recompose already runs.
 
-GitHub Copilot is the exception, and it waits on a flow nothing on this machine owns.
+GitHub Copilot is the exception, and it waits on a flow nothing on this machine owns. recompose runs that flow itself, which makes it the one piece of this change
+that carries logic rather than a table row.
 
 The badge outlived its reason. This change removes it.
 
@@ -77,9 +78,9 @@ what this change removes.
    The rest leave the field unhinted rather than teaching a shape nobody promised.
 7. **Kimi Code signs in through CLIProxyAPI.** Porting its device flow into recompose would
    duplicate a flow the tool recompose already launches implements and tests.
-8. **GitHub Copilot waits for its own change.** Nothing on the machine owns its flow, so it
-   needs a device code, a poll and a token trade. The research that places it stands in
-   `discovery/`.
+8. **GitHub Copilot's flow follows CC Switch.** The device code, the poll, the token trade and
+   the refresh margin come from a shipped implementation rather than from a reading of the
+   endpoints.
 9. **A coding plan stands in the Subscriptions catalog and stores as a key.** The catalog
    column is where a person looks. The stored kind is what the credential is. Bending the
    subscription contract around a token that never renews would put a "this one has no tool"
@@ -92,8 +93,10 @@ what this change removes.
 
 ### New capabilities
 
-- **Connecting every provider the catalog names.** Twenty-one rows that stood inert connect,
-  each against the endpoint its vendor documents.
+- **Connecting every provider the catalog names.** Twenty-two rows that stood inert connect, each
+  against the endpoint its vendor documents.
+- **Signing in to GitHub Copilot.** A device code, a poll, and a short-lived credential bought
+  again before it lapses.
 - **An account pointed at an address a person chose.** A custom endpoint, a custom aggregator
   and a custom local server each carry the origin and dialect that person entered.
 

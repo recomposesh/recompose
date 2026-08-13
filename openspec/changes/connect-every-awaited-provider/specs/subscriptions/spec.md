@@ -20,6 +20,52 @@ Kimi, which is the endpoint the engine already serves.
 - When the surface reports which tools this machine can run
 - Then Kimi Code names the same tool the Gemini plan names
 
+### Requirement: GitHub Copilot signs in through a device flow the app runs
+
+The Subscriptions catalog MUST offer GitHub Copilot. Nothing on the machine owns its sign-in, so
+the app MUST run the device authorization itself.
+
+The app MUST show the person the code and the address to enter it at, and MUST poll for
+authorization at the pace the server sets. It MUST wait longer when the server asks it to, and
+MUST stop on a refusal the server calls terminal rather than polling on. The handle that completes
+the flow MUST NOT cross to the screen, so nothing outside the main process can finish a sign-in it
+never opened.
+
+On authorization the app MUST record who signed in, so the row names an account. The app MUST hold
+the long-lived credential the sign-in yielded, and MUST buy the short-lived one a turn carries. It
+MUST buy the next one before the current one lapses, because a credential expiring part way
+through fails a request a person is watching.
+
+#### Scenario: a person signs in to Copilot
+
+- Given the Subscriptions catalog stands open
+- When a person picks GitHub Copilot
+- Then the surface shows a code and the address to enter it at
+- And authorizing there records the account under the name that signed in
+
+#### Scenario: the flow waits at the pace the server sets
+
+- Given a sign-in stands waiting for authorization
+- When the server asks the app to slow down
+- Then the app waits longer between asks
+
+#### Scenario: a refused sign-in stops rather than polls on
+
+- Given a sign-in stands waiting for authorization
+- When the person denies it, or the code expires
+- Then the app stops asking and says which happened
+
+#### Scenario: a turn carries what the held credential buys
+
+- Given a connected Copilot account
+- When a gateway serves a turn through it
+- Then the turn carries the short-lived credential rather than the one the vault holds
+
+#### Scenario: nothing asks a tool about the plan no tool signs in
+
+- When the surface reports which tools this machine can run
+- Then GitHub Copilot names none, because recompose runs its flow itself
+
 ### Requirement: A plan that issues a token connects by taking one
 
 Three coding plans sell a monthly subscription and offer no sign-in: the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. Qwen ended its sign-in in April 2026, and the other two never published one.
@@ -54,12 +100,12 @@ The app MUST NOT run a sign-in, look for a tool, create a config home, or renew 
 
 ### Requirement: Adding a provider opens the catalog
 
-The Subscriptions surface MUST open a catalog holding Claude, Codex, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
+The Subscriptions surface MUST open a catalog holding Claude, Codex, GitHub Copilot, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
 
 #### Scenario: a person opens the subscriptions catalog
 
 - When a person opens the catalog from the Subscriptions surface
-- Then it lists six plans
+- Then it lists seven plans
 - And every entry answers a pointer and a keyboard
 
 ### Requirement: Picking a provider offers the one way the surface holds

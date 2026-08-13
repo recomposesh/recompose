@@ -11,6 +11,7 @@ import {
   catalog,
   openProviderScreen,
   openProviderWays,
+  everyEntryAnswersAPick,
   planCard,
   screenTitle,
   toolBinaryFor,
@@ -120,11 +121,13 @@ Then('the catalog opens over the screen, holding only subscription plans', async
   await expect(catalog(page).getByRole('button', { name: /OpenRouter/u })).toBeHidden();
 });
 
-Then('the plans that cannot connect yet stand disabled', async ({ page }) => {
-  await expect(catalog(page).getByRole('button', { name: /GitHub Copilot/u })).toHaveAttribute(
-    'aria-disabled',
-    'true',
-  );
+Then('every plan answers a pick', async ({ page }) => {
+  await everyEntryAnswersAPick(page);
+});
+
+Then('the step shows a code and the address to enter it at', async ({ page }) => {
+  await expect(catalog(page).getByRole('status').first()).toContainText(/[A-Z0-9]{4}-[A-Z0-9]{4}/u);
+  await expect(catalog(page).getByText('https://github.com/login/device')).toBeVisible();
 });
 
 Then(
