@@ -7,13 +7,19 @@ test('TestClaudeThinkingReplayClearDoesNotClearKimiState', () => {
   const claude = new ClaudeThinkingReplay();
   const kimi = new KimiThinkingReplay();
 
-  claude.commit('shared-model', 'execution', turn('claude-signature'));
-  kimi.commit('shared-model', 'execution', turn('kimi-signature'));
+  expect(claude.commit('shared-model', 'execution', turn('claude-signature'))).toBe(true);
+  expect(kimi.commit('shared-model', 'execution', turn('kimi-signature'))).toBe(true);
+
+  const claudeHeld = claude.totalBytes();
+  const kimiHeld = kimi.totalBytes();
+
+  expect(claudeHeld).toBeGreaterThan(0);
+  expect(kimiHeld).toBeGreaterThan(0);
 
   claude.clearAll();
 
   expect(claude.totalBytes()).toBe(0);
-  expect(kimi.totalBytes()).toBeGreaterThan(0);
+  expect(kimi.totalBytes()).toBe(kimiHeld);
 });
 
 function turn(signature: string) {
