@@ -6,6 +6,7 @@ import {
   localProviderIdSchema,
   localRuntimeIdSchema,
   localRuntimes,
+  loopbackAddressAt,
   loopbackAddressSchema,
   modelListBoundMs,
   proxyFetchBoundMs,
@@ -157,6 +158,26 @@ describe('the address main mints from the table and a chosen port', () => {
       expect(minted).not.toContain('localhost');
     },
   );
+});
+
+describe('the address a server nobody documents listens at', () => {
+  test('the port a person gave is the whole of it, over the loopback host', () => {
+    expect(loopbackAddressAt(9000)).toBe('http://127.0.0.1:9000');
+  });
+
+  test('a number no port can be refuses loudly rather than minting anything', () => {
+    for (const outside of [0, -1, RUNTIME_PORT_RANGE.max + 1, 9000.5, Number.NaN]) {
+      expect(() => loopbackAddressAt(outside)).toThrow();
+    }
+  });
+
+  test('every minted address is one a stored row would admit', () => {
+    for (const port of [RUNTIME_PORT_RANGE.min, 8000, RUNTIME_PORT_RANGE.max]) {
+      const minted = loopbackAddressAt(port);
+
+      expect(loopbackAddressSchema.parse(minted)).toBe(minted);
+    }
+  });
 });
 
 describe('the bound a look at a runtime waits under', () => {

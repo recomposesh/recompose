@@ -19,6 +19,13 @@ describe('the path a look asks a runtime to identify itself down', () => {
     expect(runtimeLookFor('custom').identityPath).toBe('/v1/models');
   });
 
+  test('a documented runtime is asked its own path rather than the shared one', () => {
+    for (const runtime of localRuntimeIdSchema.options) {
+      expect(runtimeLookFor(runtime), runtime).toEqual(localRuntimes[runtime]);
+      expect(runtimeLookFor(runtime).identityPath, runtime).not.toBe('/v1/models');
+    }
+  });
+
   test('no two runtimes share an identity path, or one would answer for another', () => {
     const paths = localRuntimeIdSchema.options.map((id) => localRuntimes[id].identityPath);
 

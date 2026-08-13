@@ -128,6 +128,12 @@ describe('the shape a vendor hands its keys out in', () => {
     expect(documentedKeyOpeningOf('gemini')).toBe('AIza');
   });
 
+  test('the openings that shipped before the directory keep the shape they hinted', () => {
+    expect(documentedKeyOpeningOf('anthropic')).toBe('sk-ant-');
+    expect(documentedKeyOpeningOf('openai')).toBe('sk-proj-');
+    expect(documentedKeyOpeningOf('openrouter')).toBe('sk-or-v1-');
+  });
+
   test('a vendor documenting no opening hints nothing rather than teaching a shape', () => {
     for (const unhinted of ['cerebras', 'mistral', 'deepseek', 'together', 'deepinfra']) {
       expect(documentedKeyOpeningOf(unhinted), unhinted).toBeUndefined();

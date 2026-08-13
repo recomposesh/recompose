@@ -16,22 +16,28 @@ function bodyOf(init: RequestInit | undefined): string {
   return typeof init?.body === 'string' ? init.body : '';
 }
 
+type Sent = { url: string; body: string; init: RequestInit };
+
+function answerAt(answers: readonly Answer[], turn: number): Answer {
+  return answers[Math.min(turn, answers.length - 1)] ?? { status: 200, body: {} };
+}
+
 function fetchAnswering(answers: readonly Answer[]): {
-  sent: { url: string; body: string }[];
+  sent: Sent[];
   fetchLike: typeof fetch;
 } {
-  const sent: { url: string; body: string }[] = [];
+  const sent: Sent[] = [];
   let turn = 0;
 
   const fetchLike: typeof fetch = async (input, init) => {
-    const answer = answers[Math.min(turn, answers.length - 1)];
+    const answer = answerAt(answers, turn);
 
     turn += 1;
-    sent.push({ url: urlOf(input), body: bodyOf(init) });
+    sent.push({ url: urlOf(input), body: bodyOf(init), init: init ?? {} });
 
     return Promise.resolve(
-      new Response(JSON.stringify(answer?.body ?? {}), {
-        status: answer?.status ?? 200,
+      new Response(JSON.stringify(answer.body), {
+        status: answer.status,
         headers: { 'content-type': 'application/json' },
       }),
     );
@@ -57,7 +63,43 @@ describe('the code a person is shown', () => {
     expect(sent[0]?.url).toBe(copilotEndpoints.deviceCode);
     expect(sent[0]?.body).toContain('client_id=Iv1.b507a08c87ecfe98');
   });
+});
 
+describe('what the ask refuses to read', () => {
+  test('the ask is a form post that follows no redirect', async () => {
+    const { sent, fetchLike } = fetchAnswering([{ status: 200, body: aDeviceCode }]);
+
+    await askForADeviceCode(fetchLike);
+
+    expect(sent[0]?.init.method).toBe('POST');
+    expect(sent[0]?.init.redirect).toBe('error');
+    expect(sent[0]?.init.headers).toEqual({
+      accept: 'application/json',
+      'content-type': 'application/x-www-form-urlencoded',
+    });
+  });
+
+  test('an answer that is no object at all refuses rather than reading fields off it', async () => {
+    for (const body of ['a sentence', 42, null]) {
+      const { fetchLike } = fetchAnswering([{ status: 200, body }]);
+
+      expect((await askForADeviceCode(fetchLike)).verdict, String(body)).toBe('refused');
+    }
+  });
+
+  test('a code that arrived blank refuses, because a blank is nothing to type', async () => {
+    const { fetchLike } = fetchAnswering([
+      { status: 200, body: { ...aDeviceCode, user_code: '   ' } },
+    ]);
+
+    expect(await askForADeviceCode(fetchLike)).toEqual({
+      verdict: 'refused',
+      reason: 'GitHub answered the device request without a code.',
+    });
+  });
+});
+
+describe('the code a person is shown, read out of the answer', () => {
   test('the ask carries the scope Copilot reads', async () => {
     const { sent, fetchLike } = fetchAnswering([{ status: 200, body: aDeviceCode }]);
 

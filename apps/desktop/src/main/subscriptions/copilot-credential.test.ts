@@ -11,12 +11,13 @@ function urlOf(input: Parameters<typeof fetch>[0]): string {
 }
 
 function fetchAnswering(status: number, body: unknown) {
-  const sent: { url: string; headers: Record<string, string> }[] = [];
+  const sent: { url: string; headers: Record<string, string>; method: string }[] = [];
 
   const fetchLike: typeof fetch = async (input, init) => {
     sent.push({
       url: urlOf(input),
       headers: Object.fromEntries(Object.entries(init?.headers ?? {})),
+      method: init?.method ?? '',
     });
 
     return Promise.resolve(
@@ -63,6 +64,42 @@ describe('the short-lived credential a turn is spent with', () => {
     const { fetchLike } = fetchAnswering(401, {});
 
     expect((await buyACopilotToken(fetchLike, 'gho_stale')).verdict).toBe('refused');
+  });
+});
+
+describe('what a trade refuses to read', () => {
+  test('the trade reads rather than writes, so it never posts a credential', async () => {
+    const { sent, fetchLike } = fetchAnswering(200, { token: 'tid=x', expires_at: 1 });
+
+    await buyACopilotToken(fetchLike, 'gho_the-token');
+
+    expect(sent[0]?.method).toBe('GET');
+  });
+
+  test('an answer that is no object at all refuses rather than reading fields off it', async () => {
+    for (const body of ['a sentence', 42, null]) {
+      const { fetchLike } = fetchAnswering(200, body);
+
+      expect((await buyACopilotToken(fetchLike, 'gho_the-token')).verdict, String(body)).toBe(
+        'refused',
+      );
+    }
+  });
+
+  test('a credential that arrived blank refuses rather than being spent', async () => {
+    const { fetchLike } = fetchAnswering(200, { token: '   ', expires_at: 1 });
+
+    expect((await buyACopilotToken(fetchLike, 'gho_the-token')).verdict).toBe('refused');
+  });
+
+  test('an expiry that is no number reads as already lapsed rather than as forever', async () => {
+    const { fetchLike } = fetchAnswering(200, { token: 'tid=x', expires_at: 'soon' });
+
+    expect(await buyACopilotToken(fetchLike, 'gho_the-token')).toEqual({
+      verdict: 'minted',
+      credential: 'tid=x',
+      expiresAtMs: 0,
+    });
   });
 });
 

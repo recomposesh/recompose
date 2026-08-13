@@ -42,10 +42,12 @@ const channelNames: IpcChannel[] = [
   'system:usage-table',
   'subscriptions:detect',
   'subscriptions:adopt',
+  'subscriptions:copilot-code',
+  'subscriptions:copilot-await',
 ];
 
 describe('ipc channel registry', () => {
-  test('exactly the thirty-seven specified channels exist', () => {
+  test('exactly the thirty-nine specified channels exist', () => {
     expect(Object.keys(ipcChannels).sort()).toEqual([...channelNames].sort());
   });
 
