@@ -30,7 +30,7 @@ asserts the namespace on the restored custom tool call, so both arrive again in 
 | `internal/runtime/executor/helps`                   |   29 | `runtime-executor.md`                                         | no         |
 | `internal/translator/openai/openai/responses`       |   16 | the matching `translator-*.md`                                | no         |
 | `internal/signature`                                |   16 | `signature.md`                                                | yes        |
-| `internal/client/codex/live`                        |   16 | `client.md`                                                   | no         |
+| `internal/client/codex/live`                        |   16 | `client.md`                                                   | yes        |
 | `sdk/api/handlers`                                  |   10 | `api.md`                                                      | no         |
 | `internal/translator/openai/claude`                 |    8 | the matching `translator-*.md`                                | no         |
 | `sdk/cliproxy/auth`                                 |    5 | `auth.md`                                                     | yes        |
