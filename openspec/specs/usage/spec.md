@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A person running gateways all day has no way to answer what they spent, what failed, or which model carried the traffic. The telemetry surfaces answer for one gateway over one rolling minute, and they forget. This surface therefore keeps a ledger of its own. Main accrues every settled row into tuple-keyed hour buckets, prunes to the retention window the settings hold, and answers one range at a time. The screen over that ledger stands as a single explorer. Two filters narrow it, and a window either reaches back a fixed width or takes the edges a person draws on a calendar. Five tiles read the standing window, one chart draws it, and three panels fold it down the domain hierarchy. Every reading also exists as printed text, and missing data reads as missing rather than as zero. Every figure carrying money says which basis priced it.
+A person running gateways all day has no way to answer what they spent, what failed, or which model carried the traffic. The telemetry surfaces answer for one gateway over one rolling minute, and they forget. This surface therefore keeps a ledger of its own. Main accrues every settled row into tuple-keyed hour buckets, prunes to the retention window the settings hold, and answers one range at a time. The screen over that ledger stands as a single explorer. Two filters narrow it, and a window either reaches back a fixed width or takes the edges a person draws on a calendar. Five tiles read the standing window, one chart draws it, and three panels fold it down the domain hierarchy. The chart draws the whole window rather than the buckets that carry traffic, and a window that folded to nothing names its own silence. Every reading also exists as printed text, and missing data reads as missing rather than as zero. Every figure carrying money says which basis priced it.
 
 ## Requirements
 
@@ -46,7 +46,7 @@ The `usage:report` channel MUST answer one range of closed hour buckets, folded 
 
 ### Requirement: One explorer answers every usage question
 
-The usage screen MUST stand as one explorer: a filter bar over the window, five metric tiles reading it, one chart, and three breakdown panels. The panels MUST fold by gateway, by virtual model, and by target. The tiles MUST read rather than steer, and the chart MUST carry its own measure and stacking controls. The requests tile MUST compare its window against the window standing before it, and the errors tile MUST read as a share of the requests beside it. Every reading MUST also exist as printed text: the legend prints each series' window total, and a folded data table prints every bucket the chart draws. The caption MUST name the bucket width and say that days break at the reader's local midnight. The whole view MUST live in typed search params, so a reload lands on the same view and a summary link deep-links through the same address.
+The usage screen MUST stand as one explorer: a filter bar over the window, five metric tiles reading it, one chart, and three breakdown panels. The explorer MUST fill the surface it stands on rather than a reading column. A chart and three panels read as one grid only at the width the window gives them. The panels MUST fold by gateway, by virtual model, and by target. The tiles MUST read rather than steer, and the chart MUST carry its own measure and stacking controls. The requests tile MUST compare its window against the window standing before it, and the errors tile MUST read as a share of the requests beside it. The chart MUST draw one slot for every bucket the window opens over, whether it served anything or nothing, so a quiet day keeps its place between two busy ones. The chart MUST draw its columns without a value axis, which is width the columns take instead. The chart MUST also pace its bucket labels to a reading few, while still naming its newest bucket. Every reading MUST also exist as printed text: the legend prints each series' window total, and the View menu opens a table printing every bucket the chart draws. The caption MUST name the bucket width and say that days break at the reader's local midnight. The whole view MUST live in typed search params, so a reload lands on the same view and a summary link deep-links through the same address.
 
 #### Scenario: the chart moves without moving the tiles
 
@@ -62,9 +62,33 @@ The usage screen MUST stand as one explorer: a filter bar over the window, five 
 
 #### Scenario: the table twin prints every reading as text
 
-- Given a drawn chart
-- When the person discloses the chart's data table
-- Then every bucket the chart draws prints as a row of text values
+- Given a drawn chart standing without its table
+- When the person ticks the data table in the View menu
+- Then every bucket the chart draws prints as a row of text values, and ticking it again takes the table away
+
+#### Scenario: the axis stands for the window rather than for the buckets that carry traffic
+
+- Given a window drawn from one date to another, where only one day inside it served anything
+- When the chart draws it
+- Then every day between the edges keeps its own slot, and the busy day stands as one column among them
+
+#### Scenario: a window that folded to nothing reads as quiet rather than as broken
+
+- Given a profile that has served requests before
+- When the standing window folds to nothing
+- Then the chart prints the quiet over its own axis, each panel prints No Data, and one act offers the filters back or the next window up
+
+#### Scenario: a profile that has never served says so in its own words
+
+- Given a profile where no gateway has served a request
+- When the usage screen opens
+- Then the quiet reads as nothing served yet, and it offers no window to widen
+
+#### Scenario: a day of hour buckets names a reading few
+
+- Given a window a day wide drawn in hour buckets
+- When the chart draws its axis
+- Then a label stands every fourth bucket and the newest bucket keeps its own
 
 ### Requirement: Filters narrow the window and name what they can reach
 
@@ -125,34 +149,6 @@ Cost MUST exist at day width only, priced at answer time in main from the LiteLL
 - Given a day whose billed traffic cost less than one cent
 - When the person reads that day's spend
 - Then it reads as less than one cent
-
-### Requirement: The quota strip claims only what local logs can prove
-
-Per subscription account, the strip MUST show 5-hour and weekly window burn derived from local logs on UTC hour boundaries. Windows MUST fold in time order: one opens at the first activity at or after the previous close and closes a fixed length later. The gauge MUST draw burn on a fixed track and mark the record as a line, so a new record moves the marker instead of rescaling history. A record-breaking window MUST say it's the busiest on record rather than filling the bar. The 5-hour reset countdown MUST carry the approximation prefix, and the weekly gauge MUST show burn without a countdown. The copy MUST name local logs as the derivation and never claim an official quota.
-
-#### Scenario: the gauge fills a fixed track toward the record
-
-- Given a subscription that burned inside the current 5-hour window
-- And a larger burn on record from an earlier window
-- When the person reads the account's 5-hour gauge
-- Then the fill draws the burn with a marker at the record and its date
-
-#### Scenario: every figure names its derivation
-
-- When the person reads the quota strip
-- Then the copy names local logs on UTC hour boundaries as the source
-- And nothing claims an official remaining quota
-
-### Requirement: An aggregator balance is a reading at a moment
-
-OpenRouter credits MUST print as an account balance beside the instant of the reading, never as a live counter. The desk MUST cache the last good reading, and a failed refresh MUST keep that reading standing beside the failure sentence.
-
-#### Scenario: a failed refresh keeps the last reading
-
-- Given the credits card holds a reading
-- And no answer comes back from OpenRouter
-- When the person refreshes the card
-- Then the last balance stays with its read-at stamp and the card names the failure
 
 ### Requirement: Missing data reads as missing, never as zero
 
