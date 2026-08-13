@@ -40,8 +40,6 @@ export function subscriptionCredentialStore(
   const lane = oneAtATime();
   const livesInKeychain = (provider: SubscriptionProviderId): boolean =>
     platform === 'darwin' && provider === 'anthropic';
-  const isActive = async (provider: SubscriptionProviderId, accountId: string): Promise<boolean> =>
-    (await homes.readActive(provider)) === accountId;
 
   const fileFor = (provider: SubscriptionProviderId, accountId: string): string =>
     join(homes.homeFor(provider, accountId), fileNameFor(provider));
@@ -50,7 +48,7 @@ export function subscriptionCredentialStore(
     read: async (provider, accountId) =>
       lane(async () => {
         if (livesInKeychain(provider)) {
-          return custody?.readFor(accountId, await isActive(provider, accountId)) ?? null;
+          return custody?.readForHome(homes.homeFor(provider, accountId)) ?? null;
         }
 
         return readCredentialFile(fileFor(provider, accountId));
@@ -63,7 +61,7 @@ export function subscriptionCredentialStore(
             throw new Error('Claude credential custody is unavailable');
           }
 
-          await custody.writeFor(accountId, await isActive(provider, accountId), blob);
+          await custody.writeForHome(homes.homeFor(provider, accountId), blob);
 
           return;
         }

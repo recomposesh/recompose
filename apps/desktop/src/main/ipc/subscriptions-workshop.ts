@@ -68,16 +68,10 @@ export async function toolPresent(
   return tools.find((tool) => tool.provider === provider)?.present === true;
 }
 
-export async function parkUnder(
+export async function settleUnder(
   custody: CredentialCustody | null,
-  slot: string,
+  from: string,
+  to: string,
 ): Promise<CustodyOutcome> {
-  return custody === null ? { ok: true } : custody.park(slot);
-}
-
-export async function putBack(
-  custody: CredentialCustody | null,
-  slot: string,
-): Promise<CustodyOutcome> {
-  return custody === null ? { ok: true } : custody.place(slot);
+  return custody === null ? { ok: true } : custody.moveBetweenHomes(from, to);
 }

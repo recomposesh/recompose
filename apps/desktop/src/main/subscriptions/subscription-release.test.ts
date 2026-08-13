@@ -7,15 +7,11 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import type { FakeKeychain } from './subscriptions.testkit';
 
-import {
-  credentialCustody,
-  PARKED_SERVICE,
-  RESERVED_SLOT,
-  VENDOR_SERVICE,
-} from './credential-custody';
+import { credentialCustody } from './credential-custody';
 import { subscriptionHomes, type SubscriptionHomes } from './subscription-homes';
 import { subscriptionRelease } from './subscription-release';
-import { fakeKeychain, osUser, refusalIn } from './subscriptions.testkit';
+import { fakeKeychain, osUser } from './subscriptions.testkit';
+import { homeVendorItem, machineVendorItem } from './vendor-item';
 
 let userDataPath: string;
 let homes: SubscriptionHomes;
@@ -87,88 +83,80 @@ describe('letting go of a subscription account', () => {
 });
 
 describe('letting go of the credential a leaving account kept in the keychain', () => {
-  test('given an account leaving, its parked credential goes with it', async () => {
+  test('given an account leaving, the credential its own home kept goes with it', async () => {
     await anAccountWithAHome('anthropic', 'acc-one');
     await anAccountWithAHome('anthropic', 'acc-two');
-    keychain.put(PARKED_SERVICE, 'acc-one', 'blob-one');
+    const home = homes.homeFor('anthropic', 'acc-one');
+
+    keychain.put(homeVendorItem(home, osUser).service, osUser, 'blob-one');
     const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
 
     await release(anAccount('acc-one', 'anthropic'), ['acc-two']);
 
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-one')).toBeNull();
+    expect(keychain.blobAt(homeVendorItem(home, osUser).service, osUser)).toBeNull();
   });
 
-  test('given the active account leaving, the survivor the pointer moved to takes the vendor item', async () => {
+  test('given an account leaving, every other account keeps its own credential', async () => {
     await anAccountWithAHome('anthropic', 'acc-one');
     await anAccountWithAHome('anthropic', 'acc-two');
-    await homes.pointActiveAt('anthropic', 'acc-one');
-    keychain.put(VENDOR_SERVICE, osUser, 'blob-one');
-    keychain.put(PARKED_SERVICE, 'acc-two', 'blob-two');
+    const staying = homes.homeFor('anthropic', 'acc-two');
+
+    keychain.put(
+      homeVendorItem(homes.homeFor('anthropic', 'acc-one'), osUser).service,
+      osUser,
+      'blob-one',
+    );
+    keychain.put(homeVendorItem(staying, osUser).service, osUser, 'blob-two');
     const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
 
     await release(anAccount('acc-one', 'anthropic'), ['acc-two']);
 
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('blob-two');
+    expect(keychain.blobAt(homeVendorItem(staying, osUser).service, osUser)).toBe('blob-two');
   });
+});
 
-  test('given the last account leaving, the login that stood before recompose comes back', async () => {
+describe("letting go never reaches the login the person's own install reads", () => {
+  test("given the last account leaving, the person's own login stands where it always stood", async () => {
     await anAccountWithAHome('anthropic', 'acc-one');
     await homes.pointActiveAt('anthropic', 'acc-one');
-    keychain.put(VENDOR_SERVICE, osUser, 'blob-one');
-    keychain.put(PARKED_SERVICE, RESERVED_SLOT, 'someone-elses-login');
+    keychain.put(machineVendorItem(osUser).service, osUser, 'the-persons-login');
+    keychain.put(
+      homeVendorItem(homes.homeFor('anthropic', 'acc-one'), osUser).service,
+      osUser,
+      'blob-one',
+    );
     const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
 
     await release(anAccount('acc-one', 'anthropic'), []);
 
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('someone-elses-login');
+    expect(keychain.blobAt(machineVendorItem(osUser).service, osUser)).toBe('the-persons-login');
   });
 
-  test('given an account that was never active leaving, the vendor item is left alone', async () => {
+  test("given any account leaving, the person's own login is never handed anything", async () => {
     await anAccountWithAHome('anthropic', 'acc-one');
     await anAccountWithAHome('anthropic', 'acc-two');
     await homes.pointActiveAt('anthropic', 'acc-one');
-    keychain.put(VENDOR_SERVICE, osUser, 'blob-one');
+    keychain.put(
+      homeVendorItem(homes.homeFor('anthropic', 'acc-two'), osUser).service,
+      osUser,
+      'blob-two',
+    );
     const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
 
-    await release(anAccount('acc-two', 'anthropic'), ['acc-one']);
+    await release(anAccount('acc-one', 'anthropic'), ['acc-two']);
 
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('blob-one');
+    expect(keychain.holds(machineVendorItem(osUser).service, osUser)).toBe(false);
   });
 
   test('given a Codex account leaving, the keychain is never touched, because Codex never used it', async () => {
     await anAccountWithAHome('openai', 'acc-one');
     await homes.pointActiveAt('openai', 'acc-one');
-    keychain.put(VENDOR_SERVICE, osUser, 'blob-one');
+    keychain.put(machineVendorItem(osUser).service, osUser, 'the-persons-login');
     const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
 
     await release(anAccount('acc-one', 'openai'), []);
 
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('blob-one');
+    expect(keychain.blobAt(machineVendorItem(osUser).service, osUser)).toBe('the-persons-login');
     await expect(homeExists('openai', 'acc-one')).resolves.toBe(false);
-  });
-});
-
-describe('what a release says about the keychain it could not reach', () => {
-  test('given the keychain refusing, the release says the credential outlived the account', async () => {
-    await anAccountWithAHome('anthropic', 'acc-one');
-    await homes.pointActiveAt('anthropic', 'acc-one');
-    keychain.put(PARKED_SERVICE, 'acc-one', 'blob-one');
-    keychain.denyEverything();
-    const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
-
-    const outcome = await release(anAccount('acc-one', 'anthropic'), []);
-
-    expect(refusalIn(outcome).code).toBe('keychain-denied');
-  });
-
-  test('given the keychain answering, the release says nothing was left behind', async () => {
-    await anAccountWithAHome('anthropic', 'acc-one');
-    await homes.pointActiveAt('anthropic', 'acc-one');
-    keychain.put(PARKED_SERVICE, 'acc-one', 'blob-one');
-    const release = subscriptionRelease(homes, credentialCustody(keychain.seam, osUser));
-
-    const outcome = await release(anAccount('acc-one', 'anthropic'), []);
-
-    expect(outcome).toEqual({ ok: true });
   });
 });

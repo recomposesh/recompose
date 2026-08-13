@@ -1,21 +1,20 @@
-import { fc, test } from '@fast-check/vitest';
-import { describe, expect } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import type { CredentialCustody, CustodyOutcome } from './credential-custody';
 
-import {
-  credentialCustody,
-  PARKED_SERVICE,
-  RESERVED_SLOT,
-  VENDOR_SERVICE,
-} from './credential-custody';
+import { credentialCustody } from './credential-custody';
 import {
   fakeKeychain,
+  homeHolding,
+  machineHolding,
   osUser,
-  parkedUnder,
   refusalIn,
-  vendorHolding,
 } from './subscriptions.testkit';
+import { homeVendorItem, machineVendorItem } from './vendor-item';
+
+const oneHome = '/data/subscriptions/anthropic/acc-one';
+const otherHome = '/data/subscriptions/anthropic/acc-two';
+const pendingHome = '/data/subscriptions/anthropic/pending';
 
 async function refusalFrom(
   seeded: Record<string, string>,
@@ -27,273 +26,197 @@ async function refusalFrom(
   return refusalIn(await work(credentialCustody(keychain.seam, osUser)));
 }
 
-describe('parking the credential the provider tool keeps in the keychain', () => {
-  test('given a credential in the vendor item, parking copies it under the account it belongs to', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'));
+describe('the credential a config home owns', () => {
+  test('given the tool signed in against a home, custody reads that credential back', async () => {
+    const keychain = fakeKeychain(homeHolding(pendingHome, 'opaque-one'));
     const custody = credentialCustody(keychain.seam, osUser);
 
-    const outcome = await custody.park('acc-one');
-
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-one')).toBe('opaque-one');
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('opaque-one');
+    await expect(custody.readForHome(pendingHome)).resolves.toBe('opaque-one');
   });
 
-  test('given no credential in the vendor item, parking leaves the slot empty rather than blank', async () => {
+  test('given no sign-in against a home, custody answers that the home holds nothing', async () => {
+    const custody = credentialCustody(fakeKeychain().seam, osUser);
+
+    await expect(custody.readForHome(pendingHome)).resolves.toBeNull();
+  });
+
+  test('given a credential under one home, the other home never reaches it', async () => {
+    const keychain = fakeKeychain(homeHolding(oneHome, 'opaque-one'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await expect(custody.readForHome(otherHome)).resolves.toBeNull();
+  });
+
+  test('given a credential written for a home, custody reads back what it wrote', async () => {
     const keychain = fakeKeychain();
     const custody = credentialCustody(keychain.seam, osUser);
 
-    const outcome = await custody.park('acc-one');
+    await custody.writeForHome(oneHome, 'opaque-one');
 
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.holds(PARKED_SERVICE, 'acc-one')).toBe(false);
-    expect(keychain.writes()).toBe(0);
-    await expect(custody.readFor('acc-one', false)).resolves.toBeNull();
+    await expect(custody.readForHome(oneHome)).resolves.toBe('opaque-one');
   });
 
-  test('given the person denies the keychain prompt, parking stops before any write', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'), { atStep: 1, kind: 'denied' });
+  test('given a credential under a home, letting the home go leaves it holding nothing', async () => {
+    const keychain = fakeKeychain(homeHolding(oneHome, 'opaque-one'));
     const custody = credentialCustody(keychain.seam, osUser);
 
-    const outcome = await custody.park('acc-one');
+    const outcome = await custody.removeForHome(oneHome);
+
+    expect(outcome).toEqual({ ok: true });
+    await expect(custody.readForHome(oneHome)).resolves.toBeNull();
+  });
+});
+
+describe("what the person's own tool keeps stands apart", () => {
+  test('given the machine holds its own login, writing a home never reaches it', async () => {
+    const keychain = fakeKeychain(machineHolding('the-persons-login'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await custody.writeForHome(oneHome, 'opaque-one');
+
+    expect(keychain.blobAt(machineVendorItem(osUser).service, osUser)).toBe('the-persons-login');
+  });
+
+  test('given the machine holds its own login, letting a home go never reaches it', async () => {
+    const keychain = fakeKeychain({
+      ...machineHolding('the-persons-login'),
+      ...homeHolding(oneHome, 'opaque-one'),
+    });
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await custody.removeForHome(oneHome);
+
+    expect(keychain.blobAt(machineVendorItem(osUser).service, osUser)).toBe('the-persons-login');
+  });
+
+  test('given a home holding nothing, custody answers nothing rather than the machine login', async () => {
+    const keychain = fakeKeychain(machineHolding('the-persons-login'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await expect(custody.readForHome(oneHome)).resolves.toBeNull();
+  });
+
+  test("given a sign-in about to run, custody reads the machine's own login for a snapshot", async () => {
+    const keychain = fakeKeychain(machineHolding('the-persons-login'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await expect(custody.readMachineItem()).resolves.toBe('the-persons-login');
+  });
+});
+
+describe('a credential following its home', () => {
+  test('given a sign-in landed in the pending home, the credential moves to the account home', async () => {
+    const keychain = fakeKeychain(homeHolding(pendingHome, 'opaque-one'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    const outcome = await custody.moveBetweenHomes(pendingHome, oneHome);
+
+    expect(outcome).toEqual({ ok: true });
+    await expect(custody.readForHome(oneHome)).resolves.toBe('opaque-one');
+    await expect(custody.readForHome(pendingHome)).resolves.toBeNull();
+  });
+
+  test('given the source holds nothing, the move leaves the destination holding nothing', async () => {
+    const keychain = fakeKeychain();
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    const outcome = await custody.moveBetweenHomes(pendingHome, oneHome);
+
+    expect(outcome).toEqual({ ok: true });
+    await expect(custody.readForHome(oneHome)).resolves.toBeNull();
+  });
+
+  test('given the keychain refuses partway, the move never loses the credential', async () => {
+    const keychain = fakeKeychain(homeHolding(pendingHome, 'opaque-one'), {
+      atStep: 3,
+      kind: 'failed',
+    });
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await custody.moveBetweenHomes(pendingHome, oneHome);
+
+    const source = keychain.blobAt(homeVendorItem(pendingHome, osUser).service, osUser);
+    const destination = keychain.blobAt(homeVendorItem(oneHome, osUser).service, osUser);
+
+    expect(source ?? destination).toBe('opaque-one');
+  });
+});
+
+describe('an older tool that writes where the person keeps their own login', () => {
+  test('given the tool wrote the machine item, the credential moves to the home that earned it', async () => {
+    const keychain = fakeKeychain(machineHolding('what-the-old-tool-wrote'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    const outcome = await custody.reclaimMachineWrite(pendingHome, 'the-persons-login');
+
+    expect(outcome).toEqual({ ok: true });
+    await expect(custody.readForHome(pendingHome)).resolves.toBe('what-the-old-tool-wrote');
+  });
+
+  test("given the tool overwrote it, the person's own login goes back where it was", async () => {
+    const keychain = fakeKeychain(machineHolding('what-the-old-tool-wrote'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await custody.reclaimMachineWrite(pendingHome, 'the-persons-login');
+
+    await expect(custody.readMachineItem()).resolves.toBe('the-persons-login');
+  });
+
+  test('given the machine held nothing before, the machine item is left holding nothing', async () => {
+    const keychain = fakeKeychain(machineHolding('what-the-old-tool-wrote'));
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    await custody.reclaimMachineWrite(pendingHome, null);
+
+    await expect(custody.readMachineItem()).resolves.toBeNull();
+    await expect(custody.readForHome(pendingHome)).resolves.toBe('what-the-old-tool-wrote');
+  });
+
+  test('given the machine item holds nothing to reclaim, nothing is written anywhere', async () => {
+    const keychain = fakeKeychain();
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    const outcome = await custody.reclaimMachineWrite(pendingHome, null);
+
+    expect(outcome).toEqual({ ok: true });
+    expect(keychain.writes()).toBe(0);
+  });
+});
+
+describe('when the keychain refuses', () => {
+  test('given the person denies the prompt, custody names the denial rather than a failure', async () => {
+    const keychain = fakeKeychain(homeHolding(oneHome, 'opaque-one'), {
+      atStep: 1,
+      kind: 'denied',
+    });
+    const custody = credentialCustody(keychain.seam, osUser);
+
+    const outcome = await custody.removeForHome(oneHome);
 
     expect(outcome).toMatchObject({ ok: false, code: 'keychain-denied' });
-    expect(refusalIn(outcome).message).toContain('park');
-    expect(keychain.writes()).toBe(0);
   });
 
-  test('given the keychain fails for its own reasons, parking answers a storage refusal', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'), { atStep: 1, kind: 'failed' });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.park('acc-one');
-
-    expect(outcome).toMatchObject({ ok: false, code: 'storage-failed' });
-    expect(refusalIn(outcome).message).toContain('park');
-  });
-
-  test('given a refusal, the message never repeats the credential it was handling', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'), { atStep: 2, kind: 'failed' });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.park('acc-one');
-
-    expect(JSON.stringify(outcome)).not.toContain('opaque-one');
-  });
-});
-
-describe('placing a parked credential back where the tool looks for it', () => {
-  test('given a parked credential, placing puts it in the vendor item', async () => {
-    const keychain = fakeKeychain({
-      ...vendorHolding('opaque-one'),
-      ...parkedUnder('acc-two', 'opaque-two'),
-    });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.place('acc-two');
-
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('opaque-two');
-  });
-
-  test('given nothing parked for the account, placing empties the vendor item rather than leaving a stranger there', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'));
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.place('acc-two');
-
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.holds(VENDOR_SERVICE, osUser)).toBe(false);
-  });
-});
-
-describe('serving with a credential while it remains in custody', () => {
-  test('the active account reads from the vendor item', async () => {
-    const custody = credentialCustody(fakeKeychain(vendorHolding('active-blob')).seam, osUser);
-
-    await expect(custody.readFor('acc-one', true)).resolves.toBe('active-blob');
-  });
-
-  test('an inactive account reads from its parked item', async () => {
-    const custody = credentialCustody(
-      fakeKeychain({
-        ...vendorHolding('active-blob'),
-        ...parkedUnder('acc-two', 'parked-blob'),
-      }).seam,
-      osUser,
+  test('given the keychain refuses, the refusal names the step and never repeats the credential', async () => {
+    const refusal = await refusalFrom(homeHolding(pendingHome, 'opaque-one'), 2, async (custody) =>
+      custody.moveBetweenHomes(pendingHome, oneHome),
     );
 
-    await expect(custody.readFor('acc-two', false)).resolves.toBe('parked-blob');
-  });
-
-  test('a refreshed active credential replaces the vendor item', async () => {
-    const keychain = fakeKeychain(vendorHolding('old-blob'));
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    await custody.writeFor('acc-one', true, 'new-blob');
-
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('new-blob');
-  });
-
-  test('a refreshed inactive credential replaces only its parked item', async () => {
-    const keychain = fakeKeychain({
-      ...vendorHolding('active-blob'),
-      ...parkedUnder('acc-two', 'old-blob'),
-    });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    await custody.writeFor('acc-two', false, 'new-blob');
-
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-two')).toBe('new-blob');
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('active-blob');
+    expect(refusal.message).toContain('move');
+    expect(refusal.message).not.toContain('opaque-one');
   });
 });
 
-describe('handing the vendor item from one account to another', () => {
-  test('given both accounts, the outgoing credential is parked and the incoming one takes its place', async () => {
-    const keychain = fakeKeychain({
-      ...vendorHolding('opaque-one'),
-      ...parkedUnder('acc-two', 'opaque-two'),
-    });
+describe('one turn at a time', () => {
+  test('given two moves asked at once, the second reads what the first wrote', async () => {
+    const keychain = fakeKeychain(homeHolding(pendingHome, 'opaque-one'));
     const custody = credentialCustody(keychain.seam, osUser);
 
-    const outcome = await custody.handOver('acc-one', 'acc-two');
-
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-one')).toBe('opaque-one');
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('opaque-two');
-  });
-
-  test('given nobody was active, the outgoing credential parks under the reserved slot', async () => {
-    const keychain = fakeKeychain({
-      ...vendorHolding('someone-elses-login'),
-      ...parkedUnder('acc-two', 'opaque-two'),
-    });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    await custody.handOver(null, 'acc-two');
-
-    expect(keychain.blobAt(PARKED_SERVICE, RESERVED_SLOT)).toBe('someone-elses-login');
-  });
-
-  test('given the person denies the prompt, the hand-over stops before any write', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'), { atStep: 1, kind: 'denied' });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.handOver('acc-one', 'acc-two');
-
-    expect(outcome).toMatchObject({ ok: false, code: 'keychain-denied' });
-    expect(refusalIn(outcome).message).toContain('park');
-    expect(keychain.writes()).toBe(0);
-  });
-});
-
-describe('a custody refusal names the step it could not finish', () => {
-  test('given the keychain fails while placing, the refusal names placing and the account', async () => {
-    const refused = await refusalFrom(parkedUnder('acc-two', 'opaque-two'), 1, async (custody) =>
-      custody.place('acc-two'),
-    );
-
-    expect(refused.message).toContain('place');
-    expect(refused.message).toContain('acc-two');
-  });
-
-  test('given the keychain fails while letting go, the refusal names forgetting', async () => {
-    const refused = await refusalFrom(parkedUnder('acc-one', 'opaque-one'), 1, async (custody) =>
-      custody.forget('acc-one'),
-    );
-
-    expect(refused.message).toContain('forget');
-  });
-
-  test('given the keychain fails while emptying the vendor item, the refusal names clearing', async () => {
-    const refused = await refusalFrom(vendorHolding('opaque-one'), 1, async (custody) =>
-      custody.clear(),
-    );
-
-    expect(refused.message).toContain('clear');
-    expect(refused.message).toContain('the active account');
-  });
-
-  test('given the keychain fails as the hand-over places, the refusal names placing', async () => {
-    const refused = await refusalFrom(
-      { ...vendorHolding('opaque-one'), ...parkedUnder('acc-two', 'opaque-two') },
-      3,
-      async (custody) => custody.handOver('acc-one', 'acc-two'),
-    );
-
-    expect(refused.message).toContain('place');
-  });
-});
-
-describe('the hand-over never loses the credential it was carrying', () => {
-  test.prop([
-    fc.uniqueArray(
-      fc.uuid().map((id) => `acc-${id}`),
-      { minLength: 2, maxLength: 2 },
-    ),
-    fc.integer({ min: 1, max: 6 }),
-    fc.constantFrom('denied' as const, 'failed' as const),
-  ])(
-    'given any pair of accounts and any single point of failure, the outgoing credential is never lost',
-    async (pair, atStep, kind) => {
-      const outgoing = pair[0] ?? 'acc-one';
-      const incoming = pair[1] ?? 'acc-two';
-      const keychain = fakeKeychain(
-        { ...vendorHolding('outgoing-blob'), ...parkedUnder(incoming, 'incoming-blob') },
-        { atStep, kind },
-      );
-      const custody = credentialCustody(keychain.seam, osUser);
-
-      await custody.handOver(outgoing, incoming);
-
-      const stillRecoverable =
-        keychain.blobAt(VENDOR_SERVICE, osUser) === 'outgoing-blob' ||
-        keychain.blobAt(PARKED_SERVICE, outgoing) === 'outgoing-blob';
-
-      expect(stillRecoverable).toBe(true);
-    },
-  );
-});
-
-describe('letting go of a credential when an account leaves', () => {
-  test('given an account being removed, its parked credential goes with it', async () => {
-    const keychain = fakeKeychain(parkedUnder('acc-one', 'opaque-one'));
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.forget('acc-one');
-
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-one')).toBeNull();
-  });
-
-  test('given the active account being removed, the vendor item is emptied too', async () => {
-    const keychain = fakeKeychain(vendorHolding('opaque-one'));
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    const outcome = await custody.clear();
-
-    expect(outcome).toEqual({ ok: true });
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBeNull();
-  });
-});
-
-describe('custody runs one turn at a time', () => {
-  test('given two hand-overs asked for together, the second reads what the first left', async () => {
-    const keychain = fakeKeychain({
-      ...vendorHolding('opaque-one'),
-      ...parkedUnder('acc-two', 'opaque-two'),
-      ...parkedUnder('acc-three', 'opaque-three'),
-    });
-    const custody = credentialCustody(keychain.seam, osUser);
-
-    await Promise.all([
-      custody.handOver('acc-one', 'acc-two'),
-      custody.handOver('acc-two', 'acc-three'),
+    const [first, second] = await Promise.all([
+      custody.moveBetweenHomes(pendingHome, oneHome),
+      custody.moveBetweenHomes(oneHome, otherHome),
     ]);
 
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-one')).toBe('opaque-one');
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-two')).toBe('opaque-two');
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('opaque-three');
+    expect([first, second]).toEqual([{ ok: true }, { ok: true }]);
+    await expect(custody.readForHome(otherHome)).resolves.toBe('opaque-one');
   });
 });

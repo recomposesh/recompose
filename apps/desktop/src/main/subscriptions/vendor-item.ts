@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 
-import type { KeychainItem } from './credential-custody';
+export type KeychainItem = { service: string; account: string };
 
-import { VENDOR_SERVICE } from './credential-custody';
+const VENDOR_SERVICE = 'Claude Code-credentials';
 
 const HOME_MARK_LENGTH = 8;
 

@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import type { SubscriptionHomes } from '../subscriptions/subscription-homes';
 import type { SubscriptionsWorld } from './subscriptions-ipc.testkit';
 
-import { PARKED_SERVICE, VENDOR_SERVICE } from '../subscriptions/credential-custody';
 import { osUser } from '../subscriptions/subscriptions.testkit';
+import { homeVendorItem, machineVendorItem } from '../subscriptions/vendor-item';
 import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 import { aFreshWorld, refusalIn, viewsIn } from './subscriptions-ipc.testkit';
 
@@ -72,25 +72,29 @@ describe('choosing which account the provider tool answers to', () => {
 });
 
 describe('activating on macOS, where the tool keeps its credential in the keychain', () => {
-  test('given two accounts, activating hands the vendor item over to the incoming one', async () => {
-    await twoAnthropicAccounts('darwin');
-    world.keychain.put(VENDOR_SERVICE, osUser, 'blob-one');
-    world.keychain.put(PARKED_SERVICE, 'acc-two', 'blob-two');
+  test('given two accounts, activating moves the pointer and disturbs no credential', async () => {
+    const homes = await twoAnthropicAccounts('darwin');
+    const one = homeVendorItem(homes.homeFor('anthropic', 'acc-one'), osUser).service;
+    const two = homeVendorItem(homes.homeFor('anthropic', 'acc-two'), osUser).service;
+
+    world.keychain.put(one, osUser, 'blob-one');
+    world.keychain.put(two, osUser, 'blob-two');
 
     await handlersOn('darwin')['subscriptions:activate']({ id: 'acc-two' });
 
-    expect(world.keychain.blobAt(PARKED_SERVICE, 'acc-one')).toBe('blob-one');
-    expect(world.keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('blob-two');
+    await expect(homes.readActive('anthropic')).resolves.toBe('acc-two');
+    expect(world.keychain.blobAt(one, osUser)).toBe('blob-one');
+    expect(world.keychain.blobAt(two, osUser)).toBe('blob-two');
   });
 
-  test('given a denied prompt, the pointer stays where it was', async () => {
-    const homes = await twoAnthropicAccounts('darwin');
+  test("given an activation, the person's own login is never written", async () => {
+    await twoAnthropicAccounts('darwin');
+    world.keychain.put(machineVendorItem(osUser).service, osUser, 'the-persons-login');
 
-    world.keychain.denyEverything();
+    await handlersOn('darwin')['subscriptions:activate']({ id: 'acc-two' });
 
-    const answered = await handlersOn('darwin')['subscriptions:activate']({ id: 'acc-two' });
-
-    expect(refusalIn(answered).code).toBe('keychain-denied');
-    await expect(homes.readActive('anthropic')).resolves.toBe('acc-one');
+    expect(world.keychain.blobAt(machineVendorItem(osUser).service, osUser)).toBe(
+      'the-persons-login',
+    );
   });
 });
