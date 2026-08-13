@@ -4,11 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Crossing, JsonObject } from '../gateway-wire';
 
-import {
-  credentialedRequestBody,
-  credentialedRequestHeaders,
-  credentialedRequestUrl,
-} from './credentialed-target';
+import { credentialedRequestHeaders } from './credentialed-headers';
+import { credentialedRequestBody, credentialedRequestUrl } from './credentialed-target';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 

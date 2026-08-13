@@ -45,6 +45,8 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'subscriptions:list',
   'subscriptions:tools',
   'subscriptions:sign-in',
+  'subscriptions:copilot-code',
+  'subscriptions:copilot-await',
   'subscriptions:restore',
   'subscriptions:activate',
   'subscriptions:detect',

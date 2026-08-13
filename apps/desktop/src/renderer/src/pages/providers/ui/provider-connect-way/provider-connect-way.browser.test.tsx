@@ -239,3 +239,61 @@ test('a refused sign-in says why rather than waiting on a tool that already answ
     .element(screen.getByRole('alert'))
     .toHaveTextContent('Claude Code never reported a sign-in.');
 });
+
+test('a server a person addressed themselves stores the port they named', async () => {
+  installFakeBridge({ tools: [claudeCode] });
+
+  const screen = await renderFork(offered('custom-local'), 'local');
+
+  await screen.getByLabelText('Name', { exact: true }).fill('Bench box');
+  await screen.getByLabelText('Port', { exact: true }).fill('8123');
+  await screen.getByRole('button', { name: /Connect/ }).click();
+
+  await expect.element(screen.getByText('The fork stepped aside.')).toBeVisible();
+});
+
+test('a server named with no port cannot be connected yet', async () => {
+  installFakeBridge({ tools: [claudeCode] });
+
+  const screen = await renderFork(offered('custom-local'), 'local');
+
+  await screen.getByLabelText('Name', { exact: true }).fill('Bench box');
+
+  await expect.element(screen.getByRole('button', { name: /Connect/ })).toBeDisabled();
+});
+
+test('an endpoint a person addressed themselves stores the dialect they chose', async () => {
+  installFakeBridge({ tools: [claudeCode] });
+
+  const screen = await renderFork(offered('custom-endpoint'), 'api-key');
+
+  await screen.getByLabelText('Name', { exact: true }).fill('North Rack');
+  await screen.getByLabelText('Base URL', { exact: true }).fill('https://rack.example');
+  await screen.getByLabelText('Key', { exact: true }).fill('sk-rack-1');
+  await screen.getByRole('combobox').selectOptions('anthropic');
+  await screen.getByRole('button', { name: /Connect/ }).click();
+
+  await expect.element(screen.getByText('The fork stepped aside.')).toBeVisible();
+});
+
+test('an endpoint whose address names no scheme says so rather than storing', async () => {
+  installFakeBridge({ tools: [claudeCode] });
+
+  const screen = await renderFork(offered('custom-endpoint'), 'api-key');
+
+  await screen.getByLabelText('Name', { exact: true }).fill('North Rack');
+  await screen.getByLabelText('Base URL', { exact: true }).fill('rack.example');
+
+  await expect.element(screen.getByRole('alert')).toBeVisible();
+});
+
+test('a port outside the range recompose accepts says so rather than storing', async () => {
+  installFakeBridge({ tools: [claudeCode] });
+
+  const screen = await renderFork(offered('custom-local'), 'local');
+
+  await screen.getByLabelText('Name', { exact: true }).fill('Bench box');
+  await screen.getByLabelText('Port', { exact: true }).fill('99999');
+
+  await expect.element(screen.getByRole('alert')).toBeVisible();
+});

@@ -5,6 +5,10 @@ Feature: The Aggregators catalog
 
   Scenario: Adding a provider opens the catalog over the screen
     When the maintainer asks to add a provider
-    Then the catalog opens over the screen, holding seven entries
-    And only "OpenRouter" answers a pick
-    And the six that cannot connect yet stand under Soon badges
+    Then the catalog opens over the screen, holding seven hosted catalogs
+    And every hosted catalog answers a pick
+
+  Scenario: A hosted catalog the release once deferred now opens its own connect
+    Given the catalog is open
+    When the maintainer picks "Cerebras" in the catalog
+    Then the connect asks for a name and a key

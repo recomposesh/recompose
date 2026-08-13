@@ -4,7 +4,8 @@ import type { SpendGrantFor } from '../gateway-proxy';
 import type { Crossing, JsonObject } from '../gateway-wire';
 
 import { isJsonObject } from '../gateway-wire';
-import { credentialedRequestBody, credentialedRequestHeaders } from './credentialed-target';
+import { credentialedRequestHeaders } from './credentialed-headers';
+import { credentialedRequestBody } from './credentialed-target';
 
 export type XAIWebSocketGrant = Extract<SpendGrant, { verdict: 'resolved' }> & {
   spend: { custody: 'credentialed'; provider: 'xai'; credential: string };

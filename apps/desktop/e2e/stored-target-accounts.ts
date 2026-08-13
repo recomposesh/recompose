@@ -49,7 +49,9 @@ export async function accountHeldAs(page: Page, kind: AccountKind): Promise<Stor
     throw new Error(`recompose holds no ${kind} account`);
   }
 
-  return { id: found.id, label: 'label' in found ? found.label : found.provider };
+  const named = 'label' in found ? found.label : undefined;
+
+  return { id: found.id, label: named ?? found.provider };
 }
 
 async function keyStandsStoredOn(

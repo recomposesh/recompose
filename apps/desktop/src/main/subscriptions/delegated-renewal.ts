@@ -1,6 +1,6 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionProviders, toolBacked } from '@recompose/contracts';
 
 import type { OneAtATime } from '../storage/one-at-a-time';
 
@@ -50,6 +50,10 @@ export async function delegatedRenewal(
   provider: SubscriptionProviderId,
   run: RenewalRun,
 ): Promise<DelegatedRenewalOutcome> {
+  if (!toolBacked(provider)) {
+    return { verdict: 'no-headless-run' };
+  }
+
   const { renewArguments } = subscriptionProviders[provider];
 
   if (renewArguments.length === 0) {

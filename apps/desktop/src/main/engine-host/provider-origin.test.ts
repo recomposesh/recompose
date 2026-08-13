@@ -88,7 +88,7 @@ describe('the origin a target account is spent against', () => {
   });
 
   test('an unknown valid provider is reserved for a plugin executor without a network origin', () => {
-    expect(providerOriginOf(keyRow('cerebras'))).toBe('plugin://cerebras');
+    expect(providerOriginOf(keyRow('a-plugin-vendor'))).toBe('plugin://a-plugin-vendor');
   });
 });
 
@@ -138,7 +138,7 @@ describe('an origin the environment names in place of the vendor endpoint', () =
   test('a plugin provider is not redirected through the vendor stand-in', () => {
     vi.stubEnv(SERVING_ORIGIN, 'http://127.0.0.1:41999');
 
-    expect(providerOriginOf(keyRow('cerebras'))).toBe('plugin://cerebras');
+    expect(providerOriginOf(keyRow('a-plugin-vendor'))).toBe('plugin://a-plugin-vendor');
   });
 
   test('a local runtime is still spent against the address its account was stored with', () => {

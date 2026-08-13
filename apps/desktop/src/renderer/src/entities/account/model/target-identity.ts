@@ -11,6 +11,8 @@ const subscriptionProducts: Record<Extract<Account, { kind: 'subscription' }>['p
     anthropic: 'Claude',
     openai: 'Codex',
     antigravity: 'Gemini',
+    kimi: 'Kimi Code',
+    copilot: 'GitHub Copilot',
   };
 
 const providerProducts: Readonly<Record<string, string>> = {
@@ -35,7 +37,13 @@ const markAliases: Readonly<Record<string, BrandMarkName>> = {
  * so a row and a picker never leave one nameless.
  */
 export function accountName(account: Account): string {
-  return account.kind === 'local' ? localRuntimes[account.provider].name : account.label;
+  if (account.kind !== 'local') {
+    return account.label;
+  }
+
+  return account.provider === 'custom'
+    ? (account.label ?? 'Local server')
+    : localRuntimes[account.provider].name;
 }
 
 /** The provider product one target card names as its main line. */

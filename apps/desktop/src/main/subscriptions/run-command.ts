@@ -4,6 +4,8 @@ export const WAITS_FOR_THE_PERSON = 0;
 
 const BATCH_SUFFIXES = ['.cmd', '.bat'];
 
+const READ_BY_THE_PROCESSOR = /["&|<>^%!\r\n]/;
+
 export type CommandLine = {
   command: string;
   args: string[];
@@ -13,6 +15,19 @@ export type CommandLine = {
 
 function isBatchFile(file: string): boolean {
   return BATCH_SUFFIXES.some((suffix) => file.toLowerCase().endsWith(suffix));
+}
+
+/**
+ * Whether a line may be handed to the command processor at all.
+ *
+ * @summary The quoting around the file is what keeps a path with a space one file, and the file
+ * comes from the machine's search path rather than from this codebase. A directory named with a
+ * quote closes that quoting itself, leaving whatever follows to read as a second command. Nothing
+ * legitimate carries one of these, so a name holding one is refused rather than escaped: escaping
+ * asks every later reader to trust the escaping.
+ */
+export function safeForTheCommandProcessor(file: string, args: readonly string[]): boolean {
+  return ![file, ...args].some((word) => READ_BY_THE_PROCESSOR.test(word));
 }
 
 /**
@@ -30,6 +45,12 @@ export function commandLineFor(
 ): CommandLine {
   if (platform !== 'win32' || !isBatchFile(file)) {
     return { command: file, args: [...args], verbatim: false };
+  }
+
+  if (!safeForTheCommandProcessor(file, args)) {
+    throw new Error(
+      `refused to start ${file}, because its line carries a character the command processor reads as its own`,
+    );
   }
 
   return {

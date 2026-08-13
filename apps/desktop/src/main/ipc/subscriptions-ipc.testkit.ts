@@ -85,6 +85,12 @@ function contextIn(
       keyringHolds: null,
     },
     searchPath: async () => Promise.resolve(binFolder),
+    copilot: {
+      fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
+      sleep: async () => Promise.resolve(),
+      nowMs: () => 0,
+    },
+    writeSubscriptionCredential: async () => Promise.resolve(),
     launch,
     clock: fakeClock,
     signInBoundMs: 300,

@@ -1,6 +1,6 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionPlanNames } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useId } from 'react';
 
@@ -26,13 +26,16 @@ type SignInWayProps = {
 export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
   const reasonId = useId();
   const { data: tools } = useSuspenseQuery(subscriptionToolsQueryOptions);
-  const { toolName } = subscriptionProviders[provider];
+  const toolName = subscriptionPlanNames[provider];
   const reported = tools.find((tool) => tool.provider === provider);
   const command = reported?.present === true ? reported.signInCommand : undefined;
 
   return (
     <div className="mx-auto flex w-80 flex-col items-center gap-2.5 py-4 text-center">
-      <PickedIdentity provider={subscriptionMarkFor(provider)} title={`An account for ${toolName}`}>
+      <PickedIdentity
+        lead={{ mark: subscriptionMarkFor(provider) }}
+        title={`An account for ${toolName}`}
+      >
         <p className="text-detail text-ink-secondary">
           {toolName} signs in on its own and spends your {name} plan, under {name}&apos;s terms.
           {` ${toolName} serves one account at a time.`}

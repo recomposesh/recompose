@@ -90,7 +90,7 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
       userDataPath,
       homeFolder,
       onCorrupt,
-      probeRuntime: async (address) => engineHost.probeRuntime(address),
+      probeRuntime: async (address, provider) => engineHost.probeRuntime(address, provider),
     }),
     ...createSystemIpcHandlers({
       fileBrowser: fileBrowserFor(wiring.platform),

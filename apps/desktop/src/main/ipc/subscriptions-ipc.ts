@@ -1,11 +1,6 @@
-import type {
-  AccountsDocument,
-  IpcRequest,
-  SubscriptionAccount,
-  SubscriptionProviderId,
-} from '@recompose/contracts';
+import type { IpcRequest, SubscriptionAccount, SubscriptionProviderId } from '@recompose/contracts';
 
-import { subscriptionProviders } from '@recompose/contracts';
+import { subscriptionPlanNames, toolBacked, type ToolBackedProviderId } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
 
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
@@ -21,12 +16,13 @@ import { awaitSignIn } from '../subscriptions/subscription-sign-in';
 import { observeSubscription } from '../subscriptions/subscription-standing';
 import { heldUnderTheAddress, isSubscription } from '../subscriptions/subscription-views';
 import { reportTools } from '../subscriptions/tool-presence';
+import { copilotHandlers } from './copilot-ipc';
 import { storagePathsFor } from './storage-context';
 import { ipcFailure, storageFailure } from './storage-envelope';
 import {
   settleUnder,
   readAccounts,
-  recordTheAccount,
+  keepTheAccount,
   refusalFailure,
   toolPresent,
   viewsOf,
@@ -39,6 +35,8 @@ export type SubscriptionsIpcHandlers = Pick<
   | 'subscriptions:list'
   | 'subscriptions:tools'
   | 'subscriptions:sign-in'
+  | 'subscriptions:copilot-code'
+  | 'subscriptions:copilot-await'
   | 'subscriptions:restore'
   | 'subscriptions:activate'
 >;
@@ -56,7 +54,7 @@ type ToolRun = { landed: SubscriptionObservation | null; reclaimed: CustodyOutco
  */
 async function runTheTool(
   shop: Workshop,
-  provider: SubscriptionProviderId,
+  provider: ToolBackedProviderId,
   custody: CredentialCustody | null,
 ): Promise<ToolRun> {
   const snapshot = custody === null ? null : await custody.readMachineItem();
@@ -112,14 +110,6 @@ async function reclaimAnOldToolsWrite(what: Reclaim): Promise<ToolRun> {
   return { landed: observed.standing === 'connected' ? observed : null, reclaimed };
 }
 
-async function keepTheAccount(shop: Workshop, row: SubscriptionAccount): Promise<AccountsDocument> {
-  const updated = await recordTheAccount(shop, row);
-
-  await shop.homes.pointActiveAt(row.provider, row.id);
-
-  return updated;
-}
-
 async function afterTheToolAnswers(
   shop: Workshop,
   provider: SubscriptionProviderId,
@@ -146,7 +136,7 @@ async function afterTheToolAnswers(
     return refusalFailure(settled);
   }
 
-  const label = observed.signedInAs ?? subscriptionProviders[provider].toolName;
+  const label = observed.signedInAs ?? subscriptionPlanNames[provider];
   const kept = await keepTheAccount(shop, {
     id,
     provider,
@@ -163,12 +153,19 @@ async function signIn(
   provider: SubscriptionProviderId,
   existingId: string | null,
 ): Promise<Answered> {
-  const { toolName } = subscriptionProviders[provider];
+  const toolName = subscriptionPlanNames[provider];
 
   if (!(await toolPresent(shop, provider))) {
     return ipcFailure(
       'tool-missing',
       `${toolName} is not installed on this machine, so no sign-in can begin.`,
+    );
+  }
+
+  if (!toolBacked(provider)) {
+    return ipcFailure(
+      'tool-missing',
+      `${toolName} signs in through recompose itself rather than through a tool.`,
     );
   }
 
@@ -266,6 +263,8 @@ export function createSubscriptionsIpcHandlers(
 
     'subscriptions:sign-in': async (request: IpcRequest<'subscriptions:sign-in'>) =>
       inTurn(guarded(async () => signIn(shop, request.provider, null))),
+
+    ...copilotHandlers(shop, inTurn, guarded),
 
     'subscriptions:restore': async (request: IpcRequest<'subscriptions:restore'>) =>
       inTurn(guarded(async () => restore(shop, request.id))),

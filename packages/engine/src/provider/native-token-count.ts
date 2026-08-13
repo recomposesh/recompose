@@ -11,7 +11,7 @@ import { ingressPayload, isJsonObject, jsonResponse, refusalResponse } from '../
 import { emptyConversation } from '../refusals';
 import { decodeClaudeResponse } from '../subscription/claude-compression';
 import { reachAntigravityCount } from '../subscription/reach-count';
-import { credentialedRequestHeaders } from './credentialed-target';
+import { credentialedRequestHeaders } from './credentialed-headers';
 import { kimiProviderBody } from './kimi-request';
 import {
   parseVertexCredential,

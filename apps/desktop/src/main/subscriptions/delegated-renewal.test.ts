@@ -91,6 +91,15 @@ describe('a renewal that cannot happen', () => {
     await expect(delegatedRenewal('anthropic', run)).resolves.toEqual({ verdict: 'renewed' });
   });
 
+  test('given the plan no tool signs into, nothing is spawned and no table is read', async () => {
+    const { run, runs } = aTool();
+
+    await expect(delegatedRenewal('copilot', run)).resolves.toEqual({
+      verdict: 'no-headless-run',
+    });
+    expect(runs).toEqual([]);
+  });
+
   test('given a tool that names no run, the outcome says so and nothing is spawned', async () => {
     const { run, runs } = aTool();
 

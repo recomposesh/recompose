@@ -1,7 +1,9 @@
 import {
-  subscriptionProviderIdSchema,
+  toolBacked,
+  toolBackedProviderIdSchema,
   subscriptionProviders,
   type SubscriptionProviderId,
+  type ToolBackedProviderId,
   type SubscriptionTool,
 } from '@recompose/contracts';
 import { constants } from 'node:fs';
@@ -76,11 +78,15 @@ export async function toolFileFor(
   searchPath: string,
   platform: NodeJS.Platform,
 ): Promise<string | null> {
+  if (!toolBacked(provider)) {
+    return null;
+  }
+
   return fileOnSearchPath(subscriptionProviders[provider].toolBinary, searchPath, platform);
 }
 
 async function reportTool(
-  provider: SubscriptionProviderId,
+  provider: ToolBackedProviderId,
   request: ToolReportRequest,
 ): Promise<SubscriptionTool> {
   const { toolBinary, toolName } = subscriptionProviders[provider];
@@ -104,6 +110,6 @@ async function reportTool(
 
 export async function reportTools(request: ToolReportRequest): Promise<SubscriptionTool[]> {
   return Promise.all(
-    subscriptionProviderIdSchema.options.map(async (provider) => reportTool(provider, request)),
+    toolBackedProviderIdSchema.options.map(async (provider) => reportTool(provider, request)),
   );
 }

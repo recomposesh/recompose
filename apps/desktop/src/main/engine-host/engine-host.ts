@@ -244,6 +244,7 @@ function residentFor(deps: EngineHostDeps): Resident {
 export function createEngineHost(deps: EngineHostDeps): EngineHost {
   const resident = residentFor(deps);
   const inGatewayOrder = createGatewayOrder();
+  const child = () => runningChild(resident);
 
   return {
     start: async (gateway) =>
@@ -256,12 +257,11 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
       ),
     restart: async (gateway) =>
       inGatewayOrder(gateway.slug, async () => restartGateway(resident, gateway)),
-    probe: async (provider, key) =>
-      probeThroughTheChild(resident.looks, () => runningChild(resident), provider, key),
-    probeRuntime: async (address) =>
-      lookAtTheRuntimeThroughTheChild(resident.looks, () => runningChild(resident), address),
+    probe: async (provider, key) => probeThroughTheChild(resident.looks, child, provider, key),
+    probeRuntime: async (address, provider) =>
+      lookAtTheRuntimeThroughTheChild(resident.looks, child, address, provider),
     listModels: async (origin, custody) =>
-      listModelsThroughTheChild(resident.looks, () => runningChild(resident), origin, custody),
+      listModelsThroughTheChild(resident.looks, child, origin, custody),
     states: () => resident.states,
     retainedLogRows: () => resident.logs.retainedRows(),
     replayLogs: () => {

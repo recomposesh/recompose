@@ -18,7 +18,7 @@ import {
   withRefusal,
 } from '../../../../shared/api';
 import { FieldBoxRow, SheetActionSlot } from '../../../../shared/ui';
-import { providerName } from '../../model/provider-catalog';
+import { localLeadFor, localRuntimeName } from '../../model/local-catalog';
 import { PickedIdentity } from '../picked-identity/picked-identity';
 
 type DetectRuntimeStepProps = {
@@ -187,7 +187,7 @@ export function DetectRuntimeStep({ runtime, onConnected }: DetectRuntimeStepPro
   const look = useQuery(runtimeDetectionQueryOptions(runtime, lookPort));
   const connect = withRefusal(useConnectLocalRuntime());
 
-  const name = providerName(runtime);
+  const name = localRuntimeName(runtime);
   const lookedAt = runtimeAddressFor(runtime, lookPort);
   const host = lookedAt.slice(lookedAt.indexOf('//') + 2);
   const reading = readingOf(look);
@@ -198,7 +198,7 @@ export function DetectRuntimeStep({ runtime, onConnected }: DetectRuntimeStepPro
 
   return (
     <div className="mx-auto flex w-80 flex-col items-center gap-2.5 py-4 text-center">
-      <PickedIdentity provider={runtime} title={name} />
+      <PickedIdentity lead={localLeadFor(runtime)} title={name} />
       {portKnob({ form, onPortChosen: setLookPort })}
       <div className="flex h-16 flex-col items-center justify-center gap-0.5" role="status">
         {readingFace(name, host, reading)}

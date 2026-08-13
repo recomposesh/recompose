@@ -10,10 +10,10 @@ import { afterAuthPlugins, flattenedHeaders, headerMap } from '../plugin-after-a
 import { notePluginExecution } from '../plugin-execution-context';
 import { reachAIStudio } from './ai-studio-request';
 import { observeClaudeReplay } from './claude-replay-runtime';
+import { credentialedRequestHeaders } from './credentialed-headers';
 import {
   credentialedDialect,
   credentialedRequestBody,
-  credentialedRequestHeaders,
   credentialedRequestUrl,
 } from './credentialed-target';
 import { observeKimiReplay } from './kimi-replay-runtime';

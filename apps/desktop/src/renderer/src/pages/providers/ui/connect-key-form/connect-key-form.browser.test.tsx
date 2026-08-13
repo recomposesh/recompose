@@ -3,20 +3,19 @@ import { useState } from 'react';
 import { expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import type { BrandMarkName } from '../../../../shared/ui';
-
 import { installFakeBridge } from '../../../../shared/testing';
+import { entryNamed } from '../../testing/catalog-entry';
 import { ConnectKeyForm } from './connect-key-form';
 
-function KeyForm({ provider }: { provider: BrandMarkName }) {
+function KeyForm({ provider }: { provider: string }) {
   const [connected, setConnected] = useState(false);
 
   return connected ? (
     <p>The form stepped aside.</p>
   ) : (
     <ConnectKeyForm
+      entry={entryNamed(provider)}
       kind="api-key"
-      provider={provider}
       onConnected={() => {
         setConnected(true);
       }}
@@ -24,7 +23,7 @@ function KeyForm({ provider }: { provider: BrandMarkName }) {
   );
 }
 
-async function renderKeyForm(provider: BrandMarkName = 'anthropic') {
+async function renderKeyForm(provider = 'anthropic') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });

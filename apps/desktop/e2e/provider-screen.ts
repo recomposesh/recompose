@@ -1,7 +1,12 @@
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { subscriptionProviderIdSchema, subscriptionProviders } from '@recompose/contracts';
+import {
+  subscriptionPlanNames,
+  subscriptionProviderIdSchema,
+  subscriptionProviders,
+  toolBackedProviderIdSchema,
+} from '@recompose/contracts';
 import { join } from 'node:path';
 
 const CATALOG = 'Add provider';
@@ -226,11 +231,11 @@ export async function placementOf(locator: Locator): Promise<Placement> {
 }
 
 export function toolBinaryFor(provider: string): string {
-  return subscriptionProviders[subscriptionProviderIdSchema.parse(provider)].toolBinary;
+  return subscriptionProviders[toolBackedProviderIdSchema.parse(provider)].toolBinary;
 }
 
 export function toolNameFor(provider: string): string {
-  return subscriptionProviders[subscriptionProviderIdSchema.parse(provider)].toolName;
+  return subscriptionPlanNames[subscriptionProviderIdSchema.parse(provider)];
 }
 
 export async function userDataFolder(app: ElectronApplication): Promise<string> {
@@ -247,4 +252,15 @@ export async function toolHomesFolder(app: ElectronApplication, provider: string
 /** The config home the provider's tool currently runs against, reached through the active pointer. */
 export async function activeToolHome(app: ElectronApplication, provider: string): Promise<string> {
   return join(await toolHomesFolder(app, provider), 'active');
+}
+
+/**
+ * Proves nothing in the open catalog stands inert.
+ *
+ * @summary Every kind reads the same way now, so the three surfaces assert it through one helper
+ * rather than three copies that could drift apart.
+ */
+export async function everyEntryAnswersAPick(page: Page): Promise<void> {
+  await expect(catalog(page).locator('[aria-disabled]')).toHaveCount(0);
+  await expect(catalog(page).getByText('Soon', { exact: true })).toHaveCount(0);
 }

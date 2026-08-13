@@ -5,42 +5,38 @@ import { authoredRefusalIn, vendorShapeOf } from '@recompose/contracts';
 import { useForm, useSelector } from '@tanstack/react-form';
 import { useId } from 'react';
 
-import type { BrandMarkName } from '../../../../shared/ui';
+import type { CatalogEntry } from '../../model/provider-catalog';
 
 import { IpcResultError, useConnectAccount, withRefusal } from '../../../../shared/api';
-import { FieldBoxRow, SheetActionSlot } from '../../../../shared/ui';
 import {
   keyHostFor,
   keyShapeHintFor,
   keyTitleFor,
   providerName,
 } from '../../model/provider-catalog';
-import { PickedIdentity } from '../picked-identity/picked-identity';
+import { ConnectStep } from '../connect-step/connect-step';
+import { SheetField } from '../sheet-field/sheet-field';
 
 type ConnectKeyFormProps = {
-  /** The provider the key belongs to, already settled by the catalog entry that opened the form. */
-  provider: BrandMarkName;
+  /** The entry the key belongs to, already settled by the catalog card that opened the form. */
+  entry: CatalogEntry;
   /** Which kind the registry holds this key under. */
   kind: CredentialedAccountKind;
   /** Runs once the key is stored, so the surface that opened the form can step aside. */
   onConnected: () => void;
 };
 
-function pickedProduct(provider: BrandMarkName): ReactNode {
-  const host = keyHostFor(provider);
+function reachedHost(entry: CatalogEntry): ReactNode {
+  const host = keyHostFor(entry.id);
 
-  return (
-    <PickedIdentity provider={provider} title={keyTitleFor(provider)}>
-      {host === undefined ? null : (
-        <p className="text-detail text-ink-secondary">
-          This key reaches <span className="font-mono text-mono-value">{host}</span>
-        </p>
-      )}
-    </PickedIdentity>
+  return host === undefined ? null : (
+    <p className="text-detail text-ink-secondary">
+      This key reaches <span className="font-mono text-mono-value">{host}</span>
+    </p>
   );
 }
 
-function shapeWarning(provider: BrandMarkName, pasted: string): ReactNode {
+function shapeWarning(provider: string, pasted: string): ReactNode {
   const suggested = vendorShapeOf(pasted);
 
   if (suggested === undefined || suggested === provider) {
@@ -55,27 +51,6 @@ function shapeWarning(provider: BrandMarkName, pasted: string): ReactNode {
   );
 }
 
-type ConnectAct = {
-  formId: string;
-  ready: boolean;
-  pending: boolean;
-};
-
-function connectAct({ formId, ready, pending }: ConnectAct): ReactNode {
-  return (
-    <SheetActionSlot>
-      <button
-        className="push-button-primary focus-ring disabled:bg-surface-inert disabled:text-ink-secondary"
-        disabled={pending || !ready}
-        form={formId}
-        type="submit"
-      >
-        Connect
-      </button>
-    </SheetActionSlot>
-  );
-}
-
 function spokenRefusal(error: Error | null, refusal: string | undefined): string | undefined {
   if (!(error instanceof IpcResultError) || error.code !== 'validation-failed') {
     return refusal;
@@ -84,16 +59,8 @@ function spokenRefusal(error: Error | null, refusal: string | undefined): string
   return authoredRefusalIn(error.message) ?? 'recompose cannot store this key as it stands.';
 }
 
-function refusalLine(refusal: string | undefined): ReactNode {
-  return refusal === undefined ? null : (
-    <p className="mt-1.5 px-0.5 text-caption text-danger-ink" role="alert">
-      {refusal}
-    </p>
-  );
-}
-
 function useKeyDraftForm(
-  provider: BrandMarkName,
+  provider: string,
   kind: CredentialedAccountKind,
   connect: ReturnType<typeof useConnectAccount>,
   onConnected: () => void,
@@ -108,13 +75,12 @@ function useKeyDraftForm(
 
 type KeyDraftForm = ReturnType<typeof useKeyDraftForm>;
 
-function keyFields(form: KeyDraftForm, provider: BrandMarkName): ReactNode {
+function keyFields(form: KeyDraftForm, provider: string): ReactNode {
   return (
-    <div className="mt-4 field-box">
+    <>
       <form.Field name="label">
         {(field) => (
-          <FieldBoxRow
-            controlClasses="w-sheet-secret"
+          <SheetField
             label="Name"
             onChangeValue={field.handleChange}
             placeholder="My API Key"
@@ -124,8 +90,7 @@ function keyFields(form: KeyDraftForm, provider: BrandMarkName): ReactNode {
       </form.Field>
       <form.Field name="secret">
         {(field) => (
-          <FieldBoxRow
-            controlClasses="w-sheet-secret"
+          <SheetField
             label="Key"
             onChangeValue={field.handleChange}
             placeholder={keyShapeHintFor(provider)}
@@ -134,7 +99,7 @@ function keyFields(form: KeyDraftForm, provider: BrandMarkName): ReactNode {
           />
         )}
       </form.Field>
-    </div>
+    </>
   );
 }
 
@@ -150,9 +115,10 @@ function keyFields(form: KeyDraftForm, provider: BrandMarkName): ReactNode {
  * A refused connect keeps both drafts, because a person who has just pasted a key should never be
  * asked to find it a second time.
  */
-export function ConnectKeyForm({ provider, kind, onConnected }: ConnectKeyFormProps) {
+export function ConnectKeyForm({ entry, kind, onConnected }: ConnectKeyFormProps) {
   const connect = withRefusal(useConnectAccount());
   const formId = useId();
+  const provider = entry.id;
   const form = useKeyDraftForm(provider, kind, connect, onConnected);
   const ready = useSelector(
     form.store,
@@ -161,21 +127,20 @@ export function ConnectKeyForm({ provider, kind, onConnected }: ConnectKeyFormPr
   const pasted = useSelector(form.store, (state) => state.values.secret);
 
   return (
-    <>
-      <form
-        className="flex flex-col py-2"
-        id={formId}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void form.handleSubmit();
-        }}
-      >
-        {pickedProduct(provider)}
-        {keyFields(form, provider)}
-        {shapeWarning(provider, pasted)}
-        {refusalLine(spokenRefusal(connect.error, connect.refusal))}
-      </form>
-      {connectAct({ formId, ready, pending: connect.isPending })}
-    </>
+    <ConnectStep
+      caption={reachedHost(entry)}
+      formId={formId}
+      lead={entry.lead}
+      note={shapeWarning(provider, pasted)}
+      onSubmit={() => {
+        void form.handleSubmit();
+      }}
+      pending={connect.isPending}
+      ready={ready}
+      refusal={spokenRefusal(connect.error, connect.refusal)}
+      title={keyTitleFor(entry.id)}
+    >
+      {keyFields(form, provider)}
+    </ConnectStep>
   );
 }

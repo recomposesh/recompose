@@ -3,7 +3,7 @@ import type { CredentialedAccount } from '@recompose/contracts';
 import { fc, test } from '@fast-check/vitest';
 import { expect } from 'vitest';
 
-import type { CatalogEntry, ConnectionWay } from './provider-catalog';
+import type { CatalogEntry, ConnectionWay, OfferTakes } from './provider-catalog';
 
 import {
   catalogEntries,
@@ -23,20 +23,18 @@ import {
 
 const anyWay = fc.constantFrom<ConnectionWay[]>('subscription', 'api-key', 'aggregator', 'local');
 
+const anyTakes = fc.constantFrom<OfferTakes[]>('sign-in', 'key', 'runtime', 'address');
+
 const anyOffer = fc.record({
   way: anyWay,
+  takes: anyTakes,
   title: fc.string(),
   benefit: fc.string(),
 });
 
 const anyCatalog = fc.uniqueArray(
   fc.record({
-    id: fc.constantFrom(
-      'anthropic' as const,
-      'openai' as const,
-      'openrouter' as const,
-      'ollama' as const,
-    ),
+    id: fc.constantFrom('anthropic', 'openai', 'openrouter', 'ollama'),
     name: fc.string(),
     lead: fc.constant({ mark: 'anthropic' as const }),
     offers: fc.uniqueArray(anyOffer, { minLength: 1, selector: (offer) => offer.way }),
@@ -76,11 +74,13 @@ test('the catalog offers a provider under every way that provider connects', () 
 test('a subscription offer reads as the plan product rather than the vendor', () => {
   expect(offerFor(offered('anthropic'), 'subscription')).toEqual({
     way: 'subscription',
+    takes: 'sign-in',
     title: 'Claude',
     benefit: 'Sign in with your Pro or Max plan',
   });
   expect(offerFor(offered('openai'), 'subscription')).toEqual({
     way: 'subscription',
+    takes: 'sign-in',
     title: 'Codex',
     benefit: 'Sign in with your ChatGPT plan',
   });
@@ -97,10 +97,11 @@ test('a provider that only ever takes a key offers no way to sign in', () => {
   expect(offered('openrouter').offers.map((offer) => offer.way)).toEqual(['aggregator']);
 });
 
-test('the one runtime this machine can serve offers the local way and nothing else', () => {
+test('a runtime offers the local way and nothing else', () => {
   expect(offered('ollama').offers).toEqual([
     {
       way: 'local',
+      takes: 'runtime',
       title: 'Ollama',
       benefit: '127.0.0.1:11434, models on this machine',
     },
@@ -111,11 +112,60 @@ test('a way keeps the providers that connect by it and drops the rest', () => {
   expect(offeredUnder(catalogEntries, 'subscription').map((entry) => entry.id)).toEqual([
     'anthropic',
     'openai',
+    'copilot',
+    'kimi',
+    'zhipu',
+    'qwen-coding',
+    'minimax',
   ]);
   expect(offeredUnder(catalogEntries, 'aggregator').map((entry) => entry.id)).toEqual([
     'openrouter',
+    'together',
+    'fireworks',
+    'groq',
+    'deepinfra',
+    'cerebras',
+    'custom-aggregator',
   ]);
-  expect(offeredUnder(catalogEntries, 'local').map((entry) => entry.id)).toEqual(['ollama']);
+  expect(offeredUnder(catalogEntries, 'local').map((entry) => entry.id)).toEqual([
+    'ollama',
+    'lmstudio',
+    'llamacpp',
+    'vllm',
+    'custom-local',
+  ]);
+  expect(offeredUnder(catalogEntries, 'api-key').map((entry) => entry.id)).toEqual([
+    'anthropic',
+    'openai',
+    'gemini',
+    'mistral',
+    'xai',
+    'deepseek',
+    'moonshot',
+    'qwen',
+    'custom-endpoint',
+  ]);
+});
+
+test('every catalog entry stands under exactly one column per offer, and none stands inert', () => {
+  for (const entry of catalogEntries) {
+    expect(entry.offers.length, entry.id).toBeGreaterThan(0);
+
+    for (const offer of entry.offers) {
+      expect(offer.title.length, entry.id).toBeGreaterThan(0);
+      expect(offer.benefit.length, entry.id).toBeGreaterThan(0);
+      expect(offer.benefit.includes('Waits on'), entry.id).toBe(false);
+    }
+  }
+});
+
+test('no catalog line prints the dash this project never writes', () => {
+  const lines = catalogEntries.flatMap((entry) => [
+    entry.name,
+    ...entry.offers.flatMap((offer) => [offer.title, offer.benefit]),
+  ]);
+
+  expect(lines.filter((line) => line.includes('—'))).toEqual([]);
 });
 
 test('a stored subscription reads as the plan product its provider sells', () => {
@@ -173,7 +223,7 @@ test('a stored key reads as the product its catalog entry was picked as', () => 
 });
 
 test('a stored key the catalog never offered reads as the provider it was stored under', () => {
-  expect(keyTitleFor('mistral')).toBe('mistral');
+  expect(keyTitleFor('a-plugin-vendor')).toBe('a-plugin-vendor');
 });
 
 test('a key provider names the one host its key is spent against', () => {
@@ -192,7 +242,7 @@ test('a provider the catalog offers is drawn with its own mark', () => {
 });
 
 test('a provider the catalog never offered is drawn with no mark at all', () => {
-  expect(markFor('mistral')).toBeUndefined();
+  expect(markFor('a-plugin-vendor')).toBeUndefined();
 });
 
 test('a check can answer for a key whose provider the probe knows', () => {
@@ -200,9 +250,24 @@ test('a check can answer for a key whose provider the probe knows', () => {
   expect(checkableKey(storedKey({ provider: 'openai' }))).toBe(true);
 });
 
-test('a check can answer for neither an aggregator key nor a provider the probe never learned', () => {
+test('a check can answer for neither an aggregator key nor a provider nothing documents', () => {
   expect(checkableKey(storedKey({ provider: 'openrouter', kind: 'aggregator' }))).toBe(false);
-  expect(checkableKey(storedKey({ provider: 'mistral' }))).toBe(false);
+  expect(checkableKey(storedKey({ provider: 'a-plugin-vendor' }))).toBe(false);
+});
+
+test('a check can answer for every vendor the directory places', () => {
+  for (const vendor of ['mistral', 'deepseek', 'moonshot', 'qwen', 'gemini', 'xai']) {
+    expect(checkableKey(storedKey({ provider: vendor })), vendor).toBe(true);
+  }
+});
+
+test('a check can answer for no key stored against an address a person typed', () => {
+  const own = storedKey({
+    provider: 'my-endpoint',
+    endpoint: { origin: 'https://models.example.com', dialect: 'chat-completions' },
+  });
+
+  expect(checkableKey(own)).toBe(false);
 });
 
 test.prop([anyCatalog, anyWay])(

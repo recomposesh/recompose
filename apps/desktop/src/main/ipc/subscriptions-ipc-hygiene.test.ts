@@ -11,6 +11,15 @@ import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 
 const tokenMaterial = 'sk-ant-oat01-verysecret-subscription-token';
 
+const quietCopilot = {
+  copilot: {
+    fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
+    sleep: async () => Promise.resolve(),
+    nowMs: () => 0,
+  },
+  writeSubscriptionCredential: async () => Promise.resolve(),
+};
+
 function contextOver(userDataPath: string): SubscriptionsIpcContext {
   return {
     userDataPath,
@@ -29,6 +38,7 @@ function contextOver(userDataPath: string): SubscriptionsIpcContext {
     signInBoundMs: 0,
     signInEveryMs: 0,
     onCorrupt: () => undefined,
+    ...quietCopilot,
   };
 }
 

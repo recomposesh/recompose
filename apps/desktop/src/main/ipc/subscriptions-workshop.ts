@@ -5,6 +5,7 @@ import type {
   SubscriptionProviderId,
 } from '@recompose/contracts';
 
+import type { CopilotSignInPort } from '../subscriptions/copilot-sign-in';
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
 import type { MachineReach } from '../subscriptions/machine-store';
 import type { SignInLaunch } from '../subscriptions/sign-in-launch';
@@ -31,6 +32,14 @@ export type SubscriptionsIpcContext = {
   signInBoundMs: number;
   signInEveryMs: number;
   onCorrupt: (quarantinedPath: string) => void;
+  /** How the one plan with no tool of its own reaches GitHub, its clock, and its own pace. */
+  copilot: CopilotSignInPort;
+  /** Keeps the credential a sign-in yielded, under the account it was yielded for. */
+  writeSubscriptionCredential: (
+    provider: SubscriptionProviderId,
+    accountId: string,
+    blob: string,
+  ) => Promise<void>;
 };
 
 export type Answered =
@@ -95,4 +104,21 @@ export async function recordTheAccount(
     ...accounts,
     accounts: [...accounts.accounts.filter((one) => one.id !== row.id), row],
   }));
+}
+
+/**
+ * Records one signed-in account and points its provider at it.
+ *
+ * @summary Every sign-in ends the same way whoever ran it, so the last two steps stand here
+ * rather than once per flow.
+ */
+export async function keepTheAccount(
+  shop: Workshop,
+  row: SubscriptionAccount,
+): Promise<AccountsDocument> {
+  const updated = await recordTheAccount(shop, row);
+
+  await shop.homes.pointActiveAt(row.provider, row.id);
+
+  return updated;
 }

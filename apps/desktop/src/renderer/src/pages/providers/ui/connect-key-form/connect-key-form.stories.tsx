@@ -5,13 +5,14 @@ import { expect, userEvent } from 'storybook/test';
 import preview from '#.storybook/preview';
 import { inSettingsColumn } from '#.storybook/settings-column';
 
+import { entryNamed } from '../../testing/catalog-entry';
 import { ConnectKeyForm } from './connect-key-form';
 
 const heldAs: CredentialedAccountKind = 'api-key';
 
 const meta = preview.meta({
   component: ConnectKeyForm,
-  args: { provider: 'anthropic' as const, kind: heldAs, onConnected: () => undefined },
+  args: { entry: entryNamed('anthropic'), kind: heldAs, onConnected: () => undefined },
   decorators: [inSettingsColumn],
 });
 
@@ -73,7 +74,7 @@ export const NamedAndReady = meta.story({
  * reading looks for the warning beside a live Connect, because a warning that blocks is a refusal.
  */
 export const ForeignShapeWarns = meta.story({
-  args: { provider: 'openai' as const },
+  args: { entry: entryNamed('openai') },
   play: async ({ canvas }) => {
     await userEvent.type(await canvas.findByLabelText('Name'), 'build');
     await userEvent.type(await canvas.findByLabelText('Key'), 'sk-ant-api03-supersecret');

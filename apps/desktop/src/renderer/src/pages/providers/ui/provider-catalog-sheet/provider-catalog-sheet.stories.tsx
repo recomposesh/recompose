@@ -12,17 +12,16 @@ const meta = preview.meta({
 /**
  * The catalog standing over the subscriptions screen, holding only that kind.
  *
- * @summary The reading asks for the dialog, a live plan card, and a disabled one, because the
- * modal is kind-locked to the screen that opened it and still says what it grows toward.
+ * @summary The reading asks for the dialog and two plan cards, because the modal is kind-locked
+ * to the screen that opened it and every card in it connects.
  */
 export const Subscriptions = meta.story({
   play: async () => {
     await expect(await screen.findByRole('dialog', { name: 'Add provider' })).toBeVisible();
     await expect(await screen.findByRole('button', { name: /^Claude/ })).toBeVisible();
-    await expect(await screen.findByRole('button', { name: /Kimi Code/ })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    await expect(
+      await screen.findByRole('button', { name: /GLM Coding Plan/ }),
+    ).not.toHaveAttribute('aria-disabled');
     await expect(await screen.findByRole('button', { name: 'Cancel' })).toBeVisible();
   },
 });

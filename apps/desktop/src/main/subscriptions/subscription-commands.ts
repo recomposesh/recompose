@@ -1,18 +1,18 @@
-import { subscriptionProviders, type SubscriptionProviderId } from '@recompose/contracts';
+import { subscriptionProviders, type ToolBackedProviderId } from '@recompose/contracts';
 
 export type SignInCommandRequest = {
-  provider: SubscriptionProviderId;
+  provider: ToolBackedProviderId;
   home: string;
   platform: NodeJS.Platform;
 };
 
 export type ShellSetupLineRequest = {
-  provider: SubscriptionProviderId;
+  provider: ToolBackedProviderId;
   pointer: string;
   platform: NodeJS.Platform;
 };
 
-function invocation(provider: SubscriptionProviderId): string {
+function invocation(provider: ToolBackedProviderId): string {
   const { toolBinary, signInArguments } = subscriptionProviders[provider];
 
   return [toolBinary, ...signInArguments].join(' ');

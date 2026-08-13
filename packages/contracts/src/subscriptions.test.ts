@@ -5,8 +5,11 @@ import {
   subscriptionProvenanceSchema,
   subscriptionProviderIdSchema,
   subscriptionProviders,
+  subscriptionPlanNames,
   subscriptionStandingSchema,
   subscriptionToolSchema,
+  toolBacked,
+  toolBackedProviderIdSchema,
 } from './subscriptions';
 
 const connectedView = {
@@ -29,8 +32,33 @@ const presentTool = {
 };
 
 describe('the providers a subscription can name', () => {
-  test('exactly the two providers whose own tools sign a person in', () => {
-    expect(subscriptionProviderIdSchema.options).toEqual(['anthropic', 'openai', 'antigravity']);
+  test('every plan a subscription row can stand for', () => {
+    expect(subscriptionProviderIdSchema.options).toEqual([
+      'anthropic',
+      'openai',
+      'antigravity',
+      'kimi',
+      'copilot',
+    ]);
+  });
+
+  test('every plan whose own tool signs a person in', () => {
+    expect(toolBackedProviderIdSchema.options).toEqual([
+      'anthropic',
+      'openai',
+      'antigravity',
+      'kimi',
+    ]);
+  });
+
+  test('Kimi Code delegates to the tool that already owns its device flow', () => {
+    expect(subscriptionProviders.kimi).toEqual({
+      toolBinary: 'cliproxyapi',
+      toolName: 'Kimi Code',
+      configHomeVariable: 'CLIPROXYAPI_HOME',
+      signInArguments: ['--kimi-login'],
+      renewArguments: [],
+    });
   });
 
   test('a provider no tool signs in is refused', () => {
@@ -60,7 +88,7 @@ describe('the tool that performs each sign-in', () => {
   });
 
   test('every provider the vocabulary names has a tool to delegate to', () => {
-    for (const provider of subscriptionProviderIdSchema.options) {
+    for (const provider of toolBackedProviderIdSchema.options) {
       expect(subscriptionProviders[provider].toolBinary).not.toBe('');
       expect(subscriptionProviders[provider].configHomeVariable).not.toBe('');
     }
@@ -176,5 +204,24 @@ describe('the tool report the surface reads before offering a sign-in', () => {
 
   test('a tool report carries no secret alongside the command', () => {
     expect(() => subscriptionToolSchema.parse({ ...presentTool, secret: 'sk-oops' })).toThrow();
+  });
+});
+
+describe('the one plan no tool on the machine signs into', () => {
+  test('Copilot names no tool, because recompose runs its flow itself', () => {
+    expect(toolBacked('copilot')).toBe(false);
+    expect(Object.keys(subscriptionProviders)).not.toContain('copilot');
+  });
+
+  test('every other plan reports that a tool signs it in', () => {
+    for (const provider of toolBackedProviderIdSchema.options) {
+      expect(toolBacked(provider), provider).toBe(true);
+    }
+  });
+
+  test('every plan carries a name to read it by, tool or no tool', () => {
+    for (const provider of subscriptionProviderIdSchema.options) {
+      expect(subscriptionPlanNames[provider].length, provider).toBeGreaterThan(0);
+    }
   });
 });

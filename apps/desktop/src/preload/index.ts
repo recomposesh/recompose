@@ -62,6 +62,8 @@ const recompose: RecomposeIpc = Object.freeze({
   'subscriptions:list': bridgeEntry('subscriptions:list'),
   'subscriptions:tools': bridgeEntry('subscriptions:tools'),
   'subscriptions:sign-in': bridgeEntry('subscriptions:sign-in'),
+  'subscriptions:copilot-code': bridgeEntry('subscriptions:copilot-code'),
+  'subscriptions:copilot-await': bridgeEntry('subscriptions:copilot-await'),
   'subscriptions:restore': bridgeEntry('subscriptions:restore'),
   'subscriptions:activate': bridgeEntry('subscriptions:activate'),
   'subscriptions:detect': bridgeEntry('subscriptions:detect'),

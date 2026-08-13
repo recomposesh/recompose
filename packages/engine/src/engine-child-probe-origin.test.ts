@@ -9,6 +9,13 @@ function spokenBy(complaints: MockInstance<typeof console.error>): string {
   return complaints.mock.calls.flat().map(String).join(' ');
 }
 
+const aRuntimeProbe = {
+  kind: 'probe-runtime',
+  id: 'd1',
+  address: 'http://127.0.0.1:11434',
+  provider: 'ollama',
+} as const;
+
 describe('the origin a probe reaches', () => {
   test('each vendor is probed at its own first-party host by default, with nothing to complain about', async () => {
     const parent = aParent();
@@ -68,7 +75,7 @@ describe('the origin a runtime probe reaches', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+      parent.send(aRuntimeProbe);
       await reportsReach(parent, 1);
 
       expect(urls).toEqual(['http://127.0.0.1:11434/api/version']);
@@ -86,7 +93,7 @@ describe('the origin a runtime probe reaches', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+      parent.send(aRuntimeProbe);
       await reportsReach(parent, 1);
 
       expect(urls).toEqual(['http://127.0.0.1:8711/api/version']);
@@ -106,7 +113,7 @@ describe('the runtime override the child refuses to hear', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+      parent.send(aRuntimeProbe);
       await reportsReach(parent, 1);
 
       expect(urls).toEqual(['http://127.0.0.1:11434/api/version']);
@@ -131,7 +138,7 @@ describe('the runtime override the child refuses to hear', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+      parent.send(aRuntimeProbe);
       await reportsReach(parent, 1);
 
       expect(urls).toEqual(['http://127.0.0.1:11434/api/version']);

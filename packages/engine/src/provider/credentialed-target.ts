@@ -1,11 +1,12 @@
-import type { SpendGrant } from '@recompose/contracts';
+import type { ProviderDialect, SpendGrant } from '@recompose/contracts';
 
-import type { Crossing, JsonObject, ProviderDialect, ProxyDialect } from '../gateway-wire';
+import { vendorEndpointOf } from '@recompose/contracts';
+
+import type { Crossing, JsonObject, ProxyDialect } from '../gateway-wire';
 
 import { prepareClaudeReplay } from './claude-replay-runtime';
 import {
   geminiInteractionsBody,
-  geminiInteractionsHeaders as interactionsHeaders,
   parseGeminiInteractionsCredential,
 } from './gemini-interactions-policy';
 import { cappedGeminiOutput } from './gemini-model-limits';
@@ -15,12 +16,7 @@ import {
   applyOpenAICompatPayloadOverride,
   withOpenAICompatPromptCache,
 } from './openai-compat-payload';
-import {
-  parseVertexCredential,
-  vertexHeaders,
-  vertexProviderBody,
-  vertexRequestUrl,
-} from './vertex-request';
+import { parseVertexCredential, vertexProviderBody, vertexRequestUrl } from './vertex-request';
 import { prepareXAIReplay } from './xai-replay-runtime';
 import { xaiProviderBody } from './xai-request';
 import { collectXAIClientTools } from './xai-tool-ownership';
@@ -29,22 +25,32 @@ import { collectXAINamespaceTools } from './xai-tools';
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 type GrantedSpend = ResolvedGrant['spend'];
 type BodyBuilder = (crossing: Crossing, body: JsonObject) => JsonObject;
-type HeaderBuilder = (credential: string, crossing: Crossing) => Record<string, string>;
-const CREDENTIALED_DIALECTS = new Map<string, ProviderDialect>([
-  ['aistudio', 'gemini'],
-  ['anthropic', 'anthropic'],
-  ['gemini', 'gemini'],
-  ['gemini-interactions', 'interactions'],
-  ['vertex', 'gemini'],
-  ['xai', 'responses'],
-]);
 
-export function credentialedDialect(provider: string, source: ProxyDialect): ProviderDialect {
-  const direct = CREDENTIALED_DIALECTS.get(provider);
+/**
+ * The dialect Kimi serves, which is whichever one the caller opened with.
+ *
+ * @summary Kimi serves both, so the one a person's tools already speak is the one to answer in.
+ */
+function kimiDialect(source: ProxyDialect): ProviderDialect {
+  return source === 'anthropic' ? 'anthropic' : 'chat-completions';
+}
 
-  if (direct !== undefined) return direct;
+/**
+ * How a turn for one credentialed account reads on the wire.
+ *
+ * @summary A vendor the directory names answers from there, so one table describes the vendor for
+ * both processes. Kimi is the one vendor that follows the caller: it serves both dialects, and the
+ * one a person opened with is the one their tools already speak. A provider the directory never
+ * named answers with what the person stated when they stored the row.
+ */
+export function credentialedDialect(
+  provider: string,
+  source: ProxyDialect,
+  stated?: ProviderDialect,
+): ProviderDialect {
+  if (provider === 'kimi') return kimiDialect(source);
 
-  return provider === 'kimi' && source === 'anthropic' ? 'anthropic' : 'chat-completions';
+  return vendorEndpointOf(provider)?.dialect ?? stated ?? 'chat-completions';
 }
 
 export function credentialedRequestBody(
@@ -138,12 +144,33 @@ function interactionsUrl(origin: string): string {
   return `${origin}/v1beta/interactions`;
 }
 
-function providerPath(provider: string, crossing: Crossing): string {
-  if (provider === 'anthropic') return '/v1/messages';
-  if (provider === 'xai') return '/responses';
+const chatPath = '/v1/chat/completions';
+
+const messagesPath = '/v1/messages';
+
+/**
+ * The path a vendor lands on whatever dialect it is reached in.
+ *
+ * @summary DeepInfra publishes `https://api.deepinfra.com/v1/openai` as the base an OpenAI client
+ * is pointed at, so its turn lands one segment shorter than every other compatible vendor. The
+ * other two answer one dialect only, so nothing about the crossing can move them.
+ */
+const FIXED_PATHS = new Map<string, string>([
+  ['anthropic', messagesPath],
+  ['deepinfra', '/chat/completions'],
+  ['xai', '/responses'],
+]);
+
+function providerPath(provider: string, crossing: Crossing, dialect?: ProviderDialect): string {
+  const fixed = FIXED_PATHS.get(provider);
+
+  if (fixed !== undefined) return fixed;
+
   if (provider === 'kimi' && crossing.dialect === 'anthropic') return '/v1/messages?beta=true';
 
-  return '/v1/chat/completions';
+  return credentialedDialect(provider, crossing.dialect, dialect) === 'anthropic'
+    ? messagesPath
+    : chatPath;
 }
 
 export function credentialedRequestUrl(grant: ResolvedGrant, crossing: Crossing): string {
@@ -167,83 +194,5 @@ function credentialedProviderUrl(
 
   const vertex = spend.provider === 'vertex' ? vertexUrl(origin, spend.credential, crossing) : null;
 
-  return vertex ?? `${origin}${providerPath(spend.provider, crossing)}`;
-}
-
-function kimiBetas(client: string | undefined): string {
-  const required = ['oauth-2025-04-20', ['interleaved', 'thinking', '2025-05-14'].join('-')];
-  const requested =
-    client
-      ?.split(',')
-      .map((value) => value.trim())
-      .filter(Boolean) ?? [];
-
-  return [...new Set([...requested, ...required])].join(',');
-}
-
-function kimiHeaders(credential: string, crossing: Crossing): Record<string, string> {
-  return crossing.dialect === 'anthropic'
-    ? {
-        authorization: `Bearer ${credential}`,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': kimiBetas(crossing.anthropicBeta),
-      }
-    : { authorization: `Bearer ${credential}` };
-}
-
-function xaiHeaders(credential: string, crossing: Crossing): Record<string, string> {
-  return {
-    authorization: `Bearer ${credential}`,
-    ...(crossing.sessionId === undefined ? {} : { 'x-grok-conv-id': crossing.sessionId }),
-  };
-}
-
-function firstRequestHeader(crossing: Crossing, name: string): string | undefined {
-  const values = crossing.requestHeaders?.[name.toLowerCase()];
-
-  return values?.find((value) => value.trim() !== '');
-}
-
-function geminiInteractionsHeaders(credential: string, crossing: Crossing): Record<string, string> {
-  const revision = firstRequestHeader(crossing, 'api-revision');
-
-  return interactionsHeaders(parseGeminiInteractionsCredential(credential), revision);
-}
-
-function vertexCredentialHeaders(credential: string): Record<string, string> {
-  const parsed = parseVertexCredential(credential);
-
-  return parsed === null ? {} : vertexHeaders(parsed);
-}
-
-const HEADER_BUILDERS = new Map<string, HeaderBuilder>([
-  ['anthropic', (credential) => ({ 'x-api-key': credential, 'anthropic-version': '2023-06-01' })],
-  ['gemini', (credential) => ({ 'x-goog-api-key': credential })],
-  ['gemini-interactions', geminiInteractionsHeaders],
-  ['vertex', vertexCredentialHeaders],
-  ['kimi', kimiHeaders],
-  ['xai', xaiHeaders],
-]);
-
-function providerHeaders(
-  provider: string,
-  credential: string,
-  crossing: Crossing,
-): Record<string, string> {
-  const built = HEADER_BUILDERS.get(provider);
-
-  return built === undefined
-    ? { authorization: `Bearer ${credential}` }
-    : built(credential, crossing);
-}
-
-export function credentialedRequestHeaders(
-  spend: GrantedSpend,
-  crossing: Crossing,
-): Record<string, string> {
-  const shared = { 'content-type': 'application/json' };
-
-  return spend.custody === 'credentialed'
-    ? { ...shared, ...providerHeaders(spend.provider, spend.credential, crossing) }
-    : shared;
+  return vertex ?? `${origin}${providerPath(spend.provider, crossing, spend.dialect)}`;
 }
