@@ -7,8 +7,8 @@ import { useId } from 'react';
 import { subscriptionToolsQueryOptions } from '../../../../shared/api';
 import { SheetActionSlot } from '../../../../shared/ui';
 import { subscriptionMarkFor } from '../../model/provider-catalog';
+import { ConnectWay } from '../connect-way/connect-way';
 import { PickedIdentity } from '../picked-identity/picked-identity';
-import { SignInAction } from '../sign-in-action/sign-in-action';
 
 type SignInWayProps = {
   name: string;
@@ -17,11 +17,11 @@ type SignInWayProps = {
 };
 
 /**
- * The subscription connect step, standing the one act the pick still needs.
+ * The subscription connect step, leading with the account this machine already holds.
  *
- * @summary The picked card already said what the plan gives, so this step holds the mark, what
- * the sign-in yields, one sentence naming whose plan and terms carry it, and the act itself at
- * full width. It draws no card of its own, because it already stands inside one surface.
+ * @summary The step keeps one anatomy at this width: the picked identity, then what the machine
+ * says, then the act. An absent tool means the machine holds nothing by definition, so that branch
+ * says the one thing a person can act on and offers nothing to adopt beside it.
  */
 export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
   const reasonId = useId();
@@ -55,7 +55,7 @@ export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
           </SheetActionSlot>
         </>
       ) : (
-        <SignInAction
+        <ConnectWay
           command={command}
           name={name}
           onConnected={onConnected}

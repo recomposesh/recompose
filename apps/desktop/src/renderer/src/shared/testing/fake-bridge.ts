@@ -4,6 +4,7 @@ import type {
   EngineStates,
   GatewayConfig,
   KeyCheckVerdict,
+  MachineCredentialReading,
   QuotaWindow,
   RecomposeIpc,
   RecomposeIpcEvents,
@@ -55,6 +56,8 @@ export type BridgeParameters = {
   engineStates?: EngineStates;
   subscriptions?: readonly SubscriptionAccountView[];
   tools?: readonly SubscriptionTool[];
+  /** What the provider's own tool left on this machine, standing for what a look would find. */
+  machineReading?: MachineCredentialReading;
   /** The report every usage read answers, standing for what the ledger holds this run. */
   usageReport?: UsageReport;
   /** The windows the quota strip reads this run. */
@@ -184,7 +187,12 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
     ...systemHandlers(),
     ...gatewayHandlers(seeds.gateways, seeds.engineStates),
     ...modelListHandlers(seeds.providerModels),
-    ...subscriptionHandlers(seeds.subscriptions, seeds.tools, landSubscription),
+    ...subscriptionHandlers(
+      seeds.subscriptions,
+      seeds.tools,
+      landSubscription,
+      parameters.machineReading,
+    ),
     ...usageHandlers(seeds.usageReport, seeds.quotaWindows, seeds.balances),
     ...parameters.overrides,
   };

@@ -1,4 +1,4 @@
-import type { IpcRequest, RecomposeIpc } from '@recompose/contracts';
+import type { IpcRequest, RecomposeIpc, SubscriptionProviderId } from '@recompose/contracts';
 
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -31,6 +31,47 @@ export const subscriptionToolsQueryOptions = queryOptions({
   queryFn: async () => unwrapIpcResult(await window.recompose['subscriptions:tools']()),
   refetchOnMount: 'always',
 });
+
+/**
+ * What the provider's own tool already left on this machine.
+ *
+ * @summary A person's pick causes this read, and a mount never does, because opening a credential
+ * store can ask the operating system for permission and a prompt belongs to something the person
+ * did. It stands until an act changes the answer, so stepping back and picking again asks nothing
+ * new. The answer carries no credential material.
+ */
+export function machineReadingQueryOptions(provider: SubscriptionProviderId) {
+  return queryOptions({
+    queryKey: ['machine-credential', provider],
+    queryFn: async () =>
+      unwrapIpcResult(await window.recompose['subscriptions:detect']({ provider })),
+    staleTime: Infinity,
+    refetchOnMount: false,
+  });
+}
+
+/**
+ * Records the account the machine already holds, with no sign-in.
+ *
+ * @summary This act reads the credential itself, which the reading never carried, so the operating
+ * system may ask here and the person caused it. The reading is dropped afterward, because adopting
+ * changed what the machine means to this app.
+ */
+export function useAdoptSubscription() {
+  const queryClient = useQueryClient();
+
+  return withRefusal(
+    useMutation({
+      mutationFn: async (request: IpcRequest<'subscriptions:adopt'>) =>
+        unwrapIpcResult(await window.recompose['subscriptions:adopt'](request)),
+      onSuccess: async (views) => {
+        queryClient.setQueryData(subscriptionsQueryOptions.queryKey, views);
+        await queryClient.invalidateQueries({ queryKey: ['machine-credential'] });
+        await queryClient.invalidateQueries({ queryKey: accountsQueryOptions.queryKey });
+      },
+    }),
+  );
+}
 
 /**
  * Hands the sign-in to the provider's own tool and waits for it to report.
