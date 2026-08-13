@@ -18,7 +18,18 @@ import {
   toolNameFor,
 } from '../provider-screen';
 import { focusedProvider, focusProvider } from '../scenario-memory';
-import { connectSubscription, signInThroughTheTool } from '../subscription-sign-in';
+import {
+  connectSubscription,
+  signInThroughTheTool,
+  SIGN_IN_WAIT_MS,
+} from '../subscription-sign-in';
+import { subscriptionAdoptedFromTheMachine, theMachineHoldsFor } from './machine-subscriptions';
+
+/** What one stored-account flow may spend on a runner already bringing up two applications. */
+const ONE_FLOW_MS = 10_000;
+
+/** The screen walk an adoption arranges, standing beside the reading the machine answers with. */
+const FLOWS_BESIDE_THE_ADOPTION = 1;
 
 Given(
   'the {string} command-line tool is installed',
@@ -63,6 +74,26 @@ Given(
   },
 );
 
+Given(
+  'the {string} tool signed in on this machine as {string} on the {string} plan',
+  async ({ page, subscriptionTools }, provider: string, address: string, plan: string) => {
+    await theMachineHoldsFor(page, subscriptionTools, {
+      provider,
+      signedInAs: address,
+      plan,
+    });
+  },
+);
+
+Given(
+  'a connected {string} subscription adopted from the machine',
+  async ({ $testInfo, page, subscriptionTools }, provider: string) => {
+    $testInfo.setTimeout(SIGN_IN_WAIT_MS + FLOWS_BESIDE_THE_ADOPTION * ONE_FLOW_MS);
+    focusProvider(page, provider);
+    await subscriptionAdoptedFromTheMachine(page, subscriptionTools, { provider });
+  },
+);
+
 When('the maintainer picks {string}', async ({ page }, provider: string) => {
   focusProvider(page, provider);
   await openProviderWays(page, provider);
@@ -71,6 +102,7 @@ When('the maintainer picks {string}', async ({ page }, provider: string) => {
 When(
   'the maintainer connects an {string} subscription by signing in',
   async ({ page }, provider: string) => {
+    focusProvider(page, provider);
     await signInThroughTheTool(page, provider);
   },
 );
@@ -102,6 +134,15 @@ Then(
 
     await expect(catalog(page).getByRole('heading', { name: yields })).toBeVisible();
     await expect(catalog(page).getByLabel('Key', { exact: true })).toBeHidden();
+  },
+);
+
+Then(
+  'the catalog offers the account it found, named {string} on the {string} plan',
+  async ({ page }, address: string, plan: string) => {
+    await expect(catalog(page)).toContainText(address);
+    await expect(catalog(page)).toContainText(plan);
+    await expect(catalog(page).getByRole('button', { name: 'Connect', exact: true })).toBeEnabled();
   },
 );
 

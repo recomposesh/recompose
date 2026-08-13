@@ -1,3 +1,5 @@
+import type { SubscriptionProviderId } from '@recompose/contracts';
+
 import { app } from 'electron';
 import { userInfo } from 'node:os';
 
@@ -11,13 +13,16 @@ import { createSubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
 import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
 import { loadAccountsFile } from '../storage/accounts-store';
 import { oneAtATime } from '../storage/one-at-a-time';
+import { adoptedCredentialReader } from './adopted-credential';
 import { credentialCustody } from './credential-custody';
 import { keychainCarriedOnce, repairCustody } from './custody-repair';
 import { loginShellPath } from './login-shell-path';
 import { securityKeychain } from './macos-keychain';
+import { runCommand } from './run-command';
 import { terminalSignInLaunch } from './sign-in-launch';
 import { subscriptionHomes } from './subscription-homes';
 import { wallClock } from './subscription-sign-in';
+import { reportTools } from './tool-presence';
 
 const SIGN_IN_BOUND_MS = 5 * 60 * 1000;
 const SIGN_IN_EVERY_MS = 1_000;
@@ -115,4 +120,39 @@ export function subscriptionIpcHandlers(
     ...createSubscriptionsIpcHandlers(ctx),
     ...createSubscriptionsMachineIpcHandlers(ctx, oneAtATime()),
   };
+}
+
+const RENEWAL_BOUND_MS = 60_000;
+
+/**
+ * Reads what a provider's own tool holds, renewing through that tool near expiry.
+ *
+ * @summary The app keeps no copy of an adopted credential, so every serving turn reads the live
+ * store. The exact argument vector that makes each shipped tool renew and exit is the one thing
+ * here still unsettled, so it sits in this one place rather than scattered through the serving
+ * path. A run that renews nothing leaves the credential exactly as it stands.
+ */
+export function adoptedCredentialFor(
+  userDataPath: string,
+  homeFolder: string,
+  custody: CredentialCustody | null,
+): (provider: SubscriptionProviderId) => Promise<string | null> {
+  return adoptedCredentialReader({
+    homeFolder: substituteFor('RECOMPOSE_FAKE_MACHINE_HOME') ?? homeFolder,
+    platform: process.platform,
+    custody,
+    toolPresent: async (provider) => {
+      const found = await reportTools({
+        homes: subscriptionHomes(userDataPath, process.platform),
+        searchPath: await toolSearchPath(),
+        platform: process.platform,
+      });
+
+      return found.find((tool) => tool.provider === provider)?.present === true;
+    },
+    runTool: async (binary) => {
+      await runCommand(binary, ['--version'], RENEWAL_BOUND_MS);
+    },
+    now: Date.now,
+  });
 }

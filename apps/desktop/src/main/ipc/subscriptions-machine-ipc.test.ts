@@ -78,7 +78,7 @@ describe('adopting the account the machine already holds', () => {
     expect(world.launched).toEqual([]);
   });
 
-  test('given an adopted account, its credential lands in the item its own home owns', async () => {
+  test('given an adopted account, the app keeps no copy of its credential', async () => {
     await theToolSignedInAs('ada@ex.com');
 
     await handlersOn()['subscriptions:adopt']({ provider: 'anthropic' });
@@ -87,7 +87,7 @@ describe('adopting the account the machine already holds', () => {
     const id = stored.accounts[0]?.id ?? 'missing';
     const home = world.homesOn('darwin').homeFor('anthropic', id);
 
-    expect(world.keychain.blobAt(homeVendorItem(home, osUser).service, osUser)).toBe(aClaudeLogin);
+    expect(world.keychain.holds(homeVendorItem(home, osUser).service, osUser)).toBe(false);
   });
 
   test("given an adopted account, the person's own item is left exactly as it stood", async () => {

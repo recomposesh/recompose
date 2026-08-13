@@ -89,10 +89,6 @@ async function adopt(shop: Workshop, provider: SubscriptionProviderId): Promise<
   }
 
   const id = await accountAdopting(shop, provider, material.signedInAs);
-  const custody = custodyOver(shop.ctx.custody, provider);
-
-  await custody?.writeForHome(shop.homes.homeFor(provider, id), material.blob);
-
   const row: SubscriptionAccount = {
     id,
     provider,

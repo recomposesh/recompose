@@ -42,7 +42,10 @@ import { createSafeStorageCodec } from './storage/safe-storage-codec';
 import { subscriptionCredentialStore } from './subscriptions/subscription-credential-store';
 import { subscriptionHomes } from './subscriptions/subscription-homes';
 import { subscriptionRelease } from './subscriptions/subscription-release';
-import { subscriptionIpcHandlers } from './subscriptions/subscriptions-wiring';
+import {
+  adoptedCredentialFor,
+  subscriptionIpcHandlers,
+} from './subscriptions/subscriptions-wiring';
 import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
@@ -129,6 +132,7 @@ function storageReach(custody: CredentialCustody | null = null): SpendGrantConte
     onCorrupt: onStorageCorrupt,
     readSubscriptionCredential: subscriptionCredentialStore(userDataPath, process.platform, custody)
       .read,
+    readAdoptedCredential: adoptedCredentialFor(userDataPath, app.getPath('home'), custody),
   };
 }
 

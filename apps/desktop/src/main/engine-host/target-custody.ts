@@ -28,6 +28,13 @@ export type TargetCustodyContext = {
     provider: SubscriptionAccount['provider'],
     accountId: string,
   ) => Promise<string | null>;
+  /**
+   * Reads what the provider's own tool holds right now, renewing through that tool near expiry.
+   *
+   * @summary An adopted credential is shared with the tool that wrote it, so the app keeps no copy
+   * and reads the live store on every serving turn. Rotation stays with the program that owns it.
+   */
+  readAdoptedCredential: (provider: SubscriptionAccount['provider']) => Promise<string | null>;
 };
 
 /** Where one account is reached and how the credential opening it is spelled, or why neither. */
@@ -45,13 +52,26 @@ function targetableIn(accounts: readonly Account[], accountId: string): Account 
   return accounts.find((account) => account.id === accountId);
 }
 
+/**
+ * @summary An adopted credential belongs to the tool that wrote it, so the app holds no copy and
+ * reads the live store every turn. One the app signed in lives in a home only the app reads.
+ */
+async function credentialFor(
+  ctx: TargetCustodyContext,
+  account: SubscriptionAccount,
+): Promise<string | null> {
+  return account.provenance === 'machine'
+    ? ctx.readAdoptedCredential(account.provider)
+    : ctx.readSubscriptionCredential(account.provider, account.id);
+}
+
 async function subscriptionTarget(
   ctx: TargetCustodyContext,
   providerOrigin: string,
   account: SubscriptionAccount,
   modelPolicy: ProviderModelPolicy | undefined,
 ): Promise<ResolvedTarget> {
-  const credential = await ctx.readSubscriptionCredential(account.provider, account.id);
+  const credential = await credentialFor(ctx, account);
 
   return credential === null
     ? { verdict: 'missing-credential' }

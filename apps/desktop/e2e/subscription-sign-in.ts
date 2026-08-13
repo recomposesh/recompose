@@ -15,11 +15,22 @@ import { catalog, openProviderScreen, openProviderWays, toolBinaryFor } from './
  */
 export const SIGN_IN_WAIT_MS = 20_000;
 
+/**
+ * Signs in through the provider's own tool, whichever act the step currently stands.
+ *
+ * @summary The act is the sheet's primary button on a machine holding nothing, and a quieter link
+ * once the machine holds an account, because signing in stops being the way in. Waiting on either
+ * being enabled also absorbs the moment before the tools reading arrives.
+ */
 export async function signInThroughTheTool(page: Page, provider: string): Promise<void> {
   await openProviderWays(page, provider);
-  await catalog(page)
-    .getByRole('button', { name: `Sign in to ${provider}` })
-    .click();
+
+  const act = catalog(page)
+    .getByRole('button', { name: 'Sign in with a different account' })
+    .or(catalog(page).getByRole('button', { name: `Sign in to ${provider}` }));
+
+  await expect(act).toBeEnabled();
+  await act.click();
   await expect(catalog(page)).toBeHidden({ timeout: SIGN_IN_WAIT_MS });
 }
 

@@ -149,5 +149,6 @@ export function contextFor(userDataPath: string): SpendGrantContext {
     getCodec: () => fakeCodec,
     onCorrupt: () => undefined,
     readSubscriptionCredential: subscriptionCredentialStore(userDataPath, 'linux', null).read,
+    readAdoptedCredential: async () => Promise.resolve(null),
   };
 }
