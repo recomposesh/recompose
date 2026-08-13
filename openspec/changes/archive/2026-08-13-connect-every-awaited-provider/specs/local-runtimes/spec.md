@@ -12,6 +12,34 @@ The person MAY point the look at another port, and the host MUST stay the loopba
 
 Picking Custom local server MUST ask for a name and a port, because the app has no project to name it by and no port to assume. Its look MUST ask the one path every model server answers, and it MUST claim no version.
 
+#### Scenario: a running runtime answers and joins the registry
+
+- Given Ollama answers on its documented localhost port
+- When a person picks Ollama in the catalog the Local Runtimes surface opened
+- Then the surface says the runtime answered at its address
+- And adding it stores an account with no credential
+
+#### Scenario: a runtime that isn't running says so
+
+- Given nothing answers on the documented port
+- When a person picks Ollama in the catalog
+- Then the surface says the runtime didn't answer
+- And recompose stores nothing until the person decides
+
+#### Scenario: a runtime on a moved port answers through the port field
+
+- Given Ollama answers on a port that isn't the documented one
+- When a person picks Ollama and points the look at that port
+- Then the surface says the runtime answered at the loopback host and that port
+- And adding it stores that address with no credential
+
+#### Scenario: another server on the port never reads as the runtime
+
+- Given a different model server answers on the port a runtime documents
+- When a person picks that runtime in the catalog
+- Then the surface says another server answered there
+- And the surface never claims the runtime is running
+
 #### Scenario: a person adds a runtime the app documents
 
 - Given LM Studio runs on this machine
@@ -25,13 +53,6 @@ Picking Custom local server MUST ask for a name and a port, because the app has 
 - When the look reports what it found
 - Then it says the runtime is running
 - And it prints no version line
-
-#### Scenario: another server on the port reads as another server
-
-- Given a different model server holds the port a runtime documents
-- When a person picks that runtime
-- Then the look reports another server answered
-- And it doesn't report the runtime as running
 
 #### Scenario: a person adds a server of their own
 
@@ -48,7 +69,16 @@ Picking Custom local server MUST ask for a name and a port, because the app has 
 
 ### Requirement: A row reads the runtime's standing as an observation
 
-A row MUST look again on every mount and on every check, and MUST carry no claim older than its own screen. A row for a documented runtime MUST read as the name that runtime's own project spells. A row for a server a person addressed themselves MUST read as the name they gave it.
+A local runtime row MUST read the runtime's name over its stored address, and MUST report whether it answers as of the reading. The registry MUST NOT store the standing, so no row carries a stale claim about a server that stopped after the last look. A row MUST look again on every mount and on every check.
+
+A row for a documented runtime MUST read as the name that runtime's own project spells. A row for a server a person addressed themselves MUST read as the name they gave it.
+
+#### Scenario: a stored runtime stops answering
+
+- Given a stored Ollama account whose server has stopped
+- When the surface lists it
+- Then the row reads not running as of the reading
+- And the stored account keeps its address unchanged
 
 #### Scenario: a documented runtime reads as its project spells it
 

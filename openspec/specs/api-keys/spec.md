@@ -23,22 +23,40 @@ An API key account records a secret one provider issued and the name a person ga
 - Then the account leaves the list
 - And its vault entry leaves with it
 
-### Requirement: The catalog offers nine entries and connects two
+### Requirement: The catalog offers nine entries and connects every one
 
-The catalog the API Keys surface opens MUST offer nine entries: Anthropic API, OpenAI API, Gemini API, Mistral, xAI Grok, DeepSeek, Moonshot AI, Qwen, and Custom endpoint. Anthropic API and OpenAI API MUST connect. The other seven MUST stand inert under a Soon badge rather than hidden, because each lacks a field the account row can't hold yet. An inert entry MUST answer neither pointer nor keyboard, and its inertness MUST read as more than color and position. The one act into the catalog MUST stand at the trailing edge of the window strip.
+The catalog the API Keys surface opens MUST offer nine entries: Anthropic API, OpenAI API, Gemini API, Mistral, xAI Grok, DeepSeek, Moonshot AI, Qwen, and Custom endpoint. Every one MUST connect, and no entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
+
+A picked vendor MUST spend its key against the origin the provider directory names, in the dialect the directory names, and the connect MUST ask for neither. A picked Custom endpoint MUST ask for a base URL and a dialect, because the app knows neither, and the stored account MUST carry both.
 
 #### Scenario: a person opens the catalog from the API Keys surface
 
 - When a person asks to add a provider
 - Then the catalog opens over the surface, holding nine entries
-- And only Anthropic API and OpenAI API answer a pick
+- And every entry answers a pointer and a keyboard
 
-#### Scenario: an inert entry stays inert
+#### Scenario: a person connects a vendor the app already places
 
-- Given the catalog lists Gemini API under its Soon badge
-- When a person tries the entry by pointer or by keyboard
-- Then nothing opens
-- And the entry reads as inert through more than color and position
+- Given the catalog stands open
+- When a person picks DeepSeek and hands over a name and a key
+- Then the account stands under the api-key kind
+- And the app spends it against the origin it holds for DeepSeek
+- And the connect never asked for an address
+
+#### Scenario: a person connects an endpoint of their own
+
+- Given the catalog stands open
+- When a person picks Custom endpoint
+- Then the connect asks for a base URL and a dialect beside the name and the key
+- And the stored account carries both
+- And the app spends the key against the address a person entered
+
+#### Scenario: an address no request could reach draws a refusal
+
+- Given a person picked Custom endpoint
+- When they enter something no request could reach
+- Then the connect refuses and says so
+- And nothing reaches storage
 
 ### Requirement: Connecting asks for a name and a key
 
@@ -119,6 +137,8 @@ A row MUST read as two lines: the product title its catalog entry carried, then 
 
 A Verify act MUST let a person ask whether a stored key still authenticates, and it MUST NOT gate storing. The answer MUST be one of three: the key authenticates, the provider didn't accept the key, or the check couldn't run. The wording MUST speak as of the check, MUST NOT claim the account can spend, and MUST stay recompose's own rather than the provider's. The app MUST NOT store the answer: it lives only while the screen shows it, so no row carries a stale claim. The check MUST NOT hold the surface: it runs as an asynchronous act, and a timeout or a transport failure folds to the could-not-check verdict.
 
+The check MUST stand on every key whose vendor the provider directory names both a credential header and a models path for. A key under a vendor the directory names neither for MUST offer no check, because a check that can't succeed teaches nothing. That covers a key stored against an endpoint a person entered themselves, since no directory row places it.
+
 #### Scenario: a key passes the check
 
 - Given a stored key the provider accepts
@@ -145,3 +165,15 @@ A Verify act MUST let a person ask whether a stored key still authenticates, and
 - Given a verification answer on screen
 - When a person leaves the surface and returns
 - Then no row carries the earlier answer
+
+#### Scenario: a check stands on a vendor the app can ask
+
+- Given a connected Mistral key
+- When the surface lists it
+- Then the row offers a check
+
+#### Scenario: a check stands on none the app can't ask
+
+- Given a connected key under an endpoint a person entered themselves
+- When the surface lists it
+- Then the row offers no check
