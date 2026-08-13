@@ -161,17 +161,17 @@ describe('what a spend request draws when no target stands', () => {
   });
 
   test('an unknown valid provider resolves as a plugin executor target', async () => {
-    const stranger = { ...keyRow, provider: 'cerebras' };
+    const stranger = { ...keyRow, provider: 'a-plugin-vendor' };
     const userDataPath = await storageHolding([pointingAt(stranger.id)], [stranger]);
 
     await expect(
       resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
-      providerOrigin: 'plugin://cerebras',
+      providerOrigin: 'plugin://a-plugin-vendor',
       spend: {
         custody: 'credentialed',
-        provider: 'cerebras',
+        provider: 'a-plugin-vendor',
         credential: secret,
         accountId: 'acc-key',
       },
