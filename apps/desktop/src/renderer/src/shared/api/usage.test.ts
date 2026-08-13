@@ -115,6 +115,7 @@ describe('freshness follows the hour a report now carries', () => {
 
   it('holds a reading no longer than the poll that replaces it', () => {
     expect(usageReportQueryOptions({ range: '24h' }).staleTime).toBe(5_000);
+    expect(usageReportQueryOptions({ range: '7d' }).staleTime).toBe(5_000);
     expect(usageReportQueryOptions({ range: '30d' }).staleTime).toBe(5_000);
   });
 
