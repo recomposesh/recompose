@@ -100,17 +100,44 @@ The app MUST NOT run a sign-in, look for a tool, create a config home, or renew 
 
 ### Requirement: Adding a provider opens the catalog
 
-The Subscriptions surface MUST open a catalog holding Claude, Codex, GitHub Copilot, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge. The one act into the catalog MUST stand at the trailing edge of the window strip.
+The way to another account MUST stand once, at the trailing edge of the window strip. It MUST open a catalog over the surface, holding only the kind that surface holds. Each entry MUST name the plan product and what connecting it gives.
 
-#### Scenario: a person opens the subscriptions catalog
+The Subscriptions catalog MUST hold Claude, Codex, GitHub Copilot, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge, because every one of the seven connects.
 
-- When a person opens the catalog from the Subscriptions surface
-- Then it lists seven plans
+#### Scenario: a person opens the catalog from the subscriptions surface
+
+- When a person asks to add a provider
+- Then the catalog opens over the surface, holding only subscription plans
+- And it lists seven of them
 - And every entry answers a pointer and a keyboard
 
 ### Requirement: Picking a provider offers the one way the surface holds
 
-The surface opens the catalog for one kind, so a picked provider MUST offer only that kind's way of connecting. A plan the provider's own tool signs into MUST hand the sign-in to that tool and MUST NOT offer a key beside it. A plan that issues a token instead MUST ask for a name and that token, and MUST NOT offer a sign-in beside it, because none exists to offer.
+The surface opens the catalog for one kind, so a picked provider MUST offer only that kind's way of connecting. A subscription pick MUST hand the sign-in to the provider's own tool and MUST NOT offer a key beside it. A key pick MUST ask for a name and a key, because the provider rides in from the picked entry.
+
+A subscription pick MUST lead with the account the machine already holds, when it holds one. The sign-in MUST stay reachable as the quieter act rather than as the first thing a person meets. While either act runs, the other MUST stand inert rather than disappear, so the surface doesn't resize under the person's hand.
+
+A plan that issues a token instead of a sign-in MUST ask for a name and that token. It MUST NOT offer a sign-in beside it, because none exists to offer.
+
+#### Scenario: a person picks a provider from the subscriptions catalog
+
+- When a person picks "anthropic" in the catalog the subscriptions surface opened
+- Then the sign-in stands alone, yielding an account for the provider's own tool
+- And the surface asks for no key
+
+#### Scenario: a person picks a provider whose account sits on the machine
+
+- Given the provider's own tool signed in on this machine
+- When a person picks that provider in the subscriptions catalog
+- Then the account it holds leads the step
+- And the sign-in stands beneath it as the quieter act
+
+#### Scenario: a person waits while an act runs
+
+- Given a person picked a provider whose account sits on the machine
+- When one of the two acts runs
+- Then the other act stands inert
+- And it keeps its place on the step
 
 #### Scenario: a plan with a sign-in offers the sign-in alone
 
