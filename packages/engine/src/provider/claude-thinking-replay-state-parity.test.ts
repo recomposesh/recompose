@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 
 import { ClaudeThinkingReplay } from './claude-thinking-replay';
+import { kimiThinkingSignature } from './kimi-signature.testkit';
 import { KimiThinkingReplay } from './kimi-thinking-replay';
 
 test('TestClaudeThinkingReplayClearDoesNotClearKimiState', () => {
@@ -8,7 +9,7 @@ test('TestClaudeThinkingReplayClearDoesNotClearKimiState', () => {
   const kimi = new KimiThinkingReplay();
 
   expect(claude.commit('shared-model', 'execution', turn('claude-signature'))).toBe(true);
-  expect(kimi.commit('shared-model', 'execution', turn('kimi-signature'))).toBe(true);
+  expect(kimi.commit('shared-model', 'execution', turn(kimiThinkingSignature()))).toBe(true);
 
   const claudeHeld = claude.totalBytes();
   const kimiHeld = kimi.totalBytes();

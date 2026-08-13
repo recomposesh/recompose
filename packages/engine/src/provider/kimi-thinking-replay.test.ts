@@ -1,14 +1,15 @@
 import { describe, expect, test } from 'vitest';
 
+import { kimiThinkingSignature } from './kimi-signature.testkit';
 import {
   KimiThinkingReplay,
   kimiThinkingReplayModelFamily,
-  replayableKimiThinkingContent,
+  replayableThinkingContent,
   restoreKimiThinkingContent,
 } from './kimi-thinking-replay';
 
 const cached = [
-  { type: 'thinking', thinking: 'full reasoning', signature: 'kimi-signature' },
+  { type: 'thinking', thinking: 'full reasoning', signature: kimiThinkingSignature() },
   { type: 'text', text: 'I will inspect the file.' },
   { type: 'tool_use', id: 'toolu_1', name: 'Read', input: { path: 'README.md' } },
 ];
@@ -124,19 +125,24 @@ describe('KimiThinkingReplay', () => {
   });
 });
 
-describe('replayableKimiThinkingContent', () => {
+describe('replayableThinkingContent', () => {
   test('content that is not a list of parts cannot be replayed', () => {
-    expect(replayableKimiThinkingContent('reasoning text')).toBe(false);
-    expect(replayableKimiThinkingContent([{ type: 'thinking' }, 'raw part'])).toBe(false);
+    expect(replayableThinkingContent('reasoning text', 'other')).toBe(false);
+    expect(replayableThinkingContent([{ type: 'thinking' }, 'raw part'], 'other')).toBe(false);
   });
 
   test('signed thinking without a named tool call cannot be replayed', () => {
-    expect(replayableKimiThinkingContent([{ type: 'thinking', signature: '   ' }])).toBe(false);
+    expect(replayableThinkingContent([{ type: 'thinking', signature: '   ' }], 'other')).toBe(
+      false,
+    );
     expect(
-      replayableKimiThinkingContent([
-        { type: 'thinking', signature: 'sig' },
-        { type: 'tool_use', id: '   ' },
-      ]),
+      replayableThinkingContent(
+        [
+          { type: 'thinking', signature: 'sig' },
+          { type: 'tool_use', id: '   ' },
+        ],
+        'other',
+      ),
     ).toBe(false);
   });
 });
@@ -149,7 +155,7 @@ describe('restore refusals', () => {
 
   test('cached content without a tool call cannot be restored', () => {
     const thinkingOnly = [
-      { type: 'thinking', thinking: 'full reasoning', signature: 'kimi-signature' },
+      { type: 'thinking', thinking: 'full reasoning', signature: kimiThinkingSignature() },
       { type: 'text', text: 'I will inspect the file.' },
     ];
 

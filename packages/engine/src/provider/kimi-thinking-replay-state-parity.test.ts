@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 
 import { isJsonObject } from '../gateway-wire';
+import { kimiThinkingSignature } from './kimi-signature.testkit';
 import { KimiThinkingReplay } from './kimi-thinking-replay';
 
 test('TestKimiThinkingReplayConditionalDeleteKeepsNewerContent', () => {
@@ -12,7 +13,7 @@ test('TestKimiThinkingReplayConditionalDeleteKeepsNewerContent', () => {
   replay.commit('k3', 'scope', content('B'));
 
   expect(replay.deleteIfUnchanged('k3', 'scope', stale)).toBe(false);
-  expect(injectedSignature(replay)).toBe('B');
+  expect(injectedMarker(replay)).toBe('B');
 });
 
 test('TestKimiThinkingReplayConditionalReplaceKeepsConcurrentContent', () => {
@@ -24,7 +25,7 @@ test('TestKimiThinkingReplayConditionalReplaceKeepsConcurrentContent', () => {
   replay.commit('k3', 'scope', content('B'));
 
   expect(replay.replaceIfUnchanged('k3', 'scope', stale, content('stale'))).toBe(false);
-  expect(injectedSignature(replay)).toBe('B');
+  expect(injectedMarker(replay)).toBe('B');
 });
 
 test('TestKimiThinkingReplayTombstoneFencesConcurrentMiss', () => {
@@ -46,7 +47,7 @@ test('TestKimiThinkingReplayHomeGenerationPreventsABADelete', () => {
   replay.commit('k3', 'scope', content('A'));
 
   expect(replay.deleteIfUnchanged('k3', 'scope', stale)).toBe(false);
-  expect(injectedSignature(replay)).toBe('A');
+  expect(injectedMarker(replay)).toBe('A');
 });
 
 test('TestKimiThinkingReplayTracksAggregateLocalBytes', () => {
@@ -71,14 +72,14 @@ test('TestKimiThinkingReplayRejectsOversizedContent', () => {
   expect(replay.commit('k3', 'scope', oversized)).toBe(false);
 });
 
-function content(signature: string) {
+function content(marker: string) {
   return [
-    { type: 'thinking', thinking: 'reason', signature },
+    { type: 'thinking', thinking: marker, signature: kimiThinkingSignature() },
     { type: 'tool_use', id: 'tool-1', name: 'run', input: {} },
   ];
 }
 
-function injectedSignature(replay: KimiThinkingReplay): unknown {
+function injectedMarker(replay: KimiThinkingReplay): unknown {
   const body = {
     messages: [
       {
@@ -90,7 +91,7 @@ function injectedSignature(replay: KimiThinkingReplay): unknown {
   const injected = replay.inject('k3', 'scope', body);
   const message = firstMessage(injected.body['messages']);
 
-  return message === null ? undefined : signatureFromContent(message['content']);
+  return message === null ? undefined : markerFromContent(message['content']);
 }
 
 function firstMessage(value: unknown): Record<string, unknown> | null {
@@ -102,13 +103,13 @@ function firstMessage(value: unknown): Record<string, unknown> | null {
   return isJsonObject(message) ? message : null;
 }
 
-function signatureFromContent(value: unknown): unknown {
+function markerFromContent(value: unknown): unknown {
   if (!Array.isArray(value)) return undefined;
 
   const parts: unknown[] = Array.from(value);
   const thinking = parts.find(isThinkingPart);
 
-  return isJsonObject(thinking) ? thinking['signature'] : undefined;
+  return isJsonObject(thinking) ? thinking['thinking'] : undefined;
 }
 
 function isThinkingPart(value: unknown): boolean {
