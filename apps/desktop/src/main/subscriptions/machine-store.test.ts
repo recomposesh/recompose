@@ -137,10 +137,12 @@ describe('two stores that disagree about the same account', () => {
 describe('a Codex record kept in the keyring rather than a file', () => {
   test('given no file, the keyring answers rather than the machine reading as empty', async () => {
     const held = JSON.stringify({ tokens: { access_token: 'opaque' } });
-    const keychain = fakeKeychain({ [`Codex Auth ${osUser}`]: held });
+    const codexHome = join(homeFolder, '.codex');
+    const entry = codexVendorItem(codexHome);
+    const keychain = fakeKeychain({ [`${entry.service} ${entry.account}`]: held });
     const store = machineStoreFor(
       'openai',
-      reaching({ keyringHolds: async () => keychain.seam.read(codexVendorItem(osUser)) }),
+      reaching({ keyringHolds: async () => keychain.seam.read(entry) }),
     );
 
     await expect(store.readBlob()).resolves.toBe(held);

@@ -5,21 +5,36 @@ import { join } from 'node:path';
 
 const VENDOR_SERVICE = 'Claude Code-credentials';
 const HOME_MARK_LENGTH = 8;
+const CODEX_MARK_LENGTH = 16;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Where the fake keychain files one item, which is how the shim names what it keeps. */
-function shelfIn(store: string, service: string): string {
-  return join(store, Buffer.from(`${service}\n${userInfo().username}`).toString('base64url'));
+function shelfIn(store: string, service: string, account = userInfo().username): string {
+  return join(store, Buffer.from(`${service}\n${account}`).toString('base64url'));
 }
 
-export async function shelvedBlob(store: string, service: string): Promise<string | null> {
-  return readFile(shelfIn(store, service), 'utf8').then(
+export async function shelvedBlob(
+  store: string,
+  service: string,
+  account?: string,
+): Promise<string | null> {
+  return readFile(shelfIn(store, service, account), 'utf8').then(
     (blob) => blob,
     () => null,
   );
+}
+
+/**
+ * @summary Codex names its keyring entry after the config home rather than the person, from the
+ * first sixteen hex characters of the SHA-256 of that home's resolved path.
+ */
+export function codexEntryFor(resolvedHome: string): string {
+  const mark = createHash('sha256').update(resolvedHome).digest('hex').slice(0, CODEX_MARK_LENGTH);
+
+  return `cli|${mark}`;
 }
 
 /**

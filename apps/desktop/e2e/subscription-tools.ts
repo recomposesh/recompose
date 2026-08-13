@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 
-import { lapseTheShelvedCredential, shelvedBlob } from './keychain-shelf';
+import { codexEntryFor, lapseTheShelvedCredential, shelvedBlob } from './keychain-shelf';
 import { shimName, shimScript } from './tool-shim';
 
 const fakeTools = join(__dirname, 'fake-tools');
@@ -184,8 +185,17 @@ type MachineSeams = Pick<
 function machineSeams(bench: Bench): MachineSeams {
   const { desk, keychainDir, machine, machineHome } = bench;
 
+  /**
+   * @summary Each vendor names its keyring entry its own way: Claude Code by the person, Codex by
+   * the config home it wrote from, so reading one asks under the name that vendor would have used.
+   */
+  const entryFor = (provider: MachineProvider): string | undefined =>
+    provider === 'openai'
+      ? codexEntryFor(realpathSync(join(machineHome, machineFolders.openai)))
+      : undefined;
+
   const machineCredential: SubscriptionTools['machineCredential'] = async (provider) =>
-    (await shelvedBlob(keychainDir, vendorServices[provider])) ??
+    (await shelvedBlob(keychainDir, vendorServices[provider], entryFor(provider))) ??
     readFile(join(machineHome, machineFolders[provider], recordFiles[provider]), 'utf8').then(
       (blob) => blob,
       () => null,

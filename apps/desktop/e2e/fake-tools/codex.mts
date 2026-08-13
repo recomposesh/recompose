@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { realpathSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { userInfo } from 'node:os';
 import { join } from 'node:path';
 
 import {
@@ -16,6 +16,7 @@ import {
 
 const VENDOR_SERVICE = 'Codex Auth';
 const IDENTITY_WINDOW_SECONDS = 60 * 60;
+const ENTRY_MARK_LENGTH = 16;
 
 const plan = chosenPlan('Pro');
 
@@ -78,10 +79,20 @@ function recordBlob(): string {
   )}\n`;
 }
 
-function keychainKeeps(blob: string): void {
+/**
+ * @summary Codex names its keyring entry after the config home rather than the person, hashing
+ * that home's resolved path (`codex-rs/login/src/auth/storage.rs`, `compute_store_key`).
+ */
+function entryForHome(home: string): string {
+  const resolved = realpathSync(home);
+
+  return `cli|${createHash('sha256').update(resolved).digest('hex').slice(0, ENTRY_MARK_LENGTH)}`;
+}
+
+function keychainKeeps(home: string, blob: string): void {
   const kept = spawnSync(
     securityCommand('Codex'),
-    ['add-generic-password', '-U', '-s', VENDOR_SERVICE, '-a', userInfo().username, '-w', blob],
+    ['add-generic-password', '-U', '-s', VENDOR_SERVICE, '-a', entryForHome(home), '-w', blob],
     { stdio: 'inherit' },
   );
 
@@ -102,7 +113,7 @@ async function signIn(): Promise<number> {
   await mkdir(home, { recursive: true });
 
   if (whereCodexKeeps() === 'keychain') {
-    keychainKeeps(blob);
+    keychainKeeps(home, blob);
 
     return 0;
   }

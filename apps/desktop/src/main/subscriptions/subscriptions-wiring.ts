@@ -1,7 +1,9 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
 import { app } from 'electron';
+import { realpath } from 'node:fs/promises';
 import { userInfo } from 'node:os';
+import { join } from 'node:path';
 
 import type { SubscriptionsIpcContext } from '../ipc/subscriptions-ipc';
 import type { SubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
@@ -53,19 +55,32 @@ function machineSeam(): KeychainSeam {
 }
 
 /**
+ * @summary Codex hashes the resolved path of its config home to name the keyring entry, and falls
+ * back to the path as written when it cannot resolve one, so reading that entry has to resolve the
+ * same way or it asks for an entry nothing ever wrote.
+ */
+async function codexHomeAsCodexSeesIt(machineHome: string): Promise<string> {
+  const home = join(machineHome, '.codex');
+
+  return realpath(home).catch(() => home);
+}
+
+/**
  * Everything the machine's own stores are reached through, wired once for every reader.
  *
  * @summary Detection, the row a screen reads, and every serving turn all ask the same stores, so
  * one reach answers all three and none of them can drift from the others.
  */
 function machineReachFor(homeFolder: string, custody: CredentialCustody | null): MachineReach {
+  const machineHome = substituteFor('RECOMPOSE_FAKE_MACHINE_HOME') ?? homeFolder;
+
   return {
-    homeFolder: substituteFor('RECOMPOSE_FAKE_MACHINE_HOME') ?? homeFolder,
+    homeFolder: machineHome,
     platform: process.platform,
     custody,
     keyringHolds:
       process.platform === 'darwin'
-        ? async () => machineSeam().read(codexVendorItem(userInfo().username))
+        ? async () => machineSeam().read(codexVendorItem(await codexHomeAsCodexSeesIt(machineHome)))
         : null,
   };
 }

@@ -407,6 +407,8 @@ Tasks 1, 2, and 8 run in parallel from the start: they own disjoint files, contr
 
 **Where a Codex record lapses.** Codex decides its own freshness from the `access_token`'s claim, falling back to eight days past `last_refresh` when that token carries none (`codex-rs/login/src/auth/manager.rs`, `should_refresh_proactively`). The identity token beside it lapses an hour after issue, and Codex renews it only alongside the other. Reading its claim therefore reported every Codex account lapsed within the hour while Codex itself was content for days. `credential-records.ts` reads the spent token's claim, which is what `credentials.ts:68` in the engine already did.
 
+**How Codex names its keyring entry.** Not after the person. Codex hashes the resolved path of its config home and takes the first sixteen hex characters, keying the entry `cli|<mark>` under the service `Codex Auth` (`codex-rs/login/src/auth/storage.rs`, `compute_store_key`). It falls back to the path as written when it can't resolve one, and the reader here does the same. `auth.json` stays the default store. The keyring holds the record only where a person set `cli_auth_credentials_store` to `keyring` or `auto`.
+
 **Where a control-plane call lands under test.** The token endpoint and the profile lookup name the vendor's own host rather than an account's, so no target origin redirects them. `controlPlaneUrl` honours `RECOMPOSE_CONTROL_ORIGIN` on exactly the terms the probe and runtime origins already use: a loopback host or nothing.
 
 ## End-to-end verification
