@@ -64,6 +64,14 @@ An adopted credential belongs to the tool that wrote it as much as to the app. B
 
 The app MUST read the live store on each serving turn rather than serve a copy it kept, because the owning tool rotates the credential without telling the app.
 
+The app MUST keep no copy of an adopted credential anywhere of its own, whatever the reason for writing one. A provider MAY want facts in the credential that the record on the machine carries none of, and the app MAY mint them for the turn it serves. Writing that credential back is only the app's to do for a home it owns alone.
+
+#### Scenario: serving an adopted account leaves nothing behind
+
+- Given a connected account the app adopted from the machine
+- When a request needs that account
+- Then the app holds no credential of its own for that account afterward
+
 When an adopted credential nears expiry, the app MUST hand the renewal to the provider's own tool. That run MUST carry no window, and a lock MUST admit one renewal at a time.
 
 A tool that renews only by spending a turn names no run, because a background refresh MUST NOT cost a person a turn. The app MUST read that answer apart from a run that failed, and MUST spawn nothing for it.

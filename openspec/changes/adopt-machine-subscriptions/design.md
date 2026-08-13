@@ -409,6 +409,10 @@ Tasks 1, 2, and 8 run in parallel from the start: they own disjoint files, contr
 
 **How Codex names its keyring entry.** Not after the person. Codex hashes the resolved path of its config home and takes the first sixteen hex characters, keying the entry `cli|<mark>` under the service `Codex Auth` (`codex-rs/login/src/auth/storage.rs`, `compute_store_key`). It falls back to the path as written when it can't resolve one, and the reader here does the same. `auth.json` stays the default store. The keyring holds the record only where a person set `cli_auth_credentials_store` to `keyring` or `auto`.
 
+**The second place a credential got written.** `reach-credential.ts` was the refresh path this design guarded, and it wasn't the only writer. `ready-claude-identity.ts` mints an account identifier and a device id where the record carries none, then persisted the stamped credential for every Anthropic account whatever its provenance. For an adopted one that's the copy locked decision 1 forbids. The stamp now rides the turn, and nothing writes it back unless the app owns the home.
+
+Worth recording how it hid. On macOS the copy lands in the login keychain, while the scenario asked whether a config-home folder appeared on disk, which it never does there. Only Linux and Windows went red, because off macOS the same write creates the folder. An assertion shaped around one platform's store passed vacuously on that platform for the whole of implementation. The scenario now asks the machine's own store whether the app kept anything.
+
 **Where a control-plane call lands under test.** The token endpoint and the profile lookup name the vendor's own host rather than an account's, so no target origin redirects them. `controlPlaneUrl` honours `RECOMPOSE_CONTROL_ORIGIN` on exactly the terms the probe and runtime origins already use: a loopback host or nothing.
 
 ## End-to-end verification
