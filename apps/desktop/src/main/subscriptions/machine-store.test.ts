@@ -114,3 +114,74 @@ describe('where the address and the plan are read from', () => {
     await expect(store.readIdentity()).resolves.toBeNull();
   });
 });
+
+describe('two stores that disagree about the same account', () => {
+  test('given the keychain fresher than the file, the fresher record wins', async () => {
+    const stale = JSON.stringify({ claudeAiOauth: { accessToken: 'a', expiresAt: 1_000 } });
+    const fresh = JSON.stringify({ claudeAiOauth: { accessToken: 'b', expiresAt: 9_000 } });
+
+    await mkdir(join(homeFolder, '.claude'), { recursive: true });
+    await writeFile(join(homeFolder, '.claude', '.credentials.json'), stale, 'utf8');
+
+    const keychain = fakeKeychain(machineHolding(fresh));
+    const store = machineStoreFor({
+      provider: 'anthropic',
+      homeFolder,
+      platform: 'darwin',
+      custody: credentialCustody(keychain.seam, osUser),
+    });
+
+    await expect(store.readBlob()).resolves.toBe(fresh);
+  });
+
+  test('given the file fresher than the keychain, the fresher record wins', async () => {
+    const stale = JSON.stringify({ claudeAiOauth: { accessToken: 'a', expiresAt: 1_000 } });
+    const fresh = JSON.stringify({ claudeAiOauth: { accessToken: 'b', expiresAt: 9_000 } });
+
+    await mkdir(join(homeFolder, '.claude'), { recursive: true });
+    await writeFile(join(homeFolder, '.claude', '.credentials.json'), fresh, 'utf8');
+
+    const keychain = fakeKeychain(machineHolding(stale));
+    const store = machineStoreFor({
+      provider: 'anthropic',
+      homeFolder,
+      platform: 'darwin',
+      custody: credentialCustody(keychain.seam, osUser),
+    });
+
+    await expect(store.readBlob()).resolves.toBe(fresh);
+  });
+});
+
+describe('a Codex record kept in the keyring rather than a file', () => {
+  test('given no file, the keyring answers rather than the machine reading as empty', async () => {
+    const held = JSON.stringify({ tokens: { access_token: 'opaque' } });
+    const keychain = fakeKeychain({ [`Codex Auth ${osUser}`]: held });
+    const store = machineStoreFor({
+      provider: 'openai',
+      homeFolder,
+      platform: 'darwin',
+      custody: null,
+      keychain: keychain.seam,
+      osUser,
+    });
+
+    await expect(store.readBlob()).resolves.toBe(held);
+  });
+
+  test('given a file, it answers and the keyring is never opened', async () => {
+    await fileAt('.codex', 'auth.json');
+
+    const keychain = fakeKeychain({ [`Codex Auth ${osUser}`]: 'from the keyring' });
+    const store = machineStoreFor({
+      provider: 'openai',
+      homeFolder,
+      platform: 'darwin',
+      custody: null,
+      keychain: keychain.seam,
+      osUser,
+    });
+
+    await expect(store.readBlob()).resolves.toBe('held at .codex/auth.json');
+  });
+});

@@ -189,6 +189,14 @@ async function renewalWasToldToFail(): Promise<boolean> {
   );
 }
 
+/**
+ * @summary Claude Code keeps its identity beside the home rather than inside its config
+ * folder, and moves it into a config home only when one is named. Production reads it there.
+ */
+function machineHomeRoot(): string {
+  return machineConfigHome('Claude Code', '.');
+}
+
 function claudeMachineHome(): string {
   return machineConfigHome('Claude Code', '.claude');
 }
@@ -204,10 +212,14 @@ async function signIn(): Promise<number> {
   }
 
   await mkdir(home, { recursive: true });
-  await identityKeeps(home);
-  await keepCredential(home, configHome, credentialBlob(freshToken(), chosenExpiry()));
+  await landTheSignIn(home, configHome);
 
   return 0;
+}
+
+async function landTheSignIn(home: string, configHome: string | null): Promise<void> {
+  await identityKeeps(configHome ?? machineHomeRoot());
+  await keepCredential(home, configHome, credentialBlob(freshToken(), chosenExpiry()));
 }
 
 async function renew(): Promise<number> {
@@ -242,7 +254,7 @@ async function report(): Promise<number> {
     return 0;
   }
 
-  const account = (await documentAt(join(home, '.claude.json')))['oauthAccount'];
+  const account = (await documentAt(join(machineHomeRoot(), '.claude.json')))['oauthAccount'];
   const emailAddress = isRecord(account) ? account['emailAddress'] : undefined;
 
   process.stdout.write(

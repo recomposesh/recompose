@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { SubscriptionTools } from '../subscription-tools';
@@ -64,17 +64,6 @@ export type MachineLogin = {
  * under the folder, so a scenario naming the address it expects to see puts the identity where the
  * vendor puts it.
  */
-async function identityStandsAtTheHomeRoot(
-  tools: SubscriptionTools,
-  signedInAs: string,
-  plan: string,
-): Promise<void> {
-  await writeFile(
-    join(tools.machineHome, '.claude.json'),
-    `${JSON.stringify({ oauthAccount: { emailAddress: signedInAs }, subscriptionType: plan }, null, 2)}\n`,
-    'utf8',
-  );
-}
 
 /** Who the machine's own tool signed in as, and on which plan, with anything unsaid filled in. */
 function identityOf(login: MachineLogin, provider: MachineProvider) {
@@ -105,7 +94,6 @@ export async function theMachineHolds(
   await tools.plantMachineCredential({ provider, ...identity, ...standingOf(login) });
 
   if (provider === 'anthropic') {
-    await identityStandsAtTheHomeRoot(tools, identity.signedInAs, identity.plan);
   }
 }
 

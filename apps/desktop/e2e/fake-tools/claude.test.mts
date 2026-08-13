@@ -100,7 +100,7 @@ describe('the fake Claude Code signing in', () => {
     });
 
     const identity: unknown = JSON.parse(
-      await readFile(join(bed.machineHome, '.claude', '.claude.json'), 'utf8'),
+      await readFile(join(bed.machineHome, '.claude.json'), 'utf8'),
     );
 
     expect(identity).toMatchObject({
