@@ -9,7 +9,19 @@ import { coverageDefaults } from '../../vitest.shared';
 
 // Chromium keeps every finished test file's memory as files on disk, so a long run fills the
 // runner and the browser dies mid-suite: https://github.com/vitest-dev/vitest/issues/9437
+const FILES_BETWEEN_COLLECTIONS = 10;
+
+let filesSinceCollection = 0;
+
 const requestGC: BrowserCommand = async (context) => {
+  filesSinceCollection += 1;
+
+  if (filesSinceCollection < FILES_BETWEEN_COLLECTIONS) {
+    return;
+  }
+
+  filesSinceCollection = 0;
+
   await context.page.requestGC();
 };
 

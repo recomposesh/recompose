@@ -1,6 +1,6 @@
 # 0093: The browser suite collects between files
 
-**Status**: Accepted
+**Status**: Superseded by [0094](0094-the-browser-suite-collects-every-tenth-file.md)
 **Date**: 2026-08-13
 
 ## Context
