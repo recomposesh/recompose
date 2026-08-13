@@ -135,8 +135,8 @@ describe('the shape a vendor hands its keys out in', () => {
   });
 
   test('a vendor documenting no opening hints nothing rather than teaching a shape', () => {
-    for (const unhinted of ['cerebras', 'mistral', 'deepseek', 'together', 'deepinfra']) {
-      expect(documentedKeyOpeningOf(unhinted), unhinted).toBeUndefined();
+    for (const vendor of ['cerebras', 'mistral', 'deepseek', 'together', 'deepinfra']) {
+      expect(documentedKeyOpeningOf(vendor), vendor).toBeUndefined();
     }
   });
 });

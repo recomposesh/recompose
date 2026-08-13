@@ -91,7 +91,7 @@ const documentedKeyOpenings = new Map<string, string>([
  * The opening a vendor documents its keys start with, or nothing where it documents none.
  *
  * @summary Reach for it where an empty key field wants a hint. A vendor publishing bearer
- * authentication and no shape leaves the field unhinted, because a hint nobody promised teaches a
+ * authentication and no shape leaves the field with none, because a hint nobody promised teaches a
  * person to doubt a key that is perfectly good.
  */
 export function documentedKeyOpeningOf(provider: string): string | undefined {

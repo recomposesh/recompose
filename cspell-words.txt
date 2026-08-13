@@ -10,6 +10,7 @@ aistudio
 AKIAIOSFODNN
 aliasable
 alikes
+aliyuncs
 Alloced
 Alpcan
 alpcanaydin
@@ -61,6 +62,7 @@ credentialweight
 ctco
 cyclonedx
 dagre
+dashscope
 dbaeumer
 dbus
 declspec
@@ -110,6 +112,7 @@ Fzay
 Gebert
 Gemini
 generativelanguage
+gguf
 gitdir
 gjson
 glassmorphism
@@ -150,9 +153,11 @@ libvips
 lifecycles
 lintable
 litellm
+llamacpp
 llms
 lmstudio
 lobehub
+localai
 lockfiles
 logit
 logprobs
@@ -359,6 +364,7 @@ vLLM
 vtsls
 WCAG
 Weavy
+webui
 WHATWG
 winstaller
 worktree

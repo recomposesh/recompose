@@ -75,7 +75,7 @@ what this change removes.
 5. **A runtime that answers without naming a version still answers.** LM Studio publishes no
    version, so the reachability contract carries the version only when the runtime gives one.
 6. **A field hints a key shape only where the vendor documents an opening.** Three vendors do.
-   The rest leave the field unhinted rather than teaching a shape nobody promised.
+   The rest leave the field with none rather than teaching a shape nobody promised.
 7. **Kimi Code signs in through CLIProxyAPI.** Porting its device flow into recompose would
    duplicate a flow the tool recompose already launches implements and tests.
 8. **GitHub Copilot's flow follows CC Switch.** The device code, the poll, the token trade and

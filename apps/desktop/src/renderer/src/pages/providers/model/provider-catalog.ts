@@ -96,7 +96,7 @@ export function keyTitleFor(provider: string): string {
  *
  * @summary Reach for it where an empty key field wants a hint. The hint echoes the one documented
  * prefix family per vendor, so a person pasting recognizes at a glance which key belongs here. A
- * vendor publishing no shape leaves the field unhinted rather than teaching one nobody promised.
+ * vendor publishing no shape leaves the field with none rather than teaching one nobody promised.
  */
 export function keyShapeHintFor(provider: string): string | undefined {
   const opening = documentedKeyOpeningOf(provider);

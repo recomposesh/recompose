@@ -105,7 +105,7 @@ describe('the code a person is shown, read out of the answer', () => {
 
     await askForADeviceCode(fetchLike);
 
-    expect(sent[0]?.body).toContain('scope=read%3Auser');
+    expect(sent[0]?.body).toContain(`scope=${encodeURIComponent('read:user')}`);
   });
 
   test('the answer carries the code, the address, and the pace the server set', async () => {

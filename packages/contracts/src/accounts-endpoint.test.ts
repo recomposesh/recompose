@@ -47,10 +47,10 @@ describe('the endpoint a row carries when recompose knows none for its provider'
   });
 
   test('an endpoint naming no origin is refused, because the origin is the whole of it', () => {
-    const originless = { ...keyRow, endpoint: { dialect: 'chat-completions' } };
+    const withoutAnOrigin = { ...keyRow, endpoint: { dialect: 'chat-completions' } };
 
     expect(() =>
-      loadAccountsDocument({ schemaVersion: ACCOUNTS_VERSION, accounts: [originless] }),
+      loadAccountsDocument({ schemaVersion: ACCOUNTS_VERSION, accounts: [withoutAnOrigin] }),
     ).toThrow();
   });
 
