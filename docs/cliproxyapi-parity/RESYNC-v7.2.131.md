@@ -39,20 +39,20 @@ asserts the namespace on the restored custom tool call, so both arrive again in 
 | `internal/pluginhost`                               |    4 | `small-packages.md`                                           | no         |
 | `internal/api`                                      |    4 | `api.md`                                                      | no         |
 | `internal/api/handlers/management`                  |    3 | `api.md`                                                      | no         |
-| `internal/watcher/synthesizer`                      |    2 | `watcher.md`                                                  | no         |
-| `internal/translator/claude/openai/responses`       |    2 | the matching `translator-*.md`                                | no         |
+| `internal/watcher/synthesizer`                      |    2 | `watcher.md`                                                  | yes        |
+| `internal/translator/claude/openai/responses`       |    2 | `translator-claude.md`                                        | yes        |
 | `internal/cache`                                    |    2 | `cache.md`                                                    | yes        |
 | `sdk/translator`                                    |    1 | `translator-common.md`                                        | no         |
 | `internal/translator/openai/gemini`                 |    1 | `translator-openai.md`                                        | yes        |
 | `internal/translator/gemini/gemini`                 |    1 | `translator-gemini.md`                                        | yes        |
-| `internal/translator/common`                        |    1 | the matching `translator-*.md`                                | no         |
+| `internal/translator/common`                        |    1 | `translator-common.md`                                        | yes        |
 | `internal/translator/codex/openai/chat-completions` |    1 | the matching `translator-*.md`                                | no         |
 | `internal/translator/codex/gemini`                  |    1 | `translator-codex.md`                                         | yes        |
 | `internal/translator/claude/gemini`                 |    1 | `translator-claude.md`                                        | yes        |
 | `internal/translator/antigravity/gemini`            |    1 | `translator-antigravity.md`                                   | yes        |
 | `internal/registry`                                 |    1 | `registry.md`                                                 | yes        |
-| `internal/config`                                   |    1 | `config.md`                                                   | no         |
-| `internal/clienterror`                              |    1 | `small-packages.md`                                           | no         |
+| `internal/config`                                   |    1 | `config.md`                                                   | yes        |
+| `internal/clienterror`                              |    1 | `small-packages.md`                                           | yes        |
 
 ## Every new row
 

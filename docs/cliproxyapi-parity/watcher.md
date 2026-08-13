@@ -2,7 +2,7 @@
 
 # Final watcher parity reconciliation
 
-Scope: all 167 upstream `Test*` functions across watcher core (61), synthesizer (51), and diff (55), reconciled against the current Recompose worktree after gateway lifecycle, accounts watching, account-change IPC, and provider model-policy implementation.
+Scope: all 169 upstream `Test*` functions across watcher core (61), synthesizer (53), and diff (55), reconciled against the current Recompose worktree after gateway lifecycle, accounts watching, account-change IPC, and provider model-policy implementation.
 
 Every row is either **Covered** by concrete local behavior or **N/A** because the upstream concept is not part of Recompose's architecture or the explicitly excluded plugin/router/weight scope. No gaps remain.
 
@@ -146,63 +146,65 @@ Every row is either **Covered** by concrete local behavior or **N/A** because th
 
 ## Diff — 55 tests
 
-|   # | Upstream test                                                         | Status  | Evidence                                                            |
-| --: | --------------------------------------------------------------------- | ------- | ------------------------------------------------------------------- |
-| 113 | `TestDiffOAuthModelAliasChanges_IncludesDisplayName`                  | Covered | C3 exact parity test.                                               |
-| 114 | `TestDiffOpenAICompatibility`                                         | N/A     | N5.                                                                 |
-| 115 | `TestDiffOpenAICompatibilityPromptCacheKey`                           | N/A     | N5.                                                                 |
-| 116 | `TestDiffOpenAICompatibilityDuplicateNames`                           | N/A     | N5.                                                                 |
-| 117 | `TestDiffOpenAICompatibilityDuplicateKeyDoesNotCollide`               | N/A     | N5.                                                                 |
-| 118 | `TestDiffOpenAICompatibility_RemovedAndUnchanged`                     | N/A     | N5; generic gateway removal/unchanged is C1.                        |
-| 119 | `TestOpenAICompatKeyFallbacks`                                        | N/A     | N5.                                                                 |
-| 120 | `TestOpenAICompatKey_UsesName`                                        | N/A     | N5.                                                                 |
-| 121 | `TestOpenAICompatKey_SignatureFallbackWhenOnlyAPIKeys`                | N/A     | N5/N8.                                                              |
-| 122 | `TestOpenAICompatSignature_EmptyReturnsEmpty`                         | N/A     | N5.                                                                 |
-| 123 | `TestOpenAICompatSignature_StableAndNormalized`                       | N/A     | N5.                                                                 |
-| 124 | `TestCountOpenAIModelsSkipsBlanks`                                    | N/A     | N5/N6; local contracts reject blank IDs.                            |
-| 125 | `TestOpenAICompatKeyUsesModelNameWhenAliasEmpty`                      | N/A     | N5.                                                                 |
-| 126 | `TestModelHashesIncludeIsCompat`                                      | N/A     | N5/N6.                                                              |
-| 127 | `TestBuildConfigChangeDetails`                                        | N/A     | N2.                                                                 |
-| 128 | `TestBuildConfigChangeDetails_NoChanges`                              | Covered | C1/C2 unchanged semantic suppression.                               |
-| 129 | `TestBuildConfigChangeDetails_CodexLiveMediaRelay`                    | N/A     | N2.                                                                 |
-| 130 | `TestBuildConfigChangeDetails_GeminiVertexHeaders`                    | N/A     | N2/N7.                                                              |
-| 131 | `TestBuildConfigChangeDetails_ModelPrefixes`                          | N/A     | N2/N7.                                                              |
-| 132 | `TestBuildConfigChangeDetails_CodexAlphaSearch`                       | N/A     | N2/N7.                                                              |
-| 133 | `TestBuildConfigChangeDetails_XAIKeys`                                | N/A     | N2/N7.                                                              |
-| 134 | `TestBuildConfigChangeDetails_XAIForceMappingOnly`                    | N/A     | N5.                                                                 |
-| 135 | `TestBuildConfigChangeDetails_NilSafe`                                | N/A     | N2.                                                                 |
-| 136 | `TestBuildConfigChangeDetails_SecretsAndCounts`                       | N/A     | N2; C4 structurally excludes secrets instead of logging redactions. |
-| 137 | `TestBuildConfigChangeDetails_RedactsEndpointURLs`                    | N/A     | N2/N7.                                                              |
-| 138 | `TestBuildConfigChangeDetails_FlagsAndKeys`                           | N/A     | N2.                                                                 |
-| 139 | `TestBuildConfigChangeDetails_AllBranches`                            | N/A     | N2/N5.                                                              |
-| 140 | `TestFormatProxyURL`                                                  | N/A     | N2/N7.                                                              |
-| 141 | `TestBuildConfigChangeDetails_RemoteManagementSecretUpdated`          | N/A     | N2.                                                                 |
-| 142 | `TestBuildConfigChangeDetails_CountBranches`                          | N/A     | N2/N3.                                                              |
-| 143 | `TestTrimStrings`                                                     | N/A     | N2; local schemas trim fields directly.                             |
-| 144 | `TestSummarizeExcludedModels_NormalizesAndDedupes`                    | Covered | C3 exact parity test.                                               |
-| 145 | `TestDiffOAuthExcludedModelChanges`                                   | Covered | C3 exact add/update/removal parity test.                            |
-| 146 | `TestSummarizeOAuthExcludedModels_NormalizesKeys`                     | Covered | C3 exact parity test.                                               |
-| 147 | `TestSummarizeVertexModels`                                           | N/A     | N6.                                                                 |
-| 148 | `TestComputeOpenAICompatModelsHash_Deterministic`                     | Covered | C5 deterministic model snapshot.                                    |
-| 149 | `TestComputeOpenAICompatModelsHash_IncludesImageFlag`                 | N/A     | N6.                                                                 |
-| 150 | `TestComputeOpenAICompatModelsHashIncludesModalities`                 | N/A     | N6.                                                                 |
-| 151 | `TestComputeOpenAICompatModelsHashPreservesRoutingOrderAndDuplicates` | Covered | C5 arrays preserve order and duplicates.                            |
-| 152 | `TestComputeVertexCompatModelsHash_DifferentInputs`                   | Covered | C5 model target changes alter hash.                                 |
-| 153 | `TestComputeVertexCompatModelsHashPreservesDuplicates`                | Covered | C5.                                                                 |
-| 154 | `TestComputeClaudeModelsHash_Empty`                                   | N/A     | N6; no provider sub-hash sentinel.                                  |
-| 155 | `TestComputeCodexModelsHash_Empty`                                    | N/A     | N6.                                                                 |
-| 156 | `TestComputeClaudeModelsHashPreservesDuplicates`                      | Covered | C5.                                                                 |
-| 157 | `TestComputeCodexModelsHashPreservesDuplicates`                       | Covered | C5.                                                                 |
-| 158 | `TestComputeModelHashesIncludeDisplayName`                            | Covered | C5; C3 alias display names also affect semantic state.              |
-| 159 | `TestComputeCodexModelsHashIncludesForceMapping`                      | N/A     | N5.                                                                 |
-| 160 | `TestComputeOtherModelHashesIncludeForceMapping`                      | N/A     | N5.                                                                 |
-| 161 | `TestComputeExcludedModelsHash_Normalizes`                            | Covered | C3 exact parity test.                                               |
-| 162 | `TestComputeOpenAICompatModelsHash_Empty`                             | N/A     | N6.                                                                 |
-| 163 | `TestComputeVertexCompatModelsHash_Empty`                             | N/A     | N6.                                                                 |
-| 164 | `TestComputeExcludedModelsHash_Empty`                                 | Covered | C3 exact parity test.                                               |
-| 165 | `TestComputeClaudeModelsHash_Deterministic`                           | Covered | C5.                                                                 |
-| 166 | `TestComputeCodexModelsHash_Deterministic`                            | Covered | C5.                                                                 |
-| 167 | `TestComputeModelHashesIncludeThinking`                               | N/A     | N6.                                                                 |
+|   # | Upstream test                                                         | Status  | Evidence                                                                                                                                       |
+| --: | --------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 113 | `TestDiffOAuthModelAliasChanges_IncludesDisplayName`                  | Covered | C3 exact parity test.                                                                                                                          |
+| 114 | `TestDiffOpenAICompatibility`                                         | N/A     | N5.                                                                                                                                            |
+| 115 | `TestDiffOpenAICompatibilityPromptCacheKey`                           | N/A     | N5.                                                                                                                                            |
+| 116 | `TestDiffOpenAICompatibilityDuplicateNames`                           | N/A     | N5.                                                                                                                                            |
+| 117 | `TestDiffOpenAICompatibilityDuplicateKeyDoesNotCollide`               | N/A     | N5.                                                                                                                                            |
+| 118 | `TestDiffOpenAICompatibility_RemovedAndUnchanged`                     | N/A     | N5; generic gateway removal/unchanged is C1.                                                                                                   |
+| 119 | `TestOpenAICompatKeyFallbacks`                                        | N/A     | N5.                                                                                                                                            |
+| 120 | `TestOpenAICompatKey_UsesName`                                        | N/A     | N5.                                                                                                                                            |
+| 121 | `TestOpenAICompatKey_SignatureFallbackWhenOnlyAPIKeys`                | N/A     | N5/N8.                                                                                                                                         |
+| 122 | `TestOpenAICompatSignature_EmptyReturnsEmpty`                         | N/A     | N5.                                                                                                                                            |
+| 123 | `TestOpenAICompatSignature_StableAndNormalized`                       | N/A     | N5.                                                                                                                                            |
+| 124 | `TestCountOpenAIModelsSkipsBlanks`                                    | N/A     | N5/N6; local contracts reject blank IDs.                                                                                                       |
+| 125 | `TestOpenAICompatKeyUsesModelNameWhenAliasEmpty`                      | N/A     | N5.                                                                                                                                            |
+| 126 | `TestModelHashesIncludeIsCompat`                                      | N/A     | N5/N6.                                                                                                                                         |
+| 127 | `TestBuildConfigChangeDetails`                                        | N/A     | N2.                                                                                                                                            |
+| 128 | `TestBuildConfigChangeDetails_NoChanges`                              | Covered | C1/C2 unchanged semantic suppression.                                                                                                          |
+| 129 | `TestBuildConfigChangeDetails_CodexLiveMediaRelay`                    | N/A     | N2.                                                                                                                                            |
+| 130 | `TestBuildConfigChangeDetails_GeminiVertexHeaders`                    | N/A     | N2/N7.                                                                                                                                         |
+| 131 | `TestBuildConfigChangeDetails_ModelPrefixes`                          | N/A     | N2/N7.                                                                                                                                         |
+| 132 | `TestBuildConfigChangeDetails_CodexAlphaSearch`                       | N/A     | N2/N7.                                                                                                                                         |
+| 133 | `TestBuildConfigChangeDetails_XAIKeys`                                | N/A     | N2/N7.                                                                                                                                         |
+| 134 | `TestBuildConfigChangeDetails_XAIForceMappingOnly`                    | N/A     | N5.                                                                                                                                            |
+| 135 | `TestBuildConfigChangeDetails_NilSafe`                                | N/A     | N2.                                                                                                                                            |
+| 136 | `TestBuildConfigChangeDetails_SecretsAndCounts`                       | N/A     | N2; C4 structurally excludes secrets instead of logging redactions.                                                                            |
+| 137 | `TestBuildConfigChangeDetails_RedactsEndpointURLs`                    | N/A     | N2/N7.                                                                                                                                         |
+| 138 | `TestBuildConfigChangeDetails_FlagsAndKeys`                           | N/A     | N2.                                                                                                                                            |
+| 139 | `TestBuildConfigChangeDetails_AllBranches`                            | N/A     | N2/N5.                                                                                                                                         |
+| 140 | `TestFormatProxyURL`                                                  | N/A     | N2/N7.                                                                                                                                         |
+| 141 | `TestBuildConfigChangeDetails_RemoteManagementSecretUpdated`          | N/A     | N2.                                                                                                                                            |
+| 142 | `TestBuildConfigChangeDetails_CountBranches`                          | N/A     | N2/N3.                                                                                                                                         |
+| 143 | `TestTrimStrings`                                                     | N/A     | N2; local schemas trim fields directly.                                                                                                        |
+| 144 | `TestSummarizeExcludedModels_NormalizesAndDedupes`                    | Covered | C3 exact parity test.                                                                                                                          |
+| 145 | `TestDiffOAuthExcludedModelChanges`                                   | Covered | C3 exact add/update/removal parity test.                                                                                                       |
+| 146 | `TestSummarizeOAuthExcludedModels_NormalizesKeys`                     | Covered | C3 exact parity test.                                                                                                                          |
+| 147 | `TestSummarizeVertexModels`                                           | N/A     | N6.                                                                                                                                            |
+| 148 | `TestComputeOpenAICompatModelsHash_Deterministic`                     | Covered | C5 deterministic model snapshot.                                                                                                               |
+| 149 | `TestComputeOpenAICompatModelsHash_IncludesImageFlag`                 | N/A     | N6.                                                                                                                                            |
+| 150 | `TestComputeOpenAICompatModelsHashIncludesModalities`                 | N/A     | N6.                                                                                                                                            |
+| 151 | `TestComputeOpenAICompatModelsHashPreservesRoutingOrderAndDuplicates` | Covered | C5 arrays preserve order and duplicates.                                                                                                       |
+| 152 | `TestComputeVertexCompatModelsHash_DifferentInputs`                   | Covered | C5 model target changes alter hash.                                                                                                            |
+| 153 | `TestComputeVertexCompatModelsHashPreservesDuplicates`                | Covered | C5.                                                                                                                                            |
+| 154 | `TestComputeClaudeModelsHash_Empty`                                   | N/A     | N6; no provider sub-hash sentinel.                                                                                                             |
+| 155 | `TestComputeCodexModelsHash_Empty`                                    | N/A     | N6.                                                                                                                                            |
+| 156 | `TestComputeClaudeModelsHashPreservesDuplicates`                      | Covered | C5.                                                                                                                                            |
+| 157 | `TestComputeCodexModelsHashPreservesDuplicates`                       | Covered | C5.                                                                                                                                            |
+| 158 | `TestComputeModelHashesIncludeDisplayName`                            | Covered | C5; C3 alias display names also affect semantic state.                                                                                         |
+| 159 | `TestComputeCodexModelsHashIncludesForceMapping`                      | N/A     | N5.                                                                                                                                            |
+| 160 | `TestComputeOtherModelHashesIncludeForceMapping`                      | N/A     | N5.                                                                                                                                            |
+| 161 | `TestComputeExcludedModelsHash_Normalizes`                            | Covered | C3 exact parity test.                                                                                                                          |
+| 162 | `TestComputeOpenAICompatModelsHash_Empty`                             | N/A     | N6.                                                                                                                                            |
+| 163 | `TestComputeVertexCompatModelsHash_Empty`                             | N/A     | N6.                                                                                                                                            |
+| 164 | `TestComputeExcludedModelsHash_Empty`                                 | Covered | C3 exact parity test.                                                                                                                          |
+| 165 | `TestComputeClaudeModelsHash_Deterministic`                           | Covered | C5.                                                                                                                                            |
+| 166 | `TestComputeCodexModelsHash_Deterministic`                            | Covered | C5.                                                                                                                                            |
+| 167 | `TestComputeModelHashesIncludeThinking`                               | N/A     | N6.                                                                                                                                            |
+| 168 | `TestConfigSynthesizer_RequestRetry`                                  | N/A     | N1; the synthesized runtime-auth metadata object has no local counterpart, which is the ground every other synthesizer metadata row stands on. |
+| 169 | `TestAddRequestRetryToMetadata`                                       | N/A     | N1; same absent runtime-auth metadata map.                                                                                                     |
 
 ## Final result
 

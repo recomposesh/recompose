@@ -52,6 +52,7 @@ and management control-panel assets remain architecture N/A.
 |  22 | `misc`             | `TestFetchAntigravityLatestVersionUsesHubManifest`                     | Covered | Local tests verify manifest URL behavior, updater headers, version parsing, and now bounded streaming reads.                                                                                                                                            |
 |  23 | `misc`             | `TestFetchAntigravityLatestVersionReturnsHubManifestError`             | Covered | Local tests verify a non-success manifest response rejects.                                                                                                                                                                                             |
 |  24 | `managementasset`  | `TestAutoUpdateSkipReason`                                             | N/A     | Control-panel asset update policy depends on Home/cluster mode and remote-management flags; Recompose does not ship or auto-update CLIProxy management HTML.                                                                                            |
+|  25 | `clienterror`      | `TestHTTPStatusFromError`                                              | N/A     | Mapping a transport error onto a status belongs to the deferred router and attempt scope, the same ground rows 8 and 9 stand on.                                                                                                                        |
 
 ## Implemented residual
 
