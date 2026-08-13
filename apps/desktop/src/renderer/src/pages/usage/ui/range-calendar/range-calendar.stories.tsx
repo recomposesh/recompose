@@ -13,7 +13,7 @@ const meta = preview.meta({
     month: AUGUST,
     onMonthChange: () => {},
     window: { from: AUGUST + 4 * DAY, to: AUGUST + 11 * DAY },
-    onWindowChange: () => {},
+    onDayPress: () => {},
     spanWording: 'Aug 5, 2026 12:00 – Aug 12, 2026 12:00',
   },
   decorators: [

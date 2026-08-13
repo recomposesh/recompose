@@ -3,7 +3,6 @@ import { DayPicker, getDefaultClassNames } from 'react-day-picker';
 import type { UsageWindow } from '../../lib/usage-window';
 
 import { Icon } from '../../../../shared/ui';
-import { atClock, clockOf } from '../../lib/clock-edges';
 
 type RangeCalendarProps = {
   /** The month the left calendar opens on, the right one drawing the month after it. */
@@ -12,8 +11,8 @@ type RangeCalendarProps = {
   onMonthChange: (month: number) => void;
   /** The window the grid paints, whose edges carry the solid marks. */
   window: UsageWindow;
-  /** Receives the window a person drew, each edge keeping the clock it already stood at. */
-  onWindowChange: (next: UsageWindow) => void;
+  /** Receives the day a person pressed, at its own local midnight. */
+  onDayPress: (day: number) => void;
   /** The sentence naming both edges of the standing window. */
   spanWording: string;
 };
@@ -49,29 +48,19 @@ function monthStep(label: string, turn: string, onPress: () => void) {
   );
 }
 
-function keptClocks(
-  window: UsageWindow,
-  from: Date | undefined,
-  to: Date | undefined,
-): UsageWindow {
-  const opened = from === undefined ? window.from : atClock(from.getTime(), clockOf(window.from));
-  const closed = to === undefined ? opened : atClock(to.getTime(), clockOf(window.to));
-
-  return { from: opened, to: Math.max(opened, closed) };
-}
-
 /**
  * Two months side by side, painting the window a person is drawing.
  *
  * @summary The grid, its keyboard walk, and its month nav come from the calendar library rather
- * than from a hand-built table, and only the paint is ours. Both edges keep the clock they already
- * stood at, so drawing a day never quietly resets a window's times.
+ * than from a hand-built table, and only the paint is ours. What a press means for the window is
+ * not the library's to decide, because it only ever sees a complete range and would widen one
+ * where a person meant to start over, so the press rides out as the day it landed on.
  */
 export function RangeCalendar({
   month,
   onMonthChange,
   window,
-  onWindowChange,
+  onDayPress,
   spanWording,
 }: RangeCalendarProps) {
   return (
@@ -91,11 +80,11 @@ export function RangeCalendar({
         mode="range"
         month={new Date(month)}
         numberOfMonths={2}
+        onDayClick={(day) => {
+          onDayPress(day.getTime());
+        }}
         onMonthChange={(next) => {
           onMonthChange(next.getTime());
-        }}
-        onSelect={(range) => {
-          onWindowChange(keptClocks(window, range?.from, range?.to));
         }}
         selected={{ from: new Date(window.from), to: new Date(window.to) }}
       />

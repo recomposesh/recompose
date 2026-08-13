@@ -6,6 +6,7 @@ import type { PresetKey, UsageWindow } from '../../lib/usage-window';
 
 import { SegmentedControl } from '../../../../shared/ui';
 import { startOfMonth } from '../../lib/calendar-grid';
+import { drawnWith, settledDrawing } from '../../lib/drawn-window';
 import { presetWindows, searchForPreset, windowFor } from '../../lib/usage-window';
 import { RangeCalendar } from '../range-calendar/range-calendar';
 import { RangeWindowFooter } from '../range-window-footer/range-window-footer';
@@ -87,19 +88,24 @@ function presetList(onPick: (key: PresetKey) => void, custom: boolean) {
 
 function usePresetWindow(search: UsageSearch, now: number) {
   const standing = windowFor(search, now);
-  const [drafted, setDrafted] = useState(standing);
+  const [drawn, setDrawn] = useState(() => settledDrawing(standing));
   const [month, setMonth] = useState(() => startOfMonth(standing.from));
   const [open, setOpen] = useState(false);
 
   return {
-    drafted,
-    setDrafted,
+    drafted: drawn.window,
+    setDrafted: (next: UsageWindow) => {
+      setDrawn(settledDrawing(next));
+    },
+    onDayPress: (day: number) => {
+      setDrawn(drawnWith(drawn, day));
+    },
     month,
     setMonth,
     open,
     onOpenChange: (next: boolean) => {
       if (next) {
-        setDrafted(standing);
+        setDrawn(settledDrawing(standing));
         setMonth(startOfMonth(standing.from));
       }
 
@@ -126,11 +132,11 @@ function drawingPopup({ search, now, drawing, onSettle }: DrawingProps) {
         }, search.range === 'custom')}
         <RangeCalendar
           month={month}
+          onDayPress={(day) => {
+            drawing.onDayPress(day);
+          }}
           onMonthChange={(next) => {
             drawing.setMonth(next);
-          }}
-          onWindowChange={(next) => {
-            drawing.setDrafted(next);
           }}
           spanWording={`${spanFormat.format(drafted.from)} – ${spanFormat.format(drafted.to)}`}
           window={drafted}

@@ -37,6 +37,7 @@
     "src/renderer/src/pages/usage/lib/panel-rows.ts",
     "src/renderer/src/pages/usage/lib/usage-caption.ts",
     "src/renderer/src/pages/usage/lib/clock-edges.ts",
+    "src/renderer/src/pages/usage/lib/drawn-window.ts",
     "src/renderer/src/shared/ui/series-chart/series-presets.ts",
     "scripts/**/*.mts",
     "!scripts/**/*.test.mts",

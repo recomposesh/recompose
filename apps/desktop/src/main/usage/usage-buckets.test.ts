@@ -4,9 +4,9 @@ import { describe, expect, test } from 'vitest';
 
 import {
   accrued,
-  closedHourBuckets,
   dayFolded,
   emptyUsageLedger,
+  hourBucketsWithin,
   prunedBefore,
 } from './usage-buckets';
 
@@ -227,27 +227,29 @@ describe('pruning and reading', () => {
     expect(pruned.buckets.at(0)?.start).toBe(anHourStart);
   });
 
-  test('a range read returns closed hours only, never the hour still filling', () => {
+  test('a range read carries the hour still filling beside the closed ones', () => {
     const now = anHourStart + 2 * HOUR + 30_000;
     const ledger = ledgerOf(
       served('closed', { at: anHourStart + HOUR }),
-      served('open', { at: anHourStart + 2 * HOUR }),
+      served('filling', { at: anHourStart + 2 * HOUR }),
     );
 
-    const closed = closedHourBuckets(ledger, '24h', now);
+    const read = hourBucketsWithin(ledger, '24h', now);
 
-    expect(closed).toHaveLength(1);
-    expect(closed.at(0)?.start).toBe(anHourStart + HOUR);
+    expect(read.map((bucket) => bucket.start)).toEqual([
+      anHourStart + HOUR,
+      anHourStart + 2 * HOUR,
+    ]);
   });
 
   test('a range read reaches back its own width and no further', () => {
     const now = anHourStart + 25 * HOUR;
     const ledger = ledgerOf(served('beyond'), served('inside', { at: anHourStart + 2 * HOUR }));
 
-    const closed = closedHourBuckets(ledger, '24h', now);
+    const read = hourBucketsWithin(ledger, '24h', now);
 
-    expect(closed).toHaveLength(1);
-    expect(closed.at(0)?.start).toBe(anHourStart + 2 * HOUR);
+    expect(read).toHaveLength(1);
+    expect(read.at(0)?.start).toBe(anHourStart + 2 * HOUR);
   });
 
   test('a day breaks where the reader lives, not where UTC does', () => {

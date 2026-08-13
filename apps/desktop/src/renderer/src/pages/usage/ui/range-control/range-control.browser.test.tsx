@@ -32,6 +32,20 @@ function control(over: Partial<Parameters<typeof RangeControl>[0]> = {}) {
   );
 }
 
+function landedDays(onSearchChange: ReturnType<typeof vi.fn<(next: UsageSearch) => void>>) {
+  const landed = onSearchChange.mock.calls[0]?.[0];
+
+  if (landed === undefined) {
+    throw new Error('no window landed on the screen');
+  }
+
+  return {
+    range: landed.range,
+    from: new Date(landed.from ?? 0).getDate(),
+    to: new Date(landed.to ?? 0).getDate(),
+  };
+}
+
 test('the presets stand as one choice, the standing one checked', async () => {
   const screen = await render(control());
 
@@ -68,14 +82,39 @@ test('the custom window is drawn on a calendar and lands only once applied', asy
 
   await screen.getByRole('button', { name: 'Custom' }).click();
   await screen.getByRole('button', { name: /August 5/ }).click();
+  await screen.getByRole('button', { name: /August 7/ }).click();
 
   expect(onSearchChange).not.toHaveBeenCalled();
 
   await screen.getByRole('button', { name: 'Apply' }).click();
 
-  expect(onSearchChange).toHaveBeenCalledWith(
-    expect.objectContaining({ range: 'custom', to: NOW }),
+  expect(landedDays(onSearchChange)).toEqual({ range: 'custom', from: 5, to: 7 });
+});
+
+test('the first day pressed starts a window rather than widening the standing one', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await render(
+    control({ search: viewing({ range: 'custom', from: NOW - DAY, to: NOW }), onSearchChange }),
   );
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: /August 20/ }).click();
+  await screen.getByRole('button', { name: /August 25/ }).click();
+  await screen.getByRole('button', { name: 'Apply' }).click();
+
+  expect(landedDays(onSearchChange)).toEqual({ range: 'custom', from: 20, to: 25 });
+});
+
+test('a day pressed behind the opening edge reopens the window there', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await render(control({ onSearchChange }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: /August 20/ }).click();
+  await screen.getByRole('button', { name: /August 17/ }).click();
+  await screen.getByRole('button', { name: 'Apply' }).click();
+
+  expect(landedDays(onSearchChange)).toEqual({ range: 'custom', from: 17, to: 20 });
 });
 
 test('cancelling leaves the standing window alone', async () => {
