@@ -20,8 +20,10 @@ beforeEach(async () => {
 });
 
 function handlersOn(platform: NodeJS.Platform = 'darwin') {
+  const ctx = world.contextOn(platform, world.nothingHappens);
+
   return createSubscriptionsMachineIpcHandlers(
-    { ...world.contextOn(platform, world.nothingHappens), homeFolder: machineHome },
+    { ...ctx, homeFolder: machineHome, machine: { ...ctx.machine, homeFolder: machineHome } },
     oneAtATime(),
   );
 }

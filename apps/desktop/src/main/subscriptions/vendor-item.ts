@@ -4,6 +4,8 @@ export type KeychainItem = { service: string; account: string };
 
 const VENDOR_SERVICE = 'Claude Code-credentials';
 
+const CODEX_SERVICE = 'Codex Auth';
+
 const HOME_MARK_LENGTH = 8;
 
 function markOf(home: string): string {
@@ -24,4 +26,12 @@ export function machineVendorItem(osUser: string): KeychainItem {
  */
 export function homeVendorItem(home: string, osUser: string): KeychainItem {
   return { service: `${VENDOR_SERVICE}-${markOf(home)}`, account: osUser };
+}
+
+/**
+ * @summary Where Codex keeps its record on a machine whose keyring holds it rather than a file.
+ * It names no home, because Codex keeps one record for the machine however many homes it reads.
+ */
+export function codexVendorItem(osUser: string): KeychainItem {
+  return { service: CODEX_SERVICE, account: osUser };
 }

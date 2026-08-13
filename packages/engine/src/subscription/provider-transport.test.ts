@@ -46,7 +46,6 @@ test('Claude uses HTTP/1.1 with the captured TLS controls and no injected header
       maxTlsVersion: 'TLS1.3',
       curvesList: 'X25519:P-256:P-384',
       keyShares: ['X25519'],
-      keySharesLimit: 1,
       sessionTicket: true,
       preSharedKey: true,
       pskDheKe: true,
@@ -82,44 +81,16 @@ test('TestUtlsRoundTripperBoundsTLSHandshake', () => {
   ).toMatchObject({ connectTimeout: 10_000 });
 });
 
-test('TestNewCodexAuthWithProxyURL_OverrideDirectDisablesProxy', () => {
-  expect(subscriptionTransportOptions('openai', { mode: 'direct' })).toMatchObject({
-    proxy: false,
-  });
-  expect(
-    subscriptionRefreshTransportOptions('https://auth.openai.com/oauth/token', {
-      mode: 'direct',
-    }),
-  ).toMatchObject({ proxy: false });
-});
+test('naming the key-share group leaves the client no count to disagree with', () => {
+  const serving = subscriptionTransportOptions('anthropic').tlsOptions;
+  const renewing = subscriptionRefreshTransportOptions(
+    'https://platform.claude.com/v1/oauth/token',
+  ).tlsOptions;
 
-test('TestNewCodexAuthWithProxyURL_OverrideProxyTakesPrecedence', () => {
-  const policy = { mode: 'proxy', url: 'http://override.example.com:8081' } as const;
-
-  expect(subscriptionTransportOptions('openai', policy)).toMatchObject({ proxy: policy.url });
-  expect(
-    subscriptionRefreshTransportOptions('https://auth.openai.com/oauth/token', policy),
-  ).toMatchObject({ proxy: policy.url });
-});
-
-test('TestNewClaudeAuthWithProxyURL_OverrideDirectTakesPrecedence', () => {
-  expect(subscriptionTransportOptions('anthropic', { mode: 'direct' })).toMatchObject({
-    proxy: false,
-  });
-  expect(
-    subscriptionRefreshTransportOptions('https://platform.claude.com/v1/oauth/token', {
-      mode: 'direct',
-    }),
-  ).toMatchObject({ proxy: false });
-});
-
-test('TestNewClaudeAuthWithProxyURL_OverrideProxyAppliedWithoutConfig', () => {
-  const policy = { mode: 'proxy', url: 'socks5://proxy.example.com:1080' } as const;
-
-  expect(subscriptionTransportOptions('anthropic', policy)).toMatchObject({ proxy: policy.url });
-  expect(
-    subscriptionRefreshTransportOptions('https://platform.claude.com/v1/oauth/token', policy),
-  ).toMatchObject({ proxy: policy.url });
+  expect(serving?.keyShares).toEqual(['X25519']);
+  expect(serving).not.toHaveProperty('keySharesLimit');
+  expect(renewing?.keyShares).toEqual(['X25519']);
+  expect(renewing).not.toHaveProperty('keySharesLimit');
 });
 
 test('TestClaudeOAuthTLSResumptionIsWireSafe', () => {

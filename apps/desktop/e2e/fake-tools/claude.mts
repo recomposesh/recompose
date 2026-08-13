@@ -266,7 +266,7 @@ async function report(): Promise<number> {
 
 const argv = process.argv.slice(2);
 
-if (argv[0] === 'refresh') {
+if (argv[0] === 'auth' && argv[1] === 'status') {
   process.exitCode = await renew();
 } else if (argv[0] === 'config' && argv[1] === 'ls') {
   process.exitCode = await report();

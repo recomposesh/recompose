@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir, userInfo } from 'node:os';
+import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 
+import { lapseTheShelvedCredential, shelvedBlob } from './keychain-shelf';
 import { shimName, shimScript } from './tool-shim';
 
 const fakeTools = join(__dirname, 'fake-tools');
@@ -50,6 +51,14 @@ export type SubscriptionTools = {
   plantMachineCredential: (record: MachineRecord) => Promise<void>;
   /** The record the machine's store holds now, so a step can prove one stood untouched. */
   machineCredential: (provider: MachineProvider) => Promise<string | null>;
+  /**
+   * Moves the lapsing moment of a credential the app signed in itself.
+   *
+   * @summary No run of a vendor tool leaves a fresh sign-in near expiry, so a scenario about the
+   * app renewing what it owns has no other way to stand one there. The home named is the one the
+   * app handed the tool, which is what the vendor derives its keychain item name from.
+   */
+  appCredentialLapsesAt: (home: string, expiresAt: number) => Promise<void>;
   /** Whether a fresh run of the provider's own tool still reads as signed in. */
   machineToolReadsSignedIn: (provider: MachineProvider) => Promise<boolean>;
   /** How many renewals the provider's own tool ran, so one run reads apart from two. */
@@ -150,15 +159,6 @@ async function linesIn(path: string): Promise<number> {
   return written.split('\n').filter((line) => line !== '').length;
 }
 
-async function keychainItem(store: string, service: string): Promise<string | null> {
-  const shelf = Buffer.from(`${service}\n${userInfo().username}`).toString('base64url');
-
-  return readFile(join(store, shelf), 'utf8').then(
-    (blob) => blob,
-    () => null,
-  );
-}
-
 /** The folders one scenario's machine is built from, and the variables that point at them. */
 type Bench = {
   keychainDir: string;
@@ -170,6 +170,7 @@ type Bench = {
 /** Every seam a scenario reaches the machine's own stores and tools through. */
 type MachineSeams = Pick<
   SubscriptionTools,
+  | 'appCredentialLapsesAt'
   | 'keychainOpens'
   | 'keychainRefusesToOpen'
   | 'machineCredential'
@@ -184,7 +185,7 @@ function machineSeams(bench: Bench): MachineSeams {
   const { desk, keychainDir, machine, machineHome } = bench;
 
   const machineCredential: SubscriptionTools['machineCredential'] = async (provider) =>
-    (await keychainItem(keychainDir, vendorServices[provider])) ??
+    (await shelvedBlob(keychainDir, vendorServices[provider])) ??
     readFile(join(machineHome, machineFolders[provider], recordFiles[provider]), 'utf8').then(
       (blob) => blob,
       () => null,
@@ -205,6 +206,9 @@ function machineSeams(bench: Bench): MachineSeams {
     },
 
     machineCredential,
+
+    appCredentialLapsesAt: async (home, expiresAt) =>
+      lapseTheShelvedCredential(keychainDir, home, expiresAt),
 
     machineToolReadsSignedIn: async (provider) => {
       if (provider === 'openai') {

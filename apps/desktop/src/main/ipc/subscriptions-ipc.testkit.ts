@@ -78,6 +78,12 @@ function contextIn(
     homeFolder: '/Users/ada',
     platform,
     custody: platform === 'darwin' ? credentialCustody(keychain.seam, osUser) : null,
+    machine: {
+      homeFolder: '/Users/ada',
+      platform,
+      custody: platform === 'darwin' ? credentialCustody(keychain.seam, osUser) : null,
+      keyringHolds: null,
+    },
     searchPath: async () => Promise.resolve(binFolder),
     launch,
     clock: fakeClock,

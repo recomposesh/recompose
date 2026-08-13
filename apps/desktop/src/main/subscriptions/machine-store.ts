@@ -3,22 +3,25 @@ import type { SubscriptionProviderId } from '@recompose/contracts';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { CredentialCustody, KeychainSeam } from './credential-custody';
+import type { CredentialCustody } from './credential-custody';
 import type { MachineStore } from './machine-credential';
 
+import { custodyOver } from './credential-custody';
 import { credentialFactsFor, documentIn } from './credential-records';
 
-export type MachineStoreRequest = {
-  provider: SubscriptionProviderId;
+/**
+ * Everything the machine's own stores are reached through.
+ *
+ * @summary The custody arrives whole rather than narrowed, so no caller can hand Claude Code's
+ * keychain item to the reader for a different vendor.
+ */
+export type MachineReach = {
   homeFolder: string;
   platform: NodeJS.Platform;
   custody: CredentialCustody | null;
-  /** Reads the keyring Codex uses when it keeps its record there rather than in a file. */
-  keychain?: KeychainSeam | null;
-  osUser?: string;
+  /** Reads the keyring Codex keeps its record in on a machine that holds it there. */
+  keyringHolds: (() => Promise<string | null>) | null;
 };
-
-const CODEX_KEYRING_SERVICE = 'Codex Auth';
 
 async function fileAt(path: string): Promise<string | null> {
   return readFile(path, 'utf8').then(
@@ -51,27 +54,25 @@ function fresher(
   );
 }
 
-async function codexBlob(request: MachineStoreRequest): Promise<string | null> {
-  const inFile = await fileAt(join(request.homeFolder, '.codex', 'auth.json'));
+async function codexBlob(reach: MachineReach): Promise<string | null> {
+  const inFile = await fileAt(join(reach.homeFolder, '.codex', 'auth.json'));
 
-  if (inFile !== null || request.keychain === null || request.keychain === undefined) {
+  if (inFile !== null || reach.keyringHolds === null) {
     return inFile;
   }
 
-  return request.keychain.read({
-    service: CODEX_KEYRING_SERVICE,
-    account: request.osUser ?? '',
-  });
+  return reach.keyringHolds();
 }
 
-async function claudeBlob(request: MachineStoreRequest): Promise<string | null> {
-  const inFile = await fileAt(join(request.homeFolder, '.claude', '.credentials.json'));
+async function claudeBlob(reach: MachineReach): Promise<string | null> {
+  const custody = custodyOver(reach.custody, 'anthropic');
+  const inFile = await fileAt(join(reach.homeFolder, '.claude', '.credentials.json'));
 
-  if (request.platform !== 'darwin' || request.custody === null) {
+  if (reach.platform !== 'darwin' || custody === null) {
     return inFile;
   }
 
-  return fresher('anthropic', [await request.custody.readMachineItem(), inFile]);
+  return fresher('anthropic', [await custody.readMachineItem(), inFile]);
 }
 
 /**
@@ -79,16 +80,19 @@ async function claudeBlob(request: MachineStoreRequest): Promise<string | null> 
  * app made. Claude Code keeps its credential in the login keychain on macOS and in its config home
  * elsewhere, while the address and the plan sit in a plain file either way.
  */
-export function machineStoreFor(request: MachineStoreRequest): MachineStore {
-  if (request.provider === 'openai') {
+export function machineStoreFor(
+  provider: SubscriptionProviderId,
+  reach: MachineReach,
+): MachineStore {
+  if (provider === 'openai') {
     return {
-      readBlob: async () => codexBlob(request),
+      readBlob: async () => codexBlob(reach),
       readIdentity: async () => Promise.resolve(null),
     };
   }
 
   return {
-    readBlob: async () => claudeBlob(request),
-    readIdentity: async () => fileAt(join(request.homeFolder, '.claude.json')),
+    readBlob: async () => claudeBlob(reach),
+    readIdentity: async () => fileAt(join(reach.homeFolder, '.claude.json')),
   };
 }

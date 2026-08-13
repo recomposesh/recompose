@@ -35,7 +35,7 @@ Feature: Renewal follows where the account came from
 
   Scenario: A renewal that fails leaves the credential alone
     Given a connected "anthropic" subscription adopted from the machine
-    And its credential nears expiry
+    And its credential has expired
     And the provider's own tool fails to renew
     When a request needs that account
     Then the account reports itself lapsed

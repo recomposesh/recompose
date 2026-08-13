@@ -15,6 +15,7 @@ import {
 } from './tool-settings.mts';
 
 const VENDOR_SERVICE = 'Codex Auth';
+const IDENTITY_WINDOW_SECONDS = 60 * 60;
 
 const plan = chosenPlan('Pro');
 
@@ -29,22 +30,31 @@ function whereCodexKeeps(): 'keychain' | 'file' {
   return chosenStore('file');
 }
 
-/**
- * The session token, shaped the way the real one is read.
- *
- * @summary `subscription-standing.ts` reads the address and the plan out of the `id_token` claims,
- * so the fake signs nothing and carries a payload segment that decodes to those claims.
- */
-function sessionToken(): string {
-  const claims = Buffer.from(
-    JSON.stringify({
-      email: address,
-      'https://api.openai.com/auth': { chatgpt_plan_type: plan },
-      exp: Math.floor(chosenExpiry() / 1000),
-    }),
-  ).toString('base64url');
+/** An unsigned token whose payload segment decodes to the claims a reader looks for. */
+function tokenCarrying(claims: Record<string, unknown>): string {
+  const payload = Buffer.from(JSON.stringify(claims)).toString('base64url');
 
-  return `${Buffer.from('{"alg":"none"}').toString('base64url')}.${claims}.fake-signature`;
+  return `${Buffer.from('{"alg":"none"}').toString('base64url')}.${payload}.fake-signature`;
+}
+
+/**
+ * The identity token, which names the account and lapses within the hour.
+ *
+ * @summary `credential-records.ts` reads the address and the plan out of these claims. The real
+ * Codex lets this token lapse an hour after it was issued and renews it only alongside the token it
+ * spends, so the fake lapses it the same way and no reading may take its moment for the record's.
+ */
+function identityToken(): string {
+  return tokenCarrying({
+    email: address,
+    'https://api.openai.com/auth': { chatgpt_plan_type: plan },
+    exp: Math.floor(Date.now() / 1000) + IDENTITY_WINDOW_SECONDS,
+  });
+}
+
+/** The token a turn is spent with, whose moment is the one the record lapses at. */
+function spentToken(): string {
+  return tokenCarrying({ exp: Math.floor(chosenExpiry() / 1000) });
 }
 
 function recordBlob(): string {
@@ -56,8 +66,8 @@ function recordBlob(): string {
     {
       auth_mode: 'chatgpt',
       tokens: {
-        id_token: sessionToken(),
-        access_token: `fake-access-${randomUUID()}`,
+        id_token: identityToken(),
+        access_token: spentToken(),
         refresh_token: `fake-refresh-${randomUUID()}`,
         account_id: 'fake-account',
       },

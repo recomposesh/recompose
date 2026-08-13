@@ -1,11 +1,13 @@
-import type { Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 import type { GatewayAnswer } from '../gateway-client';
 import type { MachineProvider } from './machine-subscriptions';
 
+import { accountsStoredInRegistry } from '../accounts-document';
 import { Given, Then, When } from '../fixtures';
 import { sendTurn, turnUnder } from '../gateway-client';
 import { gatewayAddress } from '../gateway-screen';
@@ -20,7 +22,9 @@ import {
   machineLoginIfAny,
   machineProviderFor,
   nearlySpentExpiry,
+  spentExpiry,
   theMachineHolds,
+  theMachineRecordStands,
 } from './machine-subscriptions';
 
 /** Where a turn is asked for, which is the one path a message arrives on. */
@@ -84,6 +88,29 @@ function providerHeld(page: Page): MachineProvider {
   return providerIfAny(page) ?? SUBSCRIPTION_PROVIDER;
 }
 
+/**
+ * The config home the app handed the tool for the account it signed in.
+ *
+ * @summary The vendor derives its keychain item name from this path, so a step aging that
+ * credential has to name the same string the app named, not the pointer standing beside it.
+ */
+async function appHomeHolding(
+  app: ElectronApplication,
+  provider: MachineProvider,
+): Promise<string> {
+  const rows = await accountsStoredInRegistry(app);
+  const held = rows.find(
+    (row): row is { id: string } =>
+      typeof row === 'object' && row !== null && 'kind' in row && row.kind === 'subscription',
+  );
+
+  if (held === undefined) {
+    throw new Error('no step signed the app in, so no home holds a credential it owns');
+  }
+
+  return join(await toolHomesFolder(app, provider), held.id);
+}
+
 /** Stands a gateway serving one virtual model over the subscription the scenario connected. */
 async function servingThatAccount(page: Page): Promise<string> {
   await gatewayTargetingAKey(page);
@@ -118,16 +145,30 @@ function statusesOf(page: Page): number[] {
   return answersHeld(page).map((answer) => answer.status);
 }
 
-Given('its credential nears expiry', async ({ page, subscriptionTools }) => {
+Given('its credential nears expiry', async ({ electronApp, page, subscriptionTools }) => {
   const login = machineLoginIfAny(page);
 
   if (login === undefined) {
-    throw new Error(
-      'no seam ages a credential the app signed in itself, so no scenario can stand one near expiry',
+    await subscriptionTools.appCredentialLapsesAt(
+      await appHomeHolding(electronApp, SUBSCRIPTION_PROVIDER),
+      nearlySpentExpiry(),
     );
+
+    return;
   }
 
   await theMachineHolds(subscriptionTools, { ...login, expiresAt: nearlySpentExpiry() });
+  await adoptWhatTheMachineHolds(page, login.provider);
+});
+
+Given('its credential has expired', async ({ page, subscriptionTools }) => {
+  const login = machineLoginIfAny(page);
+
+  if (login === undefined) {
+    throw new Error('no step arranged the machine login this scenario stands past its moment');
+  }
+
+  await theMachineHolds(subscriptionTools, { ...login, expiresAt: spentExpiry() });
   await adoptWhatTheMachineHolds(page, login.provider);
 });
 
@@ -167,7 +208,14 @@ When('two requests need that account at once', async ({ $testInfo, page, subscri
 });
 
 When('its credential expires', async ({ $testInfo, page, subscriptionTools }) => {
+  const login = machineLoginIfAny(page);
+
+  if (login === undefined) {
+    throw new Error('no step arranged the machine login this scenario lets expire');
+  }
+
   $testInfo.setTimeout(SIGN_IN_WAIT_MS + FLOWS_BESIDE_THE_ADOPTION * ONE_FLOW_MS);
+  await theMachineRecordStands(subscriptionTools, { ...login, expiresAt: spentExpiry() });
   await turnsNeedingThatAccount(page, subscriptionTools, 1);
 });
 

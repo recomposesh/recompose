@@ -10,7 +10,6 @@ import type { OneAtATime } from '../storage/one-at-a-time';
 import type { IpcHandlers } from './dispatch';
 import type { Answered, SubscriptionsIpcContext, Workshop } from './subscriptions-workshop';
 
-import { custodyOver } from '../subscriptions/credential-custody';
 import {
   machineCredentialMaterial,
   readMachineCredential,
@@ -49,18 +48,9 @@ function standingUnderTheAddress(
 }
 
 function storeOn(shop: Workshop, provider: SubscriptionProviderId) {
-  return machineStoreFor({
-    provider,
-    homeFolder: shop.ctx.homeFolder,
-    platform: shop.ctx.platform,
-    custody: custodyOver(shop.ctx.custody, provider),
-  });
+  return machineStoreFor(provider, shop.ctx.machine);
 }
 
-/**
- * @summary Adoption records the account and writes the credential into a home of its own, so the
- * app reads its own item from here on and the item the person's install reads stays untouched.
- */
 async function accountAdopting(
   shop: Workshop,
   provider: SubscriptionProviderId,
@@ -75,8 +65,8 @@ async function accountAdopting(
 }
 
 /**
- * @summary Adoption records the account and writes the credential into a home of its own, so the
- * app reads its own item from here on and the item the person's install reads stays untouched.
+ * @summary Adoption records the account and copies no credential, so the store the provider's own
+ * tool writes stays the one place it lives and that tool alone ever rotates it.
  */
 async function adopt(shop: Workshop, provider: SubscriptionProviderId): Promise<Answered> {
   const material = await machineCredentialMaterial(provider, storeOn(shop, provider));

@@ -1,5 +1,6 @@
 import type {
   AccountsDocument,
+  MachineCredentialReading,
   SubscriptionAccount,
   SubscriptionAccountView,
   SubscriptionProviderId,
@@ -8,15 +9,20 @@ import type {
 import { subscriptionProviderIdSchema } from '@recompose/contracts';
 
 import type { CredentialCustody } from './credential-custody';
+import type { MachineReach } from './machine-store';
 import type { SubscriptionHomes } from './subscription-homes';
-import type { OutsideCredential } from './subscription-standing';
+import type { OutsideCredential, SubscriptionObservation } from './subscription-standing';
 
 import { custodyOver } from './credential-custody';
+import { readMachineCredential } from './machine-credential';
+import { machineStoreFor } from './machine-store';
 import { observeSubscription } from './subscription-standing';
 
 export type SubscriptionViewRequest = {
   homes: SubscriptionHomes;
   custody: CredentialCustody | null;
+  /** Absent where no reading of the machine is wanted, which leaves an adopted row lapsed. */
+  machine?: MachineReach | null;
 };
 
 type WhoIsActive = Map<SubscriptionProviderId, string | null>;
@@ -47,18 +53,58 @@ function credentialEvidenceFor(
   return custody === null ? null : async () => custody.readForHome(home);
 }
 
+/**
+ * @summary An adopted account owns no home, so reading one would report every such row lapsed.
+ * Its standing is whatever the provider's own tool holds this moment, which is the same live
+ * reading every serving turn takes.
+ */
+function observationFrom(reading: MachineCredentialReading): SubscriptionObservation {
+  if (reading.holds !== 'account') {
+    return { standing: 'lapsed' };
+  }
+
+  return {
+    standing: reading.standing,
+    ...(reading.signedInAs === undefined ? {} : { signedInAs: reading.signedInAs }),
+    ...(reading.plan === undefined ? {} : { plan: reading.plan }),
+  };
+}
+
+async function observeOnTheMachine(
+  reach: MachineReach | null | undefined,
+  provider: SubscriptionProviderId,
+): Promise<SubscriptionObservation> {
+  if (reach === null || reach === undefined) {
+    return { standing: 'lapsed' };
+  }
+
+  return observationFrom(await readMachineCredential(provider, machineStoreFor(provider, reach)));
+}
+
+async function observationOf(
+  request: SubscriptionViewRequest,
+  row: SubscriptionAccount,
+): Promise<SubscriptionObservation> {
+  if (row.provenance === 'machine') {
+    return observeOnTheMachine(request.machine, row.provider);
+  }
+
+  const custody = custodyOver(request.custody, row.provider);
+  const home = request.homes.homeFor(row.provider, row.id);
+
+  return observeSubscription({
+    provider: row.provider,
+    home,
+    outsideCredential: credentialEvidenceFor(custody, home),
+  });
+}
+
 async function viewOf(
   request: SubscriptionViewRequest,
   row: SubscriptionAccount,
   active: WhoIsActive,
 ): Promise<SubscriptionAccountView> {
-  const custody = custodyOver(request.custody, row.provider);
-  const home = request.homes.homeFor(row.provider, row.id);
-  const observed = await observeSubscription({
-    provider: row.provider,
-    home,
-    outsideCredential: credentialEvidenceFor(custody, home),
-  });
+  const observed = await observationOf(request, row);
 
   return {
     id: row.id,
