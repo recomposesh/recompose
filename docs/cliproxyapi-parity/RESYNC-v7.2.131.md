@@ -31,7 +31,7 @@ the owning document names which ones stayed open and why.
 | --------------------------------------------------- | ---: | ------------------------------------------------------------- | ---------- |
 | `internal/runtime/executor`                         |   87 | `runtime-executor.md` and the per-provider executor documents | no         |
 | `sdk/api/handlers/openai`                           |   40 | `api.md`                                                      | 5 of 40    |
-| `internal/runtime/executor/helps`                   |   29 | `runtime-executor.md`                                         | no         |
+| `internal/runtime/executor/helps`                   |   29 | `runtime-executor.md`                                         | yes        |
 | `internal/translator/openai/openai/responses`       |   16 | `translator-openai.md`                                        | 8 of 16    |
 | `internal/signature`                                |   16 | `signature.md`                                                | yes        |
 | `internal/client/codex/live`                        |   16 | `client.md`                                                   | yes        |
@@ -46,7 +46,7 @@ the owning document names which ones stayed open and why.
 | `internal/watcher/synthesizer`                      |    2 | `watcher.md`                                                  | yes        |
 | `internal/translator/claude/openai/responses`       |    2 | `translator-claude.md`                                        | yes        |
 | `internal/cache`                                    |    2 | `cache.md`                                                    | yes        |
-| `sdk/translator`                                    |    1 | `translator-common.md`                                        | no         |
+| `sdk/translator`                                    |    1 | `translator-common.md`                                        | yes        |
 | `internal/translator/openai/gemini`                 |    1 | `translator-openai.md`                                        | yes        |
 | `internal/translator/gemini/gemini`                 |    1 | `translator-gemini.md`                                        | yes        |
 | `internal/translator/common`                        |    1 | `translator-common.md`                                        | yes        |
