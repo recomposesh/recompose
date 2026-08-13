@@ -28,7 +28,7 @@ describe('what a look at a runtime answers', () => {
   test('a runtime that names its version answers with the version it named', async () => {
     const { host } = hostOver(scriptedChild(nothing, nothing, answering));
 
-    await expect(host.probeRuntime(ollama)).resolves.toEqual({
+    await expect(host.probeRuntime(ollama, 'ollama')).resolves.toEqual({
       verdict: 'answers',
       version: '0.5.1',
     });
@@ -38,7 +38,7 @@ describe('what a look at a runtime answers', () => {
     const scripted = scriptedChild(nothing, nothing, answering);
     const { host } = hostOver(scripted);
 
-    await host.probeRuntime(ollama);
+    await host.probeRuntime(ollama, 'ollama');
 
     expect(scripted.directives).toMatchObject([{ kind: 'probe-runtime', address: ollama }]);
   });
@@ -48,7 +48,7 @@ describe('what a look at a runtime answers', () => {
     async (reading) => {
       const { host } = hostOver(scriptedChild(nothing, nothing, () => reading));
 
-      await expect(host.probeRuntime(ollama)).resolves.toStrictEqual(reading);
+      await expect(host.probeRuntime(ollama, 'ollama')).resolves.toStrictEqual(reading);
     },
   );
 });
@@ -64,7 +64,7 @@ describe('a runtime look beside a key probe', () => {
 
     const [checked, looked] = await Promise.all([
       host.probe('anthropic', key),
-      host.probeRuntime(ollama),
+      host.probeRuntime(ollama, 'ollama'),
     ]);
 
     expect(checked).toEqual({ verdict: 'not-accepted', status: 401 });
@@ -78,7 +78,7 @@ describe('a runtime look standing when the child dies', () => {
     const scripted = scriptedChild(nothing);
     const { host } = hostOver(scripted);
 
-    const looking = host.probeRuntime(ollama);
+    const looking = host.probeRuntime(ollama, 'ollama');
 
     await Promise.resolve();
     scripted.exit(1);
@@ -91,7 +91,7 @@ describe('a runtime look standing when the child dies', () => {
     const scripted = scriptedChild(nothing);
     const { host } = hostOver(scripted);
 
-    const looking = host.probeRuntime(ollama);
+    const looking = host.probeRuntime(ollama, 'ollama');
 
     await Promise.resolve();
     scripted.exit(1);
@@ -108,7 +108,7 @@ describe('a runtime look standing when the child dies', () => {
     const scripted = scriptedChild(nothing);
     const { host } = hostOver(scripted);
 
-    const both = Promise.all([host.probe('anthropic', key), host.probeRuntime(ollama)]);
+    const both = Promise.all([host.probe('anthropic', key), host.probeRuntime(ollama, 'ollama')]);
 
     await Promise.resolve();
     scripted.exit(1);
@@ -132,7 +132,7 @@ describe('a runtime look that never draws an answer', () => {
     vi.useFakeTimers();
     const { host } = hostOver(scriptedChild(nothing));
 
-    const looking = host.probeRuntime(ollama);
+    const looking = host.probeRuntime(ollama, 'ollama');
 
     await vi.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
 
@@ -145,7 +145,7 @@ describe('a runtime look that never draws an answer', () => {
     vi.useFakeTimers();
     const { host } = hostOver(scriptedChild(nothing));
 
-    const looking = host.probeRuntime(ollama);
+    const looking = host.probeRuntime(ollama, 'ollama');
 
     await vi.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
     await looking;
@@ -163,7 +163,7 @@ describe('a runtime look that never draws an answer', () => {
       },
     });
 
-    await expect(host.probeRuntime(ollama)).resolves.toEqual({ verdict: 'unreachable' });
+    await expect(host.probeRuntime(ollama, 'ollama')).resolves.toEqual({ verdict: 'unreachable' });
 
     expect(complaint.mock.calls.flat().map(String).join(' ')).toContain(ollama);
   });

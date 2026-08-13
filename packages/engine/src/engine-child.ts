@@ -81,7 +81,11 @@ async function lookAnswerFor(fetchLike: typeof fetch, directive: LookDirective):
       return {
         kind: 'runtime-check',
         answers: directive.id,
-        reachability: await probeRuntime(fetchLike, runtimeOriginFor(directive.address)),
+        reachability: await probeRuntime(
+          fetchLike,
+          runtimeOriginFor(directive.address),
+          directive.provider,
+        ),
       };
     case 'list-models':
       return {

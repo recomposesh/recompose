@@ -5,7 +5,12 @@ import { engineDirectiveSchema, engineReportSchema } from './engine-protocol';
 const gateway = { slug: 'personal', displayName: 'Personal', port: 8397 };
 
 describe('the probe directive that asks whether a runtime answers', () => {
-  const probeRuntime = { kind: 'probe-runtime', id: 'd2', address: 'http://127.0.0.1:11434' };
+  const probeRuntime = {
+    kind: 'probe-runtime',
+    id: 'd2',
+    address: 'http://127.0.0.1:11434',
+    provider: 'ollama',
+  };
 
   test('a runtime probe carries the loopback address it will look at', () => {
     expect(engineDirectiveSchema.parse(probeRuntime)).toEqual(probeRuntime);
@@ -27,8 +32,18 @@ describe('the probe directive that asks whether a runtime answers', () => {
     ).toThrow();
   });
 
-  test('a runtime probe names no vendor, because the address is the whole of the aim', () => {
-    expect(() => engineDirectiveSchema.parse({ ...probeRuntime, provider: 'ollama' })).toThrow();
+  test('a runtime probe names the server it expects, so the look asks that server own path', () => {
+    for (const provider of ['lmstudio', 'llamacpp', 'vllm', 'custom']) {
+      expect(engineDirectiveSchema.parse({ ...probeRuntime, provider })).toMatchObject({
+        provider,
+      });
+    }
+  });
+
+  test('a runtime probe naming a server the vocabulary never held is refused', () => {
+    for (const unheld of ['openai', 'anthropic', 'localai']) {
+      expect(() => engineDirectiveSchema.parse({ ...probeRuntime, provider: unheld })).toThrow();
+    }
   });
 
   test('a runtime probe carries no gateway, because it serves no traffic', () => {

@@ -201,7 +201,7 @@ function assembleIpcHandlers(
       userDataPath,
       homeFolder,
       onCorrupt: onStorageCorrupt,
-      probeRuntime: async (address) => engineHost.probeRuntime(address),
+      probeRuntime: async (address, provider) => engineHost.probeRuntime(address, provider),
     }),
     ...createSystemIpcHandlers({
       fileBrowser: fileBrowserFor(process.platform),

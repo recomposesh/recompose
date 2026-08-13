@@ -60,7 +60,7 @@ describe('the request the probe sends', () => {
   test('the probe asks the version endpoint at the address it was handed', async () => {
     const { sent, fetchLike } = fetchAnswering(200, '{"version":"0.5.1"}');
 
-    await probeRuntime(fetchLike, ollamaAddress);
+    await probeRuntime(fetchLike, ollamaAddress, 'ollama');
 
     const request = onlyRequestOf(sent);
 
@@ -71,7 +71,7 @@ describe('the request the probe sends', () => {
   test('the call refuses redirects and rides an abort signal that has not fired yet', async () => {
     const { sent, fetchLike } = fetchAnswering(200, '{"version":"0.5.1"}');
 
-    await probeRuntime(fetchLike, ollamaAddress);
+    await probeRuntime(fetchLike, ollamaAddress, 'ollama');
 
     const request = onlyRequestOf(sent);
 
@@ -83,7 +83,7 @@ describe('the request the probe sends', () => {
   test('the probe sends no headers, because a local runtime asks for no credential', async () => {
     const { sent, fetchLike } = fetchAnswering(200, '{"version":"0.5.1"}');
 
-    await probeRuntime(fetchLike, ollamaAddress);
+    await probeRuntime(fetchLike, ollamaAddress, 'ollama');
 
     expect(onlyRequestOf(sent).init.headers).toBeUndefined();
   });
@@ -94,6 +94,7 @@ describe('the answer that reads as the runtime itself', () => {
     const reading = await probeRuntime(
       fetchAnswering(200, '{"version":"0.5.1"}').fetchLike,
       ollamaAddress,
+      'ollama',
     );
 
     expect(reading).toStrictEqual({ verdict: 'answers', version: '0.5.1' });
@@ -112,7 +113,11 @@ describe('the answer that reads as a stranger on the port', () => {
   test.each(strangerStatusTable)(
     'a %i answer folds to unrecognized carrying the status',
     async (status, body) => {
-      const reading = await probeRuntime(fetchAnswering(status, body).fetchLike, ollamaAddress);
+      const reading = await probeRuntime(
+        fetchAnswering(status, body).fetchLike,
+        ollamaAddress,
+        'ollama',
+      );
 
       expect(reading).toStrictEqual({ verdict: 'unrecognized', status });
     },
@@ -130,7 +135,11 @@ describe('the answer that reads as a stranger on the port', () => {
   test.each(strangerBodyTable)(
     'an ok answer carrying %s folds to unrecognized with its status',
     async (_shape, body) => {
-      const reading = await probeRuntime(fetchAnswering(200, body).fetchLike, ollamaAddress);
+      const reading = await probeRuntime(
+        fetchAnswering(200, body).fetchLike,
+        ollamaAddress,
+        'ollama',
+      );
 
       expect(reading).toStrictEqual({ verdict: 'unrecognized', status: 200 });
     },
@@ -139,7 +148,11 @@ describe('the answer that reads as a stranger on the port', () => {
 
 describe('the silence that reads as unreachable', () => {
   test('a thrown fetch folds to unreachable, and no status stands in for one', async () => {
-    const reading = await probeRuntime(fetchRefusing(new TypeError('fetch failed')), ollamaAddress);
+    const reading = await probeRuntime(
+      fetchRefusing(new TypeError('fetch failed')),
+      ollamaAddress,
+      'ollama',
+    );
 
     expect(reading).toStrictEqual({ verdict: 'unreachable' });
   });
@@ -148,6 +161,7 @@ describe('the silence that reads as unreachable', () => {
     const reading = await probeRuntime(
       fetchRefusing(new TypeError('unexpected redirect')),
       ollamaAddress,
+      'ollama',
     );
 
     expect(reading).toStrictEqual({ verdict: 'unreachable' });
@@ -157,6 +171,7 @@ describe('the silence that reads as unreachable', () => {
     const reading = await probeRuntime(
       fetchRefusing(new DOMException('The operation was aborted', 'TimeoutError')),
       ollamaAddress,
+      'ollama',
     );
 
     expect(reading).toStrictEqual({ verdict: 'unreachable' });
@@ -166,6 +181,7 @@ describe('the silence that reads as unreachable', () => {
     const reading = await probeRuntime(
       fetchWhoseBodyStalls(new DOMException('The operation was aborted', 'TimeoutError')),
       ollamaAddress,
+      'ollama',
     );
 
     expect(reading).toStrictEqual({ verdict: 'unreachable' });
@@ -175,11 +191,14 @@ describe('the silence that reads as unreachable', () => {
     const reading = await probeRuntime(
       fetchWhoseBodyStalls(new DOMException('The operation was aborted', 'AbortError')),
       ollamaAddress,
+      'ollama',
     );
 
     expect(reading).toStrictEqual({ verdict: 'unreachable' });
   });
+});
 
+describe('the transport dying part way through a body', () => {
   const transportDeaths: [string, Error][] = [
     ['the socket terminating mid-read', new TypeError('terminated')],
     ['an encoding the body never honored', new Error('incorrect header check')],
@@ -188,7 +207,7 @@ describe('the silence that reads as unreachable', () => {
   test.each(transportDeaths)(
     'a body %s folds to unreachable, because no body ever arrived to judge',
     async (_death, reason) => {
-      const reading = await probeRuntime(fetchWhoseBodyStalls(reason), ollamaAddress);
+      const reading = await probeRuntime(fetchWhoseBodyStalls(reason), ollamaAddress, 'ollama');
 
       expect(reading).toStrictEqual({ verdict: 'unreachable' });
     },
@@ -216,6 +235,7 @@ describe('the folding over every answer a port can give', () => {
         const reading = await probeRuntime(
           fetchAnswering(status, body.text).fetchLike,
           ollamaAddress,
+          'ollama',
         );
 
         if (status <= 299 && body.version !== null) {

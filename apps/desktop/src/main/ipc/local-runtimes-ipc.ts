@@ -18,7 +18,7 @@ export type LocalRuntimesIpcContext = {
   userDataPath: string;
   homeFolder: string;
   onCorrupt: (quarantinedPath: string) => void;
-  probeRuntime: (address: string) => Promise<RuntimeReachability>;
+  probeRuntime: (address: string, provider: LocalProviderId) => Promise<RuntimeReachability>;
 };
 
 type LocalRuntimesIpcHandlers = Pick<
@@ -87,7 +87,7 @@ async function checkStoredRuntime(ctx: LocalRuntimesIpcContext, id: string) {
       return ipcFailure('storage-failed', `no local runtime is held under ${id}.`);
     }
 
-    return { ok: true as const, value: await ctx.probeRuntime(row.address) };
+    return { ok: true as const, value: await ctx.probeRuntime(row.address, row.provider) };
   } catch (error) {
     return storageFailure(error, ctx.homeFolder);
   }
@@ -109,7 +109,7 @@ export function createLocalRuntimesIpcHandlers(
   return {
     'accounts:detect-runtime': async ({ runtime, port }) => ({
       ok: true as const,
-      value: await ctx.probeRuntime(runtimeAddressFor(runtime, port)),
+      value: await ctx.probeRuntime(runtimeAddressFor(runtime, port), runtime),
     }),
     'accounts:check-runtime': async ({ id }) => checkStoredRuntime(ctx, id),
     'accounts:connect-local': async ({ runtime, port }) => connectRuntime(ctx, runtime, port),

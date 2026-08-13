@@ -2,6 +2,7 @@ import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
 import { engineDirectiveSchema, engineGatewaySchema, engineReportSchema } from './engine-protocol';
+import { localProviderIdSchema } from './local-runtimes';
 
 const binding = {
   id: 'fast',
@@ -242,6 +243,7 @@ const directiveArb = fc.oneof(
     address: fc
       .integer({ min: 1024, max: 65535 })
       .map((port) => `http://127.0.0.1:${String(port)}`),
+    provider: fc.constantFrom(...localProviderIdSchema.options),
   }),
 );
 

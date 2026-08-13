@@ -7,6 +7,13 @@ import { aLoopbackHolding, aParent, fetchAnswering, reportsReach } from './engin
 
 const codex = { slug: 'codex', displayName: 'Codex', port: 8397, virtualModels: [] };
 
+const aRuntimeProbe = {
+  kind: 'probe-runtime',
+  id: 'd1',
+  address: 'http://127.0.0.1:11434',
+  provider: 'ollama',
+} as const;
+
 describe('a directive the parent sends', () => {
   test('a start directive answers with a running report naming the gateway', async () => {
     const parent = aParent();
@@ -109,7 +116,7 @@ describe('a runtime probe the parent sends', () => {
     const { urls, fetchLike } = fetchAnswering(200, '{"version":"0.5.1"}');
 
     attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-    parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+    parent.send(aRuntimeProbe);
     await reportsReach(parent, 1);
 
     expect(parent.reports).toEqual([
@@ -130,7 +137,7 @@ describe('a runtime probe the parent sends', () => {
       aLoopbackHolding([]),
       fetchAnswering(404, 'not found').fetchLike,
     );
-    parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+    parent.send(aRuntimeProbe);
     await reportsReach(parent, 1);
 
     expect(parent.reports).toEqual([
@@ -147,7 +154,7 @@ describe('a runtime probe the parent sends', () => {
     const refusing: typeof fetch = async () => Promise.reject(new TypeError('fetch failed'));
 
     attachEngineChild(parent.port, aLoopbackHolding([]), refusing);
-    parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://127.0.0.1:11434' });
+    parent.send(aRuntimeProbe);
     await reportsReach(parent, 1);
 
     expect(parent.reports).toEqual([
@@ -229,7 +236,7 @@ describe('the refusal log a malformed directive draws', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe-runtime', id: 'd1', address: 'http://collector.example' });
+      parent.send({ ...aRuntimeProbe, address: 'http://collector.example' });
       parent.send({ kind: 'start', id: 'd2', gateway: codex });
       await reportsReach(parent, 1);
 

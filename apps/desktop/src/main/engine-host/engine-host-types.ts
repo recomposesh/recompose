@@ -8,6 +8,7 @@ import type {
   GatewayTraffic,
   KeyCheckReport,
   KeyProviderId,
+  LocalProviderId,
   LogBatch,
   LogRow,
   LookCustody,
@@ -46,7 +47,7 @@ export type EngineHost = {
   stop: (slug: string) => Promise<GatewayEngineState>;
   restart: (gateway: EngineGateway) => Promise<GatewayEngineState>;
   probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport>;
-  probeRuntime: (address: string) => Promise<RuntimeReachability>;
+  probeRuntime: (address: string, provider: LocalProviderId) => Promise<RuntimeReachability>;
   listModels: (origin: string, custody: LookCustody) => Promise<ModelListing>;
   states: () => EngineStates;
   retainedLogRows: () => readonly LogRow[];

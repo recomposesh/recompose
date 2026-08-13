@@ -10,7 +10,9 @@ import type {
   GatewayEngineState,
   KeyCheckVerdict,
   KeyProviderId,
+  LocalProviderId,
   LookCustody,
+  ProviderDialect,
   RuntimeReachability,
   SpendGrant,
   SubscriptionProviderId,
@@ -69,15 +71,17 @@ describe('the protocol the two processes speak', () => {
     expectTypeOf<ProbeDirective['provider']>().toEqualTypeOf<KeyProviderId>();
   });
 
-  test('a runtime probe carries the address it looks at, the id it answers, and nothing else', () => {
-    expectTypeOf<keyof RuntimeProbeDirective>().toEqualTypeOf<'kind' | 'id' | 'address'>();
+  test('a runtime probe carries the address, the server it expects, and the id it answers', () => {
+    expectTypeOf<keyof RuntimeProbeDirective>().toEqualTypeOf<
+      'kind' | 'id' | 'address' | 'provider'
+    >();
     expectTypeOf<RuntimeProbeDirective['address']>().toEqualTypeOf<string>();
+    expectTypeOf<RuntimeProbeDirective['provider']>().toEqualTypeOf<LocalProviderId>();
   });
 
-  test('a runtime probe carries no credential and names no vendor', () => {
+  test('a runtime probe carries no credential, because a server on this machine asks for none', () => {
     expectTypeOf<RuntimeProbeDirective>().not.toHaveProperty('key');
     expectTypeOf<RuntimeProbeDirective>().not.toHaveProperty('secret');
-    expectTypeOf<RuntimeProbeDirective>().not.toHaveProperty('provider');
   });
 });
 
@@ -207,8 +211,9 @@ describe('the spend a resolved grant authorizes', () => {
 
   test('a credentialed spend carries its provider, credential, and optional account identity', () => {
     expectTypeOf<keyof CredentialedSpend>().toEqualTypeOf<
-      'custody' | 'provider' | 'credential' | 'accountId' | 'isCompat'
+      'custody' | 'provider' | 'credential' | 'accountId' | 'isCompat' | 'dialect'
     >();
+    expectTypeOf<CredentialedSpend['dialect']>().toEqualTypeOf<ProviderDialect | undefined>();
     expectTypeOf<CredentialedSpend['provider']>().toEqualTypeOf<string>();
     expectTypeOf<CredentialedSpend['credential']>().toEqualTypeOf<string>();
     expectTypeOf<CredentialedSpend['accountId']>().toEqualTypeOf<string | undefined>();

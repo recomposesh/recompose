@@ -3,6 +3,7 @@ import type {
   EngineReport,
   KeyCheckReport,
   KeyProviderId,
+  LocalProviderId,
   LookCustody,
   ModelListing,
   RuntimeReachability,
@@ -216,10 +217,11 @@ export async function lookAtTheRuntimeThroughTheChild(
   looks: EngineLooks,
   engineOf: () => LookPort,
   address: string,
+  provider: LocalProviderId,
 ): Promise<RuntimeReachability> {
   return askTheChild(engineOf, {
     desk: looks.runtimeReadings,
-    directive: { kind: 'probe-runtime', id: randomUUID(), address },
+    directive: { kind: 'probe-runtime', id: randomUUID(), address, provider },
     subject: address,
     fold: unreachable,
     unanswered: `recompose could not look at the runtime at ${address} within ${String(PROBE_TIMEOUT_MS)}ms.`,

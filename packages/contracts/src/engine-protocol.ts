@@ -5,8 +5,13 @@ import { logRowSchema } from './engine-logs';
 import { gatewayEngineStateSchema } from './engine-state';
 import { requestOutcomeSchema } from './engine-traffic';
 import { gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
-import { loopbackAddressSchema, runtimeReachabilitySchema } from './local-runtimes';
+import {
+  localProviderIdSchema,
+  loopbackAddressSchema,
+  runtimeReachabilitySchema,
+} from './local-runtimes';
 import { nonBlankString } from './non-blank';
+import { providerDialectSchema } from './provider-directory';
 import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
@@ -113,6 +118,7 @@ export const engineDirectiveSchema = z.discriminatedUnion('kind', [
     kind: z.literal('probe-runtime'),
     id: directiveIdSchema,
     address: loopbackAddressSchema,
+    provider: localProviderIdSchema,
   }),
   z.strictObject({
     kind: z.literal('list-models'),
@@ -197,6 +203,7 @@ const grantedSpendSchema = z.discriminatedUnion('custody', [
     credential: nonBlankString,
     accountId: nonBlankString.optional(),
     isCompat: z.boolean().optional(),
+    dialect: providerDialectSchema.optional(),
   }),
   z.strictObject(subscriptionCustodyShape),
   z.strictObject({ custody: z.literal('open') }),
