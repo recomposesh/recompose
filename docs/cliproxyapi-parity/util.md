@@ -2,15 +2,15 @@
 
 # `internal/util` parity audit
 
-Scope: all 54 upstream tests under `/private/tmp/cliproxyapi-reference/internal/util`, compared with Recompose JSON/schema normalization, tool-name/provenance IDs, Claude model/schema/result/attribution helpers, media conversion, and error-safe translation utilities.
+Scope: all 59 upstream tests under `/private/tmp/cliproxyapi-reference/internal/util`, compared with Recompose JSON/schema normalization, tool-name/provenance IDs, Claude model/schema/result/attribution helpers, media conversion, and error-safe translation utilities.
 
 ## Summary
 
 - **Covered: 52**
-- **N/A: 2**
+- **N/A: 7**
 - **Gaps: 0**
 
-The only N/A tests assert Go-specific zero-copy `gjson` byte behavior, which has no TypeScript runtime contract. All schema, naming, ID, model, media, and attribution behaviors have direct or generic local behavioral coverage.
+Every N/A test asserts a Go memory contract: zero-copy `gjson` byte aliasing, or the source scan that keeps in-place `sjson` writes away from a live no-copy result. A TypeScript string is immutable and `JSON.parse` always allocates, so none of it has an observable here. All schema, naming, ID, model, media, and attribution behaviors have direct or generic local behavioral coverage.
 
 ## Row-level audit
 
@@ -70,6 +70,11 @@ The only N/A tests assert Go-specific zero-copy `gjson` byte behavior, which has
 |  52 | Claude tool results  | `TestConvertClaudeToolResultContent`                                     | Covered | `dialect/gemini-claude-request-parity.test.ts` covers text, structured, single/multiple image, and malformed media tool-result conversion.                                                                                                                                                                  |
 |  53 | Claude tool results  | `TestConvertClaudeToolResultContent_ImageFields`                         | Covered | `dialect/gemini-claude-request-parity.test.ts` covers text, structured, single/multiple image, and malformed media tool-result conversion.                                                                                                                                                                  |
 |  54 | Claude attribution   | `TestIsClaudeCodeAttributionSystemText`                                  | Covered | `dialect/gemini-claude-request-parity.test.ts` directly verifies only Claude Code billing attribution text is stripped.                                                                                                                                                                                     |
+|  55 | JSON byte access     | `TestParseGJSONBytesNoCopy`                                              | N/A     | Go-specific zero-copy `gjson.Result` byte aliasing/allocation contract; TypeScript JSON parsing has no equivalent observable.                                                                                                                                                                               |
+|  56 | JSON byte access     | `TestParseGJSONBytesNoCopyEmptyInput`                                    | N/A     | Same zero-copy parse contract, on empty input.                                                                                                                                                                                                                                                              |
+|  57 | JSON byte access     | `TestParseGJSONBytesNoCopyReferencesInput`                               | N/A     | Asserts through `unsafe.StringData` that the parsed raw string shares the caller's backing array. A TypeScript string is immutable and `JSON.parse` always allocates, so no aliasing exists to observe.                                                                                                     |
+|  58 | Source invariant     | `TestNoInPlaceSJSONWrites`                                               | N/A     | Walks the Go tree asserting no file calls `sjson` `ReplaceInPlace` or `Optimistic`, because an in-place write would corrupt a live zero-copy result. Recompose has no `sjson` and no buffer a parsed value can alias.                                                                                       |
+|  59 | Source invariant     | `TestInPlaceByteWritesAreReviewed`                                       | N/A     | The allowlist half of the same source scan, guarding which files may opt back into in-place writes. The invariant it guards cannot arise in TypeScript.                                                                                                                                                     |
 
 ## Grouped findings
 

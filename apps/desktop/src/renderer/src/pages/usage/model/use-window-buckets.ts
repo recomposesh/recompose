@@ -8,7 +8,7 @@ import type { UsageWindow } from '../lib/usage-window';
 import {
   engineLogsQueryOptions,
   gatewaysQueryOptions,
-  usageReportQueryOptions,
+  watchedUsageReportQueryOptions,
 } from '../../../shared/api';
 import { useDisplayTick } from '../../../shared/lib';
 import { liveWindowFold } from '../lib/live-window';
@@ -82,7 +82,7 @@ export function useWindowBuckets(search: UsageSearch): WindowBuckets {
   const now = useDisplayTick(LIVE_TICK_MS);
   const ask = reportAskFor(search, now, new Date(now).getTimezoneOffset());
   const report = useQuery({
-    ...usageReportQueryOptions(ask ?? { range: '24h' }),
+    ...watchedUsageReportQueryOptions(ask ?? { range: '24h' }),
     enabled: ask !== undefined,
   });
   const gateways = useQuery(gatewaysQueryOptions);

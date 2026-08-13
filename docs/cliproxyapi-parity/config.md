@@ -2,16 +2,16 @@
 
 # `internal/config` final parity reconciliation
 
-Scope: all 48 upstream `Test*` functions under
+Scope: all 49 upstream `Test*` functions under
 `/private/tmp/cliproxyapi-reference/internal/config`, reconciled against the current Recompose
 contracts, engine, provider transports, and explicit architecture exclusions.
 
 ## Final accounting
 
 - **Covered: 22**
-- **N/A: 26**
+- **N/A: 27**
 - **Gap: 0**
-- **Rows accounted for: 48/48 exactly once**
+- **Rows accounted for: 49/49 exactly once**
 
 Recompose persists strict typed account and gateway documents rather than loading CLIProxy's
 monolithic YAML/JSON configuration. Raw parser, clone, plugin, router-weight, Home, and fixture-wire
@@ -76,6 +76,7 @@ configuration without the corresponding transport would create a dead contract.
 |  46 | Credential concurrency | `TestCredentialConcurrencyConfigDefaultsOnlyMissingFields`                  | Covered | Exact-named parity test verifies partial default merging and rejection of explicit invalid zero/negative lifecycle fields.                                                                                            |
 |  47 | Credential concurrency | `TestCredentialConcurrencyConfigRejectsInvalidLimiter`                      | Covered | Exact-named parity test covers release backoff, whole-millisecond retry values, retry ordering, and maximum limits.                                                                                                   |
 |  48 | Credential concurrency | `TestValidateCredentialConcurrencyLifecycleRejectsSafetyOverflow`           | Covered | Exact-named parity test covers safe-integer overflow in lifecycle timing sums.                                                                                                                                        |
+|  49 | Clone/parser           | `TestParseConfigBytesRequestRetry`                                          | N/A     | Raw YAML parsing is outside Recompose, the same ground every other parser row stands on. A per-account attempt count would be an independently typed setting rather than a field of this document.                    |
 
 ## Implemented credential policy surface
 

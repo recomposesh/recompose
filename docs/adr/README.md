@@ -102,6 +102,7 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0094](0094-the-browser-suite-collects-every-tenth-file.md)                     | The Browser Suite Collects Every Tenth File                                         | Accepted   | 2026-08-13 |
 | [0095](0095-the-pipeline-reads-what-the-diff-touched.md)                        | The Pipeline Reads What the Diff Touched                                            | Accepted   | 2026-08-13 |
 | [0096](0096-the-report-carries-its-open-hour.md)                                | The Report Carries Its Open Hour                                                    | Accepted   | 2026-08-13 |
+| [0097](0097-the-poll-pace-follows-the-surface.md)                               | The Poll Pace Follows the Surface, Not the Range                                    | Accepted   | 2026-08-13 |
 | [0098](0098-one-directory-names-every-vendor-endpoint.md)                       | One Directory Names Every Vendor Endpoint, and a Row May Carry Its Own              | Accepted   | 2026-08-13 |
 | [0099](0099-a-look-asks-the-runtime-own-path.md)                                | A Look Asks the Runtime's Own Path                                                  | Accepted   | 2026-08-13 |
 | [0100](0100-a-coding-plan-stands-in-one-catalog-and-stores-as-another.md)       | A Coding Plan Stands in One Catalog and Stores as Another                           | Accepted   | 2026-08-13 |

@@ -68,6 +68,26 @@ function isOneHourControl(control: unknown): control is JsonObject {
   return isJsonObject(control) && control['ttl'] === '1h';
 }
 
+/**
+ * The same body with every cache marker it already carries raised to the one-hour window.
+ *
+ * @summary A marker is the caller's own, so this widens the window it asks for and never hands a
+ * marker to a block that carried none. The ordering rule still runs after it, which is what keeps
+ * a raised marker from outliving a shorter one standing ahead of it.
+ */
+export function upgradedClaudeCacheTtls(body: JsonObject): JsonObject {
+  const cloned = structuredClone(body);
+  const sections = cacheSections(cloned);
+
+  for (const block of [...sections.tools, ...sections.system, ...sections.messages]) {
+    if (isJsonObject(block.cache_control)) {
+      block.cache_control['ttl'] = '1h';
+    }
+  }
+
+  return cloned;
+}
+
 function normalizeCacheTtls(body: JsonObject): void {
   const sections = cacheSections(body);
   let seenFiveMinutes = false;
