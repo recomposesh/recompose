@@ -33,12 +33,12 @@ asserts the namespace on the restored custom tool call, so both arrive again in 
 | `internal/client/codex/live`                        |   16 | `client.md`                                                   | no         |
 | `sdk/api/handlers`                                  |   10 | `api.md`                                                      | no         |
 | `internal/translator/openai/claude`                 |    8 | the matching `translator-*.md`                                | no         |
-| `sdk/cliproxy/auth`                                 |    5 | `auth.md`                                                     | no         |
+| `sdk/cliproxy/auth`                                 |    5 | `auth.md`                                                     | yes        |
 | `internal/util`                                     |    5 | `util.md`                                                     | yes        |
-| `sdk/cliproxy`                                      |    4 | `store.md`                                                    | no         |
-| `internal/pluginhost`                               |    4 | `small-packages.md`                                           | no         |
-| `internal/api`                                      |    4 | `api.md`                                                      | no         |
-| `internal/api/handlers/management`                  |    3 | `api.md`                                                      | no         |
+| `sdk/cliproxy`                                      |    4 | `store.md`                                                    | yes        |
+| `internal/pluginhost`                               |    4 | `small-packages.md`                                           | yes        |
+| `internal/api`                                      |    4 | `api.md`                                                      | yes        |
+| `internal/api/handlers/management`                  |    3 | `api.md`                                                      | yes        |
 | `internal/watcher/synthesizer`                      |    2 | `watcher.md`                                                  | yes        |
 | `internal/translator/claude/openai/responses`       |    2 | `translator-claude.md`                                        | yes        |
 | `internal/cache`                                    |    2 | `cache.md`                                                    | yes        |
