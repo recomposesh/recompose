@@ -6,6 +6,7 @@ Feature: Renewal follows where the account came from
     When a request needs that account
     Then the provider's own tool renews the credential with no window shown
     And the app serves the request with what the store holds afterward
+    And the app kept no copy of the credential anywhere of its own
 
   Scenario: The owning tool renewed the credential elsewhere
     Given a connected "anthropic" subscription adopted from the machine

@@ -48,17 +48,42 @@ function serviceForHome(home: string): string {
 }
 
 /**
- * Moves the lapsing moment of the credential shelved for one config home.
+ * Where the credential for one config home stands.
+ *
+ * @summary Claude Code keeps its credential in the login keychain on macOS and inside the config
+ * home on every other machine, so a scenario aging one reaches whichever of the two was written.
+ */
+function credentialKeptFor(store: string, home: string): string {
+  return process.platform === 'darwin'
+    ? shelfIn(store, serviceForHome(home))
+    : join(home, '.credentials.json');
+}
+
+/**
+ * What the app itself keeps for one config home, which is nothing for an account it adopted.
+ *
+ * @summary A copy kept on macOS lands in the login keychain, where no folder on disk would show
+ * it, so a scenario proving the app holds no copy has to ask the store this machine actually uses.
+ */
+export async function credentialTheAppKeeps(store: string, home: string): Promise<string | null> {
+  return readFile(credentialKeptFor(store, home), 'utf8').then(
+    (blob) => blob,
+    () => null,
+  );
+}
+
+/**
+ * Moves the lapsing moment of the credential the app signed in for one config home.
  *
  * @summary No run of a vendor tool leaves a fresh sign-in near expiry, so a scenario about the app
  * renewing what it owns has no other way to stand one there.
  */
-export async function lapseTheShelvedCredential(
+export async function lapseTheKeptCredential(
   store: string,
   home: string,
   expiresAt: number,
 ): Promise<void> {
-  const shelf = shelfIn(store, serviceForHome(home));
+  const shelf = credentialKeptFor(store, home);
   const read: unknown = JSON.parse(await readFile(shelf, 'utf8'));
   const held = isRecord(read) ? read : {};
   const oauth = held['claudeAiOauth'];

@@ -1,20 +1,19 @@
-import type { ElectronApplication, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 
-import type { GatewayAnswer } from '../gateway-client';
 import type { MachineProvider } from './machine-subscriptions';
 
-import { accountsStoredInRegistry } from '../accounts-document';
 import { Given, Then, When } from '../fixtures';
-import { sendTurn, turnUnder } from '../gateway-client';
-import { gatewayAddress } from '../gateway-screen';
-import { accountRows, openProviderScreen, toolHomesFolder } from '../provider-screen';
-import { focusedGateway } from '../scenario-memory';
-import { accountHeldAs, gatewayTargetingAKey } from '../stored-target-accounts';
-import { bindingOf, seedVirtualModels } from '../stored-virtual-models';
+import { accountRows, openProviderScreen } from '../provider-screen';
+import {
+  appHomeHolding,
+  appHomesFor,
+  credentialBeforeTheAct,
+  homesTheAppMade,
+  statusesOf,
+  turnsNeedingThatAccount,
+} from '../renewal-serving';
 import { SIGN_IN_WAIT_MS } from '../subscription-sign-in';
 import {
   adoptWhatTheMachineHolds,
@@ -26,15 +25,6 @@ import {
   theMachineHolds,
   theMachineRecordStands,
 } from './machine-subscriptions';
-
-/** Where a turn is asked for, which is the one path a message arrives on. */
-const MESSAGES_PATH = '/v1/messages';
-
-/** The real model every virtual model in this file names, which no scenario is about. */
-const REAL_MODEL = 'claude-sonnet-5';
-
-/** The virtual model every request in this file arrives under. */
-const VIRTUAL_MODEL = 'fast';
 
 /** What an answered turn reads as. */
 const ANSWERED = 200;
@@ -51,31 +41,7 @@ const LAPSED_READS = 'Signed out';
 /** The provider a scenario naming no machine login is about. */
 const SUBSCRIPTION_PROVIDER = 'anthropic';
 
-const answersGiven = new WeakMap<Page, GatewayAnswer[]>();
-
-const credentialsBeforeTheAct = new WeakMap<Page, string | null>();
-
 const toolReadingsAfresh = new WeakMap<Page, boolean>();
-
-function answersHeld(page: Page): GatewayAnswer[] {
-  const answers = answersGiven.get(page);
-
-  if (answers === undefined) {
-    throw new Error('no step asked this account for anything');
-  }
-
-  return answers;
-}
-
-function credentialBeforeTheAct(page: Page): string | null {
-  const held = credentialsBeforeTheAct.get(page);
-
-  if (held === undefined) {
-    throw new Error('no step read what the store held before the act this scenario is about');
-  }
-
-  return held;
-}
 
 /** The provider whose machine login this scenario adopted, when a step arranged one. */
 function providerIfAny(page: Page): MachineProvider | undefined {
@@ -86,63 +52,6 @@ function providerIfAny(page: Page): MachineProvider | undefined {
 
 function providerHeld(page: Page): MachineProvider {
   return providerIfAny(page) ?? SUBSCRIPTION_PROVIDER;
-}
-
-/**
- * The config home the app handed the tool for the account it signed in.
- *
- * @summary The vendor derives its keychain item name from this path, so a step aging that
- * credential has to name the same string the app named, not the pointer standing beside it.
- */
-async function appHomeHolding(
-  app: ElectronApplication,
-  provider: MachineProvider,
-): Promise<string> {
-  const rows = await accountsStoredInRegistry(app);
-  const held = rows.find(
-    (row): row is { id: string } =>
-      typeof row === 'object' && row !== null && 'kind' in row && row.kind === 'subscription',
-  );
-
-  if (held === undefined) {
-    throw new Error('no step signed the app in, so no home holds a credential it owns');
-  }
-
-  return join(await toolHomesFolder(app, provider), held.id);
-}
-
-/** Stands a gateway serving one virtual model over the subscription the scenario connected. */
-async function servingThatAccount(page: Page): Promise<string> {
-  await gatewayTargetingAKey(page);
-
-  const plan = await accountHeldAs(page, 'subscription');
-
-  await seedVirtualModels(page, focusedGateway(page), [
-    bindingOf(VIRTUAL_MODEL, plan.id, REAL_MODEL),
-  ]);
-
-  return gatewayAddress(page, focusedGateway(page));
-}
-
-/** Serves one turn through the account, remembering what the store held before it went. */
-async function turnsNeedingThatAccount(
-  page: Page,
-  tools: { machineCredential: (provider: MachineProvider) => Promise<string | null> },
-  count: number,
-): Promise<void> {
-  const address = await servingThatAccount(page);
-
-  credentialsBeforeTheAct.set(page, await tools.machineCredential(providerHeld(page)));
-
-  const turns = Array.from({ length: count }, async () =>
-    sendTurn(address, MESSAGES_PATH, turnUnder(VIRTUAL_MODEL)),
-  );
-
-  answersGiven.set(page, await Promise.all(turns));
-}
-
-function statusesOf(page: Page): number[] {
-  return answersHeld(page).map((answer) => answer.status);
 }
 
 Given('its credential nears expiry', async ({ electronApp, page, subscriptionTools }) => {
@@ -193,18 +102,18 @@ Given(
   "the app served requests across the credential's expiry",
   async ({ $testInfo, page, subscriptionTools }) => {
     $testInfo.setTimeout(SIGN_IN_WAIT_MS + FLOWS_BESIDE_THE_ADOPTION * ONE_FLOW_MS);
-    await turnsNeedingThatAccount(page, subscriptionTools, 1);
+    await turnsNeedingThatAccount(page, subscriptionTools, providerHeld(page), 1);
   },
 );
 
 When('a request needs that account', async ({ $testInfo, page, subscriptionTools }) => {
   $testInfo.setTimeout(SIGN_IN_WAIT_MS + FLOWS_BESIDE_THE_ADOPTION * ONE_FLOW_MS);
-  await turnsNeedingThatAccount(page, subscriptionTools, 1);
+  await turnsNeedingThatAccount(page, subscriptionTools, providerHeld(page), 1);
 });
 
 When('two requests need that account at once', async ({ $testInfo, page, subscriptionTools }) => {
   $testInfo.setTimeout(SIGN_IN_WAIT_MS + FLOWS_BESIDE_THE_ADOPTION * ONE_FLOW_MS);
-  await turnsNeedingThatAccount(page, subscriptionTools, 2);
+  await turnsNeedingThatAccount(page, subscriptionTools, providerHeld(page), 2);
 });
 
 When('its credential expires', async ({ $testInfo, page, subscriptionTools }) => {
@@ -216,7 +125,7 @@ When('its credential expires', async ({ $testInfo, page, subscriptionTools }) =>
 
   $testInfo.setTimeout(SIGN_IN_WAIT_MS + FLOWS_BESIDE_THE_ADOPTION * ONE_FLOW_MS);
   await theMachineRecordStands(subscriptionTools, { ...login, expiresAt: spentExpiry() });
-  await turnsNeedingThatAccount(page, subscriptionTools, 1);
+  await turnsNeedingThatAccount(page, subscriptionTools, providerHeld(page), 1);
 });
 
 When("the maintainer opens the provider's own tool afresh", async ({ page, subscriptionTools }) => {
@@ -230,7 +139,7 @@ Then(
   "the provider's own tool renews the credential with no window shown",
   async ({ electronApp, page, subscriptionTools }) => {
     expect(await subscriptionTools.renewalRuns(providerHeld(page))).toBe(1);
-    expect(existsSync(await toolHomesFolder(electronApp, providerHeld(page)))).toBe(false);
+    expect(await homesTheAppMade(electronApp, providerHeld(page))).toEqual([]);
   },
 );
 
@@ -244,9 +153,20 @@ Then(
   },
 );
 
+Then(
+  'the app kept no copy of the credential anywhere of its own',
+  async ({ electronApp, page, subscriptionTools }) => {
+    expect(await homesTheAppMade(electronApp, providerHeld(page))).toEqual([]);
+
+    for (const home of await appHomesFor(electronApp, providerHeld(page))) {
+      await expect(subscriptionTools.appCredentialKept(home)).resolves.toBeNull();
+    }
+  },
+);
+
 Then('the app serves the request and asks for no sign-in', async ({ electronApp, page }) => {
   expect(statusesOf(page)).toEqual([ANSWERED]);
-  expect(existsSync(await toolHomesFolder(electronApp, providerHeld(page)))).toBe(false);
+  expect(await homesTheAppMade(electronApp, providerHeld(page))).toEqual([]);
 });
 
 Then('one renewal runs', async ({ page, subscriptionTools }) => {
