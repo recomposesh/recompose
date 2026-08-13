@@ -29,6 +29,7 @@ bestpractices
 betax
 BGRA
 Binvalid
+birpc
 blockmap
 boxshadow
 Braintrust
