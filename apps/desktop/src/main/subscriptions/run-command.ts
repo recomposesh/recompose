@@ -2,58 +2,56 @@ import { execFile } from 'node:child_process';
 
 export const WAITS_FOR_THE_PERSON = 0;
 
-const windowsScriptSuffixes = ['.cmd', '.bat'];
+const BATCH_SUFFIXES = ['.cmd', '.bat'];
 
-const shellMetacharacters = /["&|<>^%!\r\n]/;
+const READ_BY_THE_PROCESSOR = /["&|<>^%!\r\n]/;
 
-/**
- * Whether a file can only be run by handing it to a shell.
- *
- * @summary Node refuses to execute a `.cmd` or `.bat` directly, which is its answer to
- * CVE-2024-27980, and Claude Code installs on Windows as `claude.cmd`. A search that resolves one
- * of those therefore hands back a file that would otherwise fail to start at all.
- */
-export function runsOnlyThroughAShell(command: string, platform: NodeJS.Platform): boolean {
-  return (
-    platform === 'win32' &&
-    windowsScriptSuffixes.some((suffix) => command.toLowerCase().endsWith(suffix))
-  );
+export type CommandLine = {
+  command: string;
+  args: string[];
+  /** Windows needs the line passed through untouched, because it is already quoted here. */
+  verbatim: boolean;
+};
+
+function isBatchFile(file: string): boolean {
+  return BATCH_SUFFIXES.some((suffix) => file.toLowerCase().endsWith(suffix));
 }
 
-/** How a command reaches the operating system, once the shell it may need is accounted for. */
-export type CommandHandoff =
-  | { verdict: 'direct' }
-  | { verdict: 'through-a-shell'; quoted: string }
-  | { verdict: 'refused'; because: string };
+/**
+ * Whether a line may be handed to the command processor at all.
+ *
+ * @summary The quoting around the file is what keeps a path with a space one file, and the file
+ * comes from the machine's search path rather than from this codebase. A directory named with a
+ * quote closes that quoting itself, leaving whatever follows to read as a second command. Nothing
+ * legitimate carries one of these, so a name holding one is refused rather than escaped: escaping
+ * asks every later reader to trust the escaping.
+ */
+export function safeForTheCommandProcessor(file: string, args: readonly string[]): boolean {
+  return ![file, ...args].some((word) => READ_BY_THE_PROCESSOR.test(word));
+}
 
 /**
- * What a command is handed to, and whether it may be handed over at all.
+ * How a file on this machine is actually run.
  *
- * @summary Going through a shell means the shell parses the whole line, and the tool's path comes
- * from the machine's search path rather than from this codebase. A directory named with a quote
- * would close the quoting around the path and leave whatever follows reading as a second command.
- * Nothing legitimate carries these characters, so a name holding one is refused rather than
- * escaped: escaping invites a reader to trust the escaping.
+ * @summary Node refuses to run a Windows batch file directly, and Claude Code installs as
+ * `claude.cmd` there, so a batch shim goes through the command processor. The whole line is quoted
+ * and handed over as one argument, which is what keeps a path holding a space one file rather than
+ * two, and the arguments beside it are ones this app names rather than anything a person typed.
  */
-export function handoffFor(
-  command: string,
+export function commandLineFor(
+  file: string,
   args: readonly string[],
   platform: NodeJS.Platform,
-): CommandHandoff {
-  if (!runsOnlyThroughAShell(command, platform)) {
-    return { verdict: 'direct' };
+): CommandLine {
+  if (platform !== 'win32' || !isBatchFile(file)) {
+    return { command: file, args: [...args], verbatim: false };
   }
 
-  const readByTheShell = [command, ...args].find((word) => shellMetacharacters.test(word));
-
-  if (readByTheShell !== undefined) {
-    return {
-      verdict: 'refused',
-      because: `refused to start ${command}, because ${readByTheShell} carries a character the shell reads as its own`,
-    };
-  }
-
-  return { verdict: 'through-a-shell', quoted: `"${command}"` };
+  return {
+    command: process.env['ComSpec'] ?? 'cmd.exe',
+    args: ['/d', '/s', '/c', [`"${file}"`, ...args].join(' ')],
+    verbatim: true,
+  };
 }
 
 export async function runCommand(
@@ -61,19 +59,24 @@ export async function runCommand(
   args: readonly string[],
   boundMs: number,
 ): Promise<string> {
-  const handoff = handoffFor(command, args, process.platform);
+  const line = commandLineFor(command, args, process.platform);
 
-  if (handoff.verdict === 'refused') {
-    throw new Error(handoff.because);
+  if (line.verbatim && !safeForTheCommandProcessor(command, args)) {
+    throw new Error(
+      `refused to start ${command}, because its line carries a character the command processor reads as its own`,
+    );
   }
-
-  const shell = handoff.verdict === 'through-a-shell';
 
   return new Promise((carry, refuse) => {
     execFile(
-      handoff.verdict === 'through-a-shell' ? handoff.quoted : command,
-      args,
-      { encoding: 'utf8', timeout: boundMs, windowsHide: true, shell },
+      line.command,
+      line.args,
+      {
+        encoding: 'utf8',
+        timeout: boundMs,
+        windowsHide: true,
+        windowsVerbatimArguments: line.verbatim,
+      },
       (failure, stdout) => {
         if (failure === null) {
           carry(stdout);

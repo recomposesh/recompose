@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, test } from 'vitest';
 
+import type { CredentialCustody } from '../subscriptions/credential-custody';
 import type { SubscriptionsWorld } from './subscriptions-ipc.testkit';
 
 import { oneAtATime } from '../storage/one-at-a-time';
@@ -24,6 +25,29 @@ function handlersOn(platform: NodeJS.Platform = 'darwin') {
 
   return createSubscriptionsMachineIpcHandlers(
     { ...ctx, homeFolder: machineHome, machine: { ...ctx.machine, homeFolder: machineHome } },
+    oneAtATime(),
+  );
+}
+
+/** Handlers over a credential store that fails for a reason of its own rather than refusing. */
+function handlersOnARefusingStore() {
+  const wouldNotOpen = async (): Promise<never> => Promise.reject(new Error('the store went away'));
+  const refusing: CredentialCustody = {
+    readForHome: wouldNotOpen,
+    writeForHome: wouldNotOpen,
+    removeForHome: wouldNotOpen,
+    moveBetweenHomes: wouldNotOpen,
+    readMachineItem: wouldNotOpen,
+    reclaimMachineWrite: wouldNotOpen,
+  };
+  const ctx = world.contextOn('darwin', world.nothingHappens);
+
+  return createSubscriptionsMachineIpcHandlers(
+    {
+      ...ctx,
+      homeFolder: machineHome,
+      machine: { ...ctx.machine, homeFolder: machineHome, custody: refusing },
+    },
     oneAtATime(),
   );
 }
@@ -114,5 +138,25 @@ describe('adopting the account the machine already holds', () => {
     const answered = await handlersOn()['subscriptions:adopt']({ provider: 'anthropic' });
 
     expect(viewsIn(answered)).toHaveLength(1);
+  });
+
+  test('given a record naming no address, adopting still records the account', async () => {
+    world.keychain.put(machineVendorItem(osUser).service, osUser, aClaudeLogin);
+
+    const answered = await handlersOn()['subscriptions:adopt']({ provider: 'anthropic' });
+
+    expect(viewsIn(answered)).toEqual([
+      expect.objectContaining({ provider: 'anthropic', provenance: 'machine' }),
+    ]);
+  });
+});
+
+describe('an adoption the store would not answer', () => {
+  test('given the store failing for a reason of its own, the refusal travels rather than throwing', async () => {
+    const answered = await handlersOnARefusingStore()['subscriptions:adopt']({
+      provider: 'anthropic',
+    });
+
+    expect(refusalIn(answered).code).toBe('storage-failed');
   });
 });

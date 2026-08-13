@@ -1,8 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
+import type { KeychainSeam } from './credential-custody';
 import type { CustodyRepairDeps } from './custody-repair';
 
-import { PARKED_SERVICE, RESERVED_SLOT, repairCustody } from './custody-repair';
+import {
+  keychainCarriedOnce,
+  PARKED_SERVICE,
+  RESERVED_SLOT,
+  repairCustody,
+} from './custody-repair';
 import { fakeKeychain, machineHolding, osUser } from './subscriptions.testkit';
 import { homeVendorItem, machineVendorItem } from './vendor-item';
 
@@ -125,6 +131,21 @@ describe('a repair that has already run', () => {
     expect(keychain.blobAt(theMachineItem, osUser)).toBe('the-persons-login');
   });
 
+  test('given an active account whose stores both stand empty, nothing is carried back', async () => {
+    const keychain = fakeKeychain();
+
+    const outcome = await repairCustody(
+      aRepair(keychain, {
+        accountIds: async () => Promise.resolve(['acc-one']),
+        activeId: async () => Promise.resolve('acc-one'),
+      }),
+    );
+
+    expect(outcome).toEqual({ ok: true });
+    expect(keychain.writes()).toBe(0);
+    expect(keychain.holds(theMachineItem, osUser)).toBe(false);
+  });
+
   test('given a fresh install with nothing to carry, nothing is written at all', async () => {
     const keychain = fakeKeychain();
 
@@ -166,5 +187,81 @@ describe('when the keychain refuses partway', () => {
     const shared = keychain.blobAt(theMachineItem, osUser);
 
     expect(carried ?? shared).toBe('active-blob');
+  });
+});
+
+function aSeam(order: string[]): KeychainSeam {
+  return {
+    read: async (item) => {
+      order.push(`read ${item.service}`);
+
+      return Promise.resolve(null);
+    },
+    write: async (item) => {
+      order.push(`write ${item.service}`);
+
+      return Promise.resolve();
+    },
+    remove: async (item) => {
+      order.push(`remove ${item.service}`);
+
+      return Promise.resolve();
+    },
+  };
+}
+
+describe('when the carry runs relative to the reads that need it', () => {
+  const anItem = { service: 'a-service', account: osUser };
+
+  test('given a first read, the carry finishes before the read reaches the store', async () => {
+    const order: string[] = [];
+    const carried = keychainCarriedOnce(aSeam(order), async () => {
+      order.push('carried');
+
+      return Promise.resolve({ ok: true });
+    });
+
+    await carried.read(anItem);
+
+    expect(order).toEqual(['carried', 'read a-service']);
+  });
+
+  test('given many operations, the carry runs once rather than before each', async () => {
+    const order: string[] = [];
+    const carried = keychainCarriedOnce(aSeam(order), async () => {
+      order.push('carried');
+
+      return Promise.resolve({ ok: true });
+    });
+
+    await carried.read(anItem);
+    await carried.write(anItem, 'blob');
+    await carried.remove(anItem);
+
+    expect(order.filter((step) => step === 'carried')).toHaveLength(1);
+    expect(order).toEqual(['carried', 'read a-service', 'write a-service', 'remove a-service']);
+  });
+
+  test('given a carry that refuses, the operation that triggered it still answers', async () => {
+    const order: string[] = [];
+    const carried = keychainCarriedOnce(aSeam(order), async () =>
+      Promise.reject(new Error('the keychain would not open')),
+    );
+
+    await expect(carried.read(anItem)).resolves.toBeNull();
+    expect(order).toEqual(['read a-service']);
+  });
+
+  test('given two operations at once, they wait on the same carry', async () => {
+    let carries = 0;
+    const carried = keychainCarriedOnce(aSeam([]), async () => {
+      carries += 1;
+
+      return Promise.resolve({ ok: true });
+    });
+
+    await Promise.all([carried.read(anItem), carried.read(anItem)]);
+
+    expect(carries).toBe(1);
   });
 });

@@ -196,3 +196,14 @@ describe('the material a person asked to adopt', () => {
     ).rejects.toThrow('denied');
   });
 });
+
+describe('a store that fails for a reason of its own', () => {
+  test('given a failure the keychain never raised, it travels rather than reading as empty', async () => {
+    await expect(
+      readMachineCredential(
+        'anthropic',
+        aStore({ readBlob: async () => Promise.reject(new Error('the disk went away')) }),
+      ),
+    ).rejects.toThrow('the disk went away');
+  });
+});
