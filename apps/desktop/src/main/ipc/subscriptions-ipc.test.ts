@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import type { SubscriptionsWorld } from './subscriptions-ipc.testkit';
 
-import { PARKED_SERVICE, VENDOR_SERVICE } from '../subscriptions/credential-custody';
 import { aClaudeLogin, anMcpRecordAlone, osUser } from '../subscriptions/subscriptions.testkit';
+import { homeVendorItem, machineVendorItem } from '../subscriptions/vendor-item';
 import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 import { aFreshWorld, viewsIn } from './subscriptions-ipc.testkit';
 
@@ -51,9 +51,19 @@ async function aBareActiveAnthropicHome(): Promise<void> {
   await homes.pointActiveAt('anthropic', 'acc-one');
 }
 
+function itsOwnKeychainItem(): string {
+  return homeVendorItem(world.homesOn('darwin').homeFor('anthropic', 'acc-one'), osUser).service;
+}
+
 async function anAnthropicRow(): Promise<void> {
   await world.alreadyHolding([
-    { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Ada' },
+    {
+      id: 'acc-one',
+      provider: 'anthropic',
+      kind: 'subscription',
+      provenance: 'sign-in',
+      label: 'Ada',
+    },
   ]);
 }
 
@@ -70,7 +80,13 @@ describe('listing the subscription accounts a person holds', () => {
 
   test('given a pasted-key account beside a subscription, only the subscription is listed', async () => {
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Claude Code' },
+      {
+        id: 'acc-one',
+        provider: 'anthropic',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Claude Code',
+      },
       {
         id: 'acc-two',
         provider: 'openrouter',
@@ -84,11 +100,19 @@ describe('listing the subscription accounts a person holds', () => {
 
     expect(viewsIn(answered).map((view) => view.id)).toEqual(['acc-one']);
   });
+});
 
+describe('what a listed row carries', () => {
   test('given a signed-in account, the row carries who it signs in as, its plan, and its standing', async () => {
     await aClaudeCodeHomeUnder('acc-one', 'ada@ex.com', 'max');
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'anthropic', kind: 'subscription', label: 'Ada' },
+      {
+        id: 'acc-one',
+        provider: 'anthropic',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Ada',
+      },
     ]);
 
     const answered = await handlersOn()['subscriptions:list']();
@@ -101,6 +125,7 @@ describe('listing the subscription accounts a person holds', () => {
         signedInAs: 'ada@ex.com',
         plan: 'max',
         standing: 'connected',
+        provenance: 'sign-in',
         active: true,
       },
     ]);
@@ -108,7 +133,13 @@ describe('listing the subscription accounts a person holds', () => {
 
   test('given an account whose home holds no credential, the row reads as lapsed and inactive', async () => {
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'openai', kind: 'subscription', label: 'Codex' },
+      {
+        id: 'acc-one',
+        provider: 'openai',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Codex',
+      },
     ]);
 
     const answered = await handlersOn()['subscriptions:list']();
@@ -121,7 +152,13 @@ describe('a row reads connected only where a credential stands', () => {
   test('given a Codex account signed in, the row carries no address and no plan', async () => {
     await aCodexHomeUnder('acc-one');
     await world.alreadyHolding([
-      { id: 'acc-one', provider: 'openai', kind: 'subscription', label: 'Codex' },
+      {
+        id: 'acc-one',
+        provider: 'openai',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'Codex',
+      },
     ]);
 
     const [view] = viewsIn(await handlersOn()['subscriptions:list']());
@@ -131,29 +168,32 @@ describe('a row reads connected only where a credential stands', () => {
       'active',
       'id',
       'label',
+      'provenance',
       'provider',
       'standing',
     ]);
   });
 
-  test('given the credential parked in the keychain, the row reads connected on a bare home', async () => {
+  test('given the credential in the item its home owns, the row reads connected on a bare home', async () => {
     await anAnthropicRow();
-    world.keychain.put(PARKED_SERVICE, 'acc-one', aClaudeLogin);
+    world.keychain.put(itsOwnKeychainItem(), osUser, aClaudeLogin);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'connected' });
   });
 
-  test('given the parked keychain item holds an MCP record and no login, the row reads lapsed', async () => {
+  test('given its keychain item holds an MCP record and no login, the row reads lapsed', async () => {
     await anAnthropicRow();
-    world.keychain.put(PARKED_SERVICE, 'acc-one', anMcpRecordAlone);
+    world.keychain.put(itsOwnKeychainItem(), osUser, anMcpRecordAlone);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'lapsed' });
   });
+});
 
+describe('a row with nothing behind it', () => {
   test('given no credential in the home and none in the keychain, the row reads lapsed', async () => {
     await anAnthropicRow();
 
@@ -164,30 +204,30 @@ describe('a row reads connected only where a credential stands', () => {
 });
 
 describe('the active account answers for the credential the tool actually spends', () => {
-  test('given the vendor slot gone empty, the active row reads lapsed even while a backup sits parked', async () => {
+  test("given only the person's own login on the machine, the active row reads lapsed", async () => {
     await anAnthropicRow();
     await aBareActiveAnthropicHome();
-    world.keychain.put(PARKED_SERVICE, 'acc-one', aClaudeLogin);
+    world.keychain.put(machineVendorItem(osUser).service, osUser, aClaudeLogin);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'lapsed', active: true });
   });
 
-  test('given the login in the vendor slot, the active row reads connected on a bare home', async () => {
+  test('given the login in the item its home owns, the active row reads connected on a bare home', async () => {
     await anAnthropicRow();
     await aBareActiveAnthropicHome();
-    world.keychain.put(VENDOR_SERVICE, osUser, aClaudeLogin);
+    world.keychain.put(itsOwnKeychainItem(), osUser, aClaudeLogin);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 
     expect(view).toMatchObject({ standing: 'connected', active: true });
   });
 
-  test('given the vendor slot holding an MCP record and no login, the active row reads lapsed', async () => {
+  test('given its keychain item holding an MCP record and no login, the active row reads lapsed', async () => {
     await anAnthropicRow();
     await aBareActiveAnthropicHome();
-    world.keychain.put(VENDOR_SERVICE, osUser, anMcpRecordAlone);
+    world.keychain.put(itsOwnKeychainItem(), osUser, anMcpRecordAlone);
 
     const [view] = viewsIn(await handlersOn('darwin')['subscriptions:list']());
 

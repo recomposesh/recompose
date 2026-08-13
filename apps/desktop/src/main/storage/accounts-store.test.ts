@@ -16,13 +16,21 @@ describe('accounts store', () => {
 
     expect(await loadAccountsFile(file, () => undefined)).toEqual(defaultAccountsDocument());
   });
+});
 
+describe('what a saved registry holds', () => {
   test('a saved registry loads back identically', async () => {
     const file = join(await mkdtemp(join(tmpdir(), 'recompose-accounts-')), 'accounts.json');
     const doc: AccountsDocument = {
       schemaVersion: ACCOUNTS_VERSION,
       accounts: [
-        { id: 'a1', provider: 'anthropic', kind: 'subscription' as const, label: 'Max' },
+        {
+          id: 'a1',
+          provider: 'anthropic',
+          kind: 'subscription' as const,
+          label: 'Max',
+          provenance: 'sign-in' as const,
+        },
         {
           id: 'a2',
           provider: 'anthropic',
@@ -37,7 +45,9 @@ describe('accounts store', () => {
 
     expect(await loadAccountsFile(file, () => undefined)).toEqual(doc);
   });
+});
 
+describe('a registry that cannot be read', () => {
   test('schema-invalid accounts are quarantined and the empty registry is returned', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'recompose-accounts-'));
     const file = join(dir, 'accounts.json');

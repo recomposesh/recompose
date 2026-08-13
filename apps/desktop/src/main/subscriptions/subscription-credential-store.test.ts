@@ -3,10 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { credentialCustody, PARKED_SERVICE, VENDOR_SERVICE } from './credential-custody';
+import { credentialCustody } from './credential-custody';
 import { subscriptionCredentialStore } from './subscription-credential-store';
 import { subscriptionHomes } from './subscription-homes';
-import { fakeKeychain, osUser, parkedUnder, vendorHolding } from './subscriptions.testkit';
+import { fakeKeychain, homeHolding, machineHolding, osUser } from './subscriptions.testkit';
+import { homeVendorItem } from './vendor-item';
 
 let userDataPath = '';
 
@@ -39,31 +40,46 @@ describe('reading a subscription credential for a serving turn', () => {
     await expect(store.read('openai', 'acc-codex')).resolves.toBe('codex-blob');
   });
 
-  test('an active Claude account on macOS reads the vendor keychain item', async () => {
+  test('a Claude account on macOS reads the keychain item its own home owns', async () => {
     const homes = subscriptionHomes(userDataPath, 'darwin');
-    const keychain = fakeKeychain(vendorHolding('active-blob'));
-
-    await mkdir(homes.homeFor('anthropic', 'acc-active'), { recursive: true });
-    await homes.pointActiveAt('anthropic', 'acc-active');
-
+    const keychain = fakeKeychain(homeHolding(homes.homeFor('anthropic', 'acc-one'), 'its-blob'));
     const store = subscriptionCredentialStore(
       userDataPath,
       'darwin',
       credentialCustody(keychain.seam, osUser),
     );
 
-    await expect(store.read('anthropic', 'acc-active')).resolves.toBe('active-blob');
+    await expect(store.read('anthropic', 'acc-one')).resolves.toBe('its-blob');
   });
 
-  test('an inactive Claude account on macOS reads its parked keychain item', async () => {
-    const keychain = fakeKeychain(parkedUnder('acc-parked', 'parked-blob'));
+  test('a Claude account reads its own credential whether or not it stands active', async () => {
+    const homes = subscriptionHomes(userDataPath, 'darwin');
+    const keychain = fakeKeychain({
+      ...homeHolding(homes.homeFor('anthropic', 'acc-one'), 'one-blob'),
+      ...homeHolding(homes.homeFor('anthropic', 'acc-two'), 'two-blob'),
+    });
+
+    await mkdir(homes.homeFor('anthropic', 'acc-one'), { recursive: true });
+    await homes.pointActiveAt('anthropic', 'acc-one');
+
     const store = subscriptionCredentialStore(
       userDataPath,
       'darwin',
       credentialCustody(keychain.seam, osUser),
     );
 
-    await expect(store.read('anthropic', 'acc-parked')).resolves.toBe('parked-blob');
+    await expect(store.read('anthropic', 'acc-two')).resolves.toBe('two-blob');
+  });
+
+  test("a Claude account never reads the credential the person's own install keeps", async () => {
+    const keychain = fakeKeychain(machineHolding('the-persons-login'));
+    const store = subscriptionCredentialStore(
+      userDataPath,
+      'darwin',
+      credentialCustody(keychain.seam, osUser),
+    );
+
+    await expect(store.read('anthropic', 'acc-one')).resolves.toBeNull();
   });
 
   test('an account with no credential answers nothing', async () => {
@@ -85,38 +101,41 @@ describe('persisting a refreshed subscription credential', () => {
     ).resolves.toBe('new-blob');
   });
 
-  test('a refreshed active Claude credential replaces the vendor item', async () => {
+  test('a refreshed Claude credential replaces the item its own home owns', async () => {
     const homes = subscriptionHomes(userDataPath, 'darwin');
-    const keychain = fakeKeychain(vendorHolding('old-blob'));
-
-    await mkdir(homes.homeFor('anthropic', 'acc-active'), { recursive: true });
-    await homes.pointActiveAt('anthropic', 'acc-active');
+    const home = homes.homeFor('anthropic', 'acc-one');
+    const keychain = fakeKeychain(homeHolding(home, 'old-blob'));
     const store = subscriptionCredentialStore(
       userDataPath,
       'darwin',
       credentialCustody(keychain.seam, osUser),
     );
 
-    await store.write('anthropic', 'acc-active', 'new-blob');
+    await store.write('anthropic', 'acc-one', 'new-blob');
 
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('new-blob');
+    expect(keychain.blobAt(homeVendorItem(home, osUser).service, osUser)).toBe('new-blob');
   });
 
-  test('a refreshed inactive Claude credential leaves the active item untouched', async () => {
-    const keychain = fakeKeychain({
-      ...vendorHolding('active-blob'),
-      ...parkedUnder('acc-parked', 'old-blob'),
-    });
+  test("a refreshed Claude credential leaves the person's own login untouched", async () => {
+    const homes = subscriptionHomes(userDataPath, 'darwin');
+    const keychain = fakeKeychain(machineHolding('the-persons-login'));
     const store = subscriptionCredentialStore(
       userDataPath,
       'darwin',
       credentialCustody(keychain.seam, osUser),
     );
 
-    await store.write('anthropic', 'acc-parked', 'new-blob');
+    await store.write('anthropic', 'acc-one', 'new-blob');
 
-    expect(keychain.blobAt(PARKED_SERVICE, 'acc-parked')).toBe('new-blob');
-    expect(keychain.blobAt(VENDOR_SERVICE, osUser)).toBe('active-blob');
+    await expect(credentialCustody(keychain.seam, osUser).readMachineItem()).resolves.toBe(
+      'the-persons-login',
+    );
+    expect(
+      keychain.blobAt(
+        homeVendorItem(homes.homeFor('anthropic', 'acc-one'), osUser).service,
+        osUser,
+      ),
+    ).toBe('new-blob');
   });
 });
 

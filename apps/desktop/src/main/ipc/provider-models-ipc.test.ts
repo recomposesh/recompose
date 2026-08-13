@@ -92,6 +92,7 @@ describe('an account no look can stand on', () => {
         origin: 'https://api.anthropic.com',
         custody: {
           custody: 'subscription',
+          renewal: 'app',
           provider: 'anthropic',
           accountId: planRow.id,
           credential,

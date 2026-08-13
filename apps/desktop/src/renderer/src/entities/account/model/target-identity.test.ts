@@ -41,6 +41,7 @@ test('a subscription names the product a person connected', () => {
       id: 'subscription',
       provider: 'anthropic',
       kind: 'subscription',
+      provenance: 'sign-in',
       label: 'Claude Max',
     }),
   ).toBe('Claude');
@@ -69,6 +70,7 @@ test('the target detail reads the account identity appropriate to its kind', () 
         id: 'subscription',
         provider: 'openai',
         kind: 'subscription',
+        provenance: 'sign-in',
         label: 'Codex account',
       },
       'ada@example.com',
@@ -82,6 +84,7 @@ test('a subscription transport with a provider alias still leads with the provid
       id: 'antigravity',
       provider: 'antigravity',
       kind: 'subscription',
+      provenance: 'sign-in',
       label: 'Gemini',
     }),
   ).toBe('gemini');

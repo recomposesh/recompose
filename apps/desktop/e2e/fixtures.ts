@@ -142,6 +142,7 @@ export const test = base.extend<ElectronFixtures>({
         RECOMPOSE_USER_DATA_DIR: userDataDir,
         RECOMPOSE_PROBE_ORIGIN: keyProbe.origin,
         RECOMPOSE_SERVING_ORIGIN: keyProbe.origin,
+        RECOMPOSE_CONTROL_ORIGIN: keyProbe.origin,
         ...($tags.includes('@probes-the-minted-address')
           ? {}
           : { RECOMPOSE_RUNTIME_ORIGIN: localRuntime.origin }),

@@ -94,6 +94,7 @@ describe('what a spend request draws for a subscription target', () => {
       providerOrigin: 'https://api.anthropic.com',
       spend: {
         custody: 'subscription',
+        renewal: 'app',
         provider: 'anthropic',
         accountId: planRow.id,
         credential,
@@ -117,6 +118,7 @@ describe('what a spend request draws for a subscription target', () => {
       providerOrigin: 'https://chatgpt.com/backend-api/codex',
       spend: {
         custody: 'subscription',
+        renewal: 'app',
         provider: 'openai',
         accountId: codexPlanRow.id,
         credential,

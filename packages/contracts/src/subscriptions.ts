@@ -6,24 +6,36 @@ export const subscriptionProviderIdSchema = z.enum(['anthropic', 'openai', 'anti
 
 export type SubscriptionProviderId = z.infer<typeof subscriptionProviderIdSchema>;
 
+/**
+ * The tools each provider delegates to, and the runs those tools answer.
+ *
+ * @summary `renewArguments` names the run that makes a tool rotate the credential it owns and
+ * exit. Claude Code renews behind `auth status`, which reports the signed-in account and so has to
+ * hold a token the provider still accepts. Codex names none: `login status` and `doctor` both read
+ * the record without touching it, and only a spent turn renews, which is no price for a background
+ * refresh. An empty list means the app leaves such a credential exactly as it stands.
+ */
 export const subscriptionProviders = {
   anthropic: {
     toolBinary: 'claude',
     toolName: 'Claude Code',
     configHomeVariable: 'CLAUDE_CONFIG_DIR',
     signInArguments: [],
+    renewArguments: ['auth', 'status'],
   },
   openai: {
     toolBinary: 'codex',
     toolName: 'Codex',
     configHomeVariable: 'CODEX_HOME',
     signInArguments: ['login'],
+    renewArguments: [],
   },
   antigravity: {
     toolBinary: 'cliproxyapi',
     toolName: 'Gemini (Antigravity)',
     configHomeVariable: 'CLIPROXYAPI_HOME',
     signInArguments: ['--antigravity-login'],
+    renewArguments: [],
   },
 } as const satisfies Record<
   SubscriptionProviderId,
@@ -32,10 +44,22 @@ export const subscriptionProviders = {
     toolName: string;
     configHomeVariable: string;
     signInArguments: readonly string[];
+    renewArguments: readonly string[];
   }
 >;
 
 export const subscriptionStandingSchema = z.enum(['connected', 'lapsed']);
+
+/**
+ * Where a connected subscription account came from.
+ *
+ * @summary A sign-in the app ran lives in a config home the app alone reads, so the app renews it
+ * and offers to sign in again when it lapses. An account adopted from the machine belongs to the
+ * provider's own tool as well, so the app renews nothing and names that tool as the way back.
+ */
+export const subscriptionProvenanceSchema = z.enum(['sign-in', 'machine']);
+
+export type SubscriptionProvenance = z.infer<typeof subscriptionProvenanceSchema>;
 
 export const subscriptionAccountViewSchema = z.strictObject({
   id: nonBlankString,
@@ -45,9 +69,32 @@ export const subscriptionAccountViewSchema = z.strictObject({
   plan: nonBlankString.optional(),
   standing: subscriptionStandingSchema,
   active: z.boolean(),
+  provenance: subscriptionProvenanceSchema,
 });
 
 export type SubscriptionAccountView = z.infer<typeof subscriptionAccountViewSchema>;
+
+/**
+ * What the app found when it looked at the credential store the provider's own tool writes.
+ *
+ * @summary The four arms stay apart on purpose: a store that refused to open is not an empty
+ * machine, and a record carrying no account credential is not one either. No arm carries credential
+ * material, because this report crosses to the screen before a person has acted on it, and only an
+ * act may read the material itself.
+ */
+export const machineCredentialReadingSchema = z.discriminatedUnion('holds', [
+  z.strictObject({
+    holds: z.literal('account'),
+    signedInAs: nonBlankString.optional(),
+    plan: nonBlankString.optional(),
+    standing: subscriptionStandingSchema,
+  }),
+  z.strictObject({ holds: z.literal('nothing') }),
+  z.strictObject({ holds: z.literal('no-account-credential') }),
+  z.strictObject({ holds: z.literal('store-refused') }),
+]);
+
+export type MachineCredentialReading = z.infer<typeof machineCredentialReadingSchema>;
 
 export const subscriptionToolSchema = z.strictObject({
   provider: subscriptionProviderIdSchema,

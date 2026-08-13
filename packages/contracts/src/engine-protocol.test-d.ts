@@ -10,8 +10,10 @@ import type {
   GatewayEngineState,
   KeyCheckVerdict,
   KeyProviderId,
+  LookCustody,
   RuntimeReachability,
   SpendGrant,
+  SubscriptionProviderId,
 } from './index';
 
 type ProbeDirective = Extract<EngineDirective, { kind: 'probe' }>;
@@ -31,6 +33,8 @@ type CredentialedSpend = Extract<GrantedSpend, { custody: 'credentialed' }>;
 type OpenSpend = Extract<GrantedSpend, { custody: 'open' }>;
 
 type SubscriptionSpend = Extract<GrantedSpend, { custody: 'subscription' }>;
+
+type SubscriptionLook = Extract<LookCustody, { custody: 'subscription' }>;
 
 type RuntimeProbeDirective = Extract<EngineDirective, { kind: 'probe-runtime' }>;
 
@@ -219,8 +223,28 @@ describe('the spend a resolved grant authorizes', () => {
 
   test('a subscription spend carries the provider account and whole credential document', () => {
     expectTypeOf<keyof SubscriptionSpend>().toEqualTypeOf<
-      'custody' | 'provider' | 'accountId' | 'credential' | 'transportPolicy'
+      'custody' | 'provider' | 'accountId' | 'credential' | 'renewal' | 'transportPolicy'
     >();
+  });
+
+  test('a subscription spend names who renews its credential, and never leaves the answer out', () => {
+    expectTypeOf<SubscriptionSpend['renewal']>().toEqualTypeOf<'app' | 'owning-tool'>();
+    expectTypeOf<{
+      custody: 'subscription';
+      provider: SubscriptionProviderId;
+      accountId: string;
+      credential: string;
+    }>().not.toExtend<SubscriptionSpend>();
+  });
+
+  test('a look at a subscription carries the same renewal owner the spend does', () => {
+    expectTypeOf<SubscriptionLook['renewal']>().toEqualTypeOf<'app' | 'owning-tool'>();
+    expectTypeOf<keyof SubscriptionLook>().toEqualTypeOf<keyof SubscriptionSpend>();
+  });
+
+  test('no other spend names a renewal owner, because only a subscription credential expires', () => {
+    expectTypeOf<CredentialedSpend>().not.toHaveProperty('renewal');
+    expectTypeOf<OpenSpend>().not.toHaveProperty('renewal');
   });
 
   test('a refusal authorizes no spend', () => {

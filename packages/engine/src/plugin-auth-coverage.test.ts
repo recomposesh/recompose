@@ -56,6 +56,7 @@ describe('the account a plugin executor is billed against', () => {
   it('should name the account a subscription grant carries', () => {
     const grant = aResolvedGrant({
       custody: 'subscription',
+      renewal: 'app',
       provider: 'anthropic',
       accountId: 'acc-claude',
       credential: '{"access_token":"live"}',

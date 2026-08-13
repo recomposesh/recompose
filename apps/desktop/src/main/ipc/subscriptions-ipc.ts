@@ -13,9 +13,8 @@ import type { SubscriptionObservation } from '../subscriptions/subscription-stan
 import type { IpcHandlers } from './dispatch';
 import type { Answered, SubscriptionsIpcContext, Workshop } from './subscriptions-workshop';
 
-import { amendAccountsFile } from '../storage/accounts-store';
 import { oneAtATime } from '../storage/one-at-a-time';
-import { custodyOver, RESERVED_SLOT } from '../subscriptions/credential-custody';
+import { custodyOver } from '../subscriptions/credential-custody';
 import { signInCommandFor } from '../subscriptions/subscription-commands';
 import { subscriptionHomes } from '../subscriptions/subscription-homes';
 import { awaitSignIn } from '../subscriptions/subscription-sign-in';
@@ -25,9 +24,9 @@ import { reportTools } from '../subscriptions/tool-presence';
 import { storagePathsFor } from './storage-context';
 import { ipcFailure, storageFailure } from './storage-envelope';
 import {
-  parkUnder,
-  putBack,
+  settleUnder,
   readAccounts,
+  recordTheAccount,
   refusalFailure,
   toolPresent,
   viewsOf,
@@ -44,76 +43,77 @@ export type SubscriptionsIpcHandlers = Pick<
   | 'subscriptions:activate'
 >;
 
-async function makeRoomForTheSignIn(
-  custody: CredentialCustody | null,
-  previous: string,
-): Promise<Answered | null> {
-  const parked = await parkUnder(custody, previous);
-
-  if (!parked.ok) {
-    return refusalFailure(parked);
-  }
-
-  if (custody === null) {
-    return null;
-  }
-
-  const cleared = await custody.clear();
-
-  return cleared.ok ? null : refusalFailure(cleared);
-}
-
-type ToolRun = { landed: SubscriptionObservation | null; restored: CustodyOutcome };
+type ToolRun = { landed: SubscriptionObservation | null; reclaimed: CustodyOutcome };
 
 /**
- * Runs the provider's tool and hands back what it left behind, alongside how the restore went.
+ * Runs the provider's tool against a home of its own and hands back what it left behind.
  *
- * @summary The vendor slot stands empty from here until the tool fills it, so anything short of a
- * finished sign-in, a timeout as much as a broken run, has to put the parked credential back. A
- * restore the keychain refuses leaves nobody signed in, which is worse news than the timeout, so
- * the caller hears about it rather than the sign-in swallowing it.
+ * @summary Nothing here touches the item the person's own install reads. A modern tool names its
+ * keychain item after the home it was given, so a sign-in lands beside the person's login rather
+ * than on top of it. An older tool writes the person's item instead, which is why the run snapshots
+ * that item beforehand and, on a run that landed nothing, moves an unexpected write home and puts
+ * the snapshot back.
  */
 async function runTheTool(
   shop: Workshop,
   provider: SubscriptionProviderId,
   custody: CredentialCustody | null,
-  previous: string,
 ): Promise<ToolRun> {
-  let landed: SubscriptionObservation | null = null;
-  let restored: CustodyOutcome = { ok: true };
-
-  try {
-    const home = await shop.homes.resetPending(provider);
-
-    await shop.ctx
-      .launch(signInCommandFor({ provider, home, platform: shop.ctx.platform }))
-      .catch(() => undefined);
-
-    landed = await awaitSignIn({
-      observe: async () =>
-        observeSubscription({
-          provider,
-          home,
-          outsideCredential: custody === null ? null : async () => custody.vendorHolds(),
-        }),
-      clock: shop.ctx.clock(),
-      boundMs: shop.ctx.signInBoundMs,
-      everyMs: shop.ctx.signInEveryMs,
+  const snapshot = custody === null ? null : await custody.readMachineItem();
+  const home = await shop.homes.resetPending(provider);
+  const observe = async (): Promise<SubscriptionObservation> =>
+    observeSubscription({
+      provider,
+      home,
+      outsideCredential: custody === null ? null : async () => custody.readForHome(home),
     });
-  } finally {
-    if (landed === null) {
-      restored = await putBack(custody, previous);
-    }
+
+  await shop.ctx
+    .launch(signInCommandFor({ provider, home, platform: shop.ctx.platform }))
+    .catch(() => undefined);
+
+  const landed = await awaitSignIn({
+    observe,
+    clock: shop.ctx.clock(),
+    boundMs: shop.ctx.signInBoundMs,
+    everyMs: shop.ctx.signInEveryMs,
+  });
+
+  return landed !== null || custody === null
+    ? { landed, reclaimed: { ok: true } }
+    : reclaimAnOldToolsWrite({ custody, home, snapshot, observe });
+}
+
+type Reclaim = {
+  custody: CredentialCustody;
+  home: string;
+  snapshot: string | null;
+  observe: () => Promise<SubscriptionObservation>;
+};
+
+/**
+ * @summary An older tool writes the item the person's own install reads rather than one named
+ * after the home it was given. Nothing landed where the poll watched, so an item that changed
+ * under the run is that tool's work: it belongs to the home, and the person's login belongs back.
+ */
+async function reclaimAnOldToolsWrite(what: Reclaim): Promise<ToolRun> {
+  if ((await what.custody.readMachineItem()) === what.snapshot) {
+    return { landed: null, reclaimed: { ok: true } };
   }
 
-  return { landed, restored };
+  const reclaimed = await what.custody.reclaimMachineWrite(what.home, what.snapshot);
+
+  if (!reclaimed.ok) {
+    return { landed: null, reclaimed };
+  }
+
+  const observed = await what.observe();
+
+  return { landed: observed.standing === 'connected' ? observed : null, reclaimed };
 }
 
 async function keepTheAccount(shop: Workshop, row: SubscriptionAccount): Promise<AccountsDocument> {
-  const updated = await amendAccountsFile(shop.accountsFile, shop.ctx.onCorrupt, (accounts) => ({
-    ...accounts,
-    accounts: [...accounts.accounts.filter((one) => one.id !== row.id), row],
-  }));
+  const updated = await recordTheAccount(shop, row);
 
   await shop.homes.pointActiveAt(row.provider, row.id);
 
@@ -136,23 +136,26 @@ async function afterTheToolAnswers(
       observed.signedInAs,
     ));
   const id = held ?? `acc-${randomUUID()}`;
+  const pending = shop.homes.pendingHomeFor(provider);
 
   await shop.homes.promotePending(provider, id);
 
-  const parked = await parkUnder(custody, id);
+  const settled = await settleUnder(custody, pending, shop.homes.homeFor(provider, id));
 
-  if (!parked.ok) {
-    return refusalFailure(parked);
+  if (!settled.ok) {
+    return refusalFailure(settled);
   }
 
   const label = observed.signedInAs ?? subscriptionProviders[provider].toolName;
-  const kept = await keepTheAccount(shop, { id, provider, kind: 'subscription', label });
+  const kept = await keepTheAccount(shop, {
+    id,
+    provider,
+    kind: 'subscription',
+    label,
+    provenance: 'sign-in',
+  });
 
   return { ok: true, value: await viewsOf(shop, kept) };
-}
-
-async function activeSlot(shop: Workshop, provider: SubscriptionProviderId): Promise<string> {
-  return (await shop.homes.readActive(provider)) ?? RESERVED_SLOT;
 }
 
 async function signIn(
@@ -170,17 +173,10 @@ async function signIn(
   }
 
   const custody = custodyOver(shop.ctx.custody, provider);
-  const previous = await activeSlot(shop, provider);
-  const refused = await makeRoomForTheSignIn(custody, previous);
+  const { landed, reclaimed } = await runTheTool(shop, provider, custody);
 
-  if (refused !== null) {
-    return refused;
-  }
-
-  const { landed, restored } = await runTheTool(shop, provider, custody, previous);
-
-  if (!restored.ok) {
-    return refusalFailure(restored);
+  if (!reclaimed.ok) {
+    return refusalFailure(reclaimed);
   }
 
   if (landed === null) {
@@ -205,16 +201,6 @@ async function activate(shop: Workshop, id: string): Promise<Answered> {
 
   if (row === null) {
     return ipcFailure('storage-failed', `no subscription account is held under ${id}.`);
-  }
-
-  const custody = custodyOver(shop.ctx.custody, row.provider);
-
-  if (custody !== null) {
-    const handed = await custody.handOver(await shop.homes.readActive(row.provider), id);
-
-    if (!handed.ok) {
-      return refusalFailure(handed);
-    }
   }
 
   await shop.homes.pointActiveAt(row.provider, id);

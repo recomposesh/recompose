@@ -50,6 +50,7 @@ export const planRow: SubscriptionAccount = {
   id: 'acc-plan',
   provider: 'anthropic',
   kind: 'subscription',
+  provenance: 'sign-in',
   label: 'Max',
 };
 
@@ -57,6 +58,7 @@ export const codexPlanRow: SubscriptionAccount = {
   id: 'acc-codex-plan',
   provider: 'openai',
   kind: 'subscription',
+  provenance: 'sign-in',
   label: 'Plus',
 };
 
@@ -147,5 +149,6 @@ export function contextFor(userDataPath: string): SpendGrantContext {
     getCodec: () => fakeCodec,
     onCorrupt: () => undefined,
     readSubscriptionCredential: subscriptionCredentialStore(userDataPath, 'linux', null).read,
+    readAdoptedCredential: async () => Promise.resolve(null),
   };
 }

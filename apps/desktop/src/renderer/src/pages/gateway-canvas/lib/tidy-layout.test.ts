@@ -8,7 +8,13 @@ import type { CanvasNode, CanvasNodeKind } from './node-graph';
 
 import { seatForNewNode, tidyPositions } from './tidy-layout';
 
-const work: Account = { id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Work' };
+const work: Account = {
+  id: 'a1',
+  provider: 'anthropic',
+  kind: 'subscription',
+  provenance: 'sign-in',
+  label: 'Work',
+};
 
 const nodeOfKind: Record<CanvasNodeKind, (id: string) => CanvasNode> = {
   gateway: (id) => ({ id, kind: 'gateway', displayName: 'Codex', port: 8397 }),

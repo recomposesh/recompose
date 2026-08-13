@@ -27,7 +27,6 @@ import { pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
 import { registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { createStorageIpcHandlers } from './ipc/storage-ipc';
-import { createSubscriptionsIpcHandlers } from './ipc/subscriptions-ipc';
 import { createSystemIpcHandlers } from './ipc/system-ipc';
 import { createUsageIpcHandlers, type UsageIpcDeps } from './ipc/usage-ipc';
 import { bootAppMenu } from './menu/app-menu-boot';
@@ -43,7 +42,10 @@ import { createSafeStorageCodec } from './storage/safe-storage-codec';
 import { subscriptionCredentialStore } from './subscriptions/subscription-credential-store';
 import { subscriptionHomes } from './subscriptions/subscription-homes';
 import { subscriptionRelease } from './subscriptions/subscription-release';
-import { subscriptionsContext } from './subscriptions/subscriptions-wiring';
+import {
+  adoptedCredentialFor,
+  subscriptionIpcHandlers,
+} from './subscriptions/subscriptions-wiring';
 import { fileBrowserFor } from './system/file-browser';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, isMenuBarTrayVisible, showMenuBarTray } from './tray/menu-bar-tray';
@@ -130,6 +132,7 @@ function storageReach(custody: CredentialCustody | null = null): SpendGrantConte
     onCorrupt: onStorageCorrupt,
     readSubscriptionCredential: subscriptionCredentialStore(userDataPath, process.platform, custody)
       .read,
+    readAdoptedCredential: adoptedCredentialFor(app.getPath('home'), custody),
   };
 }
 
@@ -183,9 +186,7 @@ function assembleIpcHandlers(
   const homeFolder = app.getPath('home');
 
   return {
-    ...createSubscriptionsIpcHandlers(
-      subscriptionsContext({ userDataPath, homeFolder, custody, onCorrupt: onStorageCorrupt }),
-    ),
+    ...subscriptionIpcHandlers({ userDataPath, homeFolder, custody, onCorrupt: onStorageCorrupt }),
     ...createEngineIpcHandlers({
       host: engineHost,
       userDataPath,

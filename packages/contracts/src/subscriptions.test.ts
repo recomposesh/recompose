@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   subscriptionAccountViewSchema,
+  subscriptionProvenanceSchema,
   subscriptionProviderIdSchema,
   subscriptionProviders,
   subscriptionStandingSchema,
@@ -16,6 +17,7 @@ const connectedView = {
   plan: 'Max',
   standing: 'connected',
   active: true,
+  provenance: 'sign-in',
 };
 
 const presentTool = {
@@ -43,6 +45,7 @@ describe('the tool that performs each sign-in', () => {
       toolName: 'Claude Code',
       configHomeVariable: 'CLAUDE_CONFIG_DIR',
       signInArguments: [],
+      renewArguments: ['auth', 'status'],
     });
   });
 
@@ -52,6 +55,7 @@ describe('the tool that performs each sign-in', () => {
       toolName: 'Codex',
       configHomeVariable: 'CODEX_HOME',
       signInArguments: ['login'],
+      renewArguments: [],
     });
   });
 
@@ -60,6 +64,16 @@ describe('the tool that performs each sign-in', () => {
       expect(subscriptionProviders[provider].toolBinary).not.toBe('');
       expect(subscriptionProviders[provider].configHomeVariable).not.toBe('');
     }
+  });
+});
+
+describe('the tool run that hands a renewal back to the credential’s owner', () => {
+  test('Claude Code renews behind the command that reports who is signed in', () => {
+    expect(subscriptionProviders.anthropic.renewArguments).toEqual(['auth', 'status']);
+  });
+
+  test('Codex names no run, because none of its commands renews without spending a turn', () => {
+    expect(subscriptionProviders.openai.renewArguments).toEqual([]);
   });
 });
 
@@ -111,6 +125,37 @@ describe('the view a subscription row renders from', () => {
     expect(() =>
       subscriptionAccountViewSchema.parse({ ...connectedView, standing: 'connecting' }),
     ).toThrow();
+  });
+});
+
+describe('where the row says its account came from', () => {
+  test('a view the app signed in reports the sign-in it came from', () => {
+    const signedIn = { ...connectedView, provenance: 'sign-in' };
+
+    expect(subscriptionAccountViewSchema.parse(signedIn)).toEqual(signedIn);
+  });
+
+  test('a view the app adopted reports the machine it came from', () => {
+    const adopted = { ...connectedView, provenance: 'machine' };
+
+    expect(subscriptionAccountViewSchema.parse(adopted)).toEqual(adopted);
+  });
+
+  test('a view saying nothing about where it came from is refused, because every row reports it', () => {
+    const { provenance, ...withoutTheOrigin } = connectedView;
+
+    expect(provenance).toBe('sign-in');
+    expect(() => subscriptionAccountViewSchema.parse(withoutTheOrigin)).toThrow();
+  });
+
+  test('an origin outside the pair is refused', () => {
+    expect(() =>
+      subscriptionAccountViewSchema.parse({ ...connectedView, provenance: 'keychain' }),
+    ).toThrow();
+  });
+
+  test('the vocabulary names the sign-in and the machine, and nothing else', () => {
+    expect(subscriptionProvenanceSchema.options).toEqual(['sign-in', 'machine']);
   });
 });
 

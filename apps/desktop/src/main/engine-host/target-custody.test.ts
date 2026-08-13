@@ -58,6 +58,7 @@ describe('the model policy a resolved target carries', () => {
         providerOrigin: 'https://api.anthropic.com',
         custody: {
           custody: 'subscription',
+          renewal: 'app',
           provider: 'anthropic',
           accountId: planRow.id,
           credential,

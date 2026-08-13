@@ -62,6 +62,7 @@ function grantExpiredSubscription(parent: Parent, answers: string): void {
       providerOrigin: 'https://api.anthropic.com',
       spend: {
         custody: 'subscription',
+        renewal: 'app',
         provider: 'anthropic',
         accountId: 'acc-claude',
         credential: anExpiredCredential(),

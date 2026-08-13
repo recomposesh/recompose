@@ -21,6 +21,7 @@ const connected: SubscriptionAccountView = {
   signedInAs: 'dev@example.com',
   plan: 'Max',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 

@@ -30,6 +30,7 @@ function grantFor(provider: Custody): ResolvedGrant {
     providerOrigin: 'https://example.test',
     spend: {
       custody: 'subscription',
+      renewal: 'app',
       provider,
       accountId: 'account-1',
       credential: credentials[provider],

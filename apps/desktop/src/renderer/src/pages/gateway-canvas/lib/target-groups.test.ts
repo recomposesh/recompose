@@ -7,7 +7,7 @@ import { targetGroups } from './target-groups';
 type StoredAccounts = AccountsDocument['accounts'];
 
 const everyKind: StoredAccounts = [
-  { id: 's1', provider: 'anthropic', kind: 'subscription', label: 'Claude' },
+  { id: 's1', provider: 'anthropic', kind: 'subscription', provenance: 'sign-in', label: 'Claude' },
   { id: 'k1', provider: 'anthropic', kind: 'api-key', label: 'Work key', credentialRef: 'c1' },
   { id: 'g1', provider: 'openrouter', kind: 'aggregator', label: 'Router', credentialRef: 'c2' },
   { id: 'l1', provider: 'ollama', kind: 'local', address: 'http://127.0.0.1:11434' },

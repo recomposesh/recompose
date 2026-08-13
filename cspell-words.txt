@@ -17,6 +17,7 @@ amsg
 anchore
 andrej
 aoede
+apikey
 APPIMAGE
 asar
 Attio

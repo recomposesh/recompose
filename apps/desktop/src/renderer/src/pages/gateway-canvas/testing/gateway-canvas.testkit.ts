@@ -18,6 +18,7 @@ const claudeSubscription: Account = {
   id: 's1',
   provider: 'anthropic',
   kind: 'subscription',
+  provenance: 'sign-in',
   label: 'Claude',
 };
 

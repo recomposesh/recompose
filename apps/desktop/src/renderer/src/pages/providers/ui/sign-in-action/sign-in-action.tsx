@@ -1,7 +1,8 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
 import { useSignInSubscription } from '../../../../shared/api';
-import { CopyButton, SheetActionSlot } from '../../../../shared/ui';
+import { SheetActionSlot } from '../../../../shared/ui';
+import { WaitingOnTheTool } from '../waiting-on-the-tool/waiting-on-the-tool';
 
 type SignInActionProps = {
   name: string;
@@ -9,6 +10,12 @@ type SignInActionProps = {
   onConnected: () => void;
   toolName: string;
   command: string;
+  /**
+   * @summary True when the machine already holds an account, so this act stops being the way in
+   * and becomes the second choice. At this width that reads as a quiet act in place rather than
+   * the sheet's primary button.
+   */
+  quieter?: boolean;
 };
 
 /** The act that hands the sign-in to the provider's tool, and the waiting it turns into. */
@@ -17,24 +24,13 @@ export function SignInAction({
   provider,
   toolName,
   command,
+  quieter = false,
   onConnected,
 }: SignInActionProps) {
   const signIn = useSignInSubscription();
 
   if (signIn.isPending) {
-    return (
-      <div className="flex flex-col gap-1.5">
-        <p className="text-detail text-ink-secondary">
-          Waiting for {toolName} to finish signing in.
-        </p>
-        <div className="flex min-w-0 items-start gap-2 rounded-control border border-line-faint bg-surface-card px-2.5 py-2">
-          <code className="min-w-0 flex-1 font-mono text-mono-caption break-all whitespace-pre-wrap text-ink">
-            {command}
-          </code>
-          <CopyButton label={`Copy the ${toolName} sign-in command`} value={command} />
-        </div>
-      </div>
-    );
+    return <WaitingOnTheTool command={command} toolName={toolName} />;
   }
 
   return (
@@ -44,17 +40,29 @@ export function SignInAction({
           {signIn.refusal}
         </p>
       )}
-      <SheetActionSlot>
+      {quieter ? (
         <button
-          className="push-button-primary focus-ring"
+          className="focus-ring text-detail text-ink-secondary underline underline-offset-2"
           onClick={() => {
             signIn.mutate({ provider }, { onSuccess: onConnected });
           }}
           type="button"
         >
-          Sign in to {name}
+          Sign in with a different account
         </button>
-      </SheetActionSlot>
+      ) : (
+        <SheetActionSlot>
+          <button
+            className="push-button-primary focus-ring"
+            onClick={() => {
+              signIn.mutate({ provider }, { onSuccess: onConnected });
+            }}
+            type="button"
+          >
+            Sign in to {name}
+          </button>
+        </SheetActionSlot>
+      )}
     </>
   );
 }

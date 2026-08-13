@@ -14,7 +14,13 @@ async function anAccountsFile(): Promise<string> {
     JSON.stringify({
       schemaVersion: ACCOUNTS_VERSION,
       accounts: [
-        { id: 'sub-1', provider: 'anthropic', kind: 'subscription', label: 'Personal' },
+        {
+          id: 'sub-1',
+          provider: 'anthropic',
+          kind: 'subscription',
+          label: 'Personal',
+          provenance: 'sign-in',
+        },
         {
           id: 'key-1',
           provider: 'anthropic',

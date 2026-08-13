@@ -13,6 +13,7 @@ const subscriptionRow = {
   provider: 'anthropic',
   kind: 'subscription',
   label: 'Claude Max',
+  provenance: 'sign-in',
 };
 
 const keyRow = {
@@ -39,7 +40,7 @@ const localRow = {
 };
 
 describe('the row the accounts registry stores', () => {
-  test('a subscription row parses carrying identity alone', () => {
+  test('a subscription row parses carrying identity and where its account came from', () => {
     const stored = { schemaVersion: ACCOUNTS_VERSION, accounts: [subscriptionRow] };
 
     expect(loadAccountsDocument(stored)).toEqual(stored);

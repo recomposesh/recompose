@@ -21,7 +21,13 @@ const ollama: LocalAccount = {
 };
 
 function subscription(provider: SubscriptionAccount['provider']): SubscriptionAccount {
-  return { id: `acc-${provider}`, provider, kind: 'subscription', label: provider };
+  return {
+    id: `acc-${provider}`,
+    provider,
+    kind: 'subscription',
+    provenance: 'sign-in',
+    label: provider,
+  };
 }
 
 describe('the origin a target account is spent against', () => {

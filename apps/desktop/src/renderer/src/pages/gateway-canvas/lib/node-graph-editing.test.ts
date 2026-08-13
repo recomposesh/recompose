@@ -9,7 +9,13 @@ import type { CanvasOverlay } from './node-graph';
 import { gatewayDefining, gatewayRebinding, gatewayReleasing } from './model-draft';
 import { canvasGraph } from './node-graph';
 
-const work: Account = { id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Work' };
+const work: Account = {
+  id: 'a1',
+  provider: 'anthropic',
+  kind: 'subscription',
+  provenance: 'sign-in',
+  label: 'Work',
+};
 
 const bare: GatewayConfig = {
   schemaVersion: GATEWAY_CONFIG_VERSION,

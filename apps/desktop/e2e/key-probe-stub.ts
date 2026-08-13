@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { createServer } from 'node:http';
 
+import { controlPlaneBodyFor } from './control-plane-stub';
 import { bindToAFreePort } from './loopback-ports';
 
 const MODELS_PATH = '/v1/models';
@@ -158,6 +159,43 @@ async function answerTheTurn(
   response.end(bodyFor(model));
 }
 
+function answerWith(response: ServerResponse, body: string): void {
+  response.writeHead(ACCEPTED, { 'content-type': 'application/json' });
+  response.end(body);
+}
+
+/**
+ * @summary A vendor is asked under a path that may carry a query, because Claude names its beta
+ * there, so the route is decided by the path alone rather than by the whole line.
+ */
+function pathAsked(request: IncomingMessage): string {
+  return new URL(request.url ?? '/', 'http://stand-in').pathname;
+}
+
+async function answerWhatWasAskedFor(
+  desk: ProviderDesk,
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  const path = pathAsked(request);
+
+  if (path === MODELS_PATH) {
+    answerTheLook(desk, response);
+
+    return;
+  }
+
+  if (path === CHAT_TURN_PATH) {
+    return answerTheTurn(desk, request, response, chatTurnAnswerBody);
+  }
+
+  if (path === MESSAGES_TURN_PATH) {
+    return answerTheTurn(desk, request, response, messagesTurnAnswerBody);
+  }
+
+  response.writeHead(NOTHING_THERE).end();
+}
+
 async function answerAsked(
   desk: ProviderDesk,
   request: IncomingMessage,
@@ -169,21 +207,15 @@ async function answerAsked(
     return;
   }
 
-  if (request.url === MODELS_PATH) {
-    answerTheLook(desk, response);
+  const controlPlane = controlPlaneBodyFor(pathAsked(request));
+
+  if (controlPlane !== null) {
+    answerWith(response, controlPlane);
 
     return;
   }
 
-  if (request.url === CHAT_TURN_PATH) {
-    return answerTheTurn(desk, request, response, chatTurnAnswerBody);
-  }
-
-  if (request.url === MESSAGES_TURN_PATH) {
-    return answerTheTurn(desk, request, response, messagesTurnAnswerBody);
-  }
-
-  response.writeHead(NOTHING_THERE).end();
+  return answerWhatWasAskedFor(desk, request, response);
 }
 
 /**

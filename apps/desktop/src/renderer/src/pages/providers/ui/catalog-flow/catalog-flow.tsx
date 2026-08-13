@@ -26,7 +26,7 @@ function connectStepFor(
 }
 
 const descriptions: Record<AccountKind, string> = {
-  subscription: 'Sign in with a plan you already pay for.',
+  subscription: 'Connect the plan this machine already signs into, or sign in with another.',
   'api-key': "Paste a key for one provider's endpoint.",
   aggregator: 'One key, many models, routed through a hosted catalog.',
   local: 'Servers this machine already runs.',

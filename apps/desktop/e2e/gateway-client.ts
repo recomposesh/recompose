@@ -5,11 +5,24 @@ export type GatewayAnswer = {
   body: unknown;
 };
 
+/**
+ * @summary A gateway that answers nothing, or answers words rather than a document, is a failure a
+ * scenario has to be able to read. Parsing eagerly would throw before any assertion ran, and the
+ * message would name the parser rather than what came back.
+ */
+function bodyIn(said: string): unknown {
+  try {
+    return JSON.parse(said);
+  } catch {
+    return said;
+  }
+}
+
 async function answerOf(answer: Response): Promise<GatewayAnswer> {
   return {
     status: answer.status,
     contentType: answer.headers.get('content-type') ?? '',
-    body: await answer.json(),
+    body: bodyIn(await answer.text()),
   };
 }
 

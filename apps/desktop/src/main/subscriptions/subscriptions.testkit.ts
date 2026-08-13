@@ -1,7 +1,8 @@
 import type { CustodyOutcome, KeychainItem, KeychainSeam } from './credential-custody';
 import type { Clock } from './subscription-sign-in';
 
-import { KeychainDenied, PARKED_SERVICE, VENDOR_SERVICE } from './credential-custody';
+import { KeychainDenied } from './credential-custody';
+import { homeVendorItem, machineVendorItem } from './vendor-item';
 
 export const osUser = 'ada';
 
@@ -36,12 +37,12 @@ export function refusalIn(outcome: CustodyOutcome): { code: string; message: str
   return outcome;
 }
 
-export function vendorHolding(blob: string): Record<string, string> {
-  return { [shelf({ service: VENDOR_SERVICE, account: osUser })]: blob };
+export function machineHolding(blob: string): Record<string, string> {
+  return { [shelf(machineVendorItem(osUser))]: blob };
 }
 
-export function parkedUnder(slot: string, blob: string): Record<string, string> {
-  return { [shelf({ service: PARKED_SERVICE, account: slot })]: blob };
+export function homeHolding(home: string, blob: string): Record<string, string> {
+  return { [shelf(homeVendorItem(home, osUser))]: blob };
 }
 
 function refusalGate(refuse: Refusal | undefined) {

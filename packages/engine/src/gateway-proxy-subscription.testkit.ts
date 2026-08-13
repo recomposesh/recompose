@@ -21,6 +21,7 @@ export function subscriptionGrant(
     providerOrigin: subscriptionOrigin(provider),
     spend: {
       custody: 'subscription',
+      renewal: 'app',
       provider,
       accountId: `acc-${provider}`,
       credential,

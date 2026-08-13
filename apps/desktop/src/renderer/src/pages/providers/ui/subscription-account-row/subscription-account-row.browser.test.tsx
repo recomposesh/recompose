@@ -27,6 +27,7 @@ const connected: SubscriptionAccountView = {
   signedInAs: 'dev@example.com',
   plan: 'Max',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 
@@ -155,7 +156,15 @@ test('removing an account takes it out of the registry it was held in', async ()
   await renderRow(connected, {
     accounts: {
       schemaVersion: ACCOUNTS_VERSION,
-      accounts: [{ id: 's1', kind: 'subscription', label: 'Anthropic', provider: 'anthropic' }],
+      accounts: [
+        {
+          id: 's1',
+          kind: 'subscription',
+          provenance: 'sign-in',
+          label: 'Anthropic',
+          provider: 'anthropic',
+        },
+      ],
     },
   });
 

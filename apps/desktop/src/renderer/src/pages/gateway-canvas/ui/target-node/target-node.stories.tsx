@@ -51,7 +51,13 @@ const subscribed: TargetNodeData = {
   id: 'target:a2',
   kind: 'target',
   modelId: 'fast',
-  account: { id: 'a2', provider: 'openai', kind: 'subscription', label: 'Codex account' },
+  account: {
+    id: 'a2',
+    provider: 'openai',
+    kind: 'subscription',
+    provenance: 'sign-in',
+    label: 'Codex account',
+  },
   detail: 'dev@example.com',
 };
 

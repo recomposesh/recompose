@@ -42,7 +42,7 @@ export async function reachCodexCompact(
     grant.spend.transportPolicy,
   );
 
-  if (!shouldRefreshUnauthorized(answer, ready.credential)) return answer;
+  if (!shouldRefreshUnauthorized(answer, ready.credential, grant.spend.renewal)) return answer;
 
   const retried = await refreshedAndPersisted(grant.spend, ready.blob, runtime);
 

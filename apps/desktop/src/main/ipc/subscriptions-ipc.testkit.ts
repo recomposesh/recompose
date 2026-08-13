@@ -14,7 +14,7 @@ import type { FakeKeychain } from '../subscriptions/subscriptions.testkit';
 import type { SubscriptionsIpcContext, SubscriptionsIpcHandlers } from './subscriptions-ipc';
 
 import { loadAccountsFile, saveAccountsFile } from '../storage/accounts-store';
-import { credentialCustody, VENDOR_SERVICE } from '../subscriptions/credential-custody';
+import { credentialCustody } from '../subscriptions/credential-custody';
 import { subscriptionHomes } from '../subscriptions/subscription-homes';
 import {
   aClaudeLogin,
@@ -22,6 +22,7 @@ import {
   fakeKeychain,
   osUser,
 } from '../subscriptions/subscriptions.testkit';
+import { homeVendorItem } from '../subscriptions/vendor-item';
 
 type Launch = SubscriptionsIpcContext['launch'];
 
@@ -77,6 +78,12 @@ function contextIn(
     homeFolder: '/Users/ada',
     platform,
     custody: platform === 'darwin' ? credentialCustody(keychain.seam, osUser) : null,
+    machine: {
+      homeFolder: '/Users/ada',
+      platform,
+      custody: platform === 'darwin' ? credentialCustody(keychain.seam, osUser) : null,
+      keyringHolds: null,
+    },
     searchPath: async () => Promise.resolve(binFolder),
     launch,
     clock: fakeClock,
@@ -129,7 +136,7 @@ export async function aFreshWorld(): Promise<SubscriptionsWorld> {
       );
 
       if (provider === 'anthropic') {
-        keychain.put(VENDOR_SERVICE, osUser, aClaudeLogin);
+        keychain.put(homeVendorItem(pending, osUser).service, osUser, aClaudeLogin);
       }
     },
 

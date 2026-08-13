@@ -7,7 +7,13 @@ import type { CableStanding, CanvasEdge, CanvasGraph, CanvasOverlay } from './no
 
 import { canvasGraph } from './node-graph';
 
-const work: Account = { id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Work' };
+const work: Account = {
+  id: 'a1',
+  provider: 'anthropic',
+  kind: 'subscription',
+  provenance: 'sign-in',
+  label: 'Work',
+};
 
 const fast: VirtualModel = {
   id: 'fast',

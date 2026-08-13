@@ -1,4 +1,5 @@
 import type {
+  MachineCredentialReading,
   IpcChannel,
   RecomposeIpc,
   SubscriptionAccountView,
@@ -22,6 +23,7 @@ export const connectedSubscription: SubscriptionAccountView = {
   signedInAs: 'dev@example.com',
   plan: 'Max',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 
@@ -36,33 +38,40 @@ export function subscriptionHandlers(
   seededViews: readonly SubscriptionAccountView[],
   seededTools: readonly SubscriptionTool[],
   onAccountLanded?: (id: string, provider: SubscriptionAccountView['provider']) => void,
+  seededReading?: MachineCredentialReading,
 ): SubscriptionHandlers {
   let held = [...seededViews];
   let nextSubscriptionNumber = held.length + 1;
 
   const asHeld = async () => Promise.resolve({ ok: true as const, value: held });
 
+  const land = async (
+    provider: SubscriptionAccountView['provider'],
+    provenance: SubscriptionAccountView['provenance'],
+  ) => {
+    const id = `s${nextSubscriptionNumber}`;
+
+    nextSubscriptionNumber += 1;
+    onAccountLanded?.(id, provider);
+    held = [
+      ...held,
+      {
+        id,
+        provider,
+        label: subscriptionProviders[provider].toolName,
+        standing: 'connected',
+        provenance,
+        active: held.length === 0,
+      },
+    ];
+
+    return asHeld();
+  };
+
   return {
     'subscriptions:list': asHeld,
     'subscriptions:tools': async () => Promise.resolve({ ok: true, value: [...seededTools] }),
-    'subscriptions:sign-in': async ({ provider }) => {
-      const id = `s${nextSubscriptionNumber}`;
-
-      nextSubscriptionNumber += 1;
-      onAccountLanded?.(id, provider);
-      held = [
-        ...held,
-        {
-          id,
-          provider,
-          label: subscriptionProviders[provider].toolName,
-          standing: 'connected',
-          active: held.length === 0,
-        },
-      ];
-
-      return asHeld();
-    },
+    'subscriptions:sign-in': async ({ provider }) => land(provider, 'sign-in'),
     'subscriptions:restore': async ({ id }) => {
       held = held.map((view) => (view.id === id ? { ...view, standing: 'connected' } : view));
 
@@ -73,5 +82,8 @@ export function subscriptionHandlers(
 
       return asHeld();
     },
+    'subscriptions:detect': async () =>
+      Promise.resolve({ ok: true, value: seededReading ?? { holds: 'nothing' } }),
+    'subscriptions:adopt': async ({ provider }) => land(provider, 'machine'),
   };
 }

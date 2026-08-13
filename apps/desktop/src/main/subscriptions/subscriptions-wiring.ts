@@ -1,14 +1,32 @@
+import type { SubscriptionProviderId } from '@recompose/contracts';
+
 import { app } from 'electron';
+import { realpath } from 'node:fs/promises';
 import { userInfo } from 'node:os';
+import { join } from 'node:path';
 
 import type { SubscriptionsIpcContext } from '../ipc/subscriptions-ipc';
-import type { CredentialCustody } from './credential-custody';
+import type { SubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
+import type { SubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
+import type { CredentialCustody, KeychainSeam } from './credential-custody';
+import type { MachineReach } from './machine-store';
 
+import { storagePathsFor } from '../ipc/storage-context';
+import { createSubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
+import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
+import { loadAccountsFile } from '../storage/accounts-store';
+import { oneAtATime } from '../storage/one-at-a-time';
+import { adoptedCredentialReader } from './adopted-credential';
 import { credentialCustody } from './credential-custody';
+import { keychainCarriedOnce, repairCustody } from './custody-repair';
 import { loginShellPath } from './login-shell-path';
 import { securityKeychain } from './macos-keychain';
+import { runCommand } from './run-command';
 import { terminalSignInLaunch } from './sign-in-launch';
+import { subscriptionHomes } from './subscription-homes';
 import { wallClock } from './subscription-sign-in';
+import { toolFileFor } from './tool-presence';
+import { codexVendorItem } from './vendor-item';
 
 const SIGN_IN_BOUND_MS = 5 * 60 * 1000;
 const SIGN_IN_EVERY_MS = 1_000;
@@ -32,13 +50,73 @@ export type SubscriptionsWiring = {
   onCorrupt: (quarantinedPath: string) => void;
 };
 
-export function machineCustody(): CredentialCustody | null {
-  return process.platform === 'darwin'
-    ? credentialCustody(
-        securityKeychain(substituteFor('RECOMPOSE_KEYCHAIN_COMMAND') ?? SECURITY_COMMAND),
-        userInfo().username,
-      )
-    : null;
+function machineSeam(): KeychainSeam {
+  return securityKeychain(substituteFor('RECOMPOSE_KEYCHAIN_COMMAND') ?? SECURITY_COMMAND);
+}
+
+/**
+ * @summary Codex hashes the resolved path of its config home to name the keyring entry, and falls
+ * back to the path as written when it cannot resolve one, so reading that entry has to resolve the
+ * same way or it asks for an entry nothing ever wrote.
+ */
+async function codexHomeAsCodexSeesIt(machineHome: string): Promise<string> {
+  const home = join(machineHome, '.codex');
+
+  return realpath(home).catch(() => home);
+}
+
+/**
+ * Everything the machine's own stores are reached through, wired once for every reader.
+ *
+ * @summary Detection, the row a screen reads, and every serving turn all ask the same stores, so
+ * one reach answers all three and none of them can drift from the others.
+ */
+function machineReachFor(homeFolder: string, custody: CredentialCustody | null): MachineReach {
+  const machineHome = substituteFor('RECOMPOSE_FAKE_MACHINE_HOME') ?? homeFolder;
+
+  return {
+    homeFolder: machineHome,
+    platform: process.platform,
+    custody,
+    keyringHolds:
+      process.platform === 'darwin'
+        ? async () => machineSeam().read(codexVendorItem(await codexHomeAsCodexSeesIt(machineHome)))
+        : null,
+  };
+}
+
+/**
+ * @summary An install written before each home owned its item carries on the first custody read,
+ * so the person's own login goes back rather than staying under this app's chain.
+ */
+export function machineCustody(userDataPath: string): CredentialCustody | null {
+  if (process.platform !== 'darwin') {
+    return null;
+  }
+
+  const osUser = userInfo().username;
+  const seam = machineSeam();
+  const homes = subscriptionHomes(userDataPath, process.platform);
+  const accountsFile = storagePathsFor(userDataPath).accountsFile;
+  const anthropicRows = async (): Promise<readonly string[]> =>
+    loadAccountsFile(accountsFile, () => undefined).then((held) =>
+      held.accounts.flatMap((row) =>
+        row.kind === 'subscription' && row.provider === 'anthropic' ? [row.id] : [],
+      ),
+    );
+
+  return credentialCustody(
+    keychainCarriedOnce(seam, async () =>
+      repairCustody({
+        keychain: seam,
+        osUser,
+        homeFor: (id) => homes.homeFor('anthropic', id),
+        accountIds: anthropicRows,
+        activeId: async () => homes.readActive('anthropic'),
+      }),
+    ),
+    osUser,
+  );
 }
 
 async function toolSearchPath(): Promise<string> {
@@ -50,12 +128,13 @@ async function toolSearchPath(): Promise<string> {
   });
 }
 
-export function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcContext {
+function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcContext {
   return {
     userDataPath: wiring.userDataPath,
     homeFolder: wiring.homeFolder,
     platform: process.platform,
     custody: wiring.custody,
+    machine: machineReachFor(wiring.homeFolder, wiring.custody),
     searchPath: toolSearchPath,
     launch: terminalSignInLaunch(process.platform, substituteFor('RECOMPOSE_SIGN_IN_LAUNCHER')),
     clock: wallClock,
@@ -63,4 +142,44 @@ export function subscriptionsContext(wiring: SubscriptionsWiring): Subscriptions
     signInEveryMs: SIGN_IN_EVERY_MS,
     onCorrupt: wiring.onCorrupt,
   };
+}
+
+/**
+ * @summary Both subscription handler sets share one context and one write lane, so a sign-in and
+ * an adoption never record an account at the same moment.
+ */
+export function subscriptionIpcHandlers(
+  wiring: SubscriptionsWiring,
+): SubscriptionsIpcHandlers & SubscriptionsMachineIpcHandlers {
+  const ctx = subscriptionsContext({
+    ...wiring,
+    homeFolder: substituteFor('RECOMPOSE_FAKE_MACHINE_HOME') ?? wiring.homeFolder,
+  });
+
+  return {
+    ...createSubscriptionsIpcHandlers(ctx),
+    ...createSubscriptionsMachineIpcHandlers(ctx, oneAtATime()),
+  };
+}
+
+const RENEWAL_BOUND_MS = 60_000;
+
+/**
+ * Reads what a provider's own tool holds, renewing through that tool near expiry.
+ *
+ * @summary The app keeps no copy of an adopted credential, so every serving turn reads the live
+ * store. A run that renews nothing leaves the credential exactly as it stands.
+ */
+export function adoptedCredentialFor(
+  homeFolder: string,
+  custody: CredentialCustody | null,
+): (provider: SubscriptionProviderId) => Promise<string | null> {
+  return adoptedCredentialReader({
+    reach: machineReachFor(homeFolder, custody),
+    toolFile: async (provider) => toolFileFor(provider, await toolSearchPath(), process.platform),
+    runTool: async (toolFile, args) => {
+      await runCommand(toolFile, [...args], RENEWAL_BOUND_MS);
+    },
+    now: Date.now,
+  });
 }

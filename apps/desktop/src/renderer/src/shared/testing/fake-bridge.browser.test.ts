@@ -42,6 +42,7 @@ const claudeMax: SubscriptionAccountView = {
   signedInAs: 'dev@example.com',
   plan: 'Max',
   standing: 'connected',
+  provenance: 'sign-in',
   active: true,
 };
 
@@ -218,7 +219,7 @@ test('signing in leaves a connected account behind for the provider it signed in
   await window.recompose['subscriptions:sign-in']({ provider: 'openai' });
 
   expect(await heldSubscriptions()).toMatchObject([
-    { provider: 'openai', standing: 'connected', active: true },
+    { provider: 'openai', standing: 'connected', provenance: 'sign-in', active: true },
   ]);
 });
 

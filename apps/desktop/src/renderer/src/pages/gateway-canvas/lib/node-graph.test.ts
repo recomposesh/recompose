@@ -15,9 +15,21 @@ import type {
 import { gatewayRebinding } from './model-draft';
 import { canvasGraph } from './node-graph';
 
-const work: Account = { id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Work' };
+const work: Account = {
+  id: 'a1',
+  provider: 'anthropic',
+  kind: 'subscription',
+  provenance: 'sign-in',
+  label: 'Work',
+};
 
-const spare: Account = { id: 'a2', provider: 'openai', kind: 'subscription', label: 'Spare' };
+const spare: Account = {
+  id: 'a2',
+  provider: 'openai',
+  kind: 'subscription',
+  provenance: 'sign-in',
+  label: 'Spare',
+};
 
 const fast: VirtualModel = {
   id: 'fast',
@@ -108,6 +120,7 @@ test('a subscription target prefers the observed signed-in address over its stor
       provider: 'anthropic',
       label: work.label,
       standing: 'connected',
+      provenance: 'sign-in',
       active: true,
       signedInAs: 'ada@example.com',
     },

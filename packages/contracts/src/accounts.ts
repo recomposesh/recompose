@@ -5,10 +5,10 @@ import { localRuntimeIdSchema, loopbackAddressSchema } from './local-runtimes';
 import { migrateDocument, type Migration } from './migration';
 import { providerModelPoliciesSchema } from './model-policy';
 import { nonBlankString } from './non-blank';
-import { subscriptionProviderIdSchema } from './subscriptions';
+import { subscriptionProvenanceSchema, subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
-export const ACCOUNTS_VERSION = 7;
+export const ACCOUNTS_VERSION = 8;
 
 export const accountKindSchema = z.enum(['subscription', 'api-key', 'aggregator', 'local']);
 
@@ -23,6 +23,7 @@ const subscriptionAccountSchema = z.strictObject({
   provider: subscriptionProviderIdSchema,
   kind: z.literal('subscription'),
   label: z.string().trim().min(1),
+  provenance: subscriptionProvenanceSchema,
   credentialPolicy: credentialPolicySchema.optional(),
   transportPolicy: accountTransportPolicySchema.optional(),
 });
@@ -70,25 +71,35 @@ export const accountsDocumentSchema = z
 
 export type AccountsDocument = z.infer<typeof accountsDocumentSchema>;
 
-const versionOneAccounts = z.array(z.looseObject({ kind: z.string() }));
+const storedAccountRows = z.array(z.looseObject({ kind: z.string() }));
 
-type VersionOneAccount = z.infer<typeof versionOneAccounts>[number];
+type StoredAccountRow = z.infer<typeof storedAccountRows>[number];
 
-function pastedSecretReadsAsAKey(row: VersionOneAccount): VersionOneAccount {
+function rewritingEveryRow(
+  doc: Record<string, unknown>,
+  schemaVersion: number,
+  rewrite: (row: StoredAccountRow) => StoredAccountRow,
+): Record<string, unknown> {
+  const stored = storedAccountRows.safeParse(doc['accounts']);
+
+  return {
+    ...doc,
+    schemaVersion,
+    accounts: stored.success ? stored.data.map(rewrite) : doc['accounts'],
+  };
+}
+
+function pastedSecretReadsAsAKey(row: StoredAccountRow): StoredAccountRow {
   return row.kind === 'subscription' ? { ...row, kind: 'api-key' } : row;
+}
+
+function subscriptionCameFromASignIn(row: StoredAccountRow): StoredAccountRow {
+  return row.kind === 'subscription' ? { ...row, provenance: 'sign-in' } : row;
 }
 
 const subscriptionRowsHeldPastedSecrets: Migration = {
   from: 1,
-  migrate: (doc) => {
-    const stored = versionOneAccounts.safeParse(doc['accounts']);
-
-    return {
-      ...doc,
-      schemaVersion: 2,
-      accounts: stored.success ? stored.data.map(pastedSecretReadsAsAKey) : doc['accounts'],
-    };
-  },
+  migrate: (doc) => rewritingEveryRow(doc, 2, pastedSecretReadsAsAKey),
 };
 
 const rowsPredateTheMaskNoMigrationCanMint: Migration = {
@@ -116,6 +127,11 @@ const rowsPredateModelCompatibility: Migration = {
   migrate: (doc) => ({ ...doc, schemaVersion: 7 }),
 };
 
+const subscriptionRowsPredateTheirOrigin: Migration = {
+  from: 7,
+  migrate: (doc) => rewritingEveryRow(doc, 8, subscriptionCameFromASignIn),
+};
+
 const accountsMigrations: readonly Migration[] = [
   subscriptionRowsHeldPastedSecrets,
   rowsPredateTheMaskNoMigrationCanMint,
@@ -123,6 +139,7 @@ const accountsMigrations: readonly Migration[] = [
   rowsPredateProviderModelPolicy,
   rowsPredateAccountTransportPolicy,
   rowsPredateModelCompatibility,
+  subscriptionRowsPredateTheirOrigin,
 ];
 
 export function loadAccountsDocument(doc: unknown): AccountsDocument {

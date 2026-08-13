@@ -1,15 +1,17 @@
 import type {
   AccountsDocument,
+  SubscriptionAccount,
   SubscriptionAccountView,
   SubscriptionProviderId,
 } from '@recompose/contracts';
 
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
+import type { MachineReach } from '../subscriptions/machine-store';
 import type { SignInLaunch } from '../subscriptions/sign-in-launch';
 import type { SubscriptionHomes } from '../subscriptions/subscription-homes';
 import type { Clock } from '../subscriptions/subscription-sign-in';
 
-import { loadAccountsFile } from '../storage/accounts-store';
+import { amendAccountsFile, loadAccountsFile } from '../storage/accounts-store';
 import { subscriptionViews } from '../subscriptions/subscription-views';
 import { reportTools } from '../subscriptions/tool-presence';
 import { ipcFailure } from './storage-envelope';
@@ -21,6 +23,8 @@ export type SubscriptionsIpcContext = {
   platform: NodeJS.Platform;
   /** Only macOS keeps the Claude Code credential outside the config home, so elsewhere this is absent. */
   custody: CredentialCustody | null;
+  /** How every reader reaches the stores the providers' own tools wrote. */
+  machine: MachineReach;
   searchPath: () => Promise<string>;
   launch: SignInLaunch;
   clock: () => Clock;
@@ -52,7 +56,10 @@ export async function viewsOf(
   shop: Workshop,
   accounts: AccountsDocument,
 ): Promise<SubscriptionAccountView[]> {
-  return subscriptionViews({ homes: shop.homes, custody: shop.ctx.custody }, accounts);
+  return subscriptionViews(
+    { homes: shop.homes, custody: shop.ctx.custody, machine: shop.ctx.machine },
+    accounts,
+  );
 }
 
 export async function toolPresent(
@@ -68,16 +75,24 @@ export async function toolPresent(
   return tools.find((tool) => tool.provider === provider)?.present === true;
 }
 
-export async function parkUnder(
+export async function settleUnder(
   custody: CredentialCustody | null,
-  slot: string,
+  from: string,
+  to: string,
 ): Promise<CustodyOutcome> {
-  return custody === null ? { ok: true } : custody.park(slot);
+  return custody === null ? { ok: true } : custody.moveBetweenHomes(from, to);
 }
 
-export async function putBack(
-  custody: CredentialCustody | null,
-  slot: string,
-): Promise<CustodyOutcome> {
-  return custody === null ? { ok: true } : custody.place(slot);
+/**
+ * @summary One account row, written whole over any row already standing under its id, so a
+ * sign-in and an adoption of the same address settle on one account rather than two.
+ */
+export async function recordTheAccount(
+  shop: Workshop,
+  row: SubscriptionAccount,
+): Promise<AccountsDocument> {
+  return amendAccountsFile(shop.accountsFile, shop.ctx.onCorrupt, (accounts) => ({
+    ...accounts,
+    accounts: [...accounts.accounts.filter((one) => one.id !== row.id), row],
+  }));
 }

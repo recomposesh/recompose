@@ -1,4 +1,4 @@
-import type { SubscriptionProviderId } from '@recompose/contracts';
+import type { SubscriptionProviderId, SubscriptionRenewalOwner } from '@recompose/contracts';
 
 import type { JsonObject } from '../gateway-wire';
 import type { ParsedSubscriptionCredential } from './credentials';
@@ -12,6 +12,7 @@ type CompletionOptions = {
   attempt: SubscriptionAttempt;
   provider: SubscriptionProviderId;
   credential: ParsedSubscriptionCredential;
+  renewal: SubscriptionRenewalOwner;
   requestBody: JsonObject;
   wait?: ((milliseconds: number) => Promise<void>) | undefined;
   resend: () => Promise<SubscriptionAttempt>;
@@ -32,7 +33,7 @@ export async function completeSubscriptionAttempt(
   if (
     classified.terminated ||
     classified.failureScope === 'request' ||
-    !shouldRefreshUnauthorized(classified.answer, options.credential)
+    !shouldRefreshUnauthorized(classified.answer, options.credential, options.renewal)
   ) {
     return classified;
   }

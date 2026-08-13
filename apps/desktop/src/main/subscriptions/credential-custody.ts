@@ -1,12 +1,11 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
+import type { KeychainItem } from './vendor-item';
+
 import { oneAtATime } from '../storage/one-at-a-time';
+import { homeVendorItem, machineVendorItem } from './vendor-item';
 
-export const VENDOR_SERVICE = 'Claude Code-credentials';
-export const PARKED_SERVICE = 'recompose-parked-credentials';
-export const RESERVED_SLOT = 'login-before-recompose';
-
-export type KeychainItem = { service: string; account: string };
+export type { KeychainItem } from './vendor-item';
 
 export type KeychainSeam = {
   read: (item: KeychainItem) => Promise<string | null>;
@@ -21,14 +20,12 @@ export type CustodyOutcome =
   | { ok: false; code: 'keychain-denied' | 'storage-failed'; message: string };
 
 export type CredentialCustody = {
-  park: (slot: string) => Promise<CustodyOutcome>;
-  place: (slot: string) => Promise<CustodyOutcome>;
-  handOver: (outgoing: string | null, incoming: string) => Promise<CustodyOutcome>;
-  forget: (slot: string) => Promise<CustodyOutcome>;
-  clear: () => Promise<CustodyOutcome>;
-  vendorHolds: () => Promise<string | null>;
-  readFor: (slot: string, active: boolean) => Promise<string | null>;
-  writeFor: (slot: string, active: boolean, blob: string) => Promise<void>;
+  readForHome: (home: string) => Promise<string | null>;
+  writeForHome: (home: string, blob: string) => Promise<void>;
+  removeForHome: (home: string) => Promise<CustodyOutcome>;
+  moveBetweenHomes: (from: string, to: string) => Promise<CustodyOutcome>;
+  readMachineItem: () => Promise<string | null>;
+  reclaimMachineWrite: (home: string, restore: string | null) => Promise<CustodyOutcome>;
 };
 
 export function custodyOver(
@@ -62,58 +59,60 @@ async function attempt(
   }
 }
 
+/**
+ * @summary Claude Code keeps one credential per config home, so every account the app signs in
+ * owns its own keychain item and no account ever squats on another's. The item the person's own
+ * install reads is never among them, which is why nothing here parks or restores anything.
+ */
 export function credentialCustody(keychain: KeychainSeam, osUser: string): CredentialCustody {
   const lane = oneAtATime();
-  const vendorItem: KeychainItem = { service: VENDOR_SERVICE, account: osUser };
-  const parkedItem = (slot: string): KeychainItem => ({ service: PARKED_SERVICE, account: slot });
+  const itemFor = (home: string): KeychainItem => homeVendorItem(home, osUser);
 
-  const parkInto = async (slot: string): Promise<void> => {
-    const held = await keychain.read(vendorItem);
-
-    if (held !== null) {
-      await keychain.write(parkedItem(slot), held);
-    }
-  };
-
-  const placeFrom = async (slot: string): Promise<void> => {
-    const held = await keychain.read(parkedItem(slot));
+  const moveFrom = async (from: string, to: string): Promise<void> => {
+    const held = await keychain.read(itemFor(from));
 
     if (held === null) {
-      await keychain.remove(vendorItem);
+      return;
+    }
+
+    await keychain.write(itemFor(to), held);
+    await keychain.remove(itemFor(from));
+  };
+
+  const machineItem = machineVendorItem(osUser);
+
+  const reclaimFromMachine = async (home: string, restore: string | null): Promise<void> => {
+    const written = await keychain.read(machineItem);
+
+    if (written === null) {
+      return;
+    }
+
+    await keychain.write(itemFor(home), written);
+
+    if (restore === null) {
+      await keychain.remove(machineItem);
 
       return;
     }
 
-    await keychain.write(vendorItem, held);
+    await keychain.write(machineItem, restore);
   };
 
   return {
-    park: async (slot) => lane(async () => attempt('park', slot, async () => parkInto(slot))),
+    readForHome: async (home) => lane(async () => keychain.read(itemFor(home))),
 
-    place: async (slot) => lane(async () => attempt('place', slot, async () => placeFrom(slot))),
+    writeForHome: async (home, blob) => lane(async () => keychain.write(itemFor(home), blob)),
 
-    handOver: async (outgoing, incoming) =>
-      lane(async () => {
-        const slot = outgoing ?? RESERVED_SLOT;
-        const parked = await attempt('park', slot, async () => parkInto(slot));
+    removeForHome: async (home) =>
+      lane(async () => attempt('let go of', home, async () => keychain.remove(itemFor(home)))),
 
-        return parked.ok ? attempt('place', incoming, async () => placeFrom(incoming)) : parked;
-      }),
+    moveBetweenHomes: async (from, to) =>
+      lane(async () => attempt('move', to, async () => moveFrom(from, to))),
 
-    forget: async (slot) =>
-      lane(async () => attempt('forget', slot, async () => keychain.remove(parkedItem(slot)))),
+    readMachineItem: async () => lane(async () => keychain.read(machineItem)),
 
-    clear: async () =>
-      lane(async () =>
-        attempt('clear', 'the active account', async () => keychain.remove(vendorItem)),
-      ),
-
-    vendorHolds: async () => lane(async () => keychain.read(vendorItem)),
-
-    readFor: async (slot, active) =>
-      lane(async () => keychain.read(active ? vendorItem : parkedItem(slot))),
-
-    writeFor: async (slot, active, blob) =>
-      lane(async () => keychain.write(active ? vendorItem : parkedItem(slot), blob)),
+    reclaimMachineWrite: async (home, restore) =>
+      lane(async () => attempt('reclaim', home, async () => reclaimFromMachine(home, restore))),
   };
 }

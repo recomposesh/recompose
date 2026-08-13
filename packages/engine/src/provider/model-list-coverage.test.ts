@@ -22,6 +22,7 @@ function answering(payload: unknown, status = 200): typeof fetch {
 function codexSubscription(credential: string) {
   return {
     custody: 'subscription' as const,
+    renewal: 'app' as const,
     provider: 'openai' as const,
     accountId: 'acc-codex',
     credential,

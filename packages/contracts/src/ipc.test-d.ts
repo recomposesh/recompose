@@ -87,6 +87,7 @@ describe('ipc response contracts', () => {
       | 'sign-in-timed-out'
       | 'keychain-denied'
       | 'usage-newer-schema'
+      | 'nothing-to-adopt'
     >();
   });
 
@@ -150,6 +151,10 @@ describe('the subscription channels', () => {
     expectTypeOf<SubscriptionAccountView['standing']>().toEqualTypeOf<'connected' | 'lapsed'>();
     expectTypeOf<SubscriptionAccountView>().not.toHaveProperty('credentialRef');
     expectTypeOf<SubscriptionAccountView>().not.toHaveProperty('secret');
+  });
+
+  test('a view says where its account came from, so the row knows which way back to offer', () => {
+    expectTypeOf<SubscriptionAccountView['provenance']>().toEqualTypeOf<'sign-in' | 'machine'>();
   });
 });
 

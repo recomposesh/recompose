@@ -25,6 +25,7 @@ function subscription(access = 'codex-token'): SpendGrant {
     providerOrigin: 'https://chatgpt.com/backend-api/codex',
     spend: {
       custody: 'subscription',
+      renewal: 'app',
       provider: 'openai',
       accountId: 'acc-codex',
       credential: credential(access),

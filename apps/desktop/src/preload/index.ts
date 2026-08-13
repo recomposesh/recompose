@@ -64,6 +64,8 @@ const recompose: RecomposeIpc = Object.freeze({
   'subscriptions:sign-in': bridgeEntry('subscriptions:sign-in'),
   'subscriptions:restore': bridgeEntry('subscriptions:restore'),
   'subscriptions:activate': bridgeEntry('subscriptions:activate'),
+  'subscriptions:detect': bridgeEntry('subscriptions:detect'),
+  'subscriptions:adopt': bridgeEntry('subscriptions:adopt'),
 });
 
 const recomposeEvents: RecomposeIpcEvents = Object.freeze({

@@ -38,6 +38,10 @@ function labelOf(account: Account): string | undefined {
   return account.kind === 'local' ? undefined : account.label;
 }
 
+function stampedWithItsOrigin(row: { kind: string }): unknown {
+  return row.kind === 'subscription' ? { ...row, provenance: 'sign-in' } : row;
+}
+
 describe('a stored version 1 document, written while a subscription held a pasted secret', () => {
   test('the subscription row becomes a key row, keeping its id, label, and credential', () => {
     const storedUnderVersionOne = {
@@ -119,7 +123,7 @@ describe('a stored version 2 document, written before a row published a mask', (
 
     expect(loadAccountsDocument(storedUnderVersionTwo)).toEqual({
       schemaVersion: ACCOUNTS_VERSION,
-      accounts: [subscriptionRow, keyRow, aggregatorRow],
+      accounts: [{ ...subscriptionRow, provenance: 'sign-in' }, keyRow, aggregatorRow],
     });
   });
 
@@ -146,7 +150,7 @@ describe('a stored version 3 document, written before a runtime could stand as a
 
     expect(loadAccountsDocument(storedUnderVersionThree)).toEqual({
       schemaVersion: ACCOUNTS_VERSION,
-      accounts: [subscriptionRow, keyRow, aggregatorRow],
+      accounts: [{ ...subscriptionRow, provenance: 'sign-in' }, keyRow, aggregatorRow],
     });
   });
 
@@ -197,13 +201,13 @@ describe('every version 3 document a machine could hold', () => {
   });
 
   test.prop([versionThreeDocuments])(
-    'it reaches the current version with every row byte-identical to the one stored',
+    'it reaches the current version with every stored field intact and each subscription stamped as a sign-in',
     (storedUnderVersionThree) => {
       const migrated = loadAccountsDocument(storedUnderVersionThree);
 
       expect(migrated.schemaVersion).toBe(ACCOUNTS_VERSION);
       expect(JSON.stringify(migrated.accounts)).toBe(
-        JSON.stringify(storedUnderVersionThree.accounts),
+        JSON.stringify(storedUnderVersionThree.accounts.map(stampedWithItsOrigin)),
       );
     },
   );
@@ -232,13 +236,13 @@ describe('every version 2 document a machine could hold', () => {
   });
 
   test.prop([versionTwoDocuments])(
-    'it reaches the current version with every row byte-identical to the one stored',
+    'it reaches the current version with every stored field intact and each subscription stamped as a sign-in',
     (storedUnderVersionTwo) => {
       const migrated = loadAccountsDocument(storedUnderVersionTwo);
 
       expect(migrated.schemaVersion).toBe(ACCOUNTS_VERSION);
       expect(JSON.stringify(migrated.accounts)).toBe(
-        JSON.stringify(storedUnderVersionTwo.accounts),
+        JSON.stringify(storedUnderVersionTwo.accounts.map(stampedWithItsOrigin)),
       );
     },
   );
