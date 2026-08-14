@@ -29,8 +29,13 @@ loopback guard checks it. The box that already edits the gateway's name offers i
   facts and returning a `MiddlewareHandler`.
 - `apps/desktop/src/main/engine-host/stored-gateway.ts:58`: fixed how an optional field travels. The
   spread stays conditional, so `exactOptionalPropertyTypes` never meets an explicit undefined.
-- `apps/desktop/src/main/storage/gateway-watcher-wiring.ts:17`: removed a task. An edit restarts the
-  gateway already, so nothing new has to signal the listener.
+- `apps/desktop/src/main/storage/gateway-watcher-wiring.ts:17`: removed one task and added another. An
+  edit already reaches the listener, so nothing new has to signal it. The same line also starts a
+  stopped gateway, which decision 9 repairs.
+- `apps/desktop/src/main/ipc/gateway-storage-ipc.ts:76`: fixed where the repair belongs. The rewrite
+  path already holds `restartIfServing`, so the gap lives in the watcher path alone.
+- `apps/desktop/src/main/ipc/engine-ipc.ts:74`: fenced the repair. `movePort` restarts a gateway that
+  stopped on a port conflict on purpose, so the guard can't sit in `EngineHost.restart`.
 - `apps/desktop/src/renderer/src/shared/api/gateways.ts:49`: removed a task. `gateways:update`
   carries a whole `GatewayConfig`, so the key needs no channel.
 - `apps/desktop/src/renderer/src/shared/ui/copy-button/copy-button.tsx`: removed a task. The renderer
@@ -47,10 +52,13 @@ loopback guard checks it. The box that already edits the gateway's name offers i
 
 **Goals:**
 
-- A gateway holds an optional API key, and holding none keeps today's behavior exactly.
-- Every path but health refuses a request that arrives without a held key.
-- A person mints, copies, replaces, and removes the key from the gateway's General Info.
+- A gateway holds an optional API key, and requiring none keeps today's behavior exactly.
+- Every path but health refuses a request that arrives without a required key.
+- A person turns the key on, copies it, regenerates it, and turns it off, from the gateway's General
+  Info.
+- Turning the requirement off keeps the stored key.
 - A gateway document written before this change reads back untouched.
+- A document change reaches a serving gateway and leaves a stopped one stopped.
 
 **Non-goals:**
 
@@ -111,13 +119,16 @@ An absent key and a wrong key draw the same 401 with the same body. Splitting th
 caller whether a gateway holds a key at all, and it buys a person nothing the status code hasn't
 already said.
 
-**The main process owns delivery.** `engineGatewayOf` copies the field onto the snapshot when the
-document carries one, the way it already copies `bindAddress`. Everything after that runs on existing
-machinery. The config hash covers the new field, the watcher restarts the gateway on an upsert, and
-the restart sends the fresh snapshot.
+**The main process owns delivery.** `engineGatewayOf` copies the key onto the snapshot where the
+document requires it, the way it already copies `bindAddress`. Most of what follows runs on existing
+machinery. The config hash covers the new field, and a restart sends the fresh snapshot. The one piece
+that changes is the watcher's upsert, which reapplies to a serving gateway rather than restarting
+whatever it finds.
 
-**The renderer owns the act.** A new component under the gateway canvas `ui/` segment renders the
-row. General Info holds the draft beside the name draft, so one save writes one document.
+**The renderer owns the act.** A new component under the gateway canvas `ui/` segment carries the
+switch, the copy control, and the regenerate action. General Info holds the draft beside the name
+draft, so one save writes one document. The component's shape follows the drawer option the maintainer
+picked from `designs/recompose.pen`.
 
 ## Data model and contracts
 
