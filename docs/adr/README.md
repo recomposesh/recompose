@@ -113,3 +113,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0105](0105-two-ways-in-read-as-two-rows.md)                                    | Two Ways into a Plan Read as Two Rows                                               | Accepted   | 2026-08-14 |
 | [0106](0106-a-gateway-carries-its-own-key.md)                                   | A Gateway Carries Its Own Key, in Its Own Document                                  | Accepted   | 2026-08-14 |
 | [0107](0107-a-port-is-where-a-server-answers-today.md)                          | A port is where a server answers today                                              | Accepted   | 2026-08-14 |
+| [0108](0108-a-baseline-compares-the-design-not-the-runner.md)                   | A baseline compares the design, not the runner                                      | Accepted   | 2026-08-14 |
