@@ -1,6 +1,6 @@
 import type { KeyCheckReport, KeyCheckVerdict, KeyProviderId } from '@recompose/contracts';
 
-const probeFetchBoundMs = 10_000;
+import { keyProbeBoundMs } from '@recompose/contracts';
 
 export const firstPartyProbeOrigins: Readonly<Record<KeyProviderId, string>> = {
   anthropic: 'https://api.anthropic.com',
@@ -67,7 +67,7 @@ export async function probeKey(
       method: 'GET',
       headers: authHeadersFor(provider, key),
       redirect: 'error',
-      signal: AbortSignal.timeout(probeFetchBoundMs),
+      signal: AbortSignal.timeout(keyProbeBoundMs),
     });
 
     return { verdict: verdictFor(response.status), status: response.status };
