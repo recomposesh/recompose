@@ -109,6 +109,7 @@ freenothing
 frontmatter
 frontmost
 fuite
+Fumadocs
 Fzay
 Gebert
 Gemini
@@ -311,6 +312,7 @@ Twingate
 typecheckable
 typecov
 Typeform
+Typekit
 typeless
 unbootable
 uncited
