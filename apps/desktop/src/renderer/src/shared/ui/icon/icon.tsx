@@ -11,6 +11,12 @@ const glyphs = {
     </>
   ),
   check: <path d="M5 12.5l4.6 4.6L19 7.4" />,
+  branch: (
+    <>
+      <path d="M4.5 12h3.9c2.4 0 2.5-5.2 4.9-5.2h6.2M8.4 12c2.4 0 2.5 5.2 4.9 5.2h6.2" />
+      <circle cx="4.5" cy="12" fill="currentColor" r="1.3" stroke="none" />
+    </>
+  ),
   search: (
     <>
       <circle cx="10.8" cy="10.8" r="6.3" />
@@ -19,6 +25,7 @@ const glyphs = {
   ),
   close: <path d="M6.6 6.6 17.4 17.4M17.4 6.6 6.6 17.4" />,
   chevron: <path d="M6 9.5 12 15.5l6-6" />,
+  grip: <path d="M8 9h8M8 15h8" />,
   network: (
     <>
       <circle cx="5.2" cy="12" r="2.1" />

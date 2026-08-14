@@ -17,17 +17,16 @@ import {
   subscriptionsQueryOptions,
   useDefineVirtualModel,
 } from '../../../../shared/api';
-import { closeInspector, useDisplayTick } from '../../../../shared/lib';
+import { useDisplayTick } from '../../../../shared/lib';
 import {
   canvasPositions,
-  keepCanvasPositions,
   setNodePosition,
   subscribeToCanvasPositions,
 } from '../../lib/canvas-position-store';
 import { canvasGraph } from '../../lib/node-graph';
 import { childSeatBeside } from '../../lib/tidy-layout';
-import { heldDraft, leaveDrafting, useHeldDraft } from '../../lib/use-held-draft';
-import { askedTargetRemoval, spokenNameOf, targetNameIn } from './binding-acts';
+import { useHeldDraft } from '../../lib/use-held-draft';
+import { askedTargetRemoval, graduatedDraft, targetNameIn } from './binding-acts';
 import { flowWiring } from './canvas-gestures';
 import {
   overlayOf,
@@ -37,7 +36,8 @@ import {
   useEscapeSettledCanvas,
   usePickerModels,
 } from './canvas-standings';
-import { subjectOf, targetModelIdOf } from './canvas-wiring';
+import { subjectOf } from './canvas-subjects';
+import { targetModelIdOf } from './canvas-wiring';
 import { pickerOnCanvas } from './picker-on-canvas';
 import { removalAsked, useGatewayRemoval } from './removal-flow';
 
@@ -60,22 +60,14 @@ export type ComposedCanvas = {
 
 function draftGraduation(world: CanvasWorld): (definition: SettledDefinition) => void {
   return (definition) => {
-    const draft = heldDraft(world.slug);
-
-    if (draft !== undefined) {
-      setNodePosition(world.slug, `model:${definition.id}`, draft.seat);
-      setNodePosition(world.slug, `target:${definition.id}`, childSeatBeside(draft.seat));
-      keepCanvasPositions(world.slug);
-    }
-
-    leaveDrafting(world.slug);
-    world.standings.select(undefined);
-    closeInspector();
-    world.standings.announce({
-      kind: 'bound',
-      virtualModel: spokenNameOf(definition),
-      target: targetNameIn(world.accounts, definition.accountId),
-    });
+    graduatedDraft(
+      world,
+      definition,
+      targetNameIn(world.accounts, definition.accountId),
+      (draftSeat) => {
+        setNodePosition(world.slug, `target:${definition.id}`, childSeatBeside(draftSeat));
+      },
+    );
   };
 }
 

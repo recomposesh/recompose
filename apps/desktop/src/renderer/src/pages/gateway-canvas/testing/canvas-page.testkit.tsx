@@ -123,6 +123,26 @@ export async function canvasPageOn(parameters: BridgeParameters = {}, strict = f
   return renderCanvasPage(strict);
 }
 
+type BindingAsk = { getByRole: (role: string, options?: { name?: RegExp }) => AskedOption };
+
+type AskedOption = {
+  getByRole: (role: string, options?: { name?: RegExp }) => { click: () => Promise<void> };
+};
+
+/**
+ * Answers the binding ask with a target, which is the step every account pick now opens on.
+ *
+ * @operation A released cable asks what to bind before anything else, so a scenario about the
+ * account pick says which kind it meant and then reads the accounts. The press is scoped to the
+ * ask itself, because the canvas behind it stands target cards whose names read like options.
+ */
+export async function pickedTheTarget(screen: BindingAsk): Promise<void> {
+  await screen
+    .getByRole('dialog')
+    .getByRole('button', { name: /Target/ })
+    .click();
+}
+
 type CanvasCommand = IpcEventPayload<'canvas:command'>;
 
 /**

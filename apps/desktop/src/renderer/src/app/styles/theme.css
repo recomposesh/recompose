@@ -72,6 +72,8 @@
   --color-gateway-ink: light-dark(var(--teal-800), var(--teal-500));
   --color-virtual-model: light-dark(var(--pink-700), var(--pink-400));
   --color-virtual-model-ink: light-dark(var(--pink-800), var(--pink-300));
+  --color-router: light-dark(var(--indigo-600), var(--indigo-500));
+  --color-router-ink: light-dark(var(--indigo-700), var(--indigo-400));
   --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
   --color-cable-live: light-dark(var(--green-600), var(--green-500));
   --color-cable-served: light-dark(var(--green-700), var(--green-500));
@@ -124,6 +126,9 @@
   --spacing-port-dot: 9px;
   --spacing-port-offset: 34px;
   --spacing-hit-target: 24px;
+  --spacing-node-border: 1.5px;
+  --spacing-node-dash: 4px;
+  --spacing-node-dash-gap: 3px;
   --spacing-cable-stroke: 2.6px;
   --spacing-cable-stroke-selected: 3.6px;
   /* React Flow elevates a selected node to z-index 1000; an open error reading must clear it. */
@@ -170,6 +175,9 @@
 
   --shadow-thumb: 0 1px 2px rgb(0 0 0 / 22%), 0 0 0 0.5px rgb(0 0 0 / 8%);
   --shadow-raised: 0 12px 32px rgb(0 0 0 / 18%), 0 2px 8px rgb(0 0 0 / 10%);
+  /* A drawn frame takes its elevation through `filter`, which reads no box-shadow list. */
+  --shadow-raised-drawn: drop-shadow(0 12px 32px rgb(0 0 0 / 18%))
+    drop-shadow(0 2px 8px rgb(0 0 0 / 10%));
   --shadow-canvas-card: 0 4px 14px rgb(0 0 0 / 40%);
 }
 
@@ -621,10 +629,14 @@
 @utility node-card {
   --node-card-border: var(--node-tint, var(--color-accent-ink));
   --node-card-emphasis: var(--node-tint, var(--color-accent));
+  --node-card-line: var(--node-card-border);
+  --node-card-fill: var(--color-surface-card);
+  --node-card-glow: transparent;
+  --node-card-dash: none;
 
-  border: 1.5px solid var(--node-card-border);
+  border: var(--spacing-node-border) solid var(--node-card-line);
   border-radius: var(--radius-card);
-  background-color: var(--color-surface-card);
+  background-color: var(--node-card-fill);
   box-shadow: var(--shadow-raised);
 
   @media (prefers-reduced-motion: no-preference) {
@@ -637,28 +649,64 @@
   &:hover,
   &[data-hovered],
   &:focus-visible {
-    border-color: var(--node-card-emphasis);
-    background-color: color-mix(in srgb, var(--node-card-emphasis) 8%, var(--color-surface-card));
+    --node-card-line: var(--node-card-emphasis);
+    --node-card-fill: color-mix(in srgb, var(--node-card-emphasis) 8%, var(--color-surface-card));
   }
 
   &:active {
-    background-color: color-mix(in srgb, var(--node-card-emphasis) 14%, var(--color-surface-card));
+    --node-card-fill: color-mix(in srgb, var(--node-card-emphasis) 14%, var(--color-surface-card));
   }
 
   &[aria-pressed='true'] {
-    border-color: var(--node-card-emphasis);
-    background-color: color-mix(in srgb, var(--node-card-emphasis) 12%, var(--color-surface-card));
+    --node-card-line: var(--node-card-emphasis);
+    --node-card-fill: color-mix(in srgb, var(--node-card-emphasis) 12%, var(--color-surface-card));
+    --node-card-glow: color-mix(
+      in srgb,
+      var(--node-card-emphasis) var(--glow-ring-strength),
+      transparent
+    );
+
     box-shadow:
-      0 0 0 var(--glow-ring-spread)
-        color-mix(in srgb, var(--node-card-emphasis) var(--glow-ring-strength), transparent),
+      0 0 0 var(--glow-ring-spread) var(--node-card-glow),
       0 0 var(--glow-bloom-blur)
         color-mix(in srgb, var(--node-card-emphasis) var(--glow-bloom-strength), transparent),
       var(--shadow-raised);
   }
 
   &[aria-pressed='true']:hover {
-    background-color: color-mix(in srgb, var(--node-card-emphasis) 18%, var(--color-surface-card));
+    --node-card-fill: color-mix(in srgb, var(--node-card-emphasis) 18%, var(--color-surface-card));
   }
+}
+
+@utility node-card-drafted {
+  --node-card-dash: var(--spacing-node-dash) var(--spacing-node-dash-gap);
+
+  border-style: dashed;
+}
+
+@utility node-card-chamfer {
+  border-width: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+@utility node-chamfer-frame {
+  overflow: visible;
+  filter: drop-shadow(0 0 var(--glow-ring-spread) var(--node-card-glow)) var(--shadow-raised-drawn);
+}
+
+@utility node-chamfer-fill {
+  fill: var(--node-card-fill);
+  stroke: var(--node-card-line);
+  stroke-width: var(--spacing-node-border);
+  stroke-dasharray: var(--node-card-dash);
+}
+
+@utility node-chamfer-line {
+  fill: none;
+  stroke: var(--node-card-line);
+  stroke-width: var(--spacing-node-border);
+  stroke-dasharray: var(--node-card-dash);
 }
 
 @utility inspector-panel {

@@ -22,6 +22,7 @@ import {
   canvasCommandLine,
   canvasPageOn,
   freshCanvasRun,
+  pickedTheTarget,
   renderCanvasPage,
   standCanvasBridge,
 } from '../../testing/canvas-page.testkit';
@@ -133,6 +134,7 @@ test('a pane press while the picker stands puts the pick and its pending card aw
   await userEvent.keyboard('{Enter}');
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
 
   await userEvent.click(paneOf(screen.container), { position: { x: 30, y: 30 } });
@@ -187,6 +189,7 @@ test('a dragged pending card carries the pick it stands for with it', async () =
   await userEvent.keyboard('{Enter}');
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
   await expect.poll(() => cardCornerOn(screen.container, 'pending')).toEqual(letGo);
 
   draggedCard(cardWrapper(screen.container, 'pending'), { x: 40, y: 30 });

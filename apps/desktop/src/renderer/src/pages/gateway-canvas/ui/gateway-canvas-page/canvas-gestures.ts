@@ -17,6 +17,7 @@ import {
   flowNodesOf,
   modelIdOf,
   oneTargetRule,
+  routerSeatOf,
   targetAccountIdIn,
 } from './canvas-wiring';
 import { deletionWiring } from './deletion-gestures';
@@ -60,6 +61,10 @@ function escapedOrLanded(world: CanvasWorld, landed: boolean): boolean {
 const REFUSED_LANDING =
   'A cable binds a virtual model to a stored target it does not already hold, and nothing else connects.';
 
+function asksWhatToBind(from: string): boolean {
+  return from === 'draft' || modelIdOf(from) !== undefined || routerSeatOf(from) !== undefined;
+}
+
 function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
   if (from === 'gateway') {
     birthedDraftAt(world, at);
@@ -67,9 +72,9 @@ function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
     return;
   }
 
-  if (from === 'draft' || modelIdOf(from) !== undefined) {
+  if (asksWhatToBind(from)) {
     world.standings.setPicker({
-      step: 'account',
+      step: 'kind',
       from,
       at: { x: at.x, y: at.y - CARD_MEASURE.height / 2 },
       origin: 'drop',
@@ -193,9 +198,9 @@ function cardAsks(world: CanvasWorld) {
         heldDraft(world.slug)?.seat ?? seatForNewNode(MODEL_COLUMN, world.seats),
       );
     },
-    onPickTargetFor: (from: string) => {
+    onBindFrom: (from: string) => {
       world.standings.setPicker({
-        step: 'account',
+        step: 'kind',
         from,
         at: seatForNewNode(ROUTE_COLUMN, world.seats),
         origin: 'ask',

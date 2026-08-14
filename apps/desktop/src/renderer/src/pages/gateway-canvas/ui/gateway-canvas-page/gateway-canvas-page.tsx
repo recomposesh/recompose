@@ -58,6 +58,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
     anchorSeat,
     onDismiss,
     onPickAccount,
+    onPickKind,
     onPickProviderModel,
     onSelectDifferentProvider,
   } = picker;
@@ -67,6 +68,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
       groups={groups}
       onDismiss={onDismiss}
       onPickAccount={onPickAccount}
+      onPickKind={onPickKind}
       onPickProviderModel={onPickProviderModel}
       onSelectDifferentProvider={onSelectDifferentProvider}
       refusal={refusal}

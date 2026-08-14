@@ -1,11 +1,13 @@
 import type { XY } from '../../lib/canvas-positions';
 import type { ModelListReading } from '../../lib/model-draft';
-import type { PickerStage } from '../drop-picker/drop-picker';
+import type { BoundKind, PickerStage } from '../drop-picker/drop-picker';
 import type { OptionGroup } from '../option-list/option-list';
 import type { CanvasWorld, PickerStanding } from './canvas-standings';
 
 import { targetGroups } from '../../lib/target-groups';
 import { completedDraftPick, completedRebindPick } from './binding-acts';
+import { routerSeatOf } from './canvas-wiring';
+import { boundThroughARouter, completedChildPick } from './router-acts';
 
 /** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
 export type PickerOnCanvas = {
@@ -13,6 +15,7 @@ export type PickerOnCanvas = {
   groups: readonly OptionGroup[];
   refusal: string | undefined;
   anchorSeat: XY;
+  onPickKind: (kind: BoundKind) => void;
   onPickAccount: (accountId: string) => void;
   onPickProviderModel: (providerModel: string) => void;
   onSelectDifferentProvider: () => void;
@@ -37,15 +40,48 @@ function completedPick(
 ): void {
   if (from === 'draft') {
     completedDraftPick(world, accountId, providerModel);
-  } else {
-    completedRebindPick(world, accountId, providerModel);
+
+    return;
   }
+
+  if (routerSeatOf(from) === undefined) {
+    completedRebindPick(world, accountId, providerModel);
+
+    return;
+  }
+
+  completedChildPick(world, from, accountId, providerModel);
+}
+
+/**
+ * Answers the kind ask, which either carries the ask on or finishes it in one write.
+ *
+ * @summary Picking the target continues into the account and model pick that ships today, because
+ * a target is still two facts. Picking the router settles there, since a fresh router holds no
+ * child and has nothing left to ask about.
+ */
+function answeredKind(world: CanvasWorld, picker: PickerStanding): (kind: BoundKind) => void {
+  return (kind) => {
+    if (picker.step !== 'kind') {
+      return;
+    }
+
+    if (kind === 'target') {
+      world.standings.setPicker({ ...picker, step: 'account' });
+
+      return;
+    }
+
+    boundThroughARouter(world, picker.from);
+  };
 }
 
 function pickerStage(picker: PickerStanding): PickerStage {
-  return picker.step === 'account'
-    ? { step: 'account' }
-    : { step: 'provider-model', accountId: picker.accountId };
+  if (picker.step === 'provider-model') {
+    return { step: 'provider-model', accountId: picker.accountId };
+  }
+
+  return picker.step === 'kind' ? { step: 'kind' } : { step: 'account' };
 }
 
 /**
@@ -72,6 +108,7 @@ export function pickerOnCanvas(
     groups: pickerGroups(world, picker, models.offered),
     refusal: picker.step === 'provider-model' ? models.refusal : undefined,
     anchorSeat: world.seats[anchorId] ?? { x: 0, y: 0 },
+    onPickKind: answeredKind(world, picker),
     onPickAccount: (accountId) => {
       if (picker.step === 'account') {
         world.standings.setPicker({
