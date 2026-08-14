@@ -1,6 +1,16 @@
-const USAGE_SEARCH_RANGES = ['1h', '24h', '7d', '30d', 'custom'] as const;
+const USAGE_SEARCH_RANGES = [
+  '1h',
+  '24h',
+  '7d',
+  '30d',
+  'this-week',
+  'this-month',
+  'custom',
+] as const;
 
 export type UsageSearchRange = (typeof USAGE_SEARCH_RANGES)[number];
+
+export type PresetRange = Exclude<UsageSearchRange, 'custom'>;
 
 const CHART_MEASURES = ['requests', 'tokens', 'latency', 'spend'] as const;
 
@@ -99,6 +109,18 @@ export function usageSearchFrom(raw: Record<string, unknown>): UsageSearch {
 /** The members one filter stands on, empty when it stands on everything. */
 export function filteredMembers(search: UsageSearch, level: FilterLevel): readonly string[] {
   return search[level] ?? [];
+}
+
+/**
+ * The same view over another range, without the edges only a drawn window stands on.
+ *
+ * @summary A drawn window is the one range that carries edges, so moving onto any other range
+ * drops them rather than leaving a stale pair behind for the next drawing to inherit.
+ */
+export function withRange(search: UsageSearch, range: UsageSearchRange): UsageSearch {
+  const { from: _from, to: _to, ...kept } = search;
+
+  return { ...kept, range };
 }
 
 /** The same view with one filter standing on everything again. */

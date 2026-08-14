@@ -105,6 +105,22 @@ test('the first day pressed starts a window rather than widening the standing on
   expect(landedDays(onSearchChange)).toEqual({ range: 'custom', from: 20, to: 25 });
 });
 
+test('a day pressed inside the standing window paints a new window rather than widening it', async () => {
+  const screen = await render(
+    control({ search: viewing({ range: 'custom', from: NOW - DAY, to: NOW }) }),
+  );
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: /August 20/ }).click();
+
+  await expect
+    .element(screen.getByRole('button', { name: /August 20th, 2026, selected/ }))
+    .toBeVisible();
+  await expect
+    .element(screen.getByRole('button', { name: /August 11th, 2026, selected/ }))
+    .not.toBeInTheDocument();
+});
+
 test('a day pressed behind the opening edge reopens the window there', async () => {
   const onSearchChange = vi.fn<(next: UsageSearch) => void>();
   const screen = await render(control({ onSearchChange }));
@@ -128,16 +144,80 @@ test('cancelling leaves the standing window alone', async () => {
   expect(onSearchChange).not.toHaveBeenCalled();
 });
 
-test('a calendar preset commits as it is pressed', async () => {
+test('a preset is drawn into the window and lands only once applied', async () => {
   const onSearchChange = vi.fn<(next: UsageSearch) => void>();
   const screen = await render(control({ onSearchChange }));
 
   await screen.getByRole('button', { name: 'Custom' }).click();
   await screen.getByRole('button', { name: 'This month' }).click();
 
-  expect(onSearchChange).toHaveBeenCalledWith(
-    expect.objectContaining({ range: 'custom', to: NOW }),
-  );
+  expect(onSearchChange).not.toHaveBeenCalled();
+
+  await screen.getByRole('button', { name: 'Apply' }).click();
+
+  expect(onSearchChange).toHaveBeenCalledWith({
+    range: 'this-month',
+    metric: 'requests',
+    stackedBy: 'gateway',
+  });
+});
+
+test('the calendar paints the window a preset drew, dropping the one it opened on', async () => {
+  const screen = await render(control({ search: viewing({ range: 'this-month' }) }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: 'Last 7 days' }).click();
+
+  await expect
+    .element(screen.getByRole('button', { name: /August 5th, 2026, selected/ }))
+    .toBeVisible();
+  await expect
+    .element(screen.getByRole('button', { name: /August 1st, 2026, selected/ }))
+    .not.toBeInTheDocument();
+});
+
+test('the preset the standing window came from reads as the picked one', async () => {
+  const screen = await render(control({ search: viewing({ range: 'this-month' }) }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'This month' }))
+    .toHaveAttribute('aria-current', 'true');
+  await expect.element(screen.getByText('Custom range')).not.toHaveAttribute('aria-current');
+});
+
+test('a preset reaching back from now reads as the picked one too', async () => {
+  const screen = await render(control({ search: viewing({ range: '24h' }) }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Last 24 hours' }))
+    .toHaveAttribute('aria-current', 'true');
+});
+
+test('drawing a day leaves the preset behind and reads as a custom range', async () => {
+  const screen = await render(control({ search: viewing({ range: '24h' }) }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: /August 5/ }).click();
+
+  await expect.element(screen.getByText('Custom range')).toHaveAttribute('aria-current', 'true');
+  await expect
+    .element(screen.getByRole('button', { name: 'Last 24 hours' }))
+    .not.toHaveAttribute('aria-current');
+});
+
+test('a preset pressed by mistake is left behind by cancelling', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+  const screen = await render(control({ onSearchChange }));
+
+  await screen.getByRole('button', { name: 'Custom' }).click();
+  await screen.getByRole('button', { name: 'This week' }).click();
+  await screen.getByRole('button', { name: 'Cancel' }).click();
+
+  expect(onSearchChange).not.toHaveBeenCalled();
 });
 
 test('the window names the zone its edges are read in', async () => {
