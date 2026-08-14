@@ -48,8 +48,10 @@ answers every route.
 3. **The build is static and the host is Cloudflare.** Nothing on either surface needs a
    request answered at runtime. A route that reaches for a server function forfeits this, so no
    route may hold one.
-4. **The first release carries the landing page and a first documentation set.** A documentation
-   shell holding nothing drags on the page and on the search index.
+4. **The first release carries the landing page and one or two example documentation pages.**
+   The pages exist to prove the shell: the navigation tree, the search index, the prose gates,
+   and the crossing from the landing page. Writing the real documentation is its own change,
+   and holding this one open until that writing lands would keep a finished site unshipped.
 5. **The site owns its palette and shares no tokens.** The repository has no shared token
    package to read. `design-system/` at the root sits under `.gitignore`, so it never reaches a
    build, and the tokens that do exist live inside the one application the site must not import
@@ -59,6 +61,33 @@ answers every route.
    one consumer. A second
    consumer now exists and still doesn't want it, which is worth recording rather than
    assuming the record has expired.
+6. **The hero ships as the prototype behaves, and it carries no pause control.** Success
+   criterion 2.2.2 of the Web Content Accessibility Guidelines asks for a mechanism to pause,
+   stop, or hide moving content that starts on its own, runs past five seconds, and sits beside
+   other content. The loop runs 12.4 seconds behind the product claim and the download, so the
+   criterion applies and a reduced-motion preference doesn't discharge it. The maintainer read
+   that and chose the prototype's behavior. This records a known gap against a level A
+   criterion, so a later reader finds a decision rather than an oversight. The still frame for a
+   reduced-motion preference stays.
+7. **A device with no pointer gets a reveal that wanders on its own.** A touch visitor then
+   meets the scene rather than a dark rectangle. That wandering is itself motion nobody asked
+   for, so it widens the gap decision 6 records rather than narrowing it.
+8. **The download affordance waits, and the landing page points at the releases page.** Four
+   facts stand between the promise and a working button: every artifact name carries the
+   version, `release.yml` opens releases as drafts that the latest-release link can't see, a
+   browser-side call to the GitHub interface allows sixty requests an hour for every visitor
+   behind one address, and the disk image name holds no architecture. Resolving those edits the
+   release workflow, which is its own change rather than a corner of this one.
+9. **`apps/web` stays outside the Feature-Sliced Design and the Human Interface Guidelines
+   gates.** Fumadocs imposes its own file layout, and laying a second methodology over it would
+   set two rule sets against one directory. The guidelines gate judges a macOS application, which a
+   marketing page isn't. Every other gate applies. The edit-time test-first gate reaches the new
+   application through the `apps/*/src/**` glob it already carries, and narrowing that glob
+   would weaken a gate for no reason anyone has given.
+10. **Vale learns to read the documentation before anyone writes it.** The prose gate binds a
+    `*.md` glob, so content authored as `.mdx` would pass it vacuously. Vale parses that format
+    natively from version 3.18.0, and `mise.toml` pins 3.15.2, so the version and the glob move
+    together or the gate stays blind.
 
 ## Capabilities
 

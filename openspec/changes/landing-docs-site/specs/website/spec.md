@@ -51,8 +51,17 @@ lit, so the scene answers movement rather than accumulating it.
 The hero MUST show its scene before the loop has loaded, because a hero that starts blank
 teaches the person there is nothing to reveal.
 
+Where no pointer can reach the hero, the reveal MUST wander the scene on its own. A person on a
+touch screen then meets the scene rather than a dark rectangle.
+
 A person who asks the operating system for reduced motion MUST get a still hero. The loop MUST
-NOT play for them, and the reveal MUST stay, because the reveal answers their own movement.
+NOT play for them, and the reveal MUST stay, because the reveal answers their own movement. The
+hero MUST watch that preference for the life of the page, so turning it on mid-visit stills a
+loop already running.
+
+The loop MUST hold the still frame whenever it can't play. A browser MAY refuse playback for
+reasons the page can't see, and a hero that sits dark on refusal fails worse than one that
+never tried.
 
 #### Scenario: a person moves the pointer across the hero
 
@@ -67,9 +76,28 @@ NOT play for them, and the reveal MUST stay, because the reveal answers their ow
 - When a person moves the pointer across the hero
 - Then the reveal shows the scene's first frame
 
+#### Scenario: a touch visitor meets a lit scene
+
+- Given a device that no pointer reaches
+- When a person opens the landing page
+- Then the reveal wanders the scene on its own
+- And the scene never sits fully dark
+
 #### Scenario: a reduced-motion preference stills the hero
 
 - Given the operating system asks for reduced motion
 - When a person opens the landing page
 - Then the hero holds a still frame and the loop never plays
+
+#### Scenario: turning reduced motion on mid-visit stills the loop
+
+- Given a person is watching the hero with the loop playing
+- When they turn on the operating system's reduced-motion preference
+- Then the loop stops on a still frame without a reload
+
+#### Scenario: a refused playback holds the still frame
+
+- Given the browser refuses to play the loop
+- When a person opens the landing page
+- Then the hero holds the still frame and the reveal still answers movement
 - And moving the pointer still reveals the scene
