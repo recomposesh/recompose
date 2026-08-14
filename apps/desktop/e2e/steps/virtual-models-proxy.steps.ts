@@ -2,7 +2,6 @@ import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-import type { GatewayAnswer } from '../gateway-client';
 import type { KeyProbeStub } from '../key-probe-stub';
 import type { ScriptedProvider } from '../scripted-provider';
 
@@ -18,7 +17,12 @@ import {
 import { gatewayAddress, seedGateway, storedGateway } from '../gateway-screen';
 import { answerTheProviderGives } from '../key-probe-stub';
 import { accountRows, openProviderScreen } from '../provider-screen';
-import { focusedGateway, focusGateway } from '../scenario-memory';
+import {
+  answerTheGatewayGave,
+  focusedGateway,
+  focusGateway,
+  rememberGatewayAnswer,
+} from '../scenario-memory';
 import {
   accountHeldAs,
   gatewayTargetingAKey,
@@ -51,19 +55,7 @@ function everythingAsked(probe: KeyProbeStub, scripted: ScriptedProvider): reado
   return [...probe.modelsAsked(), ...scripted.modelsAsked()];
 }
 
-const answers = new WeakMap<Page, GatewayAnswer>();
-
 const namesAsked = new WeakMap<Page, string>();
-
-function answerHeld(page: Page): GatewayAnswer {
-  const answer = answers.get(page);
-
-  if (answer === undefined) {
-    throw new Error('no step asked this gateway anything');
-  }
-
-  return answer;
-}
 
 function nameAsked(page: Page): string {
   const name = namesAsked.get(page);
@@ -136,13 +128,13 @@ When('a request arrives under {string}', async ({ page }, name: string) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
   namesAsked.set(page, name);
-  answers.set(page, await sendTurn(address, MESSAGES_PATH, turnUnder(name)));
+  rememberGatewayAnswer(page, await sendTurn(address, MESSAGES_PATH, turnUnder(name)));
 });
 
 When('a client asks the gateway for its model listing', async ({ page }) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
-  answers.set(page, await readFrom(address, MODEL_LISTING));
+  rememberGatewayAnswer(page, await readFrom(address, MODEL_LISTING));
 });
 
 Then(
@@ -153,14 +145,14 @@ Then(
 );
 
 Then('the answer travels back to the caller', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = answerTheGatewayGave(page);
 
   expect(answer.status).toBe(ANSWERED);
   expect(JSON.stringify(answer.body)).toContain(answerTheProviderGives);
 });
 
 Then('the gateway answers a typed refusal naming the unknown model', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = answerTheGatewayGave(page);
 
   expect(answer.status).toBe(NO_SUCH_MODEL);
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
@@ -171,7 +163,7 @@ Then('no request leaves the machine', ({ keyProbe, scriptedProvider }) => {
 });
 
 Then('the gateway answers a typed refusal naming the missing target', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = answerTheGatewayGave(page);
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toContain('no target');
@@ -179,7 +171,7 @@ Then('the gateway answers a typed refusal naming the missing target', ({ page })
 });
 
 Then('the gateway answers a typed refusal naming the missing credential', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = answerTheGatewayGave(page);
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toContain('no account behind it');
@@ -191,11 +183,11 @@ Then('nothing else receives the request', ({ keyProbe, scriptedProvider }) => {
 });
 
 Then('the listing names {string} and {string}', ({ page }, first: string, second: string) => {
-  expect(anthropicListedIds(answerHeld(page).body)).toEqual([first, second]);
+  expect(anthropicListedIds(answerTheGatewayGave(page).body)).toEqual([first, second]);
 });
 
 Then('it answers the same set in the Anthropic and the OpenAI shape', ({ page }) => {
-  const { body } = answerHeld(page);
+  const { body } = answerTheGatewayGave(page);
 
   expect(openAiListedIds(body)).toEqual(anthropicListedIds(body));
 });

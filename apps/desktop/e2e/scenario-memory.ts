@@ -1,10 +1,14 @@
 import type { Page } from '@playwright/test';
 
+import type { GatewayAnswer } from './gateway-client';
+
 const gatewaysInFocus = new WeakMap<Page, string>();
 
 const providersInFocus = new WeakMap<Page, string>();
 
 const portsAnotherProcessTook = new WeakMap<Page, number>();
+
+const answersGatewaysGave = new WeakMap<Page, GatewayAnswer>();
 
 export function focusGateway(page: Page, name: string): void {
   gatewaysInFocus.set(page, name);
@@ -104,4 +108,19 @@ export function takenPort(page: Page): number {
   }
 
   return port;
+}
+
+export function rememberGatewayAnswer(page: Page, answer: GatewayAnswer): void {
+  answersGatewaysGave.set(page, answer);
+}
+
+/** What the gateway answered the last request this scenario sent it. */
+export function answerTheGatewayGave(page: Page): GatewayAnswer {
+  const answer = answersGatewaysGave.get(page);
+
+  if (answer === undefined) {
+    throw new Error('no step asked this gateway anything');
+  }
+
+  return answer;
 }
