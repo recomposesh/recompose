@@ -6,13 +6,7 @@ import { SignInAction } from './sign-in-action';
 
 const meta = preview.meta({
   component: SignInAction,
-  args: {
-    name: 'Anthropic',
-    provider: 'anthropic' as const,
-    toolName: 'Claude Code',
-    command: 'claude',
-    onConnected: () => undefined,
-  },
+  args: { name: 'Anthropic', disabled: false, onSignIn: () => undefined },
   decorators: [
     (Story) => (
       <div className="flex w-sheet flex-col gap-2 p-4">
@@ -31,6 +25,18 @@ const meta = preview.meta({
 export const Ready = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: 'Sign in to Anthropic' })).toBeVisible();
+  },
+});
+
+/**
+ * The act with nothing on the machine to carry it out, which stays on screen and cannot move.
+ */
+export const HeldBack = meta.story({
+  args: { disabled: true },
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByRole('button', { name: 'Sign in to Anthropic' }),
+    ).toBeDisabled();
   },
 });
 

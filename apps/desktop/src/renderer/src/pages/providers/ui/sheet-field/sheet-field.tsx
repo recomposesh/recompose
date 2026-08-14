@@ -8,6 +8,13 @@ type SheetFieldProps = {
   placeholder?: string | undefined;
   /** Passed only where the value is a secret, so the control hides what it holds. */
   type?: 'password';
+  /**
+   * Stands the label over the control rather than beside it.
+   *
+   * @summary Reach for it on a form whose longest value is an address rather than a word: a slot
+   * beside the label leaves an address unreadable, and one stacked row makes every sibling stack.
+   */
+  stacked?: boolean;
 };
 
 /**
@@ -17,14 +24,24 @@ type SheetFieldProps = {
  * sheet rather than about the field, so it stands here once instead of beside every label a
  * connect step asks for.
  */
-export function SheetField({ label, value, onChangeValue, placeholder, type }: SheetFieldProps) {
+export function SheetField({
+  label,
+  value,
+  onChangeValue,
+  placeholder,
+  type,
+  stacked,
+}: SheetFieldProps) {
+  const controlClasses = stacked === true ? 'w-full' : 'w-sheet-secret';
+
   if (type === 'password') {
     return (
       <FieldBoxRow
-        controlClasses="w-sheet-secret"
+        controlClasses={controlClasses}
         label={label}
         onChangeValue={onChangeValue}
         placeholder={placeholder}
+        stacked={stacked}
         type="password"
         value={value}
       />
@@ -33,10 +50,11 @@ export function SheetField({ label, value, onChangeValue, placeholder, type }: S
 
   return (
     <FieldBoxRow
-      controlClasses="w-sheet-secret"
+      controlClasses={controlClasses}
       label={label}
       onChangeValue={onChangeValue}
       placeholder={placeholder}
+      stacked={stacked}
       value={value}
     />
   );

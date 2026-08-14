@@ -53,10 +53,10 @@ function dialectRow(form: EndpointDraft['form']): ReactNode {
   return (
     <form.Field name="dialect">
       {(field) => (
-        <label className="flex items-center justify-between gap-3 px-3 py-2">
-          <span className="text-body text-ink">Dialect</span>
+        <label className="field-box-row" data-stacked>
+          <span>Dialect</span>
           <select
-            className="w-sheet-secret rounded-control border border-line-subtle focus-ring px-2 py-1 text-body text-ink"
+            className="w-full rounded-control border border-line-field focus-ring px-2 py-1 text-body text-ink"
             onChange={(event) => {
               field.handleChange(dialectNamed(event.target.value));
             }}
@@ -83,6 +83,7 @@ function endpointFields(form: EndpointDraft['form']): ReactNode {
             label="Name"
             onChangeValue={field.handleChange}
             placeholder="My endpoint"
+            stacked
             value={field.state.value}
           />
         )}
@@ -93,6 +94,7 @@ function endpointFields(form: EndpointDraft['form']): ReactNode {
             label="Base URL"
             onChangeValue={field.handleChange}
             placeholder="https://models.example.com"
+            stacked
             value={field.state.value}
           />
         )}
@@ -103,6 +105,8 @@ function endpointFields(form: EndpointDraft['form']): ReactNode {
           <SheetField
             label="Key"
             onChangeValue={field.handleChange}
+            placeholder="Paste the secret"
+            stacked
             type="password"
             value={field.state.value}
           />

@@ -23,9 +23,29 @@ type FieldBoxRowProps = {
   refusal?: string | undefined;
   /** Width and family classes for the control, which sibling fields do not share. */
   controlClasses: string;
+  /**
+   * Stands the label over the control rather than beside it.
+   *
+   * @summary Reach for it where the value is longer than the room left beside its own label, so the
+   * control takes the row's full width and the value reads whole instead of through a slot.
+   */
+  stacked?: boolean | undefined;
   /** Reaches the input itself, so the sheet can land opening focus on this row. */
   ref?: Ref<HTMLInputElement> | undefined;
 };
+
+/**
+ * How the row lays its label and its control out, which is the one thing stacking changes.
+ *
+ * @summary A row beside its label hands the control the trailing edge, and a stacked row hands it
+ * the whole width, so the marker the style reads and the control's own classes settle together.
+ */
+function layoutOf(stacked: boolean, controlClasses: string) {
+  return {
+    control: `sheet-field placeholder:text-ink-tertiary ${stacked ? '' : 'ms-auto'} ${controlClasses}`,
+    marker: stacked ? '' : undefined,
+  };
+}
 
 /** One labelled row of a field box, carrying its own refusal under the field it refuses. */
 export function FieldBoxRow({
@@ -37,9 +57,11 @@ export function FieldBoxRow({
   onCommitValue,
   refusal,
   controlClasses,
+  stacked,
   ref,
 }: FieldBoxRowProps) {
   const lastSettled = useRef(value);
+  const layout = layoutOf(stacked === true, controlClasses);
 
   const settle = (typed: string) => {
     if (typed === lastSettled.current) {
@@ -51,10 +73,10 @@ export function FieldBoxRow({
   };
 
   return (
-    <Field.Root className="field-box-row">
+    <Field.Root className="field-box-row" data-stacked={layout.marker}>
       <Field.Label>{label}</Field.Label>
       <Field.Control
-        className={`ms-auto sheet-field placeholder:text-ink-tertiary ${controlClasses}`}
+        className={layout.control}
         onBlur={(event) => {
           settle(event.currentTarget.value);
         }}

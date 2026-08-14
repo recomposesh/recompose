@@ -18,7 +18,9 @@ const meta = preview.meta({
   decorators: [
     (Story) => (
       <div className="w-80 p-4">
-        <Story />
+        <div className="field-box">
+          <Story />
+        </div>
       </div>
     ),
   ],
@@ -26,12 +28,15 @@ const meta = preview.meta({
 
 /**
  * The account the machine already holds, named by address and plan.
+ *
+ * @summary The reading asks for the whole row as the act, because the row is the way in and a
+ * button inside it would rank this way over the sign-in beside it.
  */
 export const Found = meta.story({
   play: async ({ canvas }) => {
     await expect(canvas.getByText('dev@example.com')).toBeVisible();
     await expect(canvas.getByText('max')).toBeVisible();
-    await expect(canvas.getByRole('button', { name: 'Connect' })).toBeEnabled();
+    await expect(canvas.getByRole('button', { name: 'Connect dev@example.com' })).toBeEnabled();
   },
 });
 
@@ -42,27 +47,29 @@ export const WithoutAnAddress = meta.story({
   args: { signedInAs: undefined, plan: undefined },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Claude Code')).toBeVisible();
-    await expect(canvas.getByRole('button', { name: 'Connect' })).toBeEnabled();
+    await expect(canvas.getByRole('button', { name: 'Connect Claude Code' })).toBeEnabled();
   },
 });
 
 /**
- * The act while it runs, which reports itself rather than going quiet.
+ * The act while it runs, which reports itself on the row's own quiet line rather than going silent.
  */
 export const Connecting = meta.story({
   args: { connecting: true, inert: true },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: 'Connecting' })).toBeDisabled();
+    await expect(canvas.getByText('Connecting')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Connect dev@example.com' })).toBeDisabled();
   },
 });
 
 /**
- * The row while the sign-in beneath it runs, standing inert in place rather than disappearing.
+ * The row while the sign-in beside it runs, standing inert in place rather than disappearing.
  */
 export const Inert = meta.story({
   args: { inert: true },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: 'Connect' })).toBeDisabled();
+    await expect(canvas.getByText('Already signed in through Claude Code')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Connect dev@example.com' })).toBeDisabled();
   },
 });
 
@@ -75,3 +82,6 @@ export const Lapsed = meta.story({
     await expect(canvas.getByText('Signed out in Claude Code')).toBeVisible();
   },
 });
+
+/** The same row in the dark scheme, where the initial disc has to hold its edge. */
+export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

@@ -169,9 +169,14 @@ export async function theMachineHoldsNoLogin(
   await tools.install(toolBinaryFor(machineProviderFor(provider)));
 }
 
-/** The act the found account carries, which records it without any sign-in. */
+/**
+ * The act the found account carries, which records it without any sign-in.
+ *
+ * @summary The whole row is the act and it is named after the account it would take, so the name
+ * opens with the act and carries whoever the machine holds after it.
+ */
 export function adoptAct(page: Page): Locator {
-  return catalog(page).getByRole('button', { name: 'Connect', exact: true });
+  return catalog(page).getByRole('button', { name: /^Connect / });
 }
 
 /** The act the catalog offers to sign in as somebody else, which stands whatever it found. */
