@@ -91,12 +91,23 @@
 
 @media (prefers-reduced-motion: reduce) {
   .note,
+  .note-flat,
+  .note-notehead,
+  .note-flat::after,
+  .note-notehead::after,
   .note-link::before {
     transition: none;
   }
 
   .note-link:hover .note {
     transform: none;
+  }
+
+  .note-link:hover .note-flat,
+  .note-link:hover .note-notehead,
+  .note-link:hover .note-flat::after,
+  .note-link:hover .note-notehead::after {
+    transition: none;
   }
 }
 

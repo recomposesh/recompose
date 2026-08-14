@@ -1,5 +1,11 @@
 import { COMPOSITE_FRAGMENT, QUAD_VERTEX, TRAIL_FRAGMENT } from './shaders';
 
+const TRAIL_SCALE = 4;
+
+export function trailSize(edge: number) {
+  return Math.max(2, Math.round(edge / TRAIL_SCALE));
+}
+
 export type Target = {
   texture: WebGLTexture;
   frame: WebGLFramebuffer;
@@ -78,6 +84,11 @@ export function createTarget(gl: WebGLRenderingContext, width: number, height: n
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   return { texture, frame, width, height };
+}
+
+export function destroyTarget(gl: WebGLRenderingContext, target: Target) {
+  gl.deleteFramebuffer(target.frame);
+  gl.deleteTexture(target.texture);
 }
 
 export function createPlateTexture(gl: WebGLRenderingContext) {

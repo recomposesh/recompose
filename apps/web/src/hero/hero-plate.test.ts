@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type PlateInput, choosePlate } from './hero-plate';
+import { type LoopInput, type PlateInput, chooseLoopAction, choosePlate } from './hero-plate';
 
 const input = (overrides: Partial<PlateInput> = {}): PlateInput => ({
   stillness: false,
@@ -32,5 +32,30 @@ describe('the hero decides what the reveal uncovers', () => {
 
     expect(playing).toBe('loop');
     expect(stilled).toBe('poster');
+  });
+});
+
+const loopInput = (overrides: Partial<LoopInput> = {}): LoopInput => ({
+  stillness: false,
+  loopReady: true,
+  sourceSet: true,
+  ...overrides,
+});
+
+describe('the hero decides what the loop does next', () => {
+  it('fetches the loop the first time motion is welcome', () => {
+    expect(chooseLoopAction(loopInput({ loopReady: false, sourceSet: false }))).toBe('fetch');
+  });
+
+  it('holds the loop still while the reader asks for no motion', () => {
+    expect(chooseLoopAction(loopInput({ stillness: true }))).toBe('hold');
+  });
+
+  it('plays the loop again when the reader welcomes motion back', () => {
+    expect(chooseLoopAction(loopInput())).toBe('play');
+  });
+
+  it('waits rather than plays while the loop is still arriving', () => {
+    expect(chooseLoopAction(loopInput({ loopReady: false }))).toBe('wait');
   });
 });

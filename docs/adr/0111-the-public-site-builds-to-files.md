@@ -41,7 +41,7 @@ review promise.
 
 ## Alternatives
 
-- **Next.js carrying Fumadocs**: rejected. It's the better trodden Fumadocs path and would put
+- **Next.js carrying Fumadocs**: rejected. It's the better-trodden Fumadocs path and would put
   a second framework family in a repository that runs one.
 - **Single-page application mode alone**: rejected by measurement. One document where the first
   requirement asks for one per route.

@@ -1,4 +1,4 @@
-import { choosePlate } from './hero-plate';
+import { chooseLoopAction, choosePlate } from './hero-plate';
 
 export type Plate = HTMLImageElement | HTMLVideoElement;
 
@@ -15,12 +15,16 @@ export function plateAspect(plate: Plate) {
   return height === 0 ? 1 : width / height;
 }
 
-export function createPlateSource(sources: HeroSources, stillness: MediaQueryList) {
+function createPoster(src: string) {
   const poster = new Image();
 
   poster.fetchPriority = 'high';
-  poster.src = sources.poster;
+  poster.src = src;
 
+  return poster;
+}
+
+function createLoop() {
   const loop = document.createElement('video');
 
   loop.muted = true;
@@ -28,21 +32,39 @@ export function createPlateSource(sources: HeroSources, stillness: MediaQueryLis
   loop.playsInline = true;
   loop.preload = 'auto';
 
+  return loop;
+}
+
+export function createPlateSource(sources: HeroSources, stillness: MediaQueryList) {
+  const poster = createPoster(sources.poster);
+  const loop = createLoop();
+
   let loopReady = false;
   let playbackRefused = false;
 
-  const onLoopReady = () => {
-    loopReady = true;
-
+  const playLoop = () => {
     loop.play().catch(() => {
       playbackRefused = true;
     });
   };
 
+  const onLoopReady = () => {
+    loopReady = true;
+
+    playLoop();
+  };
+
   loop.addEventListener('loadeddata', onLoopReady);
 
   const startLoop = () => {
-    if (!stillness.matches && loop.getAttribute('src') === null) loop.src = sources.loop;
+    const action = chooseLoopAction({
+      stillness: stillness.matches,
+      loopReady,
+      sourceSet: loop.getAttribute('src') !== null,
+    });
+
+    if (action === 'fetch') loop.src = sources.loop;
+    if (action === 'play') playLoop();
   };
 
   if (poster.complete) startLoop();

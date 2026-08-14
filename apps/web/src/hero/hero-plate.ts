@@ -13,3 +13,19 @@ export function choosePlate(input: PlateInput): PlateChoice {
 
   return 'loop';
 }
+
+export type LoopInput = {
+  stillness: boolean;
+  loopReady: boolean;
+  sourceSet: boolean;
+};
+
+export type LoopAction = 'hold' | 'fetch' | 'play' | 'wait';
+
+export function chooseLoopAction(input: LoopInput): LoopAction {
+  if (input.stillness) return 'hold';
+  if (!input.sourceSet) return 'fetch';
+  if (!input.loopReady) return 'wait';
+
+  return 'play';
+}

@@ -141,6 +141,81 @@ describe('the hero canvas mounts against a real graphics context', () => {
   });
 });
 
+describe('the hero gives its graphics memory back', () => {
+  it('leaves no live texture behind once the page lets it go', async () => {
+    const canvas = document.createElement('canvas');
+
+    document.body.append(canvas);
+
+    const context = canvas.getContext('webgl');
+
+    if (!context) throw new Error('this browser gave no webgl context');
+
+    const born: WebGLTexture[] = [];
+    const create = context.createTexture.bind(context);
+
+    context.createTexture = () => {
+      const texture = create();
+
+      born.push(texture);
+
+      return texture;
+    };
+
+    const dispose = mountHero(canvas, { poster: POSTER, loop: LOOP });
+
+    canvas.style.cssText = 'display:block;width:640px;height:360px';
+
+    await sleep(150);
+
+    canvas.style.width = '820px';
+
+    await sleep(150);
+
+    dispose();
+
+    expect(born.length).toBeGreaterThan(0);
+    expect(born.filter((texture) => context.isTexture(texture))).toStrictEqual([]);
+  });
+});
+
+describe('the hero keeps the spotlight over the words it lights', () => {
+  it('re-reads where the words sit after the page scrolls under them', async () => {
+    const canvas = document.createElement('canvas');
+    const mark = document.createElement('p');
+    const tail = document.createElement('div');
+
+    mark.dataset['spot'] = 'text';
+    mark.textContent = 'every model';
+    mark.style.cssText = 'margin-top:1200px';
+    tail.style.cssText = 'height:3000px';
+
+    document.body.append(canvas, mark, tail);
+
+    const dispose = mountHero(canvas, { poster: POSTER, loop: LOOP });
+
+    disposers.push(dispose);
+
+    dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 200 }));
+
+    await sleep(900);
+
+    const before = mark.style.getPropertyValue('--spot-y');
+
+    await sleep(200);
+
+    expect(mark.style.getPropertyValue('--spot-y')).toBe(before);
+
+    scrollTo(0, 900);
+    dispatchEvent(new Event('scroll'));
+
+    await sleep(250);
+
+    expect(before).not.toBe('');
+    expect(mark.style.getPropertyValue('--spot-y')).not.toBe(before);
+  });
+});
+
 describe('the hero paints what it was pointed at', () => {
   it('carries the pointer into the light it aims', async () => {
     const { canvas } = mount();

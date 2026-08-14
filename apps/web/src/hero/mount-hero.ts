@@ -1,4 +1,10 @@
-import { createPlateTexture, createPrograms, createTarget } from './hero-gl';
+import {
+  createPlateTexture,
+  createPrograms,
+  createTarget,
+  destroyTarget,
+  trailSize,
+} from './hero-gl';
 import { type HeroMotion, heroMotionStep, restingMotion } from './hero-motion';
 import { type Frame, paintComposite, paintTrail } from './hero-paint';
 import { type HeroSources, createPlateSource } from './hero-plate-source';
@@ -6,7 +12,6 @@ import { type HeroSources, createPlateSource } from './hero-plate-source';
 export type { HeroSources };
 
 const MAX_PIXEL_RATIO = 1.75;
-const TRAIL_SCALE = 4;
 const REVEAL_EASE = 0.12;
 const SPOT_RADIUS = 260;
 const INK_LAG = 0.05;
@@ -85,7 +90,9 @@ function createSurface(gl: WebGLRenderingContext, canvas: HTMLCanvasElement, pix
     height = nextHeight;
     canvas.width = width;
     canvas.height = height;
-    front = createTarget(gl, Math.max(2, width / TRAIL_SCALE), Math.max(2, height / TRAIL_SCALE));
+    destroyTarget(gl, front);
+    destroyTarget(gl, back);
+    front = createTarget(gl, trailSize(width), trailSize(height));
     back = createTarget(gl, front.width, front.height);
   };
 
@@ -105,6 +112,8 @@ function createSurface(gl: WebGLRenderingContext, canvas: HTMLCanvasElement, pix
     },
     dispose: () => {
       boxWatcher.disconnect();
+      destroyTarget(gl, front);
+      destroyTarget(gl, back);
     },
   };
 }
@@ -161,14 +170,24 @@ function trackSpot(canvas: HTMLCanvasElement) {
   const marks = [...(canvas.parentElement?.querySelectorAll<HTMLElement>('[data-spot]') ?? [])];
 
   let boxes = marks.map((mark) => mark.getBoundingClientRect());
+  let ink: Head | null = null;
+
+  const paint = (at: Head) => {
+    for (const [index, mark] of marks.entries()) {
+      const box = boxes[index];
+
+      if (box) litBySpot(mark, box, at);
+    }
+  };
 
   const remeasure = () => {
     boxes = marks.map((mark) => mark.getBoundingClientRect());
+
+    if (ink) paint(ink);
   };
 
-  let ink: Head | null = null;
-
   addEventListener('resize', remeasure);
+  addEventListener('scroll', remeasure, { passive: true });
 
   return {
     move: (head: Head) => {
@@ -178,14 +197,22 @@ function trackSpot(canvas: HTMLCanvasElement) {
 
       ink = next;
 
-      for (const [index, mark] of marks.entries()) {
-        const box = boxes[index];
-
-        if (box) litBySpot(mark, box, ink);
-      }
+      paint(ink);
     },
     dispose: () => {
       removeEventListener('resize', remeasure);
+      removeEventListener('scroll', remeasure);
+    },
+  };
+}
+
+function holdPlate(gl: WebGLRenderingContext) {
+  const texture = createPlateTexture(gl);
+
+  return {
+    texture,
+    dispose: () => {
+      gl.deleteTexture(texture);
     },
   };
 }
@@ -202,7 +229,7 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
   const stillness = matchMedia('(prefers-reduced-motion: reduce)');
   const pixelRatio = Math.min(devicePixelRatio || 1, MAX_PIXEL_RATIO);
   const programs = createPrograms(gl);
-  const plateTexture = createPlateTexture(gl);
+  const plate = holdPlate(gl);
   const plates = createPlateSource(sources, stillness);
   const watchers = {
     visibility: watchVisibility(canvas),
@@ -212,8 +239,8 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
 
   const surface = createSurface(gl, canvas, pixelRatio);
   const spot = trackSpot(canvas);
-  const stage: Stage = { gl, programs, plateTexture, plates, surface };
-  const parts = [surface, plates, spot, ...Object.values(watchers)];
+  const stage: Stage = { gl, programs, plateTexture: plate.texture, plates, surface };
+  const parts = [surface, plates, plate, spot, ...Object.values(watchers)];
 
   let frame = restingFrame(pixelRatio);
   let motion: HeroMotion = restingMotion({ width: innerWidth, height: innerHeight });
