@@ -19,8 +19,13 @@ Feature: The API key a gateway holds
 
   Scenario: A person replaces a key that leaked
     Given "codex" requires an API key
-    When a person regenerates the API key of "codex"
+    When a person regenerates the API key of "codex" and accepts the cost
     Then "codex" requires a key it never held before
+
+  Scenario: A person backs out of a regeneration
+    Given "codex" requires an API key
+    When a person asks to regenerate the API key of "codex" and declines
+    Then "codex" requires the key it already held
 
   Scenario: A person turns the key off without losing it
     Given "codex" requires an API key

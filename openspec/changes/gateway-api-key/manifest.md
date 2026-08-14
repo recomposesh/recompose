@@ -1,6 +1,8 @@
 ---
 tier: full
-phase: planning
-approvals: []
+phase: implementation
+approvals:
+  - plan
+  - design
 branch: worktree-gateway-api-key
 ---

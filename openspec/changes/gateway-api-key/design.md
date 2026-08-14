@@ -125,10 +125,20 @@ machinery. The config hash covers the new field, and a restart sends the fresh s
 that changes is the watcher's upsert, which reapplies to a serving gateway rather than restarting
 whatever it finds.
 
-**The renderer owns the act.** A new component under the gateway canvas `ui/` segment carries the
-switch, the copy control, and the regenerate action. General Info holds the draft beside the name
-draft, so one save writes one document. The component's shape follows the drawer option the maintainer
-picked from `designs/recompose.pen`.
+**The renderer owns the act.** The maintainer picked option B from `designs/recompose.pen`. The key gets
+an Access section of its own between General Info and Endpoint, rather than a row inside the box that
+edits the name.
+
+The section holds three things. A heading carrying a `Switch`. A field box holding the masked key beside
+a `CopyButton`, above a regenerate row. One line naming the fields a client can present the key in.
+
+The switch and the regeneration apply the moment a person acts, which is what `Switch` already documents
+about itself, so the section holds no draft and no save button. Regenerating goes through
+`ConsequenceDialog` first, because it invalidates a credential the person already handed to their
+clients.
+
+Each act writes a whole `GatewayConfig` through the `gateways:update` mutation the drawer already uses,
+built by `withGatewayApiKey`.
 
 ## Data model and contracts
 
@@ -199,12 +209,12 @@ above 65536 bytes, and this one asks for 32.
 - `apps/desktop/src/main/storage/storage-watchers.ts`: threads the renamed request (modify)
 - `apps/desktop/src/main/boot/stored-boot.ts`: threads the renamed request (modify)
 - `apps/desktop/src/main/index.ts`: threads the renamed request (modify)
-- `apps/desktop/src/renderer/src/pages/gateway-canvas/ui/gateway-api-key-row/gateway-api-key-row.tsx`:
-  the row, in the page layer's `ui/` segment beside `gateway-general-info` (create)
-- `.../gateway-api-key-row/gateway-api-key-row.stories.tsx`: held, absent, and editing (create)
-- `.../gateway-api-key-row/gateway-api-key-row.browser.test.tsx`: the row's behaviors (create)
-- `apps/desktop/src/renderer/src/pages/gateway-canvas/ui/gateway-general-info/gateway-general-info.tsx`:
-  holds the key draft and writes it on save (modify)
+- `apps/desktop/src/renderer/src/pages/gateway-canvas/ui/gateway-access/gateway-access.tsx`: the
+  Access section, in the page layer's `ui/` segment beside `gateway-general-info` (create)
+- `.../gateway-access/gateway-access.stories.tsx`: off, on, and the regeneration question (create)
+- `.../gateway-access/gateway-access.browser.test.tsx`: the section's behaviors (create)
+- `apps/desktop/src/renderer/src/pages/gateway-canvas/ui/subject-bodies/subject-bodies.tsx`: mounts the
+  section between General Info and Endpoint (modify)
 - `apps/desktop/e2e/features/engine/api-key.feature`: what a gateway holding a key answers, graduated
   unchanged from `gherkin/engine/` (create)
 - `apps/desktop/e2e/steps/engine-api-key.steps.ts`: its steps (create)
@@ -239,18 +249,17 @@ above 65536 bytes, and this one asks for 32.
 
 - Produces: `function apiKeyRequired(displayName: string): AnthropicRefusal`
 
-**`.../ui/gateway-api-key-row/gateway-api-key-row.tsx`**
+**`.../ui/gateway-access/gateway-access.tsx`**
 
-- Consumes: `maskGatewayApiKey`, `mintGatewayApiKey`, `factRow`, `editRow`, `CopyButton`
+- Consumes: `maskGatewayApiKey`, `mintGatewayApiKey`, `withGatewayApiKey`, `sectionHeading`, `factRow`,
+  `CopyButton`, `Switch`, `ConsequenceDialog`, `useDefineVirtualModel`
 - Produces:
   ```ts
-  type GatewayApiKeyRowProps = {
-    apiKey: string | undefined;
-    editing: boolean;
-    onChange: (apiKey: string | undefined) => void;
-  };
-  function GatewayApiKeyRow(props: GatewayApiKeyRowProps): ReactNode;
+  type GatewayAccessProps = { gateway: GatewayConfig };
+  function GatewayAccess(props: GatewayAccessProps): ReactNode;
   ```
+- The component reads the stored gateway and writes the whole config back, so it holds no draft. Its
+  only local state is whether the regeneration question stands open.
 
 ## Decisions
 
@@ -375,6 +384,33 @@ the blast radius is the four files that thread it.
 a gateway that stopped on a port conflict on purpose, and the guard would break that recovery. Guarding
 in the watcher wiring, rejected because the wiring holds no engine state and would need a new port
 threaded to it. Leaving it as a rider, rejected by the maintainer.
+
+### 10. The key gets its own section, the switch applies at once, and only the regeneration asks
+
+The maintainer picked option B from three drawn alternatives. The drawer's rhythm is already heading
+plus box, three times over, and the Access section takes the same shape. It also leaves room for the one
+line that names the fields a client can carry the key in, which neither of the other two options had
+space for.
+
+Nothing in the section is a field a person types into, so nothing waits for a save. `Switch` already
+documents itself as a control for a value that applies the moment it changes, and the repository's own
+settings screen works that way.
+
+The regeneration asks first, through `ConsequenceDialog`. It's the only act here that destroys
+something: a key the person already pasted into their clients. Turning the requirement off asks nothing,
+because it takes a door off its latch rather than changing the lock. Turning it on asks nothing either,
+because the person just asked for exactly that.
+
+Option C, the one-time reveal most hosted APIs use, loses on a fact rather than a preference. That
+pattern rests on the server being unable to retrieve the key. Decision 1 puts the key in a plain
+document, so the app can retrieve it and so can the person. A screen promising that nothing reveals the
+key again would say something the storage doesn't back.
+
+**Alternatives considered:** option A, a row inside General Info, rejected on two counts. It mixes the
+gateway's identity with its security in one box, and it leaves the value row without a label. Option C,
+the one-time reveal, rejected above. A save button for the section, rejected because a switch that waits
+for a save reads as broken. Asking before turning the requirement off, rejected because the question
+would train a person to dismiss questions.
 
 ## Test matrix
 

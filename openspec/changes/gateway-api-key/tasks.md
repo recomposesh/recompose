@@ -52,21 +52,24 @@ parallel once Task 1 lands.
 
 ### Task 4: The renderer owns the act
 
-The component's shape follows the drawer option the maintainer picked. Every item below holds whatever
-that shape turns out to be.
+The maintainer picked option B, so the key gets an Access section of its own.
 
-- [ ] The control lives under a `ui/` segment in the gateway canvas page layer, in its own folder
-- [ ] It carries the on and off switch, the copy control, and the regenerate action
-- [ ] Its `*.stories.tsx` sibling covers off, on, and the moment after a mint
-- [ ] Browser specs prove a gateway holding no key reads as open, turning the switch on mints a key,
-      turning it off keeps the stored value, regenerate replaces it, and the copy control carries the
-      whole value
-- [ ] Browser specs prove the whole key never renders except where the picked option shows it on
-      purpose
-- [ ] `GatewayGeneralInfo` holds the key draft beside the name draft and writes both through one save
+- [ ] `ui/gateway-access/gateway-access.tsx` renders the heading with its `Switch`, the box holding the
+      masked key beside a `CopyButton` and a regenerate row, and the line naming the fields a client can
+      carry the key in
+- [ ] `subject-bodies.tsx` mounts the section between General Info and Endpoint
+- [ ] Regenerating goes through `ConsequenceDialog`, and the question names what breaks
+- [ ] Its `*.stories.tsx` sibling covers off, on, and the regeneration question
+- [ ] Browser specs prove the switch reads off for a gateway requiring nothing, turning it on mints a
+      key and requires it, turning it off keeps the stored value, and the copy control carries the whole
+      value
+- [ ] Browser specs prove the section never renders the whole key, and that declining the regeneration
+      question leaves the stored key alone
+- [ ] Browser specs prove no act in the section waits for a save
 - [ ] A pass through `claude-in-chrome` in both color schemes, reading accessible names off the page
       rather than by eye
-- [ ] The dark scheme pair of the picked option lands in `designs/recompose.pen`
+- [ ] The dark scheme pair of option B lands in `designs/recompose.pen`, and the two rejected option
+      frames leave it
 
 ### Task 5: A document change never starts a stopped gateway
 

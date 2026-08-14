@@ -68,10 +68,11 @@ typed, because a person picking a credential picks a weak one. The minted value 
 stored key MUST replace it, so a person answers a leak by replacing one gateway's credential rather
 than every gateway's.
 
-#### Scenario: a person asks for a key on a gateway holding none
+#### Scenario: a person turns the requirement on for a gateway holding no key
 
-- When a person asks the gateway's General Info for an API key
-- Then the app mints one and the row shows it as held
+- When a person turns on the API key of a gateway holding none
+- Then the app mints one
+- And the gateway requires it
 
 #### Scenario: a person replaces a key
 
@@ -79,34 +80,63 @@ than every gateway's.
 - Then the stored key is the newly minted value
 - And no other gateway's key changes
 
-### Requirement: The key row masks, copies, and removes
+### Requirement: The drawer carries an Access section of its own
 
-The General Info box MUST show whether the gateway holds an API key without showing the value. It
-MUST show a mask carrying the prefix and the last four characters. It MUST offer a control that
-copies the whole value to the clipboard, and MUST NOT offer a control that reveals it on screen. It
-MUST offer a removal that returns the gateway to answering without a key. The key MUST save through
-the
-same act that saves the gateway's name, so one save writes one document.
+The gateway drawer MUST carry an Access section between General Info and Endpoint, rather than folding
+the key into the box that edits the gateway's name. The section heading MUST carry the switch that
+turns the requirement on and off. The section MUST state the fields a client can present the key in,
+because a person who copies a key still has to know where their client puts it.
 
-#### Scenario: a gateway holds no key
+The section MUST show the key masked to its prefix and its last four characters. It MUST offer a
+control that copies the whole value to the clipboard, and MUST NOT offer a control that reveals the
+value on screen. A revealed secret survives on every surface that captures a screen, and copying
+carries the value where it needs to go.
 
-- When a person opens the General Info of a gateway holding no API key
-- Then the row states that clients reach this gateway without a key
+The switch and the regeneration MUST take effect when a person acts on them, rather than waiting for a
+save, because neither is a field a person types into.
 
-#### Scenario: a gateway holds a key
+#### Scenario: a gateway requires no key
 
-- When a person opens the General Info of a gateway holding an API key
-- Then the row shows the prefix and the last four characters of the value
-- And no control reveals the rest
+- When a person opens the Access section of a gateway requiring no API key
+- Then the switch reads off
+- And the section shows no key
+
+#### Scenario: a gateway requires a key
+
+- When a person opens the Access section of a gateway requiring an API key
+- Then the switch reads on
+- And the section shows the prefix and the last four characters of the value
+- And nothing on the screen reveals the rest
 
 #### Scenario: a person copies the key
 
-- When a person activates the copy control beside a held API key
+- When a person activates the copy control beside a required API key
 - Then the whole value reaches the clipboard
 - And the surface says the copy landed
 
-#### Scenario: a person removes the key
+#### Scenario: a person reads where the key goes
 
-- When a person removes the API key and saves
-- Then the stored gateway carries none
-- And clients reach it without one
+- When a person opens the Access section of a gateway requiring an API key
+- Then the section names the fields a client can carry the key in
+
+### Requirement: Regenerating a key asks first
+
+Regenerating MUST ask a person to confirm before it replaces a stored key, and the question MUST state
+that clients carrying the current key stop reaching the gateway. Turning the requirement on or off MUST
+NOT ask, because neither act invalidates a credential a person already handed out.
+
+#### Scenario: a person asks to regenerate
+
+- When a person asks to regenerate the API key of a gateway
+- Then the app asks them to confirm
+- And the question states that clients carrying the current key stop reaching the gateway
+
+#### Scenario: a person backs out of a regeneration
+
+- When a person meets the regeneration question and declines
+- Then the stored key is the key the gateway already held
+
+#### Scenario: turning the requirement off asks nothing
+
+- When a person turns off the API key of a gateway
+- Then nothing asks them to confirm
