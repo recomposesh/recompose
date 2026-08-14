@@ -29,6 +29,7 @@ type AccountHandlers = Pick<
   | 'accounts:connect-local'
   | 'accounts:detect-runtime'
   | 'accounts:check-runtime'
+  | 'accounts:move-runtime'
 >;
 
 type RuntimeLookHandlers = Pick<RecomposeIpc, 'accounts:detect-runtime' | 'accounts:check-runtime'>;
@@ -91,6 +92,18 @@ function runtimeLookHandlers(reachability: RuntimeReachability): RuntimeLookHand
  * seeded. A local connect mints the loopback address around the chosen port the way main does, so
  * no scenario can supply one.
  */
+/** A stored runtime pointed at another port, keeping the row and everything else about it. */
+function withRuntimeMoved(held: AccountsDocument, id: string, port: number): AccountsDocument {
+  return {
+    ...held,
+    accounts: held.accounts.map((row) =>
+      row.id === id && row.kind === 'local'
+        ? { ...row, address: `http://127.0.0.1:${String(port)}` }
+        : row,
+    ),
+  };
+}
+
 export function accountHandlers(
   seed: AccountsDocument,
   verdict: KeyCheckVerdict,
@@ -105,6 +118,18 @@ export function accountHandlers(
     return registry;
   }
 
+  function moved(id: string, port: number): AccountsDocument {
+    registry = withRuntimeMoved(registry, id, port);
+
+    return registry;
+  }
+
+  function forgotten(id: string): AccountsDocument {
+    registry = { ...registry, accounts: registry.accounts.filter((row) => row.id !== id) };
+
+    return registry;
+  }
+
   function nextId(): string {
     const id = `a${nextAccountNumber}`;
 
@@ -113,7 +138,15 @@ export function accountHandlers(
     return id;
   }
 
+  const localRuntimeActs = {
+    'accounts:connect-local': async (request: IpcRequest<'accounts:connect-local'>) =>
+      Promise.resolve({ ok: true as const, value: append(localRow(nextId(), request)) }),
+    'accounts:move-runtime': async ({ id, port }: IpcRequest<'accounts:move-runtime'>) =>
+      Promise.resolve({ ok: true as const, value: moved(id, port) }),
+  };
+
   return {
+    ...localRuntimeActs,
     ...runtimeLookHandlers(reachability),
     landSubscription: (id, provider) => {
       append({
@@ -127,16 +160,7 @@ export function accountHandlers(
     'accounts:list': async () => Promise.resolve({ ok: true, value: registry }),
     'accounts:connect': async (request) =>
       Promise.resolve({ ok: true, value: append(keyRow(nextId(), request)) }),
-    'accounts:connect-local': async (request) =>
-      Promise.resolve({ ok: true, value: append(localRow(nextId(), request)) }),
     'accounts:check-key': async () => Promise.resolve({ ok: true as const, value: { verdict } }),
-    'accounts:remove': async (request) => {
-      registry = {
-        ...registry,
-        accounts: registry.accounts.filter((row) => row.id !== request.id),
-      };
-
-      return Promise.resolve({ ok: true, value: registry });
-    },
+    'accounts:remove': async ({ id }) => Promise.resolve({ ok: true, value: forgotten(id) }),
   };
 }

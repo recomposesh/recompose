@@ -19,3 +19,9 @@ Feature: The local runtime account row
     Given a stored "Ollama" account whose port another server answers
     When the surface lists it
     Then the standing reads "Another server answered" rather than "Running"
+
+  Scenario: A moved server keeps its row
+    Given a stored "Ollama" account whose server answers
+    When the maintainer moves it to port 11435
+    Then the row's second line reads "http://127.0.0.1:11435"
+    And the screen lists one local runtime

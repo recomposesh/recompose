@@ -1,13 +1,8 @@
 import type { LocalRuntimeId, RuntimeReachability } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import {
-  documentedRuntimePort,
-  RUNTIME_PORT_RANGE,
-  runtimeAddressFor,
-  runtimePortSchema,
-} from '@recompose/contracts';
-import { useForm, useSelector } from '@tanstack/react-form';
+import { documentedRuntimePort, runtimeAddressFor, runtimePortSchema } from '@recompose/contracts';
+import { useSelector } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -17,9 +12,11 @@ import {
   useConnectLocalRuntime,
   withRefusal,
 } from '../../../../shared/api';
-import { FieldBoxRow, SheetActionSlot } from '../../../../shared/ui';
+import { SheetActionSlot } from '../../../../shared/ui';
 import { localLeadFor, localRuntimeName } from '../../model/local-catalog';
+import { portRefusal, usePortForm, type PortForm } from '../../model/runtime-port';
 import { PickedIdentity } from '../picked-identity/picked-identity';
+import { RuntimePortField } from '../runtime-port-field/runtime-port-field';
 
 type DetectRuntimeStepProps = {
   /** The runtime the person picked, whose loopback host is the one place the look aims. */
@@ -27,12 +24,6 @@ type DetectRuntimeStepProps = {
   /** Runs once the account is stored, so the catalog can close behind it. */
   onConnected: () => void;
 };
-
-const PORT_RANGE_REFUSAL = `Accepts ${String(RUNTIME_PORT_RANGE.min)} through ${String(RUNTIME_PORT_RANGE.max)}.`;
-
-function portRefusal(port: string): string | undefined {
-  return runtimePortSchema.safeParse(Number(port)).success ? undefined : PORT_RANGE_REFUSAL;
-}
 
 type Reading =
   | { face: 'looking' }
@@ -126,12 +117,8 @@ function settleActs({ name, reading, addHeld, onAdd, onLookAgain }: SettleActs):
   );
 }
 
-function usePortDraftForm(runtime: LocalRuntimeId) {
-  return useForm({ defaultValues: { port: String(documentedRuntimePort(runtime)) } });
-}
-
 type PortKnob = {
-  form: ReturnType<typeof usePortDraftForm>;
+  form: PortForm;
   onPortChosen: (port: number) => void;
 };
 
@@ -146,20 +133,12 @@ function pointTheLook(settled: string, onPortChosen: (port: number) => void): vo
 function portKnob({ form, onPortChosen }: PortKnob): ReactNode {
   return (
     <div className="w-full field-box text-start">
-      <form.Field name="port" validators={{ onChange: (draft) => portRefusal(draft.value) }}>
-        {(field) => (
-          <FieldBoxRow
-            controlClasses="w-sheet-port text-end font-mono"
-            label="Port"
-            onChangeValue={field.handleChange}
-            onCommitValue={(settled) => {
-              pointTheLook(settled, onPortChosen);
-            }}
-            refusal={field.state.meta.errors[0]}
-            value={field.state.value}
-          />
-        )}
-      </form.Field>
+      <RuntimePortField
+        form={form}
+        onCommitValue={(settled) => {
+          pointTheLook(settled, onPortChosen);
+        }}
+      />
     </div>
   );
 }
@@ -179,7 +158,7 @@ function portKnob({ form, onPortChosen }: PortKnob): ReactNode {
  */
 export function DetectRuntimeStep({ runtime, onConnected }: DetectRuntimeStepProps) {
   const [lookPort, setLookPort] = useState(() => documentedRuntimePort(runtime));
-  const form = usePortDraftForm(runtime);
+  const form = usePortForm(String(documentedRuntimePort(runtime)));
   const portStands = useSelector(
     form.store,
     (state) => portRefusal(state.values.port) === undefined,

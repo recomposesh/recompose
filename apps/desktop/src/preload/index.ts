@@ -42,6 +42,7 @@ const recompose: RecomposeIpc = Object.freeze({
   'accounts:connect-local': bridgeEntry('accounts:connect-local'),
   'accounts:detect-runtime': bridgeEntry('accounts:detect-runtime'),
   'accounts:check-runtime': bridgeEntry('accounts:check-runtime'),
+  'accounts:move-runtime': bridgeEntry('accounts:move-runtime'),
   'accounts:list-models': bridgeEntry('accounts:list-models'),
   'system:get': bridgeEntry('system:get'),
   'system:open-config-folder': bridgeEntry('system:open-config-folder'),
