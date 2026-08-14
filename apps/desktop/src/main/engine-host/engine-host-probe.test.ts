@@ -1,4 +1,4 @@
-import { type EngineGateway } from '@recompose/contracts';
+import { keyProbeBoundMs, type EngineGateway } from '@recompose/contracts';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createEngineHost, PROBE_TIMEOUT_MS } from './engine-host';
@@ -6,7 +6,6 @@ import { grantsNothing, hostOver, nothing, running, scriptedChild } from './engi
 
 const codex: EngineGateway = { slug: 'codex', displayName: 'Codex', port: 8397, virtualModels: [] };
 const key = 'sk-ant-api03-long-secret-7f2c';
-const childFetchBoundMs = 10_000;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -183,6 +182,6 @@ describe('a reading nobody asked for', () => {
 
 describe('the two wait bounds', () => {
   test('the host waits on a probe longer than the child waits on its fetch', () => {
-    expect(PROBE_TIMEOUT_MS).toBeGreaterThan(childFetchBoundMs);
+    expect(PROBE_TIMEOUT_MS).toBeGreaterThan(keyProbeBoundMs);
   });
 });

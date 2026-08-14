@@ -103,6 +103,17 @@ export const proxyFetchBoundMs = 600_000;
  */
 export const modelListBoundMs = 10_000;
 
+/**
+ * How long a check of a stored key waits for the vendor before the check counts as silence.
+ *
+ * @summary It stands here for the same reason the runtime look bound does. Two processes read it:
+ * the engine child bounds its fetch by it, and the host's own wait has to outlast it, so a check
+ * folds on the child's verdict rather than on the host giving up. While the number lived privately
+ * in the engine and the host's spec re-declared it, raising one side left that relation spec green
+ * with the invariant broken.
+ */
+export const keyProbeBoundMs = 10_000;
+
 export const RUNTIME_PORT_RANGE = { min: 1, max: 65535 } as const;
 
 export const runtimePortSchema = z.int().min(RUNTIME_PORT_RANGE.min).max(RUNTIME_PORT_RANGE.max);
