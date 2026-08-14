@@ -27,10 +27,19 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
 
   Its scope widened during the run, because the repository typechecks as one unit: 35 files read the field that went away. Nineteen call sites wanted the same answer, so contracts gained `targetTheEntryNames`, the one rule for the single target a routing binds. Every repair is call-site only and behaviorally identical, so the clusters that own those files replace them with real work.
 
-- [ ] **Task 2: contracts protocol.** Depends on task 1. Lands `engineRoutingSchema`, the spend request with its route node, and the traffic shapes. Owns `packages/contracts/src/engine-protocol.ts`, `engine-protocol.test-d.ts`, `engine-traffic.ts`, `engine-traffic.test-d.ts`.
-- [ ] **Task 3: engine routing core.** Depends on task 2. Lands `walkAttempts`, `classify`, the two policies, the cooldown ledger, and `firstDeclaredTarget`. Owns `packages/engine/src/routing/` entire, sources and specs.
+- [x] **Task 2: contracts protocol.** Landed as `5927a199` after a rebase onto task 6. The engine mirror in `engine-routing.ts`, the spend request and the traffic report naming their route node, and traffic keyed three levels deep. Mutation 100 on contracts.
+
+  It and task 6 both split `cable-traffic.ts` out of `node-graph.ts` independently, the only collision this train has seen. The rebase took task 6's side as the base and folded the third level into its `outcomeInto` seam. Four of task 6's specs flipped. The rebase proved that flip with a scratch spec rather than assuming it: the cable into a router now rests, because nothing tries a router itself.
+
+- [x] **Task 3: engine routing core.** Landed as `e0cddea9`. The classification table, both policies, the cooldown ledger, the rotation cursors, and the walk. Mutation 99.22, the two survivors named as equivalent. Four property laws, each with its deterministic twin.
+
+  Two shapes the design left open, decided here. The walk answers a verdict rather than a `Response`, because refusal copy lives in task 4's file. It carries facts, and task 4 renders the wording. The ledger also records whether the provider promised the retry time, because decision 9's choice between 429 and 502 needs that across requests. Without it, a pool downed by transport failures would answer 429 with a time nobody promised.
+
 - [ ] **Task 4: engine serving path.** Depends on task 3. Reshapes `proxyModelRequest` and widens the refusal wire. Owns the serving-path files the design's file map names, plus the six side paths and their sibling specs.
-- [ ] **Task 5: main host.** Depends on task 2, parallel to tasks 3 and 4. Lands the per-node grant. Owns `apps/desktop/src/main/engine-host/stored-gateway.ts`, `spend-grant.ts`, `engine-spend.ts`, and their sibling specs.
+- [x] **Task 5: main host.** Landed as `02da90cd`. Main mints the engine view node by node, and a spend request resolves the account its named node holds. Mutation 98.67, and all five survivors task 2 named on `stored-gateway.ts` are dead.
+
+  Two files outside any cluster's list had to change, both pass-through. `first-request.ts` and `stored-boot.ts` wrap `SpendGrantFor`. Widening it would otherwise have dropped the seat name in production while still typechecking in one direction.
+
 - [x] **Task 6: renderer graph and layout.** Landed as `68bd3138`. The `router` node kind, one walk of the stored table in `lib/route-graph.ts`, cards in `lib/canvas-cards.ts`, the traffic reading in `lib/cable-traffic.ts`, route edits in `lib/routing-edits.ts`, depth-derived seating, and the fourth log subject. Mutation 99.77, one survivor left alive and named as equivalent.
 
   Four measurements the later clusters need:
@@ -40,7 +49,12 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
   - **Decision 12's stored-seat shift rests on a false premise.** Canvas seats live in `localStorage` through `canvas-position-store.ts`, not in `gateway.layout.nodes`, and nothing has to write them: depth-derived seating already moves a displaced target one column, because its depth changed.
   - **The serves box reads a routed definition through its lead target.** So a routed model whose lead account left reads as removed while a sibling could serve. Worth a second look from task 7.
 
-- [ ] **Task 7: renderer surface.** Depends on tasks 0 and 6. Lands the router card, the ladder, the kind ask, and the inspector body, each with its stories sibling. Owns the `ui/` folders the design's file map names, plus `app/styles/theme.css` and `primitives.css`.
+- [x] **Task 7: renderer surface.** Landed as `fe1a4763`. The chamfered card, the ladder, the kind ask, the router inspector, and the indigo tokens, each component with its stories sibling. Mutation 97.83, three survivors named as equivalent, and two modules entered the mutate list that no cluster had covered before.
+
+  The browser pass earned its place. A green suite said nothing while three real defects sat on the page. The chamfer drew at 181 by 85 inside an 184 by 88 card, because the SVG laid out inside the button's own transparent border. The shipped 11 pixel inset ran the mono line into the inner border, at the exact height a chamfer takes its edges inward. And the raised shadow clipped into four grey corner wedges, because a filter on the path reads no box-shadow. Contrast read off the page: kicker ink 8.54 to 1 on light and 6.49 to 1 on dark.
+
+  The battery earned its place too. Nineteen shipped browser specs encoded the old immediate-account flow, and only the full run caught them, because the cluster had run its new spec files alone.
+
 - [ ] **Task 7b: the gaps task 7 named rather than left silent.** Depends on task 7. Owns `ui/gateway-canvas-page/`, `ui/drop-picker/`, and `ui/cable-failure-chip/`.
 
   The one that contradicts an approved decision comes first. Proposal decision 2 says a cable may meet a router card. `oneTargetRule` still refuses that drop, and its refusal copy still names a stored target. No approved scenario covers it, which is why task 7 stopped rather than inventing one.
