@@ -1,0 +1,183 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/generated/glass.css';
+@import 'fumadocs-ui/css/black.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: 'neue-haas-grotesk-text', ui-sans-serif, system-ui, sans-serif;
+}
+.note-run {
+  display: inline-flex;
+}
+
+.note {
+  display: inline-block;
+  transition: transform 0.25s ease var(--stagger, 0s);
+}
+
+.note-link {
+  position: relative;
+}
+
+.note-link::before {
+  content: '';
+  position: absolute;
+  inset-inline: -8px;
+  top: 50%;
+  height: 17px;
+  background-color: var(--color-fd-foreground);
+  mask: repeating-linear-gradient(to bottom, black 0 1px, transparent 1px 4px);
+  opacity: 0.35;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.note-link:hover::before {
+  transform: translateY(-50%) scaleX(1);
+}
+
+.note-link:hover .note {
+  transform: translateY(var(--note-shift, 0));
+}
+
+.note-flat,
+.note-notehead {
+  position: relative;
+  transition:
+    transform 0.25s ease var(--stagger, 0s),
+    color 0.12s ease 0.12s;
+}
+
+.note-flat::after,
+.note-notehead::after {
+  content: '';
+  position: absolute;
+  left: 0.04em;
+  bottom: 0.24em;
+  height: 0.95em;
+  opacity: 0;
+  transition: opacity 0.12s ease 0s;
+}
+
+.note-flat::after {
+  width: 0.56em;
+  background-color: var(--color-fd-foreground);
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'><path d='M1.2 0.5 V10.4'/><path d='M1.2 6.4 C 4.4 5.2 5.6 6.6 5.0 8.2 C 4.4 9.6 2.8 10.2 1.2 10.4'/></svg>")
+    no-repeat center / contain;
+}
+
+.note-notehead::after {
+  width: 0.6em;
+  background-color: var(--color-fd-foreground);
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7.5 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round'><path d='M6.1 0.5 V8.6'/><ellipse cx='3.4' cy='8.7' rx='2.4' ry='1.7' transform='rotate(-18 3.4 8.7)'/></svg>")
+    no-repeat center / contain;
+}
+
+.note-link:hover .note-flat,
+.note-link:hover .note-notehead {
+  color: transparent;
+  text-shadow: none;
+  transition:
+    transform 0.25s ease var(--stagger, 0s),
+    color 0.12s ease 0s;
+}
+
+.note-link:hover .note-flat::after,
+.note-link:hover .note-notehead::after {
+  opacity: 1;
+  transition: opacity 0.12s ease 0.12s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .note-flat,
+  .note-notehead,
+  .note-flat::after,
+  .note-notehead::after,
+  .note-link::before {
+    transition: none;
+  }
+
+  .note-link:hover .note {
+    transform: none;
+  }
+
+  .note-link:hover .note-flat,
+  .note-link:hover .note-notehead,
+  .note-link:hover .note-flat::after,
+  .note-link:hover .note-notehead::after {
+    transition: none;
+  }
+}
+
+:root {
+  --hero-lift: transparent;
+}
+
+.dark {
+  --hero-lift: rgb(0 0 0 / 78%);
+}
+
+.hero-lift {
+  text-shadow:
+    0 1px 2px var(--hero-lift),
+    0 2px 14px var(--hero-lift),
+    0 0 36px var(--hero-lift);
+}
+
+html:not(.dark) .note-link:hover .note-flat,
+html:not(.dark) .note-link:hover .note-notehead {
+  background-image: none;
+}
+
+html:not(.dark) [data-spot='text'] {
+  background-image:
+    radial-gradient(
+      circle 260px at 260px 260px,
+      var(--color-white) 0%,
+      var(--color-white) 40%,
+      transparent 100%
+    ),
+    linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-size:
+    520px 520px,
+    100% 100%;
+  background-position:
+    var(--spot-x, -1000px) var(--spot-y, -1000px),
+    0 0;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html:not(.dark) .spot-copy {
+  padding-bottom: 0.22em;
+  margin-bottom: -0.22em;
+}
+
+html:not(.dark) .note-link::before,
+html:not(.dark) .note-flat::after,
+html:not(.dark) .note-notehead::after {
+  background-image: radial-gradient(
+    circle 260px at 260px 260px,
+    var(--color-white) 0%,
+    var(--color-white) 40%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 520px 520px;
+  background-position: var(--spot-x, -1000px) var(--spot-y, -1000px);
+}
+
+.spot-mask {
+  color: var(--color-white);
+  mask-image: radial-gradient(circle 260px at 260px 260px, black 0%, black 40%, transparent 100%);
+  mask-repeat: no-repeat;
+  mask-size: 520px 520px;
+  mask-position: -1000px -1000px;
+}
+
+.dark .spot-mask {
+  display: none;
+}

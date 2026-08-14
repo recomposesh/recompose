@@ -9,6 +9,7 @@
     "**/playwright-report/**",
     "**/storybook-static/**",
     "**/.turbo/**",
+    "web/**",
     "**/e2e/visual.css"
   ]
 }

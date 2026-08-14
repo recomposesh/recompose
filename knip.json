@@ -1,6 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
+    ".": {
+      "entry": ["steiger.config.ts", "probity.config.ts"],
+      "ignore": [".claude/workflows/**"],
+      "ignoreDependencies": ["@playwright/mcp", "@steiger/toolkit", "@swc/core", "hig-mcp"],
+      "ignoreBinaries": ["mise"]
+    },
     "apps/desktop": {
       "entry": [
         "build/after-pack.cjs",
@@ -15,6 +21,9 @@
       "ignoreBinaries": ["dpkg-deb"],
       "ignore": ["src/renderer/src/app/routeTree.gen.ts"]
     },
+    "apps/web": {
+      "ignoreDependencies": ["@base-ui/react"]
+    },
     "packages/contracts": {
       "entry": ["src/**/*.test-d.ts", "vitest.mutation.config.ts"],
       "ignoreDependencies": ["fast-check"]
@@ -23,12 +32,6 @@
       "entry": ["src/dialect/index.ts", "src/**/*.test-d.ts", "vitest.mutation.config.ts"],
       "ignoreDependencies": ["fast-check"],
       "ignoreBinaries": ["cc"]
-    },
-    ".": {
-      "entry": ["steiger.config.ts", "probity.config.ts"],
-      "ignore": [".claude/workflows/**"],
-      "ignoreDependencies": ["@playwright/mcp", "@steiger/toolkit", "@swc/core", "hig-mcp"],
-      "ignoreBinaries": ["mise"]
     }
   }
 }

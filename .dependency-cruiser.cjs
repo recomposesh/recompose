@@ -77,6 +77,18 @@ module.exports = {
       to: { path: '^packages/engine/' },
     },
     {
+      name: 'web-not-into-desktop',
+      severity: 'error',
+      from: { path: '^apps/web/' },
+      to: { path: '^apps/desktop/' },
+    },
+    {
+      name: 'web-not-into-desktop-transitive',
+      severity: 'error',
+      from: { path: '^apps/web/' },
+      to: { path: '^apps/desktop/', reachable: true },
+    },
+    {
       name: 'headless-scope',
       severity: 'error',
       from: { path: '^apps/headless/' },
@@ -137,7 +149,9 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(out|coverage|storybook-static)/' },
+    exclude: {
+      path: '(^|/)(out|coverage|storybook-static|\\.output|\\.nitro)/|(^|/)routeTree\\.gen\\.ts$',
+    },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'apps/desktop/tsconfig.web.json' },
     enhancedResolveOptions: {
