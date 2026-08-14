@@ -82,7 +82,7 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
       Every end-to-end unit inherits one shipped-behavior change. Decision 18 puts the kind ask in front of every drop-to-picker and plus-ask flow, so a scenario that binds a target now answers "router or target" before the account picker opens. Task 7 found this the hard way: nineteen shipped browser specs expected the picker immediately, and it swept all eight plus-ask sites to catch the last one. Assume the shipped `.feature` files that bind a target need the same step, and check `gateway-canvas/cable-wiring.feature` first.
 
 - [ ] **Task 8a to 8g: one unit per feature file.** Depends on task 8, all seven parallel. Each graduates exactly one `.feature` into `apps/desktop/e2e/features/routers/` together with exactly one `steps/routers-<area>.steps.ts`, in one commit, so `bddgen` never sees an undefined step. The seven are `failover`, `streaming`, `round-robin`, `refusals`, `stored-shape`, `canvas`, and `inspector`.
-- [ ] **Task 9: decision records.** Depends on tasks 4 and 8 settling the residual wording. Owns `docs/adr/0110-*.md`, `docs/adr/0111-*.md`, and `docs/adr/README.md`. The design drafted them as 0104 and 0105, and the sequence has now moved twice under it: 0104 through 0106 landed while the clusters ran, then 0107 through 0109 landed with the main merge below. Ask the `new-adr` skill again before writing, because it can move a third time.
+- [ ] **Task 9: decision records.** Depends on tasks 4 and 8 settling the residual wording. Owns `docs/adr/0111-*.md`, `docs/adr/0112-*.md`, and `docs/adr/README.md`. The design drafted them as 0104 and 0105, and the sequence has now moved twice under it: 0104 through 0106 landed while the clusters ran, then 0107 through 0110 landed with the main merge below. Ask the `new-adr` skill again before writing, because it moved once more between two merges an hour apart.
 
 The design's task decomposition named three feature files. The approved scenario set holds seven, and the phase rule gives each its own unit, so task 8 fans out seven ways rather than three.
 
@@ -94,7 +94,7 @@ The clusters branch from `origin/main`, and main gained 13 commits after this tr
 
 Three things the remaining clusters inherit from main rather than from this change:
 
-- **The Architecture Decision Record (ADR) sequence moved again.** 0107, 0108, and 0109 landed on main, so task 9 writes 0110 and 0111.
+- **The Architecture Decision Record (ADR) sequence moved again.** Numbers 0107 through 0110 landed on main, and the last of them arrived between two merges an hour apart, so task 9 writes 0111 and 0112.
 - **`apps/desktop/e2e/fixtures.ts` already has the pattern task 8 needs.** #200 landed `oneClipboard`, an `auto: true` fixture keyed off Playwright's `$tags`. Anything the seven end-to-end units would each wire by hand has a shipped precedent to follow rather than invent.
 - **Main edited the scenario rider #154 planned to amend.** #206 changed `features/gateway-canvas/furniture.feature` from `Given an open gateway detail` to `Given an open gateway detail holding a composition`. Decision 16 hands that same file the router amendment, so whoever writes it starts from main's line rather than the one the design quoted. Task 8 takes it, because it already owns the shipped end-to-end repairs.
 
