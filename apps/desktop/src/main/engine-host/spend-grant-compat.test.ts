@@ -19,6 +19,6 @@ test('a configured compatibility model marks only its matching credentialed spen
   );
 
   await expect(
-    resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast'),
+    resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
   ).resolves.toMatchObject({ spend: { custody: 'credentialed', isCompat: true } });
 });

@@ -10,6 +10,7 @@ import {
   localRow,
   planRow,
   pointingAt,
+  rewriteSettings,
   seatedAs,
   secret,
   storageHolding,
@@ -140,6 +141,38 @@ describe('the snapshot a gateway about to be written serves under', () => {
         },
       ],
     });
+  });
+});
+
+describe('which bind address the engine is trusted with', () => {
+  test('an address a person chose reaches the child, because it is not the loopback default', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await rewriteSettings(userDataPath, '0.0.0.0');
+
+    await expect(
+      engineGatewayOf(userDataPath, noComplaint, gatewayHolding([])),
+    ).resolves.toMatchObject({ bindAddress: '0.0.0.0' });
+  });
+
+  test('the loopback default leaves the property absent, because the child already assumes it', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await rewriteSettings(userDataPath, '127.0.0.1');
+
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, gatewayHolding([]));
+
+    expect('bindAddress' in snapshot).toBe(false);
+  });
+
+  test('a settings document naming no address leaves the property absent rather than undefined', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await rewriteSettings(userDataPath);
+
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, gatewayHolding([]));
+
+    expect('bindAddress' in snapshot).toBe(false);
   });
 });
 

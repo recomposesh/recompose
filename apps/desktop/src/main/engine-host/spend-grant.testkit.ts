@@ -6,11 +6,13 @@ import type {
   GatewayConfig,
   LocalAccount,
   ProviderModelPolicies,
+  RouteNode,
+  RouterPolicy,
   SubscriptionAccount,
   VirtualModel,
 } from '@recompose/contracts';
 
-import { ACCOUNTS_VERSION, GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
+import { ACCOUNTS_VERSION, defaultSettings, GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -77,6 +79,47 @@ export function pointingAt(accountId: string, providerModel = 'claude-sonnet-5')
   };
 }
 
+export type LadderSeat = { node: string; accountId: string; providerModel?: string };
+
+const LADDER = 'ladder';
+
+function seatedNodes(seats: readonly LadderSeat[]): Record<string, RouteNode> {
+  const nodes: Record<string, RouteNode> = {};
+
+  for (const seat of seats) {
+    nodes[seat.node] = {
+      kind: 'target',
+      accountId: seat.accountId,
+      providerModel: seat.providerModel ?? 'claude-sonnet-5',
+    };
+  }
+
+  return nodes;
+}
+
+/**
+ * A virtual model whose entry hands the request to a router over the seats named.
+ *
+ * @summary Every per-node spec stands the same stored shape up, so the one rule that writes it
+ * lives here rather than in each spec's own literal.
+ */
+export function ladderedOver(
+  seats: readonly LadderSeat[],
+  policy: RouterPolicy = { mode: 'failover' },
+): VirtualModel {
+  return {
+    id: 'fast',
+    displayName: 'fast',
+    routing: {
+      entry: LADDER,
+      nodes: {
+        [LADDER]: { kind: 'router', policy, children: seats.map((seat) => seat.node) },
+        ...seatedNodes(seats),
+      },
+    },
+  };
+}
+
 export function seatedAs(standing: EngineTargetStanding): EngineVirtualModel['routing'] {
   return { entry: 'seat', nodes: { seat: { kind: 'target', standing } } };
 }
@@ -117,6 +160,19 @@ export async function rewriteRegistry(
     }),
     'utf8',
   );
+}
+
+/**
+ * Writes the settings document a gateway snapshot is minted against.
+ *
+ * @summary Only the bind address changes what the child is handed, so the helper names that one
+ * field and fills the rest from the defaults. Leaving it out writes a document that names no
+ * address at all, which is what a profile saved before the setting existed looks like.
+ */
+export async function rewriteSettings(userDataPath: string, bindAddress?: string): Promise<void> {
+  const stored = { ...defaultSettings(), bindAddress };
+
+  await writeFile(join(userDataPath, 'settings.json'), JSON.stringify(stored), 'utf8');
 }
 
 export async function rewriteVault(

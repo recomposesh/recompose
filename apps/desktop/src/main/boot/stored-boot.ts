@@ -60,7 +60,8 @@ export type StoredBoot = {
 
 function storedSpendGrants(deps: StoredBootDeps, custody: CredentialCustody | null): SpendGrantFor {
   return noticingTheFirstGrant(
-    async (slug, model) => resolveSpendGrant(deps.spendGrantContext(custody), slug, model),
+    async (slug, model, routeNode) =>
+      resolveSpendGrant(deps.spendGrantContext(custody), slug, model, routeNode),
     firstRequestReporter(
       () => storagePathsFor(deps.recomposeHome()).settingsFile,
       deps.onCorrupt,
