@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      desktop: ${{ steps.filter.outputs.desktop }}
       workflows: ${{ steps.filter.outputs.workflows }}
       prose: ${{ steps.filter.outputs.prose }}
     steps:
@@ -37,6 +38,8 @@ jobs:
               - '!docs/**'
               - '!designs/**'
               - '!**/*.md'
+            desktop:
+              - '{apps/desktop/**,packages/**,pnpm-lock.yaml,package.json,pnpm-workspace.yaml,turbo.json,vitest.shared.ts,tsconfig*.json}'
             workflows:
               - '.github/workflows/**'
             prose:
@@ -69,7 +72,8 @@ jobs:
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
-      - run: pnpm --filter @recompose/desktop run storybook:build
+      - if: needs.changes.outputs.desktop == 'true'
+        run: pnpm --filter @recompose/desktop run storybook:build
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-reports
@@ -114,7 +118,7 @@ jobs:
 
   mutation:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name == 'pull_request'
+    if: needs.changes.outputs.desktop == 'true' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
@@ -187,7 +191,7 @@ jobs:
 
   e2e:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.desktop == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -281,7 +285,7 @@ jobs:
 
   e2e-quarantine:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.desktop == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
