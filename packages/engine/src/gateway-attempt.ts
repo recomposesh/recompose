@@ -17,7 +17,6 @@ import { upstreamAtTheCommitLatch } from './gateway-stream-commit';
 import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
 import { pluginGatewayTarget, reachPluginExecutor } from './plugin-gateway';
 import { reachCredentialed } from './provider/credentialed-reach';
-import { missingTarget } from './refusals';
 import { coolUntilTheProviderNames } from './routing/cooldown-signal';
 import { parseSubscriptionCredential } from './subscription/credentials';
 import { reachSubscription } from './subscription/reach';
@@ -208,19 +207,25 @@ async function readingFromResolved(
     : readingFromProvider(deps, effectiveProviderCrossing(compatible, target), grant);
 }
 
+/**
+ * What one child's custody came to, which is a reading about that child and about nothing else.
+ *
+ * @summary Neither answer a grant can refuse with ends the walk, because both describe the one seat
+ * that was asked about: an account that left the registry took nothing from its siblings, and a
+ * credential that could not be opened took nothing either. They stay two readings rather than one so
+ * the refusal a person eventually reads names the repair the seat actually needs.
+ */
 async function readingFromGrant(
   deps: AttemptDeps,
   crossing: Crossing,
   grant: SpendGrant,
 ): Promise<AttemptReading<Response>> {
-  if (grant.verdict === 'missing-credential' || hasMalformedSubscription(grant)) {
-    return { kind: 'grant-missing-credential' };
+  if (grant.verdict === 'missing-target') {
+    return { kind: 'grant-missing-target' };
   }
 
-  if (grant.verdict !== 'resolved') {
-    return recomposeAnswered(
-      refusalResponse(crossing.dialect, missingTarget(crossing.gatewayName, crossing.virtualModel)),
-    );
+  if (grant.verdict !== 'resolved' || hasMalformedSubscription(grant)) {
+    return { kind: 'grant-missing-credential' };
   }
 
   return readingFromResolved(deps, crossing, grant);
@@ -230,10 +235,12 @@ async function readingFromGrant(
  * What one child made of the request: an answer to keep, or a reason to try the next child.
  *
  * @summary Custody is resolved here rather than once per request, so a ladder spends the account each
- * child names and a refusal about one child says nothing about any other. A child whose account left
- * reads as a credential failure without a grant ever being asked, because there is no account to ask
- * about. Every refusal recompose writes itself is marked as one no sibling could cure, so a
- * translation the gateway could not perform never spends a second account proving it again.
+ * child names and a refusal about one child says nothing about any other. A seat the table already
+ * stands unbound reads as a missing target without a grant ever being asked, which is the same
+ * reading a grant answers for the same seat once the table catches up, so the words a person reads
+ * never turn on how fresh the table is. Every refusal recompose writes itself is marked as one no
+ * sibling could cure, so a translation the gateway could not perform never spends a second account
+ * proving it again.
  */
 export async function readingAtNode(
   deps: AttemptDeps,
@@ -242,7 +249,7 @@ export async function readingAtNode(
   const node = deps.virtualModel.routing.nodes[routeNode];
 
   if (node?.kind !== 'target' || node.standing.standing !== 'bound') {
-    return { kind: 'grant-missing-credential' };
+    return { kind: 'grant-missing-target' };
   }
 
   const crossing: Crossing = { ...deps.crossing, providerModel: node.standing.providerModel };
