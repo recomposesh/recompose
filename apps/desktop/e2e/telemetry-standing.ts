@@ -4,6 +4,7 @@ import { expect } from '@playwright/test';
 
 import { openGatewayCanvas } from './canvas-screen';
 import { drawerStands, loggedRows, theLogsDrawerOpens } from './logs-drawer';
+import { focusedGateway } from './scenario-memory';
 import { SERVING_GATEWAY } from './served-gateway';
 import { answersGiven } from './served-traffic';
 import { rememberFooterReading, rememberWholeStream } from './telemetry-memory';
@@ -52,8 +53,16 @@ export async function theRunHolds(page: Page, rows: number): Promise<void> {
   await expect(loggedRows(page).first()).toHaveAttribute('aria-setsize', String(rows));
 }
 
+/**
+ * Opens the detail of the gateway the scenario is acting on.
+ *
+ * @summary It reads the focus rather than naming one gateway, because the sentence a person says
+ * out loud is "the gateway detail" and two features now say it: the telemetry tree, which focuses
+ * its serving gateway in its own background, and the routers tree, which focuses the gateway its
+ * routed definition stands on. Naming one here would answer the other with the wrong screen.
+ */
 export async function theDetailStandsOpen(page: Page): Promise<void> {
-  await openGatewayCanvas(page, SERVING_GATEWAY);
+  await openGatewayCanvas(page, focusedGateway(page));
 }
 
 /**
