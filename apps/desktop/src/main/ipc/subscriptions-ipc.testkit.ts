@@ -41,7 +41,11 @@ export type SubscriptionsWorld = {
   ) => Launch;
   storedAccounts: () => Promise<AccountsDocument>;
   alreadyHolding: (rows: AccountsDocument['accounts']) => Promise<void>;
+  launchRefusals: readonly LaunchRefusal[];
+  noteLaunchRefused: SubscriptionsIpcContext['noteLaunchRefused'];
 };
+
+type LaunchRefusal = { provider: SubscriptionProviderId; note: string };
 
 type Answered = Awaited<ReturnType<SubscriptionsIpcHandlers['subscriptions:list']>>;
 
@@ -91,6 +95,7 @@ function contextIn(
       nowMs: () => 0,
     },
     writeSubscriptionCredential: async () => Promise.resolve(),
+    noteLaunchRefused: () => undefined,
     launch,
     clock: fakeClock,
     signInBoundMs: 300,
@@ -106,12 +111,18 @@ export async function aFreshWorld(): Promise<SubscriptionsWorld> {
   ]);
   const keychain = fakeKeychain();
   const launched: string[] = [];
+  const launchRefusals: LaunchRefusal[] = [];
   const accountsFile = join(userDataPath, 'accounts.json');
 
   return {
     userDataPath,
     keychain,
     launched,
+    launchRefusals,
+
+    noteLaunchRefused: (provider, note) => {
+      launchRefusals.push({ provider, note });
+    },
 
     homesOn: (platform) => subscriptionHomes(userDataPath, platform),
 

@@ -51,14 +51,20 @@ describe('the protocol the two processes speak', () => {
     >();
   });
 
-  test('the child hears only what serving needs, so no secret rides a gateway', () => {
+  test('the child hears what serving needs, and the one secret it has to compare against', () => {
     expectTypeOf<EngineGateway>().toEqualTypeOf<{
       slug: string;
       displayName: string;
       port: number;
       bindAddress?: string | undefined;
+      apiKey?: string | undefined;
       virtualModels: EngineVirtualModel[];
     }>();
+  });
+
+  test('the snapshot carries no requirement flag, because the parent resolves it before sending', () => {
+    expectTypeOf<EngineGateway>().not.toHaveProperty('apiKeyRequired');
+    expectTypeOf<EngineGateway>().not.toHaveProperty('requireApiKey');
   });
 
   test('the probe is the one directive a key can travel in', () => {

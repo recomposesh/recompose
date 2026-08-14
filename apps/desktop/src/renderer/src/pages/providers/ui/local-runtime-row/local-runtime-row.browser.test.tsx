@@ -165,14 +165,15 @@ test('Check again re-reads the standing without touching the stored address', as
   await expect.element(screen.getByText('http://127.0.0.1:11434')).toBeVisible();
 });
 
-test('the overflow holds checking again and removal, and nothing else', async () => {
+test('the overflow holds checking again, moving and removal, and nothing else', async () => {
   await renderRow();
 
   await press('Actions for Ollama');
 
   await expect.element(page.getByRole('menuitem', { name: 'Check again' })).toBeVisible();
+  await expect.element(page.getByRole('menuitem', { name: 'Move to another port' })).toBeVisible();
   await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
-  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(2);
+  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(3);
 });
 
 test('removing the runtime takes it out of the registry it was held in', async () => {

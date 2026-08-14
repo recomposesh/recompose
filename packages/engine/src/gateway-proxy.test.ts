@@ -124,7 +124,8 @@ describe('a grant the parent refuses', () => {
       type: 'error',
       error: {
         type: 'api_error',
-        message: 'The gateway "Codex" holds no credential for the virtual model "fast".',
+        message:
+          'The virtual model "fast" in the gateway "Codex" has no account behind it. Reconnect the account it spends, or point it at another.',
       },
     });
     expect(sent).toEqual([]);

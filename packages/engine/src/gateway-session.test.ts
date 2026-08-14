@@ -1,7 +1,11 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 
-import { requestReplayScopeId, requestSessionId } from './gateway-session';
+import {
+  requestCallerFingerprint,
+  requestReplayScopeId,
+  requestSessionId,
+} from './gateway-session';
 
 async function sessionFrom(body: Record<string, unknown>, headers: Record<string, string> = {}) {
   const app = new Hono();
@@ -115,5 +119,89 @@ describe('replay session namespaces', () => {
     await expect(replayScopeFrom({}, { 'x-codex-window-id': 'window-1' })).resolves.toEqual({
       scope: 'window:window-1',
     });
+  });
+});
+
+async function fingerprintFrom(headers: Record<string, string> = {}): Promise<string> {
+  const app = new Hono();
+
+  app.post('/', (c) => c.text(requestCallerFingerprint(c) ?? ''));
+
+  const response = await app.request('http://local/', { method: 'POST', headers });
+
+  return response.text();
+}
+
+async function fingerprintFromQuery(key: string): Promise<string> {
+  const app = new Hono();
+
+  app.post('/', (c) => c.text(requestCallerFingerprint(c) ?? ''));
+
+  const response = await app.request(`http://local/?key=${encodeURIComponent(key)}`, {
+    method: 'POST',
+  });
+
+  return response.text();
+}
+
+describe('what a caller leaves behind in the log', () => {
+  it('records a digest rather than the credential the caller presented', async () => {
+    const key = 'rc-local-J8xQm2NpVr4wYs6bZa1cLd3fGh5jKm9';
+
+    await expect(fingerprintFrom({ 'x-api-key': key })).resolves.not.toBe(key);
+  });
+
+  it('records a digest of the fixed width a log row accepts', async () => {
+    await expect(fingerprintFrom({ 'x-api-key': 'rc-local-abcdef' })).resolves.toMatch(
+      /^[0-9a-f]{64}$/u,
+    );
+  });
+
+  it('reads the bearer header the same way, so no spelling escapes the digest', async () => {
+    await expect(fingerprintFrom({ authorization: 'Bearer rc-local-abcdef' })).resolves.toMatch(
+      /^[0-9a-f]{64}$/u,
+    );
+  });
+
+  it('records nothing at all when the caller presented no credential', async () => {
+    await expect(fingerprintFrom()).resolves.toBe('');
+  });
+});
+
+describe('every way in leaves the same mark', () => {
+  const key = 'rc-local-J8xQm2NpVr4wYs6bZa1cLd3fGh5jKm9';
+
+  it('a caller naming its scheme leaves the mark of the key, not of the line carrying it', async () => {
+    await expect(fingerprintFrom({ authorization: `Bearer ${key}` })).resolves.toBe(
+      await fingerprintFrom({ 'x-api-key': key }),
+    );
+  });
+
+  it('a Google client is the same caller as an Anthropic one holding the same key', async () => {
+    await expect(fingerprintFrom({ 'x-goog-api-key': key })).resolves.toBe(
+      await fingerprintFrom({ 'x-api-key': key }),
+    );
+  });
+
+  it('a caller putting the key in the query string is that caller too', async () => {
+    await expect(fingerprintFromQuery(key)).resolves.toBe(
+      await fingerprintFrom({ 'x-api-key': key }),
+    );
+  });
+
+  it('two callers holding different keys are never the same caller', async () => {
+    await expect(fingerprintFrom({ 'x-api-key': key })).resolves.not.toBe(
+      await fingerprintFrom({ 'x-api-key': 'rc-local-adifferentkeyentirely' }),
+    );
+  });
+
+  it('the authorization header wins when a caller offers more than one', async () => {
+    await expect(
+      fingerprintFrom({ authorization: `Bearer ${key}`, 'x-api-key': 'rc-local-second' }),
+    ).resolves.toBe(await fingerprintFrom({ 'x-api-key': key }));
+  });
+
+  it('a blank query key leaves no mark, the way a blank header leaves none', async () => {
+    await expect(fingerprintFromQuery('   ')).resolves.toBe('');
   });
 });

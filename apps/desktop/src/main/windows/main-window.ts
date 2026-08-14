@@ -16,6 +16,7 @@ import {
   rendererUrlFor,
   settingsShortcutRouteFor,
 } from './renderer-url';
+import { staysBack } from './stays-back';
 import { windowOptionsFor } from './window-options';
 
 const isMac = process.platform === 'darwin';
@@ -41,7 +42,7 @@ function applyGlassBackdrop(window: BrowserWindow): void {
 }
 
 export function createMainWindow(route: string): void {
-  const windowStaysBack = process.env['RECOMPOSE_WINDOW_STAYS_BACK'] === '1';
+  const windowStaysBack = staysBack(process.env);
   const windowState = windowStateKeeper({ defaultWidth: 1120, defaultHeight: 780 });
   const mainWindow = new BrowserWindow({
     ...windowOptionsFor(process.platform, join(__dirname, '../preload/index.js'), icon),

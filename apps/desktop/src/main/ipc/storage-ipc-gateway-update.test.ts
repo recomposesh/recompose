@@ -1,41 +1,14 @@
 import {
   ACCOUNTS_VERSION,
   GATEWAY_CONFIG_VERSION,
-  type AccountsDocument,
-  type EngineGateway,
-  type GatewayConfig,
   type IpcError,
   type VirtualModel,
 } from '@recompose/contracts';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-import type { SecretCodec } from '../storage/safe-storage-codec';
-import type { StorageIpcContext } from './storage-context';
-
-import { createStorageIpcHandlers } from './storage-ipc';
-
-const fakeCodec: SecretCodec = {
-  encrypt: (plain) => Buffer.from(plain, 'utf8').toString('base64'),
-  decrypt: (encrypted) => Buffer.from(encrypted, 'base64').toString('utf8'),
-  isPlaintextFallback: false,
-};
-
-const registry: AccountsDocument = {
-  schemaVersion: ACCOUNTS_VERSION,
-  accounts: [
-    { id: 'acc-key', provider: 'anthropic', kind: 'api-key', label: 'work', credentialRef: 'c1' },
-    {
-      id: 'acc-plan',
-      provider: 'anthropic',
-      kind: 'subscription',
-      provenance: 'sign-in',
-      label: 'Max',
-    },
-  ],
-};
+import { deskHolding, gatewayServing, storedBytes } from './gateway-storage.testkit';
 
 const fast: VirtualModel = {
   id: 'fast',
@@ -43,70 +16,12 @@ const fast: VirtualModel = {
   target: { accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
 };
 
-function gatewayServing(models: readonly VirtualModel[], port = 8397): GatewayConfig {
-  return {
-    schemaVersion: GATEWAY_CONFIG_VERSION,
-    slug: 'codex',
-    displayName: 'Codex',
-    port,
-    virtualModels: [...models],
-    layout: { nodes: {} },
-  };
-}
-
-type Desk = {
-  restarted: EngineGateway[];
-  userDataPath: string;
-  handlers: ReturnType<typeof createStorageIpcHandlers>;
-};
-
-async function deskHolding(stored: readonly GatewayConfig[]): Promise<Desk> {
-  const started: EngineGateway[] = [];
-  const restarted: EngineGateway[] = [];
-  const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-update-'));
-  const context: StorageIpcContext = {
-    userDataPath,
-    homeFolder: '/Users/ada',
-    getCodec: () => fakeCodec,
-    isEncryptionAvailable: () => true,
-    onCorrupt: () => undefined,
-    onSettingsWritten: () => undefined,
-    applySettings: () => undefined,
-    readLoginItem: () => false,
-    startGateway: (gateway) => {
-      started.push(gateway);
-    },
-    restartGateway: (gateway) => {
-      restarted.push(gateway);
-    },
-    stopGateway: () => undefined,
-    isServing: () => true,
-    releaseSubscription: async () => Promise.resolve({ ok: true }),
-  };
-
-  await writeFile(join(userDataPath, 'accounts.json'), JSON.stringify(registry), 'utf8');
-
-  const handlers = createStorageIpcHandlers(context);
-
-  for (const gateway of stored) {
-    await handlers['gateways:save'](gateway);
-  }
-
-  started.length = 0;
-
-  return { restarted, userDataPath, handlers };
-}
-
 function refusalIn(answer: { ok: true } | { ok: false; error: IpcError }): IpcError {
   if (answer.ok) {
     throw new Error('the update landed where the spec expected a refusal');
   }
 
   return answer.error;
-}
-
-async function storedBytes(userDataPath: string, slug: string): Promise<string> {
-  return readFile(join(userDataPath, 'gateways', `${slug}.json`), 'utf8');
 }
 
 describe('an update to a gateway already on disk', () => {

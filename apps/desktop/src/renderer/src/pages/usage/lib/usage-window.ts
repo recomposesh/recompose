@@ -1,55 +1,84 @@
 import type { UsageRange, UsageReportAsk } from '@recompose/contracts';
 
-import type { UsageSearch, UsageSearchRange } from './usage-search';
+import type { PresetRange, UsageSearch, UsageSearchRange } from './usage-search';
+
+import { startOfMonth } from './calendar-grid';
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
 
-const PRESET_REACH: Record<Exclude<UsageSearchRange, 'custom'>, number> = {
-  '1h': HOUR_MS,
-  '24h': DAY_MS,
-  '7d': 7 * DAY_MS,
-  '30d': 30 * DAY_MS,
+export type UsageWindow = { from: number; to: number };
+
+function reachingBack(width: number) {
+  return (now: number): UsageWindow => ({ from: now - width, to: now });
+}
+
+function startOfWeek(at: number): number {
+  const midnight = new Date(at);
+
+  midnight.setHours(0, 0, 0, 0);
+  midnight.setDate(midnight.getDate() - midnight.getDay());
+
+  return midnight.getTime();
+}
+
+const RANGE_WINDOW: Record<PresetRange, (now: number) => UsageWindow> = {
+  '1h': reachingBack(HOUR_MS),
+  '24h': reachingBack(DAY_MS),
+  '7d': reachingBack(7 * DAY_MS),
+  '30d': reachingBack(30 * DAY_MS),
+  'this-week': (now) => ({ from: startOfWeek(now), to: now }),
+  'this-month': (now) => ({ from: startOfMonth(now), to: now }),
 };
 
-const RANGE_WORDING: Record<Exclude<UsageSearchRange, 'custom'>, string> = {
+const RANGE_WORDING: Record<PresetRange, string> = {
   '1h': 'Last hour',
   '24h': 'Last 24 hours',
   '7d': 'Last 7 days',
   '30d': 'Last 30 days',
+  'this-week': 'This week',
+  'this-month': 'This month',
 };
 
-export type UsageWindow = { from: number; to: number };
+const PREVIOUS_WORD: Record<UsageSearchRange, string> = {
+  '1h': '1h',
+  '24h': '24h',
+  '7d': '7d',
+  '30d': '30d',
+  'this-week': 'window',
+  'this-month': 'window',
+  custom: 'window',
+};
 
-export type PresetKey =
-  | 'last-hour'
-  | 'last-24-hours'
-  | 'last-7-days'
-  | 'last-30-days'
-  | 'this-week'
-  | 'this-month';
+export type PresetWindow = { range: PresetRange; label: string };
 
-export type PresetWindow = { key: PresetKey; label: string };
+const PRESET_ORDER: readonly PresetRange[] = ['1h', '24h', '7d', '30d', 'this-week', 'this-month'];
 
 /** The windows the range popover offers, in the order it lists them. */
-export const presetWindows: readonly PresetWindow[] = [
-  { key: 'last-hour', label: 'Last hour' },
-  { key: 'last-24-hours', label: 'Last 24 hours' },
-  { key: 'last-7-days', label: 'Last 7 days' },
-  { key: 'last-30-days', label: 'Last 30 days' },
-  { key: 'this-week', label: 'This week' },
-  { key: 'this-month', label: 'This month' },
-];
+export const presetWindows: readonly PresetWindow[] = PRESET_ORDER.map((range) => ({
+  range,
+  label: RANGE_WORDING[range],
+}));
 
-/** The window one view stands over, which a custom range names outright. */
+/**
+ * The window one view stands over, which a custom range names outright.
+ *
+ * @summary A range either reaches back a fixed width from now or opens at the boundary of the week
+ * or month standing, and both keep closing at now. Only a drawn window carries its own edges.
+ */
 export function windowFor(search: UsageSearch, now: number): UsageWindow {
-  if (search.range === 'custom' && search.from !== undefined && search.to !== undefined) {
-    return { from: search.from, to: search.to };
+  if (search.range === 'custom') {
+    return search.from !== undefined && search.to !== undefined
+      ? { from: search.from, to: search.to }
+      : RANGE_WINDOW['24h'](now);
   }
 
-  const reach = search.range === 'custom' ? DAY_MS : PRESET_REACH[search.range];
+  return RANGE_WINDOW[search.range](now);
+}
 
-  return { from: now - reach, to: now };
+/** What a tile calls the window before this one: a fixed reach names itself, the rest is a window. */
+export function previousWindowWord(range: UsageSearchRange): string {
+  return PREVIOUS_WORD[range];
 }
 
 /** The window standing before the one on screen, the same width, ending where it opens. */
@@ -93,60 +122,6 @@ export function reportAskFor(
     range,
     ...(wantsHours ? { bucketWidth: 'hour' as const } : {}),
     dayOffsetMinutes,
-  };
-}
-
-function localMidnight(at: number): number {
-  const day = new Date(at);
-
-  day.setHours(0, 0, 0, 0);
-
-  return day.getTime();
-}
-
-function weekStart(at: number): number {
-  const midnight = new Date(localMidnight(at));
-
-  midnight.setDate(midnight.getDate() - midnight.getDay());
-
-  return midnight.getTime();
-}
-
-function monthStart(at: number): number {
-  const midnight = new Date(localMidnight(at));
-
-  midnight.setDate(1);
-
-  return midnight.getTime();
-}
-
-const PRESET_RANGE: Partial<Record<PresetKey, UsageSearchRange>> = {
-  'last-hour': '1h',
-  'last-24-hours': '24h',
-  'last-7-days': '7d',
-  'last-30-days': '30d',
-};
-
-/**
- * The view one preset moves to, filters and chart left standing.
- *
- * @summary A calendar preset lands as a custom window over the local week or month, because a
- * window anchored to a boundary is not the same as one reaching back a fixed width.
- */
-export function searchForPreset(search: UsageSearch, key: PresetKey, now: number): UsageSearch {
-  const range = PRESET_RANGE[key];
-
-  if (range !== undefined) {
-    const { from: _from, to: _to, ...kept } = search;
-
-    return { ...kept, range };
-  }
-
-  return {
-    ...search,
-    range: 'custom',
-    from: key === 'this-week' ? weekStart(now) : monthStart(now),
-    to: now,
   };
 }
 

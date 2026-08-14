@@ -24,7 +24,11 @@ import {
   signInThroughTheTool,
   SIGN_IN_WAIT_MS,
 } from '../subscription-sign-in';
-import { subscriptionAdoptedFromTheMachine, theMachineHoldsFor } from './machine-subscriptions';
+import {
+  adoptAct,
+  subscriptionAdoptedFromTheMachine,
+  theMachineHoldsFor,
+} from './machine-subscriptions';
 
 /** What one stored-account flow may spend on a runner already bringing up two applications. */
 const ONE_FLOW_MS = 10_000;
@@ -145,7 +149,7 @@ Then(
   async ({ page }, address: string, plan: string) => {
     await expect(catalog(page)).toContainText(address);
     await expect(catalog(page)).toContainText(plan);
-    await expect(catalog(page).getByRole('button', { name: 'Connect', exact: true })).toBeEnabled();
+    await expect(adoptAct(page)).toBeEnabled();
   },
 );
 
@@ -218,6 +222,18 @@ Then("the app hands the sign-in to the provider's own tool", async ({ electronAp
   const record: unknown = JSON.parse(await readFile(join(home, '.claude.json'), 'utf8'));
 
   expect(JSON.stringify(record)).toContain('dev@example.com');
+});
+
+/**
+ * @summary Anthropic's tool names the address in plain text and Codex hides it inside a token, so
+ * this proves the record landed where the app pointed the tool rather than in the person's own
+ * home. That the app read the right account out of it is the next step's, off the screen.
+ */
+Then('Codex writes its record into the home the app gave it', async ({ electronApp }) => {
+  const home = await activeToolHome(electronApp, 'openai');
+  const record: unknown = JSON.parse(await readFile(join(home, 'auth.json'), 'utf8'));
+
+  expect(record).toEqual(expect.objectContaining({ auth_mode: 'chatgpt' }));
 });
 
 Then('the account appears once that tool reports success', async ({ page }) => {

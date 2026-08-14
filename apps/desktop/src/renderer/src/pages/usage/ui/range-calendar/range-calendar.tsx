@@ -54,7 +54,9 @@ function monthStep(label: string, turn: string, onPress: () => void) {
  * @summary The grid, its keyboard walk, and its month nav come from the calendar library rather
  * than from a hand-built table, and only the paint is ours. What a press means for the window is
  * not the library's to decide, because it only ever sees a complete range and would widen one
- * where a person meant to start over, so the press rides out as the day it landed on.
+ * where a person meant to start over, so the press rides out as the day it landed on. The library
+ * only paints the window it is handed while a select handler stands, so the handler stays even
+ * though the range it works out goes unread.
  */
 export function RangeCalendar({
   month,
@@ -80,11 +82,11 @@ export function RangeCalendar({
         mode="range"
         month={new Date(month)}
         numberOfMonths={2}
-        onDayClick={(day) => {
-          onDayPress(day.getTime());
-        }}
         onMonthChange={(next) => {
           onMonthChange(next.getTime());
+        }}
+        onSelect={(_walked, day) => {
+          onDayPress(day.getTime());
         }}
         selected={{ from: new Date(window.from), to: new Date(window.to) }}
       />

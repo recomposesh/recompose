@@ -8,6 +8,7 @@ export {
   forgetEngineLogsListeners,
 } from './fake-engine-pushes';
 export { gatewaySeed } from './fake-gateways';
+export { emitLaunchRefused } from './fake-launch-refusals';
 export { emitSettingsChanged } from './fake-settings';
 export { connectedSubscription } from './fake-subscriptions';
 export { emitUsageCommand } from './fake-usage-pushes';

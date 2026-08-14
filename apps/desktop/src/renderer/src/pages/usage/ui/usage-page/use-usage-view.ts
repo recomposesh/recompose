@@ -17,7 +17,7 @@ import { panelRowsOf } from '../../lib/panel-rows';
 import { stackedChart } from '../../lib/usage-chart-fold';
 import { metricFaces } from '../../lib/usage-faces';
 import { filteredBuckets } from '../../lib/usage-groups';
-import { windowFor } from '../../lib/usage-window';
+import { previousWindowWord, windowFor } from '../../lib/usage-window';
 import { useWindowBuckets } from '../../model/use-window-buckets';
 
 function localMidnight(at: number): number {
@@ -120,7 +120,7 @@ function readingsView(
       dayCosts: sourced.dayCosts,
       dayWidth: sourced.widthWord === 'day',
       todayStart: localMidnight(now),
-      windowWord: search.range === 'custom' ? 'window' : search.range,
+      windowWord: previousWindowWord(search.range),
     }),
     chart: stackedChart({
       measure: search.metric,

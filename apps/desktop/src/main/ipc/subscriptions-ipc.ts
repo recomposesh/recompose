@@ -44,6 +44,17 @@ export type SubscriptionsIpcHandlers = Pick<
 type ToolRun = { landed: SubscriptionObservation | null; reclaimed: CustodyOutcome };
 
 /**
+ * @summary A launch that fails carries the one sentence worth reading, and on Linux it names every
+ * terminal emulator that was tried. Anything else thrown here is still worth a line, because the
+ * alternative is a wait with nothing behind it.
+ */
+function sentenceFor(cause: unknown): string {
+  const said = cause instanceof Error ? cause.message.trim() : '';
+
+  return said === '' ? 'recompose could not open a terminal for the sign-in.' : said;
+}
+
+/**
  * Runs the provider's tool against a home of its own and hands back what it left behind.
  *
  * @summary Nothing here touches the item the person's own install reads. A modern tool names its
@@ -68,7 +79,9 @@ async function runTheTool(
 
   await shop.ctx
     .launch(signInCommandFor({ provider, home, platform: shop.ctx.platform }))
-    .catch(() => undefined);
+    .catch((cause: unknown) => {
+      shop.ctx.noteLaunchRefused(provider, sentenceFor(cause));
+    });
 
   const landed = await awaitSignIn({
     observe,

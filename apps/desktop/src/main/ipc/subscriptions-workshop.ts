@@ -34,6 +34,11 @@ export type SubscriptionsIpcContext = {
   onCorrupt: (quarantinedPath: string) => void;
   /** How the one plan with no tool of its own reaches GitHub, its clock, and its own pace. */
   copilot: CopilotSignInPort;
+  /**
+   * @summary A launch that never opened a terminal leaves the wait running, because the command
+   * stays on screen for a person to run by hand. This is how they learn nothing opened.
+   */
+  noteLaunchRefused: (provider: SubscriptionProviderId, note: string) => void;
   /** Keeps the credential a sign-in yielded, under the account it was yielded for. */
   writeSubscriptionCredential: (
     provider: SubscriptionProviderId,

@@ -18,7 +18,10 @@ export type LocalRuntimesIpcContext = {
 
 type LocalRuntimesIpcHandlers = Pick<
   IpcHandlers,
-  'accounts:connect-local' | 'accounts:detect-runtime' | 'accounts:check-runtime'
+  | 'accounts:connect-local'
+  | 'accounts:detect-runtime'
+  | 'accounts:check-runtime'
+  | 'accounts:move-runtime'
 >;
 
 function runtimesStandingIn(accounts: AccountsDocument): Set<LocalProviderId> {
@@ -117,18 +120,87 @@ async function connectRuntime(
   }
 }
 
-async function checkStoredRuntime(ctx: LocalRuntimesIpcContext, id: string) {
-  const paths = storagePathsFor(ctx.userDataPath);
+/**
+ * Whether a server other than this row already answers where this row wants to move.
+ *
+ * @summary A documented runtime stands once, and the row moving is that one, so it can never
+ * collide with itself. A server a person addressed themselves stands once per address, so the
+ * check is against every other row's address rather than against the runtime.
+ */
+function anotherServerHolds(accounts: AccountsDocument, moving: string, address: string): boolean {
+  return accounts.accounts.some(
+    (held) => held.kind === 'local' && held.id !== moving && held.address === address,
+  );
+}
 
+/**
+ * The stored local server under an id, read fresh, with everything standing beside it.
+ *
+ * @summary Both acts that name a stored row read it this way, so neither can drift from the other
+ * on what counts as one. An id naming a key row or nobody at all is the same absence to a caller.
+ */
+async function theLocalRowUnder(ctx: LocalRuntimesIpcContext, id: string) {
+  const stored = await loadAccountsFile(
+    storagePathsFor(ctx.userDataPath).accountsFile,
+    ctx.onCorrupt,
+  );
+  const row = stored.accounts.find((held) => held.id === id);
+
+  return row?.kind === 'local' ? { stored, row } : null;
+}
+
+function noLocalRuntime(id: string) {
+  return ipcFailure('storage-failed', `no local runtime is held under ${id}.`);
+}
+
+function movedTo(accounts: AccountsDocument, id: string, address: string): AccountsDocument {
+  return {
+    ...accounts,
+    accounts: accounts.accounts.map((held) => (held.id === id ? { ...held, address } : held)),
+  };
+}
+
+/**
+ * Points a stored runtime at another port, keeping the row it already is.
+ *
+ * @summary A server's port is where it answers today rather than a fact about the row, so a moved
+ * `OLLAMA_HOST` used to mean removing the row and adding it back, losing the name a person gave it.
+ * The read and the write share one amend turn, so a move racing another act cannot half-land.
+ */
+async function moveRuntime(ctx: LocalRuntimesIpcContext, id: string, port: number) {
   try {
-    const stored = await loadAccountsFile(paths.accountsFile, ctx.onCorrupt);
-    const row = stored.accounts.find((held) => held.id === id);
+    const held = await theLocalRowUnder(ctx, id);
 
-    if (row?.kind !== 'local') {
-      return ipcFailure('storage-failed', `no local runtime is held under ${id}.`);
+    if (held === null) {
+      return noLocalRuntime(id);
     }
 
-    return { ok: true as const, value: await ctx.probeRuntime(row.address, row.provider) };
+    const address = addressOf(held.row.provider, port);
+
+    if (anotherServerHolds(held.stored, id, address)) {
+      return ipcFailure('name-conflict', alreadyStandingRefusal(held.row.provider, address));
+    }
+
+    return {
+      ok: true as const,
+      value: await amendAccountsFile(
+        storagePathsFor(ctx.userDataPath).accountsFile,
+        ctx.onCorrupt,
+        (fresh) => (anotherServerHolds(fresh, id, address) ? fresh : movedTo(fresh, id, address)),
+      ),
+    };
+  } catch (error) {
+    return storageFailure(error, ctx.homeFolder);
+  }
+}
+
+async function checkStoredRuntime(ctx: LocalRuntimesIpcContext, id: string) {
+  try {
+    const held = await theLocalRowUnder(ctx, id);
+
+    return held === null
+      ? noLocalRuntime(id)
+      : { ok: true as const, value: await ctx.probeRuntime(held.row.address, held.row.provider) };
   } catch (error) {
     return storageFailure(error, ctx.homeFolder);
   }
@@ -155,5 +227,6 @@ export function createLocalRuntimesIpcHandlers(
     'accounts:check-runtime': async ({ id }) => checkStoredRuntime(ctx, id),
     'accounts:connect-local': async ({ runtime, port, label }) =>
       connectRuntime(ctx, runtime, port, label),
+    'accounts:move-runtime': async ({ id, port }) => moveRuntime(ctx, id, port),
   };
 }

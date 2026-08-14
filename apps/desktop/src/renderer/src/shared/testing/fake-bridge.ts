@@ -28,6 +28,7 @@ import {
   listenForEngineTraffic,
 } from './fake-engine-pushes';
 import { gatewayHandlers } from './fake-gateways';
+import { forgetLaunchRefusedListeners, listenForLaunchRefusals } from './fake-launch-refusals';
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
 import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
@@ -111,6 +112,7 @@ function eventBridge(): RecomposeIpcEvents {
     'usage:command': (listener) => listenForUsageCommands(listener),
     'settings:changed': (listener) => listenForSettingsChanges(listener),
     'devtools:toggle': () => () => undefined,
+    'subscriptions:launch-refused': (listener) => listenForLaunchRefusals(listener),
   };
 }
 
@@ -174,6 +176,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   forgetEngineTrafficListeners();
   forgetEngineLogsListeners();
   forgetUsageCommandListeners();
+  forgetLaunchRefusedListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(
     seeds.accounts,

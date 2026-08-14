@@ -5,8 +5,8 @@ import type { UsageSearch } from './usage-search';
 import {
   presetWindows,
   previousWindowFor,
+  previousWindowWord,
   reportAskFor,
-  searchForPreset,
   windowFor,
   windowWording,
 } from './usage-window';
@@ -15,6 +15,8 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
 const NOW = 1_754_600_400_000;
+
+const MIDWEEK = new Date(2026, 7, 12, 13, 45, 30, 250).getTime();
 
 function viewing(over: Partial<UsageSearch> = {}): UsageSearch {
   return { range: '24h', metric: 'requests', stackedBy: 'gateway', ...over };
@@ -32,6 +34,49 @@ describe('the window a view stands over', () => {
     const custom = viewing({ range: 'custom', from: NOW - 5 * HOUR, to: NOW - HOUR });
 
     expect(windowFor(custom, NOW)).toEqual({ from: NOW - 5 * HOUR, to: NOW - HOUR });
+  });
+
+  it('falls back to the last day for a custom range standing on no edges at all', () => {
+    expect(windowFor(viewing({ range: 'custom' }), NOW)).toEqual({ from: NOW - DAY, to: NOW });
+  });
+
+  it('falls back to the last day for a custom range naming one edge and not the other', () => {
+    expect(windowFor(viewing({ range: 'custom', from: NOW - HOUR }), NOW)).toEqual({
+      from: NOW - DAY,
+      to: NOW,
+    });
+    expect(windowFor(viewing({ range: 'custom', to: NOW }), NOW)).toEqual({
+      from: NOW - DAY,
+      to: NOW,
+    });
+  });
+
+  it('opens this week at the local week start rather than a fixed reach back', () => {
+    const week = windowFor(viewing({ range: 'this-week' }), MIDWEEK);
+    const opened = new Date(week.from);
+
+    expect([
+      opened.getDay(),
+      opened.getHours(),
+      opened.getMinutes(),
+      opened.getSeconds(),
+      opened.getMilliseconds(),
+    ]).toEqual([0, 0, 0, 0, 0]);
+    expect(week.to).toBe(MIDWEEK);
+  });
+
+  it('opens this month at the local month start, and keeps closing at now', () => {
+    const month = windowFor(viewing({ range: 'this-month' }), MIDWEEK);
+    const opened = new Date(month.from);
+
+    expect([
+      opened.getDate(),
+      opened.getHours(),
+      opened.getMinutes(),
+      opened.getSeconds(),
+      opened.getMilliseconds(),
+    ]).toEqual([1, 0, 0, 0, 0]);
+    expect(month.to).toBe(MIDWEEK);
   });
 });
 
@@ -113,37 +158,15 @@ describe('the presets the range popover offers', () => {
     ]);
   });
 
-  it('moves a preset range straight onto the view', () => {
-    expect(searchForPreset(viewing(), 'last-7-days', NOW)).toEqual(viewing({ range: '7d' }));
-  });
-
-  it('turns this week into a window opening at the local week start', () => {
-    const search = searchForPreset(viewing(), 'this-week', NOW);
-    const opened = new Date(search.from ?? 0);
-
-    expect(search.range).toBe('custom');
-    expect(search.to).toBe(NOW);
-    expect(opened.getDay()).toBe(0);
-    expect([opened.getHours(), opened.getMinutes(), opened.getSeconds()]).toEqual([0, 0, 0]);
-    expect(search.from).toBeLessThanOrEqual(NOW);
-  });
-
-  it('turns this month into a window opening at the local month start', () => {
-    const search = searchForPreset(viewing(), 'this-month', NOW);
-    const opened = new Date(search.from ?? 0);
-
-    expect(search.range).toBe('custom');
-    expect(opened.getDate()).toBe(1);
-    expect(opened.getHours()).toBe(0);
-  });
-
-  it('keeps the filters and the chart standing when the window moves', () => {
-    const filtered = viewing({ gateways: ['relay'], metric: 'tokens', stackedBy: 'provider' });
-    const moved = searchForPreset(filtered, 'last-30-days', NOW);
-
-    expect(moved.gateways).toEqual(['relay']);
-    expect(moved.metric).toBe('tokens');
-    expect(moved.stackedBy).toBe('provider');
+  it('carries the range each preset stands for, so a standing view knows its own preset', () => {
+    expect(presetWindows.map((preset) => preset.range)).toEqual([
+      '1h',
+      '24h',
+      '7d',
+      '30d',
+      'this-week',
+      'this-month',
+    ]);
   });
 });
 
@@ -153,9 +176,27 @@ describe('the wording the header prints for a window', () => {
     expect(windowWording(viewing({ range: '1h' }), NOW)).toBe('Last hour');
   });
 
+  it('names the window a boundary preset stands on', () => {
+    expect(windowWording(viewing({ range: 'this-week' }), NOW)).toBe('This week');
+    expect(windowWording(viewing({ range: 'this-month' }), NOW)).toBe('This month');
+  });
+
   it('prints both edges of a custom window', () => {
     const custom = viewing({ range: 'custom', from: NOW - DAY, to: NOW });
 
     expect(windowWording(custom, NOW)).toMatch(/\d{2}:\d{2} – .+ \d{2}:\d{2}$/u);
+  });
+});
+
+describe('what a tile calls the window standing before this one', () => {
+  it('names a fixed reach by its own width', () => {
+    expect(previousWindowWord('24h')).toBe('24h');
+    expect(previousWindowWord('30d')).toBe('30d');
+  });
+
+  it('calls a drawn or boundary window a window, which is all it can be called', () => {
+    expect(previousWindowWord('custom')).toBe('window');
+    expect(previousWindowWord('this-week')).toBe('window');
+    expect(previousWindowWord('this-month')).toBe('window');
   });
 });

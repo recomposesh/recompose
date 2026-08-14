@@ -55,6 +55,16 @@ export function nonLoopbackClient(): AnthropicRefusal {
   };
 }
 
+export function apiKeyRequired(displayName: string): AnthropicRefusal {
+  return {
+    type: 'error',
+    error: {
+      type: 'authentication_error',
+      message: `The gateway "${displayName}" requires an API key.`,
+    },
+  };
+}
+
 export function requestCarriesOrigin(): AnthropicRefusal {
   return {
     type: 'error',
@@ -197,7 +207,7 @@ function configFaultFacts(refusal: ConfigFaultRefusal): RefusalFacts {
 
   return {
     status: 502,
-    message: `The gateway "${refusal.displayName}" holds no credential for the virtual model "${refusal.model}".`,
+    message: `The virtual model "${refusal.model}" in the gateway "${refusal.displayName}" has no account behind it. Reconnect the account it spends, or point it at another.`,
     code: 'missing_credential',
     anthropicType: 'api_error',
   };

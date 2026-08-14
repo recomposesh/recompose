@@ -29,11 +29,19 @@ export const engineVirtualModelSchema = z.strictObject({
 
 export type EngineVirtualModel = z.infer<typeof engineVirtualModelSchema>;
 
+/**
+ * The gateway a start directive stands up, as the child sees it.
+ *
+ * @summary The key arrives only where the gateway enforces it. The parent reads the requirement off
+ * the stored document and leaves the field out otherwise, so the child never holds a secret it must
+ * not act on, and its guard mounts on presence alone rather than on a second flag.
+ */
 export const engineGatewaySchema = z.strictObject({
   slug: gatewaySlugSchema,
   displayName: z.string().trim().min(1),
   port: gatewayPortSchema,
   bindAddress: gatewayBindAddressSchema.optional(),
+  apiKey: nonBlankString.optional(),
   virtualModels: z.array(engineVirtualModelSchema),
 });
 

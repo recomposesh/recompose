@@ -1,13 +1,14 @@
 import { Popover } from '@base-ui/react/popover';
 import { useState } from 'react';
 
-import type { UsageSearch, UsageSearchRange } from '../../lib/usage-search';
-import type { PresetKey, UsageWindow } from '../../lib/usage-window';
+import type { PresetRange, UsageSearch, UsageSearchRange } from '../../lib/usage-search';
+import type { UsageWindow } from '../../lib/usage-window';
 
 import { SegmentedControl } from '../../../../shared/ui';
 import { startOfMonth } from '../../lib/calendar-grid';
 import { drawnWith, settledDrawing } from '../../lib/drawn-window';
-import { presetWindows, searchForPreset, windowFor } from '../../lib/usage-window';
+import { withRange } from '../../lib/usage-search';
+import { presetWindows, windowFor } from '../../lib/usage-window';
 import { RangeCalendar } from '../range-calendar/range-calendar';
 import { RangeWindowFooter } from '../range-window-footer/range-window-footer';
 
@@ -61,15 +62,23 @@ function rangeOptions(retentionDays: number) {
   );
 }
 
-function presetList(onPick: (key: PresetKey) => void, custom: boolean) {
+const ROW_PAINT = 'rounded-control px-2 py-1.5 text-start text-detail';
+const PICKED_PAINT = 'bg-surface-selected text-ink';
+
+function presetRow(picked: boolean): string {
+  return `${ROW_PAINT} focus-ring ${picked ? PICKED_PAINT : 'text-ink row-hover'}`;
+}
+
+function presetList(onPick: (range: PresetRange) => void, picked: UsageSearchRange) {
   return (
     <div className="flex w-37.5 flex-col gap-0.5 border-e border-line-faint px-2 py-2.5">
       {presetWindows.map((preset) => (
         <button
-          className="rounded-control focus-ring px-2 py-1.5 text-start text-detail text-ink row-hover"
-          key={preset.key}
+          aria-current={preset.range === picked ? 'true' : undefined}
+          className={presetRow(preset.range === picked)}
+          key={preset.range}
           onClick={() => {
-            onPick(preset.key);
+            onPick(preset.range);
           }}
           type="button"
         >
@@ -77,8 +86,8 @@ function presetList(onPick: (key: PresetKey) => void, custom: boolean) {
         </button>
       ))}
       <span
-        aria-current={custom ? 'true' : undefined}
-        className={`rounded-control px-2 py-1.5 text-start text-detail ${custom ? 'bg-surface-selected text-accent-ink' : 'text-ink-secondary'}`}
+        aria-current={picked === 'custom' ? 'true' : undefined}
+        className={`${ROW_PAINT} ${picked === 'custom' ? PICKED_PAINT : 'text-ink-secondary'}`}
       >
         Custom range
       </span>
@@ -86,27 +95,36 @@ function presetList(onPick: (key: PresetKey) => void, custom: boolean) {
   );
 }
 
-function usePresetWindow(search: UsageSearch, now: number) {
-  const standing = windowFor(search, now);
-  const [drawn, setDrawn] = useState(() => settledDrawing(standing));
-  const [month, setMonth] = useState(() => startOfMonth(standing.from));
+function draftedOver(search: UsageSearch, now: number) {
+  const window = windowFor(search, now);
+
+  return { range: search.range, drawn: settledDrawing(window), month: startOfMonth(window.from) };
+}
+
+function useDraftedWindow(search: UsageSearch, now: number) {
+  const [drafted, setDrafted] = useState(() => draftedOver(search, now));
   const [open, setOpen] = useState(false);
 
   return {
-    drafted: drawn.window,
-    setDrafted: (next: UsageWindow) => {
-      setDrawn(settledDrawing(next));
+    picked: drafted.range,
+    window: drafted.drawn.window,
+    month: drafted.month,
+    onPreset: (range: PresetRange) => {
+      setDrafted(draftedOver(withRange(search, range), now));
+    },
+    onDrawn: (next: UsageWindow) => {
+      setDrafted({ ...drafted, range: 'custom', drawn: settledDrawing(next) });
     },
     onDayPress: (day: number) => {
-      setDrawn(drawnWith(drawn, day));
+      setDrafted({ ...drafted, range: 'custom', drawn: drawnWith(drafted.drawn, day) });
     },
-    month,
-    setMonth,
+    setMonth: (month: number) => {
+      setDrafted({ ...drafted, month });
+    },
     open,
     onOpenChange: (next: boolean) => {
       if (next) {
-        setDrawn(settledDrawing(standing));
-        setMonth(startOfMonth(standing.from));
+        setDrafted(draftedOver(search, now));
       }
 
       setOpen(next);
@@ -117,19 +135,25 @@ function usePresetWindow(search: UsageSearch, now: number) {
 type DrawingProps = {
   search: UsageSearch;
   now: number;
-  drawing: ReturnType<typeof usePresetWindow>;
+  drawing: ReturnType<typeof useDraftedWindow>;
   onSettle: (next: UsageSearch) => void;
 };
 
+function settledSearch(search: UsageSearch, drawing: ReturnType<typeof useDraftedWindow>) {
+  return drawing.picked === 'custom'
+    ? { ...search, range: 'custom' as const, ...appliedWindow(drawing.window) }
+    : withRange(search, drawing.picked);
+}
+
 function drawingPopup({ search, now, drawing, onSettle }: DrawingProps) {
-  const { drafted, month } = drawing;
+  const { window, month } = drawing;
 
   return (
     <Popover.Popup aria-label="Custom window" className="z-40 w-144.25 menu-surface">
       <div className="flex">
-        {presetList((key) => {
-          onSettle(searchForPreset(search, key, now));
-        }, search.range === 'custom')}
+        {presetList((range) => {
+          drawing.onPreset(range);
+        }, drawing.picked)}
         <RangeCalendar
           month={month}
           onDayPress={(day) => {
@@ -138,20 +162,20 @@ function drawingPopup({ search, now, drawing, onSettle }: DrawingProps) {
           onMonthChange={(next) => {
             drawing.setMonth(next);
           }}
-          spanWording={`${spanFormat.format(drafted.from)} – ${spanFormat.format(drafted.to)}`}
-          window={drafted}
+          spanWording={`${spanFormat.format(window.from)} – ${spanFormat.format(window.to)}`}
+          window={window}
         />
       </div>
       <RangeWindowFooter
-        drafted={drafted}
+        drafted={window}
         onApply={() => {
-          onSettle({ ...search, range: 'custom', ...appliedWindow(drafted) });
+          onSettle(settledSearch(search, drawing));
         }}
         onCancel={() => {
           drawing.onOpenChange(false);
         }}
         onDraftedChange={(next) => {
-          drawing.setDrafted(next);
+          drawing.onDrawn(next);
         }}
         zone={zoneWording(now)}
       />
@@ -160,15 +184,16 @@ function drawingPopup({ search, now, drawing, onSettle }: DrawingProps) {
 }
 
 /**
- * The window control: four presets, and a custom window drawn on a calendar.
+ * The window control: four presets, and a window picked or drawn beside a calendar.
  *
- * @summary The presets commit as they are pressed, because a window reaching back from now needs
- * nothing else said about it. A custom window is drawn first and applied after, so half a window
- * never lands on the screen as a reading nobody asked for.
+ * @summary Every act inside the popover draws into a window standing beside the one on screen, and
+ * Apply is the only act that lands it, so half a window never lands as a reading nobody asked for.
+ * The preset the standing window came from reads as picked whenever the popover opens, because the
+ * view carries the range it stands on rather than only the edges that range worked out to.
  */
 export function RangeControl({ search, onSearchChange, retentionDays, now }: RangeControlProps) {
-  const drawing = usePresetWindow(search, now);
-  const custom = search.range === 'custom';
+  const drawing = useDraftedWindow(search, now);
+  const offSegment = !PRESET_OPTIONS.some((option) => option.value === search.range);
   const settle = (next: UsageSearch) => {
     onSearchChange(next);
     drawing.onOpenChange(false);
@@ -179,9 +204,7 @@ export function RangeControl({ search, onSearchChange, retentionDays, now }: Ran
       <SegmentedControl
         label="Range"
         onChangeValue={(range) => {
-          const { from: _from, to: _to, ...kept } = search;
-
-          onSearchChange({ ...kept, range });
+          onSearchChange(withRange(search, range));
         }}
         options={rangeOptions(retentionDays)}
         value={search.range}
@@ -193,7 +216,7 @@ export function RangeControl({ search, onSearchChange, retentionDays, now }: Ran
         open={drawing.open}
       >
         <Popover.Trigger
-          className={`flex h-chip items-center rounded-chip focus-ring px-2 text-detail ${custom ? 'chip-selected text-ink' : 'text-ink-secondary'}`}
+          className={`flex h-chip items-center rounded-chip focus-ring px-2 text-detail ${offSegment ? 'chip-selected text-ink' : 'text-ink-secondary'}`}
         >
           Custom
         </Popover.Trigger>

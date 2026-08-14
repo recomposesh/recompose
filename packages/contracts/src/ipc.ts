@@ -20,6 +20,7 @@ import {
 } from './local-runtimes';
 import { nonBlankString } from './non-blank';
 import { settingsPatchSchema, settingsSchema } from './settings';
+import { subscriptionProviderIdSchema } from './subscriptions';
 import {
   accountBalanceSchema,
   quotaWindowSchema,
@@ -111,6 +112,18 @@ export const ipcChannels = {
   'accounts:check-runtime': {
     request: z.strictObject({ id: nonBlankString }),
     response: ipcResult(runtimeReachabilitySchema),
+  },
+  /**
+   * Points a stored runtime at another port, without taking the row away and putting it back.
+   *
+   * @summary A server's port is not a fact about the row, it is where the server happens to answer
+   * today, and a moved `OLLAMA_HOST` used to mean removing the row and adding it again. It names
+   * the row rather than the runtime, because only a row has somewhere to move from, and it carries
+   * a port rather than an address, because the app mints the address the same way an add does.
+   */
+  'accounts:move-runtime': {
+    request: z.strictObject({ id: nonBlankString, port: runtimePortSchema }),
+    response: ipcResult(accountsDocumentSchema),
   },
   'accounts:list-models': {
     request: z.strictObject({ id: nonBlankString }),
@@ -213,6 +226,12 @@ export const ipcEvents = {
   },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
+  'subscriptions:launch-refused': {
+    payload: z.strictObject({
+      provider: subscriptionProviderIdSchema,
+      note: nonBlankString,
+    }),
+  },
 } as const;
 
 export type IpcEvent = keyof typeof ipcEvents;

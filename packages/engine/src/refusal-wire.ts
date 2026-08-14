@@ -5,7 +5,12 @@ export type Dialect = 'anthropic' | 'chat-completions' | 'gemini' | 'interaction
 export type AnthropicRefusal = {
   type: 'error';
   error: {
-    type: 'not_found_error' | 'permission_error' | 'invalid_request_error' | 'api_error';
+    type:
+      | 'not_found_error'
+      | 'permission_error'
+      | 'authentication_error'
+      | 'invalid_request_error'
+      | 'api_error';
     message: string;
   };
 };

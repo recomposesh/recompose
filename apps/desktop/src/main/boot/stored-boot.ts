@@ -45,7 +45,7 @@ export type StoredBootDeps = {
   spendGrantContext: (custody: CredentialCustody | null) => SpendGrantContext;
   reflectSettings: (settings: Settings) => void;
   repaintStates: (states: EngineStates) => void;
-  lifecycle: Pick<GatewayLifecycleRequests, 'restart' | 'stop'>;
+  lifecycle: Pick<GatewayLifecycleRequests, 'reapply' | 'stop'>;
 };
 
 export type StoredBoot = {

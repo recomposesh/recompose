@@ -141,7 +141,7 @@ function depsOver(home: string, overrides: Partial<StoredBootDeps> = {}): Stored
     spendGrantContext: () => contextFor(home),
     reflectSettings: () => undefined,
     repaintStates: () => undefined,
-    lifecycle: { restart: () => undefined, stop: () => undefined },
+    lifecycle: { reapply: () => undefined, stop: () => undefined },
     ...overrides,
   };
 }

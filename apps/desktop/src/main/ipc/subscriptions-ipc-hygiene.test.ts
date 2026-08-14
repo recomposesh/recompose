@@ -18,6 +18,7 @@ const quietCopilot = {
     nowMs: () => 0,
   },
   writeSubscriptionCredential: async () => Promise.resolve(),
+  noteLaunchRefused: () => undefined,
 };
 
 function contextOver(userDataPath: string): SubscriptionsIpcContext {

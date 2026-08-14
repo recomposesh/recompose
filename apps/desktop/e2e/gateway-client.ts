@@ -2,6 +2,7 @@
 export type GatewayAnswer = {
   status: number;
   contentType: string;
+  challenge: string;
   body: unknown;
 };
 
@@ -22,16 +23,32 @@ async function answerOf(answer: Response): Promise<GatewayAnswer> {
   return {
     status: answer.status,
     contentType: answer.headers.get('content-type') ?? '',
+    challenge: answer.headers.get('www-authenticate') ?? '',
     body: bodyIn(await answer.text()),
   };
 }
 
-async function ask(address: string, path: string, method: string): Promise<GatewayAnswer> {
-  return answerOf(await fetch(new URL(path, address), { method }));
+async function ask(
+  address: string,
+  path: string,
+  method: string,
+  headers: Record<string, string> = {},
+): Promise<GatewayAnswer> {
+  return answerOf(await fetch(new URL(path, address), { method, headers }));
 }
 
-export async function readFrom(address: string, path: string): Promise<GatewayAnswer> {
-  return ask(address, path, 'GET');
+/**
+ * What a gateway answers a plain read, optionally under the headers a client carries.
+ *
+ * @summary The headers are how a scenario says which field a client put its credential in, which
+ * is the whole subject wherever a gateway requires one.
+ */
+export async function readFrom(
+  address: string,
+  path: string,
+  headers: Record<string, string> = {},
+): Promise<GatewayAnswer> {
+  return ask(address, path, 'GET', headers);
 }
 
 /** The wire body a client sends when it asks a gateway for a turn under a name it holds. */

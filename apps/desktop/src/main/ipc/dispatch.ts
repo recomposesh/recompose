@@ -25,6 +25,7 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'accounts:connect-local',
   'accounts:detect-runtime',
   'accounts:check-runtime',
+  'accounts:move-runtime',
   'accounts:list-models',
   'system:get',
   'system:open-config-folder',

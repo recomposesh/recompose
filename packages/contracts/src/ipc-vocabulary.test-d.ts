@@ -21,6 +21,7 @@ describe('the channel vocabulary', () => {
       | 'accounts:connect-local'
       | 'accounts:detect-runtime'
       | 'accounts:check-runtime'
+      | 'accounts:move-runtime'
       | 'accounts:list-models'
       | 'system:get'
       | 'system:open-config-folder'
@@ -59,6 +60,7 @@ describe('the push vocabulary', () => {
       | 'usage:command'
       | 'settings:changed'
       | 'devtools:toggle'
+      | 'subscriptions:launch-refused'
     >();
   });
 });

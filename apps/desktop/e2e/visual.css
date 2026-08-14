@@ -1,0 +1,17 @@
+/*
+ * Pins how glyphs are rasterized, so a baseline compares the design rather than the runner.
+ *
+ * macOS decides subpixel antialiasing per display, per GPU and per runner in a pool, and a
+ * screenshot carries that decision as thousands of differing pixels around every letter. That is
+ * what a tolerance was absorbing, and a tolerance wide enough to absorb it would pass a real
+ * regression. Grayscale antialiasing has no subpixel term to vary, so the same page rasterizes the
+ * same way on every machine and the comparison can be exact again.
+ *
+ * It is a file rather than an `addStyleTag` call because the app answers under `style-src 'self'`
+ * and refuses an inline style, which is the app's own posture and not this suite's to relax.
+ * Playwright injects a `stylePath` around the capture itself, so nothing here reaches the app.
+ */
+* {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}

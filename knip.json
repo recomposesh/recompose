@@ -11,6 +11,7 @@
       "entry": [
         "build/after-pack.cjs",
         "e2e/fixtures.ts",
+        "e2e/visual.css",
         "e2e/*.spec.ts",
         "e2e/steps/**/*.ts",
         "e2e/fake-tools/*.mts",

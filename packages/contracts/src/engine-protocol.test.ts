@@ -42,6 +42,26 @@ describe('the gateway the parent hands the child', () => {
   test('a nameless gateway is refused, because the health answer names it', () => {
     expect(() => engineGatewaySchema.parse({ ...gateway, displayName: '   ' })).toThrow();
   });
+
+  test('a gateway that requires a key carries the value the child compares against', () => {
+    const guarded = { ...gateway, apiKey: 'rc-local-abcdef' };
+
+    expect(engineGatewaySchema.parse(guarded)).toEqual(guarded);
+  });
+
+  test('a gateway requiring no key carries no key, so the child holds no secret it cannot act on', () => {
+    expect(engineGatewaySchema.parse(gateway).apiKey).toBeUndefined();
+  });
+
+  test('a blank key is refused, because a blank one would guard nothing while reading as a guard', () => {
+    expect(() => engineGatewaySchema.parse({ ...gateway, apiKey: '   ' })).toThrow();
+  });
+
+  test('the snapshot carries no requirement flag, because the parent already resolved it', () => {
+    expect(() =>
+      engineGatewaySchema.parse({ ...gateway, apiKey: 'rc-local-abcdef', apiKeyRequired: true }),
+    ).toThrow();
+  });
 });
 
 describe('a directive the parent sends the child', () => {

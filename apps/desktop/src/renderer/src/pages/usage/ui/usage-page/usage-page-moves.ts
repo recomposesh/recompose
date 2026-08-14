@@ -1,12 +1,12 @@
 import type { IpcEventPayload } from '@recompose/contracts';
 
-import type { ChartMeasure, UsageSearch, UsageSearchRange } from '../../lib/usage-search';
+import type { ChartMeasure, PresetRange, UsageSearch } from '../../lib/usage-search';
 
-import { spendSnappedRange } from '../../lib/usage-search';
+import { spendSnappedRange, withRange } from '../../lib/usage-search';
 
 type UsageCommand = IpcEventPayload<'usage:command'>;
 
-const RANGE_BY_COMMAND: Readonly<Partial<Record<UsageCommand, UsageSearchRange>>> = {
+const RANGE_BY_COMMAND: Readonly<Partial<Record<UsageCommand, PresetRange>>> = {
   'range-24h': '24h',
   'range-7d': '7d',
   'range-30d': '30d',
@@ -30,9 +30,7 @@ export function movedSearch(command: UsageCommand, search: UsageSearch): UsageSe
   const range = RANGE_BY_COMMAND[command];
 
   if (range !== undefined) {
-    const { from: _from, to: _to, ...kept } = search;
-
-    return { ...kept, range };
+    return withRange(search, range);
   }
 
   const metric = MEASURE_BY_COMMAND[command];
