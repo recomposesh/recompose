@@ -92,7 +92,23 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
 
   Two things it found and correctly left alone. `connectAccount` in `main/ipc/connect-account.ts` accepts an endpoint on the wire and never stores it, which closed the cleanest route to per-target origins and forced the feature-tree switch instead. And the stand-in ships with no spec of its own, because the only end-to-end include in `vitest.config.ts` is `e2e/fake-tools/**/*.test.mts`.
 
-- [ ] **Task 8a to 8g: one unit per feature file.** Depends on task 8, all seven parallel. Each graduates exactly one `.feature` into `apps/desktop/e2e/features/routers/` together with exactly one `steps/routers-<area>.steps.ts`, in one commit, so `bddgen` never sees an undefined step. The seven are `failover`, `streaming`, `round-robin`, `refusals`, `stored-shape`, `canvas`, and `inspector`.
+- **Task 8a to 8g: one unit per feature file.** Each graduates exactly one `.feature` into `apps/desktop/e2e/features/routers/` together with exactly one `steps/routers-<area>.steps.ts`, in one commit, so `bddgen` never sees an undefined step. Every unit proved each scenario non-vacuous by breaking what it claims in production code and watching it go red.
+
+  - [x] **8c round-robin.** Landed as `93ba2178`. Rotation spreads, a cooling child loses its turn, a chained turn refuses. Three mutations, one per scenario, each killing only its own.
+  - [x] **8d refusals.** Landed as `1dacbe34`. The empty router and the exhausted one. Three mutations, including one that survived and was the cluster's own mistake rather than a weak test: it moved the constant the assertion also reads, so both sides moved together.
+  - [x] **8g inspector.** Landed as `9ce89ff7`. The keyboard reorders the ladder and the live region says where the child landed, and a round-robin list carries no rank. It added the third target the shared surface had left out on purpose.
+  - [ ] **8a failover.** Written, green on three of four scenarios, blocked on the defect above. Its steps are already written against the fixed behaviour, so they're the check on task 4b.
+  - [ ] **8b streaming.** Reduced to two scenarios by the maintainer's call, and waiting to be rewritten against them.
+  - [ ] **8e stored-shape.** Running.
+  - [ ] **8f canvas.** Waits on task 7b, because its scenarios exercise what 7b is changing.
+
+  Four measurements the remaining units and the review should have.
+
+  - **A chained turn has to travel `/v1/responses`.** Over `/v1/messages` the Anthropic envelope carries no `code` field at all, so nothing there can read `chained_turn`. Two units found this independently. The codes task 4 recorded are real, and they surface in the OpenAI and Responses dialects only.
+  - **Arranging a cooling child contaminates the journal.** A real 429 hands that first request to the sibling, so a later `modelsAsked()` assertion would pass on the arranging request alone. Unit 8c clears the journal in its Given through `provider.mock.clearRequests()`, and guards the arrangement rather than assuming it. `provider.forgets()` is the wrong tool, because it resets the fixtures too and disarms everything.
+  - **A Given that must send a request needs the model's name and nothing hands it over.** The shared Background records the name nowhere, so unit 8c reads the single virtual model out of the focused gateway rather than hard-coding it.
+  - **The shared seeding step flakes under local load.** `gateway-screen.ts` times out waiting for the gateway row after a reload inside `seedGateway`. It sits upstream of every routers scenario and the shipped proxy feature flakes the same way, so it belongs to the machine rather than to any branch.
+
 - [ ] **Task 9: decision records.** Depends on tasks 4 and 8 settling the residual wording. Owns `docs/adr/0111-*.md`, `docs/adr/0112-*.md`, and `docs/adr/README.md`. The design drafted them as 0104 and 0105, and the sequence has now moved twice under it: 0104 through 0106 landed while the clusters ran, then 0107 through 0110 landed with the main merge below. Ask the `new-adr` skill again before writing, because it moved once more between two merges an hour apart.
 
 The design's task decomposition named three feature files. The approved scenario set holds seven, and the phase rule gives each its own unit, so task 8 fans out seven ways rather than three.
