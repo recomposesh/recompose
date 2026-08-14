@@ -64,13 +64,25 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
 
   The battery earned its place too. Nineteen shipped browser specs encoded the old immediate-account flow, and only the full run caught them, because the cluster had run its new spec files alone.
 
-- [ ] **Task 7b: the gaps task 7 named rather than left silent.** Depends on task 7. Owns `ui/gateway-canvas-page/`, `ui/drop-picker/`, and `ui/cable-failure-chip/`.
+- [x] **Task 7b: the gaps task 7 named rather than left silent.** Landed as `f8b4e50e`, merged at `782382c8`. Mutation 100 on `lib/routing-edits.ts`, no survivors.
 
-  The one that contradicts an approved decision comes first. Proposal decision 2 says a cable may meet a router card. `oneTargetRule` still refuses that drop, and its refusal copy still names a stored target. No approved scenario covers it, which is why task 7 stopped rather than inventing one.
+  **It refused the first item and it was right.** Two earlier readings, this ledger's and the brief built on it, took decision 2 to license dropping a cable onto an existing router card. A cable on this canvas runs parent to child, so a cable ending on a router card would make that router a child of the source. The stored shape refuses a node answering to more than one parent, and a routing table belongs to one definition. Every such drop is therefore a no-op, unrepresentable, or a re-parent. A re-parent is a move, and `design.md` says the canvas owns only binding. No approved scenario asks for one, and `canvas.feature` confirms it: every scenario there drops on empty canvas or drags out of a port.
 
-  A second reader checked that reading against the text rather than taking it on trust, and it held. Decision 2 says a cable may meet a router card in as many words, and `oneTargetRule` refuses the drop because `targetAccountIdIn` answers nothing for a node carrying no account. The same file's `askedData` already has a router arm, so a router draws on the canvas today and no cable can reach it.
+  What decision 2 genuinely promised and the code refused was its second half, that the same ask serves a router's children. The plus affordance created a binding the drag couldn't, which also broke the accessibility contract's promise that the two create the same things. That's what landed. A drop-on-a-router gesture needs a scenario naming which move it means before anyone writes it.
 
-  The rest, in the order a person would meet them. A router has no removal path, and `REMOVAL_WORDING` has no arm for one. A child card born under a router takes its tidy seat rather than the drop point. The cause is that `gatewayBindingChild` mints the id inside the write, so nothing can name the card before it exists. The account stage offers no way back to the kind ask, where only the model stage has a back chevron. Rider #155's failure-chip anchoring rides here too, since it sits in this segment and this train agreed to carry it.
+  Three more items landed as named. A router leaves by the same key a target does, taking its subtree. A child born under a router seats at the drop point, because the caller now mints its id rather than the write. And the account stage offers the way back it lacked. Rider #155's chip anchoring collided with main, which rewrote the same component the same hour on Base UI's popover while this train used the platform's own. Main's version stands, as it did for the xAI rename.
+
+  **It found a data loss nobody had reported.** Deleting one child of a pool released the whole virtual model into a draft and discarded every sibling target, because every target card went through the same release. One act now answers a target card and a router card alike, and only the entry releases the definition.
+
+  **Two truncation defects came off the page rather than the suite.** The kind ask printed `Ro...` and `Tar...`, and the ladder clipped account names while printing the real model whole. Both are the same bug: the explanation and the identity both shrank, so the identity lost. Both are one line in the row.
+
+  Three things it measured and left, each with a reason:
+
+  - **The picker's back chevron is 22 by 22**, two under the 24 the canvas accessibility contract names. It's the shipped `icon-secondary` button the provider-model stage already used, so it predates this change, and the spacing exception covers it at 120 pixels of clearance. Fixing it means changing a `shared/ui` variant across the app.
+  - **`canvas-wiring.ts` still isn't on the mutate list.** Measured at 70.83 against a break of 81, with 21 no-coverage mutants in the flow builders that only browser specs reach. It killed the one survivor its own code introduced. Adding the file is a rider, not a line.
+  - **A router has no Remove control in the inspector**, only the key, where a target has both. The drawer link reaches two more files.
+
+  **One fact every renderer cluster after this needs.** Browser specs render unstyled: the `browser` vitest project loads React alone, and Tailwind runs only under Storybook. A geometry assertion there can pass vacuously against a browser default, which one of this cluster's did before it caught itself. Geometry belongs in a story.
 
 - [x] **Task 6b: the serves box tells a thinner pool from a broken one.** Landed as `bea27980`, merged at `ba97fd01`. The third standing, the first-held-target reading, and the row that says how many left. Mutation 100 on `served-models.ts`, no survivors.
 
