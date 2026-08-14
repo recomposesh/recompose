@@ -34,7 +34,7 @@ jobs:
           predicate-quantifier: every
           filters: |
             desktop:
-              - '{apps/desktop/**,packages/**,pnpm-lock.yaml,package.json,pnpm-workspace.yaml,turbo.json,vitest.shared.ts,tsconfig*.json,.github/workflows/chromatic.yml}'
+              - '{apps/desktop/**,packages/**,pnpm-lock.yaml,package.json,pnpm-workspace.yaml,turbo.json,vitest.shared.ts,tsconfig*.json}'
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:

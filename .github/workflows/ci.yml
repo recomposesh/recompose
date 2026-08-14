@@ -39,7 +39,7 @@ jobs:
               - '!designs/**'
               - '!**/*.md'
             desktop:
-              - '{apps/desktop/**,packages/**,pnpm-lock.yaml,package.json,pnpm-workspace.yaml,turbo.json,vitest.shared.ts,tsconfig*.json,.github/workflows/ci.yml}'
+              - '{apps/desktop/**,packages/**,pnpm-lock.yaml,package.json,pnpm-workspace.yaml,turbo.json,vitest.shared.ts,tsconfig*.json}'
             workflows:
               - '.github/workflows/**'
             prose:
