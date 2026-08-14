@@ -7,8 +7,8 @@ import type { ScriptedProvider } from '../scripted-provider';
 
 import { Given, Then, When } from '../fixtures';
 import { openAiRefusalCode, refusalSentence, sendTurn, turnUnder } from '../gateway-client';
-import { gatewayAddress, storedGateway } from '../gateway-screen';
-import { FIRST_TARGET, SECOND_TARGET } from '../routed-gateway';
+import { gatewayAddress } from '../gateway-screen';
+import { FIRST_TARGET, SECOND_TARGET, theRoutedModelName } from '../routed-gateway';
 import { focusedGateway } from '../scenario-memory';
 
 const MESSAGES_PATH = '/v1/messages';
@@ -29,16 +29,6 @@ const answersToChainedTurns = new WeakMap<Page, GatewayAnswer>();
 
 async function addressOfTheFocusedGateway(page: Page): Promise<string> {
   return gatewayAddress(page, focusedGateway(page));
-}
-
-async function theRoutedModelName(page: Page): Promise<string> {
-  const [only] = (await storedGateway(page, focusedGateway(page))).virtualModels;
-
-  if (only === undefined) {
-    throw new Error('the gateway this scenario acts on holds no virtual model');
-  }
-
-  return only.id;
 }
 
 function forgetTheTurnsThatArrangedTheScenario(provider: ScriptedProvider): void {

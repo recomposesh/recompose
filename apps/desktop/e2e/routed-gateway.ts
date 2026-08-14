@@ -5,6 +5,7 @@ import { mintRouteNodeId } from '@recompose/contracts';
 
 import type { ScriptedProvider } from './scripted-provider';
 
+import { storedGateway } from './gateway-screen';
 import { focusedGateway } from './scenario-memory';
 import { accountLabeled } from './served-gateway';
 import { theGatewayAScenarioActsOn } from './stored-target-accounts';
@@ -120,4 +121,21 @@ export async function aRoutedModelStands(
   await seedVirtualModels(page, focusedGateway(page), [
     routedBinding(binding.model, binding.mode, children),
   ]);
+}
+
+/**
+ * The name the routed model this scenario acts on answers to.
+ *
+ * @summary A step that has to send a request needs the name, and the scenario handed it to the
+ * Given that seeded it rather than to the step that sends. Reading it back off the gateway is what
+ * keeps a step from writing a name of its own, which would pass while the seeded name drifted.
+ */
+export async function theRoutedModelName(page: Page): Promise<string> {
+  const [only] = (await storedGateway(page, focusedGateway(page))).virtualModels;
+
+  if (only === undefined) {
+    throw new Error('the gateway this scenario acts on holds no virtual model');
+  }
+
+  return only.id;
 }
