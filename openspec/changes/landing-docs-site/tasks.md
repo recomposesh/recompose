@@ -74,6 +74,6 @@
 
 ## 10. The record
 
-- [x] 10.1 Write `docs/adr/0109-the-public-site-builds-to-files.md` and add it to the index
+- [x] 10.1 Write `docs/adr/0111-the-public-site-builds-to-files.md` and add it to the index
 - [ ] 10.2 Graduate the scenarios to `apps/web/e2e/features/website/` with the steps that answer
       them, feature and steps in one commit

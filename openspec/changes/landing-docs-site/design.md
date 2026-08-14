@@ -250,7 +250,7 @@ the build. A missing document for a content page fails the output check.
 - `hig-doctor.config.json`: an ignore entry keeping `apps/web` out of that gate (modify)
 - `.github/workflows/ci.yml`: the site joins the check job (modify)
 - `.github/workflows/deploy-web.yml`: the deployment a merge triggers (create)
-- `docs/adr/0109-the-public-site-builds-to-files.md`: the stack and build-mode record (create)
+- `docs/adr/0111-the-public-site-builds-to-files.md`: the stack and build-mode record (create)
 
 ## Interfaces
 
@@ -274,7 +274,7 @@ and keeps a fallback for unmatched paths.
 document and the requirement asks for one per route. Server-side rendering at request time,
 rejected because it forfeits locked decision 3.
 
-**Architecture decision record draft:** `docs/adr/0109-the-public-site-builds-to-files.md`
+**Architecture decision record draft:** `docs/adr/0111-the-public-site-builds-to-files.md`
 
 ### 2. No route holds a server function, and the build output proves it
 
