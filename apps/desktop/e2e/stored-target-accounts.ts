@@ -64,6 +64,17 @@ async function keyStandsStoredOn(
   await keyStandsConnected(page, { entry, name, pasted: keyAScenarioPastes(entry) });
 }
 
+/**
+ * The Anthropic key account, standing alone with no gateway beside it.
+ *
+ * @summary Reach for it where a scenario stands up its own gateways and only wants something for
+ * them to target. `gatewayTargetingAKey` seeds one of its own on the way to the account, which
+ * leaves a bystander standing in any scenario that counts gateways or reads the first one.
+ */
+export async function theKeyAccountStandsStored(page: Page): Promise<void> {
+  await keyStandsStoredOn(page, 'API Keys', ANTHROPIC_KEY_ENTRY, KEY_ACCOUNT);
+}
+
 /** The gateway a scenario acts on, put on disk and focused, with nothing else stored. */
 export async function theGatewayAScenarioActsOn(page: Page): Promise<void> {
   await seedGateway(page, GATEWAY_A_SCENARIO_ACTS_ON);
@@ -73,7 +84,7 @@ export async function theGatewayAScenarioActsOn(page: Page): Promise<void> {
 /** The gateway a scenario acts on, with the Anthropic key account its definitions target. */
 export async function gatewayTargetingAKey(page: Page): Promise<void> {
   await theGatewayAScenarioActsOn(page);
-  await keyStandsStoredOn(page, 'API Keys', ANTHROPIC_KEY_ENTRY, KEY_ACCOUNT);
+  await theKeyAccountStandsStored(page);
 }
 
 /** The focused gateway if a step named one, otherwise the seeded gateway targeting a key. */
