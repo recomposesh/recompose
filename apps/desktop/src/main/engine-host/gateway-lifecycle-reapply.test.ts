@@ -25,8 +25,9 @@ describe('a document change reaching a gateway nobody asked to serve', () => {
     requests.reapply('codex');
 
     await vi.waitFor(() => {
-      expect(recorded.restarted).toEqual([]);
+      expect(recorded.stateReads()).toBeGreaterThan(0);
     });
+    expect(recorded.restarted).toEqual([]);
     expect(recorded.started).toEqual([]);
   });
 

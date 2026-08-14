@@ -43,6 +43,7 @@ export function recordingHost(running: readonly string[] = []) {
   const started: EngineGateway[] = [];
   const stopped: string[] = [];
   const restarted: EngineGateway[] = [];
+  const stateReads = { count: 0 };
 
   const host: EngineHost = {
     replayLogs: () => undefined,
@@ -62,7 +63,11 @@ export function recordingHost(running: readonly string[] = []) {
 
       return Promise.resolve({ status: 'running' });
     },
-    states: () => Object.fromEntries(running.map((slug) => [slug, { status: 'running' as const }])),
+    states: () => {
+      stateReads.count += 1;
+
+      return Object.fromEntries(running.map((slug) => [slug, { status: 'running' as const }]));
+    },
     onStatesChanged: () => () => undefined,
     probe: async () => Promise.resolve({ verdict: 'could-not-check' as const }),
     probeRuntime: async () => Promise.resolve({ verdict: 'unreachable' as const }),
@@ -70,7 +75,7 @@ export function recordingHost(running: readonly string[] = []) {
     dispose: () => undefined,
   };
 
-  return { host, started, stopped, restarted };
+  return { host, started, stopped, restarted, stateReads: () => stateReads.count };
 }
 
 export async function directoryHolding(
