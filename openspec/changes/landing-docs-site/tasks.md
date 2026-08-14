@@ -54,11 +54,11 @@
 
 ## 7. The build contract
 
-- [ ] 7.1 Derive the prerender page list from the content source
+- [x] 7.1 Derive the prerender page list from the content source
 - [ ] 7.2 Fail the build on a prerender error rather than emitting a partial site
-- [ ] 7.3 Assert a document for every published route, including every content page
-- [ ] 7.4 Assert no server function survives into the emitted directory
-- [ ] 7.5 Assert the search index is present and answers
+- [x] 7.3 Assert a document for every published route, including every content page
+- [x] 7.4 Assert no server function survives into the emitted directory
+- [x] 7.5 Assert the search index is present and answers
 
 ## 8. The landing route
 

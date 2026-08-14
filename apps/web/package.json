@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:browser": "vitest run --project browser",
-    "typecheck": "tsc --noEmit"
+    "test:output": "node scripts/check-output.mts",
+    "typecheck": "tsc --noEmit && tsc -p scripts/tsconfig.json"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.25",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
     "@types/mdx": "2.0.14",
+    "@types/node": "24.13.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.4",

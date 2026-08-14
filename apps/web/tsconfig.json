@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "../../tsconfig.strict.json",
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": [".output", ".nitro"],
+  "exclude": [".nitro", ".output", "scripts"],
   "compilerOptions": {
     "esModuleInterop": true,
     "jsx": "react-jsx",
