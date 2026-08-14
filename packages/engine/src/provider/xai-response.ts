@@ -39,7 +39,15 @@ async function withFreeUsageDelay(response: Response): Promise<Response> {
   return new Response(response.body, { status: response.status, headers });
 }
 
-export async function withXaiRetryAfter(response: Response): Promise<Response> {
+/**
+ * The answer xAI meant, which twice differs from the one it sent.
+ *
+ * @summary A 403 whose body names a bad credential is an authentication failure, and saying so lets
+ * a caller reconnect rather than wonder what it lacked permission for. A 429 from exhausted free
+ * usage owes a day, and xAI names no time, so the wait is stated rather than guessed at. Every other
+ * answer passes through as it arrived.
+ */
+export async function theAnswerXaiMeant(response: Response): Promise<Response> {
   if (response.status === 403) return asUnauthorized(response);
   if (response.status !== 429) return response;
 

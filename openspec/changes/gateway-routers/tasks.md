@@ -103,7 +103,7 @@ Three things the remaining clusters inherit from main rather than from this chan
 The decision folded three items from #155 and one from #154 into this train. They ended up in four different places, so the train tracks them here rather than in one cluster's notes.
 
 - **The credential refusal.** Main answered it in #202 while the train ran. It reworded the message to say an account left rather than blaming the gateway, and it recorded a reason for declining the rest: the string becomes an HTTP body, and an account's label is usually a person's address. The train carried the new words into `refusal-facts.ts` and asserts them, and owes nothing further.
-- **The `withXaiRetryAfter` rename.** Still open. The rider asks for a name saying what the function decides rather than what it wraps, and it decides two things: that a 403 from xAI is an auth failure, and that a free-usage 429 owes a day. Four files read it.
+- **The `withXaiRetryAfter` rename.** Done. It reads `theAnswerXaiMeant` now, because the old name says what it wraps while the function decides what xAI meant: a 403 whose body names a bad credential is a 401, and a free-usage 429 owes the day that xAI never states. Five files read it, one of them arriving with the main merge.
 - **The failure reveal anchoring.** Task 7b owns it.
 - **The furniture scenario.** Task 8 owns it, on main's amended line.
 

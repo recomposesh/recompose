@@ -1,7 +1,7 @@
 import type { JsonObject } from '../gateway-wire';
 
 import { normalizeXAIImageRefs } from './xai-image';
-import { withXaiRetryAfter } from './xai-response';
+import { theAnswerXaiMeant } from './xai-response';
 
 export type XAIVideoPath = '/videos/generations' | '/videos/edits' | '/videos/extensions' | '';
 
@@ -53,5 +53,5 @@ export async function reachXAIVideo(
     ...(request.body === undefined ? {} : { body: request.body }),
   });
 
-  return withXaiRetryAfter(response);
+  return theAnswerXaiMeant(response);
 }
