@@ -110,7 +110,14 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
   - [x] **8d refusals.** Landed as `1dacbe34`. The empty router and the exhausted one. Three mutations, including one that survived and was the cluster's own mistake rather than a weak test: it moved the constant the assertion also reads, so both sides moved together.
   - [x] **8g inspector.** Landed as `9ce89ff7`. The keyboard reorders the ladder and the live region says where the child landed, and a round-robin list carries no rank. It added the third target the shared surface had left out on purpose.
   - [ ] **8a failover.** Written, green on three of four scenarios, blocked on the defect above. Its steps are already written against the fixed behaviour, so they're the check on task 4b.
-  - [ ] **8b streaming.** Reduced to two scenarios by the maintainer's call, and waiting to be rewritten against them.
+  - [x] **8b streaming.** Landed as `60d1b993`. The two scenarios the maintainer left standing: a failure past the first byte closes without moving on, and a status-less drop fails over.
+
+    **It disproved the fact task 4 recorded and three briefs repeated.** `truncateAfterChunks: 1` doesn't land a chunk past the commit latch. Node corks an HTTP write and uncorks on the next tick. The stand-in destroys the socket synchronously after writing, so nothing ever flushes the opening event, and the gateway reads a plain transport failure. Measured from the child: `bytesWritten: 420, bytesRead: 0`, and the caller held a whole answer from the sibling. With no pacing this holds for any value, because the whole answer composes inside one tick. `{ latency: 25, truncateAfterChunks: 2 }` is what works: the await before the second write is the tick boundary that flushes the first. Same run after: `bytesRead: 548`, one `message_start`, ending broken.
+
+    That first failure also caught its own arrangement passing for the wrong reason. The Given proved a byte had arrived while the byte came from the sibling that had already taken over. It now asserts the opening event names the first child's model, which is the only thing on the wire that says who is serving.
+
+    **jscpd forced a scope extension.** A verbatim copy of unit 8c's `theRoutedModelName` tripped the zero-threshold duplicate gate. No honest way keeps it, so the helper moved to `routed-gateway.ts` and both step files read it there.
+
   - [ ] **8e stored-shape.** Running.
   - [ ] **8f canvas.** Waits on task 7b, because its scenarios exercise what 7b is changing.
 
@@ -198,6 +205,12 @@ The maintainer settled both open questions.
 **Delete the two clauses with no expression, rather than defer or reword them.** The approved `streaming.feature` loses the scenario about a stream opening with an error event, and the post-commit scenario loses its `Then the caller receives the provider's stream error unchanged`. What survives is what the suite can prove: the stream closes, no sibling begins, and a status-less transport failure moves on.
 
 Nothing about the product changed, and the behaviour is still proven. Task 4 covers the pre-commit error-open path and the verbatim forward in unit specs. It scored 88.71 mutation on the serving path, after killing 29 survivors in the file that owns the wording. What went away is the end-to-end witness, not the guarantee. `specs/routers/spec.md` still requires the forward, and it should: a requirement describes the product, not the test rig.
+
+## Two observations the streaming unit left standing
+
+**A closed stream and a finished one look alike at the transport.** The caller's read does break on a mid-stream failure, and the scenario asserts that, but it also asserts the events carry no `message_stop`. A client watching only for socket close would read a truncated answer as a complete one. That's about the product rather than the rig.
+
+**The mid-stream failure reaches the log with no context.** It prints a bare `TypeError: terminated`, where the transport-failure path prints the gateway, the virtual model and the target. The project rule asks an error to carry the attempted operation and why it failed. Nothing in this repository logs that line. Giving it context means wrapping the forwarded stream rather than editing a message, which is a change to the serving path and wants its own job.
 
 ## One rider this change found and refuses to carry
 
