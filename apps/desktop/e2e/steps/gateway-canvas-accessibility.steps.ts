@@ -35,7 +35,7 @@ const SERVED_MODEL = 'claude-sonnet-5';
 
 /** The words the canvas refuses a landing with, which the live region carries whole. */
 const REFUSAL =
-  'A cable binds a virtual model to a stored target it does not already hold, and nothing else connects.';
+  'A cable binds a virtual model or a router to a stored target it does not already hold, and nothing else connects.';
 
 /** How many presses a walk may spend before the keyboard is called unable to reach an option. */
 const TAB_LIMIT = 20;
