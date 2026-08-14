@@ -118,6 +118,22 @@ The decision folded three items from #155 and one from #154 into this train. The
 - **The failure reveal anchoring.** Task 7b owns it.
 - **The furniture scenario.** Task 8 owns it, on main's amended line.
 
+## The streaming scenarios ask for something the stand-in can't do
+
+Unit 8b answered the open question before writing a line, read-only, against `@copilotkit/aimock@1.38.0` itself rather than its docs. The lead task 8 left was a dead end, and two of the three approved scenarios have no honest expression.
+
+- **`ResponseFactory` can't help.** It's typed `(req) => FixtureResponse | Promise<FixtureResponse>`, the same union a plain fixture answers. It defers _which_ response to pick until the request arrives. It can't widen the wire shape, name a content type, or write raw bytes.
+- **An error fixture is always a JSON error, never a stream.** In `dist/messages.js` the Anthropic handler branches on `isErrorResponse` before it ever reads `stream`, and `writeErrorResponse` sets `Content-Type: application/json`. Even at status 200 the answer is a JSON error envelope. So scenario 1, which needs a 200 `text/event-stream` whose first frame is an error, has no expression at all.
+- **Truncation can't abort before the first chunk.** `dist/interruption.js` increments the count and then compares `chunkCount >= truncateAfterChunks`, so 0 and 1 are the same instruction and both abort after exactly one chunk. That's the mechanism behind what tasks 4 and 8 each measured from outside.
+- **Scenario 2 is half expressible.** `truncateAfterChunks: 1` lands one chunk past the commit boundary and then destroys the socket, which proves the stream closes and no sibling begins. It can't prove the caller receives the provider's own stream error, because a destroyed socket carries no payload.
+- **Scenario 3 is expressible, and the shipped docstring says otherwise.** `chaos: { disconnectRate: 1 }` destroys the connection before any status line, runs after the fixture matches, and still journals the request, so `modelsAsked()` keeps seeing it. The `mock` docstring in `scripted-provider.ts` claims this case can't be a fixture, and that's wrong.
+
+Two things follow, and both are the maintainer's to settle rather than a unit's.
+
+Decision 15 says chaos rates stay at zero. The reason is determinism, and at a rate of exactly 1 the roll is no longer a roll. Reading the decision by its purpose allows 0 and 1 and still forbids everything between.
+
+Scenario 1 and scenario 2's error clause need the same missing capability: a stand-in that can write an arbitrary server-sent-event body on `/v1/messages`. Nothing reaches that path through `mount()`, so closing the gap means changing the shared surface rather than a unit's two files.
+
 ## One rider this change found and refuses to carry
 
 The `unit` project in `apps/desktop/vitest.config.ts` is the only one of four that doesn't spread `pacedForCi`. Under a full battery it runs at full file parallelism with no retry, while three chromium projects compete for the same cores. The specs that lose are the ones waiting on a real filesystem read. Four runs on this train each lost to a different `src/main/**` file the branch never opened, the last of them reading a usage ledger before its flush landed. Every one passed alone.
