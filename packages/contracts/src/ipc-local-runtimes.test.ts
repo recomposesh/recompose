@@ -67,6 +67,45 @@ describe('what the local runtime channels ask for', () => {
   });
 });
 
+describe('moving a stored runtime to another port', () => {
+  const move = ipcChannels['accounts:move-runtime'].request;
+
+  test('the move names the row it moves and the port it moves to', () => {
+    const asked = { id: storedRuntime.id, port: 11435 };
+
+    expect(move.parse(asked)).toEqual(asked);
+  });
+
+  test('a move naming no port is refused, because there is nowhere to move to', () => {
+    expect(move.safeParse({ id: storedRuntime.id }).success).toBe(false);
+  });
+
+  test('a move onto a port no server can hold is refused where it is asked for', () => {
+    expect(move.safeParse({ id: storedRuntime.id, port: 0 }).success).toBe(false);
+    expect(move.safeParse({ id: storedRuntime.id, port: 70_000 }).success).toBe(false);
+  });
+
+  test('a move carries no address, because the app mints one from the port', () => {
+    expect(
+      move.safeParse({ id: storedRuntime.id, port: 11435, address: 'http://elsewhere:1' }).success,
+    ).toBe(false);
+  });
+
+  test('a move names a row rather than a runtime, because only a row has somewhere to move from', () => {
+    expect(move.safeParse({ runtime: 'ollama', port: 11435 }).success).toBe(false);
+    expect(move.safeParse({ id: '   ', port: 11435 }).success).toBe(false);
+  });
+
+  test('the move answers the whole accounts document, the way every account act does', () => {
+    const answered = {
+      ok: true,
+      value: { schemaVersion: ACCOUNTS_VERSION, accounts: [storedRuntime] },
+    };
+
+    expect(ipcChannels['accounts:move-runtime'].response.parse(answered)).toEqual(answered);
+  });
+});
+
 describe('what a server nobody documents must name', () => {
   test('it names its own port and the name a person gave it', () => {
     const own = { runtime: 'custom', port: 9000, label: 'Bench box' };

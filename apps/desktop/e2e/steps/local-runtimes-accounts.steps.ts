@@ -51,6 +51,22 @@ When('the surface lists it', async ({ page }) => {
   await openProviderScreen(page, 'Local Runtimes');
 });
 
+When('the maintainer moves it to port {int}', async ({ page }, port: number) => {
+  const row = accountRows(page).first();
+
+  await row.getByRole('button', { name: /^Actions for / }).click();
+  await page.getByRole('menuitem', { name: 'Move to another port' }).click();
+
+  const field = page.getByRole('textbox', { name: 'Port' });
+
+  await field.fill(String(port));
+  await page.getByRole('button', { name: 'Move' }).click();
+});
+
+Then('the screen lists one local runtime', async ({ page }) => {
+  await expect(accountRows(page)).toHaveCount(1);
+});
+
 Then("the row's second line reads {string}", async ({ page }, address: string) => {
   await addressStandsBeneathTheName(page, address);
 });

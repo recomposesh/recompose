@@ -7,7 +7,7 @@ type ConsequenceDialogProps = {
   open: boolean;
   /** The question the dialog stands on. */
   heading: string;
-  /** The cost the change carries, worth naming before it applies. */
+  /** The cost the change carries, or the one thing it needs, before it applies. */
   children: ReactNode;
   /** The act's own words, never a bare yes. */
   confirmLabel: string;
@@ -51,7 +51,7 @@ export function ConsequenceDialog({
       <h3 className="text-heading text-ink" id={headingId}>
         {heading}
       </h3>
-      <p className="mt-1 text-detail text-ink-secondary">{children}</p>
+      <div className="mt-1 text-detail text-ink-secondary">{children}</div>
       <div className="mt-4 flex justify-end gap-2">
         <button className="push-button" onClick={onCancel} type="button">
           Cancel

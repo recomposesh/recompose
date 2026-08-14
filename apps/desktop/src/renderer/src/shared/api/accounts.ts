@@ -85,6 +85,26 @@ export function useConnectLocalRuntime() {
   });
 }
 
+/**
+ * Points a stored runtime at another port, keeping the row it already is.
+ *
+ * @summary The address changed, so the accounts reading is asked again, and the row's standing is
+ * dropped rather than asked again: what the old address answered says nothing about the new one,
+ * and a row that kept its chip through a move would be claiming otherwise.
+ */
+export function useMoveLocalRuntime() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: IpcRequest<'accounts:move-runtime'>) =>
+      unwrapIpcResult(await window.recompose['accounts:move-runtime'](request)),
+    onSuccess: async (_moved, { id }) => {
+      queryClient.removeQueries({ queryKey: ['runtime-standing', id] });
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+  });
+}
+
 export function useConnectAccount() {
   const queryClient = useQueryClient();
 
