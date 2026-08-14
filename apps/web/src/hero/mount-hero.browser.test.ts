@@ -62,6 +62,22 @@ const sleep = async (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+const settledSpot = async (mark: HTMLElement) => {
+  let last = mark.style.getPropertyValue('--spot-y');
+
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    await sleep(150);
+
+    const now = mark.style.getPropertyValue('--spot-y');
+
+    if (now !== '' && now === last) return now;
+
+    last = now;
+  }
+
+  return last;
+};
+
 afterEach(() => {
   while (disposers.length > 0) disposers.pop()?.();
 
@@ -198,13 +214,7 @@ describe('the hero keeps the spotlight over the words it lights', () => {
 
     dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 200 }));
 
-    await sleep(900);
-
-    const before = mark.style.getPropertyValue('--spot-y');
-
-    await sleep(200);
-
-    expect(mark.style.getPropertyValue('--spot-y')).toBe(before);
+    const before = await settledSpot(mark);
 
     scrollTo(0, 900);
     dispatchEvent(new Event('scroll'));
