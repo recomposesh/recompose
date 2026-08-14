@@ -97,7 +97,7 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
   It corrected the spike on both counts, one in the units' favour and one against.
 
   - **A named retry time needs no `mount()`.** A fixture carrying `retryAfter` answers `retry-after: 90` as asked, so `refuses(..., { retryAfterSeconds })` is enough. The spike's constraint was wrong.
-  - **`mount()` can't serve a path the stand-in already owns.** Mounting `/v1/messages` and reading the body deadlocks, and a mounted request is never journalled, so `modelsAsked()` goes blind to it.
+  - **`mount()` can't serve a path the stand-in already owns.** Mounting `/v1/messages` and reading the body deadlocks, and a mounted request is never journaled, so `modelsAsked()` goes blind to it.
   - **A 200 stream opening with an error event has no expression the cluster found.** Unit 8b owns the scenario that needs one. Read `ResponseFactory` in the fixture's own answer type before concluding otherwise, and report rather than invent if it truly holds.
 
   Decision 18 broke ten shipped scenarios rather than the one the design expected, and the suite named them rather than a reading of the code. Two say what opens and their text changed. Four walk one stage further, so their step definitions absorbed it and the approved text stands.
@@ -211,7 +211,7 @@ The maintainer settled both open questions.
 
 **Delete the two clauses with no expression, rather than defer or reword them.** The approved `streaming.feature` loses the scenario about a stream opening with an error event, and the post-commit scenario loses its `Then the caller receives the provider's stream error unchanged`. What survives is what the suite can prove: the stream closes, no sibling begins, and a status-less transport failure moves on.
 
-Nothing about the product changed, and the behaviour is still proven. Task 4 covers the pre-commit error-open path and the verbatim forward in unit specs. It scored 88.71 mutation on the serving path, after killing 29 survivors in the file that owns the wording. What went away is the end-to-end witness, not the guarantee. `specs/routers/spec.md` still requires the forward, and it should: a requirement describes the product, not the test rig.
+Nothing about the product changed, and the behavior is still proven. Task 4 covers the pre-commit error-open path and the verbatim forward in unit specs. It scored 88.71 mutation on the serving path, after killing 29 survivors in the file that owns the wording. What went away is the end-to-end witness, not the guarantee. `specs/routers/spec.md` still requires the forward, and it should: a requirement describes the product, not the test rig.
 
 ## Two operational facts the end-to-end units measured
 
@@ -245,7 +245,7 @@ Three reviewers read the change at `99cf66b9`: an adversarial pair split node si
 
 **A promise the provider never made.** The cooldown signal accepts Anthropic's rate-limit reset headers as a promised retry time, and those ride every response rather than only a 429. Two children failing with 500 therefore answer 429 with a `Retry-After`, where decision 9 requires 502 and rejects that case in its own words. Reading the headers for cooldown duration stays right. Letting them decide the refusal's status is what breaks.
 
-**One asymmetry against a directly bound target.** A router holding one child inherits the per-gateway cooldown ledger, so a single 503 blacks the model out for a minute and the provider never hears another request. The same target bound directly doesn't, and the branch's own docstring argues for the behaviour it doesn't have. It keys on router-ness where it means having a sibling.
+**One asymmetry against a directly bound target.** A router holding one child inherits the per-gateway cooldown ledger, so a single 503 blacks the model out for a minute and the provider never hears another request. The same target bound directly doesn't, and the branch's own docstring argues for the behavior it doesn't have. It keys on router-ness where it means having a sibling.
 
 The rules review found one user-visible rule written three times, which is how a router takes its name. The engine says it, the card says it, and the inspector says it again, and two of those reach a person at once in a refusal and on screen.
 

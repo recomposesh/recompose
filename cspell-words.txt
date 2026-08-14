@@ -141,6 +141,7 @@ IHDR
 imagegen
 inspectable
 interceptable
+journaled
 JVBE
 kapi
 Kapı

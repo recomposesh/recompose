@@ -23,7 +23,7 @@ function childNameOf(routing: EngineRouting, routeNode: string): string {
     : routeNode;
 }
 
-type StatuslessReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stream-error'>;
+type UnansweredReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stream-error'>;
 
 /**
  * Why a child nobody ever answered for could not take the request.
@@ -32,7 +32,7 @@ type StatuslessReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stre
  * there without a credential, because the two ask a person for different repairs. A child that stood
  * cooling reads as such rather than as a failure of this request, because it never carried one.
  */
-function whyNothingAnswered(because: StatuslessReason): string {
+function whyNothingAnswered(because: UnansweredReason): string {
   if (because === 'missing-credential') return 'has no credential';
 
   if (because === 'missing-target') return 'has no target';
