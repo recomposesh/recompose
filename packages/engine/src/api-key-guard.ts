@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
 
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 import { apiKeyRequired } from './refusals';
 
@@ -8,12 +8,21 @@ const OPEN_PATHS = new Set(['/health', '/healthz']);
 
 const BEARER = 'bearer ';
 
-function digestOf(value: string): Buffer {
-  return createHash('sha256').update(value).digest();
+/**
+ * One request's value and the gateway's key, reduced to a pair of fixed-width tags.
+ *
+ * @summary The tag exists so the constant-time compare meets two buffers of equal length whatever
+ * the caller sent, which is what keeps the check from leaking the key's length. It's keyed rather
+ * than bare so nobody can compute the tag of a guess without the secret this process minted at
+ * start, and it is never stored: the key it stands for is a 256-bit random value, so the slow
+ * derivations a person's password would need buy nothing here.
+ */
+function tagOf(value: string, comparisonKey: Buffer): Buffer {
+  return createHmac('sha256', comparisonKey).update(value).digest();
 }
 
-function matches(presented: string, held: Buffer): boolean {
-  return timingSafeEqual(digestOf(presented), held);
+function matches(presented: string, held: Buffer, comparisonKey: Buffer): boolean {
+  return timingSafeEqual(tagOf(presented, comparisonKey), held);
 }
 
 /**
@@ -58,7 +67,8 @@ function presentedKeys(c: Context): (string | undefined)[] {
  * for.
  */
 export function guardApiKey(displayName: string, apiKey: string): MiddlewareHandler {
-  const held = digestOf(apiKey);
+  const comparisonKey = randomBytes(32);
+  const held = tagOf(apiKey, comparisonKey);
 
   return async (c, next) => {
     if (OPEN_PATHS.has(c.req.path)) {
@@ -67,7 +77,11 @@ export function guardApiKey(displayName: string, apiKey: string): MiddlewareHand
 
     const presented = presentedKeys(c);
 
-    if (presented.some((candidate) => candidate !== undefined && matches(candidate, held))) {
+    if (
+      presented.some(
+        (candidate) => candidate !== undefined && matches(candidate, held, comparisonKey),
+      )
+    ) {
       return next();
     }
 

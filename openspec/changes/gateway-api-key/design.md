@@ -111,9 +111,13 @@ request
   -> route
 ```
 
-The comparison hashes both sides to SHA-256 and calls `timingSafeEqual`. Hashing first keeps the two
-buffers at 32 bytes whatever the inputs were. The compare therefore leaks neither the key's length
-nor how many leading characters a guess got right.
+The comparison reduces both sides to a keyed SHA-256 tag and calls `timingSafeEqual`. Tagging first
+keeps the two buffers at 32 bytes whatever the inputs were. The compare therefore leaks neither the
+key's length nor how many leading characters a guess got right.
+
+A secret each guard mints at start keys that tag rather than leaving it bare. Nobody can compute the
+tag of a guess offline. A bare digest also reads to a scanner as a password hash carrying no work
+factor. That's what it would be, if the value were a password rather than a 256-bit random token.
 
 An absent key and a wrong key draw the same 401 with the same body. Splitting them would tell a
 caller whether a gateway holds a key at all, and it buys a person nothing the status code hasn't
@@ -226,7 +230,7 @@ above 65536 bytes, and this one asks for 32.
 - `apps/desktop/e2e/features/gateways/api-key.feature`: the act in the drawer, graduated unchanged
   from `gherkin/gateways/` (create)
 - `apps/desktop/e2e/steps/gateways-api-key.steps.ts`: its steps (create)
-- `docs/adr/0105-a-gateway-carries-its-own-key.md`: the record (create)
+- `docs/adr/0106-a-gateway-carries-its-own-key.md`: the record (create)
 - `cspell-words.txt`: any new vocabulary the diff introduces (modify, only where needed)
 
 ## Interfaces
@@ -299,7 +303,7 @@ what it buys on a machine that may hold no keyring. The vault with the digest al
 rejected because the guard needs no plaintext but the copy control does, which puts the read back
 where it started.
 
-**ADR draft:** `docs/adr/0105-a-gateway-carries-its-own-key.md`
+**ADR draft:** `docs/adr/0106-a-gateway-carries-its-own-key.md`
 
 ### 2. The stored version moves to 3
 

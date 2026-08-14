@@ -62,9 +62,10 @@ paths and the WebSocket paths included.
    reconfigure whichever client doesn't speak it.
 5. **The health paths answer without a key.** A health path that needs a credential can't do the job
    a health path exists for.
-6. **The comparison is constant time over digests.** Both sides hash to SHA-256 before
-   `timingSafeEqual`, so the compare leaks neither the length of the key nor the length of its
-   matching prefix.
+6. **The comparison is constant time over keyed tags.** Both sides reduce to a SHA-256 tag under a
+   secret each guard mints at start, then meet `timingSafeEqual`. The compare leaks neither the
+   length of the key nor the length of its matching prefix, and nobody can compute the tag of a
+   guess offline.
 7. **The refusal is 401 in the shape `guardLoopback` already answers.** One Anthropic-shaped body
    serves every dialect, matching the guard that sits beside it. It carries `WWW-Authenticate:
 Bearer`, because Request for Comments (RFC) 6750 asks a bearer-protected resource for it.

@@ -90,31 +90,39 @@ describe('the key a gateway hands its callers', () => {
   });
 });
 
+const HIDDEN = '••••••••';
+
+const LONG_BODY = 'abcdefghijkl';
+
+const OWN_KEY = 'someonesOwnKeyValue';
+
 describe('the mask a screen shows in place of the key', () => {
   test('the mask keeps the prefix, which names the value rather than revealing it', () => {
-    expect(maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}abcdefghijkl`)).toContain(
+    expect(maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}${LONG_BODY}`)).toContain(
       GATEWAY_API_KEY_PREFIX,
     );
   });
 
   test('the mask ends in the last four characters, so a person can tell two keys apart', () => {
-    expect(maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}abcdefghijkl`)).toMatch(/ijkl$/u);
+    const masked = maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}${LONG_BODY}`);
+
+    expect(masked.endsWith(LONG_BODY.slice(-4))).toBe(true);
   });
 
   test('the mask hides everything between the prefix and those four', () => {
-    expect(maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}abcdefghijkl`)).toBe(
-      `${GATEWAY_API_KEY_PREFIX}••••••••ijkl`,
+    expect(maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}${LONG_BODY}`)).toBe(
+      `${GATEWAY_API_KEY_PREFIX}${HIDDEN}${LONG_BODY.slice(-4)}`,
     );
   });
 
   test('a key too short to hide eight characters shows no tail at all', () => {
     expect(maskGatewayApiKey(`${GATEWAY_API_KEY_PREFIX}abcd`)).toBe(
-      `${GATEWAY_API_KEY_PREFIX}••••••••`,
+      `${GATEWAY_API_KEY_PREFIX}${HIDDEN}`,
     );
   });
 
   test('a hand-written key carrying no prefix claims none', () => {
-    expect(maskGatewayApiKey('someonesOwnKeyValue')).toBe('••••••••alue');
+    expect(maskGatewayApiKey(OWN_KEY)).toBe(`${HIDDEN}${OWN_KEY.slice(-4)}`);
   });
 
   test('a minted key never reads back through its own mask', () => {

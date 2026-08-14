@@ -51,8 +51,10 @@ another is ordinary rather than hostile.
 
 **The health paths stay open, and an absent key answers as a wrong one does.** A health path that
 needs a credential can't do the job it exists for. Splitting the two refusals would tell a caller
-whether the gateway holds a key at all. Both sides hash to SHA-256 before `timingSafeEqual`. The compare
-therefore leaks neither the key's length nor how many leading characters a guess got right.
+whether the gateway holds a key at all. Both sides reduce to a keyed SHA-256 tag before
+`timingSafeEqual`. The compare therefore leaks neither the key's length nor how many leading characters
+a guess got right. A secret each guard mints at start keys that tag, so nobody can compute the tag of
+a guess offline.
 
 ## Alternatives
 
