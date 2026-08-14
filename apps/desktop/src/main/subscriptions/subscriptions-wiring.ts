@@ -11,6 +11,7 @@ import type { SubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machi
 import type { CredentialCustody, KeychainSeam } from './credential-custody';
 import type { MachineReach } from './machine-store';
 
+import { pushLaunchRefused } from '../ipc/push-events';
 import { storagePathsFor } from '../ipc/storage-context';
 import { createSubscriptionsIpcHandlers } from '../ipc/subscriptions-ipc';
 import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-machine-ipc';
@@ -153,6 +154,9 @@ function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcCont
     ).write,
     signInBoundMs: SIGN_IN_BOUND_MS,
     signInEveryMs: SIGN_IN_EVERY_MS,
+    noteLaunchRefused: (provider, note) => {
+      pushLaunchRefused({ provider, note });
+    },
     onCorrupt: wiring.onCorrupt,
   };
 }

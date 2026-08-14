@@ -28,6 +28,7 @@ beforeEach(() => {
     'settings:changed': () => () => undefined,
     'devtools:toggle': () => () => undefined,
     'usage:command': () => () => undefined,
+    'subscriptions:launch-refused': () => () => undefined,
     'canvas:command': (listener) => {
       listeners.add(listener);
 

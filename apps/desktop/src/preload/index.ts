@@ -79,6 +79,7 @@ const recomposeEvents: RecomposeIpcEvents = Object.freeze({
   'usage:command': eventEntry('usage:command'),
   'settings:changed': eventEntry('settings:changed'),
   'devtools:toggle': eventEntry('devtools:toggle'),
+  'subscriptions:launch-refused': eventEntry('subscriptions:launch-refused'),
 });
 
 contextBridge.exposeInMainWorld('recompose', recompose);
