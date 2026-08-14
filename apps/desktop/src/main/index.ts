@@ -47,6 +47,7 @@ import {
   showMainWindow,
 } from './windows/main-window';
 import { registerPermissionHandlers } from './windows/permission-wiring';
+import { activationPolicyFor } from './windows/stays-back';
 
 app.setName('Recompose');
 app.setAboutPanelOptions({ applicationName: 'Recompose' });
@@ -176,6 +177,12 @@ const passwordStoreOverride = resolvePasswordStoreOverride(process.env);
 
 if (passwordStoreOverride !== null) {
   app.commandLine.appendSwitch('password-store', passwordStoreOverride);
+}
+
+const activationPolicy = activationPolicyFor(process.platform, process.env);
+
+if (activationPolicy !== null) {
+  app.setActivationPolicy(activationPolicy);
 }
 
 registerAppScheme();
