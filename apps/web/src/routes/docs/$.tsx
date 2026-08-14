@@ -1,10 +1,10 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { useFumadocsLoader } from 'fumadocs-core/source/client';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { Suspense } from 'react';
 
 import { DocsContent } from '../../components/docs-content';
-import { gitHubUrl, navOptions } from '../../lib/layout.shared';
+import { SiteNav } from '../../components/site-nav';
+import { gitHubUrl } from '../../lib/layout.shared';
 import { docs, source } from '../../lib/source';
 
 export const Route = createFileRoute('/docs/$')({
@@ -17,21 +17,22 @@ export const Route = createFileRoute('/docs/$')({
 
     await docs.getPage(page.path)?.preload();
 
-    return {
-      path: page.path,
-      pageTree: await source.serializePageTree(source.getPageTree()),
-    };
+    return { path: page.path };
   },
 });
 
 function Page() {
-  const { pageTree, path } = useFumadocsLoader(Route.useLoaderData());
+  const { path } = Route.useLoaderData();
 
   return (
-    <DocsLayout nav={navOptions} githubUrl={gitHubUrl} tree={pageTree}>
-      <Suspense>
-        <DocsContent path={path} />
-      </Suspense>
-    </DocsLayout>
+    <div className="docs-shell">
+      <SiteNav />
+
+      <DocsLayout nav={{ enabled: false }} githubUrl={gitHubUrl} tree={source.getPageTree()}>
+        <Suspense>
+          <DocsContent path={path} />
+        </Suspense>
+      </DocsLayout>
+    </div>
   );
 }

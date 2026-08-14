@@ -300,6 +300,43 @@ html > body[data-scroll-locked] {
   }
 }
 
+#nd-docs-layout,
+#nd-page,
+.docs-shell {
+  font-family: var(--brand-sans);
+}
+
+[data-slot='docs-page'] h1,
+[data-slot='docs-page'] h2,
+[data-slot='docs-page'] h3,
+#nd-page h1,
+#nd-page h2,
+#nd-page h3,
+#nd-page h4 {
+  font-family: var(--brand-sans);
+  letter-spacing: -0.02em;
+}
+
+.docs-shell .site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: auto;
+  padding-inline: 1.5rem;
+  background: rgb(12 12 14 / 72%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid var(--white-a13);
+}
+
+.docs-shell .site-links a,
+.docs-shell .site-cta {
+  text-shadow: none;
+}
+
+.docs-shell .site-brand img {
+  filter: none;
+}
+
 @media (max-width: 720px) {
   .landing-claim h1 {
     max-width: none;

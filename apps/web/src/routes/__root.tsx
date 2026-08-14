@@ -16,6 +16,7 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
       { rel: 'preconnect', href: 'https://use.typekit.net' },
       { rel: 'preconnect', href: 'https://p.typekit.net', crossOrigin: 'anonymous' },
       { rel: 'stylesheet', href: 'https://use.typekit.net/vva5dyp.css' },
