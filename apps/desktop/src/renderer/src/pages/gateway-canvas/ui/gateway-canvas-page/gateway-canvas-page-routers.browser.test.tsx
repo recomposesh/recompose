@@ -1,13 +1,19 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
-import { draggedCable, sourcePortOf, targetPortOf } from '../../testing/canvas-gestures.testkit';
+import {
+  draggedCable,
+  reconnectAnchorOf,
+  sourcePortOf,
+  targetPortOf,
+} from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 import {
   cardAcross,
   cardSeat,
   droppedOnOpenCanvas,
   ladderUnder,
+  routeNodeOf,
   routingOf,
 } from '../../testing/routed-canvas.testkit';
 import { emptyRouterWorld, pooledWorld } from '../../testing/routed-gateways.testkit';
@@ -99,6 +105,40 @@ test('a cable from a router lands on a stored target, which joins the ladder as 
   await expect.poll(async () => (await ladderUnder('pooled'))?.length).toBe(3);
 });
 
+test("dragging a child's cable onto another stored target moves that binding, ladder unchanged", async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await draggedCable(
+    await reconnectAnchorOf(screen.container, 'cable:pooled:t2'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect
+    .poll(async () => routeNodeOf('pooled', 't2'))
+    .toEqual({ kind: 'target', accountId: 'k1', providerModel: 'claude-sonnet-5' });
+  expect(await ladderUnder('pooled')).toEqual(['t1', 't2']);
+});
+
+test('stepping back mid-child-rebind reopens the accounts, and the fresh pick still moves it', async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await draggedCable(
+    await reconnectAnchorOf(screen.container, 'cable:pooled:t2'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
+
+  await expect
+    .poll(async () => routeNodeOf('pooled', 't2'))
+    .toEqual({ kind: 'target', accountId: 'k1', providerModel: 'claude-opus-5' });
+  expect(await ladderUnder('pooled')).toEqual(['t1', 't2']);
+});
+
 test('a card born under a router stands where the cable was let go rather than at a tidy seat', async () => {
   const screen = await canvasPageOn(pooledWorld);
 
@@ -153,6 +193,43 @@ test('the inspector writes the mode a person switched the router to', async () =
       return entry?.kind === 'router' ? entry.policy.mode : undefined;
     })
     .toBe('round-robin');
+});
+
+async function nameOfTheEntryRouter(modelId: string): Promise<string | undefined> {
+  const routing = await routingOf(modelId);
+  const entry = routing === undefined ? undefined : routing.nodes[routing.entry];
+
+  return entry?.kind === 'router' ? entry.displayName : undefined;
+}
+
+test('the inspector names a router, and its card reads that name instead of its mode', async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await userEvent.click(screen.getByRole('button', { name: /Failover/ }).first());
+  await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  await screen.getByRole('textbox', { name: 'Router name' }).fill('Ladder');
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await expect.poll(async () => nameOfTheEntryRouter('pooled')).toBe('Ladder');
+  await expect.element(screen.getByRole('button', { name: /Ladder/ }).first()).toBeVisible();
+});
+
+test('clearing the name stands the router back under the mode it spreads requests by', async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await userEvent.click(screen.getByRole('button', { name: /Failover/ }).first());
+  await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  await screen.getByRole('textbox', { name: 'Router name' }).fill('Ladder');
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await expect.poll(async () => nameOfTheEntryRouter('pooled')).toBe('Ladder');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  await screen.getByRole('textbox', { name: 'Router name' }).fill('');
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await expect.poll(async () => nameOfTheEntryRouter('pooled')).toBeUndefined();
+  await expect.element(screen.getByRole('button', { name: /Failover/ }).first()).toBeVisible();
 });
 
 test('the keyboard reorders the failover ladder, and the write lands in the stored router', async () => {

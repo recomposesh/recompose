@@ -12,7 +12,8 @@ import {
   storedAccounts,
   workKey,
 } from '../../testing/gateway-canvas.testkit';
-import { gatewayBody, ghostBody, targetBody } from './subject-bodies';
+import { pooledGateway } from '../../testing/routed-gateways.testkit';
+import { gatewayBody, ghostBody, routerBody, targetBody } from './subject-bodies';
 
 const asked = fn<() => void>();
 
@@ -59,6 +60,22 @@ function GhostSubjectUnderProof() {
   return <InspectorFrame>{ghostBody('gone')}</InspectorFrame>;
 }
 
+const pooled = pooledGateway.virtualModels[0];
+
+const pooledRouter = pooled?.routing.nodes['r1'];
+
+function RouterSubjectUnderProof() {
+  if (pooled === undefined || pooledRouter?.kind !== 'router') {
+    throw new Error('the pooled fixture stands no router at its entry');
+  }
+
+  return (
+    <InspectorFrame>
+      {routerBody(pooledGateway, pooled, 'r1', pooledRouter, storedAccounts.accounts, asked)}
+    </InspectorFrame>
+  );
+}
+
 const meta = preview.meta({
   component: GatewaySubjectUnderProof,
   parameters: { bridge: servingBridgeWorld },
@@ -93,6 +110,21 @@ export const TheTargetSubject = meta.story({
     await expect((await canvas.findAllByText('API Key', { exact: true }))[0]).toBeVisible();
     await expect(await canvas.findByText('Behind of', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Fast', { exact: true })).toBeVisible();
+  },
+});
+
+/**
+ * The router subject's body: the mode, the children, and the way off the canvas.
+ *
+ * @summary A router is a card a person put here, so it offers the deletion footer every other card
+ * subject offers rather than leaving the Delete key as the only way to take one back.
+ */
+export const TheRouterSubject = meta.story({
+  render: () => <RouterSubjectUnderProof />,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Mode', { exact: true })).toBeVisible();
+    await expect(await canvas.findByRole('list', { name: 'Children' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Delete Router' })).toBeVisible();
   },
 });
 

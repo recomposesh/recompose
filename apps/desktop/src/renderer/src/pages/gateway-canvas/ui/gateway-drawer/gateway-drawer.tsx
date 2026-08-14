@@ -125,22 +125,38 @@ function accountSubjectBody(
       });
 }
 
+/**
+ * The router subject's body: the router the selection names, ready to edit and to remove.
+ *
+ * @summary The removal asks about the card the subject stands for rather than about its
+ * definition, since one definition can stand several routers and naming the definition would take
+ * every sibling with it.
+ */
+function routerAt(model: VirtualModel, routeNodeId: string | undefined) {
+  const seat = routeNodeId ?? model.routing.entry;
+  const node = model.routing.nodes[seat];
+
+  return node?.kind === 'router' ? { seat, node } : undefined;
+}
+
 function routerSubjectBody(
   world: DrawerWorld,
   subject: Extract<InspectorSubject, { kind: 'router' }>,
 ): ReactNode | undefined {
   const model = modelHeldBy(world, subject.modelId);
+  const card = nodeIdOf(subject);
 
-  if (model === undefined) {
+  if (model === undefined || card === undefined) {
     return undefined;
   }
 
-  const seat = subject.routeNodeId ?? model.routing.entry;
-  const node = model.routing.nodes[seat];
+  const held = routerAt(model, subject.routeNodeId);
 
-  return node?.kind === 'router'
-    ? routerBody(world.gateway, model, seat, node, world.accounts)
-    : undefined;
+  return held === undefined
+    ? undefined
+    : routerBody(world.gateway, model, held.seat, held.node, world.accounts, () => {
+        world.onAskRemoval(card);
+      });
 }
 
 function routedSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {

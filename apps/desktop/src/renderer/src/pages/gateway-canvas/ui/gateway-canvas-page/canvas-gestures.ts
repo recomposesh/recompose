@@ -12,6 +12,7 @@ import { heldDraft, startDrafting } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import {
   bindingCableId,
+  cableSeatOf,
   CARD_MEASURE,
   flowEdgesOf,
   flowNodesOf,
@@ -38,11 +39,22 @@ function birthedDraftAt(world: CanvasWorld, at: XY): void {
   revealOn(world.standings, 'draft');
 }
 
-function openedStageTwo(world: CanvasWorld, from: string, target: string): void {
+function openedStageTwo(
+  world: CanvasWorld,
+  from: string,
+  target: string,
+  replacing?: string,
+): void {
   const accountId = targetAccountIdIn(world.gateway, target);
 
   if (accountId !== undefined) {
-    world.standings.setPicker({ step: 'provider-model', from, accountId, anchor: target });
+    world.standings.setPicker({
+      step: 'provider-model',
+      from,
+      accountId,
+      anchor: target,
+      replacing,
+    });
   }
 }
 
@@ -139,7 +151,12 @@ function connectWiring(
       }
 
       if (oldEdge.source === connection.source) {
-        openedStageTwo(world, connection.source, connection.target);
+        openedStageTwo(
+          world,
+          connection.source,
+          connection.target,
+          cableSeatOf(oldEdge.id)?.routeNodeId,
+        );
       }
     },
     onReconnectStart: () => {

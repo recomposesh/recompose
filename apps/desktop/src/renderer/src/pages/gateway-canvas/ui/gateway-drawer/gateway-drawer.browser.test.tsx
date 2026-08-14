@@ -23,7 +23,7 @@ test('the gateway subject reads the endpoint and what serves, with no add button
   const screen = await renderDrawer({ kind: 'gateway' });
 
   await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('fast → work · claude-haiku-4-5')).toBeVisible();
+  await expect.element(screen.getByText('work · claude-haiku-4-5')).toBeVisible();
   await expect
     .element(screen.getByRole('button', { name: 'Add virtual model' }))
     .not.toBeInTheDocument();

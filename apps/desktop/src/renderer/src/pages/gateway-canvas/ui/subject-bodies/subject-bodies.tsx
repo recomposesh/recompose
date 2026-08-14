@@ -155,13 +155,21 @@ export function modelBody(
   );
 }
 
-/** The router subject's body: how it spreads its requests, and the children it spreads over. */
+/**
+ * The router subject's body: how it spreads its requests, and the children it spreads over.
+ *
+ * @summary It carries the deletion footer every other card subject carries, because a router is a
+ * card a person put on the canvas and the Delete key alone would leave the pointer with no way off
+ * it. The question the link raises names the router and what leaves with it, the same way the key's
+ * does, so the two paths differ in nothing but which hand a person reached with.
+ */
 export function routerBody(
   gateway: GatewayConfig,
   model: VirtualModel,
   routeNodeId: string,
   router: StoredRouter,
   accounts: readonly Account[],
+  onDelete: () => void,
 ): ReactNode {
   return subjectShell(
     {
@@ -177,6 +185,7 @@ export function routerBody(
       routeNodeId={routeNodeId}
       router={router}
     />,
+    { label: 'Delete Router', onPress: onDelete },
   );
 }
 

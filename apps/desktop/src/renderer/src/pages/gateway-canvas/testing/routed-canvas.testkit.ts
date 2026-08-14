@@ -25,6 +25,11 @@ export async function routingOf(modelId: string) {
   return held.find((model) => model.id === modelId)?.routing;
 }
 
+/** The stored route node one definition holds under an id, or nothing where nothing stands there. */
+export async function routeNodeOf(modelId: string, routeNodeId: string) {
+  return (await routingOf(modelId))?.nodes[routeNodeId];
+}
+
 /** The children the entry router of one definition holds, or nothing where it binds a target. */
 export async function ladderUnder(modelId: string): Promise<readonly string[] | undefined> {
   const routing = await routingOf(modelId);

@@ -22,8 +22,8 @@ import { modelsTheProviderServes } from '../key-probe-stub';
 import { focusedGateway } from '../scenario-memory';
 import { gatewayTargetingAKey, KEY_ACCOUNT } from '../stored-target-accounts';
 
-/** The two lines a defined row leads with: the name a client asks for, then what serves it. */
-const NAME_THEN_BINDING = 2;
+/** The lines a defined row leads with: the name, the id a client sends, then what serves it. */
+const NAME_ID_THEN_BINDING = 3;
 
 async function draftBornFromTheGatewayPlus(page: Page): Promise<void> {
   await openGatewayCanvas(page, focusedGateway(page));
@@ -78,9 +78,10 @@ Then('the Models list holds {string} as one row', async ({ page }, name: string)
 Then('the row reads {string} over its target', async ({ page }, name: string) => {
   const printed = await rowLines(servedRow(page, focusedGateway(page), name));
 
-  expect(printed.slice(0, NAME_THEN_BINDING)).toEqual([
+  expect(printed.slice(0, NAME_ID_THEN_BINDING)).toEqual([
     name,
-    `${name} → ${KEY_ACCOUNT} · claude-sonnet-5`,
+    name,
+    `${KEY_ACCOUNT} · claude-sonnet-5`,
   ]);
 });
 

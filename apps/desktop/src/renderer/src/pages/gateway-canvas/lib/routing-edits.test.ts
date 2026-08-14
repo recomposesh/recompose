@@ -1,10 +1,12 @@
-import type { RouteNode } from '@recompose/contracts';
+import type { RouteNode, RouteTarget } from '@recompose/contracts';
 
 import { routingSchema } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import {
   gatewayBindingChild,
+  gatewayNamingRouter,
+  gatewayRebindingNode,
   gatewayReordering,
   gatewayRoutingThrough,
   gatewaySwitching,
@@ -15,6 +17,12 @@ import { bound, childrenOf, codex, ladderOfThree, routingOf, spare } from './rou
 function routerIn(routing: ReturnType<typeof routingOf>): string {
   return routing.entry;
 }
+
+const elsewhere: RouteTarget = {
+  kind: 'target',
+  accountId: 'a9',
+  providerModel: 'claude-sonnet-5',
+};
 
 test('a fresh router routes through itself and holds no child yet', () => {
   const routing = routedThroughARouter('failover');
@@ -99,6 +107,47 @@ test('a child bound under a node that routes nothing leaves the whole gateway as
   expect(gatewayBindingChild(routed, 'fast', child, 'second', spare)).toEqual(routed);
 });
 
+test('rebinding one child stands the picked target in its place rather than beside it', () => {
+  const three = ladderOfThree();
+  const ladder = routerIn(routingOf(three));
+  const rebound = routingOf(gatewayRebindingNode(three, 'fast', 'second', elsewhere));
+
+  expect(childrenOf(rebound, ladder)).toEqual(childrenOf(routingOf(three), ladder));
+  expect(rebound.nodes['second']).toEqual(elsewhere);
+});
+
+test('rebinding one child leaves every sibling of that child exactly as it stood', () => {
+  const three = ladderOfThree();
+  const rebound = routingOf(gatewayRebindingNode(three, 'fast', 'second', elsewhere));
+  const stood = routingOf(three);
+
+  expect(rebound.nodes['third']).toEqual(stood.nodes['third']);
+  expect(routingSchema.safeParse(rebound).success).toBe(true);
+});
+
+test('rebinding a child that held a ladder takes that ladder with it, leaving nothing stranded', () => {
+  const three = ladderOfThree();
+  const ladder = routerIn(routingOf(three));
+  const branched = gatewayBindingChild(three, 'fast', ladder, 'branch', {
+    kind: 'router',
+    policy: { mode: 'failover' },
+    children: [],
+  });
+  const grown = gatewayBindingChild(branched, 'fast', 'branch', 'leaf', spare);
+  const rebound = routingOf(gatewayRebindingNode(grown, 'fast', 'branch', elsewhere));
+
+  expect(rebound.nodes['branch']).toEqual(elsewhere);
+  expect(rebound.nodes['leaf']).toBeUndefined();
+  expect(childrenOf(rebound, ladder)).toContain('branch');
+  expect(routingSchema.safeParse(rebound).success).toBe(true);
+});
+
+test('rebinding a route node the table never held leaves the whole gateway as it stood', () => {
+  const three = ladderOfThree();
+
+  expect(gatewayRebindingNode(three, 'fast', 'never-minted', elsewhere)).toEqual(three);
+});
+
 test('reordering a ladder moves one child to its new rank and leaves the rest in order', () => {
   const three = ladderOfThree();
   const ladder = routerIn(routingOf(three));
@@ -155,6 +204,35 @@ test('an edit naming a route node the table never held leaves the whole gateway 
   expect(gatewayBindingChild(routed, 'fast', 'never-minted', 'second', spare)).toEqual(routed);
   expect(gatewayReordering(routed, 'fast', 'never-minted', 0, 0)).toEqual(routed);
   expect(gatewaySwitching(routed, 'fast', 'never-minted', 'round-robin')).toEqual(routed);
+});
+
+test('naming a router writes the name a person gave it and leaves its ladder standing', () => {
+  const three = ladderOfThree();
+  const ladder = routerIn(routingOf(three));
+  const named = routingOf(gatewayNamingRouter(three, 'fast', ladder, 'Ladder'));
+
+  expect(named.nodes[ladder]).toMatchObject({ displayName: 'Ladder' });
+  expect(childrenOf(named, ladder)).toEqual(childrenOf(routingOf(three), ladder));
+});
+
+test('clearing a router name stands it back under the mode it spreads requests by', () => {
+  const three = ladderOfThree();
+  const ladder = routerIn(routingOf(three));
+  const named = gatewayNamingRouter(three, 'fast', ladder, 'Ladder');
+  const bare = routingOf(gatewayNamingRouter(named, 'fast', ladder, undefined));
+
+  expect(bare.nodes[ladder]).toEqual({
+    kind: 'router',
+    policy: { mode: 'failover' },
+    children: childrenOf(routingOf(three), ladder),
+  });
+  expect(routingSchema.safeParse(bare).success).toBe(true);
+});
+
+test('naming a route node that routes nothing leaves the whole gateway as it stood', () => {
+  const three = ladderOfThree();
+
+  expect(gatewayNamingRouter(three, 'fast', 'second', 'Ladder')).toEqual(three);
 });
 
 test('switching a router to another mode leaves the children standing under it', () => {

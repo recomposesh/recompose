@@ -44,7 +44,7 @@ const meta = preview.meta({
 export const GatewaySubject = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Endpoint', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('fast → work · claude-haiku-4-5')).toBeVisible();
+    await expect(await canvas.findByText('work · claude-haiku-4-5')).toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'Add virtual model' })).toBeNull();
   },
 });

@@ -1,10 +1,15 @@
 import type { GatewayConfig } from '@recompose/contracts';
 
 import { expect, test, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 
 import { gatewaySeed } from '../../../../shared/testing';
 import { renderDrawer } from '../../testing/gateway-drawer.testkit';
-import { oneProviderPool, twoKeysOneProvider } from '../../testing/routed-gateways.testkit';
+import {
+  nestedGateway,
+  oneProviderPool,
+  twoKeysOneProvider,
+} from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -99,6 +104,37 @@ test('each move control names the child it carries, so two of one provider never
 
   await expect.element(screen.getByRole('button', { name: 'Move work down' })).toBeVisible();
   await expect.element(screen.getByRole('button', { name: 'Move spare up' })).toBeVisible();
+});
+
+test('the router subject offers the drawer link into removal that every other subject has', async () => {
+  const asked: string[] = [];
+  const screen = await renderDrawer(onTheRouter, {
+    gateway: pooledGateway('failover'),
+    onAskRemoval: (nodeId) => {
+      asked.push(nodeId);
+    },
+  });
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+
+  expect(asked).toEqual(['route:pooled']);
+});
+
+test('the drawer link on a nested router names that router rather than the one above it', async () => {
+  const asked: string[] = [];
+  const screen = await renderDrawer(
+    { kind: 'router', modelId: 'pooled', routeNodeId: 'r2' },
+    {
+      gateway: nestedGateway,
+      onAskRemoval: (nodeId) => {
+        asked.push(nodeId);
+      },
+    },
+  );
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+
+  expect(asked).toEqual(['route:pooled:r2']);
 });
 
 test('a router holding no child says so rather than standing an empty ladder', async () => {

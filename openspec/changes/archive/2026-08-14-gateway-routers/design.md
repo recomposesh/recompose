@@ -516,7 +516,9 @@ When the walk exhausts a router, the refusal enumerates every child the walk att
 
 ### 10. A router names itself from its mode unless a person renames it
 
-The stored router arm carries an optional `displayName`. When absent, every surface derives the name from the mode. The card's name line reads "Failover" or "Round-robin," and refusal copy says "the failover router," always beside the virtual model's name. The inspector header offers rename, writing the optional field. This closes gate-2 question 6.
+The stored router arm carries an optional `displayName`. When absent, every surface derives the name from the mode. The card's name line reads "Failover" or "Round-robin," and refusal copy says "the failover router," always beside the virtual model's name. The router inspector offers rename, writing the optional field. This closes gate-2 question 6.
+
+**Where the rename control stands (rider #217).** The rename lives in a General Info box at the top of the router inspector, not in the subject header. It sits behind the same Edit affordance the virtual model's name and id already use. The header is one shared strip across every subject and carries no control on any of them, so a control there would serve the router alone. An empty field takes the name back and the mode speaks again. A sentence under the box says so, because a placeholder paints below the contrast a reader can rely on, and it leaves the moment a person types.
 
 The mono subtitle then follows the name rather than repeating it, which refines proposal decision 17 for the derived case the proposal didn't reach. A named router keeps the mode on the mono line, so the card reads "Ladder" over "failover." A router wearing its derived name would otherwise read "Failover" over "failover." Its mono line carries the child count instead, reading "2 targets," or "no child" while the router stands empty. Either way the card spends its two lines on two facts.
 
