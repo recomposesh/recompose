@@ -144,10 +144,17 @@ function settled(ink: Head | null, next: Head) {
 }
 
 function litBySpot(mark: HTMLElement, box: DOMRect, ink: Head) {
-  const left = ink.x - box.left - SPOT_RADIUS;
-  const top = ink.y - box.top - SPOT_RADIUS;
+  const left = `${ink.x - box.left - SPOT_RADIUS}px`;
+  const top = `${ink.y - box.top - SPOT_RADIUS}px`;
 
-  mark.style.backgroundPosition = `${left}px ${top}px, 0 0`;
+  if (mark.dataset['spot'] === 'mask') {
+    mark.style.maskPosition = `${left} ${top}`;
+
+    return;
+  }
+
+  mark.style.setProperty('--spot-x', left);
+  mark.style.setProperty('--spot-y', top);
 }
 
 function trackSpot(canvas: HTMLCanvasElement) {
