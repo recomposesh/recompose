@@ -21,6 +21,75 @@ function valueAfter(argv: readonly string[], flag: string): string | null {
   return at === -1 ? null : (argv[at + 1] ?? null);
 }
 
+type Scan = { held: string[]; word: string; started: boolean; quoted: boolean };
+
+const NOTHING_READ: Scan = { held: [], word: '', started: false, quoted: false };
+
+function carrying(scan: Scan, character: string): Scan {
+  return { ...scan, word: scan.word + character, started: true };
+}
+
+function ending(scan: Scan): Scan {
+  return scan.started
+    ? { ...scan, held: [...scan.held, scan.word], word: '', started: false }
+    : scan;
+}
+
+type Step = { character: string; literal: boolean; span: number };
+
+function nextStep(line: string, at: number): Step {
+  const character = line.charAt(at);
+  const escapes = character === '\\' && at + 1 < line.length;
+
+  return escapes
+    ? { character: line.charAt(at + 1), literal: true, span: 2 }
+    : { character, literal: false, span: 1 };
+}
+
+function afterOne(scan: Scan, character: string, literal: boolean): Scan {
+  if (literal) {
+    return carrying(scan, character);
+  }
+
+  if (character === '"') {
+    return { ...scan, quoted: !scan.quoted, started: true };
+  }
+
+  return !scan.quoted && /\s/u.test(character) ? ending(scan) : carrying(scan, character);
+}
+
+/**
+ * One command line, taken apart the way the real tool's interactive reader takes it apart.
+ *
+ * @summary A credential reaches the real `security` on its standard input rather than in the
+ * argument vector, so this shim has to read the same line. Inside double quotes a backslash escapes
+ * the character after it, which is what lets a JSON blob carry its own quotes.
+ */
+function wordsIn(line: string): string[] {
+  let scan = NOTHING_READ;
+
+  for (let at = 0; at < line.length;) {
+    const step = nextStep(line, at);
+
+    scan = afterOne(scan, step.character, step.literal);
+    at += step.span;
+  }
+
+  return ending(scan).held;
+}
+
+async function commandOnStandardInput(): Promise<string> {
+  const chunks: string[] = [];
+
+  process.stdin.setEncoding('utf8');
+
+  for await (const chunk of process.stdin) {
+    chunks.push(String(chunk));
+  }
+
+  return chunks.join('').split('\n')[0] ?? '';
+}
+
 function readRequest(argv: readonly string[]): Request {
   return {
     operation: argv[0] ?? '',
@@ -137,5 +206,8 @@ if (store === undefined || store === '') {
   process.stderr.write('the fake security needs RECOMPOSE_FAKE_KEYCHAIN_DIR\n');
   process.exitCode = UNKNOWN_REQUEST;
 } else {
-  process.exitCode = await answer(store, readRequest(process.argv.slice(2)));
+  const argv = process.argv.slice(2);
+  const asked = argv[0] === '-i' ? wordsIn(await commandOnStandardInput()) : argv;
+
+  process.exitCode = await answer(store, readRequest(asked));
 }

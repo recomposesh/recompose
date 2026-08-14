@@ -1,6 +1,26 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { commandLineFor, safeForTheCommandProcessor } from './run-command';
+import { commandLineFor, runCommand, safeForTheCommandProcessor } from './run-command';
+
+/** Reads its whole standard input and prints it back, on every platform this app ships to. */
+const ECHOES_ITS_INPUT = [
+  '-e',
+  'let held = ""; process.stdin.on("data", (d) => { held += d; }); process.stdin.on("end", () => process.stdout.write(held));',
+];
+
+const A_BOUND = 30_000;
+
+describe('handing a command something on its standard input', () => {
+  test('what the caller hands over is what the tool reads', async () => {
+    await expect(
+      runCommand(process.execPath, ECHOES_ITS_INPUT, A_BOUND, 'a-line the tool must read\n'),
+    ).resolves.toBe('a-line the tool must read\n');
+  });
+
+  test('a tool handed nothing reads nothing, because its input still closes', async () => {
+    await expect(runCommand(process.execPath, ECHOES_ITS_INPUT, A_BOUND, '')).resolves.toBe('');
+  });
+});
 
 describe('how a tool on this machine is actually run', () => {
   test('given a plain executable, it runs directly with the arguments as they stand', () => {

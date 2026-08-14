@@ -1,5 +1,6 @@
 import { KeychainDenied, type KeychainItem, type KeychainSeam } from './credential-custody';
 import { runCommand, WAITS_FOR_THE_PERSON } from './run-command';
+import { securityWriteLine } from './security-line';
 
 const NOT_FOUND = 44;
 const USER_CANCELED = 128;
@@ -30,11 +31,24 @@ function refuse(cause: unknown, operation: string): never {
   throw new Error(`the keychain refused ${operation}, exit ${status ?? 'unknown'}`);
 }
 
-export function securityKeychain(command: string): KeychainSeam {
+export type RunCommand = (
+  command: string,
+  args: readonly string[],
+  boundMs: number,
+  input?: string,
+) => Promise<string>;
+
+/**
+ * The keychain as the tool on this machine answers it.
+ *
+ * @summary The runner is a seam so a spec can read what the argument vector carried, which is the
+ * one thing a write here must never carry.
+ */
+export function securityKeychain(command: string, run: RunCommand = runCommand): KeychainSeam {
   return {
     read: async (item: KeychainItem) => {
       try {
-        const found = await runCommand(
+        const found = await run(
           command,
           ['find-generic-password', '-s', item.service, '-a', item.account, '-w'],
           WAITS_FOR_THE_PERSON,
@@ -52,11 +66,7 @@ export function securityKeychain(command: string): KeychainSeam {
 
     write: async (item: KeychainItem, blob: string) => {
       try {
-        await runCommand(
-          command,
-          ['add-generic-password', '-U', '-s', item.service, '-a', item.account, '-w', blob],
-          WAITS_FOR_THE_PERSON,
-        );
+        await run(command, ['-i'], WAITS_FOR_THE_PERSON, securityWriteLine(item, blob));
       } catch (cause) {
         refuse(cause, 'add-generic-password');
       }
@@ -64,7 +74,7 @@ export function securityKeychain(command: string): KeychainSeam {
 
     remove: async (item: KeychainItem) => {
       try {
-        await runCommand(
+        await run(
           command,
           ['delete-generic-password', '-s', item.service, '-a', item.account],
           WAITS_FOR_THE_PERSON,

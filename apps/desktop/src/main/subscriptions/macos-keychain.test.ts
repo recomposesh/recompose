@@ -3,6 +3,9 @@ import { describe, expect, test } from 'vitest';
 import { securityKeychain } from './macos-keychain';
 
 const A_SECRET = 'sk-ant-oat01-a-blob-that-must-never-leave-the-keychain';
+
+/** A path nothing answers, which is how these scenarios make the tool fail on any platform. */
+const NO_SUCH_TOOL = '/nonexistent/recompose-security';
 const item = { service: 'recompose-parked-credentials', account: 'acc-one' };
 
 async function refusalFrom(work: Promise<unknown>): Promise<Error> {
@@ -17,7 +20,7 @@ async function refusalFrom(work: Promise<unknown>): Promise<Error> {
 
 describe('the security keychain seam', () => {
   test('given the security tool fails, when a credential is written, the refusal never carries the blob', async () => {
-    const keychain = securityKeychain(process.execPath);
+    const keychain = securityKeychain(NO_SUCH_TOOL);
 
     const refusal = await refusalFrom(keychain.write(item, A_SECRET));
 
@@ -25,7 +28,7 @@ describe('the security keychain seam', () => {
   });
 
   test('given the security tool fails, when a credential is written, the refusal names the operation', async () => {
-    const keychain = securityKeychain(process.execPath);
+    const keychain = securityKeychain(NO_SUCH_TOOL);
 
     const refusal = await refusalFrom(keychain.write(item, A_SECRET));
 
