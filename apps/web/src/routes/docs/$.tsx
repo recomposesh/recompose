@@ -4,7 +4,6 @@ import { Suspense } from 'react';
 
 import { DocsBrand } from '../../components/docs-brand';
 import { DocsContent } from '../../components/docs-content';
-import { gitHubUrl } from '../../lib/layout.shared';
 import { docs, source } from '../../lib/source';
 
 export const Route = createFileRoute('/docs/$')({
@@ -25,11 +24,7 @@ function Page() {
   const { path } = Route.useLoaderData();
 
   return (
-    <GlassLayout
-      nav={{ title: DocsBrand, url: '/' }}
-      githubUrl={gitHubUrl}
-      tree={source.getPageTree()}
-    >
+    <GlassLayout nav={{ title: DocsBrand, url: '/' }} tree={source.getPageTree()}>
       <Suspense>
         <DocsContent path={path} />
       </Suspense>

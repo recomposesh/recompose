@@ -3,12 +3,13 @@ import { Link } from '@tanstack/react-router';
 import { gitHubUrl } from '../lib/layout.shared';
 import { releasesUrl } from '../lib/shared';
 import { NoteLabel } from './note-label';
+import { Wordmark } from './wordmark';
 
 export function SiteNav() {
   return (
     <nav className="site-nav">
       <Link className="site-brand" to="/" aria-label="recompose">
-        <img src="/recompose-wordmark.svg" alt="" width={264} height={48} />
+        <Wordmark />
       </Link>
 
       <div className="site-links">
