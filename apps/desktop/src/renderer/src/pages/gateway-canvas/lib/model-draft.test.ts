@@ -1,4 +1,4 @@
-import type { GatewayConfig, Target, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, RouteTarget, Routing, VirtualModel } from '@recompose/contracts';
 
 import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
@@ -18,10 +18,18 @@ import {
   servesPreview,
 } from './model-draft';
 
+function boundThrough(seat: string, target: RouteTarget): Routing {
+  return { entry: seat, nodes: { [seat]: target } };
+}
+
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'fast',
-  target: { accountId: 'a1', providerModel: 'claude-sonnet-5' },
+  routing: boundThrough('seat-fast', {
+    kind: 'target',
+    accountId: 'a1',
+    providerModel: 'claude-sonnet-5',
+  }),
 };
 
 const codex: GatewayConfig = {
@@ -36,10 +44,18 @@ const codex: GatewayConfig = {
 const slow: VirtualModel = {
   id: 'slow',
   displayName: 'slow',
-  target: { accountId: 'a1', providerModel: 'claude-opus-5' },
+  routing: boundThrough('seat-slow', {
+    kind: 'target',
+    accountId: 'a1',
+    providerModel: 'claude-opus-5',
+  }),
 };
 
-const onWork: Target = { accountId: 'a2', providerModel: 'claude-haiku-4-5' };
+const onWork: RouteTarget = {
+  kind: 'target',
+  accountId: 'a2',
+  providerModel: 'claude-haiku-4-5',
+};
 
 const noneHeld: readonly VirtualModel[] = [];
 
@@ -110,13 +126,19 @@ test('a settled draft reaches storage as the gateway carrying the id a person sa
     providerModel: 'claude-sonnet-5',
   });
 
+  const entry = String(defining.virtualModels[0]?.routing.entry);
+
   expect(defining).toEqual({
     ...codex,
     virtualModels: [
       {
         id: 'claude-5.6-sol',
         displayName: 'Claude 5.6 Sol',
-        target: { accountId: 'a1', providerModel: 'claude-sonnet-5' },
+        routing: boundThrough(entry, {
+          kind: 'target',
+          accountId: 'a1',
+          providerModel: 'claude-sonnet-5',
+        }),
       },
     ],
   });
@@ -134,13 +156,16 @@ test('a definition joins the ones the gateway already holds rather than replacin
 test('a rebound virtual model reaches the new target and nothing of the old one is left', () => {
   const rebound = gatewayRebinding({ ...codex, virtualModels: [fast] }, 'fast', onWork);
 
-  expect(rebound.virtualModels).toEqual([{ ...fast, target: onWork }]);
+  expect(rebound.virtualModels).toEqual([{ ...fast, routing: boundThrough('seat-fast', onWork) }]);
 });
 
 test('rebinding one virtual model leaves every other definition standing as it was', () => {
   const rebound = gatewayRebinding({ ...codex, virtualModels: [fast, slow] }, 'fast', onWork);
 
-  expect(rebound.virtualModels).toEqual([{ ...fast, target: onWork }, slow]);
+  expect(rebound.virtualModels).toEqual([
+    { ...fast, routing: boundThrough('seat-fast', onWork) },
+    slow,
+  ]);
 });
 
 test('rebinding a virtual model this gateway never served rewrites nothing', () => {

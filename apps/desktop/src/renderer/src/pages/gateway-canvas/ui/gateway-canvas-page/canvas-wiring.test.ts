@@ -1,3 +1,4 @@
+import type { Routing } from '@recompose/contracts';
 import type { Connection, NodeChange } from '@xyflow/react';
 
 import { describe, expect, test } from 'vitest';
@@ -67,6 +68,10 @@ describe('the controlled flow applies position changes only', () => {
   });
 });
 
+function boundThrough(seat: string, accountId: string, providerModel: string): Routing {
+  return { entry: seat, nodes: { [seat]: { kind: 'target', accountId, providerModel } } };
+}
+
 const gateway = gatewaySeed({
   slug: 'my-gateway',
   displayName: 'My Gateway',
@@ -75,17 +80,17 @@ const gateway = gatewaySeed({
     {
       id: 'fast',
       displayName: 'Fast',
-      target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+      routing: boundThrough('seat-fast', 'k1', 'claude-haiku-4-5'),
     },
     {
       id: 'creative',
       displayName: 'Creative',
-      target: { accountId: 'g1', providerModel: 'openai/gpt-5' },
+      routing: boundThrough('seat-creative', 'g1', 'openai/gpt-5'),
     },
     {
       id: 'slow',
       displayName: 'Slow',
-      target: { accountId: 'gone', providerModel: 'claude-opus-5' },
+      routing: boundThrough('seat-slow', 'gone', 'claude-opus-5'),
     },
   ],
 });

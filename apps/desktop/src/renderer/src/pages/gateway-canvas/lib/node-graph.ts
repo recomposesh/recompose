@@ -3,9 +3,12 @@ import type {
   GatewayConfig,
   GatewayTraffic,
   RequestOutcome,
+  RouteTarget,
   SubscriptionAccountView,
   VirtualModel,
 } from '@recompose/contracts';
+
+import { targetTheEntryNames } from '@recompose/contracts';
 
 import type { XY } from './canvas-positions';
 
@@ -75,16 +78,22 @@ function modelNodeId(modelId: string): string {
   return `model:${modelId}`;
 }
 
+function ghostNode(modelId: string, bound: RouteTarget | undefined): CanvasNode {
+  const accountId = bound?.accountId ?? '';
+
+  return { id: `ghost:${modelId}`, kind: 'ghost-target', accountId, modelId };
+}
+
 function targetNode(
   model: VirtualModel,
+  bound: RouteTarget | undefined,
   accounts: readonly Account[],
   subscriptions: readonly SubscriptionAccountView[],
 ): CanvasNode {
-  const { accountId } = model.target;
-  const account = accounts.find((held) => held.id === accountId);
+  const account = accounts.find((held) => held.id === bound?.accountId);
 
   if (account === undefined) {
-    return { id: `ghost:${model.id}`, kind: 'ghost-target', accountId, modelId: model.id };
+    return ghostNode(model.id, bound);
   }
 
   const signedInAs =
@@ -186,7 +195,8 @@ function servedGraph(
   const edges: CanvasEdge[] = [];
 
   for (const model of gateway.virtualModels) {
-    const target = targetNode(model, accounts, subscriptions);
+    const bound = targetTheEntryNames(model.routing);
+    const target = targetNode(model, bound, accounts, subscriptions);
     const flowed = target.kind === 'target' ? carried[model.id] : undefined;
 
     nodes.push({
@@ -194,7 +204,7 @@ function servedGraph(
       kind: 'virtual-model',
       modelId: model.id,
       displayName: model.displayName,
-      providerModel: model.target.providerModel,
+      providerModel: bound?.providerModel ?? '',
     });
 
     nodes.push(target);

@@ -1,5 +1,7 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
 
+import { targetTheEntryNames } from '@recompose/contracts';
+
 import type { XY } from '../../lib/canvas-positions';
 import type { SettledDefinition } from '../../lib/model-draft';
 import type { CanvasWorld } from './canvas-standings';
@@ -145,12 +147,13 @@ export function completedRebindPick(
     return;
   }
 
-  const wasBroken = world.accounts.every((held) => held.id !== model.target.accountId);
+  const bound = targetTheEntryNames(model.routing);
+  const wasBroken = world.accounts.every((held) => held.id !== bound?.accountId);
 
   committedPick(
     world,
     `target:${modelId}`,
-    gatewayRebinding(world.gateway, modelId, { accountId, providerModel }),
+    gatewayRebinding(world.gateway, modelId, { kind: 'target', accountId, providerModel }),
     () => {
       world.standings.announce({
         kind: wasBroken ? 'repaired' : 'rebound',

@@ -15,7 +15,10 @@ const workKey: Account = {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+  routing: {
+    entry: 'seat',
+    nodes: { seat: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' } },
+  },
 };
 
 test('a definition whose target account still stands reads as serving it', () => {

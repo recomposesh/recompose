@@ -68,7 +68,11 @@ const everyRefHoldsTheSecret: Readonly<Record<string, string>> = {
 };
 
 export function pointingAt(accountId: string, providerModel = 'claude-sonnet-5'): VirtualModel {
-  return { id: 'fast', displayName: 'fast', target: { accountId, providerModel } };
+  return {
+    id: 'fast',
+    displayName: 'fast',
+    routing: { entry: 'seat', nodes: { seat: { kind: 'target', accountId, providerModel } } },
+  };
 }
 
 export function gatewayHolding(models: readonly VirtualModel[]): GatewayConfig {
