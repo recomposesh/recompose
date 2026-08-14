@@ -48,17 +48,30 @@ type SegmentedControlProps<Value extends string> = {
   onChangeValue: (value: Value) => void;
   /** Marks a choice whose machinery is missing, keeping it reachable but unmovable. */
   inert?: boolean;
+  /**
+   * Whether the strip hugs its labels or fills the row it stands in.
+   *
+   * @summary Reach for `row` in a panel column, where a strip narrower than the field boxes above
+   * it reads as a stray control rather than as the choice the panel is about. The segments then
+   * split the row evenly, so neither choice looks like the bigger one.
+   */
+  spread?: 'hug' | 'row';
 };
 
 function inertDescriptionId(segmentId: string, option: AnyOption): string | undefined {
   return option.inertReason === undefined ? undefined : `${segmentId}-${option.value}-inert`;
 }
 
-function segmentClass(option: AnyOption): string {
+const spreads = {
+  hug: { strip: 'inline-flex', segment: '' },
+  row: { strip: 'flex w-full', segment: 'min-w-0 flex-1 justify-center' },
+} as const;
+
+function segmentClass(option: AnyOption, spread: keyof typeof spreads): string {
   const ink = option.tone === undefined ? 'text-ink' : optionInks[option.tone];
   const held = option.inertReason === undefined ? '' : 'text-ink-secondary opacity-60';
 
-  return `flex h-chip items-center rounded-chip focus-ring px-2 text-detail data-checked:chip-selected ${ink} ${held}`;
+  return `flex h-chip items-center rounded-chip focus-ring px-2 text-detail data-checked:chip-selected ${spreads[spread].segment} ${ink} ${held}`;
 }
 
 function segmentMark(option: AnyOption) {
@@ -97,6 +110,7 @@ export function SegmentedControl<Value extends string>({
   options,
   onChangeValue,
   inert = false,
+  spread = 'hug',
 }: SegmentedControlProps<Value>) {
   const segmentId = useId();
 
@@ -104,7 +118,7 @@ export function SegmentedControl<Value extends string>({
     <RadioGroup
       aria-disabled={inert || undefined}
       aria-label={label}
-      className="inline-flex h-segment items-center gap-hairline rounded-control bg-surface-track p-hairline aria-disabled:bg-surface-inert"
+      className={`${spreads[spread].strip} h-segment items-center gap-hairline rounded-control bg-surface-track p-hairline aria-disabled:bg-surface-inert`}
       onValueChange={(next) => {
         if (
           inert ||
@@ -122,7 +136,7 @@ export function SegmentedControl<Value extends string>({
           aria-describedby={inertDescriptionId(segmentId, option)}
           aria-disabled={option.inertReason === undefined ? undefined : true}
           aria-labelledby={`${segmentId}-${option.value}`}
-          className={segmentClass(option)}
+          className={segmentClass(option, spread)}
           key={option.value}
           value={option.value}
         >

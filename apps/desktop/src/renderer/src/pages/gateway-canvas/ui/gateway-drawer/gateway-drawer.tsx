@@ -6,6 +6,7 @@ import {
   type Account,
   type GatewayConfig,
   type SubscriptionAccountView,
+  type VirtualModel,
 } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
@@ -24,16 +25,31 @@ import { subscribeToPanelWidths } from '../../../../shared/lib';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { servedModels } from '../../model/served-models';
 import { DraftInspector } from '../draft-inspector/draft-inspector';
-import { gatewayBody, ghostBody, modelBody, targetBody } from '../subject-bodies/subject-bodies';
+import {
+  gatewayBody,
+  ghostBody,
+  modelBody,
+  routerBody,
+  targetBody,
+} from '../subject-bodies/subject-bodies';
 import { glyph, subjectHead } from '../subject-shell/subject-shell';
+
+/**
+ * Where in a virtual model's routing a selected card or cable seats.
+ *
+ * @summary The entry carries no id of its own in a card's name, because every card a gateway stood
+ * before routers existed keeps the name it stood under, so nothing here reads as the entry.
+ */
+type SeatedInRouting = { modelId: string; routeNodeId?: string | undefined };
 
 /** What stands selected on the canvas, which is the one thing the inspector speaks for. */
 export type InspectorSubject =
   | { kind: 'gateway' }
   | { kind: 'virtual-model'; modelId: string }
-  | { kind: 'cable'; modelId: string }
-  | { kind: 'target'; accountId: string; modelId: string }
-  | { kind: 'ghost-target'; accountId: string; modelId: string }
+  | ({ kind: 'cable' } & SeatedInRouting)
+  | ({ kind: 'router' } & SeatedInRouting)
+  | ({ kind: 'target'; accountId: string } & SeatedInRouting)
+  | ({ kind: 'ghost-target'; accountId: string } & SeatedInRouting)
   | { kind: 'draft' };
 
 type GatewayDrawerProps = {
@@ -62,11 +78,15 @@ type DrawerWorld = {
   onModelRenamed: (modelId: string) => void;
 };
 
+function modelHeldBy(world: DrawerWorld, modelId: string): VirtualModel | undefined {
+  return world.gateway.virtualModels.find((held) => held.id === modelId);
+}
+
 function bindingSubjectBody(
   world: DrawerWorld,
   subject: Extract<InspectorSubject, { modelId: string }>,
 ): ReactNode | undefined {
-  const model = world.gateway.virtualModels.find((held) => held.id === subject.modelId);
+  const model = modelHeldBy(world, subject.modelId);
 
   if (model === undefined) {
     return undefined;
@@ -105,16 +125,42 @@ function accountSubjectBody(
       });
 }
 
-function cardSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
+function routerSubjectBody(
+  world: DrawerWorld,
+  subject: Extract<InspectorSubject, { kind: 'router' }>,
+): ReactNode | undefined {
+  const model = modelHeldBy(world, subject.modelId);
+
+  if (model === undefined) {
+    return undefined;
+  }
+
+  const seat = subject.routeNodeId ?? model.routing.entry;
+  const node = model.routing.nodes[seat];
+
+  return node?.kind === 'router'
+    ? routerBody(world.gateway, model, seat, node, world.accounts)
+    : undefined;
+}
+
+function routedSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
   if (subject.kind === 'virtual-model' || subject.kind === 'cable') {
     return bindingSubjectBody(world, subject);
   }
 
+  return subject.kind === 'router' ? routerSubjectBody(world, subject) : undefined;
+}
+
+function boundSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
   if (subject.kind === 'target') {
     return accountSubjectBody(world, subject.accountId, subject.modelId);
   }
 
   return subject.kind === 'ghost-target' ? ghostBody(subject.accountId) : undefined;
+}
+
+function cardSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
+  return routedSubjectBody(subject, world) ?? boundSubjectBody(subject, world);
 }
 
 function draftBody(world: DrawerWorld): ReactNode {

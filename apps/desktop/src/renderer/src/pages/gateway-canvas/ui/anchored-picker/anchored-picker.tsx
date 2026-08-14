@@ -25,6 +25,7 @@ export function AnchoredPicker({
   stage,
   groups,
   refusal,
+  onPickKind,
   onPickAccount,
   onPickProviderModel,
   onSelectDifferentProvider,
@@ -42,6 +43,7 @@ export function AnchoredPicker({
         groups={groups}
         onDismiss={onDismiss}
         onPickAccount={onPickAccount}
+        onPickKind={onPickKind}
         onPickProviderModel={onPickProviderModel}
         onSelectDifferentProvider={onSelectDifferentProvider}
         refusal={refusal}

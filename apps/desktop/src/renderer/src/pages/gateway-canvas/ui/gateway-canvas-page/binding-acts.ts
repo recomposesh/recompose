@@ -3,7 +3,7 @@ import type { Account, GatewayConfig } from '@recompose/contracts';
 import { targetTheEntryNames } from '@recompose/contracts';
 
 import type { XY } from '../../lib/canvas-positions';
-import type { SettledDefinition } from '../../lib/model-draft';
+import type { NamedDefinition } from '../../lib/model-draft';
 import type { CanvasWorld } from './canvas-standings';
 
 import { accountName } from '../../../../entities/account';
@@ -21,8 +21,40 @@ import { shownWhereItWasBorn } from './born-card-camera';
 import { modelIdOf, targetModelIdOf } from './canvas-wiring';
 
 /** The name a definition answers to out loud, which is its id until a person names it. */
-export function spokenNameOf(definition: SettledDefinition): string {
+export function spokenNameOf(definition: NamedDefinition): string {
   return definition.displayName === '' ? definition.id : definition.displayName;
+}
+
+/**
+ * Puts a graduated draft away: seats what it became, forgets it, and says what it bound to.
+ *
+ * @summary Every path out of a draft lands here, whether it finished on a target or on a router,
+ * so a draft is never half put away: the card keeps the spot the person placed it at, the overlay
+ * standing goes, the inspector closes, and the live region says what the definition now reaches.
+ * A binding that brings a second card into being seats that one too, in the same write.
+ */
+export function graduatedDraft(
+  world: CanvasWorld,
+  named: NamedDefinition,
+  boundTo: string,
+  alsoSeat?: (draftSeat: XY) => void,
+): void {
+  const draft = heldDraft(world.slug);
+
+  if (draft !== undefined) {
+    setNodePosition(world.slug, `model:${named.id}`, draft.seat);
+    alsoSeat?.(draft.seat);
+    keepCanvasPositions(world.slug);
+  }
+
+  leaveDrafting(world.slug);
+  world.standings.select(undefined);
+  closeInspector();
+  world.standings.announce({
+    kind: 'bound',
+    virtualModel: spokenNameOf(named),
+    target: boundTo,
+  });
 }
 
 /** The name a target account reads as, or its bare id once it left the registry. */
@@ -71,7 +103,14 @@ function seatOfTheBornTarget(world: CanvasWorld, bornTargetId: string): XY | und
   return seatForNewNode(ROUTE_COLUMN, world.seats);
 }
 
-function committedPick(
+/**
+ * Writes one rewritten gateway, seating whatever card the pick brought into being.
+ *
+ * @summary Every completed pick lands here, so a born card is seated, the picker put away, and a
+ * refusal said out loud in one place rather than once per kind of thing a person can bind. A card
+ * that already stands is seated by nobody, because a card a person can see is one they placed.
+ */
+export function committedPick(
   world: CanvasWorld,
   bornTargetId: string,
   rewritten: GatewayConfig,
@@ -106,24 +145,11 @@ export function completedDraftPick(
   accountId: string,
   providerModel: string,
 ): void {
-  const draft = heldDraft(world.slug);
-  const definition = draft?.definition ?? emptyDefinition();
+  const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
   const settled = { ...definition, accountId, providerModel };
 
   committedPick(world, `target:${settled.id}`, gatewayDefining(world.gateway, settled), () => {
-    if (draft !== undefined) {
-      setNodePosition(world.slug, `model:${settled.id}`, draft.seat);
-      keepCanvasPositions(world.slug);
-    }
-
-    leaveDrafting(world.slug);
-    world.standings.select(undefined);
-    closeInspector();
-    world.standings.announce({
-      kind: 'bound',
-      virtualModel: spokenNameOf(settled),
-      target: targetNameIn(world.accounts, accountId),
-    });
+    graduatedDraft(world, settled, targetNameIn(world.accounts, accountId));
   });
 }
 

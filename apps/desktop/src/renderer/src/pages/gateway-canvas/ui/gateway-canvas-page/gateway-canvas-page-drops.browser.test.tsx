@@ -14,6 +14,7 @@ import {
   canvasCommandLine,
   canvasPageOn,
   freshCanvasRun,
+  pickedTheTarget,
   renderCanvasPage,
   standCanvasBridge,
 } from '../../testing/canvas-page.testkit';
@@ -109,6 +110,7 @@ test('dropping a cable from the draft closes its inspector and leaves the picker
 
   await pulledCable(await sourcePortOf(screen.container, 'draft'), targetSpot);
   releasedAt(targetSpot);
+  await pickedTheTarget(screen);
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
   await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
@@ -128,6 +130,7 @@ test('the target a completed pick materializes stands where the cable was let go
 
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
@@ -162,6 +165,7 @@ test('a picker standing over the canvas map takes the press a person aims at it'
 
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
 

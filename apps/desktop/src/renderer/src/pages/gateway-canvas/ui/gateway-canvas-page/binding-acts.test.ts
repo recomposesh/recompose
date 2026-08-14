@@ -11,15 +11,11 @@ const stored: readonly Account[] = [
 
 describe('the name a definition answers to out loud', () => {
   test('a named definition is spoken by its name', () => {
-    expect(
-      spokenNameOf({ displayName: 'Fast', id: 'fast', accountId: 'k1', providerModel: 'haiku' }),
-    ).toBe('Fast');
+    expect(spokenNameOf({ displayName: 'Fast', id: 'fast' })).toBe('Fast');
   });
 
   test('a definition nobody named is spoken by the id clients send it', () => {
-    expect(
-      spokenNameOf({ displayName: '', id: 'steady', accountId: 'k1', providerModel: 'haiku' }),
-    ).toBe('steady');
+    expect(spokenNameOf({ displayName: '', id: 'steady' })).toBe('steady');
   });
 });
 

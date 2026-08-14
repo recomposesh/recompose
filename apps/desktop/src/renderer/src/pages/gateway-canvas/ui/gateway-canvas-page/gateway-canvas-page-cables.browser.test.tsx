@@ -12,7 +12,7 @@ import {
   storedModels,
   targetPortOf,
 } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
 import { accountsWithout } from '../../testing/gateway-canvas.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
@@ -33,6 +33,7 @@ async function draftPulledTo(
   await userEvent.keyboard('{Enter}');
   await pulledCable(await sourcePortOf(screen.container, 'draft'), at);
   releasedAt(at);
+  await pickedTheTarget(screen);
 }
 
 test('a bound virtual model offers no new cable out of its port', async () => {
@@ -168,6 +169,7 @@ test('a completed pick on a pending card writes the binding it stands for', asyn
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
   await pulledCable(await sourcePortOf(screen.container, 'draft'), { x: 620, y: 320 });
   releasedAt({ x: 620, y: 320 });
+  await pickedTheTarget(screen);
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));

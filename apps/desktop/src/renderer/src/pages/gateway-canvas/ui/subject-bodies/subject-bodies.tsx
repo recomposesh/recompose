@@ -10,6 +10,7 @@ import { targetTheEntryNames } from '@recompose/contracts';
 
 import type { IconName } from '../../../../shared/ui';
 import type { ServedModel } from '../../model/served-models';
+import type { StoredRouter } from '../router-inspector/router-inspector';
 
 import { accountKindName, accountMark, accountProductName } from '../../../../entities/account';
 import { BrandMark, CopyButton } from '../../../../shared/ui';
@@ -19,6 +20,8 @@ import { EndpointBox } from '../endpoint-box/endpoint-box';
 import { GatewayAccess } from '../gateway-access/gateway-access';
 import { GatewayGeneralInfo } from '../gateway-general-info/gateway-general-info';
 import { ModelGeneralInfo } from '../model-general-info/model-general-info';
+import { RouterInspector } from '../router-inspector/router-inspector';
+import { routerName } from '../router-node/router-reading';
 import { ServesBox } from '../serves-box/serves-box';
 import { factRow, glyph, sectionHeading, subjectShell } from '../subject-shell/subject-shell';
 
@@ -150,6 +153,31 @@ export function modelBody(
       )}
     </>,
     { label: 'Delete Virtual Model', onPress: onDelete },
+  );
+}
+
+/** The router subject's body: how it spreads its requests, and the children it spreads over. */
+export function routerBody(
+  gateway: GatewayConfig,
+  model: VirtualModel,
+  routeNodeId: string,
+  router: StoredRouter,
+  accounts: readonly Account[],
+): ReactNode {
+  return subjectShell(
+    {
+      lead: glyph('branch'),
+      leadClasses: 'bg-router text-highlight-ink',
+      kicker: 'Router',
+      name: routerName(router.policy.mode, router.displayName),
+    },
+    <RouterInspector
+      accounts={accounts}
+      gateway={gateway}
+      model={model}
+      routeNodeId={routeNodeId}
+      router={router}
+    />,
   );
 }
 

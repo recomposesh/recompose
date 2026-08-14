@@ -4,7 +4,7 @@ import { userEvent } from 'vitest/browser';
 import { canvasPositions } from '../../lib/canvas-position-store';
 import { heldDraft } from '../../lib/use-held-draft';
 import { draftCardOn, storedBindingOf, storedModels } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
 import { listedModels } from '../../testing/gateway-canvas.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
@@ -91,6 +91,7 @@ test('a target born where the view already reaches leaves the view where it stan
 
   screen.getByLabelText('Choose a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),

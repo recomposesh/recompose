@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { draftCardOn, storedBindingOf, storedModels } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -75,6 +75,7 @@ test("a virtual model's ask opens the picker of stored accounts without a drag",
 
   screen.getByLabelText('Choose a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
   await expect
@@ -87,6 +88,12 @@ test('the ask and the picker bind with no pointer at all', async () => {
   const ask = screen.getByLabelText('Choose a target').first();
 
   ask.element().focus();
+  await userEvent.keyboard('{Enter}');
+
+  const kind = screen.getByRole('dialog').getByRole('button', { name: /Target/ });
+
+  await expect.element(kind).toBeVisible();
+  kind.element().focus();
   await userEvent.keyboard('{Enter}');
 
   const work = screen.getByRole('dialog').getByRole('button', { name: 'work' });
@@ -115,6 +122,7 @@ test('a named draft completed through the picker graduates into the composition'
 
   screen.getByLabelText('Choose a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
@@ -129,6 +137,7 @@ test('a completed binding says so in the live region, politely', async () => {
 
   screen.getByLabelText('Choose a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
@@ -147,6 +156,7 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
   screen.getByLabelText('Choose a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
@@ -164,6 +174,7 @@ test('stepping back from the models returns the ask to the account choice', asyn
 
   screen.getByLabelText('Choose a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
 
   await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
@@ -191,6 +202,7 @@ test('a target born past the pane zooms the view out until it shows', async () =
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
   screen.getByLabelText('Choose a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
@@ -207,6 +219,7 @@ test('an account whose models cannot be read says so in the picker instead of no
 
   screen.getByLabelText('Choose a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
+  await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
 
   await expect

@@ -4,17 +4,17 @@ import type { Connection, NodeChange } from '@xyflow/react';
 import { describe, expect, test } from 'vitest';
 
 import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 
 import { gatewaySeed } from '../../../../shared/testing';
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
 import {
+  bindingCableId,
   flowEdgesOf,
   flowNodesOf,
   movedSeats,
-  nodeIdOf,
   oneTargetRule,
-  subjectOf,
+  targetAccountIdIn,
+  targetModelIdOf,
 } from './canvas-wiring';
 
 function pulled(source: string, target: string): Connection {
@@ -92,6 +92,18 @@ const gateway = gatewaySeed({
       displayName: 'Slow',
       routing: boundThrough('seat-slow', 'gone', 'claude-opus-5'),
     },
+    {
+      id: 'pooled',
+      displayName: 'Pooled',
+      routing: {
+        entry: 'r1',
+        nodes: {
+          r1: { kind: 'router', policy: { mode: 'failover' }, children: ['t1', 't2'] },
+          t1: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+          t2: { kind: 'target', accountId: 'gone', providerModel: 'claude-opus-5' },
+        },
+      },
+    },
   ],
 });
 
@@ -134,7 +146,7 @@ describe('what the flow hands each card to stand on', () => {
     ],
     edges: [],
   };
-  const asks = { onAddVirtualModel: () => {}, onPickTargetFor: () => {} };
+  const asks = { onAddVirtualModel: () => {}, onBindFrom: () => {} };
 
   test('a card seats where the arrangement puts it', () => {
     const seated = flowNodesOf(graph, { 'model:fast': { x: 320, y: 140 } }, undefined, asks);
@@ -234,61 +246,23 @@ describe('what a failed cable hands the flow to stand on the path', () => {
   });
 });
 
-describe('the selection subject the inspector reads', () => {
-  test('nothing selected reads as the gateway', () => {
-    expect(subjectOf(gateway, undefined)).toEqual({ kind: 'gateway' });
+describe('what a route node card and cable name', () => {
+  test('the model a child card belongs to reads without its route node riding along', () => {
+    expect(targetModelIdOf('target:pooled:t1')).toBe('pooled');
+    expect(targetModelIdOf('ghost:pooled:t2')).toBe('pooled');
+    expect(targetModelIdOf('target:fast')).toBe('fast');
+    expect(targetModelIdOf('route:pooled:t1')).toBeUndefined();
   });
 
-  test('every card and cable names its subject', () => {
-    expect(subjectOf(gateway, 'gateway')).toEqual({ kind: 'gateway' });
-    expect(subjectOf(gateway, 'model:fast')).toEqual({ kind: 'virtual-model', modelId: 'fast' });
-    expect(subjectOf(gateway, 'cable:fast')).toEqual({ kind: 'cable', modelId: 'fast' });
-    expect(subjectOf(gateway, 'target:fast')).toEqual({
-      kind: 'target',
-      accountId: 'k1',
-      modelId: 'fast',
-    });
-    expect(subjectOf(gateway, 'ghost:slow')).toEqual({
-      kind: 'ghost-target',
-      accountId: 'gone',
-      modelId: 'slow',
-    });
-    expect(subjectOf(gateway, 'draft')).toEqual({ kind: 'draft' });
+  test('a cable below the entry still names the definition it serves', () => {
+    expect(bindingCableId('cable:pooled:t1')).toBe('pooled');
+    expect(bindingCableId('cable:fast')).toBe('fast');
+    expect(bindingCableId('wire:model:fast')).toBeUndefined();
   });
 
-  test('a selection with no body of its own falls back to the gateway', () => {
-    expect(subjectOf(gateway, 'pending')).toEqual({ kind: 'gateway' });
-    expect(subjectOf(gateway, 'target:gone-model')).toEqual({ kind: 'gateway' });
-  });
-});
-
-describe('the card a subject stands for', () => {
-  test('the gateway stands for no card, because it is what the whole screen is about', () => {
-    expect(nodeIdOf({ kind: 'gateway' })).toBeUndefined();
-  });
-
-  test('every subject with a card of its own names it', () => {
-    const named: readonly [InspectorSubject, string][] = [
-      [{ kind: 'virtual-model', modelId: 'fast' }, 'model:fast'],
-      [{ kind: 'cable', modelId: 'fast' }, 'cable:fast'],
-      [{ kind: 'target', accountId: 'k1', modelId: 'fast' }, 'target:fast'],
-      [{ kind: 'ghost-target', accountId: 'gone', modelId: 'slow' }, 'ghost:slow'],
-      [{ kind: 'draft' }, 'draft'],
-    ];
-
-    expect(named.map(([subject]) => nodeIdOf(subject))).toEqual(named.map(([, id]) => id));
-  });
-
-  test('naming a subject and reading it back lands on the very same subject', () => {
-    const every: readonly InspectorSubject[] = [
-      { kind: 'gateway' },
-      { kind: 'virtual-model', modelId: 'fast' },
-      { kind: 'cable', modelId: 'fast' },
-      { kind: 'target', accountId: 'k1', modelId: 'fast' },
-      { kind: 'ghost-target', accountId: 'gone', modelId: 'slow' },
-      { kind: 'draft' },
-    ];
-
-    expect(every.map((subject) => subjectOf(gateway, nodeIdOf(subject)))).toEqual(every);
+  test('the account a child target holds is the one its own route node names', () => {
+    expect(targetAccountIdIn(gateway, 'target:pooled:t1')).toBe('k1');
+    expect(targetAccountIdIn(gateway, 'ghost:pooled:t2')).toBe('gone');
+    expect(targetAccountIdIn(gateway, 'target:pooled')).toBeUndefined();
   });
 });

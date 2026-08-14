@@ -22,7 +22,7 @@ const seats = tidyPositions(graph.nodes);
 const restingFlow: CanvasFlowWiring = {
   nodes: flowNodesOf(graph, seats, undefined, {
     onAddVirtualModel: () => {},
-    onPickTargetFor: () => {},
+    onBindFrom: () => {},
   }),
   edges: flowEdgesOf(graph.edges, undefined),
   onNodesChange: () => {},

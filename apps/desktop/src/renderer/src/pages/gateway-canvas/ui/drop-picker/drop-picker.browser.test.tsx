@@ -28,6 +28,9 @@ async function renderPicker(stage: PickerStage, groups: readonly OptionGroup[]) 
       onPickAccount={(accountId) => {
         heard.push(`account ${accountId}`);
       }}
+      onPickKind={(kind) => {
+        heard.push(`kind ${kind}`);
+      }}
       onPickProviderModel={(providerModel) => {
         heard.push(`provider model ${providerModel}`);
       }}
@@ -40,6 +43,38 @@ async function renderPicker(stage: PickerStage, groups: readonly OptionGroup[]) 
 
   return { heard, screen };
 }
+
+test('the ask offers a router or a target before anything else', async () => {
+  const { screen } = await renderPicker({ step: 'kind' }, []);
+
+  await expect.element(screen.getByRole('button', { name: /Router/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Target/ })).toBeVisible();
+  await expect.element(screen.getByRole('searchbox')).not.toBeInTheDocument();
+});
+
+test('picking the target hands the kind back, which is what carries the ask into the accounts', async () => {
+  const { heard, screen } = await renderPicker({ step: 'kind' }, []);
+
+  await screen.getByRole('button', { name: /Target/ }).click();
+
+  expect(heard).toEqual(['kind target']);
+});
+
+test('picking the router hands the kind back, which is what drops a wired router', async () => {
+  const { heard, screen } = await renderPicker({ step: 'kind' }, []);
+
+  await screen.getByRole('button', { name: /Router/ }).click();
+
+  expect(heard).toEqual(['kind router']);
+});
+
+test('Esc at the kind ask dismisses just as it does at every other stage', async () => {
+  const { heard } = await renderPicker({ step: 'kind' }, []);
+
+  await userEvent.keyboard('{Escape}');
+
+  expect(heard).toEqual(['dismissed']);
+});
 
 test('the picker opens on the stored accounts, gathered under the kinds they are', async () => {
   const { screen } = await renderPicker({ step: 'account' }, accounts);
@@ -122,6 +157,7 @@ test('moving to the second stage carries focus onto the model list it opens on',
       refusal={undefined}
       onDismiss={() => {}}
       onPickAccount={() => {}}
+      onPickKind={() => {}}
       onPickProviderModel={() => {}}
       onSelectDifferentProvider={() => {}}
       stage={{ step: 'provider-model', accountId: 'key-work' }}
