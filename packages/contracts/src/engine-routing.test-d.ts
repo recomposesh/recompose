@@ -2,8 +2,6 @@ import { describe, expectTypeOf, test } from 'vitest';
 
 import type { EngineRouteNode, EngineRouting, RouterPolicy } from './index';
 
-import { standingTheEntryNames } from './engine-routing';
-
 type EngineTargetNode = Extract<EngineRouteNode, { kind: 'target' }>;
 
 type EngineRouterNode = Extract<EngineRouteNode, { kind: 'router' }>;
@@ -37,9 +35,5 @@ describe('the route table the child serves a request through', () => {
   test('no node in the mirror names the account paying for it', () => {
     expectTypeOf<EngineRouterNode>().not.toHaveProperty('accountId');
     expectTypeOf<Extract<keyof EngineRouteNode, 'accountId'>>().toEqualTypeOf<never>();
-  });
-
-  test('the standing an entry names is the standing a target node wears', () => {
-    expectTypeOf(standingTheEntryNames).returns.toEqualTypeOf<EngineTargetNode['standing']>();
   });
 });

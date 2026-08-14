@@ -35,7 +35,16 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
 
   Two shapes the design left open, decided here. The walk answers a verdict rather than a `Response`, because refusal copy lives in task 4's file. It carries facts, and task 4 renders the wording. The ledger also records whether the provider promised the retry time, because decision 9's choice between 429 and 502 needs that across requests. Without it, a pool downed by transport failures would answer 429 with a time nobody promised.
 
-- [ ] **Task 4: engine serving path.** Depends on task 3. Reshapes `proxyModelRequest` and widens the refusal wire. Owns the serving-path files the design's file map names, plus the six side paths and their sibling specs.
+- [x] **Task 4: engine serving path.** Landed as `12c710cb`, merged at `9f6c5a10`. The per-attempt walk, the commit latch at the first downstream byte, the three refusals, and the notes every failed child leaves behind. Mutation 88.71, after killing 29 survivors in `gateway-walk-notes.ts`, the file that owns every word the refusals say.
+
+  Three shapes the later clusters inherit rather than rediscover:
+
+  - **The refusals, exactly.** An empty router answers 502 with no header code. An exhausted one answers 429 with `Retry-After` only when every child it tried promised a time, and 502 otherwise, both under code `exhausted_router`, naming each child with one of five reasons. A chained turn answers 400 under `chained_turn`. No refusal carries an `x-recompose-*` header, and Gemini renders a 429 as `INVALID_ARGUMENT`.
+  - **The commit boundary is drivable from a test.** `truncateAfterChunks: N` with N at least 1 lands past the latch, so the answer forwards verbatim and no sibling begins. `truncateAfterChunks: 0` isn't the other side of it, which matters to any scenario that means to prove a pre-commit swap.
+  - **Observability is log-only.** Which account served, a child skipped for cooling, and the last child's true upstream status all reach the log and nothing else. An end-to-end scenario that wants any of the three reads the log, never a header.
+
+  It also left one export behind. Task 2 mirrored `targetTheEntryNames` into the engine as `standingTheEntryNames`, and the walk then replaced every reader of it. The train removed the function and the two specs that were its only callers. The stored-side `targetTheEntryNames` keeps its nineteen readers and stays.
+
 - [x] **Task 5: main host.** Landed as `02da90cd`. Main mints the engine view node by node, and a spend request resolves the account its named node holds. Mutation 98.67, and all five survivors task 2 named on `stored-gateway.ts` are dead.
 
   Two files outside any cluster's list had to change, both pass-through. `first-request.ts` and `stored-boot.ts` wrap `SpendGrantFor`. Widening it would otherwise have dropped the seat name in production while still typechecking in one direction.

@@ -43,17 +43,3 @@ export const engineRoutingSchema = z.strictObject({
 });
 
 export type EngineRouting = z.infer<typeof engineRoutingSchema>;
-
-/**
- * The standing the entry of a table names, which reads removed whenever no one target speaks for it.
- *
- * @summary Every reader that still asks one virtual model for one standing asks here, so the single
- * place that turns a table into one answer is this function rather than each reader's own lookup. An
- * entry standing a router answers removed, because a ladder names no single model and a reader built
- * for one target must never guess at a child.
- */
-export function standingTheEntryNames(routing: EngineRouting): EngineTargetStanding {
-  const entry = routing.nodes[routing.entry];
-
-  return entry?.kind === 'target' ? entry.standing : { standing: 'removed' };
-}

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { engineRoutingSchema, standingTheEntryNames } from './engine-routing';
+import { engineRoutingSchema } from './engine-routing';
 
 const bound = { kind: 'target', standing: { standing: 'bound', providerModel: 'gpt-5-mini' } };
 
@@ -108,32 +108,5 @@ describe('what the mirror refuses to carry', () => {
     expect(() =>
       engineRoutingSchema.parse({ ...oneTarget, policy: { mode: 'failover' } }),
     ).toThrow();
-  });
-});
-
-describe('the standing the entry of a mirrored table names', () => {
-  test('a one-node table bound to a real model answers that model', () => {
-    expect(standingTheEntryNames(engineRoutingSchema.parse(oneTarget))).toEqual({
-      standing: 'bound',
-      providerModel: 'gpt-5-mini',
-    });
-  });
-
-  test('a one-node table whose account left the registry answers removed', () => {
-    const gone = engineRoutingSchema.parse({ entry: 'only', nodes: { only: removed } });
-
-    expect(standingTheEntryNames(gone)).toEqual({ standing: 'removed' });
-  });
-
-  test('a table whose entry stands a router answers removed, because no one target speaks for a ladder', () => {
-    expect(standingTheEntryNames(engineRoutingSchema.parse(ladder))).toEqual({
-      standing: 'removed',
-    });
-  });
-
-  test('a table whose entry names no node answers removed rather than throwing', () => {
-    const empty = engineRoutingSchema.parse({ entry: 'only', nodes: {} });
-
-    expect(standingTheEntryNames(empty)).toEqual({ standing: 'removed' });
   });
 });
