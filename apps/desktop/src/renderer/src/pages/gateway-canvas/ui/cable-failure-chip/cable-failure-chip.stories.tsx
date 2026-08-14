@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+
 import { expect, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
@@ -6,14 +8,20 @@ import { CableFailureChip } from './cable-failure-chip';
 
 const REFUSED = 'The gateway could not reach the target.';
 
+type ChipInProps = ComponentProps<typeof CableFailureChip> & { shell: string };
+
+function ChipIn({ shell, ...args }: ChipInProps) {
+  return (
+    <div className={shell}>
+      <CableFailureChip {...args} />
+    </div>
+  );
+}
+
 const meta = preview.meta({
   component: CableFailureChip,
   args: { status: 502, detail: REFUSED },
-  render: (args) => (
-    <div className="h-40 w-72 bg-surface-content p-4 dot-grid">
-      <CableFailureChip {...args} />
-    </div>
-  ),
+  render: (args) => <ChipIn shell="h-40 w-72 bg-surface-content p-4 dot-grid" {...args} />,
 });
 
 function chipIn(canvasElement: HTMLElement): HTMLElement {
@@ -34,6 +42,34 @@ function errorUnder(chip: HTMLElement): HTMLElement {
   }
 
   return reading;
+}
+
+/**
+ * How far the reading stands from the chip, counted positive below it and negative above.
+ *
+ * @summary One reading carries both facts the anchoring has to get right: which side of the chip
+ * the reveal took, and that the gap is the same either way, since flipping swaps the block margins
+ * rather than dropping one.
+ */
+function readingOffset(chip: HTMLElement): number {
+  const stood = chip.getBoundingClientRect();
+  const reading = errorUnder(chip).getBoundingClientRect();
+
+  return reading.top >= stood.bottom ? reading.top - stood.bottom : reading.bottom - stood.top;
+}
+
+function theSentenceMeetsThePointer(chip: HTMLElement): boolean {
+  const sentence = errorUnder(chip).querySelector<HTMLElement>('[data-failure-detail]');
+
+  if (sentence === null) {
+    return false;
+  }
+
+  const box = sentence.getBoundingClientRect();
+
+  return sentence.contains(
+    document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+  );
 }
 
 async function pressedOpen(
@@ -72,14 +108,36 @@ export const PressingItAgainPutsTheErrorAway = meta.story({
   },
 });
 
-/** Esc leaves the error the same way, which is the way out that changes nothing. */
-export const EscapePutsTheErrorAway = meta.story({
+/** With room under the chip, the reading opens downward, which is where a person looks first. */
+export const TheReadingOpensUnderTheChip = meta.story({
   play: async ({ canvasElement, userEvent }) => {
     const chip = await pressedOpen(canvasElement, userEvent.click);
 
-    await userEvent.keyboard('{Escape}');
+    await expect(readingOffset(chip)).toBeCloseTo(4, 0);
+  },
+});
 
-    await waitFor(async () => expect(errorUnder(chip)).not.toBeVisible());
+/** A cable near the bottom edge flips its reading above rather than letting it clip away. */
+export const AChipAtTheBottomEdgeFlipsItsReading = meta.story({
+  render: (args) => (
+    <ChipIn shell="fixed inset-s-0 bottom-0 w-72 bg-surface-content p-4 dot-grid" {...args} />
+  ),
+  play: async ({ canvasElement, userEvent }) => {
+    const chip = await pressedOpen(canvasElement, userEvent.click);
+
+    await expect(readingOffset(chip)).toBeCloseTo(-4, 0);
+  },
+});
+
+/** The pane a cable is drawn in clips its own box, and the reading has to paint clear of it. */
+export const TheReadingPaintsClearOfAPaneThatClips = meta.story({
+  render: (args) => (
+    <ChipIn shell="h-8 w-24 overflow-hidden bg-surface-content dot-grid" {...args} />
+  ),
+  play: async ({ canvasElement, userEvent }) => {
+    const chip = await pressedOpen(canvasElement, userEvent.click);
+
+    await expect(theSentenceMeetsThePointer(chip)).toBe(true);
   },
 });
 

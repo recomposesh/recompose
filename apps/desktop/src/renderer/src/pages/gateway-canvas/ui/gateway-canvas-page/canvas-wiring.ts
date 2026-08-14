@@ -8,7 +8,7 @@ import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
 import type { SeatReading } from './route-seats';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { routeNodeIn, seatUnder } from './route-seats';
+import { routeNodeIn, seatUnder, seatWritten } from './route-seats';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
@@ -62,6 +62,11 @@ export function routerSeatOf(nodeId: string): SeatReading | undefined {
   return seatUnder(['route:'], nodeId);
 }
 
+/** Where any card standing for a route node seats, whichever of the three prefixes it wears. */
+export function cardSeatOf(nodeId: string): SeatReading | undefined {
+  return seatUnder(['target:', 'ghost:', 'route:'], nodeId);
+}
+
 /**
  * The seats the library asked to move, read out of a change batch.
  *
@@ -83,15 +88,52 @@ export function movedSeats(changes: readonly NodeChange[]): readonly MovedSeat[]
 }
 
 /**
- * Whether a cable in flight may land where it points, which is the one-target rule during a drag.
+ * Whether a router may take the card a cable points at as one more child of its ladder.
  *
- * @summary A cable leaves a virtual model or a draft and lands on a stored target, and nothing
- * else connects. A model dropping onto the very account it already answers through refuses,
- * because a second cable to one target would say the rule out loud and then break it; any other
- * account is a rebind, which is one cable ending somewhere new.
+ * @summary A router's children are the whole of what it decides, so a cable leaving its port
+ * binds one where the plus already does. A card the ladder already holds refuses, because a second
+ * cable between the same pair would say the one-cable rule out loud and then break it, and a card
+ * standing under another definition is always a fresh child rather than a duplicate.
+ */
+function targetSeatIn(gateway: GatewayConfig, nodeId: string): SeatReading | undefined {
+  const seat = seatUnder(['target:', 'ghost:'], nodeId);
+
+  return routeNodeIn(gateway, seat)?.kind === 'target' ? seat : undefined;
+}
+
+function laddersOnto(gateway: GatewayConfig, parent: SeatReading, targetId: string): boolean {
+  const router = routeNodeIn(gateway, parent);
+  const landing = targetSeatIn(gateway, targetId);
+
+  if (router?.kind !== 'router' || landing === undefined) {
+    return false;
+  }
+
+  const standing = seatWritten(landing);
+
+  return !router.children.some(
+    (child) => seatWritten({ modelId: parent.modelId, routeNodeId: child }) === standing,
+  );
+}
+
+/**
+ * Whether a cable in flight may land where it points, which is the binding rule during a drag.
+ *
+ * @summary A cable leaves a virtual model, a draft, or a router, and lands on a stored target.
+ * A model dropping onto the very account it already answers through refuses, because a second
+ * cable to one target would say the rule out loud and then break it; any other account is a rebind,
+ * which is one cable ending somewhere new. A router card takes no cable at all: every route node
+ * already stands under exactly one parent, so a cable meeting one could only move it, and moving a
+ * node is not a binding.
  */
 export function oneTargetRule(gateway: GatewayConfig) {
   return (connection: Edge | Connection): boolean => {
+    const parent = routerSeatOf(connection.source);
+
+    if (parent !== undefined) {
+      return laddersOnto(gateway, parent, connection.target);
+    }
+
     const accountId = targetAccountIdIn(gateway, connection.target);
 
     if (accountId === undefined) {

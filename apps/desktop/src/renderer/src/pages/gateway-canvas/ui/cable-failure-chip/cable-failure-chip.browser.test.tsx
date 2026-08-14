@@ -10,6 +10,17 @@ async function renderChip() {
   return render(<CableFailureChip detail={REFUSED} status={502} />);
 }
 
+async function renderChipBesideAnotherPress() {
+  return render(
+    <>
+      <CableFailureChip detail={REFUSED} status={502} />
+      <button style={{ position: 'fixed', insetBlockStart: 0, insetInlineEnd: 0 }} type="button">
+        elsewhere
+      </button>
+    </>,
+  );
+}
+
 test('the chip stands as a press a person can find, and says nothing until they ask', async () => {
   const screen = await renderChip();
 
@@ -38,12 +49,12 @@ test('pressing the chip again puts the error away, so the canvas comes back unco
 });
 
 test('a press anywhere outside the reading puts the error away', async () => {
-  const screen = await renderChip();
+  const screen = await renderChipBesideAnotherPress();
 
   await userEvent.click(screen.getByRole('button', { name: /last error/i }));
   await expect.element(screen.getByText(REFUSED)).toBeVisible();
 
-  await userEvent.click(document.body);
+  await userEvent.click(screen.getByRole('button', { name: 'elsewhere' }));
 
   await expect.element(screen.getByText(REFUSED)).not.toBeVisible();
 });

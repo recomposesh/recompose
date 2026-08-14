@@ -1,6 +1,6 @@
-import type { GatewayConfig, RouteNode, Routing } from '@recompose/contracts';
+import type { RouteNode } from '@recompose/contracts';
 
-import { GATEWAY_CONFIG_VERSION, routingSchema } from '@recompose/contracts';
+import { routingSchema } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import {
@@ -10,44 +10,10 @@ import {
   gatewaySwitching,
   routedThroughARouter,
 } from './routing-edits';
+import { bound, childrenOf, codex, ladderOfThree, routingOf, spare } from './routing-edits.testkit';
 
-const bound: Routing = {
-  entry: 'seat',
-  nodes: { seat: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
-};
-
-const codex: GatewayConfig = {
-  schemaVersion: GATEWAY_CONFIG_VERSION,
-  slug: 'codex',
-  displayName: 'Codex',
-  port: 8397,
-  virtualModels: [
-    { id: 'fast', displayName: 'Fast', routing: bound },
-    { id: 'slow', displayName: 'Slow', routing: bound },
-  ],
-  layout: { nodes: {} },
-};
-
-const spare: RouteNode = { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' };
-
-function routingOf(gateway: GatewayConfig, modelId = 'fast'): Routing {
-  const held = gateway.virtualModels.find((model) => model.id === modelId);
-
-  if (held === undefined) {
-    throw new Error(`the gateway serves no virtual model named "${modelId}"`);
-  }
-
-  return held.routing;
-}
-
-function routerIn(routing: Routing): string {
+function routerIn(routing: ReturnType<typeof routingOf>): string {
   return routing.entry;
-}
-
-function childrenOf(routing: Routing, routerId: string): readonly string[] {
-  const node = routing.nodes[routerId];
-
-  return node?.kind === 'router' ? node.children : [];
 }
 
 test('a fresh router routes through itself and holds no child yet', () => {
@@ -98,18 +64,27 @@ test('routing a model through a router leaves its id and its name alone', () => 
 test('a child bound under a router joins the end of the ladder it already holds', () => {
   const routed = gatewayRoutingThrough(codex, 'fast', 'failover');
   const ladder = routerIn(routingOf(routed));
-  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, spare));
+  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, 'second', spare));
   const children = childrenOf(grown, ladder);
 
   expect(children).toHaveLength(2);
   expect(children[1] === undefined ? undefined : grown.nodes[children[1]]).toEqual(spare);
 });
 
+test('a child stands under the id its caller named, so a card can be seated before it exists', () => {
+  const routed = gatewayRoutingThrough(codex, 'fast', 'failover');
+  const ladder = routerIn(routingOf(routed));
+  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, 'named-seat', spare));
+
+  expect(childrenOf(grown, ladder)[1]).toBe('named-seat');
+  expect(grown.nodes['named-seat']).toEqual(spare);
+});
+
 test('a router bound as a child nests under the one that named it', () => {
   const routed = gatewayRoutingThrough(codex, 'fast', 'failover');
   const ladder = routerIn(routingOf(routed));
   const nested: RouteNode = { kind: 'router', policy: { mode: 'round-robin' }, children: [] };
-  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, nested));
+  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, 'nested', nested));
   const [, second] = childrenOf(grown, ladder);
 
   expect(second === undefined ? undefined : grown.nodes[second]).toEqual(nested);
@@ -121,19 +96,8 @@ test('a child bound under a node that routes nothing leaves the whole gateway as
   const ladder = routerIn(routingOf(routed));
   const child = childrenOf(routingOf(routed), ladder)[0] ?? '';
 
-  expect(gatewayBindingChild(routed, 'fast', child, spare)).toEqual(routed);
+  expect(gatewayBindingChild(routed, 'fast', child, 'second', spare)).toEqual(routed);
 });
-
-function ladderOfThree(): GatewayConfig {
-  const routed = gatewayRoutingThrough(codex, 'fast', 'failover');
-  const ladder = routerIn(routingOf(routed));
-
-  return gatewayBindingChild(gatewayBindingChild(routed, 'fast', ladder, spare), 'fast', ladder, {
-    kind: 'target',
-    accountId: 'a3',
-    providerModel: 'claude-haiku-5',
-  });
-}
 
 test('reordering a ladder moves one child to its new rank and leaves the rest in order', () => {
   const three = ladderOfThree();
@@ -188,7 +152,7 @@ test('reordering a rank the ladder never held moves nothing at all', () => {
 test('an edit naming a route node the table never held leaves the whole gateway as it stood', () => {
   const routed = gatewayRoutingThrough(codex, 'fast', 'failover');
 
-  expect(gatewayBindingChild(routed, 'fast', 'never-minted', spare)).toEqual(routed);
+  expect(gatewayBindingChild(routed, 'fast', 'never-minted', 'second', spare)).toEqual(routed);
   expect(gatewayReordering(routed, 'fast', 'never-minted', 0, 0)).toEqual(routed);
   expect(gatewaySwitching(routed, 'fast', 'never-minted', 'round-robin')).toEqual(routed);
 });

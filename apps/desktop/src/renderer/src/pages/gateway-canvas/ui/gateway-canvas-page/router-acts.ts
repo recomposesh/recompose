@@ -1,15 +1,22 @@
 import type { VirtualModel } from '@recompose/contracts';
 
+import { mintRouteNodeId } from '@recompose/contracts';
+
 import type { RouterMode } from '../../lib/routing-edits';
 import type { CanvasWorld } from './canvas-standings';
 import type { SeatReading } from './route-seats';
 
+import { closeInspector } from '../../../../shared/lib';
 import { emptyDefinition, gatewayDefiningRouted } from '../../lib/model-draft';
-import { gatewayBindingChild, gatewayRoutingThrough } from '../../lib/routing-edits';
+import {
+  gatewayBindingChild,
+  gatewayDroppingNode,
+  gatewayRoutingThrough,
+} from '../../lib/routing-edits';
 import { heldDraft } from '../../lib/use-held-draft';
 import { routerName } from '../router-node/router-reading';
-import { committedPick, graduatedDraft, targetNameIn } from './binding-acts';
-import { modelIdOf, routerSeatOf } from './canvas-wiring';
+import { committedPick, graduatedDraft, releasedBinding, targetNameIn } from './binding-acts';
+import { cardSeatOf, modelIdOf, routerSeatOf } from './canvas-wiring';
 
 /**
  * The mode a router is born in, since the binding ask drops one without a dialog.
@@ -76,10 +83,12 @@ function nestedUnderARouter(world: CanvasWorld, seat: SeatReading): void {
     return;
   }
 
+  const born = mintRouteNodeId();
+
   committedPick(
     world,
-    `route:${seat.modelId}`,
-    gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, {
+    `route:${seat.modelId}:${born}`,
+    gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, born, {
       kind: 'router',
       policy: { mode: BORN_ROUTER_MODE },
       children: [],
@@ -130,9 +139,8 @@ export function boundThroughARouter(world: CanvasWorld, from: string): void {
  *
  * @summary A child joins the end of the ladder rather than the front, because failover walks its
  * children in declared order and a new binding jumping ahead would reroute live traffic nobody
- * asked to reroute. The child takes the seat the layout derives from its depth rather than the
- * drop point, since the stored table mints its id inside the write and nothing here can name the
- * card before it exists.
+ * asked to reroute. The card is named here rather than by the write, so the target a person let a
+ * cable go for stands exactly where they let it go.
  */
 export function completedChildPick(
   world: CanvasWorld,
@@ -147,10 +155,12 @@ export function completedChildPick(
     return;
   }
 
+  const born = mintRouteNodeId();
+
   committedPick(
     world,
-    `route:${seat.modelId}`,
-    gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, {
+    `target:${seat.modelId}:${born}`,
+    gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, born, {
       kind: 'target',
       accountId,
       providerModel,
@@ -163,4 +173,37 @@ export function completedChildPick(
       });
     },
   );
+}
+
+/**
+ * Takes one route node off the canvas, with everything standing under it.
+ *
+ * @summary One act serves a target card and a router card, because both stand for a route node and
+ * a route node leaves the same way whichever it is. A node below the entry leaves the ladder
+ * holding it and the definition keeps serving through whatever else stands there, which is what a
+ * person thinning a pool by one asked for. The entry has nothing above it to leave, so removing it
+ * releases the binding altogether and stands the definition back as a draft, the way deleting the
+ * one thing a virtual model reached has always worked on this canvas.
+ */
+export function removedRouteNode(world: CanvasWorld, nodeId: string): void {
+  const seat = cardSeatOf(nodeId);
+  const parent = seat === undefined ? undefined : parentRouterAt(world, seat);
+
+  if (seat === undefined || parent === undefined) {
+    return;
+  }
+
+  if (parent.routeNodeId === parent.model.routing.entry) {
+    releasedBinding(world, seat.modelId, false);
+
+    return;
+  }
+
+  world.define.mutate(gatewayDroppingNode(world.gateway, seat.modelId, parent.routeNodeId), {
+    onSuccess: () => {
+      world.standings.select(undefined);
+      closeInspector();
+    },
+    onError: world.standings.refuse,
+  });
 }

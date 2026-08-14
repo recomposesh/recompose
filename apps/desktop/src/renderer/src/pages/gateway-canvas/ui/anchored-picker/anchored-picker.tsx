@@ -28,7 +28,7 @@ export function AnchoredPicker({
   onPickKind,
   onPickAccount,
   onPickProviderModel,
-  onSelectDifferentProvider,
+  onStepBack,
   onDismiss,
 }: AnchoredPickerProps) {
   const { x, y, zoom } = useViewport();
@@ -45,7 +45,7 @@ export function AnchoredPicker({
         onPickAccount={onPickAccount}
         onPickKind={onPickKind}
         onPickProviderModel={onPickProviderModel}
-        onSelectDifferentProvider={onSelectDifferentProvider}
+        onStepBack={onStepBack}
         refusal={refusal}
         stage={stage}
       />

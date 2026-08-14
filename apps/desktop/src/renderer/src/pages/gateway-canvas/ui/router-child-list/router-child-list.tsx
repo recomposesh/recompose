@@ -51,11 +51,11 @@ const moveButtonFace =
 function childFace(child: RouterChild): ReactElement {
   return (
     <>
-      <span className="min-w-0 flex-1 truncate text-control text-ink" data-child-name="">
+      <span className="min-w-0 truncate text-control text-ink" data-child-name="">
         {child.name}
       </span>
       {child.detail === undefined ? null : (
-        <span className="min-w-0 truncate font-mono text-mono-caption text-ink-secondary">
+        <span className="min-w-0 flex-1 truncate font-mono text-mono-caption text-ink-secondary">
           {child.detail}
         </span>
       )}

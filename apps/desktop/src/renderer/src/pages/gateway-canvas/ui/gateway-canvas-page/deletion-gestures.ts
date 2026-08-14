@@ -4,7 +4,13 @@ import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasWorld } from './canvas-standings';
 
 import { askedTargetRemoval, releasedBinding } from './binding-acts';
-import { bindingCableId, editingText, modelIdOf, targetModelIdOf } from './canvas-wiring';
+import {
+  bindingCableId,
+  editingText,
+  modelIdOf,
+  routerSeatOf,
+  targetModelIdOf,
+} from './canvas-wiring';
 
 function removalQuestionAsked(world: CanvasWorld, nodes: Node[]): boolean {
   const removable = nodes.find(
@@ -21,6 +27,14 @@ function removalQuestionAsked(world: CanvasWorld, nodes: Node[]): boolean {
 
   if (target !== undefined) {
     askedTargetRemoval(world, target.id);
+
+    return true;
+  }
+
+  const router = nodes.find((node) => routerSeatOf(node.id) !== undefined);
+
+  if (router !== undefined) {
+    world.standings.setRemoving(router.id);
 
     return true;
   }
@@ -53,8 +67,10 @@ function deletionDecision(
  * The Delete press answered by what stands selected: a question for a card, a release for a cable.
  *
  * @summary A card never leaves unannounced, so any deletable node turns the press into the removal
- * question and stops the flow from deleting anything itself. Only a binding cable passes straight
- * through, because releasing it stands the definition back as a draft rather than destroying work.
+ * question and stops the flow from deleting anything itself. A router asks last of the cards,
+ * because it is the only one that can take a whole ladder with it. Only a binding cable passes
+ * straight through, because releasing it stands the definition back as a draft rather than
+ * destroying work.
  */
 export function deletionWiring(
   world: CanvasWorld,

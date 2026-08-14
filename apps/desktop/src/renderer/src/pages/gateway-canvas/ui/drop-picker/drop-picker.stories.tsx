@@ -77,6 +77,48 @@ function scrollRegion(canvasElement: HTMLElement): HTMLElement | null {
 /** The accounts a dropped cable can bind to, standing on the card it landed as. */
 export const Basic = meta.story({});
 
+function clippedWords(canvasElement: HTMLElement): readonly string[] {
+  const words = [...canvasElement.querySelectorAll<HTMLElement>('li button span')];
+
+  return words.filter((word) => word.scrollWidth > word.clientWidth).map((word) => word.innerText);
+}
+
+/** The first thing a drop asks, which is the one stage nothing stands behind. */
+export const TheKindAskWearsNoWayBack = meta.story({
+  args: { stage: { step: 'kind' }, groups: [] },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('button', { name: /Router/ })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: /^Select/ })).toBeNull();
+  },
+});
+
+/** Both kinds print whole, name and fact alike, because the ask has to teach the two apart. */
+export const TheKindAskPrintsBothKindsWhole = meta.story({
+  args: { stage: { step: 'kind' }, groups: [] },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByRole('button', { name: /Router/ })).toBeVisible();
+    await expect(clippedWords(canvasElement)).toEqual([]);
+  },
+});
+
+/** Reached from the kind ask, the account stage offers the chevron back to it. */
+export const TheAccountStageOffersTheWayBackToTheKindAsk = meta.story({
+  play: async ({ args, canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Select router or target' }));
+
+    await expect(args.onStepBack).toHaveBeenCalled();
+  },
+});
+
+/** A cable let go on a stored target settles the account itself, so that stage wears no chevron. */
+export const AStageNothingStandsBehindWearsNoChevron = meta.story({
+  render: (args) => <DropPicker {...args} onStepBack={undefined} />,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('button', { name: 'work key' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Select router or target' })).toBeNull();
+  },
+});
+
 /** The account settled, the picker asks the account's own list for the model that serves. */
 export const TheSecondStageAsksForTheProviderModel = meta.story({
   args: {
