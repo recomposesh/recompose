@@ -135,7 +135,7 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
   - **A Given that must send a request needs the model's name and nothing hands it over.** The shared Background records the name nowhere, so unit 8c reads the single virtual model out of the focused gateway rather than hard-coding it.
   - **The shared seeding step flakes under local load.** `gateway-screen.ts` times out waiting for the gateway row after a reload inside `seedGateway`. It sits upstream of every routers scenario and the shipped proxy feature flakes the same way, so it belongs to the machine rather than to any branch.
 
-- [ ] **Task 9: decision records.** Depends on tasks 4 and 8 settling the residual wording. Owns `docs/adr/0111-*.md`, `docs/adr/0112-*.md`, and `docs/adr/README.md`. The design drafted them as 0104 and 0105, and the sequence has now moved twice under it: 0104 through 0106 landed while the clusters ran, then 0107 through 0110 landed with the main merge below. Ask the `new-adr` skill again before writing, because it moved once more between two merges an hour apart.
+- [x] **Task 9: decision records.** Landed as `15bf331a`, merged at `c40bf24f`. Record 0113 carries the router design and 0114 the stand-in adoption rider #140 asked for. The design drafted them as 0104 and 0105, and the sequence moved four times while the clusters ran, so the cluster verified the numbers itself against `origin/main` and recorded when it last looked.
 
 The design's task decomposition named three feature files. The approved scenario set holds seven, and the phase rule gives each its own unit, so task 8 fans out seven ways rather than three.
 
