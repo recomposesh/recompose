@@ -165,7 +165,7 @@ Then('the gateway answers a typed refusal naming the missing credential', ({ pag
   const answer = answerHeld(page);
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
-  expect(refusalSentence(answer.body)).toContain('no credential');
+  expect(refusalSentence(answer.body)).toContain('no account behind it');
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
 });
 
