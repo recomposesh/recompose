@@ -75,6 +75,14 @@ export const TheGatewaySubject = meta.story({
   },
 });
 
+/** The gateway's front door stands between its own facts and the address it answers on. */
+export const TheGatewaySubjectCarriesAccess = meta.story({
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Access', { exact: true })).toBeVisible();
+    await expect(await canvas.findByRole('switch', { name: /API key/ })).toBeVisible();
+  },
+});
+
 /** The target subject's body: the stored account, and the definitions behind it. */
 export const TheTargetSubject = meta.story({
   render: () => <TargetSubjectUnderProof />,
