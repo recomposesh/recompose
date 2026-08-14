@@ -6,12 +6,14 @@ design-system
 .turbo
 .turbo
 out
+.output
 .vale/styles/*
 !.vale/styles/config/
 !.vale/styles/recompose/
 storybook-static/
 .features-gen/
 test-results/
+__screenshots__/
 playwright-report/
 .stryker-tmp/
 reports/

@@ -1,0 +1,39 @@
+{
+  "name": "@recompose/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:browser": "vitest run --project browser",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.170.25",
+    "@tanstack/react-start": "1.168.42",
+    "fumadocs-core": "16.14.3",
+    "fumadocs-mdx": "15.2.3",
+    "fumadocs-ui": "16.14.3",
+    "lucide-react": "1.31.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@types/mdx": "2.0.14",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
+    "@vitest/browser-playwright": "4.1.10",
+    "nitro": "3.0.260610-beta",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  }
+}
