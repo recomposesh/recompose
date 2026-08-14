@@ -2,9 +2,10 @@ import { expect } from '@playwright/test';
 
 import { Given, Then } from '../fixtures';
 import { refusalSentence, sendTurn, turnUnder } from '../gateway-client';
+import { lastAnswerFrom } from '../gateway-exchanges';
 import { gatewayAddress, storedGateway } from '../gateway-screen';
 import { aRoutedModelStands, FIRST_TARGET, SECOND_TARGET } from '../routed-gateway';
-import { answerTheGatewayGave, focusedGateway } from '../scenario-memory';
+import { focusedGateway } from '../scenario-memory';
 
 const MESSAGES_PATH = '/v1/messages';
 
@@ -73,21 +74,21 @@ Given('both targets stand cooling from earlier rate limits', async ({ page, scri
 });
 
 Then('the gateway answers a typed refusal naming the empty router', ({ page }) => {
-  const answer = answerTheGatewayGave(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toMatch(NAMES_THE_EMPTY_ROUTER);
 });
 
 Then('the gateway answers a typed refusal naming each child and its reason', ({ page }) => {
-  const sentence = refusalSentence(answerTheGatewayGave(page).body);
+  const sentence = refusalSentence(lastAnswerFrom(page, focusedGateway(page)).body);
 
   expect(sentence).toContain(`${FIRST_TARGET.providerModel} stands cooling`);
   expect(sentence).toContain(`${SECOND_TARGET.providerModel} stands cooling`);
 });
 
 Then('the refusal carries the earliest retry time', ({ page }) => {
-  const answer = answerTheGatewayGave(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(RATE_LIMITED);
 

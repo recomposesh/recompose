@@ -14,15 +14,11 @@ import {
   sendTurn,
   turnUnder,
 } from '../gateway-client';
+import { lastAnswerFrom, recordExchange } from '../gateway-exchanges';
 import { gatewayAddress, seedGateway, storedGateway } from '../gateway-screen';
 import { answerTheProviderGives } from '../key-probe-stub';
 import { accountRows, openProviderScreen } from '../provider-screen';
-import {
-  answerTheGatewayGave,
-  focusedGateway,
-  focusGateway,
-  rememberGatewayAnswer,
-} from '../scenario-memory';
+import { focusedGateway, focusGateway } from '../scenario-memory';
 import {
   accountHeldAs,
   gatewayTargetingAKey,
@@ -128,13 +124,17 @@ When('a request arrives under {string}', async ({ page }, name: string) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
   namesAsked.set(page, name);
-  rememberGatewayAnswer(page, await sendTurn(address, MESSAGES_PATH, turnUnder(name)));
+  recordExchange(
+    page,
+    focusedGateway(page),
+    await sendTurn(address, MESSAGES_PATH, turnUnder(name)),
+  );
 });
 
 When('a client asks the gateway for its model listing', async ({ page }) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
-  rememberGatewayAnswer(page, await readFrom(address, MODEL_LISTING));
+  recordExchange(page, focusedGateway(page), await readFrom(address, MODEL_LISTING));
 });
 
 Then(
@@ -145,14 +145,14 @@ Then(
 );
 
 Then('the answer travels back to the caller', ({ page }) => {
-  const answer = answerTheGatewayGave(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(ANSWERED);
   expect(JSON.stringify(answer.body)).toContain(answerTheProviderGives);
 });
 
 Then('the gateway answers a typed refusal naming the unknown model', ({ page }) => {
-  const answer = answerTheGatewayGave(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(NO_SUCH_MODEL);
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
@@ -163,7 +163,7 @@ Then('no request leaves the machine', ({ keyProbe, scriptedProvider }) => {
 });
 
 Then('the gateway answers a typed refusal naming the missing target', ({ page }) => {
-  const answer = answerTheGatewayGave(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toContain('no target');
@@ -171,7 +171,7 @@ Then('the gateway answers a typed refusal naming the missing target', ({ page })
 });
 
 Then('the gateway answers a typed refusal naming the missing credential', ({ page }) => {
-  const answer = answerTheGatewayGave(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toContain('no account behind it');
@@ -183,11 +183,14 @@ Then('nothing else receives the request', ({ keyProbe, scriptedProvider }) => {
 });
 
 Then('the listing names {string} and {string}', ({ page }, first: string, second: string) => {
-  expect(anthropicListedIds(answerTheGatewayGave(page).body)).toEqual([first, second]);
+  expect(anthropicListedIds(lastAnswerFrom(page, focusedGateway(page)).body)).toEqual([
+    first,
+    second,
+  ]);
 });
 
 Then('it answers the same set in the Anthropic and the OpenAI shape', ({ page }) => {
-  const { body } = answerTheGatewayGave(page);
+  const { body } = lastAnswerFrom(page, focusedGateway(page));
 
   expect(openAiListedIds(body)).toEqual(anthropicListedIds(body));
 });
