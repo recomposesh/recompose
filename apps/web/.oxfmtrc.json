@@ -1,0 +1,23 @@
+{
+  "$schema": "../../node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": ["**/routeTree.gen.ts"],
+  "singleQuote": true,
+  "embeddedLanguageFormatting": "auto",
+  "jsxSingleQuote": false,
+  "sortTailwindcss": {
+    "preserveDuplicates": false,
+    "functions": ["clsx", "cn", "cva", "tw"],
+    "stylesheet": "src/styles/app.css"
+  },
+  "sortImports": {
+    "groups": [
+      "type-import",
+      ["value-builtin", "value-external"],
+      "type-internal",
+      "value-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ]
+  }
+}
