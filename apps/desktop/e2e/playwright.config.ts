@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { join } from 'node:path';
 import { defineBddConfig } from 'playwright-bdd';
 
 const acceptanceDir = defineBddConfig({
@@ -23,8 +24,10 @@ export default defineConfig({
   retries: process.env['CI'] === undefined ? 1 : 2,
   use: { trace: 'on-first-retry' },
   snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}',
-  /* The macos runner pool rasterizes fonts unevenly; 1.5% absorbs that and nothing structural. */
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.015 } },
+  /* visual.css pins how glyphs rasterize, so a baseline can be compared exactly again. */
+  expect: {
+    toHaveScreenshot: { maxDiffPixels: 0, stylePath: join(__dirname, 'visual.css') },
+  },
   projects: [
     { name: 'acceptance', testDir: acceptanceDir },
     { name: 'proofs', testMatch: /boot-proof\.spec\.ts/ },
