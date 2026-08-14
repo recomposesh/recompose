@@ -233,6 +233,24 @@ The root `test` block does spread `pacedForCi`, which reads like coverage and is
 
 The train left it alone on purpose. Pacing that project changes every run on every branch, so it wants its own job rather than a line buried in a router feature.
 
+## What the verification round found
+
+Three reviewers read the change at `99cf66b9`: an adversarial pair split node side against renderer side, and a rules review over the whole diff. They found seven defects worth repairing, four of them serious, and none of the four was visible from any test the change had written. Three repair clusters carry them.
+
+**Two data-loss paths the change's own repair didn't reach.** Task 7b closed the release that discarded a pool's siblings, on the card path. The inspector's own Delete Target builds its removal id without the route node. So a child of a pool reads as the entry and takes the whole definition with it, behind a dialog naming a router the person never selected. Deleting a child's cable does the same thing without asking at all. The code carries its own justification for a cable skipping the question: releasing a binding stands the definition back as a draft rather than destroying work. A router in the binding makes that false.
+
+**Two critical engine defects.** A stream that dies inside the commit latch escapes the walk entirely. The one guard on the attempt path closes before the latch reads the body, so a child answering 200 and then breaking mid first event gives the caller a 500. No failover, no cooling, no note. That's a status-less failure never reaching failover, which is the class this change exists to close, reopened inside the mechanism that closes it. The Codex reasoning replay carries no account in its key. A failover therefore injects one account's encrypted reasoning into another's request, and the walk stops on a hard 400. Its Antigravity sibling three lines away already keys by account.
+
+**Two approved documents contradict each other.** The proposal says a chained turn never rotates. The design narrows that to the entry router, and the code implements the narrow rule, so a failover entry over round-robin children still rotates a chained turn. The proposal outranks the design, and the repair moves the check to where a router is about to rotate.
+
+**A promise the provider never made.** The cooldown signal accepts Anthropic's rate-limit reset headers as a promised retry time, and those ride every response rather than only a 429. Two children failing with 500 therefore answer 429 with a `Retry-After`, where decision 9 requires 502 and rejects that case in its own words. Reading the headers for cooldown duration stays right. Letting them decide the refusal's status is what breaks.
+
+**One asymmetry against a directly bound target.** A router holding one child inherits the per-gateway cooldown ledger, so a single 503 blacks the model out for a minute and the provider never hears another request. The same target bound directly doesn't, and the branch's own docstring argues for the behaviour it doesn't have. It keys on router-ness where it means having a sibling.
+
+The rules review found one user-visible rule written three times, which is how a router takes its name. The engine says it, the card says it, and the inspector says it again, and two of those reach a person at once in a refusal and on screen.
+
+Three things the reviewers proved sound, recorded so nobody repeats the work. The contracts walk refuses every malformed table they could construct, including four separate ways to express a cycle. The walk can't spin whatever the table's shape. And the version 4 migration is now pure, with derived and minted ids in disjoint namespaces.
+
 ## One question for the review gate
 
 The rules review on task 4 read every `@summary` docstring on a module-private function as a banned comment. The cluster checked before following it and found 53 already committed across `packages/engine/src` and `apps/desktop/src/main`, several of them written by this change's own earlier clusters. CLAUDE.md carves the pattern out for API documentation the tooling reads, which names exported declarations, so the strict reading and the house practice genuinely disagree.
