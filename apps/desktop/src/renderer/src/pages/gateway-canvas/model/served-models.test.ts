@@ -12,6 +12,14 @@ const workKey: Account = {
   credentialRef: 'c1',
 };
 
+const spareKey: Account = {
+  id: 'k2',
+  provider: 'anthropic',
+  kind: 'api-key',
+  label: 'spare',
+  credentialRef: 'c2',
+};
+
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
@@ -58,21 +66,62 @@ const routed: VirtualModel = {
 };
 
 test('a routed definition reads the real model the target its ladder tries first serves', () => {
-  const [served] = servedModels([routed], [workKey]);
+  const [served] = servedModels([routed], [workKey, spareKey]);
 
   expect(served?.providerModel).toBe('claude-haiku-4-5');
 });
 
-test('a routed definition whose lead account still stands reads as serving through it', () => {
-  const [served] = servedModels([routed], [workKey]);
+test('a routed definition whose every account still stands reads as serving through the lead', () => {
+  const [served] = servedModels([routed], [workKey, spareKey]);
 
   expect(served?.target).toEqual({ standing: 'serving', account: workKey });
 });
 
-test('a routed definition whose lead account left the registry reads as removed', () => {
+test('a routed definition whose every account left the registry reads as removed', () => {
   const [served] = servedModels([routed], []);
 
   expect(served?.target).toEqual({ standing: 'removed' });
+});
+
+test('a routed definition whose lead account left reads through the sibling that still stands', () => {
+  const [served] = servedModels([routed], [spareKey]);
+
+  expect(served?.target).toEqual({ standing: 'thinned', account: spareKey, lost: 1 });
+});
+
+test('a routed definition reads the real model off the same target it still serves through', () => {
+  const [served] = servedModels([routed], [spareKey]);
+
+  expect(served?.providerModel).toBe('claude-opus-5');
+});
+
+test('a thinned definition counts every target whose account left, not only the lead', () => {
+  const deep: VirtualModel = {
+    ...routed,
+    routing: {
+      entry: 'ladder',
+      nodes: {
+        ladder: {
+          kind: 'router',
+          policy: { mode: 'failover' },
+          children: ['lead', 'spare', 'far'],
+        },
+        lead: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+        spare: { kind: 'target', accountId: 'k2', providerModel: 'claude-opus-5' },
+        far: { kind: 'target', accountId: 'k3', providerModel: 'claude-sonnet-4-5' },
+      },
+    },
+  };
+  const [served] = servedModels([deep], [spareKey]);
+
+  expect(served?.target).toEqual({ standing: 'thinned', account: spareKey, lost: 2 });
+});
+
+test('a definition bound straight to one target never reads as thinned', () => {
+  const [standing] = servedModels([fast], [workKey]);
+  const [gone] = servedModels([fast], []);
+
+  expect([standing?.target.standing, gone?.target.standing]).toEqual(['serving', 'removed']);
 });
 
 test('a definition routed through a router holding no target names no real model at all', () => {
