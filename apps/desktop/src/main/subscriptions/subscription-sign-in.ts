@@ -30,8 +30,8 @@ export function wallClock(): Clock {
  *
  * @summary A vendor tool writes the credential and the identity file as two separate acts, and on
  * macOS the credential goes to the keychain, so the standing can read connected while the address
- * is still unflushed. An account promoted in that window carries no address, and the rule that
- * matches an address to an account then matches nothing, which stands the same person up twice.
+ * is still on its way to disk. An account promoted in that window carries no address, and the rule
+ * that matches an address to an account then matches nothing, which stands the same person up twice.
  *
  * One look, not a wait: an address that has not arrived by then folds into the row on the next
  * observation anyway, and holding the sign-in open longer than that costs the person a stall.
