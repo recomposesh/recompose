@@ -1,7 +1,9 @@
 ---
 tier: full
-phase: solution-design
+phase: implementation
 approvals:
   - design-document
+  - solution-design
+  - gherkin
 branch: worktree-landing-docs-site
 ---
