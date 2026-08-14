@@ -118,3 +118,5 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0110](0110-desktop-jobs-run-when-desktop-can-change.md)                        | Desktop Jobs Run When Desktop Can Change                                            | Accepted   | 2026-08-14 |
 | [0111](0111-the-public-site-builds-to-files.md)                                 | The Public Site Builds to Files                                                     | Accepted   | 2026-08-14 |
 | [0112](0112-a-swept-vault-never-takes-a-row-with-it.md)                         | A swept vault never takes a row with it                                             | Accepted   | 2026-08-14 |
+| [0113](0113-a-router-walks-an-id-keyed-table.md)                                | A router walks an id-keyed table, one attempt at a time                             | Accepted   | 2026-08-14 |
+| [0114](0114-the-serving-suite-answers-from-a-scripted-upstream.md)              | The serving suite answers from a scripted upstream                                  | Accepted   | 2026-08-14 |
