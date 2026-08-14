@@ -118,21 +118,23 @@ The decision folded three items from #155 and one from #154 into this train. The
 - **The failure reveal anchoring.** Task 7b owns it.
 - **The furniture scenario.** Task 8 owns it, on main's amended line.
 
-## The streaming scenarios ask for something the stand-in can't do
+## The streaming scenarios the stand-in can't carry, and what happened to them
 
-Unit 8b answered the open question before writing a line, read-only, against `@copilotkit/aimock@1.38.0` itself rather than its docs. The lead task 8 left was a dead end, and two of the three approved scenarios have no honest expression.
+Unit 8b answered the open question before writing a line, read-only, against `@copilotkit/aimock@1.38.0` itself rather than its docs.
 
 - **`ResponseFactory` can't help.** It's typed `(req) => FixtureResponse | Promise<FixtureResponse>`, the same union a plain fixture answers. It defers _which_ response to pick until the request arrives. It can't widen the wire shape, name a content type, or write raw bytes.
-- **An error fixture is always a JSON error, never a stream.** In `dist/messages.js` the Anthropic handler branches on `isErrorResponse` before it ever reads `stream`, and `writeErrorResponse` sets `Content-Type: application/json`. Even at status 200 the answer is a JSON error envelope. So scenario 1, which needs a 200 `text/event-stream` whose first frame is an error, has no expression at all.
+- **An error fixture is always a JSON error, never a stream.** In `dist/messages.js` the Anthropic handler branches on `isErrorResponse` before it ever reads `stream`, and `writeErrorResponse` sets `Content-Type: application/json`. Even at status 200 the answer is a JSON error envelope.
 - **Truncation can't abort before the first chunk.** `dist/interruption.js` increments the count and then compares `chunkCount >= truncateAfterChunks`, so 0 and 1 are the same instruction and both abort after exactly one chunk. That's the mechanism behind what tasks 4 and 8 each measured from outside.
-- **Scenario 2 is half expressible.** `truncateAfterChunks: 1` lands one chunk past the commit boundary and then destroys the socket, which proves the stream closes and no sibling begins. It can't prove the caller receives the provider's own stream error, because a destroyed socket carries no payload.
-- **Scenario 3 is expressible, and the shipped docstring says otherwise.** `chaos: { disconnectRate: 1 }` destroys the connection before any status line, runs after the fixture matches, and still journals the request, so `modelsAsked()` keeps seeing it. The `mock` docstring in `scripted-provider.ts` claims this case can't be a fixture, and that's wrong.
+- **A truncated stream dies as a bare socket.** It carries no provider error payload, so nothing can read one back.
+- **A connection dropping before any status is expressible after all.** `chaos: { disconnectRate: 1 }` destroys the connection before any status line, runs after the fixture matches, and still journals the request, so `modelsAsked()` keeps seeing it. The `mock` docstring in `scripted-provider.ts` says this can't be a fixture, and that's wrong.
 
-Two things follow, and both are the maintainer's to settle rather than a unit's.
+The maintainer settled both open questions.
 
-Decision 15 says chaos rates stay at zero. The reason is determinism, and at a rate of exactly 1 the roll is no longer a roll. Reading the decision by its purpose allows 0 and 1 and still forbids everything between.
+**Chaos rates.** Decision 15 now forbids a rate between 0 and 1 rather than forbidding the control. The purpose was determinism, and at exactly 1 the roll is no longer a roll.
 
-Scenario 1 and scenario 2's error clause need the same missing capability: a stand-in that can write an arbitrary server-sent-event body on `/v1/messages`. Nothing reaches that path through `mount()`, so closing the gap means changing the shared surface rather than a unit's two files.
+**Delete the two clauses with no expression, rather than defer or reword them.** The approved `streaming.feature` loses the scenario about a stream opening with an error event, and the post-commit scenario loses its `Then the caller receives the provider's stream error unchanged`. What survives is what the suite can prove: the stream closes, no sibling begins, and a status-less transport failure moves on.
+
+Nothing about the product changed, and the behaviour is still proven. Task 4 covers the pre-commit error-open path and the verbatim forward in unit specs. It scored 88.71 mutation on the serving path, after killing 29 survivors in the file that owns the wording. What went away is the end-to-end witness, not the guarantee. `specs/routers/spec.md` still requires the forward, and it should: a requirement describes the product, not the test rig.
 
 ## One rider this change found and refuses to carry
 
