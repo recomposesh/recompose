@@ -1,4 +1,4 @@
-# 0110: A swept vault never takes a row with it
+# 0112: A swept vault never takes a row with it
 
 **Status**: Accepted
 **Date**: 2026-08-14
