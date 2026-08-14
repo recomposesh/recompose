@@ -7,16 +7,19 @@ import { dragCableOnto, fitCanvasToView, takeUpThePortAsk } from '../canvas-gest
 import { rememberComposition, virtualModelInFocus } from '../canvas-memory';
 import {
   accountPicker,
+  bindingKindAsk,
+  completeThePick,
+  providerModelPicker,
+} from '../canvas-picker';
+import {
   cableBetween,
   cableGrabEnd,
-  completeThePick,
   DRAFT_NODE,
   GATEWAY_NODE,
   hitTarget,
   modelNodeId,
   nodeTreatment,
   politelySaid,
-  providerModelPicker,
   sourcePort,
   standingCables,
   standingNodes,
@@ -130,6 +133,11 @@ When(
   async ({ page }, name: string, providerModel: string) => {
     await takeUpThePortAsk(page, await cardStandingFor(page, name));
 
+    await pickWithTheKeyboard(
+      page,
+      bindingKindAsk(page).getByRole('button', { name: /^Target/u }),
+      'the target kind',
+    );
     await pickWithTheKeyboard(
       page,
       accountPicker(page).getByRole('button', { name: KEY_ACCOUNT }),

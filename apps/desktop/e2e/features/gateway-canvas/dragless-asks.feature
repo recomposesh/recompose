@@ -3,7 +3,7 @@ Feature: Every source port answers a keyboard without a drag
   The canvas shows no standing icon beside a node: a pointer meets only the
   cable. Each source port still carries an ask a keyboard reaches, painted
   only under keyboard focus. The gateway's ask births a draft virtual model,
-  and a virtual model's ask opens the picker of stored accounts.
+  and a virtual model's ask names the two kinds a binding meets.
 
   Scenario: An empty gateway stands plain
     Given a gateway with no virtual models defined
@@ -22,7 +22,7 @@ Feature: Every source port answers a keyboard without a drag
     Then a draft virtual model node stands wired to the gateway
     And the inspector opens with the name field focused
 
-  Scenario: A virtual model's ask opens the picker
+  Scenario: A virtual model's ask names the two kinds a binding meets
     Given a virtual model "fast" holding no target
     When the person takes up the ask on the port of "fast" without a drag
-    Then the picker of stored accounts opens
+    Then an ask offers a router or a target before anything else

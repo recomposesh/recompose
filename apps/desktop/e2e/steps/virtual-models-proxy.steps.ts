@@ -3,6 +3,8 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import type { GatewayAnswer } from '../gateway-client';
+import type { KeyProbeStub } from '../key-probe-stub';
+import type { ScriptedProvider } from '../scripted-provider';
 
 import { Given, Then, When } from '../fixtures';
 import {
@@ -36,6 +38,18 @@ const ANSWERED = 200;
 const REFUSED_BY_CONFIG = 502;
 
 const NO_SUCH_MODEL = 404;
+
+/**
+ * Every real model name that left the machine, whichever stand-in the scenario was served by.
+ *
+ * @summary Both stand-ins answer the same reading, and a scenario is served by exactly one of
+ * them. Reading only the probe would let a routers scenario prove nothing left the machine while
+ * every attempt reached the other stand-in, which is a check that passes by asking the wrong
+ * question.
+ */
+function everythingAsked(probe: KeyProbeStub, scripted: ScriptedProvider): readonly string[] {
+  return [...probe.modelsAsked(), ...scripted.modelsAsked()];
+}
 
 const answers = new WeakMap<Page, GatewayAnswer>();
 
@@ -131,9 +145,12 @@ When('a client asks the gateway for its model listing', async ({ page }) => {
   answers.set(page, await readFrom(address, MODEL_LISTING));
 });
 
-Then("the target's provider receives it under the target's real model name", ({ keyProbe }) => {
-  expect(keyProbe.modelsAsked()).toEqual([REAL_MODEL]);
-});
+Then(
+  "the target's provider receives it under the target's real model name",
+  ({ keyProbe, scriptedProvider }) => {
+    expect(everythingAsked(keyProbe, scriptedProvider)).toEqual([REAL_MODEL]);
+  },
+);
 
 Then('the answer travels back to the caller', ({ page }) => {
   const answer = answerHeld(page);
@@ -149,8 +166,8 @@ Then('the gateway answers a typed refusal naming the unknown model', ({ page }) 
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
 });
 
-Then('no request leaves the machine', ({ keyProbe }) => {
-  expect(keyProbe.modelsAsked()).toEqual([]);
+Then('no request leaves the machine', ({ keyProbe, scriptedProvider }) => {
+  expect(everythingAsked(keyProbe, scriptedProvider)).toEqual([]);
 });
 
 Then('the gateway answers a typed refusal naming the missing target', ({ page }) => {
@@ -169,8 +186,8 @@ Then('the gateway answers a typed refusal naming the missing credential', ({ pag
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
 });
 
-Then('nothing else receives the request', ({ keyProbe }) => {
-  expect(keyProbe.modelsAsked()).toEqual([]);
+Then('nothing else receives the request', ({ keyProbe, scriptedProvider }) => {
+  expect(everythingAsked(keyProbe, scriptedProvider)).toEqual([]);
 });
 
 Then('the listing names {string} and {string}', ({ page }, first: string, second: string) => {

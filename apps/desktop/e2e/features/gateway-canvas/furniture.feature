@@ -18,3 +18,8 @@ Feature: The minimap and zoom controls stand on the canvas
     Given the app in the dark scheme
     When the person opens the gateway detail
     Then the minimap and the zoom controls draw in the dark scheme
+
+  Scenario: The minimap mirrors a composition carrying a router
+    Given a gateway holding a virtual model bound to a failover router over two targets
+    When the person opens the gateway detail
+    Then the minimap draws every node of the composition

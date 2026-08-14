@@ -4,7 +4,8 @@ import type { VirtualModel } from '@recompose/contracts';
 import { expect } from '@playwright/test';
 
 import { takeUpThePortAsk } from '../canvas-gestures';
-import { accountPicker, DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
+import { accountPicker, pickTheTargetKind } from '../canvas-picker';
+import { DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
 import { openGatewayDrawer, servedRow } from '../gateway-drawer';
 import { focusedGateway } from '../scenario-memory';
@@ -98,6 +99,7 @@ When('the person opens the target picker for a new virtual model', async ({ page
   await openGatewayCanvas(page, focusedGateway(page));
   await takeUpThePortAsk(page, GATEWAY_NODE);
   await takeUpThePortAsk(page, DRAFT_NODE);
+  await pickTheTargetKind(page);
   await expect(accountPicker(page)).toBeVisible();
 });
 
