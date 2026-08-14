@@ -75,6 +75,12 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
 
 The design's task decomposition named three feature files. The approved scenario set holds seven, and the phase rule gives each its own unit, so task 8 fans out seven ways rather than three.
 
+## One question for the review gate
+
+The rules review on task 4 read every `@summary` docstring on a module-private function as a banned comment. The cluster checked before following it and found 53 already committed across `packages/engine/src` and `apps/desktop/src/main`, several of them written by this change's own earlier clusters. CLAUDE.md carves the pattern out for API documentation the tooling reads, which names exported declarations, so the strict reading and the house practice genuinely disagree.
+
+The train kept them, because changing course mid-flight would have rewritten files other clusters own for a rule nobody had stated. Settle it at the gate, in either direction, because it recurs on every cluster that writes a helper.
+
 ## Standing rules for every cluster
 
 - Test-first. Each task reports its failing run before writing any implementation, and lands as one green commit.
