@@ -102,10 +102,12 @@ sequenceDiagram
 
 ## Data model and contracts
 
+**A correction on the version number.** This document assumed a tree storing version 2, so it says version 3 throughout. The gateway API key change landed first and took 3 with an identity restamp, so the router change stores **version 4** and registers a `from: 3` entry. Every "version 3" below reads as "the version this change stores." Nothing else moves: the 2-to-3 step rewrites nothing, so a stored version 2 document still climbs the ladder and serves what it served.
+
 ### Stored shape, `packages/contracts/src/gateway-config.ts`
 
 ```ts
-export const GATEWAY_CONFIG_VERSION = 3;
+export const GATEWAY_CONFIG_VERSION = 4;
 
 export const routeNodeIdSchema = nonBlankString;
 
@@ -417,7 +419,7 @@ Decision records, at implementation:
 
 **Contracts to everyone:**
 
-- Produces: `routingSchema`, `routeNodeSchema`, `routerPolicySchema`, `routeNodeIdSchema`, `ROUTER_DEPTH_LIMIT`, `mintRouteNodeId(): string`, `GATEWAY_CONFIG_VERSION = 3`, and the inferred `Routing`, `RouteNode`, `RouterPolicy` types.
+- Produces: `routingSchema`, `routeNodeSchema`, `routerPolicySchema`, `routeNodeIdSchema`, `ROUTER_DEPTH_LIMIT`, `mintRouteNodeId(): string`, `GATEWAY_CONFIG_VERSION = 4`, and the inferred `Routing`, `RouteNode`, `RouterPolicy` types.
 - Produces: `engineRoutingSchema`, the widened `engineVirtualModelSchema`, `engineSpendRequestSchema` with `routeNode`, `engineTrafficReportSchema` with `routeNode`, and the three-level `gatewayTrafficSchema`.
 
 **Engine routing core to the serving path:**

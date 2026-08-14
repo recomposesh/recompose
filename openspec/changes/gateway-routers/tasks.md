@@ -15,8 +15,15 @@ The phase then deleted the copy without a commit, per the rule. The scenarios gr
 
 Ownership is disjoint by construction. A dependency below is a data dependency, never a file one.
 
-- [ ] **Task 0: design tokens.** Depends on nothing. Authors `--color-router` and `--color-router-ink` and the chamfer treatment in the "recompose-design-system" design project. Owns no repository file. Runs first because task 7 waits on it and nothing else does.
-- [ ] **Task 1: contracts config.** Depends on nothing. Lands `routingSchema`, `mintRouteNodeId`, version 3, and the migration. Owns `packages/contracts/src/gateway-config.ts`, `gateway-config.test-d.ts`, `gateway-config-targets.test.ts`, `gateway-config-migration.test.ts`. Runs alone, because the contract files are the one collision point every other cluster reads.
+- [x] **Task 0: design tokens.** The design project now carries `--indigo` in both schemes, points `--tint-router` at it, and defines `--ink-router` for the first time: `#a5a3ff` on dark, `#3f3daa` on light. Task 7 has the values it waited for.
+
+  Two findings came out of it. The project already held `--tint-router`, set to orange, which is the archived canvas decision 13 reservation that never reached `theme.css`. The maintainer moved it to indigo on a measurement: the app spends orange on `--color-warning` and on the draft cable, and that cable is on screen the moment a router appears.
+
+  The project's `NodeCard.jsx` still draws the router as a plain rectangle wearing the `swap` glyph. That change waits for the design app's own build, because `_ds_bundle.js` is a compiled artifact this session can't regenerate. Shipping the source without its bundle would leave the preview card lying.
+
+  One drift the router work didn't cause and didn't fix. The project sets `--tint-model` to blue where the app ships pink. It also draws the card at 158 by 78 where the app ships 184 by 88.
+
+- [ ] **Task 1: contracts config.** Depends on nothing. Lands `routingSchema`, `mintRouteNodeId`, version 4, and the migration. Owns `packages/contracts/src/gateway-config.ts`, `gateway-config.test-d.ts`, `gateway-config-targets.test.ts`, `gateway-config-migration.test.ts`. Runs alone, because the contract files are the one collision point every other cluster reads.
 - [ ] **Task 2: contracts protocol.** Depends on task 1. Lands `engineRoutingSchema`, the spend request with its route node, and the traffic shapes. Owns `packages/contracts/src/engine-protocol.ts`, `engine-protocol.test-d.ts`, `engine-traffic.ts`, `engine-traffic.test-d.ts`.
 - [ ] **Task 3: engine routing core.** Depends on task 2. Lands `walkAttempts`, `classify`, the two policies, the cooldown ledger, and `firstDeclaredTarget`. Owns `packages/engine/src/routing/` entire, sources and specs.
 - [ ] **Task 4: engine serving path.** Depends on task 3. Reshapes `proxyModelRequest` and widens the refusal wire. Owns the serving-path files the design's file map names, plus the six side paths and their sibling specs.
