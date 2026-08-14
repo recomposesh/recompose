@@ -1,7 +1,11 @@
 import type { SubscriptionAccountView } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { useForgetSubscription, useRestoreSubscription } from '../../../../shared/api';
+import {
+  useActivateSubscription,
+  useForgetSubscription,
+  useRestoreSubscription,
+} from '../../../../shared/api';
 import { Badge, BrandMark, OverflowMenu, StatusChip } from '../../../../shared/ui';
 import { subscriptionMarkFor, subscriptionTitleFor } from '../../model/provider-catalog';
 
@@ -19,6 +23,7 @@ type RowActions = {
   view: SubscriptionAccountView;
   onSignInAgain: () => void;
   onRemove: () => void;
+  onUseThis: () => void;
 };
 
 /**
@@ -26,7 +31,17 @@ type RowActions = {
  * one an adopted row stands for. So an adopted row never offers it, anywhere, and names the tool
  * that owns its credential instead.
  */
-function quieterActions({ view, onSignInAgain, onRemove }: RowActions) {
+/**
+ * Whether this account can be asked to take over the plan's traffic.
+ *
+ * @summary The one already spending has nothing to take over, and a lapsed one has nothing behind
+ * it to answer with, so neither offers the act. Everything else does.
+ */
+function couldTakeOver(view: SubscriptionAccountView): boolean {
+  return !view.active && view.standing === 'connected';
+}
+
+function quieterActions({ view, onSignInAgain, onRemove, onUseThis }: RowActions) {
   const signInAgain =
     view.standing === 'lapsed' || view.provenance === 'machine'
       ? []
@@ -39,7 +54,19 @@ function quieterActions({ view, onSignInAgain, onRemove }: RowActions) {
           },
         ];
 
+  const useThis = couldTakeOver(view)
+    ? [
+        {
+          label: 'Use this account',
+          icon: 'check' as const,
+          tone: 'accent' as const,
+          onSelect: onUseThis,
+        },
+      ]
+    : [];
+
   return [
+    ...useThis,
     ...signInAgain,
     { label: 'Remove', icon: 'trash' as const, tone: 'danger' as const, onSelect: onRemove },
   ];
@@ -71,13 +98,21 @@ function firstRefusal(refusals: readonly (string | undefined)[]) {
   return refusals.find((refusal) => refusal !== undefined);
 }
 
+/** What the account is called, with whatever the row has to say about it beside the name. */
+function accountTitle(view: SubscriptionAccountView): ReactNode {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="text-card-title text-ink">{subscriptionTitleFor(view.provider)}</span>
+      {view.plan === undefined ? null : <Badge>{view.plan}</Badge>}
+      {view.active ? <Badge>In use</Badge> : null}
+    </span>
+  );
+}
+
 function accountIdentity(view: SubscriptionAccountView, refusal: string | undefined): ReactNode {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-      <span className="flex items-center gap-1.5">
-        <span className="text-card-title text-ink">{subscriptionTitleFor(view.provider)}</span>
-        {view.plan === undefined ? null : <Badge>{view.plan}</Badge>}
-      </span>
+      {accountTitle(view)}
       <span className="text-detail text-ink-secondary">
         {view.signedInAs ?? view.label}
         {view.provenance === 'machine' ? ' · from this machine' : ''}
@@ -103,8 +138,9 @@ function accountIdentity(view: SubscriptionAccountView, refusal: string | undefi
 export function SubscriptionAccountRow({ view }: SubscriptionAccountRowProps) {
   const restore = useRestoreSubscription();
   const forget = useForgetSubscription();
+  const useThis = useActivateSubscription();
 
-  const refusal = firstRefusal([restore.refusal, forget.refusal]);
+  const refusal = firstRefusal([restore.refusal, forget.refusal, useThis.refusal]);
 
   const signInAgain = () => {
     restore.mutate({ id: view.id });
@@ -122,6 +158,9 @@ export function SubscriptionAccountRow({ view }: SubscriptionAccountRowProps) {
           onSignInAgain: signInAgain,
           onRemove: () => {
             forget.mutate({ id: view.id });
+          },
+          onUseThis: () => {
+            useThis.mutate({ id: view.id });
           },
         })}
         label={`Actions for ${view.label}`}

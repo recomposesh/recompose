@@ -125,6 +125,18 @@ export function useRestoreSubscription() {
 }
 
 /**
+ * Points a plan's traffic at one of the accounts held for it.
+ *
+ * @summary A person can hold two accounts for one plan, and only one of them spends. This is how
+ * the other takes over. It travels the same act lane as restoring, because the answer is the whole
+ * view list: moving the pointer changes which row reads as in use, so every row is republished
+ * rather than the one that was pressed.
+ */
+export function useActivateSubscription() {
+  return useSubscriptionAct(async (request) => window.recompose['subscriptions:activate'](request));
+}
+
+/**
  * Takes a subscription account out of the registry it was held in.
  *
  * @summary Removal is an act on the account row rather than on the sign-in, so it travels the

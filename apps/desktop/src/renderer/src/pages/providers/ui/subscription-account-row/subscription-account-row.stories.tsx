@@ -92,11 +92,11 @@ export const AdoptedAndLapsed = meta.story({
 });
 
 /**
- * The overflow open on a connected account.
+ * The overflow open on a connected account that is not the one being spent.
  *
- * @summary The menu holds the two quieter acts and nothing else, because every setup detail the
- * row once copied now travels with the sign-in itself, and the pointer follows the sign-in
- * rather than a menu act.
+ * @summary The menu holds the quieter acts and nothing else, because every setup detail the row
+ * once copied now travels with the sign-in itself. Taking over leads, because it is the only one
+ * of the three a person reaches for while things are working.
  */
 export const QuieterActions = meta.story({
   args: { view: { ...connectedSubscription, active: false } },
@@ -105,7 +105,67 @@ export const QuieterActions = meta.story({
 
     const actions = await screen.findAllByRole('menuitem');
 
-    await expect(actions.map((action) => action.textContent)).toEqual(['Sign in again', 'Remove']);
+    await expect(actions.map((action) => action.textContent)).toEqual([
+      'Use this account',
+      'Sign in again',
+      'Remove',
+    ]);
+  },
+});
+
+/**
+ * The account the provider is spending right now, said on the row rather than left to be guessed.
+ *
+ * @summary A person holding two accounts for one plan has no way to tell which one serves without
+ * this. It is a word rather than an act, because the account already spending is not something to
+ * press.
+ */
+export const TheOneBeingSpent = meta.story({
+  args: { view: { ...connectedSubscription, active: true } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('In use')).toBeVisible();
+  },
+});
+
+/**
+ * Another account for the same plan, which can be asked to take over.
+ *
+ * @summary The act sits behind the overflow, because choosing which account spends is not part of
+ * reading the row.
+ */
+export const AnotherAccountCanTakeOver = meta.story({
+  args: { view: { ...connectedSubscription, active: false } },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText('In use')).toBeNull();
+
+    await userEvent.click(await canvas.findByRole('button', { name: /Actions for/u }));
+
+    await expect(await screen.findByRole('menuitem', { name: 'Use this account' })).toBeVisible();
+  },
+});
+
+/** @summary Opens the overflow and reads whether taking over is on offer at all. */
+async function takeoverIsOffered(canvas: {
+  findByRole: (role: string, options: { name: RegExp }) => Promise<HTMLElement>;
+}): Promise<boolean> {
+  await userEvent.click(await canvas.findByRole('button', { name: /Actions for/u }));
+
+  return screen.queryByRole('menuitem', { name: 'Use this account' }) !== null;
+}
+
+/** The account already spending offers no way to start spending it again. */
+export const TheOneBeingSpentOffersNoTakeover = meta.story({
+  args: { view: { ...connectedSubscription, active: true } },
+  play: async ({ canvas }) => {
+    await expect(await takeoverIsOffered(canvas)).toBe(false);
+  },
+});
+
+/** A lapsed account cannot take over, because nothing behind it would answer. */
+export const ALapsedAccountCannotTakeOver = meta.story({
+  args: { view: { ...connectedSubscription, active: false, standing: 'lapsed' as const } },
+  play: async ({ canvas }) => {
+    await expect(await takeoverIsOffered(canvas)).toBe(false);
   },
 });
 
