@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A person running gateways all day has no way to answer what they spent, what failed, or which model carried the traffic. The telemetry surfaces answer for one gateway over one rolling minute, and they forget. This surface therefore keeps a ledger of its own. Main accrues every settled row into tuple-keyed hour buckets, prunes to the retention window the settings hold, and answers one range at a time. The screen over that ledger stands as a single explorer. Two filters narrow it, and a window either reaches back a fixed width or takes the edges a person draws on a calendar. Five tiles read the standing window, one chart draws it, and three panels fold it down the domain hierarchy. The chart draws the whole window rather than the buckets that carry traffic, and a window that folded to nothing names its own silence. Every reading also exists as printed text, and missing data reads as missing rather than as zero. Every figure carrying money says which basis priced it.
+A person running gateways all day has no way to answer what they spent, what failed, or which model carried the traffic. The telemetry surfaces answer for one gateway over one rolling minute, and they forget. This surface therefore keeps a ledger of its own. Main accrues every settled row into tuple-keyed hour buckets, prunes to the retention window the settings hold, and answers one range at a time. The screen over that ledger stands as a single explorer. Two filters narrow it, and a window either reaches back a fixed width, opens at the week or month standing, or takes the edges a person draws on a calendar. Five tiles read the standing window, one chart draws it, and three panels fold it down the domain hierarchy. The chart draws the whole window rather than the buckets that carry traffic, and a window that folded to nothing names its own silence. Every reading also exists as printed text, and missing data reads as missing rather than as zero. Every figure carrying money says which basis priced it.
 
 ## Requirements
 
@@ -126,7 +126,7 @@ The address MUST carry a gateway filter and a provider filter. Each is a list, a
 
 ### Requirement: A window is a preset or a range a person draws
 
-The range control MUST offer the live hour, the last 24 hours, the last 7 days, the last 30 days, and a custom window. A custom window MUST come from a calendar a person draws a range on, with a clock field at each edge. The first day pressed on a settled window MUST open a new window over that day rather than move either standing edge. The press after it MUST close that window. A press behind the opening edge MUST reopen the window there. A press on a window already drawn MUST start a new one. Both edges MUST keep the clock they already stood at. The calendar MUST also offer the standing presets, including this week and this month, which land as custom windows over the reader's own week and month. The calendar grid, its keyboard walk, its month navigation, and its accessible day names MUST come from a library rather than a hand-built grid. The control MUST render segments wider than the retention window inert, with the window named as the reason.
+The range control MUST offer the live hour, the last 24 hours, the last 7 days, the last 30 days, and a custom window. A custom window MUST come from a calendar a person draws a range on, with a clock field at each edge. The first day pressed on a settled window MUST open a new window over that day rather than move either standing edge. The press after it MUST close that window. A press behind the opening edge MUST reopen the window there. A press on a window already drawn MUST start a new one. Both edges MUST keep the clock they already stood at. The calendar MUST also offer the standing presets, including this week and this month. Those two MUST stand as ranges of their own rather than as drawn windows, opening at the reader's week or month start and closing at the present. Every act inside the popover MUST draft rather than land, and Apply alone MUST move the readings. The calendar MUST paint the window drafted, and the row a person picked MUST read as picked whenever the popover opens again. The calendar grid, its keyboard walk, its month navigation, and its accessible day names MUST come from a library rather than a hand-built grid. The control MUST render segments wider than the retention window inert, with the window named as the reason.
 
 #### Scenario: a drawn range moves every reading
 
@@ -143,8 +143,14 @@ The range control MUST offer the live hour, the last 24 hours, the last 7 days, 
 #### Scenario: this week lands on the reader's own week
 
 - Given the window stands at the last 24 hours
-- When the person picks This week
+- When the person picks This week and applies it
 - Then the window opens at the local week start and reaches the present
+
+#### Scenario: the popover names the window it stands on
+
+- Given the window stands on This month
+- When the person opens the range popover again
+- Then This month reads as the picked window rather than a custom range
 
 ### Requirement: Cost tells the truth about its basis
 
