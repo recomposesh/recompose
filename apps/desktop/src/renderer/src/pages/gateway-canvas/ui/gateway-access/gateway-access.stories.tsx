@@ -62,6 +62,16 @@ export const HeldButNotRequired = meta.story({
   },
 });
 
+/** Nothing here waits for a save, because nothing here is a field a person types into. */
+export const NothingWaitsForASave = meta.story({
+  args: { gateway: requiringTheKey },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('switch', { name: /API key/ })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Save' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Cancel' })).toBeNull();
+  },
+});
+
 /** Regenerating asks first, and the question names the clients it breaks. */
 export const RegeneratingAsksFirst = meta.story({
   args: { gateway: requiringTheKey },
