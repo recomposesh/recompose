@@ -115,4 +115,5 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0107](0107-a-port-is-where-a-server-answers-today.md)                          | A port is where a server answers today                                              | Accepted   | 2026-08-14 |
 | [0108](0108-a-baseline-compares-the-design-not-the-runner.md)                   | A baseline compares the design, not the runner                                      | Accepted   | 2026-08-14 |
 | [0109](0109-a-scenario-refuses-to-pass-vacuously.md)                            | A scenario refuses to pass vacuously                                                | Accepted   | 2026-08-14 |
+| [0110](0110-a-swept-vault-never-takes-a-row-with-it.md)                         | A swept vault never takes a row with it                                             | Accepted   | 2026-08-14 |
 | [0110](0110-desktop-jobs-run-when-desktop-can-change.md)                        | Desktop Jobs Run When Desktop Can Change                                            | Accepted   | 2026-08-14 |

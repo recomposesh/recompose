@@ -32,6 +32,7 @@ import { adoptLegacyConfigHome } from '../storage/config-home';
 import { firstRequestReporter } from '../storage/settings-amend';
 import { loadSettingsFile } from '../storage/settings-store';
 import { startStorageWatchers } from '../storage/storage-watchers';
+import { reconcileVault } from '../storage/vault-maintenance';
 import { subscriptionCredentialStore } from '../subscriptions/subscription-credential-store';
 import { machineCustody } from '../subscriptions/subscriptions-wiring';
 import { openAccountKinds } from '../usage/account-kinds';
@@ -122,10 +123,25 @@ function watchEngineStates(
   deps.repaintStates(engineHost.states());
 }
 
+/**
+ * @summary Boot is the one moment nothing else is writing either store, which is why the repair
+ * runs here. What is worth saying is the repair's to decide, so this prints whatever it hands back.
+ */
+async function repairedStore(deps: StoredBootDeps): Promise<void> {
+  const settled = await reconcileVault(deps.recomposeHome(), deps.onCorrupt);
+
+  for (const note of settled.notes) {
+    console.warn(note);
+  }
+}
+
 export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredBoot> {
   await adoptLegacyConfigHome(deps.legacyUserDataPath, deps.recomposeHome());
 
   const boot = await storedBootState(deps.recomposeHome(), deps.onCorrupt);
+
+  await repairedStore(deps);
+
   const custody = machineCustody(deps.recomposeHome());
   const { accountKinds, usageStore } = await openUsageLedger(deps);
   const engineHost = createEngineHost({
