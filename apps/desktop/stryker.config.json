@@ -32,6 +32,7 @@
     "src/renderer/src/pages/gateway-canvas/lib/log-scope.ts",
     "src/renderer/src/pages/gateway-canvas/ui/gateway-canvas-page/route-seats.ts",
     "src/renderer/src/pages/gateway-canvas/ui/gateway-canvas-page/canvas-subjects.ts",
+    "src/renderer/src/pages/gateway-canvas/model/served-models.ts",
     "src/renderer/src/pages/usage/lib/live-window.ts",
     "src/renderer/src/pages/usage/lib/usage-groups.ts",
     "src/renderer/src/pages/usage/lib/usage-search.ts",
