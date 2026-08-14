@@ -146,6 +146,23 @@ The decision folded three items from #155 and one from #154 into this train. The
 - **The failure reveal anchoring.** Task 7b owns it.
 - **The furniture scenario.** Task 8 owns it, on main's amended line.
 
+- [x] **Task 4b: one dead account costs only that child.** Landed as `66b0098d`, merged at `22a3ea24`. Mutation 95.83 across the four files, against a break of 80, and `gateway-attempt.ts` rose from a measured baseline of 85.51 to 92.14 with no uncovered mutants left. It judged and named every one of the twelve survivors, and none of them arrived with this commit.
+
+  A child whose account left now says `has no target` beside its siblings in the exhausted refusal. A routing standing one target alone still answers the shipped `holds no target` sentence, which the proxy scenarios pin and which still passes against the real app.
+
+  **It answered the stale-standing question with a no, and measured both sides rather than asserting one.** After the walk stops ending on a custody failure, the stale reading and the fresh reading agree everywhere it could find a divergence. A lone target, a router child, and both side paths answer the same status, body and code either way. The cost of refreshing isn't small. `createGatewayApp` builds `routingMemory()`, so restarting the child forgets the cooldown ledger and the rotation cursors for every virtual model on that gateway. Not only the ones touching the account that left. Removing one key would un-cool every rate-limited target the app had learned. The restart also kills in-flight requests, and an account can back targets in any stored gateway, so a correct refresh has to sweep them all. If the mirror ever needs to stay fresh, the shape that fits is a directive updating standings in place, which reaches past this cluster and past one file.
+
+  **One line beyond the four edits, said out loud.** The short circuit for a seat the table already stands unbound answered `grant-missing-credential` and now answers `grant-missing-target`. `standingOf` mints `removed` for exactly the condition `resolveTargetCustody` answers `missing-target` for, so leaving them apart would have shipped one fact reading two ways depending only on how fresh the table was.
+
+  Five places where the approved documents disagree with what shipped, named rather than absorbed:
+
+  - **Decision 6 is narrower than the defect it cites.** It says a missing _credential_ becomes a per-child outcome, while #3317 is about custody failing at all, which is what actually poisoned the pool here. It wants the word `custody`. **This is the maintainer's to amend, and the train hasn't touched the proposal.**
+  - `design.md`'s classification table had no row for a missing-target grant, and its `AttemptReading` sketch listed five arms where six shipped. Both corrected in place, since the solution design is this change's own artifact.
+  - Two places disagreed about one condition: `refusalTheEntryEarns` answered `missingTarget` for a removed standing while `readingAtNode`'s docstring called the same condition a credential failure. One now.
+  - The `resolveSpendGrant` docstring promising that a ladder whose first child lost its credential still spends its siblings was true for one verdict and false for the other. True for both now, without touching it.
+
+  `whyOf` hit the complexity ceiling at five arms and split into the two reasons carrying a provider status and the four that were never answered. It touched no gate.
+
 ## A graduated scenario found a real defect, which is what they're for
 
 Unit 8a wrote the approved scenario _A credential refusal cools that child alone_ and it couldn't go green on the shipped app. With a failover router over two targets, an account leaving the registry makes the gateway answer 502 `holds no target` and the healthy sibling never hears about it. Nothing leaves the machine. That's the failure this whole change exists to prevent, and it reproduces CLIProxyAPI#3317 inside recompose.

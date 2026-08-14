@@ -267,6 +267,7 @@ The transport layer hands the walk one of these readings per attempt. The catch-
 export type AttemptReading =
   | { kind: 'transport-failure' }
   | { kind: 'grant-missing-credential' }
+  | { kind: 'grant-missing-target' }
   | { kind: 'refused'; status: number; retryableHint?: boolean; coolUntil?: number }
   | { kind: 'stream-error-before-commit'; equivalentStatus: number; coolUntil?: number }
   | { kind: 'served' };
@@ -282,6 +283,7 @@ One exported table in `packages/engine/src/routing/outcome-classification.ts` ma
 | ------------------------------------------------------------------------ | ------- | ----------------------------- |
 | Transport failure, no status                                             | Move on | Default                       |
 | Grant answered missing-credential for this child                         | Move on | Default                       |
+| Grant answered missing-target for this child                             | Move on | Default                       |
 | Normalized hint says retryable, any status                               | Move on | Provider signal, else default |
 | Normalized hint says not retryable, any status                           | Answer  | None                          |
 | Status 429                                                               | Move on | Provider signal, else default |
@@ -291,7 +293,7 @@ One exported table in `packages/engine/src/routing/outcome-classification.ts` ma
 | Status 400, 401, 402, 403, 404, 409, 413, 422, and every unlisted status | Answer  | None                          |
 | Served                                                                   | Answer  | None                          |
 
-Notes the table's spec pins: a 401 on a subscription child classifies after the transport's single refresh, which already exists and satisfies ADR-0081 rule 7. Context-length failures, invalid tool schemas, and thinking-signature failures all surface as 400-class statuses and therefore answer, per ADR-0081 rule 8. A missing credential moves on, so one dead credential never poisons a sibling (proposal decision 6, the repair for CLIProxyAPI#3317).
+Notes the table's spec pins: a 401 on a subscription child classifies after the transport's single refresh, which already exists and satisfies ADR-0081 rule 7. Context-length failures, invalid tool schemas, and thinking-signature failures all surface as 400-class statuses and therefore answer, per ADR-0081 rule 8. Custody failing for one child moves on, so one dead account never poisons a sibling (proposal decision 6, the repair for CLIProxyAPI#3317). This document first wrote that row for a missing credential alone, and task 4b found the gap the hard way. An account leaving the registry answers `missing-target`, never `missing-credential`, and that's the cause #3317 names. The table carries both readings now, and decision 6 should read custody rather than credential.
 
 ### Cooldown
 
