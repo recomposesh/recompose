@@ -29,6 +29,25 @@ function watchVisibility(canvas: HTMLCanvasElement) {
   };
 }
 
+function watchScheme() {
+  const isLight = () => !document.documentElement.classList.contains('dark');
+
+  let light = isLight();
+
+  const observer = new MutationObserver(() => {
+    light = isLight();
+  });
+
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  return {
+    light: () => light,
+    dispose: () => {
+      observer.disconnect();
+    },
+  };
+}
+
 function watchPointer() {
   let pointer: { x: number; y: number } | null = null;
 
@@ -87,6 +106,10 @@ function createSurface(gl: WebGLRenderingContext, canvas: HTMLCanvasElement, pix
   };
 }
 
+function restingFrame(pixelRatio: number): Frame {
+  return { width: 0, height: 0, pixelRatio, seconds: 0, reveal: 0, inverted: false };
+}
+
 export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () => void {
   const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
 
@@ -97,13 +120,16 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
   const programs = createPrograms(gl);
   const plateTexture = createPlateTexture(gl);
   const plates = createPlateSource(sources, stillness);
-  const visibility = watchVisibility(canvas);
-  const pointer = watchPointer();
+  const watchers = {
+    visibility: watchVisibility(canvas),
+    pointer: watchPointer(),
+    scheme: watchScheme(),
+  };
 
   const surface = createSurface(gl, canvas, pixelRatio);
-  const parts = [surface, pointer, visibility, plates];
+  const parts = [surface, plates, ...Object.values(watchers)];
 
-  let frame: Frame = { width: 0, height: 0, pixelRatio, seconds: 0, reveal: 0 };
+  let frame = restingFrame(pixelRatio);
   let motion: HeroMotion = restingMotion({ width: innerWidth, height: innerHeight });
   let handle = 0;
 
@@ -112,7 +138,7 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
   const draw = (now: number) => {
     handle = requestAnimationFrame(draw);
 
-    if (!visibility.showing()) return;
+    if (!watchers.visibility.showing()) return;
 
     const still = stillness.matches;
 
@@ -121,10 +147,11 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
       ...surface.size(),
       seconds: still ? 0 : (now - startedAt) / 1000,
       reveal: frame.reveal + (1 - frame.reveal) * REVEAL_EASE,
+      inverted: watchers.scheme.light(),
     };
 
     motion = heroMotionStep(motion, {
-      pointer: pointer.read(),
+      pointer: watchers.pointer.read(),
       elapsedSeconds: frame.seconds,
       stillness: still,
       viewport: { width: innerWidth, height: innerHeight },

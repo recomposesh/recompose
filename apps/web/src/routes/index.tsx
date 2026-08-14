@@ -38,7 +38,7 @@ function Home() {
             download for macOS
           </a>
           <Link
-            className="hero-lift rounded-lg bg-fd-accent/40 px-5 py-3 text-sm text-fd-foreground backdrop-blur-sm hover:bg-fd-accent/70"
+            className="hero-lift rounded-lg px-5 py-3 text-sm text-fd-foreground transition-colors hover:bg-fd-accent"
             to="/docs/$"
             params={{ _splat: '' }}
           >

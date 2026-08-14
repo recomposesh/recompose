@@ -27,6 +27,7 @@ describe('the hero shaders carry only what the canvas feeds them', () => {
       'u_fog',
       'u_grade',
       'u_grain',
+      'u_invert',
     ]);
   });
 

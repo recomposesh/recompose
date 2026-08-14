@@ -13,6 +13,7 @@ uniform float u_beam;
 uniform float u_fog;
 uniform float u_grade;
 uniform float u_grain;
+uniform float u_invert;
 
 #include noise
 
@@ -80,6 +81,9 @@ void main() {
 
   float grain = hash(gl_FragCoord.xy + fract(u_time * 7.31) * vec2(191.0, 122.0)) - 0.5;
   color += grain * u_grain;
+
+  vec3 negative = vec3(1.0) - smoothstep(vec3(0.03), vec3(0.5), color);
+  color = mix(color, negative, u_invert);
 
   gl_FragColor = vec4(color, 1.0);
 }

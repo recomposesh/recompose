@@ -18,6 +18,7 @@ export type Frame = {
   pixelRatio: number;
   seconds: number;
   reveal: number;
+  inverted: boolean;
 };
 
 const toGl = (point: { x: number; y: number }, frame: Frame) => ({
@@ -91,5 +92,6 @@ export function paintComposite(
   gl.uniform1f(at('u_fog'), LOOK.fogDensity);
   gl.uniform1f(at('u_grade'), LOOK.gradeMix);
   gl.uniform1f(at('u_grain'), LOOK.grain);
+  gl.uniform1f(at('u_invert'), frame.inverted ? 1 : 0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
