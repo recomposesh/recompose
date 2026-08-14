@@ -1,7 +1,7 @@
 import type { AccountsDocument } from '@recompose/contracts';
 
 import { ACCOUNTS_VERSION } from '@recompose/contracts';
-import { expect } from 'storybook/test';
+import { expect, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 import { inProvidersColumn } from '#.storybook/providers-column';
@@ -43,6 +43,31 @@ export const Connected = meta.story({
 export const Empty = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText(/local runtime serves models/)).toBeVisible();
+  },
+});
+
+/**
+ * A moved server keeps its row and reads at the port it moved to.
+ *
+ * @summary This is where the move can be proved: the surface reads the registry, so a move that
+ * stood a second row up, or dropped the one it moved, shows here as a count rather than as a
+ * refusal nobody sees.
+ */
+export const MovedToAnotherPort = meta.story({
+  parameters: { bridge: { accounts: runtimes } },
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Actions for Ollama' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Move to another port' }));
+
+    const port = await screen.findByRole('textbox', { name: 'Port' });
+
+    await userEvent.clear(port);
+    await userEvent.type(port, '11435');
+    await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
+
+    await expect(await canvas.findByText('http://127.0.0.1:11435')).toBeVisible();
+    await expect(canvas.queryByText('http://127.0.0.1:11434')).toBeNull();
+    await expect(canvas.getAllByRole('listitem')).toHaveLength(1);
   },
 });
 

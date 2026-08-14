@@ -1,8 +1,31 @@
-import { expect } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { emitLaunchRefused } from '../../../../shared/testing';
 import { ConnectWay } from './connect-way';
+
+const NOTHING_OPENED = 'no terminal emulator on this machine could run claude /login';
+const ANOTHER_PLANS_NOTE = 'no terminal emulator on this machine could run codex login';
+
+/** An empty machine whose sign-in never answers, which is the only way the wait stays on screen. */
+const waitingOnASignIn = {
+  machineReading: { holds: 'nothing' as const },
+  overrides: { 'subscriptions:sign-in': async () => new Promise<never>(() => undefined) },
+};
+
+type WaitingCanvas = {
+  findByRole: (role: string, options: { name: string }) => Promise<HTMLElement>;
+  findByText: (text: string) => Promise<HTMLElement>;
+};
+
+async function theWaitIsOnScreen(canvas: WaitingCanvas): Promise<void> {
+  await userEvent.click(await canvas.findByRole('button', { name: 'Sign in to Anthropic' }));
+
+  await expect(
+    await canvas.findByText('Waiting for Claude Code to finish signing in.'),
+  ).toBeVisible();
+}
 
 const accountOnTheMachine = {
   machineReading: {
@@ -45,15 +68,19 @@ const meta = preview.meta({
  * once an account is standing there to take.
  */
 export const AccountFound = meta.story({
+  args: { onConnected: fn() },
   parameters: { bridge: accountOnTheMachine },
-  play: async ({ canvas }) => {
+  play: async ({ args, canvas }) => {
     await expect(await canvas.findByRole('heading', { name: 'Claude Code' })).toBeVisible();
-    await expect(
-      await canvas.findByRole('button', { name: 'Connect dev@example.com' }),
-    ).toBeEnabled();
     await expect(
       await canvas.findByRole('button', { name: 'Sign in with a different account' }),
     ).toBeEnabled();
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Connect dev@example.com' }));
+
+    await waitFor(() => {
+      void expect(args.onConnected).toHaveBeenCalled();
+    });
   },
 });
 
@@ -92,6 +119,47 @@ export const StoreRefused = meta.story({
       await canvas.findByText('macOS did not allow access to the login keychain.'),
     ).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Sign in to Anthropic' })).toBeEnabled();
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Check again' }));
+
+    await expect(
+      await canvas.findByText('macOS did not allow access to the login keychain.'),
+    ).toBeVisible();
+  },
+});
+
+/**
+ * The wait, saying no terminal opened, with the command still there for the person to run.
+ *
+ * @summary The launch and the wait are one act to the main process, so the news that nothing
+ * opened arrives as a push part way through rather than as the act's answer. It reads as a quiet
+ * line rather than a refusal, because the sign-in still lands if the person runs the command.
+ */
+export const NoTerminalOpened = meta.story({
+  parameters: { bridge: waitingOnASignIn },
+  play: async ({ canvas }) => {
+    await theWaitIsOnScreen(canvas);
+
+    emitLaunchRefused({ provider: 'anthropic', note: NOTHING_OPENED });
+
+    await expect(await canvas.findByText(NOTHING_OPENED)).toBeVisible();
+    await expect(
+      canvas.getByRole('button', { name: 'Copy the Claude Code sign-in command' }),
+    ).toBeVisible();
+  },
+});
+
+/** A refusal meant for another plan's sign-in never lands on this one. */
+export const AnotherPlansTerminal = meta.story({
+  parameters: { bridge: waitingOnASignIn },
+  play: async ({ canvas }) => {
+    await theWaitIsOnScreen(canvas);
+
+    emitLaunchRefused({ provider: 'openai', note: ANOTHER_PLANS_NOTE });
+    emitLaunchRefused({ provider: 'anthropic', note: NOTHING_OPENED });
+
+    await expect(await canvas.findByText(NOTHING_OPENED)).toBeVisible();
+    await expect(canvas.queryByText(ANOTHER_PLANS_NOTE)).toBeNull();
   },
 });
 

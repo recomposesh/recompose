@@ -25,12 +25,38 @@ export function wallClock(): Clock {
   };
 }
 
+/**
+ * The sign-in, given one more look when the credential landed before the record naming its owner.
+ *
+ * @summary A vendor tool writes the credential and the identity file as two separate acts, and on
+ * macOS the credential goes to the keychain, so the standing can read connected while the address
+ * is still on its way to disk. An account promoted in that window carries no address, and the rule
+ * that matches an address to an account then matches nothing, which stands the same person up twice.
+ *
+ * One look, not a wait: an address that has not arrived by then folds into the row on the next
+ * observation anyway, and holding the sign-in open longer than that costs the person a stall.
+ */
+async function onceMoreForTheAddress(
+  watch: SignInWatch,
+  seen: SubscriptionObservation,
+): Promise<SubscriptionObservation> {
+  if (seen.signedInAs !== undefined) {
+    return seen;
+  }
+
+  await watch.clock.sleep(watch.everyMs);
+
+  const again = await watch.observe();
+
+  return again.standing === 'connected' ? again : seen;
+}
+
 export async function awaitSignIn(watch: SignInWatch): Promise<SubscriptionObservation | null> {
   for (;;) {
     const seen = await watch.observe();
 
     if (seen.standing === 'connected') {
-      return seen;
+      return onceMoreForTheAddress(watch, seen);
     }
 
     if (watch.clock.elapsed() >= watch.boundMs) {

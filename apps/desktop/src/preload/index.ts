@@ -42,6 +42,7 @@ const recompose: RecomposeIpc = Object.freeze({
   'accounts:connect-local': bridgeEntry('accounts:connect-local'),
   'accounts:detect-runtime': bridgeEntry('accounts:detect-runtime'),
   'accounts:check-runtime': bridgeEntry('accounts:check-runtime'),
+  'accounts:move-runtime': bridgeEntry('accounts:move-runtime'),
   'accounts:list-models': bridgeEntry('accounts:list-models'),
   'system:get': bridgeEntry('system:get'),
   'system:open-config-folder': bridgeEntry('system:open-config-folder'),
@@ -79,6 +80,7 @@ const recomposeEvents: RecomposeIpcEvents = Object.freeze({
   'usage:command': eventEntry('usage:command'),
   'settings:changed': eventEntry('settings:changed'),
   'devtools:toggle': eventEntry('devtools:toggle'),
+  'subscriptions:launch-refused': eventEntry('subscriptions:launch-refused'),
 });
 
 contextBridge.exposeInMainWorld('recompose', recompose);

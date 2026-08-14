@@ -34,6 +34,7 @@ Feature: The toolbar's control opens the logs drawer
     When the person picks "Show Logs" again
     Then the drawer leaves
 
+  @one-clipboard
   Scenario: The footer reading copies as text
     Given a footer reading live traffic
     When the person selects the footer text and copies it

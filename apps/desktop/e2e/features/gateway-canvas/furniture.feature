@@ -9,7 +9,7 @@ Feature: The minimap and zoom controls stand on the canvas
     Then the minimap draws every node of the composition
 
   Scenario: A zoom control magnifies the view
-    Given an open gateway detail
+    Given an open gateway detail holding a composition
     When the person presses the zoom-in control
     Then the canvas view magnifies
     And the nodes keep their arrangement

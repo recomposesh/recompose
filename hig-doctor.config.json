@@ -8,6 +8,7 @@
     "**/test-results/**",
     "**/playwright-report/**",
     "**/storybook-static/**",
-    "**/.turbo/**"
+    "**/.turbo/**",
+    "**/e2e/visual.css"
   ]
 }

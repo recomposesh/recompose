@@ -1,6 +1,14 @@
 import { execFile } from 'node:child_process';
 
-export const WAITS_FOR_THE_PERSON = 0;
+/**
+ * How long a command that raises a prompt may hold its child open.
+ *
+ * @summary The keychain asks the person before it answers, so this outlasts a reach for the mouse
+ * rather than a network round trip. It is a bound rather than none, because an unanswered prompt
+ * used to hold the child open with no end, and while it stood open so did whatever that child was
+ * handed.
+ */
+export const WAITS_FOR_THE_PERSON = 120_000;
 
 const BATCH_SUFFIXES = ['.cmd', '.bat'];
 
@@ -60,15 +68,22 @@ export function commandLineFor(
   };
 }
 
+/**
+ * Runs a file on this machine, optionally handing it something on its standard input.
+ *
+ * @summary The input is how a secret reaches a tool without standing in the argument vector, where
+ * any process on the machine reads it out of the process table for as long as the child lives.
+ */
 export async function runCommand(
   command: string,
   args: readonly string[],
   boundMs: number,
+  input?: string,
 ): Promise<string> {
   const line = commandLineFor(command, args, process.platform);
 
   return new Promise((carry, refuse) => {
-    execFile(
+    const child = execFile(
       line.command,
       line.args,
       {
@@ -87,5 +102,9 @@ export async function runCommand(
         refuse(failure instanceof Error ? failure : new Error(`${command} failed`));
       },
     );
+
+    if (input !== undefined) {
+      child.stdin?.end(input);
+    }
   });
 }

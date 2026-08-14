@@ -68,6 +68,8 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
 
   The one that contradicts an approved decision comes first. Proposal decision 2 says a cable may meet a router card. `oneTargetRule` still refuses that drop, and its refusal copy still names a stored target. No approved scenario covers it, which is why task 7 stopped rather than inventing one.
 
+  A second reader checked that reading against the text rather than taking it on trust, and it held. Decision 2 says a cable may meet a router card in as many words, and `oneTargetRule` refuses the drop because `targetAccountIdIn` answers nothing for a node carrying no account. The same file's `askedData` already has a router arm, so a router draws on the canvas today and no cable can reach it.
+
   The rest, in the order a person would meet them. A router has no removal path, and `REMOVAL_WORDING` has no arm for one. A child card born under a router takes its tidy seat rather than the drop point. The cause is that `gatewayBindingChild` mints the id inside the write, so nothing can name the card before it exists. The account stage offers no way back to the kind ask, where only the model stage has a back chevron. Rider #155's failure-chip anchoring rides here too, since it sits in this segment and this train agreed to carry it.
 
 - [ ] **Task 6b: the serves box tells a thinner pool from a broken one.** Depends on tasks 6 and 7 landing, because it crosses both segments. Owns `pages/gateway-canvas/model/served-models.ts` and `ui/served-model-row/`, plus their specs.
@@ -80,9 +82,30 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
       Every end-to-end unit inherits one shipped-behavior change. Decision 18 puts the kind ask in front of every drop-to-picker and plus-ask flow, so a scenario that binds a target now answers "router or target" before the account picker opens. Task 7 found this the hard way: nineteen shipped browser specs expected the picker immediately, and it swept all eight plus-ask sites to catch the last one. Assume the shipped `.feature` files that bind a target need the same step, and check `gateway-canvas/cable-wiring.feature` first.
 
 - [ ] **Task 8a to 8g: one unit per feature file.** Depends on task 8, all seven parallel. Each graduates exactly one `.feature` into `apps/desktop/e2e/features/routers/` together with exactly one `steps/routers-<area>.steps.ts`, in one commit, so `bddgen` never sees an undefined step. The seven are `failover`, `streaming`, `round-robin`, `refusals`, `stored-shape`, `canvas`, and `inspector`.
-- [ ] **Task 9: decision records.** Depends on tasks 4 and 8 settling the residual wording. Owns `docs/adr/0107-*.md`, `docs/adr/0108-*.md`, and `docs/adr/README.md`. The design drafted them as 0104 and 0105, but that sequence moved under it: 0104 through 0106 landed today. Ask the `new-adr` skill again before writing, because the sequence can move once more while the clusters run.
+- [ ] **Task 9: decision records.** Depends on tasks 4 and 8 settling the residual wording. Owns `docs/adr/0110-*.md`, `docs/adr/0111-*.md`, and `docs/adr/README.md`. The design drafted them as 0104 and 0105, and the sequence has now moved twice under it: 0104 through 0106 landed while the clusters ran, then 0107 through 0109 landed with the main merge below. Ask the `new-adr` skill again before writing, because it can move a third time.
 
 The design's task decomposition named three feature files. The approved scenario set holds seven, and the phase rule gives each its own unit, so task 8 fans out seven ways rather than three.
+
+## The train caught up with main, and what that cost
+
+The clusters branch from `origin/main`, and main gained 13 commits after this train forked at `d90351b8`. Two clusters refused their pin rather than guess, which is what surfaced it. The train merged main in, and the whole reconciliation was one conflict plus one spec:
+
+- `packages/engine/src/refusals.ts`. Main reworded the missing-credential refusal in #202, and the train had moved that whole renderer into `refusal-facts.ts` and its siblings. The merge kept the train's split and carried main's new words into their new home, along with the one router spec that asserted the old ones.
+
+Three things the remaining clusters inherit from main rather than from this change:
+
+- **The Architecture Decision Record (ADR) sequence moved again.** 0107, 0108, and 0109 landed on main, so task 9 writes 0110 and 0111.
+- **`apps/desktop/e2e/fixtures.ts` already has the pattern task 8 needs.** #200 landed `oneClipboard`, an `auto: true` fixture keyed off Playwright's `$tags`. Anything the seven end-to-end units would each wire by hand has a shipped precedent to follow rather than invent.
+- **Main edited the scenario rider #154 planned to amend.** #206 changed `features/gateway-canvas/furniture.feature` from `Given an open gateway detail` to `Given an open gateway detail holding a composition`. Decision 16 hands that same file the router amendment, so whoever writes it starts from main's line rather than the one the design quoted. Task 8 takes it, because it already owns the shipped end-to-end repairs.
+
+## Where decision 16's four rider items stand
+
+The decision folded three items from #155 and one from #154 into this train. They ended up in four different places, so the train tracks them here rather than in one cluster's notes.
+
+- **The credential refusal.** Main answered it in #202 while the train ran. It reworded the message to say an account left rather than blaming the gateway, and it recorded a reason for declining the rest: the string becomes an HTTP body, and an account's label is usually a person's address. The train carried the new words into `refusal-facts.ts` and asserts them, and owes nothing further.
+- **The `withXaiRetryAfter` rename.** Still open. The rider asks for a name saying what the function decides rather than what it wraps, and it decides two things: that a 403 from xAI is an auth failure, and that a free-usage 429 owes a day. Four files read it.
+- **The failure reveal anchoring.** Task 7b owns it.
+- **The furniture scenario.** Task 8 owns it, on main's amended line.
 
 ## One question for the review gate
 

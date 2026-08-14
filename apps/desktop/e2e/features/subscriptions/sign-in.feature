@@ -27,6 +27,12 @@ Feature: Signing in through the provider's own tool
     When the maintainer connects an "anthropic" subscription by signing in
     Then the screen lists one subscription account
 
+  Scenario: The OpenAI tool performs its own sign-in
+    Given the "openai" command-line tool is installed
+    When the maintainer connects an "openai" subscription by signing in
+    Then Codex writes its record into the home the app gave it
+    And the account appears once that tool reports success
+
   Scenario: An absent tool is a stated reason
     Given the "anthropic" command-line tool isn't installed
     When the maintainer chooses to sign in to "anthropic"

@@ -154,7 +154,8 @@ describe('renderRefusal renders a missing credential as a 502 in both dialects',
       type: 'error',
       error: {
         type: 'api_error',
-        message: 'The gateway "Codex" holds no credential for the virtual model "fast".',
+        message:
+          'The virtual model "fast" in the gateway "Codex" has no account behind it. Reconnect the account it spends, or point it at another.',
       },
     });
   });
@@ -165,7 +166,8 @@ describe('renderRefusal renders a missing credential as a 502 in both dialects',
     expect(rendered.status).toBe(502);
     expect(rendered.body).toEqual({
       error: {
-        message: 'The gateway "Codex" holds no credential for the virtual model "fast".',
+        message:
+          'The virtual model "fast" in the gateway "Codex" has no account behind it. Reconnect the account it spends, or point it at another.',
         type: 'invalid_request_error',
         param: null,
         code: 'missing_credential',

@@ -14,9 +14,10 @@ describe('the lifecycle push', () => {
     'usage:command',
     'settings:changed',
     'devtools:toggle',
+    'subscriptions:launch-refused',
   ];
 
-  test('exactly the state, traffic, logs, account-change, command, settings, and devtools pushes exist', () => {
+  test('exactly the state, traffic, logs, account-change, command, settings, devtools, and launch-refused pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -137,5 +138,32 @@ describe('the settings push', () => {
 
   test('it refuses a delta a subscriber would have to merge', () => {
     expect(() => ipcEvents['settings:changed'].payload.parse({ theme: 'dark' })).toThrow();
+  });
+});
+
+describe('the push saying the terminal never opened', () => {
+  test('it names the plan whose sign-in it belongs to, and why nothing opened', () => {
+    const refused = {
+      provider: 'anthropic',
+      note: 'no terminal emulator on this machine could run claude /login',
+    };
+
+    expect(ipcEvents['subscriptions:launch-refused'].payload.parse(refused)).toEqual(refused);
+  });
+
+  test('a push naming no plan is refused, because the screen could not place it', () => {
+    expect(() =>
+      ipcEvents['subscriptions:launch-refused'].payload.parse({ note: 'nothing opened' }),
+    ).toThrow();
+  });
+
+  test('a push carrying no reason is refused, because a blank line says nothing', () => {
+    expect(() =>
+      ipcEvents['subscriptions:launch-refused'].payload.parse({ provider: 'anthropic', note: '' }),
+    ).toThrow();
+  });
+
+  test('it rides beside the invoke surface rather than inside it', () => {
+    expect(Object.keys(ipcChannels)).not.toContain('subscriptions:launch-refused');
   });
 });

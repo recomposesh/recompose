@@ -10,6 +10,7 @@ import {
   pushEngineLogs,
   pushEngineStates,
   pushEngineTraffic,
+  pushLaunchRefused,
   pushSettingsChanged,
   pushUsageCommand,
 } from './push-events';
@@ -140,6 +141,27 @@ describe('asking the renderer for its devtools', () => {
 
     expect(first).toEqual([{ channel: 'devtools:toggle', payload: 'asked' }]);
     expect(second).toEqual([{ channel: 'devtools:toggle', payload: 'asked' }]);
+  });
+});
+
+describe('saying no terminal opened for a sign-in', () => {
+  test('the news reaches every open window, because any of them may hold the wait', () => {
+    const first = openWindow();
+    const second = openWindow();
+    const refused = { provider: 'anthropic' as const, note: 'no terminal emulator answered' };
+
+    pushLaunchRefused(refused);
+
+    expect(first).toEqual([{ channel: 'subscriptions:launch-refused', payload: refused }]);
+    expect(second).toEqual([{ channel: 'subscriptions:launch-refused', payload: refused }]);
+  });
+
+  test('the plan it belongs to travels with it, so no wait reads another plan s news', () => {
+    const only = openWindow();
+
+    pushLaunchRefused({ provider: 'openai', note: 'nothing opened' });
+
+    expect(only[0]?.payload).toEqual({ provider: 'openai', note: 'nothing opened' });
   });
 });
 

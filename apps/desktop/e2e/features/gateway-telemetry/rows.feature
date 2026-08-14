@@ -40,6 +40,7 @@ Feature: A row tells one request's story
     When the person steps down the list by keyboard
     Then the row cursor moves one row at a time
 
+  @one-clipboard
   Scenario: The focused row copies
     Given the row cursor standing on a row
     When the person copies the focused row

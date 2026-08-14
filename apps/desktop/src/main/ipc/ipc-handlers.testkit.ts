@@ -82,6 +82,7 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'accounts:connect-local': refuses,
     'accounts:detect-runtime': refuses,
     'accounts:check-runtime': refuses,
+    'accounts:move-runtime': refuses,
     'accounts:list-models': refuses,
     'system:get': refuses,
     'system:open-config-folder': refuses,
@@ -137,6 +138,7 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
       Promise.resolve({ ok: true, value: { verdict: 'could-not-check' as const } }),
     'accounts:detect-runtime': silentRuntime,
     'accounts:check-runtime': silentRuntime,
+    'accounts:move-runtime': theseAccounts,
     'accounts:list-models': async () =>
       Promise.resolve({ ok: true, value: { standing: 'unlisted' as const } }),
     'system:get': async () => Promise.resolve({ ok: true, value: observedSystem }),

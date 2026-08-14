@@ -1,7 +1,7 @@
 import type { AccountsDocument, LocalAccount } from '@recompose/contracts';
 
 import { ACCOUNTS_VERSION } from '@recompose/contracts';
-import { expect, screen, userEvent } from 'storybook/test';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -79,10 +79,10 @@ export const AnotherServer = meta.story({
 });
 
 /**
- * The overflow holding the row's two acts and nothing else.
+ * The overflow holding the row's three acts and nothing else.
  *
- * @summary Checking again and removing are not part of reading the row, so both live behind the
- * overflow, matching the key row's anatomy.
+ * @summary None of the three is part of reading the row, so all three live behind the overflow,
+ * matching the key row's anatomy.
  */
 export const Acts = meta.story({
   play: async ({ canvas }) => {
@@ -90,7 +90,39 @@ export const Acts = meta.story({
 
     const actions = await screen.findAllByRole('menuitem');
 
-    await expect(actions.map((action) => action.textContent)).toEqual(['Check again', 'Remove']);
+    await expect(actions.map((action) => action.textContent)).toEqual([
+      'Check again',
+      'Move to another port',
+      'Remove',
+    ]);
+  },
+});
+
+/**
+ * The move opens on the port the row answers at now, and closes once it is asked for.
+ *
+ * @summary The row reads its address from a prop, so what the move did to the registry shows on
+ * the surface that lists rows rather than here. What belongs here is that the act opens the right
+ * dialog, prefilled, and that asking for the move leaves no refusal behind.
+ */
+export const MovedToAnotherPort = meta.story({
+  parameters: { bridge: { accounts: heldRegistry } },
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Actions for Ollama' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Move to another port' }));
+
+    const port = await screen.findByRole('textbox', { name: 'Port' });
+
+    await expect(port).toHaveValue('11434');
+
+    await userEvent.clear(port);
+    await userEvent.type(port, '11435');
+    await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
+
+    await waitFor(() => {
+      void expect(screen.queryByRole('textbox', { name: 'Port' })).toBeNull();
+    });
+    await expect(canvas.queryByRole('alert')).toBeNull();
   },
 });
 
