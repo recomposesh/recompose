@@ -81,5 +81,19 @@ export function createTarget(gl: WebGLRenderingContext, width: number, height: n
 }
 
 export function createPlateTexture(gl: WebGLRenderingContext) {
-  return sampleSmoothlyClamped(gl, gl.createTexture());
+  const texture = sampleSmoothlyClamped(gl, gl.createTexture());
+
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGB,
+    1,
+    1,
+    0,
+    gl.RGB,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array([0, 0, 0]),
+  );
+
+  return texture;
 }
