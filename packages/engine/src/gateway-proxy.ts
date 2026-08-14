@@ -14,19 +14,21 @@ import type { TranslationRefusal } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
 import type { CooldownLedger } from './routing/cooldown-ledger';
 import type { AttemptReading } from './routing/outcome-classification';
+import type { DeclaredTarget } from './routing/route-table';
 import type { SubscriptionRuntime } from './subscription/reach';
 
 import { unreachableTargetAnswer } from './gateway-answers';
 import { readingAtNode } from './gateway-attempt';
+import { turnResumesServerState } from './gateway-chained-turn';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
 import { answerTheWalkGives } from './gateway-walk-answer';
 import { failedOutcome, notesThatCarriedARequest } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
 import { missingCredential, missingTarget } from './refusals';
-import { routerTheEntryStands } from './router-entry';
 import { walkAttempts } from './routing/attempt-walk';
 import { createCooldownLedger } from './routing/cooldown-ledger';
+import { targetsInDeclaredOrder } from './routing/route-table';
 import { subscriptionRuntime } from './subscription/reach';
 
 export type { SpendGrantContext, SpendGrantFor } from './gateway-spend';
@@ -35,18 +37,26 @@ export { subscriptionRuntime } from './subscription/reach';
 
 export type RouterServing = { memory: RoutingMemory; noteAttempt: NoteAttempt };
 
+function couldServe(target: DeclaredTarget): boolean {
+  return target.standing.standing === 'bound';
+}
+
 /**
  * The cooling a table remembers, which is a ladder's memory and no one else's.
  *
- * @summary Cooling exists to steer a walk away from a child and toward its sibling, so a table
- * standing one target alone keeps a memory that forgets with the request. A lone target that stayed
- * cool would refuse every caller for a minute without the provider ever being asked, and no sibling
- * would be spared, so the memory it keeps is no memory at all.
+ * @summary Cooling exists to steer a walk away from a child and toward its sibling, so a table with
+ * no sibling to steer toward keeps a memory that forgets with the request. A child that stayed cool
+ * where the walk has nowhere else to go would refuse every caller for a minute without the provider
+ * ever being asked, and no sibling would be spared, so the memory it keeps is no memory at all. The
+ * question is whether a second child could serve rather than whether a router stands, because a
+ * person wires a router before wiring its children and a router over one child steers nowhere. An
+ * account that left is no sibling either: a walk sent to it answers for a binding a person can see
+ * is broken rather than reaching any provider.
  */
 function ledgerTheTableUses(memory: RoutingMemory, routing: EngineRouting): CooldownLedger {
-  return routerTheEntryStands(routing) === undefined
-    ? createCooldownLedger(memory.now)
-    : memory.ledger;
+  return targetsInDeclaredOrder(routing).filter(couldServe).length > 1
+    ? memory.ledger
+    : createCooldownLedger(memory.now);
 }
 
 type GrantUnmet = Extract<
@@ -113,6 +123,7 @@ async function walkedAnswer(
     virtualModel: deps.virtualModel.id,
     ledger: ledgerTheTableUses(serving.memory, routing),
     cursors: serving.memory.cursors,
+    resumesServerState: turnResumesServerState(deps.crossing.raw),
     now: serving.memory.now,
     attempt: async (routeNode) => {
       const reading = await readingAtNode(deps, routeNode);

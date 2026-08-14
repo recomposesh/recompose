@@ -1,5 +1,7 @@
 export const DEFAULT_COOLDOWN_MS = 60_000;
 
+export type CoolingSignal = { coolUntilMs: number; promised: boolean };
+
 const DELAY_SECONDS = /^\d+$/u;
 
 const RESET_WINDOW = /^anthropic-ratelimit-.+-reset$/u;
@@ -35,7 +37,22 @@ function earliestReopening(headers: Headers): number | undefined {
  * windows reporting at once answer the earliest, so a child stands down no longer than the soonest
  * evidence says it must. Nothing here re-reads a vendor body; the transport hands over what its own
  * normalizer already settled.
+ *
+ * The two facts stay apart because they answer different questions. A reset window says when a
+ * bucket refills and rides on every answer a provider writes, including the ones that failed for
+ * reasons a bucket knows nothing about, so it can time a stand-down but can never promise the next
+ * caller anything. Only `Retry-After` is the provider promising this failure clears, and only a
+ * promise may become a wait a client is told to obey.
  */
-export function coolUntilTheProviderNames(headers: Headers, now: number): number | undefined {
-  return instantTheDelayNames(headers.get('retry-after') ?? '', now) ?? earliestReopening(headers);
+export function coolUntilTheProviderNames(
+  headers: Headers,
+  now: number,
+): CoolingSignal | undefined {
+  const promised = instantTheDelayNames(headers.get('retry-after') ?? '', now);
+
+  if (promised !== undefined) return { coolUntilMs: promised, promised: true };
+
+  const reopening = earliestReopening(headers);
+
+  return reopening === undefined ? undefined : { coolUntilMs: reopening, promised: false };
 }

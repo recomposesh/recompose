@@ -6,7 +6,7 @@ import type { WalkResult } from './routing/attempt-walk';
 import { unreachableTargetAnswer } from './gateway-answers';
 import { attemptsRecorded } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
-import { emptyRouter, exhaustedRouter } from './refusals';
+import { chainedTurn, emptyRouter, exhaustedRouter } from './refusals';
 import { nameOfRouter, routerTheEntryStands } from './router-entry';
 
 export type WalkScene = {
@@ -41,6 +41,24 @@ function exhaustedAnswer(
   );
 }
 
+type RouterStood = Extract<
+  WalkResult<Response>['verdict'],
+  { outcome: 'empty-router' | 'chained-turn' }
+>;
+
+function routerAnswer(scene: WalkScene, verdict: RouterStood): Response {
+  const name = nameOfRouter(verdict.router);
+  const displayName = scene.gateway.displayName;
+  const model = scene.virtualModel.id;
+
+  return refusalResponse(
+    scene.crossing.dialect,
+    verdict.outcome === 'empty-router'
+      ? emptyRouter(displayName, model, name)
+      : chainedTurn(displayName, model, name),
+  );
+}
+
 /**
  * The response one walk hands the caller, whichever way the walk ended.
  *
@@ -48,7 +66,9 @@ function exhaustedAnswer(
  * reaches the caller exactly as written and only a refusal recompose raised wears the recompose
  * shape. A ladder that ran out says so, naming every child it touched, while a lone target that ran
  * out was the whole ladder and keeps the answer it already gave, because there is no sibling for a
- * router refusal to speak about.
+ * router refusal to speak about. The two refusals a router raises before trying anyone name the
+ * router the walk actually stood at rather than the one the table opens with, because a ladder that
+ * chains puts a different router in the way at each depth.
  */
 export function answerTheWalkGives(
   scene: WalkScene,
@@ -59,11 +79,8 @@ export function answerTheWalkGives(
 
   if (verdict.outcome === 'answered') return verdict.answer;
 
-  if (verdict.outcome === 'empty-router') {
-    return refusalResponse(
-      scene.crossing.dialect,
-      emptyRouter(scene.gateway.displayName, scene.virtualModel.id, nameOfRouter(verdict.router)),
-    );
+  if (verdict.outcome === 'empty-router' || verdict.outcome === 'chained-turn') {
+    return routerAnswer(scene, verdict);
   }
 
   return exhaustedAnswer(scene, result, verdict, answerable);

@@ -5,11 +5,13 @@ import type { ParsedSubscriptionCredential } from './credentials';
 
 import { codexPromptCacheKey } from './codex-prompt-cache';
 import { codexProviderRequest } from './codex-request';
+import { codexReplayKey } from './reach-observation';
 
 type CodexReachOptions = {
   providerOrigin: string;
   body: JsonObject;
   credential: ParsedSubscriptionCredential;
+  accountId: string;
   replay: CodexReasoningReplay | undefined;
   replayScopeId: string;
   sessionId: string;
@@ -34,11 +36,8 @@ export function codexReachRequest(options: CodexReachOptions): ProviderRequest {
 function replayedBody(options: CodexReachOptions): JsonObject {
   if (options.sourceDialect !== 'anthropic' || options.replay === undefined) return options.body;
 
-  return options.replay.inject(codexReplayKey(options.body, options.replayScopeId), options.body);
-}
-
-function codexReplayKey(body: JsonObject, sessionId: string): string {
-  const model = typeof body['model'] === 'string' ? body['model'] : '';
-
-  return `${model}\0${sessionId}`;
+  return options.replay.inject(
+    codexReplayKey(options.accountId, options.body, options.replayScopeId),
+    options.body,
+  );
 }

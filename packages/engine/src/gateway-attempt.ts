@@ -2,10 +2,12 @@ import type { EngineGateway, EngineVirtualModel, SpendGrant } from '@recompose/c
 import type { Context } from 'hono';
 
 import type { SpendGrantFor } from './gateway-spend';
+import type { UpstreamCommit } from './gateway-stream-commit';
 import type { Crossing, JsonObject, ProviderDialect } from './gateway-wire';
 import type { PluginGatewayTarget } from './plugin-gateway';
 import type { PluginHost } from './plugin-host';
 import type { AIStudioRelay } from './provider/ai-studio-relay';
+import type { CoolingSignal } from './routing/cooldown-signal';
 import type { AttemptReading } from './routing/outcome-classification';
 import type { SubscriptionRuntime } from './subscription/reach';
 
@@ -36,7 +38,7 @@ export type AttemptDeps = {
 
 type Resolved = Extract<SpendGrant, { verdict: 'resolved' }>;
 
-type UpstreamReach = { kind: 'reached'; upstream: Response } | { kind: 'transport-failure' };
+type UpstreamReach = { kind: 'reached'; committed: UpstreamCommit } | { kind: 'transport-failure' };
 
 function recomposeAnswered(answer: Response): AttemptReading<Response> {
   return { kind: 'refused', status: answer.status, answer, retryableHint: false };
@@ -46,10 +48,10 @@ function locallyAnswered(answer: Response): AttemptReading<Response> {
   return answer.ok ? { kind: 'served', answer } : recomposeAnswered(answer);
 }
 
-function coolingPromised(headers: Headers, now: number): { coolUntilMs?: number } {
-  const promised = coolUntilTheProviderNames(headers, now);
+function coolingTheHeadersReport(headers: Headers, now: number): { cooling?: CoolingSignal } {
+  const cooling = coolUntilTheProviderNames(headers, now);
 
-  return promised === undefined ? {} : { coolUntilMs: promised };
+  return cooling === undefined ? {} : { cooling };
 }
 
 function hasMalformedSubscription(grant: SpendGrant): boolean {
@@ -106,7 +108,11 @@ async function sentUpstream(
  *
  * @summary A connection that died carrying no status is a reading of its own, built before any status
  * is consulted, so it can never be mistaken for an answer the caller should keep. The distinction is
- * what lets a sibling take a turn the transport never gave the first child.
+ * what lets a sibling take a turn the transport never gave the first child. The guard spans the
+ * commit latch as well as the send, because the latch reads the upstream body and a body that dies
+ * mid-event died before the caller was owed a byte, which is the same nothing a refused connection
+ * gave. Ending the guard at the send would let that death cross the walk as a throw, and a throw is
+ * the one shape failover cannot read.
  */
 async function reachedUpstream(
   deps: AttemptDeps,
@@ -115,7 +121,9 @@ async function reachedUpstream(
   body: JsonObject,
 ): Promise<UpstreamReach> {
   try {
-    return { kind: 'reached', upstream: await sentUpstream(deps, crossing, grant, body) };
+    const upstream = await sentUpstream(deps, crossing, grant, body);
+
+    return { kind: 'reached', committed: await upstreamAtTheCommitLatch(upstream) };
   } catch (failure) {
     if (failure instanceof InvalidJsonBodyError) {
       throw failure;
@@ -130,17 +138,12 @@ async function reachedUpstream(
 async function readingFromUpstream(
   deps: AttemptDeps,
   crossing: Crossing,
-  upstream: Response,
+  latched: UpstreamCommit,
   upstreamDialect: ProviderDialect,
 ): Promise<AttemptReading<Response>> {
-  const latched = await upstreamAtTheCommitLatch(upstream);
-  const answer = await answerThroughPlugins(
-    crossing,
-    latched.upstream,
-    upstreamDialect,
-    deps.plugins,
-  );
-  const cooling = coolingPromised(upstream.headers, deps.now());
+  const upstream = latched.upstream;
+  const answer = await answerThroughPlugins(crossing, upstream, upstreamDialect, deps.plugins);
+  const cooling = coolingTheHeadersReport(upstream.headers, deps.now());
 
   if (latched.kind === 'error-before-commit') {
     return {
@@ -172,7 +175,7 @@ async function readingFromProvider(
 
   return reached.kind === 'transport-failure'
     ? reached
-    : readingFromUpstream(deps, crossing, reached.upstream, upstreamDialect);
+    : readingFromUpstream(deps, crossing, reached.committed, upstreamDialect);
 }
 
 async function readingFromExecutor(

@@ -135,7 +135,12 @@ describe('where the cooling time comes from when a child stands down', () => {
     const promised = NOW + 12_000;
 
     const verdict = classify(
-      { kind: 'refused', status: 429, coolUntilMs: promised, answer: 'upstream' },
+      {
+        kind: 'refused',
+        status: 429,
+        cooling: { coolUntilMs: promised, promised: true },
+        answer: 'upstream',
+      },
       NOW,
     );
 
@@ -154,7 +159,7 @@ describe('where the cooling time comes from when a child stands down', () => {
       {
         kind: 'stream-error-before-commit',
         equivalentStatus: 429,
-        coolUntilMs: promised,
+        cooling: { coolUntilMs: promised, promised: true },
         answer: 'upstream',
       },
       NOW,
@@ -165,6 +170,48 @@ describe('where the cooling time comes from when a child stands down', () => {
       coolUntilMs: promised,
       retryAtMs: promised,
       reason: { because: 'stream-error', status: 429 },
+    });
+  });
+});
+
+describe('a stand-down a provider never promised stays the walk own guess', () => {
+  test('a refusal reporting only a reset window cools to it without promising a caller a wait', () => {
+    const reopening = NOW + 45_000;
+
+    const verdict = classify(
+      {
+        kind: 'refused',
+        status: 500,
+        cooling: { coolUntilMs: reopening, promised: false },
+        answer: 'upstream',
+      },
+      NOW,
+    );
+
+    expect(verdict).toEqual({
+      verdict: 'move-on',
+      coolUntilMs: reopening,
+      reason: { because: 'refused', status: 500 },
+    });
+  });
+
+  test('a stream error reporting only a reset window promises a caller nothing either', () => {
+    const reopening = NOW + 9_000;
+
+    const verdict = classify(
+      {
+        kind: 'stream-error-before-commit',
+        equivalentStatus: 503,
+        cooling: { coolUntilMs: reopening, promised: false },
+        answer: 'upstream',
+      },
+      NOW,
+    );
+
+    expect(verdict).toEqual({
+      verdict: 'move-on',
+      coolUntilMs: reopening,
+      reason: { because: 'stream-error', status: 503 },
     });
   });
 });
