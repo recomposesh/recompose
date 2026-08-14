@@ -46,6 +46,15 @@ Where it can and cannot reach:
 
 The cheap guard bounds the recursion rather than searching for cycles: a maximum nesting depth refuses at the cap, so a cyclic value refuses instead of exhausting the stack. The same bound answers the attempt-budget requirement the technical research asks for, since depth times children caps how many targets one request can touch.
 
+## AIMock answers both verifications the design deferred
+
+The router design put two checks on AIMock before merge. Both ran against `@copilotkit/aimock` 1.38.0 in a scratch install, driving `LLMock` on an ephemeral port and reading the responses.
+
+- **A 429 carries `Retry-After`.** `nextRequestError(429, ...)` answers `429` with `retry-after: 1`. The header isn't accidental: `ErrorResponseOptions.retryAfter` is typed and documented as "Override the Retry-After header value (seconds). Default: 1. Only applied on 429."
+- **The 400 malformed shape matches.** It answers `{"type":"error","error":{"type":"invalid_request_error","message":"..."}}`, which is the Anthropic error envelope the classification table reads. A 529 answers the same shape with `overloaded_error`, so the retryable row has its overload case too.
+
+One constraint the docs don't state: `nextRequestError(status, errorBody?)` takes no retry time, so the header always reads 1 second through that path. A scenario that needs a named retry time, such as the exhausted refusal carrying the earliest cooldown, drives `mount()` with a handler calling `writeErrorResponse(res, 429, body, { retryAfter })` instead.
+
 ## Two gaps the acceptance-references arm left open
 
 **A downstream `/v1/responses` route exists.** `packages/engine/src/gateway-route-paths.ts:9` registers `/v1/responses` and `/responses` in `MODEL_ROUTES`, and `packages/engine/src/dialect/responses-request-options.ts:7` reads and forwards `previous_response_id`. So the stateful-continuation criterion is live rather than conditional: a Codex client chaining turns through this gateway is the exact configuration that broke on the pinned upstream.
