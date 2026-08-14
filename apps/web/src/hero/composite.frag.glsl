@@ -79,11 +79,12 @@ void main() {
   float vig = smoothstep(0.0, 0.18, st.x) * smoothstep(1.0, 0.82, st.x) * smoothstep(0.0, 0.10, st.y);
   color *= mix(0.35, 1.0, vig);
 
+  float glow = (beams.r + beams.g + beams.b) * 0.3333 * u_beam;
+  float reveal = clamp(0.04 + mask * 0.88 + glow * 0.22, 0.0, 1.0);
+  color = mix(color, mix(vec3(1.0), img, reveal), u_invert);
+
   float grain = hash(gl_FragCoord.xy + fract(u_time * 7.31) * vec2(191.0, 122.0)) - 0.5;
   color += grain * u_grain;
-
-  vec3 negative = vec3(1.0) - smoothstep(vec3(0.03), vec3(0.5), color);
-  color = mix(color, negative, u_invert);
 
   gl_FragColor = vec4(color, 1.0);
 }
