@@ -510,9 +510,11 @@ When the walk exhausts a router, the refusal enumerates every child the walk att
 
 ### 10. A router names itself from its mode unless a person renames it
 
-The stored router arm carries an optional `displayName`. When absent, every surface derives the name from the mode. The card's name line reads "Failover" or "Round-robin," and refusal copy says "the failover router," always beside the virtual model's name. The inspector header offers rename, writing the optional field. The mono subtitle keeps the machine vocabulary per proposal decision 17. This closes gate-2 question 6.
+The stored router arm carries an optional `displayName`. When absent, every surface derives the name from the mode. The card's name line reads "Failover" or "Round-robin," and refusal copy says "the failover router," always beside the virtual model's name. The inspector header offers rename, writing the optional field. This closes gate-2 question 6.
 
-**Alternatives considered:** demanding a name at creation, rejected because decision 18's ask drops a wired router with no dialog. Deriving from children, rejected because the derivation changes under edits and a name that drifts isn't a name.
+The mono subtitle then follows the name rather than repeating it, which refines proposal decision 17 for the derived case the proposal didn't reach. A named router keeps the mode on the mono line, so the card reads "Ladder" over "failover." A router wearing its derived name would otherwise read "Failover" over "failover." Its mono line carries the child count instead, reading "2 targets," or "no child" while the router stands empty. Either way the card spends its two lines on two facts.
+
+**Alternatives considered:** demanding a name at creation, rejected because decision 18's ask drops a wired router with no dialog. Deriving from children, rejected because the derivation changes under edits and a name that drifts isn't a name. Keeping the mode on the mono line in both cases, rejected at gate 2 because the derived card would print one word twice.
 
 ### 11. A childless router wears the ghost treatment, and reorder ships without undo
 
