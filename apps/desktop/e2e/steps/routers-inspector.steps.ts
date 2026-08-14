@@ -68,7 +68,23 @@ Given(
   },
 );
 
+/**
+ * Puts the keyboard on the control a person meets first in this panel, and nowhere nearer.
+ *
+ * @summary The walk has to start somewhere, and starting at the window's edge spends a hundred
+ * presses crossing every card and cable before it arrives. It starts at the mode control instead,
+ * which stands above the ladder and is the first thing the inspector offers. Nothing here touches
+ * the control under test, so a move button that fell out of the tab order is still never reached.
+ */
+async function theKeyboardStandsOnTheModeControl(page: Page): Promise<void> {
+  const mode = page.getByRole('radiogroup', { name: 'Routing mode' }).getByRole('radio').first();
+
+  await expect(mode).toBeVisible();
+  await mode.focus();
+}
+
 When('the person, with the keyboard alone, moves the third child up one rank', async ({ page }) => {
+  await theKeyboardStandsOnTheModeControl(page);
   await pickWithTheKeyboard(
     page,
     childRow(page, THIRD_TARGET.providerModel).getByRole('button', { name: TOWARD_THE_FRONT }),
