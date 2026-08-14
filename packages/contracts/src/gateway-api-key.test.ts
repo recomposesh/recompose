@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
   GATEWAY_API_KEY_PREFIX,
@@ -12,6 +12,12 @@ import {
   enforcedApiKey,
   withGatewayApiKey,
 } from './gateway-config';
+
+const KEY_BYTES = 32;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function storedGateway(): GatewayConfig {
   return {
@@ -39,6 +45,31 @@ describe('the key a gateway hands its callers', () => {
 
   test('two mints never answer the same key', () => {
     expect(mintGatewayApiKey()).not.toBe(mintGatewayApiKey());
+  });
+
+  test('bytes that spell every slash come back as underscores, at full width', () => {
+    const everySlash = new Uint8Array(KEY_BYTES).fill(0xff);
+
+    vi.spyOn(globalThis.crypto, 'getRandomValues').mockReturnValue(everySlash);
+
+    const body = mintGatewayApiKey().slice(GATEWAY_API_KEY_PREFIX.length);
+
+    expect(body).toHaveLength(43);
+    expect(body).toContain('_');
+  });
+
+  test('bytes that spell every plus come back as dashes, at full width', () => {
+    const everyPlus = Uint8Array.from(
+      { length: KEY_BYTES },
+      (_unused, index) => [0xfb, 0xef, 0xbe][index % 3] ?? 0,
+    );
+
+    vi.spyOn(globalThis.crypto, 'getRandomValues').mockReturnValue(everyPlus);
+
+    const body = mintGatewayApiKey().slice(GATEWAY_API_KEY_PREFIX.length);
+
+    expect(body).toHaveLength(43);
+    expect(body).toContain('-');
   });
 
   test('a minted key is one the stored shape accepts', () => {

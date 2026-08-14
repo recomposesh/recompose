@@ -105,4 +105,5 @@ The maintainer picked option B, so the key gets an Access section of its own.
 ### Closing
 
 - [ ] The prose and spelling gates run once at the end, and one editing pass answers every finding
-- [ ] The full local battery runs green before the branch reaches continuous integration
+- [x] The full local battery runs green before the branch reaches continuous integration
+- [x] The diff-scoped mutation gate leaves no survivor on a file this change wrote

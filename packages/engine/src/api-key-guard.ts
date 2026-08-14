@@ -6,7 +6,7 @@ import { apiKeyRequired } from './refusals';
 
 const OPEN_PATHS = new Set(['/health', '/healthz']);
 
-const BEARER_PREFIX = /^Bearer\s+/iu;
+const BEARER = 'bearer ';
 
 function digestOf(value: string): Buffer {
   return createHash('sha256').update(value).digest();
@@ -16,17 +16,31 @@ function matches(presented: string, held: Buffer): boolean {
   return timingSafeEqual(digestOf(presented), held);
 }
 
-function presentedKeys(c: Context): string[] {
-  const authorization = c.req.header('authorization');
+/**
+ * The credential inside an `Authorization` header, whether or not the client named its scheme.
+ *
+ * @summary Some clients send `Bearer <key>` and some send the key alone, so the scheme comes off
+ * where it stands and the value passes through where it doesn't. The comparison is case-insensitive
+ * because the scheme name is, and the trim covers a client that spaced its value out.
+ */
+function offeredIn(authorization: string | undefined): string | undefined {
+  if (authorization === undefined) {
+    return undefined;
+  }
 
+  return authorization.toLowerCase().startsWith(BEARER)
+    ? authorization.slice(BEARER.length).trimStart()
+    : authorization;
+}
+
+const KEY_HEADERS = ['x-api-key', 'x-goog-api-key'];
+
+function presentedKeys(c: Context): (string | undefined)[] {
   return [
-    authorization === undefined ? undefined : authorization.replace(BEARER_PREFIX, ''),
-    c.req.header('x-api-key'),
-    c.req.header('x-goog-api-key'),
-    c.req.query('key'),
-  ]
-    .map((candidate) => candidate?.trim() ?? '')
-    .filter((candidate) => candidate !== '');
+    offeredIn(c.req.header('authorization')),
+    ...KEY_HEADERS.map((header) => c.req.header(header)),
+    c.req.query('key')?.trim(),
+  ];
 }
 
 /**
@@ -51,7 +65,9 @@ export function guardApiKey(displayName: string, apiKey: string): MiddlewareHand
       return next();
     }
 
-    if (presentedKeys(c).some((candidate) => matches(candidate, held))) {
+    const presented = presentedKeys(c);
+
+    if (presented.some((candidate) => candidate !== undefined && matches(candidate, held))) {
       return next();
     }
 

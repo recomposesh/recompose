@@ -30,20 +30,6 @@ describe('a document change reaching a gateway nobody asked to serve', () => {
     expect(recorded.started).toEqual([]);
   });
 
-  test('a restart a person picked from the menu bar acts, because they asked for it', async () => {
-    const recorded = recordingHost([]);
-    const requests = requestsOver(
-      recorded.host,
-      await directoryHolding([gatewayNamed('codex', 8397)]),
-    );
-
-    requests.restart('codex');
-
-    await vi.waitFor(() => {
-      expect(recorded.restarted).toHaveLength(1);
-    });
-  });
-
   test('a gateway that serves takes the changed document', async () => {
     const recorded = recordingHost(['codex']);
     const requests = requestsOver(
@@ -58,8 +44,41 @@ describe('a document change reaching a gateway nobody asked to serve', () => {
     });
     expect(recorded.restarted[0]?.slug).toBe('codex');
   });
+});
 
+describe('the restart a person picks for themselves', () => {
+  test('it acts whatever the state says, because they asked for it', async () => {
+    const recorded = recordingHost([]);
+    const requests = requestsOver(
+      recorded.host,
+      await directoryHolding([gatewayNamed('codex', 8397)]),
+    );
+
+    requests.restart('codex');
+
+    await vi.waitFor(() => {
+      expect(recorded.restarted).toHaveLength(1);
+    });
+  });
+
+  test('a refusal names the restart rather than the act beside it', async () => {
+    const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const requests = requestsOver(
+      { ...recordingHost(['codex']).host, restart: async () => Promise.reject(new Error('no')) },
+      await directoryHolding([gatewayNamed('codex', 8397)]),
+    );
+
+    requests.restart('codex');
+
+    await vi.waitFor(() => {
+      expect(complained(complaint)).toContain('restart the gateway "codex"');
+    });
+  });
+});
+
+describe('one act never reaches the gateway another named', () => {
   test('one stopped gateway never holds the serving one back', async () => {
+    const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const recorded = recordingHost(['gemini']);
     const requests = requestsOver(
       recorded.host,
@@ -73,6 +92,7 @@ describe('a document change reaching a gateway nobody asked to serve', () => {
       expect(recorded.restarted).toHaveLength(1);
     });
     expect(recorded.restarted[0]?.slug).toBe('gemini');
+    expect(complained(complaint)).toBe('');
   });
 });
 

@@ -42,6 +42,18 @@ describe('a gateway that requires a key', () => {
     expect(JSON.stringify(await refusal.json())).toContain('Codex');
   });
 
+  test('the refusal reads as the error a vendor answers a 401 with', async () => {
+    const refusal = await askGuarded('/v1/models');
+
+    await expect(refusal.json()).resolves.toEqual({
+      type: 'error',
+      error: {
+        type: 'authentication_error',
+        message: 'The gateway "Codex" requires an API key.',
+      },
+    });
+  });
+
   test('the refusal challenges the client the way a bearer-protected resource must', async () => {
     const refusal = await askGuarded('/v1/models');
 
@@ -105,8 +117,22 @@ describe('where a client is allowed to carry the key', () => {
     expect(answer.status).toBe(200);
   });
 
-  test('a key a person pasted with surrounding space still matches', async () => {
-    const answer = await askGuarded('/v1/models', { headers: { 'x-api-key': `  ${KEY}  ` } });
+  test('a client naming its scheme in lower case serves, because the scheme is caseless', async () => {
+    const answer = await askGuarded('/v1/models', { headers: { authorization: `bearer ${KEY}` } });
+
+    expect(answer.status).toBe(200);
+  });
+
+  test('a client that spaced its scheme out still serves', async () => {
+    const answer = await askGuarded('/v1/models', {
+      headers: { authorization: `Bearer   ${KEY}` },
+    });
+
+    expect(answer.status).toBe(200);
+  });
+
+  test('a key a person pasted into a query with surrounding space still matches', async () => {
+    const answer = await askGuarded(`/v1/models?key=%20${KEY}%20`);
 
     expect(answer.status).toBe(200);
   });
