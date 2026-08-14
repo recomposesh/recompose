@@ -22,6 +22,12 @@ function observesInTurn(readings: readonly SubscriptionObservation[]) {
   };
 }
 
+async function waitFor(watcher: {
+  observe: () => Promise<SubscriptionObservation>;
+}): Promise<SubscriptionObservation | null> {
+  return awaitSignIn({ observe: watcher.observe, clock: fakeClock(), boundMs: 1000, everyMs: 100 });
+}
+
 describe('waiting for the provider tool to finish signing somebody in', () => {
   test('given the tool already signed in, the wait answers on its first look', async () => {
     const watcher = observesInTurn([{ standing: 'connected', signedInAs: 'ada@ex.com' }]);
@@ -41,7 +47,7 @@ describe('waiting for the provider tool to finish signing somebody in', () => {
     const watcher = observesInTurn([
       { standing: 'lapsed' },
       { standing: 'lapsed' },
-      { standing: 'connected', plan: 'max' },
+      { standing: 'connected', signedInAs: 'ada@ex.com', plan: 'max' },
     ]);
 
     const answered = await awaitSignIn({
@@ -51,7 +57,7 @@ describe('waiting for the provider tool to finish signing somebody in', () => {
       everyMs: 100,
     });
 
-    expect(answered).toEqual({ standing: 'connected', plan: 'max' });
+    expect(answered).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com', plan: 'max' });
     expect(watcher.looks).toHaveLength(3);
   });
 
@@ -67,6 +73,54 @@ describe('waiting for the provider tool to finish signing somebody in', () => {
 
     expect(answered).toBeNull();
     expect(watcher.looks).toHaveLength(4);
+  });
+});
+
+describe('a credential that lands before the record naming who it belongs to', () => {
+  test('given the address arrives a beat late, the wait answers with it rather than without', async () => {
+    const watcher = observesInTurn([
+      { standing: 'connected' },
+      { standing: 'connected', signedInAs: 'ada@ex.com' },
+    ]);
+
+    expect(await waitFor(watcher)).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com' });
+  });
+
+  test('given the address never arrives, the wait answers the sign-in it already has', async () => {
+    const watcher = observesInTurn([{ standing: 'connected' }, { standing: 'connected' }]);
+
+    expect(await waitFor(watcher)).toEqual({ standing: 'connected' });
+  });
+
+  test('the second look is one look, not a wait that runs to the bound', async () => {
+    const watcher = observesInTurn([{ standing: 'connected' }, { standing: 'connected' }]);
+
+    await waitFor(watcher);
+
+    expect(watcher.looks).toHaveLength(2);
+  });
+
+  test('given the second look reads nobody signed in, the sign-in already seen still stands', async () => {
+    const watcher = observesInTurn([{ standing: 'connected' }, { standing: 'lapsed' }]);
+
+    expect(await waitFor(watcher)).toEqual({ standing: 'connected' });
+  });
+
+  test('the second look is the fresher reading, so a plan it learned late comes back too', async () => {
+    const watcher = observesInTurn([
+      { standing: 'connected' },
+      { standing: 'connected', plan: 'max' },
+    ]);
+
+    expect(await waitFor(watcher)).toEqual({ standing: 'connected', plan: 'max' });
+  });
+
+  test('a sign-in that named its address on the first look is never looked at twice', async () => {
+    const watcher = observesInTurn([{ standing: 'connected', signedInAs: 'ada@ex.com' }]);
+
+    await waitFor(watcher);
+
+    expect(watcher.looks).toHaveLength(1);
   });
 });
 
