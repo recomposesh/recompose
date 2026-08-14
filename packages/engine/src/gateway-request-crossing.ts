@@ -1,6 +1,8 @@
 import type { EngineGateway, EngineVirtualModel } from '@recompose/contracts';
 import type { Context } from 'hono';
 
+import { standingTheEntryNames } from '@recompose/contracts';
+
 import type { Crossing, ProxyDialect } from './gateway-wire';
 
 import { responsesToolRefs } from './dialect/responses-extended-tools';
@@ -45,7 +47,9 @@ export async function gatewayRequestCrossing(
     return { response: refusalResponse(dialect, unknownModel(name)) };
   }
 
-  if (virtualModel.target.standing === 'removed') {
+  const standing = standingTheEntryNames(virtualModel.routing);
+
+  if (standing.standing === 'removed') {
     return { response: refusalResponse(dialect, missingTarget(gateway.displayName, name)) };
   }
 
@@ -56,7 +60,7 @@ export async function gatewayRequestCrossing(
       raw,
       gatewayName: gateway.displayName,
       virtualModel: virtualModel.id,
-      providerModel: virtualModel.target.providerModel,
+      providerModel: standing.providerModel,
       ...requestSessions(c, raw),
       callerFingerprint: requestCallerFingerprint(c),
       responsesLite: requestsResponsesLite(c),

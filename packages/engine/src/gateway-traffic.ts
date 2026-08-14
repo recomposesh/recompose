@@ -21,7 +21,12 @@ import {
 } from './provider/serving-turn';
 import { subscribeToProviderAttempts, tellingReaders } from './provider/telemetry-feed';
 
-export type NoteTraffic = (slug: string, virtualModel: string, request: RequestOutcome) => void;
+export type NoteTraffic = (
+  slug: string,
+  virtualModel: string,
+  routeNode: string,
+  request: RequestOutcome,
+) => void;
 
 export type LogRowListener = (row: LogRow) => void;
 
@@ -194,7 +199,7 @@ function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: nu
   publishRow(raisedRow(turn, status, at));
 }
 
-type Asked = { slug: string; virtualModel: string };
+type Asked = { slug: string; virtualModel: string; routeNode: string };
 
 /**
  * Wraps one serving turn so the virtual model it spent on is noted against the answer it gave.
@@ -215,17 +220,17 @@ export function watchingTraffic(
     let flowing = false;
     let interrupted = false;
     let stopListeningForDisconnect: () => void = () => undefined;
-    const answer = await serve(async (slug, virtualModel, context) => {
-      asked.push({ slug, virtualModel });
+    const answer = await serve(async (slug, virtualModel, routeNode, context) => {
+      asked.push({ slug, virtualModel, routeNode });
 
       if (!flowing) {
         flowing = true;
-        note(slug, virtualModel, { outcome: 'live', at: now() });
+        note(slug, virtualModel, routeNode, { outcome: 'live', at: now() });
 
         if (turn !== undefined) {
           stopListeningForDisconnect = onServingTurnAbort(turn, () => {
             interrupted = true;
-            note(slug, virtualModel, {
+            note(slug, virtualModel, routeNode, {
               outcome: 'failed',
               at: now(),
               status: CLIENT_DISCONNECTED_STATUS,
@@ -237,7 +242,7 @@ export function watchingTraffic(
 
       if (turn !== undefined) turn.virtualModel = virtualModel;
 
-      return spendGrantFor(slug, virtualModel, context);
+      return spendGrantFor(slug, virtualModel, routeNode, context);
     });
     const spent = asked.at(-1);
 
@@ -259,7 +264,7 @@ export function watchingTraffic(
       const outcome: RequestOutcome =
         preparedFailure === undefined ? { outcome: 'served', at } : { ...preparedFailure, at };
 
-      note(spent.slug, spent.virtualModel, outcome);
+      note(spent.slug, spent.virtualModel, spent.routeNode, outcome);
       noteRaisedFailure(turn, answer.status, at);
     });
   };

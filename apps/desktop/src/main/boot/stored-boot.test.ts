@@ -11,6 +11,7 @@ import {
   gatewayHolding,
   keyRow,
   pointingAt,
+  spendAskFor,
   storageHolding,
 } from '../engine-host/spend-grant.testkit';
 import { bootFromStoredState } from './stored-boot';
@@ -224,7 +225,7 @@ describe('serving the stored gateways with the launch setting on', () => {
       expect(boot.engineHost.states()).toEqual({ personal: { status: 'running' } });
     });
 
-    engineWire.speak({ kind: 'spend-request', id: 's1', slug: 'personal', virtualModel: 'fast' });
+    engineWire.speak(spendAskFor('s1', 'personal', 'fast'));
 
     await vi.waitFor(() => {
       expect(engineWire.grants.at(0)).toMatchObject({

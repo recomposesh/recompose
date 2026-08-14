@@ -1,6 +1,8 @@
 import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
 
+import { standingTheEntryNames } from '@recompose/contracts';
+
 import type { SpendGrantFor } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 import type { XAIVideoPath } from './provider/xai-video';
@@ -46,9 +48,12 @@ export async function proxyVideoRequest(
   const virtual = gateway.virtualModels.find((candidate) => candidate.id === model);
 
   if (virtual === undefined) return videoError(`The model "${model}" does not exist.`, 404);
-  if (virtual.target.standing !== 'bound') return videoError('The video model has no target.');
 
-  const grant = await spendGrantFor(gateway.slug, virtual.id);
+  const standing = standingTheEntryNames(virtual.routing);
+
+  if (standing.standing !== 'bound') return videoError('The video model has no target.');
+
+  const grant = await spendGrantFor(gateway.slug, virtual.id, virtual.routing.entry);
 
   if (!xaiGrant(grant)) {
     return videoError('The video target has no xAI credential.');
@@ -58,7 +63,7 @@ export async function proxyVideoRequest(
     grant.providerOrigin,
     path,
     grant.spend.credential,
-    providerBody(body, virtual.target.providerModel),
+    providerBody(body, standing.providerModel),
     idempotencyKey(c),
     fetchLike,
   );

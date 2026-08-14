@@ -10,6 +10,7 @@ import {
   localRow,
   planRow,
   pointingAt,
+  seatedAs,
   secret,
   storageHolding,
 } from './spend-grant.testkit';
@@ -58,7 +59,7 @@ describe('the standing each virtual model is minted with', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -71,7 +72,7 @@ describe('the standing each virtual model is minted with', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -90,7 +91,7 @@ describe('a virtual model whose target no longer stands', () => {
     const gateway = await storedEngineGateway(userDataPath, noComplaint, 'personal');
 
     expect(gateway?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', target: { standing: 'removed' } },
+      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
     ]);
   });
 
@@ -102,7 +103,7 @@ describe('a virtual model whose target no longer stands', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -112,11 +113,11 @@ describe('a virtual model whose target no longer stands', () => {
     const gateway = await storedEngineGateway(userDataPath, noComplaint, 'personal');
 
     expect(gateway?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', target: { standing: 'removed' } },
+      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
       {
         id: 'thorough',
         displayName: 'thorough',
-        target: { standing: 'bound', providerModel: 'gpt-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'gpt-5' }),
       },
     ]);
   });
@@ -135,7 +136,7 @@ describe('the snapshot a gateway about to be written serves under', () => {
         {
           id: 'fast',
           displayName: 'fast',
-          target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+          routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
         },
       ],
     });

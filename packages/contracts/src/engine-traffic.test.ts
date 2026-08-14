@@ -69,7 +69,7 @@ describe('what the last request through a virtual model came to', () => {
 
 describe('the traffic snapshot the whole app reads', () => {
   test('it holds one outcome per virtual model under the gateway serving it', () => {
-    const snapshot = { personal: { fast: served }, work: { deep: failed } };
+    const snapshot = { personal: { fast: { only: served } }, work: { deep: { only: failed } } };
 
     expect(gatewayTrafficSchema.parse(snapshot)).toEqual(snapshot);
   });
@@ -79,10 +79,10 @@ describe('the traffic snapshot the whole app reads', () => {
   });
 
   test('a snapshot keyed by something no gateway could be named is refused', () => {
-    expect(() => gatewayTrafficSchema.parse({ Personal: { fast: served } })).toThrow();
+    expect(() => gatewayTrafficSchema.parse({ Personal: { fast: { only: served } } })).toThrow();
   });
 
   test('a snapshot keyed by something no virtual model could be named is refused', () => {
-    expect(() => gatewayTrafficSchema.parse({ personal: { Fast: served } })).toThrow();
+    expect(() => gatewayTrafficSchema.parse({ personal: { Fast: { only: served } } })).toThrow();
   });
 });

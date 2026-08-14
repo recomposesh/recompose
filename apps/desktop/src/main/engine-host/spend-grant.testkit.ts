@@ -1,6 +1,8 @@
 import type {
   Account,
   CredentialedAccount,
+  EngineTargetStanding,
+  EngineVirtualModel,
   GatewayConfig,
   LocalAccount,
   ProviderModelPolicies,
@@ -73,6 +75,14 @@ export function pointingAt(accountId: string, providerModel = 'claude-sonnet-5')
     displayName: 'fast',
     routing: { entry: 'seat', nodes: { seat: { kind: 'target', accountId, providerModel } } },
   };
+}
+
+export function seatedAs(standing: EngineTargetStanding): EngineVirtualModel['routing'] {
+  return { entry: 'seat', nodes: { seat: { kind: 'target', standing } } };
+}
+
+export function spendAskFor(id: string, slug: string, virtualModel: string): unknown {
+  return { kind: 'spend-request', id, slug, virtualModel, routeNode: 'seat' };
 }
 
 export function gatewayHolding(models: readonly VirtualModel[]): GatewayConfig {

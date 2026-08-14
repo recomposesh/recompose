@@ -12,7 +12,7 @@ import {
   recordingHost,
   requestsOver,
 } from './gateway-lifecycle.testkit';
-import { keyRow } from './spend-grant.testkit';
+import { keyRow, seatedAs } from './spend-grant.testkit';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -22,7 +22,7 @@ const boundToTheStoredModel = [
   {
     id: 'fast',
     displayName: 'fast',
-    target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+    routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
   },
 ];
 
@@ -66,7 +66,7 @@ describe('the snapshot a slug-only request serves under', () => {
 
     await vi.waitFor(() => {
       expect(recorded.started[0]?.virtualModels).toStrictEqual([
-        { id: 'fast', displayName: 'fast', target: { standing: 'removed' } },
+        { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
       ]);
     });
   });

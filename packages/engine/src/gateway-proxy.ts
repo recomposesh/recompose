@@ -32,6 +32,7 @@ export type SpendGrantContext = {
 export type SpendGrantFor = (
   slug: string,
   virtualModel: string,
+  routeNode: string,
   context?: SpendGrantContext,
 ) => Promise<SpendGrant>;
 
@@ -58,7 +59,7 @@ export async function proxyModelRequest(
   if ('response' in intercepted) return intercepted.response;
 
   const effectiveCrossing = intercepted.crossing;
-  const grant = await spendGrantFor(gateway.slug, virtualModel.id);
+  const grant = await spendGrantFor(gateway.slug, virtualModel.id, virtualModel.routing.entry);
   const pluginTarget =
     grant.verdict === 'resolved'
       ? await pluginGatewayTarget(c, effectiveCrossing, grant, plugins)

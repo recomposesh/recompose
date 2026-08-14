@@ -2,10 +2,14 @@ import { describe, expect, test } from 'vitest';
 
 import { engineGatewaySchema } from './engine-protocol';
 
+function aRoutingStanding(standing: unknown): unknown {
+  return { entry: 'only', nodes: { only: { kind: 'target', standing } } };
+}
+
 const binding = {
   id: 'fast',
   displayName: 'Fast',
-  target: { standing: 'bound', providerModel: 'claude-sonnet-4-5' },
+  routing: aRoutingStanding({ standing: 'bound', providerModel: 'claude-sonnet-4-5' }),
 };
 
 const gateway = {
@@ -17,6 +21,10 @@ const gateway = {
 
 function aGatewayBindingLike(patch: Record<string, unknown>): unknown {
   return { ...gateway, virtualModels: [{ ...binding, ...patch }] };
+}
+
+function aGatewayBindingStanding(standing: unknown): unknown {
+  return aGatewayBindingLike({ routing: aRoutingStanding(standing) });
 }
 
 describe('the binding snapshot the child answers listings from', () => {
@@ -33,7 +41,7 @@ describe('the binding snapshot the child answers listings from', () => {
   });
 
   test('a binding whose target left the registry stands removed', () => {
-    const removed = aGatewayBindingLike({ target: { standing: 'removed' } });
+    const removed = aGatewayBindingStanding({ standing: 'removed' });
 
     expect(engineGatewaySchema.parse(removed)).toEqual(removed);
   });
@@ -41,8 +49,9 @@ describe('the binding snapshot the child answers listings from', () => {
 
 describe('the standing that tells a bound target from a removed one', () => {
   test('a removed target names no model, because nothing stands behind the name', () => {
-    const removedWithAModel = aGatewayBindingLike({
-      target: { standing: 'removed', providerModel: 'claude-sonnet-4-5' },
+    const removedWithAModel = aGatewayBindingStanding({
+      standing: 'removed',
+      providerModel: 'claude-sonnet-4-5',
     });
 
     expect(() => engineGatewaySchema.parse(removedWithAModel)).toThrow();
@@ -50,14 +59,14 @@ describe('the standing that tells a bound target from a removed one', () => {
 
   test('a standing the child cannot tell bound from removed by is refused', () => {
     for (const standing of ['unknown', 'missing-target', '']) {
-      const guessed = aGatewayBindingLike({ target: { standing } });
+      const guessed = aGatewayBindingStanding({ standing });
 
       expect(() => engineGatewaySchema.parse(guessed)).toThrow();
     }
   });
 
   test('a bound target naming no model is refused, because the request would carry no name', () => {
-    const nameless = aGatewayBindingLike({ target: { standing: 'bound', providerModel: '   ' } });
+    const nameless = aGatewayBindingStanding({ standing: 'bound', providerModel: '   ' });
 
     expect(() => engineGatewaySchema.parse(nameless)).toThrow();
   });
@@ -84,9 +93,13 @@ describe('what a binding refuses to carry', () => {
     expect(() => engineGatewaySchema.parse(aGatewayBindingLike({ displayName: '   ' }))).toThrow();
   });
 
-  test('a binding carries no weight and no second target, because one name stands on one model', () => {
-    for (const smuggled of [{ weight: 100 }, { routing: { kind: 'router' } }]) {
-      expect(() => engineGatewaySchema.parse(aGatewayBindingLike(smuggled))).toThrow();
-    }
+  test('a binding carries no weight, because no shipped mode reads a share', () => {
+    expect(() => engineGatewaySchema.parse(aGatewayBindingLike({ weight: 100 }))).toThrow();
+  });
+
+  test('a routing that is no table at all is refused, so a bare node cannot stand in for one', () => {
+    expect(() =>
+      engineGatewaySchema.parse(aGatewayBindingLike({ routing: { kind: 'router' } })),
+    ).toThrow();
   });
 });

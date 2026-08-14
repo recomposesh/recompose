@@ -1,4 +1,4 @@
-import type { EngineVirtualModel, SpendGrant } from '@recompose/contracts';
+import type { EngineTargetStanding, SpendGrant } from '@recompose/contracts';
 import type { Hono } from 'hono';
 
 import { describe, expect, test } from 'vitest';
@@ -34,7 +34,7 @@ const openaiGrant: SpendGrant = {
   spend: { custody: 'credentialed', provider: 'openai', credential: 'sk-live-1' },
 };
 
-const boundTarget: EngineVirtualModel['target'] = {
+const boundTarget: EngineTargetStanding = {
   standing: 'bound',
   providerModel: 'grok-video-1',
 };

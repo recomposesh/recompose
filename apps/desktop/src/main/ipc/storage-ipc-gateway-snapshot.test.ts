@@ -13,7 +13,7 @@ import { describe, expect, test } from 'vitest';
 import type { SecretCodec } from '../storage/safe-storage-codec';
 import type { StorageIpcContext } from './storage-context';
 
-import { keyRow } from '../engine-host/spend-grant.testkit';
+import { keyRow, seatedAs } from '../engine-host/spend-grant.testkit';
 import { createStorageIpcHandlers } from './storage-ipc';
 
 const fakeCodec: SecretCodec = {
@@ -90,7 +90,7 @@ describe('the snapshot a gateway serves under the moment it is saved', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -102,7 +102,7 @@ describe('the snapshot a gateway serves under the moment it is saved', () => {
     await handlers['gateways:save'](personal);
 
     expect(started[0]?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', target: { standing: 'removed' } },
+      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
     ]);
   });
 });

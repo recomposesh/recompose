@@ -7,7 +7,12 @@ import { localProviderIdSchema } from './local-runtimes';
 const binding = {
   id: 'fast',
   displayName: 'Fast',
-  target: { standing: 'bound', providerModel: 'claude-sonnet-4-5' },
+  routing: {
+    entry: 'only',
+    nodes: {
+      only: { kind: 'target', standing: { standing: 'bound', providerModel: 'claude-sonnet-4-5' } },
+    },
+  },
 };
 
 const gateway = {
@@ -229,6 +234,21 @@ const trimmedDisplayNameArb = fc
 
 const directiveIdArb = fc.stringMatching(/^[a-z0-9-]{1,12}$/);
 
+const routeNodeIdArb = fc.stringMatching(/^[a-z0-9-]{1,12}$/);
+
+const routingArb = fc
+  .tuple(
+    routeNodeIdArb,
+    fc.record({
+      standing: fc.constant('bound' as const),
+      providerModel: fc.stringMatching(/^[a-z0-9-]{3,20}$/),
+    }),
+  )
+  .map(([entry, standing]) => ({
+    entry,
+    nodes: { [entry]: { kind: 'target' as const, standing } },
+  }));
+
 const directiveArb = fc.oneof(
   fc.record({
     kind: fc.constant('start' as const),
@@ -241,10 +261,7 @@ const directiveArb = fc.oneof(
         fc.record({
           id: slugArb,
           displayName: trimmedDisplayNameArb,
-          target: fc.record({
-            standing: fc.constant('bound' as const),
-            providerModel: fc.stringMatching(/^[a-z0-9-]{3,20}$/),
-          }),
+          routing: routingArb,
         }),
         { maxLength: 2 },
       ),

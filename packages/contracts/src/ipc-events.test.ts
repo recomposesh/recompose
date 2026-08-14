@@ -64,7 +64,7 @@ describe('the lifecycle push', () => {
 });
 
 describe('the traffic push', () => {
-  const flowed = { personal: { fast: { outcome: 'served', at: 1_754_600_000_000 } } };
+  const flowed = { personal: { fast: { only: { outcome: 'served', at: 1_754_600_000_000 } } } };
 
   test('it carries the whole snapshot, so a missed push heals on the next', () => {
     expect(ipcEvents['engine:traffic'].payload.parse(flowed)).toEqual(flowed);

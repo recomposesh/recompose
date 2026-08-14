@@ -11,7 +11,7 @@ import type { CableFailure, CableStanding, CarriedTraffic } from './cable-traffi
 import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
 
-import { carriedBy, failureCarried, standingCarried } from './cable-traffic';
+import { carriedBy, failureCarried, latestAcrossNodes, standingCarried } from './cable-traffic';
 import { routeCard, seatName } from './canvas-cards';
 import { firstDeclaredTarget, seatedRouteNodes } from './route-graph';
 
@@ -51,24 +51,25 @@ function modelNodeId(modelId: string): string {
 }
 
 /**
- * What the last request through a model says about the cable feeding one of its route nodes.
+ * What the last request through one route node says about the cable feeding its card.
  *
- * @summary Traffic names the virtual model a request passed through, so the cable out of the
- * model carries it and a cable below a router waits for a reading named against its own route node.
- * Painting every cable of a ladder from one reading would say two children each failed where one
- * did. A cable onto a card whose account left the registry carries nothing at all, because it
- * cannot serve the next request and stale green would say it could.
+ * @summary Traffic names the route node an attempt went through, so each cable of a ladder paints
+ * from its own node: the child a router moved on from reads failed beside the child that answered,
+ * where one reading spread over every cable would say both failed. A router is attempted by nothing,
+ * so the cable into one rests and the children below it carry the story. A cable onto a card whose
+ * account left the registry carries nothing at all, because it cannot serve the next request and
+ * stale green would say it could.
  */
 function outcomeInto(
   carried: CarriedTraffic,
   card: CanvasNode,
   placed: PlacedRouteNode,
 ): RequestOutcome | undefined {
-  if (card.kind === 'ghost-target' || placed.seat.parent !== undefined) {
+  if (card.kind === 'ghost-target') {
     return undefined;
   }
 
-  return carried[placed.modelId];
+  return carried[placed.modelId]?.[placed.seat.routeNodeId];
 }
 
 function cableInto(
@@ -112,19 +113,22 @@ function routedCards(
   const { entry } = model.routing;
   const nodes: CanvasNode[] = [];
   const edges: CanvasEdge[] = [];
-  let flowed: RequestOutcome | undefined;
+  const painted: Record<string, RequestOutcome> = {};
 
   for (const seat of seatedRouteNodes(model.routing)) {
     const placed = { modelId: model.id, name: seatName(model.id, seat.routeNodeId, entry), seat };
     const card = routeCard(placed, registry);
     const into = outcomeInto(carried, card, placed);
 
-    flowed = seat.parent === undefined ? into : flowed;
+    if (into !== undefined) {
+      painted[seat.routeNodeId] = into;
+    }
+
     nodes.push(card);
     edges.push(cableInto(placed, card, into, entry));
   }
 
-  return { nodes, edges, flowed };
+  return { nodes, edges, flowed: latestAcrossNodes(painted) };
 }
 
 function modelCard(model: VirtualModel): CanvasNode {

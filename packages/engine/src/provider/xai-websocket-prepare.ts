@@ -1,5 +1,7 @@
 import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 
+import { standingTheEntryNames } from '@recompose/contracts';
+
 import type { SpendGrantFor } from '../gateway-proxy';
 import type { Crossing, JsonObject } from '../gateway-wire';
 
@@ -27,14 +29,30 @@ function xaiGrant(grant: SpendGrant): grant is XAIWebSocketGrant {
   );
 }
 
+function boundSeatIn(gateway: EngineGateway, model: string) {
+  const virtual = gateway.virtualModels.find((candidate) => candidate.id === model);
+
+  if (virtual === undefined) {
+    return null;
+  }
+
+  const standing = standingTheEntryNames(virtual.routing);
+
+  return standing.standing === 'bound'
+    ? {
+        virtualModel: virtual.id,
+        routeNode: virtual.routing.entry,
+        providerModel: standing.providerModel,
+      }
+    : null;
+}
+
 function socketTarget(gateway: EngineGateway, message: JsonObject) {
   const body = isJsonObject(message['response']) ? message['response'] : message;
   const model = typeof body['model'] === 'string' ? body['model'] : '';
-  const virtual = gateway.virtualModels.find((candidate) => candidate.id === model);
+  const seat = boundSeatIn(gateway, model);
 
-  return virtual?.target.standing === 'bound'
-    ? { body, virtualModel: virtual.id, providerModel: virtual.target.providerModel }
-    : null;
+  return seat === null ? null : { body, ...seat };
 }
 
 function crossingFor(
@@ -70,7 +88,7 @@ export async function prepareXAIWebSocketTarget(
 
   if (target === null) return { error: 'unknown virtual model' };
 
-  const grant = await spendGrantFor(gateway.slug, target.virtualModel);
+  const grant = await spendGrantFor(gateway.slug, target.virtualModel, target.routeNode);
 
   if (!xaiGrant(grant)) return { error: 'xAI target unavailable' };
 

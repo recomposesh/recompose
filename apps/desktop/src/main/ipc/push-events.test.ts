@@ -73,7 +73,7 @@ describe('telling the open windows what changed', () => {
     const first = openWindow();
     const second = openWindow();
     const traffic: GatewayTraffic = {
-      'my-gateway': { fast: { outcome: 'served', at: 1_754_600_000_000 } },
+      'my-gateway': { fast: { only: { outcome: 'served', at: 1_754_600_000_000 } } },
     };
 
     pushEngineTraffic(traffic);

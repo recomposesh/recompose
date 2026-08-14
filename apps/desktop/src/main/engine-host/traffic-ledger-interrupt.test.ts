@@ -1,4 +1,4 @@
-import type { EngineGateway, GatewayTraffic } from '@recompose/contracts';
+import type { EngineGateway, EngineVirtualModel, GatewayTraffic } from '@recompose/contracts';
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -8,12 +8,35 @@ const at = 1_754_600_000_000;
 
 const stoppedAt = at + 5_000;
 
+const onlyNode = 'only';
+
 function servedThrough(slug: string, virtualModel: string): unknown {
-  return { kind: 'traffic', slug, virtualModel, request: { outcome: 'served', at } };
+  return {
+    kind: 'traffic',
+    slug,
+    virtualModel,
+    routeNode: onlyNode,
+    request: { outcome: 'served', at },
+  };
 }
 
 function liveThrough(slug: string, virtualModel: string): unknown {
-  return { kind: 'traffic', slug, virtualModel, request: { outcome: 'live', at } };
+  return {
+    kind: 'traffic',
+    slug,
+    virtualModel,
+    routeNode: onlyNode,
+    request: { outcome: 'live', at },
+  };
+}
+
+function aBoundRouting(): EngineVirtualModel['routing'] {
+  return {
+    entry: onlyNode,
+    nodes: {
+      [onlyNode]: { kind: 'target', standing: { standing: 'bound', providerModel: 'gpt-5-mini' } },
+    },
+  };
 }
 
 function aGatewayServing(slug: string, ...ids: readonly string[]): EngineGateway {
@@ -21,12 +44,12 @@ function aGatewayServing(slug: string, ...ids: readonly string[]): EngineGateway
     slug,
     displayName: slug,
     port: 8397,
-    virtualModels: ids.map((id) => ({
-      id,
-      displayName: id,
-      target: { standing: 'bound', providerModel: 'gpt-5-mini' },
-    })),
+    virtualModels: ids.map((id) => ({ id, displayName: id, routing: aBoundRouting() })),
   };
+}
+
+function lastOutcomeOn(pushed: readonly GatewayTraffic[], virtualModel: string): unknown {
+  return pushed.at(-1)?.['personal']?.[virtualModel]?.[onlyNode];
 }
 
 function aDesk() {
@@ -59,10 +82,12 @@ describe('a gateway that stopped while a request was live', () => {
     expect(pushed.at(-1)).toEqual({
       personal: {
         fast: {
-          outcome: 'failed',
-          at: stoppedAt,
-          status: 503,
-          detail: 'The gateway stopped before the request finished.',
+          [onlyNode]: {
+            outcome: 'failed',
+            at: stoppedAt,
+            status: 503,
+            detail: 'The gateway stopped before the request finished.',
+          },
         },
       },
     });
@@ -79,8 +104,8 @@ describe('a gateway that stopped while a request was live', () => {
     desk.interrupt('personal');
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
-    expect(pushed.at(-1)?.['personal']?.['deep']).toEqual({ outcome: 'served', at });
-    expect(pushed.at(-1)?.['personal']?.['fast']).toMatchObject({ outcome: 'failed' });
+    expect(lastOutcomeOn(pushed, 'deep')).toEqual({ outcome: 'served', at });
+    expect(lastOutcomeOn(pushed, 'fast')).toMatchObject({ outcome: 'failed' });
   });
 
   test('a gateway holding nothing live says nothing more when it stops', async () => {
@@ -120,7 +145,9 @@ describe('the traffic lane once a gateway has stopped', () => {
     desk.hears(servedThrough('personal', 'fast'));
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
-    expect(pushed.at(-1)).toEqual({ personal: { fast: { outcome: 'served', at } } });
+    expect(pushed.at(-1)).toEqual({
+      personal: { fast: { [onlyNode]: { outcome: 'served', at } } },
+    });
   });
 });
 
@@ -136,7 +163,7 @@ describe('a gateway removed from the traffic snapshot', () => {
     desk.forget('personal');
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
-    expect(pushed.at(-1)).toEqual({ work: { deep: { outcome: 'served', at } } });
+    expect(pushed.at(-1)).toEqual({ work: { deep: { [onlyNode]: { outcome: 'served', at } } } });
   });
 
   test('a gateway nothing flowed through leaves nothing behind', async () => {
@@ -158,6 +185,8 @@ describe('a gateway removed from the traffic snapshot', () => {
     desk.hears(servedThrough('personal', 'fast'));
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
-    expect(pushed.at(-1)).toEqual({ personal: { fast: { outcome: 'served', at } } });
+    expect(pushed.at(-1)).toEqual({
+      personal: { fast: { [onlyNode]: { outcome: 'served', at } } },
+    });
   });
 });

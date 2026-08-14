@@ -22,7 +22,7 @@ function noting(): { noted: Noted[]; note: NoteTraffic } {
 
   return {
     noted,
-    note: (slug, virtualModel, request) => {
+    note: (slug, virtualModel, _routeNode, request) => {
       noted.push({ slug, virtualModel, request });
     },
   };

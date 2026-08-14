@@ -1,4 +1,4 @@
-import type { EngineGateway, GatewayTraffic } from '@recompose/contracts';
+import type { EngineGateway, EngineVirtualModel, GatewayTraffic } from '@recompose/contracts';
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -8,16 +8,23 @@ import { TRAFFIC_PUSH_MS } from './traffic-ledger';
 
 const at = 1_754_600_000_000;
 
+const onlyNode = 'only';
+
+function aBoundRouting(): EngineVirtualModel['routing'] {
+  return {
+    entry: onlyNode,
+    nodes: {
+      [onlyNode]: { kind: 'target', standing: { standing: 'bound', providerModel: 'gpt-5-mini' } },
+    },
+  };
+}
+
 function aGatewayServing(...ids: readonly string[]): EngineGateway {
   return {
     slug: 'codex',
     displayName: 'Codex',
     port: 8397,
-    virtualModels: ids.map((id) => ({
-      id,
-      displayName: id,
-      target: { standing: 'bound', providerModel: 'gpt-5-mini' },
-    })),
+    virtualModels: ids.map((id) => ({ id, displayName: id, routing: aBoundRouting() })),
   };
 }
 
@@ -26,6 +33,7 @@ function servedThrough(virtualModel: string): unknown {
     kind: 'traffic',
     slug: 'codex',
     virtualModel,
+    routeNode: onlyNode,
     request: { outcome: 'served', at },
   };
 }
@@ -61,7 +69,7 @@ describe('traffic the child reports on its own', () => {
     scripted.send(servedThrough('fast'));
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
-    expect(pushed).toEqual([{ codex: { fast: { outcome: 'served', at } } }]);
+    expect(pushed).toEqual([{ codex: { fast: { [onlyNode]: { outcome: 'served', at } } } }]);
   });
 
   test('a host nobody asked to report traffic drops it and keeps serving', async () => {
@@ -95,7 +103,7 @@ describe('a gateway starting under a changed set of models', () => {
     await host.start(aGatewayServing('fast'));
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
-    expect(pushed.at(-1)).toEqual({ codex: { fast: { outcome: 'served', at } } });
+    expect(pushed.at(-1)).toEqual({ codex: { fast: { [onlyNode]: { outcome: 'served', at } } } });
   });
 
   test('a restart under the same models leaves every outcome standing', async () => {
@@ -110,6 +118,6 @@ describe('a gateway starting under a changed set of models', () => {
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
     expect(pushed).toHaveLength(1);
-    expect(pushed.at(-1)).toEqual({ codex: { fast: { outcome: 'served', at } } });
+    expect(pushed.at(-1)).toEqual({ codex: { fast: { [onlyNode]: { outcome: 'served', at } } } });
   });
 });

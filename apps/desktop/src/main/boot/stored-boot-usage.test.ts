@@ -41,7 +41,12 @@ function aGatewayServing(): EngineGateway {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'gpt-5-mini' },
+        routing: {
+          entry: 'only',
+          nodes: {
+            only: { kind: 'target', standing: { standing: 'bound', providerModel: 'gpt-5-mini' } },
+          },
+        },
       },
     ],
   };

@@ -1,4 +1,4 @@
-import type { EngineGateway, SpendGrant } from '@recompose/contracts';
+import type { EngineGateway, EngineVirtualModel, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
 
 import { proxyFetchBoundMs } from '@recompose/contracts';
@@ -23,14 +23,14 @@ function sanitizedBody(body: JsonObject): JsonObject {
   return sanitized;
 }
 
-function virtualModelId(gateway: EngineGateway, body: JsonObject): string | null {
+function virtualModelBound(gateway: EngineGateway, body: JsonObject): EngineVirtualModel | null {
   const requested = body['model'];
   const exact =
     typeof requested === 'string'
       ? gateway.virtualModels.find((model) => model.id === requested)
       : undefined;
 
-  return (exact ?? gateway.virtualModels[0])?.id ?? null;
+  return exact ?? gateway.virtualModels[0] ?? null;
 }
 
 function credentialedAlpha(grant: ResolvedGrant): AlphaAuth | null {
@@ -74,8 +74,8 @@ function requiredBody(raw: string): JsonObject {
   return body;
 }
 
-function requiredVirtualModel(gateway: EngineGateway, body: JsonObject): string {
-  const model = virtualModelId(gateway, body);
+function requiredVirtualModel(gateway: EngineGateway, body: JsonObject): EngineVirtualModel {
+  const model = virtualModelBound(gateway, body);
 
   if (model === null) throw new AlphaSearchError('Codex target unavailable', 503);
 
@@ -95,11 +95,11 @@ async function resolvedGrant(
   c: Context,
   gateway: EngineGateway,
   body: JsonObject,
-  virtualModel: string,
+  virtualModel: EngineVirtualModel,
   spendGrantFor: SpendGrantFor,
 ): Promise<ResolvedGrant> {
   const sessionId = typeof body['id'] === 'string' ? body['id'] : undefined;
-  const grant = await spendGrantFor(gateway.slug, virtualModel, {
+  const grant = await spendGrantFor(gateway.slug, virtualModel.id, virtualModel.routing.entry, {
     headers: new Headers(c.req.raw.headers),
     query: new URL(c.req.url).searchParams,
     ...(sessionId === undefined ? {} : { sessionId }),
@@ -173,7 +173,7 @@ export async function proxyCodexAlphaSearch(
 
     return await forwardedSearch(
       body,
-      virtualModel,
+      virtualModel.id,
       grant,
       fetchLike,
       new Headers(c.req.raw.headers),

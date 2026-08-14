@@ -14,8 +14,8 @@ export type CableStanding =
 /** What a request the gateway refused or could not finish came to, as a person reads it. */
 export type CableFailure = { status: number; detail: string };
 
-/** The latest outcome of every virtual model this gateway serves, warm ones only. */
-export type CarriedTraffic = Readonly<Record<string, RequestOutcome>>;
+/** The latest outcome of every route node this gateway served, under its model, warm ones only. */
+export type CarriedTraffic = Readonly<Record<string, Readonly<Record<string, RequestOutcome>>>>;
 
 const CABLE_TRAFFIC_MEMORY_MS = 60_000;
 
@@ -31,12 +31,20 @@ function stillWarm(carried: RequestOutcome, now: number): boolean {
   return true;
 }
 
+function warmNodes(
+  nodes: Readonly<Record<string, RequestOutcome>>,
+  now: number,
+): readonly (readonly [string, RequestOutcome])[] {
+  return Object.entries(nodes).filter(([, carried]) => stillWarm(carried, now));
+}
+
 /**
- * What each of a gateway's virtual models last came to, once the cold readings fall away.
+ * What each route node of a gateway's virtual models last came to, once the cold readings fall away.
  *
  * @summary A served reading cools back to rest once the minute passes it by, because a warm tint is
  * a claim about now rather than a plaque about ever, and a failure stays until newer traffic answers
- * it, since a break is a thing a person has to see.
+ * it, since a break is a thing a person has to see. The node level is what lets one request paint
+ * two cables: the child a ladder moved on from and the one that answered each keep their own.
  */
 export function carriedBy(
   gateway: GatewayConfig,
@@ -46,7 +54,28 @@ export function carriedBy(
   const flowed = traffic[gateway.slug] ?? {};
 
   return Object.fromEntries(
-    Object.entries(flowed).filter(([, carried]) => stillWarm(carried, now)),
+    Object.entries(flowed).flatMap(([modelId, nodes]) => {
+      const warm = warmNodes(nodes, now);
+
+      return warm.length === 0 ? [] : [[modelId, Object.fromEntries(warm)] as const];
+    }),
+  );
+}
+
+/**
+ * The newest reading among a virtual model's route nodes, or nothing where none stayed warm.
+ *
+ * @summary One request walking a ladder leaves a reading under every node it tried, and the
+ * gateway's wire belongs to the model rather than to a node, so it shows the attempt that landed
+ * last. Two readings from the same instant settle on the last node the table names, so the answer
+ * never depends on when it was asked.
+ */
+export function latestAcrossNodes(
+  nodes: Readonly<Record<string, RequestOutcome>> | undefined,
+): RequestOutcome | undefined {
+  return Object.values(nodes ?? {}).reduce<RequestOutcome | undefined>(
+    (latest, carried) => (latest === undefined || carried.at >= latest.at ? carried : latest),
+    undefined,
   );
 }
 

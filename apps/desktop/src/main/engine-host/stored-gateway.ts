@@ -1,9 +1,12 @@
 import type {
   Account,
   EngineGateway,
+  EngineRouting,
+  EngineTargetStanding,
   EngineVirtualModel,
   GatewayConfig,
   RouteTarget,
+  Routing,
   VirtualModel,
 } from '@recompose/contracts';
 
@@ -21,12 +24,18 @@ import { loadSettingsFile } from '../storage/settings-store';
 function standingOf(
   accounts: readonly Account[],
   target: RouteTarget | undefined,
-): EngineVirtualModel['target'] {
+): EngineTargetStanding {
   const held = accounts.find((account) => account.id === target?.accountId);
 
   return target === undefined || held === undefined
     ? { standing: 'removed' }
     : { standing: 'bound', providerModel: target.providerModel };
+}
+
+function mirroredRouting(accounts: readonly Account[], routing: Routing): EngineRouting {
+  const standing = standingOf(accounts, targetTheEntryNames(routing));
+
+  return { entry: routing.entry, nodes: { [routing.entry]: { kind: 'target', standing } } };
 }
 
 function mintedAgainst(
@@ -36,7 +45,7 @@ function mintedAgainst(
   return stored.map((model) => ({
     id: model.id,
     displayName: model.displayName,
-    target: standingOf(accounts, targetTheEntryNames(model.routing)),
+    routing: mirroredRouting(accounts, model.routing),
   }));
 }
 

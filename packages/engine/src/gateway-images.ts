@@ -1,6 +1,8 @@
 import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
 
+import { standingTheEntryNames } from '@recompose/contracts';
+
 import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 
@@ -166,17 +168,12 @@ export async function proxyImageRequest(
 
   if (virtual === undefined)
     return imageError(`The model "${prepared.model}" does not exist.`, 404);
-  if (virtual.target.standing !== 'bound') return imageError('The image model has no target.');
 
-  const grant = await spendGrantFor(gateway.slug, virtual.id);
+  const standing = standingTheEntryNames(virtual.routing);
 
-  return targetImageAnswer(
-    c,
-    grant,
-    virtual.target.providerModel,
-    prepared,
-    path,
-    runtime,
-    fetchLike,
-  );
+  if (standing.standing !== 'bound') return imageError('The image model has no target.');
+
+  const grant = await spendGrantFor(gateway.slug, virtual.id, virtual.routing.entry);
+
+  return targetImageAnswer(c, grant, standing.providerModel, prepared, path, runtime, fetchLike);
 }

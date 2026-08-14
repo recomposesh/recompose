@@ -1,6 +1,8 @@
 import type { EngineGateway, EngineVirtualModel, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
 
+import { standingTheEntryNames } from '@recompose/contracts';
+
 import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
@@ -120,7 +122,7 @@ function countVirtual(gateway: EngineGateway, model: string): VirtualLookup {
     return { refusal: refusalResponse('anthropic', unknownModel(model)) };
   }
 
-  return virtual.target.standing === 'removed'
+  return standingTheEntryNames(virtual.routing).standing === 'removed'
     ? { refusal: refusalResponse('anthropic', missingTarget(gateway.displayName, model)) }
     : { virtual };
 }
@@ -137,7 +139,7 @@ async function countWithGrant(
   aiStudio?: AIStudioRelay,
   plugins?: PluginHost,
 ): Promise<Response> {
-  const grant = await spendGrantFor(gateway.slug, model);
+  const grant = await spendGrantFor(gateway.slug, model, virtual.routing.entry);
   const denied = deniedCount(gateway, model, grant);
 
   if (grant.verdict !== 'resolved') {
@@ -148,7 +150,9 @@ async function countWithGrant(
     return denied;
   }
 
-  const providerModel = virtual.target.standing === 'bound' ? virtual.target.providerModel : model;
+  const standing = standingTheEntryNames(virtual.routing);
+
+  const providerModel = standing.standing === 'bound' ? standing.providerModel : model;
 
   return safeResolvedCount(
     c,

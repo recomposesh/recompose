@@ -18,6 +18,7 @@ const askFor = (id: string, virtualModel: string): unknown => ({
   id,
   slug: codex.slug,
   virtualModel,
+  routeNode: 'seat',
 });
 
 afterEach(() => {

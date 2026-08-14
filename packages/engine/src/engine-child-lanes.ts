@@ -27,13 +27,19 @@ export function openSpendLane(parentPort: ParentPort): SpendLane {
   const pending = new Map<string, (grant: SpendGrant) => void>();
 
   return {
-    grantFor: async (slug, virtualModel) =>
+    grantFor: async (slug, virtualModel, routeNode) =>
       new Promise((resolve) => {
         const id = crypto.randomUUID();
 
         pending.set(id, resolve);
         parentPort.postMessage(
-          engineSpendRequestSchema.parse({ kind: 'spend-request', id, slug, virtualModel }),
+          engineSpendRequestSchema.parse({
+            kind: 'spend-request',
+            id,
+            slug,
+            virtualModel,
+            routeNode,
+          }),
         );
       }),
     settle: (data) => {

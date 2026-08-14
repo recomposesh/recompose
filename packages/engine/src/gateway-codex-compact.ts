@@ -1,6 +1,8 @@
 import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
 
+import { standingTheEntryNames } from '@recompose/contracts';
+
 import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 
@@ -13,7 +15,9 @@ import { reachCodexCompact } from './subscription/reach-compact';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 type RefusedGrant = Exclude<SpendGrant, { verdict: 'resolved' }>;
-type CompactTarget = { response: Response } | { providerModel: string; virtualId: string };
+type CompactTarget =
+  | { response: Response }
+  | { providerModel: string; virtualId: string; routeNode: string };
 
 function denied(gateway: EngineGateway, model: string, grant: RefusedGrant): Response {
   return grant.verdict === 'missing-target'
@@ -74,11 +78,17 @@ function compactTarget(gateway: EngineGateway, model: string): CompactTarget {
     return { response: refusalResponse('responses', unknownModel(model)) };
   }
 
-  if (virtual.target.standing === 'removed') {
+  const standing = standingTheEntryNames(virtual.routing);
+
+  if (standing.standing === 'removed') {
     return { response: refusalResponse('responses', missingTarget(gateway.displayName, model)) };
   }
 
-  return { providerModel: virtual.target.providerModel, virtualId: virtual.id };
+  return {
+    providerModel: standing.providerModel,
+    virtualId: virtual.id,
+    routeNode: virtual.routing.entry,
+  };
 }
 
 async function resolvedCompact(
@@ -123,7 +133,7 @@ export async function proxyCodexCompactRequest(
 
   if ('response' in target) return target.response;
 
-  const grant = await spendGrantFor(gateway.slug, target.virtualId);
+  const grant = await spendGrantFor(gateway.slug, target.virtualId, target.routeNode);
 
   return resolvedCompact(c, gateway, model, body, grant, runtime, target.providerModel, fetchLike);
 }

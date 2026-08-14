@@ -11,6 +11,7 @@ const asked: EngineSpendRequest = {
   id: 's1',
   slug: 'codex',
   virtualModel: 'fast',
+  routeNode: 'only',
 };
 
 const credentialed: SpendGrant = {
