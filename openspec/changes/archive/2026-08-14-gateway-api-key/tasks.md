@@ -55,22 +55,27 @@ parallel once Task 1 lands.
 
 The maintainer picked option B, so the key gets an Access section of its own.
 
-- [ ] `ui/gateway-access/gateway-access.tsx` renders the heading with its `Switch`, the box holding the
+- [x] `ui/gateway-access/gateway-access.tsx` renders the heading with its `Switch`, the box holding the
       masked key beside a `CopyButton` and a regenerate row, and the line naming the fields a client can
       carry the key in
-- [ ] `subject-bodies.tsx` mounts the section between General Info and Endpoint
-- [ ] Regenerating goes through `ConsequenceDialog`, and the question names what breaks
-- [ ] Its `*.stories.tsx` sibling covers off, on, and the regeneration question
-- [ ] Browser specs prove the switch reads off for a gateway requiring nothing, turning it on mints a
+- [x] `subject-bodies.tsx` mounts the section between General Info and Endpoint
+- [x] Regenerating goes through `ConsequenceDialog`, and the question names what breaks
+- [x] Its `*.stories.tsx` sibling covers off, on, and the regeneration question
+- [x] Browser specs prove the switch reads off for a gateway requiring nothing, turning it on mints a
       key and requires it, turning it off keeps the stored value, and the copy control carries the whole
       value
-- [ ] Browser specs prove the section never renders the whole key, and that declining the regeneration
+- [x] Browser specs prove the section never renders the whole key, and that declining the regeneration
       question leaves the stored key alone
-- [ ] Browser specs prove no act in the section waits for a save
-- [ ] A pass through `claude-in-chrome` in both color schemes, reading accessible names off the page
+- [x] Browser specs prove no act in the section waits for a save
+- [x] A pass through `claude-in-chrome` in both color schemes, reading accessible names off the page
       rather than by eye
 - [ ] The dark scheme pair of option B lands in `designs/recompose.pen`, and the two rejected option
       frames leave it
+
+The one item this change leaves open, and why. The three option frames stand in `designs/recompose.pen`
+in the editor's memory rather than on disk. The Pencil tools never write the file, and their
+`filePath` reaches whatever document the app has open. The maintainer saves it, so the dark pair and
+the removal wait on that save rather than on this branch.
 
 ### Task 5: A document change never starts a stopped gateway
 
@@ -104,6 +109,6 @@ The maintainer picked option B, so the key gets an Access section of its own.
 
 ### Closing
 
-- [ ] The prose and spelling gates run once at the end, and one editing pass answers every finding
+- [x] The prose and spelling gates run once at the end, and one editing pass answers every finding
 - [x] The full local battery runs green before the branch reaches continuous integration
 - [x] The diff-scoped mutation gate leaves no survivor on a file this change wrote
