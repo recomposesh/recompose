@@ -109,6 +109,14 @@ The decision folded three items from #155 and one from #154 into this train. The
 - **The failure reveal anchoring.** Task 7b owns it.
 - **The furniture scenario.** Task 8 owns it, on main's amended line.
 
+## One rider this change found and refuses to carry
+
+The `unit` project in `apps/desktop/vitest.config.ts` is the only one of four that doesn't spread `pacedForCi`. Under a full battery it runs at full file parallelism with no retry, while three chromium projects compete for the same cores. The specs that lose are the ones waiting on a real filesystem read. Four runs on this train each lost to a different `src/main/**` file the branch never opened, the last of them reading a usage ledger before its flush landed. Every one passed alone.
+
+The root `test` block does spread `pacedForCi`, which reads like coverage and isn't. A `projects` entry carrying its own `test` block doesn't inherit it, which is why the three browser projects each restate it.
+
+The train left it alone on purpose. Pacing that project changes every run on every branch, so it wants its own job rather than a line buried in a router feature.
+
 ## One question for the review gate
 
 The rules review on task 4 read every `@summary` docstring on a module-private function as a banned comment. The cluster checked before following it and found 53 already committed across `packages/engine/src` and `apps/desktop/src/main`, several of them written by this change's own earlier clusters. CLAUDE.md carves the pattern out for API documentation the tooling reads, which names exported declarations, so the strict reading and the house practice genuinely disagree.
