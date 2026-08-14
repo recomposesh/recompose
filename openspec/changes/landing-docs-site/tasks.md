@@ -14,7 +14,7 @@
 - [x] 2.1 Add the emitted directory to the build outputs in `turbo.json`
 - [x] 2.2 Keep every documentation page in `.md`, the format the prose gate already reads,
       because the Vale release that reads `.mdx` natively isn't out
-- [ ] 2.3 Prove the prose gate reads the documentation by seeding an error and watching it fail
+- [x] 2.3 Prove the prose gate reads the documentation by seeding an error and watching it fail
 - [x] 2.4 Give `.oxlintrc.json` and `.oxfmtrc.json` the site's stylesheet as a second entry point
 - [x] 2.5 Forbid `apps/web` from reaching `apps/desktop` in `.dependency-cruiser.cjs`
 - [x] 2.6 Give `knip.json` a workspace block naming the site's entries and its generated route tree
