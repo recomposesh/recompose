@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page } from '@playwright/test';
+import type { ElectronApplication, Page, TestInfo } from '@playwright/test';
 
 import { _electron as electron } from '@playwright/test';
 import { mkdir, rm } from 'node:fs/promises';
@@ -9,12 +9,14 @@ import { createBdd, test as base } from 'playwright-bdd';
 
 import type { KeyProbeStub } from './key-probe-stub';
 import type { RuntimeStub } from './runtime-stub';
+import type { ScriptedProvider } from './scripted-provider';
 import type { SubscriptionTools } from './subscription-tools';
 
 import { fakeKeyProbe } from './key-probe-stub';
 import { dropServer, holdPort, LOOPBACK_HOSTS } from './loopback-ports';
 import { theClipboardIsHeld } from './one-clipboard';
 import { fakeLocalRuntime } from './runtime-stub';
+import { fakeScriptedProvider } from './scripted-provider';
 import { fakeSubscriptionTools } from './subscription-tools';
 import { seededUsageHistoryWritten } from './usage-screen';
 
@@ -43,6 +45,14 @@ type ElectronFixtures = {
    * file reads as the whole requirement.
    */
   oneClipboard: void;
+  /**
+   * Forgets everything the last scenario scripted, before this one arranges anything.
+   *
+   * @summary The provider outlives one scenario, so a fixture left behind would answer the next
+   * one's first attempt. It is automatic because a scenario that never scripts an answer is
+   * exactly the one a leftover would fool.
+   */
+  aFreshScript: void;
   electronApp: ElectronApplication;
   keyProbe: KeyProbeStub;
   localRuntime: RuntimeStub;
@@ -50,6 +60,35 @@ type ElectronFixtures = {
   portSquatter: PortSquatter;
   subscriptionTools: SubscriptionTools;
 };
+
+/**
+ * The stand-ins one worker keeps standing across every scenario it runs.
+ *
+ * @summary The scripted provider costs a whole HTTP server, and a worker runs its scenarios one at
+ * a time, so one per worker is enough. What it costs instead is the memory of the last scenario,
+ * which `aFreshScript` takes away before the next one arranges anything.
+ */
+type WorkerStandIns = {
+  scriptedProvider: ScriptedProvider;
+};
+
+/**
+ * Where this scenario's targets are spent: the provider it scripts, or the probe.
+ *
+ * @summary A router offers one request to several children in turn, which the probe cannot answer
+ * differently for each. The whole routers tree needs the scripted provider and nothing else does,
+ * so the tree a scenario stands in is what decides. Deciding it by tag instead would mean writing
+ * a tag into every approved scenario, and graduation copies those unchanged.
+ */
+function servingOriginFor(
+  testInfo: TestInfo,
+  keyProbe: KeyProbeStub,
+  scriptedProvider: ScriptedProvider,
+): string {
+  return testInfo.file.includes(join('features', 'routers'))
+    ? scriptedProvider.origin
+    : keyProbe.origin;
+}
 
 async function takePort(held: Map<number, Server[]>, port: number): Promise<void> {
   const holders = await Promise.all(LOOPBACK_HOSTS.map(async (host) => holdPort(host, port)));
@@ -104,7 +143,7 @@ async function restoreLoginItem(
   }, openAtLogin);
 }
 
-export const test = base.extend<ElectronFixtures>({
+export const test = base.extend<ElectronFixtures, WorkerStandIns>({
   oneClipboard: [
     async ({ $tags }, use) => {
       const letGo = $tags.includes('@one-clipboard') ? await theClipboardIsHeld() : null;
@@ -114,6 +153,26 @@ export const test = base.extend<ElectronFixtures>({
       } finally {
         await letGo?.();
       }
+    },
+    { auto: true },
+  ],
+  scriptedProvider: [
+    async ({}, use) => {
+      const provider = await fakeScriptedProvider();
+
+      try {
+        await use(provider);
+      } finally {
+        await provider.dispose();
+      }
+    },
+    { scope: 'worker' },
+  ],
+  aFreshScript: [
+    async ({ scriptedProvider }, use) => {
+      scriptedProvider.forgets();
+
+      await use();
     },
     { auto: true },
   ],
@@ -144,7 +203,11 @@ export const test = base.extend<ElectronFixtures>({
       await runtime.dispose();
     }
   },
-  electronApp: async ({ $tags, keyProbe, localRuntime, subscriptionTools }, use, testInfo) => {
+  electronApp: async (
+    { $tags, keyProbe, localRuntime, scriptedProvider, subscriptionTools },
+    use,
+    testInfo,
+  ) => {
     const userDataDir = join(homedir(), `.recompose-e2e-w${String(testInfo.parallelIndex)}`);
 
     await rm(userDataDir, { force: true, recursive: true });
@@ -162,7 +225,7 @@ export const test = base.extend<ElectronFixtures>({
         ELECTRON_RENDERER_URL: '',
         RECOMPOSE_USER_DATA_DIR: userDataDir,
         RECOMPOSE_PROBE_ORIGIN: keyProbe.origin,
-        RECOMPOSE_SERVING_ORIGIN: keyProbe.origin,
+        RECOMPOSE_SERVING_ORIGIN: servingOriginFor(testInfo, keyProbe, scriptedProvider),
         RECOMPOSE_CONTROL_ORIGIN: keyProbe.origin,
         ...($tags.includes('@probes-the-minted-address')
           ? {}

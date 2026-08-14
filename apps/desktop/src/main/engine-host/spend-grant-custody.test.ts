@@ -14,7 +14,7 @@ import {
 } from './spend-grant.testkit';
 
 async function grantedOver(userDataPath: string) {
-  return resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast');
+  return resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat');
 }
 
 describe('where the credential a grant carries is allowed to live', () => {

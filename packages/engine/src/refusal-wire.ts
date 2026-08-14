@@ -15,7 +15,7 @@ export type AnthropicRefusal = {
   };
 };
 
-export type OpenAiCode =
+type OpenAiCode =
   | 'model_not_found'
   | 'unmappable_stop_reason'
   | 'unrepairable_tool_call'
@@ -25,7 +25,42 @@ export type OpenAiCode =
   | 'missing_target'
   | 'missing_credential'
   | 'unstreamable_answer'
+  | 'empty_router'
+  | 'exhausted_router'
+  | 'chained_turn'
   | 'invalid_json';
+
+export type RouterAttempt = { child: string; why: string };
+
+export type TranslationRefusal =
+  | { reason: 'unknown-model'; model: string }
+  | { reason: 'unmappable-stop-reason'; stopReason: string }
+  | { reason: 'unrepairable-tool-call'; unmatchedId: string }
+  | { reason: 'unsupported-field'; field: string }
+  | { reason: 'empty-conversation' }
+  | { reason: 'tool-id-collision'; sanitizedId: string }
+  | { reason: 'missing-target'; displayName: string; model: string }
+  | { reason: 'missing-credential'; displayName: string; model: string }
+  | { reason: 'unstreamable-answer'; displayName: string; model: string; target: string }
+  | { reason: 'empty-router'; displayName: string; model: string; routerName: string }
+  | {
+      reason: 'exhausted-router';
+      displayName: string;
+      model: string;
+      routerName: string;
+      attempts: readonly RouterAttempt[];
+      retryAtMs?: number;
+    }
+  | { reason: 'chained-turn'; displayName: string; model: string; routerName: string }
+  | { reason: 'invalid-json'; message: string };
+
+export type RefusalFacts = {
+  status: number;
+  message: string;
+  code: OpenAiCode;
+  anthropicType: AnthropicRefusal['error']['type'];
+  retryAfterSeconds?: number;
+};
 
 export type OpenAiRefusal = {
   error: {
@@ -45,7 +80,15 @@ export type ResponsesRefusal = {
   };
 };
 
+/**
+ * One refusal already shaped for the wire, with the wait a caller owes before trying again.
+ *
+ * @summary The retry time is a fact of the refusal rather than of the dialect a caller speaks, so it
+ * rides here and becomes a header once, at the single seam that turns a rendered refusal into a
+ * response. Every dialect therefore reports the same wait without any of them knowing how to.
+ */
 export type RenderedRefusal = {
   status: number;
+  retryAfterSeconds?: number;
   body: AnthropicRefusal | OpenAiRefusal | ResponsesRefusal | GeminiRefusal;
 };

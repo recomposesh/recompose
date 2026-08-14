@@ -5,6 +5,7 @@ actool
 acyclicity
 affordances
 AIAPI
+aimock
 Airtable
 aistudio
 AKIAIOSFODNN
@@ -56,6 +57,7 @@ Commvault
 componentwise
 connectingto
 connectionline
+copilotkit
 conv
 cooldown
 covguard
@@ -139,6 +141,7 @@ IHDR
 imagegen
 inspectable
 interceptable
+journaled
 JVBE
 kapi
 Kapı
@@ -342,6 +345,7 @@ unmaximize
 unnarrowed
 unpadded
 unparseable
+unrepresentable
 unrouted
 unscanned
 UNSERVABLE

@@ -21,7 +21,7 @@ test('a per-account direct policy reaches the engine without entering public vie
   );
 
   await expect(
-    resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast'),
+    resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
   ).resolves.toMatchObject({
     spend: { custody: 'subscription', transportPolicy: { mode: 'direct' } },
   });

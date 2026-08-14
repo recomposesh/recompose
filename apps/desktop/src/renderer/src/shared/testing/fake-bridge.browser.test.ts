@@ -32,7 +32,10 @@ async function reportedStates() {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'fast',
-  target: { accountId: 'acc-key', providerModel: 'claude-sonnet-5' },
+  routing: {
+    entry: 'seat',
+    nodes: { seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-sonnet-5' } },
+  },
 };
 
 const claudeMax: SubscriptionAccountView = {
@@ -65,7 +68,9 @@ test('a pushed traffic snapshot reaches whatever is listening for it', () => {
   const letGo = window.recomposeEvents['engine:traffic']((traffic) => {
     heard.push(traffic);
   });
-  const flowed: GatewayTraffic = { codex: { fast: { outcome: 'served', at: 1_754_600_000_000 } } };
+  const flowed: GatewayTraffic = {
+    codex: { fast: { only: { outcome: 'served', at: 1_754_600_000_000 } } },
+  };
 
   emitEngineTraffic(flowed);
   letGo();
@@ -83,7 +88,7 @@ test('a fresh bridge forgets the traffic listeners the run before it left behind
     heard.push(traffic);
   });
   installFakeBridge();
-  emitEngineTraffic({ codex: { fast: { outcome: 'served', at: 1 } } });
+  emitEngineTraffic({ codex: { fast: { only: { outcome: 'served', at: 1 } } } });
 
   expect(heard).toEqual([]);
 });

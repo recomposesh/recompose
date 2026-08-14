@@ -1,20 +1,32 @@
 import { describe, expectTypeOf, test } from 'vitest';
 
-import type { GatewayApiKey, GatewayConfig, Target, VirtualModel } from './index';
+import type {
+  GatewayApiKey,
+  GatewayConfig,
+  RouteNode,
+  RouterPolicy,
+  RouteTarget,
+  Routing,
+  VirtualModel,
+} from './index';
 
 import { modelAliasSchema } from './gateway-config';
+import { targetTheEntryNames } from './gateway-routing';
+
+type TargetNode = Extract<RouteNode, { kind: 'target' }>;
+type RouterNode = Extract<RouteNode, { kind: 'router' }>;
 
 describe('the stored shape of a virtual model', () => {
-  test('the config pins itself to schema version 3', () => {
-    expectTypeOf<GatewayConfig['schemaVersion']>().toEqualTypeOf<3>();
+  test('the config pins itself to schema version 4', () => {
+    expectTypeOf<GatewayConfig['schemaVersion']>().toEqualTypeOf<4>();
   });
 
   test('a gateway holds a list of virtual models', () => {
     expectTypeOf<GatewayConfig['virtualModels']>().toEqualTypeOf<VirtualModel[]>();
   });
 
-  test('a virtual model carries a name, a display name, and one target', () => {
-    expectTypeOf<keyof VirtualModel>().toEqualTypeOf<'id' | 'displayName' | 'target'>();
+  test('a virtual model carries a name, a display name, and one routing', () => {
+    expectTypeOf<keyof VirtualModel>().toEqualTypeOf<'id' | 'displayName' | 'routing'>();
     expectTypeOf<VirtualModel['id']>().toEqualTypeOf<string>();
     expectTypeOf<VirtualModel['displayName']>().toEqualTypeOf<string>();
   });
@@ -23,14 +35,76 @@ describe('the stored shape of a virtual model', () => {
     expectTypeOf(modelAliasSchema.parse('claude-5.6-sol')).toEqualTypeOf<string>();
   });
 
-  test('the target is one binding, never a list and never optional', () => {
-    expectTypeOf<VirtualModel['target']>().toEqualTypeOf<Target>();
-    expectTypeOf<VirtualModel['target']>().not.toEqualTypeOf<Target | undefined>();
+  test('the routing is one graph, never a list and never optional', () => {
+    expectTypeOf<VirtualModel['routing']>().toEqualTypeOf<Routing>();
+    expectTypeOf<VirtualModel['routing']>().not.toEqualTypeOf<Routing | undefined>();
   });
 
-  test('a virtual model structurally cannot hold a routing ladder', () => {
-    expectTypeOf<VirtualModel>().not.toHaveProperty('routing');
+  test('a virtual model structurally cannot hold a target of its own', () => {
+    expectTypeOf<VirtualModel>().not.toHaveProperty('target');
     expectTypeOf<VirtualModel>().not.toHaveProperty('slug');
+  });
+});
+
+describe('the stored shape of a routing', () => {
+  test('a routing names one entry and the table every id resolves through', () => {
+    expectTypeOf<keyof Routing>().toEqualTypeOf<'entry' | 'nodes'>();
+    expectTypeOf<Routing['entry']>().toEqualTypeOf<string>();
+    expectTypeOf<Routing['nodes']>().toEqualTypeOf<Record<string, RouteNode>>();
+  });
+
+  test('a route node is a target or a router, and nothing else', () => {
+    expectTypeOf<RouteNode['kind']>().toEqualTypeOf<'target' | 'router'>();
+  });
+
+  test('a routing structurally cannot nest one node inside another', () => {
+    expectTypeOf<Routing>().not.toHaveProperty('children');
+    expectTypeOf<Routing>().not.toHaveProperty('policy');
+  });
+});
+
+describe('the stored shape of a target', () => {
+  test('a target names the account it spends and the real model it asks for', () => {
+    expectTypeOf<keyof TargetNode>().toEqualTypeOf<'kind' | 'accountId' | 'providerModel'>();
+    expectTypeOf<TargetNode['accountId']>().toEqualTypeOf<string>();
+    expectTypeOf<TargetNode['providerModel']>().toEqualTypeOf<string>();
+  });
+
+  test('the published target type is the target arm itself, never the whole node', () => {
+    expectTypeOf<RouteTarget>().toEqualTypeOf<TargetNode>();
+  });
+
+  test('the one target a routing binds may be absent, because a router binds none', () => {
+    expectTypeOf(targetTheEntryNames).returns.toEqualTypeOf<RouteTarget | undefined>();
+  });
+
+  test('a target carries no weight, because no shipped mode reads a share', () => {
+    expectTypeOf<TargetNode>().not.toHaveProperty('weight');
+  });
+
+  test('a target structurally cannot hold a secret', () => {
+    expectTypeOf<TargetNode>().not.toHaveProperty('credentialRef');
+    expectTypeOf<TargetNode>().not.toHaveProperty('key');
+  });
+});
+
+describe('the stored shape of a router', () => {
+  test('a router carries a mode, its children, and a name it may not have', () => {
+    expectTypeOf<keyof RouterNode>().toEqualTypeOf<
+      'kind' | 'displayName' | 'policy' | 'children'
+    >();
+    expectTypeOf<RouterNode['policy']>().toEqualTypeOf<RouterPolicy>();
+    expectTypeOf<RouterNode['displayName']>().toEqualTypeOf<string | undefined>();
+  });
+
+  test('the two shipped modes are the only ones a router can wear', () => {
+    expectTypeOf<RouterPolicy['mode']>().toEqualTypeOf<'failover' | 'round-robin'>();
+  });
+
+  test('a router names its children by id, never by value', () => {
+    expectTypeOf<RouterNode['children']>().toEqualTypeOf<string[]>();
+    expectTypeOf<RouterNode['children'][number]>().toEqualTypeOf<string>();
+    expectTypeOf<RouterNode>().not.toHaveProperty('nodes');
   });
 });
 
@@ -52,23 +126,5 @@ describe('the stored shape of the key a gateway hands its callers', () => {
   test('the key structurally cannot carry a scope or a lifetime', () => {
     expectTypeOf<GatewayApiKey>().not.toHaveProperty('scope');
     expectTypeOf<GatewayApiKey>().not.toHaveProperty('expiresAt');
-  });
-});
-
-describe('the stored shape of a target', () => {
-  test('a target names the account it spends and the real model it asks for', () => {
-    expectTypeOf<keyof Target>().toEqualTypeOf<'accountId' | 'providerModel'>();
-    expectTypeOf<Target['accountId']>().toEqualTypeOf<string>();
-    expectTypeOf<Target['providerModel']>().toEqualTypeOf<string>();
-  });
-
-  test('a target carries no weight, because one target needs no share', () => {
-    expectTypeOf<Target>().not.toHaveProperty('weight');
-  });
-
-  test('a target structurally cannot hold a secret or an account kind', () => {
-    expectTypeOf<Target>().not.toHaveProperty('kind');
-    expectTypeOf<Target>().not.toHaveProperty('credentialRef');
-    expectTypeOf<Target>().not.toHaveProperty('key');
   });
 });

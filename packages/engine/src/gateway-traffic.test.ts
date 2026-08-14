@@ -14,7 +14,7 @@ function noting(): { noted: Noted[]; note: NoteTraffic } {
 
   return {
     noted,
-    note: (slug, virtualModel, request) => {
+    note: (slug, virtualModel, _routeNode, request) => {
       noted.push({ slug, virtualModel, request });
     },
   };
@@ -43,7 +43,7 @@ async function spendingOn(virtualModel: string, answer: Response): Promise<Noted
   const { noted, note } = noting();
 
   const answered = await watching(note)(async (spendGrantFor) => {
-    await spendGrantFor('personal', virtualModel);
+    await spendGrantFor('personal', virtualModel, 'only');
 
     return answer;
   });
@@ -168,7 +168,7 @@ describe('what a failed answer may never do to the request that carried it', () 
     const { noted, note } = noting();
 
     const answered = await watching(note)(async (spendGrantFor) => {
-      await spendGrantFor('personal', 'fast');
+      await spendGrantFor('personal', 'fast', 'only');
 
       return holding;
     });
@@ -194,7 +194,7 @@ describe('what a failed answer may never do to the request that carried it', () 
     const { noted, note } = noting();
 
     const out = await watching(note)(async (spendGrantFor) => {
-      await spendGrantFor('personal', 'fast');
+      await spendGrantFor('personal', 'fast', 'only');
 
       return answer;
     });
@@ -238,7 +238,7 @@ describe('what the watch leaves exactly as it found it', () => {
     const granted: unknown[] = [];
 
     await watching(note)(async (spendGrantFor) => {
-      granted.push(await spendGrantFor('personal', 'fast'));
+      granted.push(await spendGrantFor('personal', 'fast', 'only'));
 
       return answering(200);
     });
@@ -258,14 +258,14 @@ describe('what the watch leaves exactly as it found it', () => {
     const watched = watching(note);
 
     const slow = watched(async (spendGrantFor) => {
-      await spendGrantFor('personal', 'fast');
+      await spendGrantFor('personal', 'fast', 'only');
       await Promise.resolve();
       await Promise.resolve();
 
       return answering(200);
     });
     const quick = watched(async (spendGrantFor) => {
-      await spendGrantFor('personal', 'deep');
+      await spendGrantFor('personal', 'deep', 'only');
 
       return answering(500);
     });

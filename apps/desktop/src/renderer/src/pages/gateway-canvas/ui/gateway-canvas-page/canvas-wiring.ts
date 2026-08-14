@@ -1,26 +1,27 @@
 import type { GatewayConfig } from '@recompose/contracts';
 import type { Connection, Edge, Node, NodeChange } from '@xyflow/react';
 
+import { targetTheEntryNames } from '@recompose/contracts';
+
 import type { NodePositions, XY } from '../../lib/canvas-positions';
 import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
+import type { SeatReading } from '../../lib/route-seats';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
+import { routeNodeIn, seatUnder, seatWritten } from '../../lib/route-seats';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
   /** Receives the gateway plus, which births the draft virtual model. */
   onAddVirtualModel: () => void;
-  /** Receives a model or draft plus, which opens the picker for that card. */
-  onPickTargetFor: (from: string) => void;
+  /** Receives a model, draft, or router plus, which opens the binding ask for that card. */
+  onBindFrom: (from: string) => void;
 };
 
 /** One seat a position change moved, and whether the drag settled there. */
 export type MovedSeat = { id: string; to: XY; settled: boolean };
 
 export const CARD_MEASURE = { width: 184, height: 88 };
-
-const DRAFT_CARD = 'draft';
 
 /** The definition id inside a model card's node id, or nothing for any other card. */
 export function modelIdOf(nodeId: string): string | undefined {
@@ -29,23 +30,52 @@ export function modelIdOf(nodeId: string): string | undefined {
 
 /** The binding's model id inside a target or ghost card's node id, or nothing otherwise. */
 export function targetModelIdOf(nodeId: string): string | undefined {
-  if (nodeId.startsWith('target:')) {
-    return nodeId.slice('target:'.length);
-  }
-
-  return nodeId.startsWith('ghost:') ? nodeId.slice('ghost:'.length) : undefined;
+  return seatUnder(['target:', 'ghost:'], nodeId)?.modelId;
 }
 
-/** The account behind a target or ghost card, read through the binding the card stands for. */
-export function targetAccountIdIn(gateway: GatewayConfig, nodeId: string): string | undefined {
-  const modelId = targetModelIdOf(nodeId);
+function accountBoundTo(gateway: GatewayConfig, modelId: string | undefined): string | undefined {
+  const held = gateway.virtualModels.find((model) => model.id === modelId);
 
-  return gateway.virtualModels.find((model) => model.id === modelId)?.target.accountId;
+  return held === undefined ? undefined : targetTheEntryNames(held.routing)?.accountId;
+}
+
+/**
+ * The account behind a target or ghost card, read through the route node the card seats at.
+ *
+ * @summary A ladder stands several target cards for one definition, so the account comes from the
+ * card's own route node rather than from whatever the definition tries first: reading them all
+ * through the entry would paint every card of a pool as the first account it holds.
+ */
+export function targetAccountIdIn(gateway: GatewayConfig, nodeId: string): string | undefined {
+  const node = routeNodeIn(gateway, seatUnder(['target:', 'ghost:'], nodeId));
+
+  return node?.kind === 'target' ? node.accountId : undefined;
 }
 
 /** The definition id inside a binding cable's id, or nothing for an overlay cable. */
 export function bindingCableId(edgeId: string): string | undefined {
-  return edgeId.startsWith('cable:') ? edgeId.slice('cable:'.length) : undefined;
+  return seatUnder(['cable:'], edgeId)?.modelId;
+}
+
+/**
+ * Where a binding cable's far end seats, or nothing for an overlay cable.
+ *
+ * @summary A ladder stands one cable per child, so a reader acting on the cable a person selected
+ * needs the seat that cable ends at rather than the definition holding it: the definition alone
+ * names the entry, and acting on the entry when a child was selected takes every sibling with it.
+ */
+export function cableSeatOf(edgeId: string): SeatReading | undefined {
+  return seatUnder(['cable:'], edgeId);
+}
+
+/** Where a router card seats in its definition's routing, or nothing for any other card. */
+export function routerSeatOf(nodeId: string): SeatReading | undefined {
+  return seatUnder(['route:'], nodeId);
+}
+
+/** Where any card standing for a route node seats, whichever of the three prefixes it wears. */
+export function cardSeatOf(nodeId: string): SeatReading | undefined {
+  return seatUnder(['target:', 'ghost:', 'route:'], nodeId);
 }
 
 /**
@@ -69,15 +99,52 @@ export function movedSeats(changes: readonly NodeChange[]): readonly MovedSeat[]
 }
 
 /**
- * Whether a cable in flight may land where it points, which is the one-target rule during a drag.
+ * Whether a router may take the card a cable points at as one more child of its ladder.
  *
- * @summary A cable leaves a virtual model or a draft and lands on a stored target, and nothing
- * else connects. A model dropping onto the very account it already answers through refuses,
- * because a second cable to one target would say the rule out loud and then break it; any other
- * account is a rebind, which is one cable ending somewhere new.
+ * @summary A router's children are the whole of what it decides, so a cable leaving its port
+ * binds one where the plus already does. A card the ladder already holds refuses, because a second
+ * cable between the same pair would say the one-cable rule out loud and then break it, and a card
+ * standing under another definition is always a fresh child rather than a duplicate.
+ */
+function targetSeatIn(gateway: GatewayConfig, nodeId: string): SeatReading | undefined {
+  const seat = seatUnder(['target:', 'ghost:'], nodeId);
+
+  return routeNodeIn(gateway, seat)?.kind === 'target' ? seat : undefined;
+}
+
+function laddersOnto(gateway: GatewayConfig, parent: SeatReading, targetId: string): boolean {
+  const router = routeNodeIn(gateway, parent);
+  const landing = targetSeatIn(gateway, targetId);
+
+  if (router?.kind !== 'router' || landing === undefined) {
+    return false;
+  }
+
+  const standing = seatWritten(landing);
+
+  return !router.children.some(
+    (child) => seatWritten({ modelId: parent.modelId, routeNodeId: child }) === standing,
+  );
+}
+
+/**
+ * Whether a cable in flight may land where it points, which is the binding rule during a drag.
+ *
+ * @summary A cable leaves a virtual model, a draft, or a router, and lands on a stored target.
+ * A model dropping onto the very account it already answers through refuses, because a second
+ * cable to one target would say the rule out loud and then break it; any other account is a rebind,
+ * which is one cable ending somewhere new. A router card takes no cable at all: every route node
+ * already stands under exactly one parent, so a cable meeting one could only move it, and moving a
+ * node is not a binding.
  */
 export function oneTargetRule(gateway: GatewayConfig) {
   return (connection: Edge | Connection): boolean => {
+    const parent = routerSeatOf(connection.source);
+
+    if (parent !== undefined) {
+      return laddersOnto(gateway, parent, connection.target);
+    }
+
     const accountId = targetAccountIdIn(gateway, connection.target);
 
     if (accountId === undefined) {
@@ -94,9 +161,7 @@ export function oneTargetRule(gateway: GatewayConfig) {
       return false;
     }
 
-    const bound = gateway.virtualModels.find((model) => model.id === modelId);
-
-    return bound === undefined || bound.target.accountId !== accountId;
+    return accountBoundTo(gateway, modelId) !== accountId;
   };
 }
 
@@ -105,11 +170,20 @@ function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> 
     return { ...node, onAddVirtualModel: asks.onAddVirtualModel };
   }
 
+  if (node.kind === 'router') {
+    return {
+      ...node,
+      onAddChild: () => {
+        asks.onBindFrom(node.id);
+      },
+    };
+  }
+
   if (node.kind === 'virtual-model' || node.kind === 'draft-model') {
     return {
       ...node,
       onPickTarget: () => {
-        asks.onPickTargetFor(node.id);
+        asks.onBindFrom(node.id);
       },
     };
   }
@@ -162,83 +236,6 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
       ? { selectable: false, reconnectable: false, focusable: false, interactionWidth: 0 }
       : { interactionWidth: CABLE_GRAB_SPAN }),
   }));
-}
-
-function modelSubject(selection: string): InspectorSubject | undefined {
-  const modelId = modelIdOf(selection);
-
-  return modelId === undefined ? undefined : { kind: 'virtual-model', modelId };
-}
-
-function cableSubject(selection: string): InspectorSubject | undefined {
-  const cableId = bindingCableId(selection);
-
-  return cableId === undefined ? undefined : { kind: 'cable', modelId: cableId };
-}
-
-function targetSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
-  const boundModelId = targetModelIdOf(selection);
-  const accountId = targetAccountIdIn(gateway, selection);
-
-  if (boundModelId === undefined || accountId === undefined) {
-    return undefined;
-  }
-
-  return selection.startsWith('ghost:')
-    ? { kind: 'ghost-target', accountId, modelId: boundModelId }
-    : { kind: 'target', accountId, modelId: boundModelId };
-}
-
-function prefixedSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
-  return modelSubject(selection) ?? cableSubject(selection) ?? targetSubject(gateway, selection);
-}
-
-/**
- * The subject the inspector speaks for, read off whatever stands selected.
- *
- * @summary Nothing selected reads as the gateway, because the gateway is what the whole screen is
- * about, and a selection with no body of its own falls back the same way rather than standing the
- * inspector in front of nothing. A target card names the binding it serves, so the account behind
- * it reads through the gateway rather than out of the card's id.
- */
-export function subjectOf(gateway: GatewayConfig, selection: string | undefined): InspectorSubject {
-  if (selection === undefined) {
-    return { kind: 'gateway' };
-  }
-
-  if (selection === DRAFT_CARD) {
-    return { kind: 'draft' };
-  }
-
-  return prefixedSubject(gateway, selection) ?? { kind: 'gateway' };
-}
-
-function modelCardOf(subject: InspectorSubject): string | undefined {
-  if (subject.kind === 'virtual-model') {
-    return `model:${subject.modelId}`;
-  }
-
-  return subject.kind === 'cable' ? `cable:${subject.modelId}` : undefined;
-}
-
-function targetCardOf(subject: InspectorSubject): string | undefined {
-  if (subject.kind === 'target') {
-    return `target:${subject.modelId}`;
-  }
-
-  return subject.kind === 'ghost-target' ? `ghost:${subject.modelId}` : undefined;
-}
-
-/**
- * The card a subject stands for, or nothing where the subject is the gateway itself.
- *
- * @summary The inverse of `subjectOf`, so a surface that speaks about a subject can move the one
- * canvas selection onto it without spelling a card id out for itself. The two live side by side on
- * purpose: a change to how a card is named has to move both, and the round trip is what proves it
- * did. The gateway stands for no card, because selecting nothing is what reads as the gateway.
- */
-export function nodeIdOf(subject: InspectorSubject): string | undefined {
-  return subject.kind === 'draft' ? DRAFT_CARD : (modelCardOf(subject) ?? targetCardOf(subject));
 }
 
 /**

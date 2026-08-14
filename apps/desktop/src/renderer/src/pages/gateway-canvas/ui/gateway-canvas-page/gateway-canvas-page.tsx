@@ -6,7 +6,6 @@ import { notFound } from '@tanstack/react-router';
 import { useRef, useSyncExternalStore } from 'react';
 
 import type { PickerOnCanvas } from './picker-on-canvas';
-import type { RemovalAsked } from './removal-flow';
 import type { ComposedCanvas } from './use-gateway-canvas';
 
 import {
@@ -22,19 +21,19 @@ import {
   logsDrawerOpen,
   panelBounds,
   setPanelWidth,
-  shownAsAskModal,
   subscribeToInspectorVisibility,
   subscribeToLogsDrawerVisibility,
   subscribeToPanelWidths,
   toggleInspector,
 } from '../../../../shared/lib';
-import { Button, PanelSeparator } from '../../../../shared/ui';
+import { PanelSeparator } from '../../../../shared/ui';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { usePanelReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
 import { LogsDrawer } from '../logs-drawer/logs-drawer';
+import { RemovalDialog } from '../removal-dialog/removal-dialog';
 import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import {
   useInspectorPutAwayOnLeave,
@@ -43,8 +42,6 @@ import {
   useSelectionPutAwayWithInspector,
 } from './canvas-page-hooks';
 import { useGatewayCanvas } from './use-gateway-canvas';
-
-const REMOVAL_HEADING = 'removal-asked-heading';
 
 function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
   if (picker === undefined) {
@@ -58,8 +55,9 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
     anchorSeat,
     onDismiss,
     onPickAccount,
+    onPickKind,
     onPickProviderModel,
-    onSelectDifferentProvider,
+    onStepBack,
   } = picker;
 
   return (
@@ -67,56 +65,13 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
       groups={groups}
       onDismiss={onDismiss}
       onPickAccount={onPickAccount}
+      onPickKind={onPickKind}
       onPickProviderModel={onPickProviderModel}
-      onSelectDifferentProvider={onSelectDifferentProvider}
+      onStepBack={onStepBack}
       refusal={refusal}
       seat={anchorSeat}
       stage={stage}
     />
-  );
-}
-
-const REMOVAL_WORDING = {
-  'virtual-model': {
-    subject: 'virtual model',
-    consequence: 'The definition leaves the gateway, and clients stop being served under its id.',
-  },
-  gateway: {
-    subject: 'gateway',
-    consequence: 'The gateway stops serving, and its whole composition leaves this app.',
-  },
-  target: {
-    subject: 'target',
-    consequence: 'The binding releases, and the virtual model returns to the canvas as a draft.',
-  },
-} as const;
-
-function removalDialog(removal: RemovalAsked | undefined): ReactNode {
-  if (removal === undefined) {
-    return null;
-  }
-
-  const { kind, name, onCancel, onConfirm } = removal;
-  const wording = REMOVAL_WORDING[kind];
-
-  return (
-    <dialog
-      aria-labelledby={REMOVAL_HEADING}
-      className="m-auto w-80 menu-surface p-4"
-      onCancel={onCancel}
-      ref={shownAsAskModal}
-    >
-      <p className="text-control font-semibold text-ink" id={REMOVAL_HEADING}>
-        Delete the {wording.subject} &quot;{name}&quot;?
-      </p>
-      <p className="mt-1 text-detail text-ink-secondary">{wording.consequence}</p>
-      <div className="mt-3 flex justify-end gap-2">
-        <Button onPress={onCancel}>Cancel</Button>
-        <Button glyph="trash" onPress={onConfirm} variant="danger">
-          Delete
-        </Button>
-      </div>
-    </dialog>
   );
 }
 
@@ -280,7 +235,7 @@ export function GatewayCanvasPage({
         canvas,
       })}
       {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
-      {removalDialog(canvas.removal)}
+      <RemovalDialog removal={canvas.removal} />
     </div>
   );
 }

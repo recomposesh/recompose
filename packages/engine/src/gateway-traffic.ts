@@ -1,39 +1,22 @@
-import type { LogRow, RequestOutcome } from '@recompose/contracts';
+import type { LogRow } from '@recompose/contracts';
 import type { MiddlewareHandler } from 'hono';
 
-import type { SpendGrantFor } from './gateway-proxy';
+import type { SpendGrantFor } from './gateway-spend';
+import type { NoteTraffic, ServeWatched } from './gateway-traffic-watch';
 import type { ServingTurn } from './provider/serving-turn';
 import type { ProviderAttempt } from './provider/telemetry-feed';
 
-import {
-  afterResponseBody,
-  detailFor,
-  failed,
-  FIRST_FAILING_STATUS,
-  outcomeOf,
-} from './answered-outcome';
+import { detailFor, failed } from './answered-outcome';
+import { watchingEveryAttempt } from './gateway-traffic-watch';
 import { sha256Digest } from './provider/provider-observation';
-import {
-  abortServingTurn,
-  onServingTurnAbort,
-  servingTurn,
-  withinServingTurn,
-} from './provider/serving-turn';
+import { abortServingTurn, servingTurn, withinServingTurn } from './provider/serving-turn';
 import { subscribeToProviderAttempts, tellingReaders } from './provider/telemetry-feed';
 
-export type NoteTraffic = (slug: string, virtualModel: string, request: RequestOutcome) => void;
+export type { NoteTraffic, ServeWatched } from './gateway-traffic-watch';
 
 export type LogRowListener = (row: LogRow) => void;
 
-export type ServeWatched = (
-  serve: (spendGrantFor: SpendGrantFor) => Promise<Response>,
-) => Promise<Response>;
-
 const UNREADABLE_REQUEST_STATUS = 400;
-
-const CLIENT_DISCONNECTED_STATUS = 499;
-
-const CLIENT_DISCONNECTED_DETAIL = 'The client disconnected before the request finished.';
 
 function fieldOf(holder: unknown, name: string): unknown {
   if (typeof holder !== 'object' || holder === null) return undefined;
@@ -194,73 +177,18 @@ function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: nu
   publishRow(raisedRow(turn, status, at));
 }
 
-type Asked = { slug: string; virtualModel: string };
-
 /**
- * Wraps one serving turn so the virtual model it spent on is noted against the answer it gave.
+ * Wraps one serving turn so every child it spent on reaches the cables and the log alike.
  *
- * @summary The grant is the one place every serving path names its gateway and its virtual model,
- * and it is handed out fresh per turn, so two requests in flight at once can never take each
- * other's note. A turn that never asked for a grant never reached a virtual model, so it is noted
- * nowhere: an unknown model is a caller's mistake rather than a cable that went red.
+ * @summary The row a gateway raises for itself and the note a cable paints come from the same turn,
+ * which is why the errors a footer counts and a cable that reads red can never disagree. The watching
+ * itself lives beside this, and the raised row rides in from here, so neither has to know the other's
+ * job.
  */
 export function watchingTraffic(
   spendGrantFor: SpendGrantFor,
   note: NoteTraffic,
   now: () => number = Date.now,
 ): ServeWatched {
-  return async (serve) => {
-    const turn = servingTurn();
-    const asked: Asked[] = [];
-    let flowing = false;
-    let interrupted = false;
-    let stopListeningForDisconnect: () => void = () => undefined;
-    const answer = await serve(async (slug, virtualModel, context) => {
-      asked.push({ slug, virtualModel });
-
-      if (!flowing) {
-        flowing = true;
-        note(slug, virtualModel, { outcome: 'live', at: now() });
-
-        if (turn !== undefined) {
-          stopListeningForDisconnect = onServingTurnAbort(turn, () => {
-            interrupted = true;
-            note(slug, virtualModel, {
-              outcome: 'failed',
-              at: now(),
-              status: CLIENT_DISCONNECTED_STATUS,
-              detail: CLIENT_DISCONNECTED_DETAIL,
-            });
-          });
-        }
-      }
-
-      if (turn !== undefined) turn.virtualModel = virtualModel;
-
-      return spendGrantFor(slug, virtualModel, context);
-    });
-    const spent = asked.at(-1);
-
-    if (spent === undefined) {
-      return answer;
-    }
-
-    const preparedFailure =
-      answer.status < FIRST_FAILING_STATUS ? undefined : await outcomeOf(answer, 0);
-
-    return afterResponseBody(answer, () => {
-      stopListeningForDisconnect();
-
-      if (interrupted) {
-        return;
-      }
-
-      const at = now();
-      const outcome: RequestOutcome =
-        preparedFailure === undefined ? { outcome: 'served', at } : { ...preparedFailure, at };
-
-      note(spent.slug, spent.virtualModel, outcome);
-      noteRaisedFailure(turn, answer.status, at);
-    });
-  };
+  return watchingEveryAttempt(spendGrantFor, note, noteRaisedFailure, now);
 }

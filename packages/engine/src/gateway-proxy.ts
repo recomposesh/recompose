@@ -1,46 +1,162 @@
-import type { EngineGateway, SpendGrant } from '@recompose/contracts';
+import type { EngineGateway, EngineRouting } from '@recompose/contracts';
 import type { Context } from 'hono';
 
-import type { Crossing, JsonObject, ProxyDialect } from './gateway-wire';
-import type { PluginGatewayTarget } from './plugin-gateway';
+import type { AttemptDeps } from './gateway-attempt';
+import type { RoutingMemory } from './gateway-routing-memory';
+import type { SpendGrantFor } from './gateway-spend';
+import type { NoteAttempt } from './gateway-traffic-watch';
+import type { WalkScene } from './gateway-walk-answer';
+import type { WalkNote } from './gateway-walk-notes';
+import type { ProxyDialect } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
 import type { AIStudioRelay } from './provider/ai-studio-relay';
+import type { TranslationRefusal } from './refusal-wire';
+import type { WalkResult } from './routing/attempt-walk';
+import type { CooldownLedger } from './routing/cooldown-ledger';
+import type { AttemptReading } from './routing/outcome-classification';
+import type { DeclaredTarget } from './routing/route-table';
 import type { SubscriptionRuntime } from './subscription/reach';
 
-import { unreachableTargetAnswer, unreachableTargetMessage } from './gateway-answers';
-import { outboundBodyFor } from './gateway-outbound-body';
+import { unreachableTargetAnswer } from './gateway-answers';
+import { readingAtNode } from './gateway-attempt';
+import { turnResumesServerState } from './gateway-chained-turn';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
-import { answerThroughPlugins } from './gateway-plugin-response';
-import { dialectFor } from './gateway-provider-dialect';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
-import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
-import { pluginGatewayTarget, reachPluginExecutor } from './plugin-gateway';
-import { reachCredentialed } from './provider/credentialed-reach';
+import { answerTheWalkGives } from './gateway-walk-answer';
+import { failedOutcome, notesThatCarriedARequest } from './gateway-walk-notes';
+import { refusalResponse } from './gateway-wire';
 import { missingCredential, missingTarget } from './refusals';
-import { parseSubscriptionCredential } from './subscription/credentials';
-import { reachSubscription, subscriptionRuntime } from './subscription/reach';
+import { walkAttempts } from './routing/attempt-walk';
+import { createCooldownLedger } from './routing/cooldown-ledger';
+import { targetsInDeclaredOrder } from './routing/route-table';
+import { subscriptionRuntime } from './subscription/reach';
 
+export type { SpendGrantContext, SpendGrantFor } from './gateway-spend';
 export type { SubscriptionRuntime } from './subscription/reach';
 export { subscriptionRuntime } from './subscription/reach';
 
-export type SpendGrantContext = {
-  headers: Headers;
-  query: URLSearchParams;
-  sessionId?: string;
-};
+export type RouterServing = { memory: RoutingMemory; noteAttempt: NoteAttempt };
 
-export type SpendGrantFor = (
-  slug: string,
-  virtualModel: string,
-  context?: SpendGrantContext,
-) => Promise<SpendGrant>;
+function couldServe(target: DeclaredTarget): boolean {
+  return target.standing.standing === 'bound';
+}
 
+/**
+ * The cooling a table remembers, which is a ladder's memory and no one else's.
+ *
+ * @summary Cooling exists to steer a walk away from a child and toward its sibling, so a table with
+ * no sibling to steer toward keeps a memory that forgets with the request. A child that stayed cool
+ * where the walk has nowhere else to go would refuse every caller for a minute without the provider
+ * ever being asked, and no sibling would be spared, so the memory it keeps is no memory at all. The
+ * question is whether a second child could serve rather than whether a router stands, because a
+ * person wires a router before wiring its children and a router over one child steers nowhere. An
+ * account that left is no sibling either: a walk sent to it answers for a binding a person can see
+ * is broken rather than reaching any provider.
+ */
+function ledgerTheTableUses(memory: RoutingMemory, routing: EngineRouting): CooldownLedger {
+  return targetsInDeclaredOrder(routing).filter(couldServe).length > 1
+    ? memory.ledger
+    : createCooldownLedger(memory.now);
+}
+
+type GrantUnmet = Extract<
+  AttemptReading<Response>,
+  { kind: 'grant-missing-credential' | 'grant-missing-target' }
+>;
+
+/**
+ * The sentence a seat whose custody failed owes the caller, in the words that seat earned.
+ *
+ * @summary An account that left the registry and a credential that could not be opened are two
+ * different repairs, so they keep the two refusals the gateway already shipped for them rather than
+ * collapsing into one. A ladder never reaches here, because it speaks for every child at once.
+ */
+function refusalUnresolvedCustodyEarns(deps: AttemptDeps, reading: GrantUnmet): TranslationRefusal {
+  return reading.kind === 'grant-missing-target'
+    ? missingTarget(deps.gateway.displayName, deps.virtualModel.id)
+    : missingCredential(deps.gateway.displayName, deps.virtualModel.id);
+}
+
+/**
+ * What one attempt would have answered the caller, had the walk stopped there.
+ *
+ * @summary A child that answered hands its own answer over untouched. A child that answered nothing
+ * at all still owes the caller a sentence, and only a lone target ever hears it, because a ladder
+ * that ran out speaks for every child at once instead. Keeping the last one is what lets a table
+ * holding a single target answer with the provider's own words rather than a router's.
+ */
+function answerableOf(deps: AttemptDeps, reading: AttemptReading<Response>): Response {
+  if ('answer' in reading) return reading.answer;
+
+  if (reading.kind === 'transport-failure') return unreachableTargetAnswer(deps.crossing);
+
+  return refusalResponse(deps.crossing.dialect, refusalUnresolvedCustodyEarns(deps, reading));
+}
+
+/**
+ * The failed attempts owed a cable of their own, which is every child but the last one tried.
+ *
+ * @summary The last child tried is the child the answer is attributed to when the body ends, so a
+ * note here as well would paint one cable twice for a single request and disagree with itself about
+ * what happened. A child the walk skipped because it stood cooling carried no request at all, so it
+ * is named in the refusal and left off the canvas.
+ */
+function notesOwedACable(
+  notes: WalkResult<Response>['notes'],
+  lastTried: string | undefined,
+): readonly WalkNote[] {
+  return notesThatCarriedARequest(notes).filter((note) => note.routeNode !== lastTried);
+}
+
+async function walkedAnswer(
+  deps: AttemptDeps,
+  scene: WalkScene,
+  serving: RouterServing,
+): Promise<Response> {
+  const routing = deps.virtualModel.routing;
+  let answerable: Response | undefined;
+  let lastTried: string | undefined;
+
+  const result = await walkAttempts<Response>({
+    routing,
+    slug: deps.gateway.slug,
+    virtualModel: deps.virtualModel.id,
+    ledger: ledgerTheTableUses(serving.memory, routing),
+    cursors: serving.memory.cursors,
+    resumesServerState: turnResumesServerState(deps.crossing.raw),
+    now: serving.memory.now,
+    attempt: async (routeNode) => {
+      const reading = await readingAtNode(deps, routeNode);
+
+      answerable = answerableOf(deps, reading);
+      lastTried = routeNode;
+
+      return reading;
+    },
+  });
+
+  for (const note of notesOwedACable(result.notes, lastTried)) {
+    serving.noteAttempt(note.routeNode, failedOutcome(note, serving.memory.now()));
+  }
+
+  return answerTheWalkGives(scene, result, answerable);
+}
+
+/**
+ * One client request served across the table its virtual model binds.
+ *
+ * @summary The walk decides which child to try and this composes what a try means: resolve custody
+ * for that one seat, forward, read the answer at the commit latch, and hand back a reading. Nothing
+ * here knows the order children are tried in, and the walk knows nothing about credentials or
+ * transports, which is what lets one of them be reasoned about without the other.
+ */
 export async function proxyModelRequest(
   c: Context,
   dialect: ProxyDialect,
   gateway: EngineGateway,
   spendGrantFor: SpendGrantFor,
   fetchLike: typeof fetch,
+  serving: RouterServing,
   subscriptions: SubscriptionRuntime = subscriptionRuntime(),
   aiStudio?: AIStudioRelay,
   plugins?: PluginHost,
@@ -51,215 +167,23 @@ export async function proxyModelRequest(
 
   if ('response' in lookup) return lookup.response;
 
-  const { crossing, virtualModel } = lookup;
-
-  const intercepted = await beforeGatewayPlugins(c, crossing, plugins);
+  const intercepted = await beforeGatewayPlugins(c, lookup.crossing, plugins);
 
   if ('response' in intercepted) return intercepted.response;
 
-  const effectiveCrossing = intercepted.crossing;
-  const grant = await spendGrantFor(gateway.slug, virtualModel.id);
-  const pluginTarget =
-    grant.verdict === 'resolved'
-      ? await pluginGatewayTarget(c, effectiveCrossing, grant, plugins)
-      : null;
-
-  return forwardGranted(
-    effectiveCrossing,
-    grant,
+  const virtualModel = lookup.virtualModel;
+  const deps: AttemptDeps = {
+    c,
+    gateway,
+    virtualModel,
+    crossing: intercepted.crossing,
+    spendGrantFor,
     fetchLike,
     subscriptions,
-    aiStudio,
-    pluginTarget,
-    plugins,
-  );
-}
-
-async function forwardGranted(
-  crossing: Crossing,
-  grant: SpendGrant,
-  fetchLike: typeof fetch,
-  subscriptions: SubscriptionRuntime,
-  aiStudio?: AIStudioRelay,
-  pluginTarget?: PluginGatewayTarget | null,
-  plugins?: PluginHost,
-): Promise<Response> {
-  const denied = deniedGrantAnswer(crossing, grant);
-
-  if (grant.verdict !== 'resolved') {
-    return denied ?? unreachableTargetAnswer(crossing);
-  }
-
-  if (denied !== null) {
-    return denied;
-  }
-
-  return forwardResolved(
-    crossing,
-    grant,
-    fetchLike,
-    subscriptions,
-    aiStudio,
-    pluginTarget,
-    plugins,
-  );
-}
-
-function crossingWithCompatibility(
-  crossing: Crossing,
-  grant: Extract<SpendGrant, { verdict: 'resolved' }>,
-): Crossing {
-  return grant.spend.custody === 'credentialed' && grant.spend.isCompat === true
-    ? { ...crossing, isCompat: true }
-    : crossing;
-}
-
-async function forwardResolved(
-  crossing: Crossing,
-  grant: Extract<SpendGrant, { verdict: 'resolved' }>,
-  fetchLike: typeof fetch,
-  subscriptions: SubscriptionRuntime,
-  aiStudio?: AIStudioRelay,
-  pluginTarget?: PluginGatewayTarget | null,
-  plugins?: PluginHost,
-): Promise<Response> {
-  const compatibleCrossing = crossingWithCompatibility(crossing, grant);
-
-  if (pluginTarget?.kind === 'executor') {
-    return forwardPluginExecutor(compatibleCrossing, grant, pluginTarget, plugins);
-  }
-
-  return forwardProviderResolved(
-    effectiveProviderCrossing(compatibleCrossing, pluginTarget),
-    grant,
-    fetchLike,
-    subscriptions,
+    now: serving.memory.now,
     aiStudio,
     plugins,
-  );
-}
+  };
 
-function effectiveProviderCrossing(
-  crossing: Crossing,
-  target: PluginGatewayTarget | null | undefined,
-): Crossing {
-  return target?.kind === 'provider' && target.providerModel !== undefined
-    ? { ...crossing, providerModel: target.providerModel }
-    : crossing;
-}
-
-async function forwardProviderResolved(
-  effectiveCrossing: Crossing,
-  grant: Extract<SpendGrant, { verdict: 'resolved' }>,
-  fetchLike: typeof fetch,
-  subscriptions: SubscriptionRuntime,
-  aiStudio?: AIStudioRelay,
-  plugins?: PluginHost,
-): Promise<Response> {
-  const upstreamDialect = dialectFor(grant, effectiveCrossing.dialect);
-  const outbound = outboundBodyFor(
-    effectiveCrossing,
-    upstreamDialect,
-    isAntigravitySubscription(grant),
-  );
-
-  if ('refusal' in outbound) {
-    return refusalResponse(effectiveCrossing.dialect, outbound.refusal);
-  }
-
-  const upstream = await reachedUpstream(
-    effectiveCrossing,
-    grant,
-    outbound.body,
-    fetchLike,
-    subscriptions,
-    aiStudio,
-    plugins,
-  );
-
-  if (upstream === null) {
-    return unreachableTargetAnswer(effectiveCrossing);
-  }
-
-  return answerThroughPlugins(effectiveCrossing, upstream, upstreamDialect, plugins);
-}
-
-function isAntigravitySubscription(grant: Extract<SpendGrant, { verdict: 'resolved' }>): boolean {
-  return grant.spend.custody === 'subscription' && grant.spend.provider === 'antigravity';
-}
-
-async function forwardPluginExecutor(
-  crossing: Crossing,
-  grant: Extract<SpendGrant, { verdict: 'resolved' }>,
-  target: Extract<PluginGatewayTarget, { kind: 'executor' }>,
-  plugins?: PluginHost,
-): Promise<Response> {
-  const outbound = outboundBodyFor(crossing, target.inputDialect);
-
-  if ('refusal' in outbound) return refusalResponse(crossing.dialect, outbound.refusal);
-
-  const upstream = await reachPluginExecutor(target, crossing, grant, outbound.body, plugins);
-
-  return answerThroughPlugins(crossing, upstream, target.outputDialect, plugins);
-}
-
-function deniedGrantAnswer(crossing: Crossing, grant: SpendGrant): Response | null {
-  if (grant.verdict === 'missing-target') {
-    return refusalResponse(
-      crossing.dialect,
-      missingTarget(crossing.gatewayName, crossing.virtualModel),
-    );
-  }
-
-  if (grant.verdict === 'missing-credential' || hasMalformedSubscription(grant)) {
-    return refusalResponse(
-      crossing.dialect,
-      missingCredential(crossing.gatewayName, crossing.virtualModel),
-    );
-  }
-
-  return null;
-}
-
-function hasMalformedSubscription(grant: SpendGrant): boolean {
-  return (
-    grant.verdict === 'resolved' &&
-    grant.spend.custody === 'subscription' &&
-    parseSubscriptionCredential(grant.spend.provider, grant.spend.credential) === null
-  );
-}
-
-async function reachedUpstream(
-  crossing: Crossing,
-  grant: Extract<SpendGrant, { verdict: 'resolved' }>,
-  body: JsonObject,
-  fetchLike: typeof fetch,
-  subscriptions: SubscriptionRuntime,
-  aiStudio?: AIStudioRelay,
-  plugins?: PluginHost,
-): Promise<Response | null> {
-  try {
-    if (grant.spend.custody === 'subscription') {
-      return await reachSubscription(
-        grant,
-        body,
-        subscriptions,
-        crossing.sessionId,
-        crossing.dialect,
-        crossing.replayScopeId,
-        crossing.responsesLite,
-        { crossing, plugins },
-      );
-    }
-
-    return await reachCredentialed(crossing, grant, body, fetchLike, aiStudio, plugins);
-  } catch (failure) {
-    if (failure instanceof InvalidJsonBodyError) {
-      throw failure;
-    }
-
-    console.error(unreachableTargetMessage(crossing), failure);
-
-    return null;
-  }
+  return walkedAnswer(deps, { crossing: intercepted.crossing, gateway, virtualModel }, serving);
 }

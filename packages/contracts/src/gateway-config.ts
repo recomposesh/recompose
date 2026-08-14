@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
 import { type GatewayApiKey, gatewayApiKeySchema } from './gateway-api-key';
+import { routingSchema } from './gateway-routing';
 import { migrateDocument, type Migration } from './migration';
 import { nonBlankString } from './non-blank';
 
-export const GATEWAY_CONFIG_VERSION = 3;
+export const GATEWAY_CONFIG_VERSION = 4;
 
 export const GATEWAY_PORT_RANGE = { min: 1024, max: 65535 } as const;
 
@@ -90,17 +91,10 @@ export function modelAliasFromName(name: string): string {
     .replace(/[-._]$/u, '');
 }
 
-export const targetSchema = z.strictObject({
-  accountId: nonBlankString,
-  providerModel: nonBlankString,
-});
-
-export type Target = z.infer<typeof targetSchema>;
-
 export const virtualModelSchema = z.strictObject({
   id: modelAliasSchema,
   displayName: nonBlankString,
-  target: targetSchema,
+  routing: routingSchema,
 });
 
 export type VirtualModel = z.infer<typeof virtualModelSchema>;
@@ -139,9 +133,55 @@ const noStoredGatewayEverRequiredAKey: Migration = {
   migrate: (doc) => ({ ...doc, schemaVersion: 3 }),
 };
 
+const storedBindingsSchema = z.array(z.unknown());
+
+const storedDirectTargetSchema = z.looseObject({
+  id: nonBlankString,
+  target: z.strictObject({ accountId: nonBlankString, providerModel: nonBlankString }),
+});
+
+/**
+ * The one stored binding, carried into the table a graph reads, seated under a name it keeps.
+ *
+ * @summary The seat is derived from the model's own id rather than minted, because this runs on
+ * every load of a document nothing rewrites. A minted seat would differ between the snapshot the
+ * engine holds and the lookup a request makes against the same file, and every request would refuse
+ * for a target that is plainly there. Stored ids are unique within a document, and a migrated table
+ * stands one node, so the derived name collides with nothing.
+ */
+function boundThroughAOneNodeGraph(model: unknown): unknown {
+  const direct = storedDirectTargetSchema.safeParse(model);
+
+  if (!direct.success) {
+    return model;
+  }
+
+  const { target, ...beyondTheTarget } = direct.data;
+  const entry = `seat:${direct.data.id}`;
+
+  return {
+    ...beyondTheTarget,
+    routing: { entry, nodes: { [entry]: { kind: 'target', ...target } } },
+  };
+}
+
+function everyBindingStandsInAGraph(doc: Record<string, unknown>): Record<string, unknown> {
+  const stored = storedBindingsSchema.safeParse(doc['virtualModels']);
+
+  return stored.success
+    ? { ...doc, virtualModels: stored.data.map(boundThroughAOneNodeGraph) }
+    : doc;
+}
+
+const noStoredVirtualModelEverBoundMoreThanOneTarget: Migration = {
+  from: 3,
+  migrate: (doc) => ({ ...everyBindingStandsInAGraph(doc), schemaVersion: 4 }),
+};
+
 const gatewayConfigMigrations: readonly Migration[] = [
   noStoredGatewayEverMintedAVirtualModel,
   noStoredGatewayEverRequiredAKey,
+  noStoredVirtualModelEverBoundMoreThanOneTarget,
 ];
 
 export function loadGatewayConfig(doc: unknown): GatewayConfig {

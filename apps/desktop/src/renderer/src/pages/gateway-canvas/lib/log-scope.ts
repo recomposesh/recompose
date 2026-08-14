@@ -7,9 +7,24 @@ export type LogSubject =
   | { kind: 'gateway' }
   | { kind: 'virtual-model'; modelId: string }
   | { kind: 'cable'; modelId: string }
+  | { kind: 'router'; modelId: string }
   | { kind: 'target'; accountId: string }
   | { kind: 'ghost-target'; accountId: string }
   | { kind: 'draft' };
+
+/**
+ * Whether a selection speaks for one virtual model rather than for one target identity.
+ *
+ * @summary A router stands inside exactly one virtual model's routing, and a log row names the
+ * virtual model it passed through rather than the route node it attempted, so a router shows what its
+ * model carried. That reads as more history than the router itself served rather than as an empty
+ * lie, which is the stance every unnamed scope here already takes.
+ */
+function scopedToItsModel(
+  subject: LogSubject,
+): subject is Extract<LogSubject, { modelId: string }> {
+  return subject.kind === 'virtual-model' || subject.kind === 'cable' || subject.kind === 'router';
+}
 
 /**
  * Whether a request reached the target a selection stands for.
@@ -28,7 +43,7 @@ function everyRequest(): boolean {
 }
 
 function subjectScope(subject: LogSubject): (row: LogRow) => boolean {
-  if (subject.kind === 'virtual-model' || subject.kind === 'cable') {
+  if (scopedToItsModel(subject)) {
     return (row) => row.virtualModel === subject.modelId;
   }
 
@@ -42,9 +57,10 @@ function subjectScope(subject: LogSubject): (row: LogRow) => boolean {
 /**
  * The rows one canvas selection leaves standing, narrowed again while the errors toggle holds.
  *
- * @summary The gateway and a draft show every request, a virtual model and the cable that binds it
- * show what passed through that model, and a target and the ghost it leaves behind show what
- * reached that identity. A selection this function does not recognize shows everything rather than
+ * @summary The gateway and a draft show every request, a virtual model, the cable that binds it,
+ * and any router inside its routing show what passed through that model, and a target and the ghost
+ * it leaves behind show what reached that identity. A selection this function does not recognize
+ * shows everything rather than
  * nothing, so a subject kind that arrives later reads as too much history instead of an empty lie.
  * The errors toggle stands apart from the selection and only ever takes requests away.
  */

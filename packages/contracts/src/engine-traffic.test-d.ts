@@ -43,11 +43,12 @@ describe('the outcome one virtual model last came to', () => {
 });
 
 describe('the traffic report the child sends unasked', () => {
-  test('a report names the gateway, the virtual model, and what the request came to', () => {
+  test('a report names the gateway, the virtual model, the node tried, and what it came to', () => {
     expectTypeOf<EngineTrafficReport>().toEqualTypeOf<{
       kind: 'traffic';
       slug: string;
       virtualModel: string;
+      routeNode: string;
       request: RequestOutcome;
     }>();
   });
@@ -58,6 +59,18 @@ describe('the traffic report the child sends unasked', () => {
 });
 
 describe('the traffic snapshot crossing to the renderer', () => {
+  test('the snapshot reads gateway, then virtual model, then route node, to one outcome', () => {
+    expectTypeOf<GatewayTraffic>().toEqualTypeOf<
+      Record<string, Record<string, Record<string, RequestOutcome>>>
+    >();
+  });
+
+  test('one virtual model holds an outcome per node, so two attempts each keep theirs', () => {
+    expectTypeOf<NonNullable<NonNullable<GatewayTraffic[string]>[string]>>().toEqualTypeOf<
+      Record<string, RequestOutcome>
+    >();
+  });
+
   test('the push carries the whole snapshot rather than one gateway', () => {
     expectTypeOf<IpcEventPayload<'engine:traffic'>>().toEqualTypeOf<GatewayTraffic>();
   });

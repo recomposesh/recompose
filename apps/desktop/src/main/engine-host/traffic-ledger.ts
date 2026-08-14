@@ -20,10 +20,22 @@ export type TrafficDesk = {
   forget: (slug: string) => void;
 };
 
+type ModelTraffic = NonNullable<GatewayTraffic[string]>;
+
+type NodeTraffic = NonNullable<ModelTraffic[string]>;
+
 function withReport(traffic: GatewayTraffic, report: EngineTrafficReport): GatewayTraffic {
+  const held = traffic[report.slug];
+
   return {
     ...traffic,
-    [report.slug]: { ...traffic[report.slug], [report.virtualModel]: report.request },
+    [report.slug]: {
+      ...held,
+      [report.virtualModel]: {
+        ...held?.[report.virtualModel],
+        [report.routeNode]: report.request,
+      },
+    },
   };
 }
 
@@ -31,10 +43,7 @@ function servedIds(gateway: EngineGateway): Set<string> {
   return new Set(gateway.virtualModels.map((virtualModel) => virtualModel.id));
 }
 
-function keptEntries(
-  held: NonNullable<GatewayTraffic[string]>,
-  gateway: EngineGateway,
-): NonNullable<GatewayTraffic[string]> {
+function keptEntries(held: ModelTraffic, gateway: EngineGateway): ModelTraffic {
   const serving = servedIds(gateway);
 
   return Object.fromEntries(Object.entries(held).filter(([id]) => serving.has(id)));
@@ -70,25 +79,37 @@ function dropRetiredModels(
   tellTheWindowsSoon(desk, push);
 }
 
-function withLiveOutcomesFailed(
-  held: NonNullable<GatewayTraffic[string]>,
-): NonNullable<GatewayTraffic[string]> | null {
+function nodesWithLiveFailed(held: NodeTraffic): NodeTraffic | null {
   let changed = false;
-  const interrupted: NonNullable<GatewayTraffic[string]> = {};
+  const interrupted: NodeTraffic = {};
 
-  for (const [modelId, outcome] of Object.entries(held)) {
+  for (const [routeNode, outcome] of Object.entries(held)) {
     if (outcome.outcome !== 'live') {
-      interrupted[modelId] = outcome;
+      interrupted[routeNode] = outcome;
       continue;
     }
 
     changed = true;
-    interrupted[modelId] = {
+    interrupted[routeNode] = {
       outcome: 'failed',
       at: Date.now(),
       status: INTERRUPTED_STATUS,
       detail: INTERRUPTED_DETAIL,
     };
+  }
+
+  return changed ? interrupted : null;
+}
+
+function withLiveOutcomesFailed(held: ModelTraffic): ModelTraffic | null {
+  let changed = false;
+  const interrupted: ModelTraffic = {};
+
+  for (const [modelId, nodes] of Object.entries(held)) {
+    const failed = nodesWithLiveFailed(nodes);
+
+    changed ||= failed !== null;
+    interrupted[modelId] = failed ?? nodes;
   }
 
   return changed ? interrupted : null;

@@ -127,16 +127,22 @@ async function reportBack(
 /**
  * Tells the parent what one finished request came to, the moment it finished.
  *
- * @summary One word per request matches the spend request the same turn already sent, so the lane
+ * @summary One word per attempt matches the spend request the same attempt already sent, so the lane
  * carries no more traffic than serving itself does, and the parent is free to hold the latest word
- * per virtual model rather than replay every one of them at a screen. A word the parent cannot be
- * told is written down and dropped, because the caller is owed its answer either way.
+ * per route node rather than replay every one of them at a screen. A word the parent cannot be told
+ * is written down and dropped, because the caller is owed its answer either way.
  */
 function notingTraffic(parentPort: ParentPort): NoteTraffic {
-  return (slug, virtualModel, request) => {
+  return (slug, virtualModel, routeNode, request) => {
     try {
       parentPort.postMessage(
-        engineTrafficReportSchema.parse({ kind: 'traffic', slug, virtualModel, request }),
+        engineTrafficReportSchema.parse({
+          kind: 'traffic',
+          slug,
+          virtualModel,
+          routeNode,
+          request,
+        }),
       );
     } catch (failure) {
       console.error(`The engine child dropped a traffic word for "${slug}".`, failure);

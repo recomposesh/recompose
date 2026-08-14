@@ -4,6 +4,8 @@ import type {
   EngineDirective,
   EngineGateway,
   EngineReport,
+  EngineRouteNode,
+  EngineRouting,
   EngineSpendGrant,
   EngineSpendRequest,
   EngineVirtualModel,
@@ -20,9 +22,11 @@ import type {
 
 type ProbeDirective = Extract<EngineDirective, { kind: 'probe' }>;
 
-type BoundTarget = Extract<EngineVirtualModel['target'], { standing: 'bound' }>;
+type EngineTargetNode = Extract<EngineRouteNode, { kind: 'target' }>;
 
-type RemovedTarget = Extract<EngineVirtualModel['target'], { standing: 'removed' }>;
+type BoundTarget = Extract<EngineTargetNode['standing'], { standing: 'bound' }>;
+
+type RemovedTarget = Extract<EngineTargetNode['standing'], { standing: 'removed' }>;
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 
@@ -146,8 +150,8 @@ describe('the report the child sends home', () => {
 });
 
 describe('the binding snapshot the child serves a listing from', () => {
-  test('a binding carries the id, the name, and the target standing, and nothing else', () => {
-    expectTypeOf<keyof EngineVirtualModel>().toEqualTypeOf<'id' | 'displayName' | 'target'>();
+  test('a binding carries the id, the name, and the route table, and nothing else', () => {
+    expectTypeOf<keyof EngineVirtualModel>().toEqualTypeOf<'id' | 'displayName' | 'routing'>();
     expectTypeOf<EngineVirtualModel['id']>().toEqualTypeOf<string>();
     expectTypeOf<EngineVirtualModel['displayName']>().toEqualTypeOf<string>();
   });
@@ -158,8 +162,13 @@ describe('the binding snapshot the child serves a listing from', () => {
     expectTypeOf<EngineVirtualModel>().not.toHaveProperty('accountId');
   });
 
+  test('a binding carries no target of its own, because the table holds every one', () => {
+    expectTypeOf<EngineVirtualModel>().not.toHaveProperty('target');
+    expectTypeOf<EngineVirtualModel['routing']>().toEqualTypeOf<EngineRouting>();
+  });
+
   test('a target either stands bound to a real model or stands removed', () => {
-    expectTypeOf<EngineVirtualModel['target']['standing']>().toEqualTypeOf<'bound' | 'removed'>();
+    expectTypeOf<EngineTargetNode['standing']['standing']>().toEqualTypeOf<'bound' | 'removed'>();
     expectTypeOf<keyof BoundTarget>().toEqualTypeOf<'standing' | 'providerModel'>();
     expectTypeOf<BoundTarget['providerModel']>().toEqualTypeOf<string>();
     expectTypeOf<keyof RemovedTarget>().toEqualTypeOf<'standing'>();
@@ -167,11 +176,12 @@ describe('the binding snapshot the child serves a listing from', () => {
 });
 
 describe('the grant lane one spend rides', () => {
-  test('a spend request keys itself by the gateway and the virtual model, and answers to an id', () => {
+  test('a spend request names the gateway, the virtual model, and the node it is about to try', () => {
     expectTypeOf<keyof EngineSpendRequest>().toEqualTypeOf<
-      'kind' | 'id' | 'slug' | 'virtualModel'
+      'kind' | 'id' | 'slug' | 'virtualModel' | 'routeNode'
     >();
     expectTypeOf<EngineSpendRequest['kind']>().toEqualTypeOf<'spend-request'>();
+    expectTypeOf<EngineSpendRequest['routeNode']>().toEqualTypeOf<string>();
   });
 
   test('a spend request carries no credential, because it is the ask for one', () => {

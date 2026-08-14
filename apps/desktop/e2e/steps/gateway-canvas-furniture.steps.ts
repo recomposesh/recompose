@@ -17,6 +17,7 @@ import {
   viewportZoom,
 } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
+import { aRoutedModelStands, FIRST_TARGET, SECOND_TARGET } from '../routed-gateway';
 import { focusedGateway } from '../scenario-memory';
 import {
   accountHeldAs,
@@ -117,6 +118,24 @@ async function aCompositionStands(page: Page): Promise<void> {
 Given('a gateway holding a virtual model bound to a target', async ({ page }) => {
   await aCompositionStands(page);
 });
+
+/**
+ * A composition whose model reaches its targets through a router.
+ *
+ * @summary The minimap mirrors whatever the canvas seats, so the scenario that proves it has to
+ * meet every node kind the canvas can seat. A router seats a fourth kind between the model and its
+ * targets, and it is the one kind no other furniture scenario stands.
+ */
+Given(
+  'a gateway holding a virtual model bound to a failover router over two targets',
+  async ({ page, scriptedProvider }) => {
+    await aRoutedModelStands(page, scriptedProvider, {
+      model: BOUND_MODEL,
+      mode: 'failover',
+      targets: [FIRST_TARGET, SECOND_TARGET],
+    });
+  },
+);
 
 /**
  * A composition standing open, rather than a gateway standing alone.

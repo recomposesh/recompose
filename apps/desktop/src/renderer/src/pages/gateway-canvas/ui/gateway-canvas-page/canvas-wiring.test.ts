@@ -1,94 +1,7 @@
-import type { Connection, NodeChange } from '@xyflow/react';
-
 import { describe, expect, test } from 'vitest';
 
-import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
-
-import { gatewaySeed } from '../../../../shared/testing';
-import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import {
-  flowEdgesOf,
-  flowNodesOf,
-  movedSeats,
-  nodeIdOf,
-  oneTargetRule,
-  subjectOf,
-} from './canvas-wiring';
-
-function pulled(source: string, target: string): Connection {
-  return { source, target, sourceHandle: null, targetHandle: null };
-}
-
-describe('the controlled flow applies position changes only', () => {
-  test('a position change in flight moves a seat without settling it', () => {
-    const changes: NodeChange[] = [
-      { type: 'position', id: 'model:fast', position: { x: 10, y: 20 }, dragging: true },
-    ];
-
-    expect(movedSeats(changes)).toEqual([
-      { id: 'model:fast', to: { x: 10, y: 20 }, settled: false },
-    ]);
-  });
-
-  test('a position change at rest settles the seat', () => {
-    const changes: NodeChange[] = [
-      { type: 'position', id: 'model:fast', position: { x: 10, y: 20 }, dragging: false },
-    ];
-
-    expect(movedSeats(changes)).toEqual([
-      { id: 'model:fast', to: { x: 10, y: 20 }, settled: true },
-    ]);
-  });
-
-  test('every foreign change type changes nothing', () => {
-    const changes: NodeChange[] = [
-      { type: 'remove', id: 'model:fast' },
-      { type: 'select', id: 'model:fast', selected: true },
-      { type: 'dimensions', id: 'model:fast', dimensions: { width: 10, height: 10 } },
-      {
-        type: 'add',
-        item: { id: 'intruder', position: { x: 0, y: 0 }, data: {} },
-      },
-      {
-        type: 'replace',
-        id: 'model:fast',
-        item: { id: 'model:fast', position: { x: 0, y: 0 }, data: {} },
-      },
-    ];
-
-    expect(movedSeats(changes)).toEqual([]);
-  });
-
-  test('a position change carrying no position moves nothing', () => {
-    const changes: NodeChange[] = [{ type: 'position', id: 'model:fast', dragging: true }];
-
-    expect(movedSeats(changes)).toEqual([]);
-  });
-});
-
-const gateway = gatewaySeed({
-  slug: 'my-gateway',
-  displayName: 'My Gateway',
-  port: 8397,
-  virtualModels: [
-    {
-      id: 'fast',
-      displayName: 'Fast',
-      target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
-    },
-    {
-      id: 'creative',
-      displayName: 'Creative',
-      target: { accountId: 'g1', providerModel: 'openai/gpt-5' },
-    },
-    {
-      id: 'slow',
-      displayName: 'Slow',
-      target: { accountId: 'gone', providerModel: 'claude-opus-5' },
-    },
-  ],
-});
+import { bindingCableId, oneTargetRule, targetAccountIdIn, targetModelIdOf } from './canvas-wiring';
+import { gateway, pulled } from './canvas-wiring.testkit';
 
 describe('the one-target rule during a drag', () => {
   const valid = oneTargetRule(gateway);
@@ -115,175 +28,59 @@ describe('the one-target rule during a drag', () => {
   });
 });
 
-describe('what the flow hands each card to stand on', () => {
-  const graph: CanvasGraph = {
-    nodes: [
-      { id: 'gateway', kind: 'gateway', displayName: 'My Gateway', port: 8397 },
-      {
-        id: 'model:fast',
-        kind: 'virtual-model',
-        modelId: 'fast',
-        displayName: 'Fast',
-        providerModel: 'claude-haiku-4-5',
-      },
-    ],
-    edges: [],
-  };
-  const asks = { onAddVirtualModel: () => {}, onPickTargetFor: () => {} };
+describe('what a cable leaving a router may meet', () => {
+  const valid = oneTargetRule(gateway);
 
-  test('a card seats where the arrangement puts it', () => {
-    const seated = flowNodesOf(graph, { 'model:fast': { x: 320, y: 140 } }, undefined, asks);
-
-    expect(seated.find((node) => node.id === 'model:fast')?.position).toEqual({ x: 320, y: 140 });
+  test('a cable from a router onto a stored target is welcome, because a router binds children', () => {
+    expect(valid(pulled('route:pooled', 'target:fast'))).toBe(true);
+    expect(valid(pulled('route:pooled', 'target:creative'))).toBe(true);
   });
 
-  test('a card the arrangement never seated stands at the origin rather than nowhere', () => {
-    const seated = flowNodesOf(graph, {}, undefined, asks);
-
-    expect(seated.map((node) => node.position)).toEqual([
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
-    ]);
+  test('a cable onto a target the router already holds refuses, since one cable already stands', () => {
+    expect(valid(pulled('route:pooled', 'target:pooled:t1'))).toBe(false);
+    expect(valid(pulled('route:pooled', 'ghost:pooled:t2'))).toBe(false);
   });
 
-  test('only the selected card reads as selected', () => {
-    const seated = flowNodesOf(graph, {}, 'model:fast', asks);
+  test('a ghost card is a landing too, because an account that left is still one to pool', () => {
+    expect(valid(pulled('route:pooled', 'ghost:slow'))).toBe(true);
+  });
 
-    expect(seated.map((node) => node.selected)).toEqual([false, true]);
+  test('a cable from a route seat holding a target rather than a router refuses', () => {
+    expect(valid(pulled('route:pooled:t1', 'target:fast'))).toBe(false);
+  });
+
+  test('a cable from a router naming no stored definition refuses', () => {
+    expect(valid(pulled('route:absent', 'target:fast'))).toBe(false);
+  });
+
+  test('a cable onto a seat holding a router rather than a target refuses', () => {
+    expect(valid(pulled('route:pooled', 'target:pooled'))).toBe(false);
+  });
+
+  test('a router card takes no cable, because a router is never a thing a cable binds', () => {
+    expect(valid(pulled('model:fast', 'route:pooled'))).toBe(false);
+    expect(valid(pulled('draft', 'route:pooled'))).toBe(false);
+    expect(valid(pulled('route:pooled', 'route:pooled'))).toBe(false);
   });
 });
 
-describe('what the flow hands each cable to answer gestures by', () => {
-  const drawn: readonly CanvasEdge[] = [
-    {
-      id: 'wire:model:fast',
-      source: 'gateway',
-      target: 'model:fast',
-      standing: 'structural',
-      failure: undefined,
-    },
-    {
-      id: 'cable:fast',
-      source: 'model:fast',
-      target: 'target:k1',
-      standing: 'resting',
-      failure: undefined,
-    },
-    {
-      id: 'wire:draft',
-      source: 'gateway',
-      target: 'draft',
-      standing: 'structural',
-      failure: undefined,
-    },
-    {
-      id: 'overlay:draft',
-      source: 'gateway',
-      target: 'draft',
-      standing: 'draft',
-      failure: undefined,
-    },
-  ];
-
-  test('a binding cable keeps the wide grab band its reconnect drag is sized by', () => {
-    const cable = flowEdgesOf(drawn, undefined).find((edge) => edge.id === 'cable:fast');
-
-    expect(cable).toMatchObject({ interactionWidth: CABLE_GRAB_SPAN });
-    expect(cable?.selectable).toBeUndefined();
-    expect(cable?.focusable).toBeUndefined();
+describe('what a route node card and cable name', () => {
+  test('the model a child card belongs to reads without its route node riding along', () => {
+    expect(targetModelIdOf('target:pooled:t1')).toBe('pooled');
+    expect(targetModelIdOf('ghost:pooled:t2')).toBe('pooled');
+    expect(targetModelIdOf('target:fast')).toBe('fast');
+    expect(targetModelIdOf('route:pooled:t1')).toBeUndefined();
   });
 
-  test('a wire and an overlay cable answer no pointer and no keyboard, so the pane keeps both', () => {
-    const inert = flowEdgesOf(drawn, undefined).filter((edge) => edge.id !== 'cable:fast');
-
-    expect(inert).toHaveLength(3);
-
-    for (const edge of inert) {
-      expect(edge).toMatchObject({
-        selectable: false,
-        reconnectable: false,
-        focusable: false,
-        interactionWidth: 0,
-      });
-    }
-  });
-});
-
-describe('what a failed cable hands the flow to stand on the path', () => {
-  test('the error it carried travels with it, so a person can press it where it failed', () => {
-    const refused = { status: 502, detail: 'The gateway could not reach the target.' };
-    const failed: readonly CanvasEdge[] = [
-      {
-        id: 'cable:fast',
-        source: 'model:fast',
-        target: 'target:k1',
-        standing: 'failed',
-        failure: refused,
-      },
-    ];
-
-    expect(flowEdgesOf(failed, undefined)[0]?.data).toEqual({
-      standing: 'failed',
-      failure: refused,
-    });
-  });
-});
-
-describe('the selection subject the inspector reads', () => {
-  test('nothing selected reads as the gateway', () => {
-    expect(subjectOf(gateway, undefined)).toEqual({ kind: 'gateway' });
+  test('a cable below the entry still names the definition it serves', () => {
+    expect(bindingCableId('cable:pooled:t1')).toBe('pooled');
+    expect(bindingCableId('cable:fast')).toBe('fast');
+    expect(bindingCableId('wire:model:fast')).toBeUndefined();
   });
 
-  test('every card and cable names its subject', () => {
-    expect(subjectOf(gateway, 'gateway')).toEqual({ kind: 'gateway' });
-    expect(subjectOf(gateway, 'model:fast')).toEqual({ kind: 'virtual-model', modelId: 'fast' });
-    expect(subjectOf(gateway, 'cable:fast')).toEqual({ kind: 'cable', modelId: 'fast' });
-    expect(subjectOf(gateway, 'target:fast')).toEqual({
-      kind: 'target',
-      accountId: 'k1',
-      modelId: 'fast',
-    });
-    expect(subjectOf(gateway, 'ghost:slow')).toEqual({
-      kind: 'ghost-target',
-      accountId: 'gone',
-      modelId: 'slow',
-    });
-    expect(subjectOf(gateway, 'draft')).toEqual({ kind: 'draft' });
-  });
-
-  test('a selection with no body of its own falls back to the gateway', () => {
-    expect(subjectOf(gateway, 'pending')).toEqual({ kind: 'gateway' });
-    expect(subjectOf(gateway, 'target:gone-model')).toEqual({ kind: 'gateway' });
-  });
-});
-
-describe('the card a subject stands for', () => {
-  test('the gateway stands for no card, because it is what the whole screen is about', () => {
-    expect(nodeIdOf({ kind: 'gateway' })).toBeUndefined();
-  });
-
-  test('every subject with a card of its own names it', () => {
-    const named: readonly [InspectorSubject, string][] = [
-      [{ kind: 'virtual-model', modelId: 'fast' }, 'model:fast'],
-      [{ kind: 'cable', modelId: 'fast' }, 'cable:fast'],
-      [{ kind: 'target', accountId: 'k1', modelId: 'fast' }, 'target:fast'],
-      [{ kind: 'ghost-target', accountId: 'gone', modelId: 'slow' }, 'ghost:slow'],
-      [{ kind: 'draft' }, 'draft'],
-    ];
-
-    expect(named.map(([subject]) => nodeIdOf(subject))).toEqual(named.map(([, id]) => id));
-  });
-
-  test('naming a subject and reading it back lands on the very same subject', () => {
-    const every: readonly InspectorSubject[] = [
-      { kind: 'gateway' },
-      { kind: 'virtual-model', modelId: 'fast' },
-      { kind: 'cable', modelId: 'fast' },
-      { kind: 'target', accountId: 'k1', modelId: 'fast' },
-      { kind: 'ghost-target', accountId: 'gone', modelId: 'slow' },
-      { kind: 'draft' },
-    ];
-
-    expect(every.map((subject) => subjectOf(gateway, nodeIdOf(subject)))).toEqual(every);
+  test('the account a child target holds is the one its own route node names', () => {
+    expect(targetAccountIdIn(gateway, 'target:pooled:t1')).toBe('k1');
+    expect(targetAccountIdIn(gateway, 'ghost:pooled:t2')).toBe('gone');
+    expect(targetAccountIdIn(gateway, 'target:pooled')).toBeUndefined();
   });
 });

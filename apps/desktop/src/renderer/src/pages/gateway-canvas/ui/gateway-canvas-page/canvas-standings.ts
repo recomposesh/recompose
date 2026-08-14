@@ -18,9 +18,11 @@ import { modelListReading, refusalFromMain } from '../../lib/model-draft';
 import { tidyPositions } from '../../lib/tidy-layout';
 import { editingText } from './canvas-wiring';
 
-/** Where the two-stage picker stands: on a pending card, or anchored to a stored target. */
+/** Where the binding ask stands: on a pending card, or anchored to a stored target. */
 export type PickerStanding =
+  | { step: 'kind'; from: string; at: XY; origin: PickerOrigin }
   | { step: 'account'; from: string; at: XY; origin: PickerOrigin }
+  | { step: 'account'; from: string; anchor: string }
   | { step: 'provider-model'; from: string; accountId: string; at: XY; origin: PickerOrigin }
   | { step: 'provider-model'; from: string; accountId: string; anchor: string };
 

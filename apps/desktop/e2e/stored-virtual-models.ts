@@ -8,7 +8,11 @@ import { gatewayRow, storedGateway } from './gateway-screen';
 
 /** A definition binding one virtual name to one stored account and one real model. */
 export function bindingOf(id: string, accountId: string, providerModel: string): VirtualModel {
-  return { id, displayName: id, target: { accountId, providerModel } };
+  return {
+    id,
+    displayName: id,
+    routing: { entry: 'seat', nodes: { seat: { kind: 'target', accountId, providerModel } } },
+  };
 }
 
 export type StoreOutcome = { ok: true } | { ok: false; message: string };

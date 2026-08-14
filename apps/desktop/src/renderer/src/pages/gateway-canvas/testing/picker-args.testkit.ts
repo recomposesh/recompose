@@ -10,7 +10,8 @@ export function pickerMetaArgs(accounts: readonly OptionGroup[]) {
     refusal: undefined,
     onDismiss: fn(),
     onPickAccount: fn(),
+    onPickKind: fn(),
     onPickProviderModel: fn(),
-    onSelectDifferentProvider: fn(),
+    onStepBack: fn(),
   };
 }

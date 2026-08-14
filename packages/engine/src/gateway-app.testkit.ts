@@ -1,4 +1,9 @@
-import type { EngineGateway, EngineVirtualModel, SpendGrant } from '@recompose/contracts';
+import type {
+  EngineGateway,
+  EngineTargetStanding,
+  EngineVirtualModel,
+  SpendGrant,
+} from '@recompose/contracts';
 import type { Hono } from 'hono';
 
 import { getRequestListener } from '@hono/node-server';
@@ -7,31 +12,40 @@ import { createServer } from 'node:http';
 import type { OpenListeners } from './engine-runtime';
 import type { SpendGrantFor } from './gateway-app';
 
-export function aVirtualModel(overrides: Partial<EngineVirtualModel> = {}): EngineVirtualModel {
-  return {
-    id: 'fast',
-    displayName: 'Fast',
-    target: { standing: 'bound', providerModel: 'gpt-5-mini' },
-    ...overrides,
-  };
+const ONLY_ROUTE_NODE = 'only';
+
+function aRoutingStanding(standing: EngineTargetStanding): EngineVirtualModel['routing'] {
+  return { entry: ONLY_ROUTE_NODE, nodes: { [ONLY_ROUTE_NODE]: { kind: 'target', standing } } };
+}
+
+type VirtualModelOverrides = Partial<Omit<EngineVirtualModel, 'routing'>> & {
+  target?: EngineTargetStanding;
+};
+
+export function aVirtualModel(overrides: VirtualModelOverrides = {}): EngineVirtualModel {
+  const { target = { standing: 'bound', providerModel: 'gpt-5-mini' }, ...named } = overrides;
+
+  return { id: 'fast', displayName: 'Fast', ...named, routing: aRoutingStanding(target) };
 }
 
 export function aGatewayHolding(...virtualModels: readonly EngineVirtualModel[]): EngineGateway {
   return { slug: 'codex', displayName: 'Codex', port: 8397, virtualModels: [...virtualModels] };
 }
 
+export type AskedGrant = { slug: string; virtualModel: string; routeNode: string };
+
 export type AskedGrants = {
-  asked: { slug: string; virtualModel: string }[];
+  asked: AskedGrant[];
   grantFor: SpendGrantFor;
 };
 
 export function granting(grant: SpendGrant): AskedGrants {
-  const asked: { slug: string; virtualModel: string }[] = [];
+  const asked: AskedGrant[] = [];
 
   return {
     asked,
-    grantFor: async (slug, virtualModel) => {
-      asked.push({ slug, virtualModel });
+    grantFor: async (slug, virtualModel, routeNode) => {
+      asked.push({ slug, virtualModel, routeNode });
 
       return Promise.resolve(grant);
     },

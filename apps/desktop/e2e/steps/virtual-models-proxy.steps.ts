@@ -2,7 +2,8 @@ import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-import type { GatewayAnswer } from '../gateway-client';
+import type { KeyProbeStub } from '../key-probe-stub';
+import type { ScriptedProvider } from '../scripted-provider';
 
 import { Given, Then, When } from '../fixtures';
 import {
@@ -13,6 +14,7 @@ import {
   sendTurn,
   turnUnder,
 } from '../gateway-client';
+import { lastAnswerFrom, recordExchange } from '../gateway-exchanges';
 import { gatewayAddress, seedGateway, storedGateway } from '../gateway-screen';
 import { answerTheProviderGives } from '../key-probe-stub';
 import { accountRows, openProviderScreen } from '../provider-screen';
@@ -37,19 +39,19 @@ const REFUSED_BY_CONFIG = 502;
 
 const NO_SUCH_MODEL = 404;
 
-const answers = new WeakMap<Page, GatewayAnswer>();
+/**
+ * Every real model name that left the machine, whichever stand-in the scenario was served by.
+ *
+ * @summary Both stand-ins answer the same reading, and a scenario is served by exactly one of
+ * them. Reading only the probe would let a routers scenario prove nothing left the machine while
+ * every attempt reached the other stand-in, which is a check that passes by asking the wrong
+ * question.
+ */
+function everythingAsked(probe: KeyProbeStub, scripted: ScriptedProvider): readonly string[] {
+  return [...probe.modelsAsked(), ...scripted.modelsAsked()];
+}
 
 const namesAsked = new WeakMap<Page, string>();
-
-function answerHeld(page: Page): GatewayAnswer {
-  const answer = answers.get(page);
-
-  if (answer === undefined) {
-    throw new Error('no step asked this gateway anything');
-  }
-
-  return answer;
-}
 
 function nameAsked(page: Page): string {
   const name = namesAsked.get(page);
@@ -122,39 +124,46 @@ When('a request arrives under {string}', async ({ page }, name: string) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
   namesAsked.set(page, name);
-  answers.set(page, await sendTurn(address, MESSAGES_PATH, turnUnder(name)));
+  recordExchange(
+    page,
+    focusedGateway(page),
+    await sendTurn(address, MESSAGES_PATH, turnUnder(name)),
+  );
 });
 
 When('a client asks the gateway for its model listing', async ({ page }) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
-  answers.set(page, await readFrom(address, MODEL_LISTING));
+  recordExchange(page, focusedGateway(page), await readFrom(address, MODEL_LISTING));
 });
 
-Then("the target's provider receives it under the target's real model name", ({ keyProbe }) => {
-  expect(keyProbe.modelsAsked()).toEqual([REAL_MODEL]);
-});
+Then(
+  "the target's provider receives it under the target's real model name",
+  ({ keyProbe, scriptedProvider }) => {
+    expect(everythingAsked(keyProbe, scriptedProvider)).toEqual([REAL_MODEL]);
+  },
+);
 
 Then('the answer travels back to the caller', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(ANSWERED);
   expect(JSON.stringify(answer.body)).toContain(answerTheProviderGives);
 });
 
 Then('the gateway answers a typed refusal naming the unknown model', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(NO_SUCH_MODEL);
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
 });
 
-Then('no request leaves the machine', ({ keyProbe }) => {
-  expect(keyProbe.modelsAsked()).toEqual([]);
+Then('no request leaves the machine', ({ keyProbe, scriptedProvider }) => {
+  expect(everythingAsked(keyProbe, scriptedProvider)).toEqual([]);
 });
 
 Then('the gateway answers a typed refusal naming the missing target', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toContain('no target');
@@ -162,23 +171,26 @@ Then('the gateway answers a typed refusal naming the missing target', ({ page })
 });
 
 Then('the gateway answers a typed refusal naming the missing credential', ({ page }) => {
-  const answer = answerHeld(page);
+  const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(REFUSED_BY_CONFIG);
   expect(refusalSentence(answer.body)).toContain('no account behind it');
   expect(refusalSentence(answer.body)).toContain(nameAsked(page));
 });
 
-Then('nothing else receives the request', ({ keyProbe }) => {
-  expect(keyProbe.modelsAsked()).toEqual([]);
+Then('nothing else receives the request', ({ keyProbe, scriptedProvider }) => {
+  expect(everythingAsked(keyProbe, scriptedProvider)).toEqual([]);
 });
 
 Then('the listing names {string} and {string}', ({ page }, first: string, second: string) => {
-  expect(anthropicListedIds(answerHeld(page).body)).toEqual([first, second]);
+  expect(anthropicListedIds(lastAnswerFrom(page, focusedGateway(page)).body)).toEqual([
+    first,
+    second,
+  ]);
 });
 
 Then('it answers the same set in the Anthropic and the OpenAI shape', ({ page }) => {
-  const { body } = answerHeld(page);
+  const { body } = lastAnswerFrom(page, focusedGateway(page));
 
   expect(openAiListedIds(body)).toEqual(anthropicListedIds(body));
 });

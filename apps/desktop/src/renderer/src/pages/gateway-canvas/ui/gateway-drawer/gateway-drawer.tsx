@@ -2,15 +2,18 @@ import type { ReactNode } from 'react';
 
 import {
   DEFAULT_GATEWAY_BIND_ADDRESS,
+  targetTheEntryNames,
   type Account,
   type GatewayConfig,
   type SubscriptionAccountView,
+  type VirtualModel,
 } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
 import type { SettledDefinition } from '../../lib/model-draft';
 import type { ServedModel } from '../../model/served-models';
+import type { InspectorSubject } from '../gateway-canvas-page/canvas-subjects';
 
 import {
   accountsQueryOptions,
@@ -21,19 +24,18 @@ import {
 } from '../../../../shared/api';
 import { subscribeToPanelWidths } from '../../../../shared/lib';
 import { inspectorWidth } from '../../lib/inspector-width';
+import { seatedRouteNodes } from '../../lib/route-graph';
 import { servedModels } from '../../model/served-models';
 import { DraftInspector } from '../draft-inspector/draft-inspector';
-import { gatewayBody, ghostBody, modelBody, targetBody } from '../subject-bodies/subject-bodies';
+import { nodeIdOf } from '../gateway-canvas-page/canvas-subjects';
+import {
+  gatewayBody,
+  ghostBody,
+  modelBody,
+  routerBody,
+  targetBody,
+} from '../subject-bodies/subject-bodies';
 import { glyph, subjectHead } from '../subject-shell/subject-shell';
-
-/** What stands selected on the canvas, which is the one thing the inspector speaks for. */
-export type InspectorSubject =
-  | { kind: 'gateway' }
-  | { kind: 'virtual-model'; modelId: string }
-  | { kind: 'cable'; modelId: string }
-  | { kind: 'target'; accountId: string; modelId: string }
-  | { kind: 'ghost-target'; accountId: string; modelId: string }
-  | { kind: 'draft' };
 
 type GatewayDrawerProps = {
   /** The gateway the drawer speaks for, which is the one the route selected. */
@@ -61,17 +63,22 @@ type DrawerWorld = {
   onModelRenamed: (modelId: string) => void;
 };
 
+function modelHeldBy(world: DrawerWorld, modelId: string): VirtualModel | undefined {
+  return world.gateway.virtualModels.find((held) => held.id === modelId);
+}
+
 function bindingSubjectBody(
   world: DrawerWorld,
   subject: Extract<InspectorSubject, { modelId: string }>,
 ): ReactNode | undefined {
-  const model = world.gateway.virtualModels.find((held) => held.id === subject.modelId);
+  const model = modelHeldBy(world, subject.modelId);
 
   if (model === undefined) {
     return undefined;
   }
 
-  const account = world.accounts.find((held) => held.id === model.target.accountId);
+  const bound = targetTheEntryNames(model.routing);
+  const account = world.accounts.find((held) => held.id === bound?.accountId);
 
   return modelBody(
     world.gateway,
@@ -86,33 +93,74 @@ function bindingSubjectBody(
   );
 }
 
+function servedByTheAccount(model: VirtualModel, accountId: string): boolean {
+  return seatedRouteNodes(model.routing).some(
+    (seat) => seat.node.kind === 'target' && seat.node.accountId === accountId,
+  );
+}
+
+/**
+ * The target subject's body: the account behind one card, and what stands in front of it.
+ *
+ * @summary What the account is behind of is every definition reaching it anywhere in its routing
+ * rather than only those binding it straight, because a pool reaches its accounts through a router
+ * and reading only the entry would omit the very composition the person clicked into. The removal
+ * asks about the card the subject stands for rather than about its definition, since a pool stands
+ * one card per child and naming the definition would take every sibling with it.
+ */
 function accountSubjectBody(
   world: DrawerWorld,
-  accountId: string,
-  modelId: string,
+  subject: Extract<InspectorSubject, { kind: 'target' }>,
 ): ReactNode | undefined {
-  const account = world.accounts.find((held) => held.id === accountId);
-  const models = world.gateway.virtualModels.filter(
-    (model) => model.target.accountId === accountId,
+  const account = world.accounts.find((held) => held.id === subject.accountId);
+  const models = world.gateway.virtualModels.filter((model) =>
+    servedByTheAccount(model, subject.accountId),
   );
+  const card = nodeIdOf(subject);
 
-  return account === undefined
+  return account === undefined || card === undefined
     ? undefined
     : targetBody(account, world.subscriptions, models, () => {
-        world.onAskRemoval(`target:${modelId}`);
+        world.onAskRemoval(card);
       });
 }
 
-function cardSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
+function routerSubjectBody(
+  world: DrawerWorld,
+  subject: Extract<InspectorSubject, { kind: 'router' }>,
+): ReactNode | undefined {
+  const model = modelHeldBy(world, subject.modelId);
+
+  if (model === undefined) {
+    return undefined;
+  }
+
+  const seat = subject.routeNodeId ?? model.routing.entry;
+  const node = model.routing.nodes[seat];
+
+  return node?.kind === 'router'
+    ? routerBody(world.gateway, model, seat, node, world.accounts)
+    : undefined;
+}
+
+function routedSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
   if (subject.kind === 'virtual-model' || subject.kind === 'cable') {
     return bindingSubjectBody(world, subject);
   }
 
+  return subject.kind === 'router' ? routerSubjectBody(world, subject) : undefined;
+}
+
+function boundSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
   if (subject.kind === 'target') {
-    return accountSubjectBody(world, subject.accountId, subject.modelId);
+    return accountSubjectBody(world, subject);
   }
 
   return subject.kind === 'ghost-target' ? ghostBody(subject.accountId) : undefined;
+}
+
+function cardSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
+  return routedSubjectBody(subject, world) ?? boundSubjectBody(subject, world);
 }
 
 function draftBody(world: DrawerWorld): ReactNode {

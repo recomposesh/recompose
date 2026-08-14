@@ -1,3 +1,5 @@
+import type { VirtualModel } from '@recompose/contracts';
+
 import { engineGatewaySchema } from '@recompose/contracts';
 import { describe, expect, test } from 'vitest';
 
@@ -8,6 +10,8 @@ import {
   localRow,
   planRow,
   pointingAt,
+  rewriteSettings,
+  seatedAs,
   secret,
   storageHolding,
 } from './spend-grant.testkit';
@@ -15,10 +19,13 @@ import { engineGatewayOf, storedEngineGateway } from './stored-gateway';
 
 const noComplaint = (): void => undefined;
 
-const thorough = {
+const thorough: VirtualModel = {
   id: 'thorough',
   displayName: 'thorough',
-  target: { accountId: aggregatorRow.id, providerModel: 'gpt-5' },
+  routing: {
+    entry: 'seat',
+    nodes: { seat: { kind: 'target', accountId: aggregatorRow.id, providerModel: 'gpt-5' } },
+  },
 };
 
 describe('what the engine hears about a stored gateway', () => {
@@ -53,7 +60,7 @@ describe('the standing each virtual model is minted with', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -66,7 +73,7 @@ describe('the standing each virtual model is minted with', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -85,7 +92,7 @@ describe('a virtual model whose target no longer stands', () => {
     const gateway = await storedEngineGateway(userDataPath, noComplaint, 'personal');
 
     expect(gateway?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', target: { standing: 'removed' } },
+      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
     ]);
   });
 
@@ -97,7 +104,7 @@ describe('a virtual model whose target no longer stands', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -107,11 +114,11 @@ describe('a virtual model whose target no longer stands', () => {
     const gateway = await storedEngineGateway(userDataPath, noComplaint, 'personal');
 
     expect(gateway?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', target: { standing: 'removed' } },
+      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
       {
         id: 'thorough',
         displayName: 'thorough',
-        target: { standing: 'bound', providerModel: 'gpt-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'gpt-5' }),
       },
     ]);
   });
@@ -130,10 +137,42 @@ describe('the snapshot a gateway about to be written serves under', () => {
         {
           id: 'fast',
           displayName: 'fast',
-          target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+          routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
         },
       ],
     });
+  });
+});
+
+describe('which bind address the engine is trusted with', () => {
+  test('an address a person chose reaches the child, because it is not the loopback default', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await rewriteSettings(userDataPath, '0.0.0.0');
+
+    await expect(
+      engineGatewayOf(userDataPath, noComplaint, gatewayHolding([])),
+    ).resolves.toMatchObject({ bindAddress: '0.0.0.0' });
+  });
+
+  test('the loopback default leaves the property absent, because the child already assumes it', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await rewriteSettings(userDataPath, '127.0.0.1');
+
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, gatewayHolding([]));
+
+    expect('bindAddress' in snapshot).toBe(false);
+  });
+
+  test('a settings document naming no address leaves the property absent rather than undefined', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await rewriteSettings(userDataPath);
+
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, gatewayHolding([]));
+
+    expect('bindAddress' in snapshot).toBe(false);
   });
 });
 

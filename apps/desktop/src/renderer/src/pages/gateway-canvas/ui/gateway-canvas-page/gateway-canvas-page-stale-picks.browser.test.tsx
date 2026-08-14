@@ -14,7 +14,7 @@ import {
   storedModels,
   targetPortOf,
 } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -99,6 +99,7 @@ test('a pick answered after its draft left refuses out loud and stores nothing',
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
 
   await userEvent.click(screen.getByRole('button', { name: /Steady/ }));

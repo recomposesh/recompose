@@ -108,7 +108,7 @@ describe('a grant the parent refuses', () => {
         code: 'missing_target',
       },
     });
-    expect(asked).toEqual([{ slug: 'codex', virtualModel: 'fast' }]);
+    expect(asked).toEqual([{ slug: 'codex', virtualModel: 'fast', routeNode: 'only' }]);
     expect(sent).toEqual([]);
   });
 
@@ -136,7 +136,7 @@ describe('a bound name on live traffic', () => {
   test('always asks the parent for a spend grant, naming the gateway and the model', async () => {
     const { asked } = await proxied(aCredentialedGrant(), '/v1/chat/completions', chatBody('fast'));
 
-    expect(asked).toEqual([{ slug: 'codex', virtualModel: 'fast' }]);
+    expect(asked).toEqual([{ slug: 'codex', virtualModel: 'fast', routeNode: 'only' }]);
   });
 });
 

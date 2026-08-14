@@ -29,15 +29,19 @@ function aTrafficLine(): {
   };
 }
 
-const flowed: GatewayTraffic = { codex: { fast: { outcome: 'served', at: 1_754_600_000_000 } } };
+const flowed: GatewayTraffic = {
+  codex: { fast: { only: { outcome: 'served', at: 1_754_600_000_000 } } },
+};
 
 const wentRed: GatewayTraffic = {
   codex: {
     fast: {
-      outcome: 'failed',
-      at: 1_754_600_000_001,
-      status: 502,
-      detail: 'The gateway could not reach the target.',
+      only: {
+        outcome: 'failed',
+        at: 1_754_600_000_001,
+        status: 502,
+        detail: 'The gateway could not reach the target.',
+      },
     },
   },
 };

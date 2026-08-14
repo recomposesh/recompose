@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 
 import { useState, useSyncExternalStore } from 'react';
 
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
+import type { InspectorSubject } from '../gateway-canvas-page/canvas-subjects';
+import type { LogFilter, SubjectHeading } from './log-subject-wording';
 
-import { accountName } from '../../../../entities/account';
 import { requestFailed, requestInFlight } from '../../../../entities/request-log';
 import {
   closeLogsDrawer,
@@ -19,15 +19,7 @@ import {
 import { Icon, PanelSeparator, SegmentedControl, StatusChip } from '../../../../shared/ui';
 import { logScope } from '../../lib/log-scope';
 import { LogList } from '../log-list/log-list';
-
-const NOTHING_YET: Record<InspectorSubject['kind'], string> = {
-  gateway: 'No requests from any client app yet.',
-  draft: 'No requests from any client app yet.',
-  'virtual-model': 'No requests through this virtual model yet.',
-  cable: 'No requests through this virtual model yet.',
-  target: 'No requests reached this target yet.',
-  'ghost-target': 'No requests reached the removed target yet.',
-};
+import { nothingYetFor, scopeKey, subjectHeading } from './log-subject-wording';
 
 const streamStanding = {
   running: { word: 'Live', tone: 'positive' },
@@ -39,100 +31,6 @@ const logFilters = [
   { value: 'success', label: 'Success', tone: 'positive' },
   { value: 'errors', label: 'Errors', tone: 'danger' },
 ] as const;
-
-type LogFilter = (typeof logFilters)[number]['value'];
-
-const NO_ERRORS_YET: Record<InspectorSubject['kind'], string> = {
-  gateway: 'No errors from any client yet.',
-  draft: 'No errors from any client yet.',
-  'virtual-model': 'No errors through this virtual model yet.',
-  cable: 'No errors through this virtual model yet.',
-  target: 'No errors from this target yet.',
-  'ghost-target': 'No errors from the removed target yet.',
-};
-
-const NO_SUCCESSES_YET: Record<InspectorSubject['kind'], string> = {
-  gateway: 'No successful requests from any client yet.',
-  draft: 'No successful requests from any client yet.',
-  'virtual-model': 'No successful requests through this virtual model yet.',
-  cable: 'No successful requests through this virtual model yet.',
-  target: 'No successful requests from this target yet.',
-  'ghost-target': 'No successful requests from the removed target yet.',
-};
-
-function nothingYetFor(subject: InspectorSubject, filter: LogFilter): string {
-  if (filter === 'errors') {
-    return NO_ERRORS_YET[subject.kind];
-  }
-
-  return filter === 'success' ? NO_SUCCESSES_YET[subject.kind] : NOTHING_YET[subject.kind];
-}
-
-type SubjectHeading = {
-  name: string;
-  type: 'Gateway' | 'Virtual Model' | 'Binding' | 'Target' | 'Removed Target' | 'Draft';
-};
-
-function nameOrId(displayName: string, id: string): string {
-  return displayName === '' ? id : displayName;
-}
-
-function modelName(gateway: GatewayConfig, modelId: string): string {
-  const model = gateway.virtualModels.find((held) => held.id === modelId);
-
-  return model === undefined ? modelId : nameOrId(model.displayName, model.id);
-}
-
-function targetName(accounts: readonly Account[], accountId: string): string {
-  const account = accounts.find((held) => held.id === accountId);
-
-  return account === undefined ? accountId : nameOrId(accountName(account), accountId);
-}
-
-const SUBJECT_TYPE: Record<InspectorSubject['kind'], SubjectHeading['type']> = {
-  gateway: 'Gateway',
-  'virtual-model': 'Virtual Model',
-  cable: 'Binding',
-  target: 'Target',
-  'ghost-target': 'Removed Target',
-  draft: 'Draft',
-};
-
-function unscopedName(gateway: GatewayConfig, kind: 'gateway' | 'draft'): string {
-  return kind === 'draft' ? 'New virtual model' : nameOrId(gateway.displayName, gateway.slug);
-}
-
-function subjectName(
-  gateway: GatewayConfig,
-  accounts: readonly Account[],
-  subject: InspectorSubject,
-): string {
-  if (subject.kind === 'virtual-model' || subject.kind === 'cable') {
-    return modelName(gateway, subject.modelId);
-  }
-
-  return subject.kind === 'target' || subject.kind === 'ghost-target'
-    ? targetName(accounts, subject.accountId)
-    : unscopedName(gateway, subject.kind);
-}
-
-function subjectHeading(
-  gateway: GatewayConfig,
-  accounts: readonly Account[],
-  subject: InspectorSubject,
-): SubjectHeading {
-  return { name: subjectName(gateway, accounts, subject), type: SUBJECT_TYPE[subject.kind] };
-}
-
-function scopeKey(subject: InspectorSubject): string {
-  if (subject.kind === 'virtual-model' || subject.kind === 'cable') {
-    return `virtual-model:${subject.modelId}`;
-  }
-
-  return subject.kind === 'target' || subject.kind === 'ghost-target'
-    ? `${subject.kind}:${subject.accountId}`
-    : 'gateway';
-}
 
 function filteredScope(
   subject: InspectorSubject,

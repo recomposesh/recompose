@@ -15,7 +15,7 @@ import { describe, expect, test } from 'vitest';
 import type { EngineHost } from '../engine-host/engine-host';
 import type { EngineIpcContext } from './engine-ipc';
 
-import { keyRow } from '../engine-host/spend-grant.testkit';
+import { keyRow, seatedAs } from '../engine-host/spend-grant.testkit';
 import { createEngineIpcHandlers } from './engine-ipc';
 
 function gatewayNamed(slug: string, port: number): GatewayConfig {
@@ -33,7 +33,16 @@ function gatewayServing(slug: string, port: number, accountId: string): GatewayC
   return {
     ...gatewayNamed(slug, port),
     virtualModels: [
-      { id: 'fast', displayName: 'fast', target: { accountId, providerModel: 'claude-sonnet-5' } },
+      {
+        id: 'fast',
+        displayName: 'fast',
+        routing: {
+          entry: 'seat',
+          nodes: {
+            seat: { kind: 'target', accountId, providerModel: 'claude-sonnet-5' },
+          },
+        },
+      },
     ],
   };
 }
@@ -168,7 +177,7 @@ describe('moving a gateway off a port another process took', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });

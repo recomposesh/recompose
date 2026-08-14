@@ -6,6 +6,7 @@ const served = {
   kind: 'traffic',
   slug: 'personal',
   virtualModel: 'fast',
+  routeNode: 'only',
   request: { outcome: 'served', at: 1_754_600_000_000 },
 };
 
@@ -13,6 +14,7 @@ const failed = {
   kind: 'traffic',
   slug: 'personal',
   virtualModel: 'fast',
+  routeNode: 'only',
   request: {
     outcome: 'failed',
     at: 1_754_600_000_000,

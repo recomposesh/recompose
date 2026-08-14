@@ -2,9 +2,11 @@ import { z } from 'zod';
 
 import { keyCheckVerdictSchema, keyProviderIdSchema } from './api-keys';
 import { logRowSchema } from './engine-logs';
+import { engineRoutingSchema } from './engine-routing';
 import { gatewayEngineStateSchema } from './engine-state';
 import { requestOutcomeSchema } from './engine-traffic';
 import { gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
+import { routeNodeIdSchema } from './gateway-routing';
 import {
   localProviderIdSchema,
   loopbackAddressSchema,
@@ -16,15 +18,10 @@ import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
-const targetStandingSchema = z.discriminatedUnion('standing', [
-  z.strictObject({ standing: z.literal('bound'), providerModel: nonBlankString }),
-  z.strictObject({ standing: z.literal('removed') }),
-]);
-
 export const engineVirtualModelSchema = z.strictObject({
   id: gatewaySlugSchema,
   displayName: nonBlankString,
-  target: targetStandingSchema,
+  routing: engineRoutingSchema,
 });
 
 export type EngineVirtualModel = z.infer<typeof engineVirtualModelSchema>;
@@ -169,13 +166,15 @@ export type EngineReport = z.infer<typeof engineReportSchema>;
  * What the child says on its own once a request through one virtual model has finished.
  *
  * @summary It answers no directive, because nothing asked: the child speaks the moment a request
- * lands, and the parent folds the latest word per virtual model into the snapshot the canvas paints
- * its cables from.
+ * lands, and the parent folds the latest word per route node into the snapshot the canvas paints
+ * its cables from. One request walking a ladder speaks once per attempt, so the child that turned
+ * the request away and the one that answered it each light their own cable.
  */
 export const engineTrafficReportSchema = z.strictObject({
   kind: z.literal('traffic'),
   slug: gatewaySlugSchema,
   virtualModel: gatewaySlugSchema,
+  routeNode: routeNodeIdSchema,
   request: requestOutcomeSchema,
 });
 
@@ -195,11 +194,19 @@ export const engineLogReportSchema = z.strictObject({
 
 export type EngineLogReport = z.infer<typeof engineLogReportSchema>;
 
+/**
+ * The child asking the parent for custody of one attempt.
+ *
+ * @summary It names the route node it is about to try rather than the virtual model alone, because
+ * a ladder spends a different account per child and only the parent may turn a seat name into a
+ * credential.
+ */
 export const engineSpendRequestSchema = z.strictObject({
   kind: z.literal('spend-request'),
   id: directiveIdSchema,
   slug: gatewaySlugSchema,
   virtualModel: gatewaySlugSchema,
+  routeNode: routeNodeIdSchema,
 });
 
 export type EngineSpendRequest = z.infer<typeof engineSpendRequestSchema>;

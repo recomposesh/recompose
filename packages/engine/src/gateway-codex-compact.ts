@@ -7,13 +7,16 @@ import type { JsonObject } from './gateway-wire';
 import { requestSessions } from './gateway-session';
 import { jsonResponse, readJsonBody, refusalResponse, virtualNameOf } from './gateway-wire';
 import { missingCredential, missingTarget, unknownModel } from './refusals';
+import { firstDeclaredTarget } from './routing/route-table';
 import { normalizeCodexError } from './subscription/codex-errors';
 import { restoreCodexMultiAgentValue } from './subscription/codex-multi-agent';
 import { reachCodexCompact } from './subscription/reach-compact';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 type RefusedGrant = Exclude<SpendGrant, { verdict: 'resolved' }>;
-type CompactTarget = { response: Response } | { providerModel: string; virtualId: string };
+type CompactTarget =
+  | { response: Response }
+  | { providerModel: string; virtualId: string; routeNode: string };
 
 function denied(gateway: EngineGateway, model: string, grant: RefusedGrant): Response {
   return grant.verdict === 'missing-target'
@@ -74,11 +77,17 @@ function compactTarget(gateway: EngineGateway, model: string): CompactTarget {
     return { response: refusalResponse('responses', unknownModel(model)) };
   }
 
-  if (virtual.target.standing === 'removed') {
+  const declared = firstDeclaredTarget(virtual.routing);
+
+  if (declared?.standing.standing !== 'bound') {
     return { response: refusalResponse('responses', missingTarget(gateway.displayName, model)) };
   }
 
-  return { providerModel: virtual.target.providerModel, virtualId: virtual.id };
+  return {
+    providerModel: declared.standing.providerModel,
+    virtualId: virtual.id,
+    routeNode: declared.routeNode,
+  };
 }
 
 async function resolvedCompact(
@@ -123,7 +132,7 @@ export async function proxyCodexCompactRequest(
 
   if ('response' in target) return target.response;
 
-  const grant = await spendGrantFor(gateway.slug, target.virtualId);
+  const grant = await spendGrantFor(gateway.slug, target.virtualId, target.routeNode);
 
   return resolvedCompact(c, gateway, model, body, grant, runtime, target.providerModel, fetchLike);
 }

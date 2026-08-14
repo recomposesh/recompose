@@ -11,7 +11,12 @@ export type OptionRow = {
   id: string;
   /** What the option reads as, which is what a person searches by name. */
   name: string;
-  /** A quieter fact under the name, where one tells two options apart. */
+  /**
+   * A quieter fact beside the name, where one tells two options apart.
+   *
+   * @summary It gives its width up long before the name does, so a row too narrow for both loses
+   * the fact rather than the identity: a person scanning a list reads what a thing is called first.
+   */
   detail?: string | undefined;
   /** The vendor mark the option leads with, where recompose draws one. */
   mark?: BrandMarkName | undefined;
@@ -94,7 +99,7 @@ function optionRow(option: OptionRow, picked: boolean, onPick: (id: string) => v
         )}
         <span className="truncate text-ink">{option.name}</span>
         {option.detail === undefined ? null : (
-          <span className="truncate font-mono text-mono-value text-ink-secondary">
+          <span className="min-w-0 flex-1 truncate font-mono text-mono-value text-ink-secondary">
             {option.detail}
           </span>
         )}

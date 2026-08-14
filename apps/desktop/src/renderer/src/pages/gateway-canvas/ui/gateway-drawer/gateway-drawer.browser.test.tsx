@@ -11,6 +11,7 @@ import {
   storedAccounts,
 } from '../../testing/gateway-canvas.testkit';
 import { renderDrawer } from '../../testing/gateway-drawer.testkit';
+import { pooledGateway } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -97,6 +98,34 @@ test.each([
     expect(asked).toEqual([nodeId]);
   },
 );
+
+const pooledChild = {
+  kind: 'target',
+  accountId: 'k1',
+  modelId: 'pooled',
+  routeNodeId: 't1',
+} as const;
+
+test('Delete Target on one child of a pool names that child rather than the definition', async () => {
+  const asked: string[] = [];
+  const screen = await renderDrawer(pooledChild, {
+    gateway: pooledGateway,
+    onAskRemoval: (nodeId) => {
+      asked.push(nodeId);
+    },
+  });
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Target' }));
+
+  expect(asked).toEqual(['target:pooled:t1']);
+});
+
+test('a child of a pool reads the composition it stands in as what it is behind of', async () => {
+  const screen = await renderDrawer(pooledChild, { gateway: pooledGateway });
+
+  await expect.element(screen.getByText('Behind of', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Pooled', { exact: true })).toBeVisible();
+});
 
 test('a subscription target reads the signed-in email', async () => {
   const screen = await renderDrawer(

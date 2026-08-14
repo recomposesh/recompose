@@ -1,4 +1,4 @@
-import type { EngineGateway, LogBatch, LogRow } from '@recompose/contracts';
+import type { EngineGateway, EngineVirtualModel, LogBatch, LogRow } from '@recompose/contracts';
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -10,16 +10,21 @@ const at = 1_754_600_000_000;
 
 const clientKey = 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c';
 
+function aBoundRouting(): EngineVirtualModel['routing'] {
+  return {
+    entry: 'only',
+    nodes: {
+      only: { kind: 'target', standing: { standing: 'bound', providerModel: 'gpt-5-mini' } },
+    },
+  };
+}
+
 function aGatewayServing(...ids: readonly string[]): EngineGateway {
   return {
     slug: 'codex',
     displayName: 'Codex',
     port: 8397,
-    virtualModels: ids.map((id) => ({
-      id,
-      displayName: id,
-      target: { standing: 'bound', providerModel: 'gpt-5-mini' },
-    })),
+    virtualModels: ids.map((id) => ({ id, displayName: id, routing: aBoundRouting() })),
   };
 }
 

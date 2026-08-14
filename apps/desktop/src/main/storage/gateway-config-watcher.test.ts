@@ -103,7 +103,10 @@ function gateway(displayName: string, modelIds: readonly string[]): GatewayConfi
     virtualModels: modelIds.map((id) => ({
       id,
       displayName: id,
-      target: { accountId: 'acc-key', providerModel: id },
+      routing: {
+        entry: 'seat',
+        nodes: { seat: { kind: 'target', accountId: 'acc-key', providerModel: id } },
+      },
     })),
     layout: { nodes: {} },
   };

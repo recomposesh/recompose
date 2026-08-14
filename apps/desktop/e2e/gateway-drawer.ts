@@ -23,15 +23,26 @@ export function draftInspector(page: Page): Locator {
   return asideHeaded(page, DRAFT_SUBJECT);
 }
 
-/** Picks a gateway out of the sidebar, opens its inspector, and waits for it to stand. */
-export async function openGatewayDrawer(page: Page, name: string): Promise<void> {
-  await gatewayRow(page, name).click();
-
+/**
+ * Brings the gateway's inspector into view, whatever a scenario did to get here.
+ *
+ * @summary The inspector opens away, because a person entering a gateway came for the canvas. A step
+ * reading the panel has to say so itself rather than lean on an earlier step having toggled it, or
+ * it passes for a reason that has nothing to do with what it claims.
+ */
+export async function revealTheInspector(page: Page, name: string): Promise<void> {
   if (!(await gatewayDrawer(page, name).isVisible())) {
     await page.getByRole('button', { name: 'Inspector' }).click();
   }
 
   await expect(gatewayDrawer(page, name)).toBeVisible();
+}
+
+/** Picks a gateway out of the sidebar, opens its inspector, and waits for it to stand. */
+export async function openGatewayDrawer(page: Page, name: string): Promise<void> {
+  await gatewayRow(page, name).click();
+
+  await revealTheInspector(page, name);
 }
 
 /** Every virtual model the drawer shows the gateway serving. */

@@ -8,27 +8,51 @@ import { useStepTransition } from '../../../../shared/lib';
 import { Button, placeFocus } from '../../../../shared/ui';
 import { OptionList } from '../option-list/option-list';
 
-/** Which half of the binding the picker is asking for, and what the first half settled on. */
-export type PickerStage = { step: 'account' } | { step: 'provider-model'; accountId: string };
+/** Which of the two kinds a released cable may bind. */
+export type BoundKind = 'router' | 'target';
+
+/** Which part of the binding the ask is asking for, and what the parts before it settled on. */
+export type PickerStage =
+  | { step: 'kind' }
+  | { step: 'account' }
+  | { step: 'provider-model'; accountId: string };
 
 type StageWording = {
   heading: string;
   searchLabel: string;
   nothingMatched: string;
+  stepBack: string;
 };
 
 const wording: Record<PickerStage['step'], StageWording> = {
+  kind: {
+    heading: 'Bind a router or a target',
+    searchLabel: 'Search kinds',
+    nothingMatched: 'Nothing binds here.',
+    stepBack: '',
+  },
   account: {
     heading: 'Pick an account',
     searchLabel: 'Search accounts',
     nothingMatched: 'No account matches that.',
+    stepBack: 'Select router or target',
   },
   'provider-model': {
     heading: 'Pick a provider model',
     searchLabel: 'Search models',
     nothingMatched: 'No model matches that.',
+    stepBack: 'Select different provider',
   },
 };
+
+const KIND_OPTIONS: readonly OptionGroup[] = [
+  {
+    options: [
+      { id: 'router', name: 'Router', detail: 'spreads over children' },
+      { id: 'target', name: 'Target', detail: 'account, real model' },
+    ],
+  },
+];
 
 function stageBody(
   refusal: string | undefined,
@@ -57,23 +81,38 @@ function stageBody(
   );
 }
 
+type PickActs = {
+  onPickKind: (kind: BoundKind) => void;
+  onPickAccount: (accountId: string) => void;
+  onPickProviderModel: (providerModel: string) => void;
+};
+
+function pickedAt(stage: PickerStage, acts: PickActs): (picked: string) => void {
+  if (stage.step === 'kind') {
+    return (picked) => {
+      acts.onPickKind(picked === 'router' ? 'router' : 'target');
+    };
+  }
+
+  return stage.step === 'account' ? acts.onPickAccount : acts.onPickProviderModel;
+}
+
 function stageHeading(
-  stage: PickerStage,
   headingId: string,
   said: StageWording,
-  onSelectDifferentProvider: () => void,
+  onStepBack: (() => void) | undefined,
 ): ReactNode {
   return (
     <div className="flex items-center gap-1.5 px-2.5 pt-1 pb-1.5">
-      {stage.step === 'provider-model' ? (
+      {onStepBack === undefined || said.stepBack === '' ? null : (
         <Button
-          aria-label="Select different provider"
+          aria-label={said.stepBack}
           glyph="chevron"
           glyphClassName="rotate-90"
-          onPress={onSelectDifferentProvider}
+          onPress={onStepBack}
           variant="icon-secondary"
         />
-      ) : null}
+      )}
       <p className="picker-heading" id={headingId}>
         {said.heading}
       </p>
@@ -82,18 +121,20 @@ function stageHeading(
 }
 
 export type DropPickerProps = {
-  /** Which half of the binding is being asked for, which is what the list on offer answers. */
+  /** Which part of the binding is being asked for, which is what the list on offer answers. */
   stage: PickerStage;
   /** What this stage offers, gathered the way a person reads them. */
   groups: readonly OptionGroup[];
   /** Why the stage offers nothing, when the picked account's models could not be read. */
   refusal: string | undefined;
+  /** Receives which of the two kinds a person chose to bind here. */
+  onPickKind: (kind: BoundKind) => void;
   /** Receives the account a person settled the first stage on. */
   onPickAccount: (accountId: string) => void;
   /** Receives the provider model that completes the binding. */
   onPickProviderModel: (providerModel: string) => void;
-  /** Returns the second stage to the account choices. */
-  onSelectDifferentProvider: () => void;
+  /** Returns this stage to the one that opened it, or nothing where no stage stands behind it. */
+  onStepBack: (() => void) | undefined;
   /** Runs when a person leaves the picker, which is what takes the pending card away. */
   onDismiss: () => void;
 };
@@ -104,21 +145,24 @@ export type DropPickerProps = {
  * @summary Render it inside the pending target card, so the question stands where the cable landed
  * rather than at a coordinate a person has to hunt for. A binding needs both an account and the
  * model that account serves, so the account settles first and the model second, and one write
- * commits them together. Esc leaves at either stage, which is the one way out that changes nothing.
+ * commits them together. Every stage a person walked into offers the chevron back out of it, and a
+ * stage nothing stands behind wears none, so the chevron never promises a step that is not there.
+ * Esc leaves at any stage, which is the one way out that changes nothing.
  */
 export function DropPicker({
   stage,
   groups,
   refusal,
+  onPickKind,
   onPickAccount,
   onPickProviderModel,
-  onSelectDifferentProvider,
+  onStepBack,
   onDismiss,
 }: DropPickerProps) {
   const headingId = useId();
   const asking = useRef<HTMLDialogElement>(null);
   const said = wording[stage.step];
-  const transition = useStepTransition(stage.step, ['account', 'provider-model']);
+  const transition = useStepTransition(stage.step, ['kind', 'account', 'provider-model']);
 
   useEffect(() => {
     const asked = asking.current;
@@ -142,13 +186,13 @@ export function DropPicker({
       tabIndex={-1}
     >
       <div className={transition} key={stage.step}>
-        {stageHeading(stage, headingId, said, onSelectDifferentProvider)}
+        {stageHeading(headingId, said, onStepBack)}
         <div className="max-h-64 overflow-y-auto px-1.5 pb-1" data-picker-body="">
           {stageBody(
             refusal,
             said,
-            groups,
-            stage.step === 'account' ? onPickAccount : onPickProviderModel,
+            stage.step === 'kind' ? KIND_OPTIONS : groups,
+            pickedAt(stage, { onPickKind, onPickAccount, onPickProviderModel }),
             stage.step === 'provider-model',
           )}
         </div>

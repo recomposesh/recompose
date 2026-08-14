@@ -7,7 +7,13 @@ import {
   engineSpendRequestSchema,
 } from './engine-protocol';
 
-const spendRequest = { kind: 'spend-request', id: 'g1', slug: 'personal', virtualModel: 'fast' };
+const spendRequest = {
+  kind: 'spend-request',
+  id: 'g1',
+  slug: 'personal',
+  virtualModel: 'fast',
+  routeNode: 'only',
+};
 
 const resolved = {
   kind: 'spend-grant',

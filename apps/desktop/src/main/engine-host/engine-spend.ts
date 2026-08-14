@@ -1,6 +1,10 @@
 import type { EngineSpendGrant, EngineSpendRequest, SpendGrant } from '@recompose/contracts';
 
-export type SpendGrantFor = (slug: string, virtualModel: string) => Promise<SpendGrant>;
+export type SpendGrantFor = (
+  slug: string,
+  virtualModel: string,
+  routeNode: string,
+) => Promise<SpendGrant>;
 
 type GrantPort = {
   postMessage: (grant: EngineSpendGrant) => void;
@@ -11,7 +15,7 @@ async function grantOrNothing(
   asked: EngineSpendRequest,
 ): Promise<SpendGrant> {
   try {
-    return await grantFor(asked.slug, asked.virtualModel);
+    return await grantFor(asked.slug, asked.virtualModel, asked.routeNode);
   } catch (error) {
     console.error(
       `recompose could not resolve a grant for "${asked.virtualModel}" on the gateway "${asked.slug}", so the turn is refused.`,
@@ -23,11 +27,13 @@ async function grantOrNothing(
 }
 
 /**
- * Answers one child request to spend a virtual model's target.
+ * Answers one child request to spend the target seated at a named route node.
  *
  * @summary Every request draws an answer, including the ones nothing can be granted for, because a
- * child left waiting holds an open turn. The credential a resolved grant carries lives in this
- * call's scope and in the message it posts, so nothing longer-lived ever holds it.
+ * child left waiting holds an open turn. One request walking a ladder asks once per attempt and
+ * each ask names its own seat, so a refusal answers that seat alone. The credential a resolved
+ * grant carries lives in this call's scope and in the message it posts, so nothing longer-lived
+ * ever holds it.
  *
  * A port that refuses the message is written down rather than left to carry out, because an
  * unhandled rejection takes the whole main process down with it.

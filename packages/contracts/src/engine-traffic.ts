@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { gatewaySlugSchema } from './gateway-config';
+import { routeNodeIdSchema } from './gateway-routing';
 import { nonBlankString } from './non-blank';
 
 const answeredAtSchema = z.number().int().nonnegative();
@@ -28,14 +29,16 @@ export const requestOutcomeSchema = z.discriminatedUnion('outcome', [
 export type RequestOutcome = z.infer<typeof requestOutcomeSchema>;
 
 /**
- * The latest outcome of every virtual model, under the gateway serving it.
+ * The latest outcome of every route node, under the virtual model and the gateway serving it.
  *
- * @summary One entry per virtual model rather than a history, because a cable shows what the last
- * request came to and nothing before it.
+ * @summary One entry per route node rather than a history, because a cable shows what the last
+ * request came to and nothing before it. The node level is what lets one request paint two cables:
+ * a ladder that moved on from a child records that child's failure beside the success of the one
+ * that answered.
  */
 export const gatewayTrafficSchema = z.record(
   gatewaySlugSchema,
-  z.record(gatewaySlugSchema, requestOutcomeSchema),
+  z.record(gatewaySlugSchema, z.record(routeNodeIdSchema, requestOutcomeSchema)),
 );
 
 export type GatewayTraffic = z.infer<typeof gatewayTrafficSchema>;

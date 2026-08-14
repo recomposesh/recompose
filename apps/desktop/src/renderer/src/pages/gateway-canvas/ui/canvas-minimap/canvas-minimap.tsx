@@ -13,6 +13,7 @@ import { accountKindNodeTint } from '../../lib/account-kind-paint';
 const roleFills: Record<string, string> = {
   gateway: 'minimap-node node-tint-gateway',
   'virtual-model': 'minimap-node node-tint-virtual-model',
+  router: 'minimap-node node-tint-router',
   'draft-model': 'minimap-node-dim node-tint-virtual-model',
   'ghost-target': 'minimap-node-dim node-tint-danger',
   'pending-target': 'minimap-node-dim node-tint-ink-tertiary',

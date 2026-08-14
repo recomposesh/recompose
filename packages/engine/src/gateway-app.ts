@@ -2,30 +2,20 @@ import type { EngineGateway } from '@recompose/contracts';
 
 import { Hono } from 'hono';
 
-import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
+import type { RouterServing, SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
+import type { RoutingMemory } from './gateway-routing-memory';
 import type { NoteTraffic, ServeWatched } from './gateway-traffic';
 import type { ProxyDialect } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
 import type { ProviderLogStore } from './provider/provider-log-store';
 
 import { guardApiKey } from './api-key-guard';
-import { proxyCodexAlphaSearch } from './gateway-codex-alpha-search';
-import { proxyCodexCompactRequest } from './gateway-codex-compact';
-import { proxyTokenCountRequest } from './gateway-count-tokens';
 import { modelListing } from './gateway-discovery';
-import { proxyImageRequest } from './gateway-images';
 import { proxyModelRequest, subscriptionRuntime } from './gateway-proxy';
-import {
-  ALPHA_SEARCH_PATHS,
-  COMPACT_PATHS,
-  COUNT_TOKENS_PATHS,
-  GEMINI_MODEL_ROUTE,
-  IMAGE_ROUTES,
-  MODEL_ROUTES,
-  VIDEO_ROUTES,
-} from './gateway-route-paths';
+import { GEMINI_MODEL_ROUTE, MODEL_ROUTES } from './gateway-route-paths';
+import { routingMemory } from './gateway-routing-memory';
+import { registerSideRoutes } from './gateway-side-routes';
 import { noteUnreadableRequest, openServingTurn, watchingTraffic } from './gateway-traffic';
-import { proxyVideoRequest } from './gateway-videos';
 import { registerGatewayWebSockets } from './gateway-websocket';
 import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
 import { guardLoopback } from './loopback-guard';
@@ -77,122 +67,46 @@ function defaultDialectForPath(path: string): ProxyDialect {
   return path.includes('/messages') ? 'anthropic' : 'chat-completions';
 }
 
-function registerAlphaSearchRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  fetchLike: typeof fetch,
-): void {
-  for (const path of ALPHA_SEARCH_PATHS) {
-    app.post(path, async (c) =>
-      watched(async (grantFor) => proxyCodexAlphaSearch(c, gateway, grantFor, fetchLike)),
-    );
-  }
-}
+type ModelServing = {
+  gateway: EngineGateway;
+  memory: RoutingMemory;
+  subscriptions: SubscriptionRuntime;
+  fetchLike: typeof fetch;
+  relay: AIStudioRelay;
+  plugins?: PluginHost | undefined;
+};
 
-function registerImageRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  subscriptionServing: SubscriptionRuntime,
-  fetchLike: typeof fetch,
-): void {
-  for (const [route, path] of IMAGE_ROUTES) {
-    app.post(route, async (c) =>
-      watched(async (grantFor) =>
-        proxyImageRequest(c, gateway, path, grantFor, subscriptionServing, fetchLike),
-      ),
-    );
-  }
-}
-
-function registerVideoRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  fetchLike: typeof fetch,
-): void {
-  for (const [route, path] of VIDEO_ROUTES) {
-    app.post(route, async (c) =>
-      watched(async (grantFor) => proxyVideoRequest(c, gateway, path, grantFor, fetchLike)),
-    );
-  }
-}
-
-function registerCountRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  subscriptions: SubscriptionRuntime,
-  fetchLike: typeof fetch,
-  relay: AIStudioRelay,
-  plugins?: PluginHost,
-): void {
-  for (const path of COUNT_TOKENS_PATHS) {
-    app.post(path, async (c) =>
-      watched(async (grantFor) =>
-        proxyTokenCountRequest(c, gateway, grantFor, subscriptions, fetchLike, relay, plugins),
-      ),
-    );
-  }
-}
-
-function registerCompactRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  subscriptions: SubscriptionRuntime,
-  fetchLike: typeof fetch,
-): void {
-  for (const path of COMPACT_PATHS) {
-    app.post(path, async (c) =>
-      watched(async (grantFor) =>
-        proxyCodexCompactRequest(c, gateway, grantFor, subscriptions, fetchLike),
-      ),
-    );
-  }
-}
-
-function registerModelRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  subscriptions: SubscriptionRuntime,
-  fetchLike: typeof fetch,
-  relay: AIStudioRelay,
-  plugins?: PluginHost,
-): void {
+function registerModelRoutes(app: Hono, watched: ServeWatched, model: ModelServing): void {
   for (const [path, dialect] of MODEL_ROUTES) {
     app.all(path, async (c) =>
-      watched(async (grantFor) =>
-        proxyModelRequest(c, dialect, gateway, grantFor, fetchLike, subscriptions, relay, plugins),
+      watched(async (grantFor, noteAttempt) =>
+        proxyModelRequest(
+          c,
+          dialect,
+          model.gateway,
+          grantFor,
+          model.fetchLike,
+          { memory: model.memory, noteAttempt },
+          model.subscriptions,
+          model.relay,
+          model.plugins,
+        ),
       ),
     );
   }
 
-  registerGeminiModelRoutes(app, gateway, watched, subscriptions, fetchLike, relay, plugins);
+  registerGeminiModelRoutes(app, watched, model);
 }
 
-function registerGeminiModelRoutes(
-  app: Hono,
-  gateway: EngineGateway,
-  watched: ServeWatched,
-  subscriptions: SubscriptionRuntime,
-  fetchLike: typeof fetch,
-  relay: AIStudioRelay,
-  plugins?: PluginHost,
-): void {
+function registerGeminiModelRoutes(app: Hono, watched: ServeWatched, model: ModelServing): void {
   app.post(GEMINI_MODEL_ROUTE, async (c) =>
-    watched(async (grantFor) =>
+    watched(async (grantFor, noteAttempt) =>
       proxyGeminiAction(
         c,
         c.req.param('action'),
-        gateway,
         grantFor,
-        subscriptions,
-        fetchLike,
-        relay,
-        plugins,
+        { memory: model.memory, noteAttempt },
+        model,
       ),
     ),
   );
@@ -213,47 +127,30 @@ function parsedGeminiAction(action: string): GeminiAction | null {
 async function proxyGeminiAction(
   c: Parameters<typeof proxyModelRequest>[0],
   action: string,
-  gateway: EngineGateway,
   spendGrantFor: SpendGrantFor,
-  subscriptions: SubscriptionRuntime,
-  fetchLike: typeof fetch,
-  relay: AIStudioRelay,
-  plugins?: PluginHost,
+  serving: RouterServing,
+  model: ModelServing,
 ): Promise<Response> {
   const parsed = parsedGeminiAction(action);
 
-  if (parsed === null) return c.json(unservedPath(gateway.displayName, c.req.path), 404);
+  if (parsed === null) return c.json(unservedPath(model.gateway.displayName, c.req.path), 404);
 
   return proxyModelRequest(
     c,
     'gemini',
-    gateway,
+    model.gateway,
     spendGrantFor,
-    fetchLike,
-    subscriptions,
-    relay,
-    plugins,
+    model.fetchLike,
+    serving,
+    model.subscriptions,
+    model.relay,
+    model.plugins,
     parsed.model,
     parsed.stream,
   );
 }
 
-export function createGatewayApp(
-  gateway: EngineGateway,
-  spendGrantFor: SpendGrantFor,
-  fetchLike: typeof fetch = globalThis.fetch,
-  subscriptions?: SubscriptionRuntime,
-  aiStudio?: AIStudioRelay,
-  providerLogs?: ProviderLogStore,
-  plugins?: PluginHost,
-  note?: NoteTraffic,
-): Hono {
-  const app = new Hono();
-  const subscriptionServing = subscriptions ?? subscriptionRuntime();
-  const relay = chosenAIStudioRelay(aiStudio);
-  const logStore = preparedLogStore(providerLogs);
-  const watched = watchingTraffic(spendGrantFor, note ?? (() => undefined));
-
+function guardAndReport(app: Hono, gateway: EngineGateway): void {
   app.use(guardLoopback(gateway.port, gateway.bindAddress));
 
   if (gateway.apiKey !== undefined) {
@@ -276,19 +173,45 @@ export function createGatewayApp(
   app.on(['GET', 'HEAD'], '/healthz', (c) =>
     c.req.method === 'HEAD' ? c.body(null, 200) : c.json({ status: 'ok' }),
   );
+}
+
+export function createGatewayApp(
+  gateway: EngineGateway,
+  spendGrantFor: SpendGrantFor,
+  fetchLike: typeof fetch = globalThis.fetch,
+  subscriptions?: SubscriptionRuntime,
+  aiStudio?: AIStudioRelay,
+  providerLogs?: ProviderLogStore,
+  plugins?: PluginHost,
+  note?: NoteTraffic,
+): Hono {
+  const app = new Hono();
+  const subscriptionServing = subscriptions ?? subscriptionRuntime();
+  const relay = chosenAIStudioRelay(aiStudio);
+  const logStore = preparedLogStore(providerLogs);
+  const watched = watchingTraffic(spendGrantFor, note ?? (() => undefined));
+
+  guardAndReport(app, gateway);
+
   app.get('/v1/models', (c) => c.json(modelListing(gateway.virtualModels)));
   registerManagementUsage(app);
   registerManagementLogs(app, logStore);
   registerGatewayWebSockets(app, gateway, spendGrantFor, fetchLike, relay);
-  registerAlphaSearchRoutes(app, gateway, watched, fetchLike);
-
-  registerCountRoutes(app, gateway, watched, subscriptionServing, fetchLike, relay, plugins);
-  registerCompactRoutes(app, gateway, watched, subscriptionServing, fetchLike);
-
-  registerImageRoutes(app, gateway, watched, subscriptionServing, fetchLike);
-  registerVideoRoutes(app, gateway, watched, fetchLike);
-
-  registerModelRoutes(app, gateway, watched, subscriptionServing, fetchLike, relay, plugins);
+  registerSideRoutes(app, watched, {
+    gateway,
+    subscriptions: subscriptionServing,
+    fetchLike,
+    relay,
+    plugins,
+  });
+  registerModelRoutes(app, watched, {
+    gateway,
+    memory: routingMemory(),
+    subscriptions: subscriptionServing,
+    fetchLike,
+    relay,
+    plugins,
+  });
 
   app.notFound((c) => c.json(unservedPath(gateway.displayName, c.req.path), 404));
 

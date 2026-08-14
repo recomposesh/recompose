@@ -7,6 +7,7 @@ import type { JsonObject } from './gateway-wire';
 import { type PreparedImageBody, readImageBody } from './gateway-images-body';
 import { requestSessions } from './gateway-session';
 import { reachXAIImage } from './provider/xai-image';
+import { firstDeclaredTarget } from './routing/route-table';
 import {
   codexImageJsonResponse,
   codexImageStreamResponse,
@@ -166,14 +167,17 @@ export async function proxyImageRequest(
 
   if (virtual === undefined)
     return imageError(`The model "${prepared.model}" does not exist.`, 404);
-  if (virtual.target.standing !== 'bound') return imageError('The image model has no target.');
 
-  const grant = await spendGrantFor(gateway.slug, virtual.id);
+  const declared = firstDeclaredTarget(virtual.routing);
+
+  if (declared?.standing.standing !== 'bound') return imageError('The image model has no target.');
+
+  const grant = await spendGrantFor(gateway.slug, virtual.id, declared.routeNode);
 
   return targetImageAnswer(
     c,
     grant,
-    virtual.target.providerModel,
+    declared.standing.providerModel,
     prepared,
     path,
     runtime,

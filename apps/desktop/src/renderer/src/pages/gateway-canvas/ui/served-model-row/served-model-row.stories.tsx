@@ -83,6 +83,62 @@ export const TargetRemoved = meta.story({
   },
 });
 
+/**
+ * A pool that lost one target of two and still answers through the one that stands.
+ *
+ * @summary The row counts what left rather than declaring the binding removed, because a request
+ * under this name still reaches an account. The binding names the account that answers now, so the
+ * line and the count describe the same target rather than two.
+ */
+export const ThinnedPool = meta.story({
+  args: {
+    served: {
+      id: 'spread',
+      displayName: 'Spread',
+      providerModel: 'claude-opus-5',
+      target: { standing: 'thinned', account: workKey, lost: 1 },
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('1 target removed')).toBeVisible();
+    await expect(await canvas.findByText('spread → work · claude-opus-5')).toBeVisible();
+  },
+});
+
+/** A pool down to its last target, where the count has to read in the plural. */
+export const ThinnedFurther = meta.story({
+  args: {
+    served: {
+      id: 'spread',
+      displayName: 'Spread',
+      providerModel: 'claude-opus-5',
+      target: { standing: 'thinned', account: workKey, lost: 2 },
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('2 targets removed')).toBeVisible();
+  },
+});
+
+/**
+ * A definition routed through a router nobody has filled, which names no target to lose.
+ *
+ * @summary The row says the composition is unfinished rather than that a target was removed,
+ * because nothing left: a person who dropped a router and has not bound a child yet would
+ * otherwise be sent to repair a binding that never existed. The line carries the name alone,
+ * since an arrow into nothing points at nothing.
+ */
+export const NoTargetYet = meta.story({
+  args: {
+    served: { ...serving, providerModel: '', target: { standing: 'incomplete' } },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('no target yet')).toBeVisible();
+    await expect(canvas.queryByText('target removed')).toBeNull();
+    await expect(await canvas.findByText('fast')).toBeVisible();
+  },
+});
+
 /** Copying the id says so out loud, because a copy that answers nothing reads as broken. */
 export const CopyingTheId = meta.story({
   play: async ({ canvas, userEvent }) => {

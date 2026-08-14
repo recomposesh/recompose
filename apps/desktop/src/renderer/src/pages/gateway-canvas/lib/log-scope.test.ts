@@ -62,6 +62,7 @@ const anySubject: fc.Arbitrary<LogSubject> = fc.oneof(
     .constantFrom('fast', 'deep')
     .map((modelId): LogSubject => ({ kind: 'virtual-model', modelId })),
   fc.constantFrom('fast', 'deep').map((modelId): LogSubject => ({ kind: 'cable', modelId })),
+  fc.constantFrom('fast', 'deep').map((modelId): LogSubject => ({ kind: 'router', modelId })),
   fc.constantFrom('work', 'home').map((accountId): LogSubject => ({ kind: 'target', accountId })),
   fc
     .constantFrom('work', 'home')
@@ -92,6 +93,13 @@ test('a selected virtual model shows the requests that passed through it', () =>
 test('a selected cable shows the requests of the virtual model it binds', () => {
   expect(everyRow.filter(logScope({ kind: 'cable', modelId: 'deep' }, false))).toEqual([
     throughDeep,
+  ]);
+});
+
+test('a selected router shows the requests its virtual model carried', () => {
+  expect(everyRow.filter(logScope({ kind: 'router', modelId: 'fast' }, false))).toEqual([
+    throughFast,
+    refusedThroughFast,
   ]);
 });
 

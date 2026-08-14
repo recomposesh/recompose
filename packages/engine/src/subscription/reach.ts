@@ -155,6 +155,7 @@ function providerRequestFor(
     providerOrigin: grant.providerOrigin,
     body,
     credential,
+    accountId: spend.accountId,
     replay: runtime.codexReplay,
     replayScopeId: scope.replayScopeId,
     sessionId: scope.sessionId,

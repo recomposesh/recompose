@@ -11,7 +11,10 @@ import { ModelGeneralInfo } from './model-general-info';
 const fastModel: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+  routing: {
+    entry: 'seat',
+    nodes: { seat: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' } },
+  },
 };
 
 const meta = preview.meta({

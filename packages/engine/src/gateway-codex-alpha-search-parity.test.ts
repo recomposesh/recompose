@@ -163,7 +163,7 @@ describe('Codex alpha search selection and logs', () => {
   test('TestCodexAlphaSearchPassesGinContextToAuthSelection', async () => {
     const captured = capture();
     let selected: SpendGrantContext | undefined;
-    const grantFor: SpendGrantFor = async (_slug, _model, context) => {
+    const grantFor: SpendGrantFor = async (_slug, _model, _routeNode, context) => {
       await Promise.resolve();
       selected = context;
 
@@ -177,7 +177,7 @@ describe('Codex alpha search selection and logs', () => {
   test('TestCodexAlphaSearchUsesRequestIDForSessionAffinity', async () => {
     const captured = capture();
     const sessions = new Map<string, string>();
-    const grantFor: SpendGrantFor = async (_slug, _model, context) => {
+    const grantFor: SpendGrantFor = async (_slug, _model, _routeNode, context) => {
       await Promise.resolve();
       const id = context?.sessionId ?? 'none';
       const token = sessions.get(id) ?? `token-${String(sessions.size)}`;

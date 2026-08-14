@@ -1,7 +1,9 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
 
+import { targetTheEntryNames } from '@recompose/contracts';
+
 import type { XY } from '../../lib/canvas-positions';
-import type { SettledDefinition } from '../../lib/model-draft';
+import type { NamedDefinition } from '../../lib/model-draft';
 import type { CanvasWorld } from './canvas-standings';
 
 import { accountName } from '../../../../entities/account';
@@ -13,14 +15,46 @@ import {
   gatewayRebinding,
   gatewayReleasing,
 } from '../../lib/model-draft';
-import { seatForNewNode } from '../../lib/tidy-layout';
+import { ROUTE_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
 import { shownWhereItWasBorn } from './born-card-camera';
 import { modelIdOf, targetModelIdOf } from './canvas-wiring';
 
 /** The name a definition answers to out loud, which is its id until a person names it. */
-export function spokenNameOf(definition: SettledDefinition): string {
+export function spokenNameOf(definition: NamedDefinition): string {
   return definition.displayName === '' ? definition.id : definition.displayName;
+}
+
+/**
+ * Puts a graduated draft away: seats what it became, forgets it, and says what it bound to.
+ *
+ * @summary Every path out of a draft lands here, whether it finished on a target or on a router,
+ * so a draft is never half put away: the card keeps the spot the person placed it at, the overlay
+ * standing goes, the inspector closes, and the live region says what the definition now reaches.
+ * A binding that brings a second card into being seats that one too, in the same write.
+ */
+export function graduatedDraft(
+  world: CanvasWorld,
+  named: NamedDefinition,
+  boundTo: string,
+  alsoSeat?: (draftSeat: XY) => void,
+): void {
+  const draft = heldDraft(world.slug);
+
+  if (draft !== undefined) {
+    setNodePosition(world.slug, `model:${named.id}`, draft.seat);
+    alsoSeat?.(draft.seat);
+    keepCanvasPositions(world.slug);
+  }
+
+  leaveDrafting(world.slug);
+  world.standings.select(undefined);
+  closeInspector();
+  world.standings.announce({
+    kind: 'bound',
+    virtualModel: spokenNameOf(named),
+    target: boundTo,
+  });
 }
 
 /** The name a target account reads as, or its bare id once it left the registry. */
@@ -66,10 +100,17 @@ function seatOfTheBornTarget(world: CanvasWorld, bornTargetId: string): XY | und
     return picker.origin === 'drop' ? undefined : picker.at;
   }
 
-  return seatForNewNode('target', world.seats);
+  return seatForNewNode(ROUTE_COLUMN, world.seats);
 }
 
-function committedPick(
+/**
+ * Writes one rewritten gateway, seating whatever card the pick brought into being.
+ *
+ * @summary Every completed pick lands here, so a born card is seated, the picker put away, and a
+ * refusal said out loud in one place rather than once per kind of thing a person can bind. A card
+ * that already stands is seated by nobody, because a card a person can see is one they placed.
+ */
+export function committedPick(
   world: CanvasWorld,
   bornTargetId: string,
   rewritten: GatewayConfig,
@@ -104,24 +145,11 @@ export function completedDraftPick(
   accountId: string,
   providerModel: string,
 ): void {
-  const draft = heldDraft(world.slug);
-  const definition = draft?.definition ?? emptyDefinition();
+  const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
   const settled = { ...definition, accountId, providerModel };
 
   committedPick(world, `target:${settled.id}`, gatewayDefining(world.gateway, settled), () => {
-    if (draft !== undefined) {
-      setNodePosition(world.slug, `model:${settled.id}`, draft.seat);
-      keepCanvasPositions(world.slug);
-    }
-
-    leaveDrafting(world.slug);
-    world.standings.select(undefined);
-    closeInspector();
-    world.standings.announce({
-      kind: 'bound',
-      virtualModel: spokenNameOf(settled),
-      target: targetNameIn(world.accounts, accountId),
-    });
+    graduatedDraft(world, settled, targetNameIn(world.accounts, accountId));
   });
 }
 
@@ -145,12 +173,13 @@ export function completedRebindPick(
     return;
   }
 
-  const wasBroken = world.accounts.every((held) => held.id !== model.target.accountId);
+  const bound = targetTheEntryNames(model.routing);
+  const wasBroken = world.accounts.every((held) => held.id !== bound?.accountId);
 
   committedPick(
     world,
     `target:${modelId}`,
-    gatewayRebinding(world.gateway, modelId, { accountId, providerModel }),
+    gatewayRebinding(world.gateway, modelId, { kind: 'target', accountId, providerModel }),
     () => {
       world.standings.announce({
         kind: wasBroken ? 'repaired' : 'rebound',
@@ -161,14 +190,7 @@ export function completedRebindPick(
   );
 }
 
-/**
- * Releases a binding into a held draft that keeps its name, its id, and its seat.
- *
- * @summary The stored shape carries no virtual model without a target, so unbinding takes the
- * definition out of the gateway and stands what a person typed as a draft card in the same place.
- * Rebinding the draft writes it back, which is why the unbind itself needs no confirmation.
- */
-export function releasedBinding(world: CanvasWorld, modelId: string, selectDraft = true): void {
+function released(world: CanvasWorld, modelId: string, standAfter: () => void): void {
   const model = world.gateway.virtualModels.find((held) => held.id === modelId);
 
   if (model === undefined) {
@@ -184,15 +206,41 @@ export function releasedBinding(world: CanvasWorld, modelId: string, selectDraft
         { displayName: model.displayName, id: model.id, accountId: '', providerModel: '' },
         seat,
       );
-      world.standings.select(selectDraft ? 'draft' : undefined);
-
-      if (!selectDraft) {
-        closeInspector();
-      }
-
+      standAfter();
       world.standings.announce({ kind: 'released', virtualModel: model.displayName });
     },
     onError: world.standings.refuse,
+  });
+}
+
+/**
+ * Releases a binding and hands the person the draft it became, ready to rebind.
+ *
+ * @summary The stored shape carries no virtual model without a target, so unbinding takes the
+ * definition out of the gateway and stands what a person typed as a draft card in the same place.
+ * Rebinding the draft writes it back, which is why the unbind itself needs no confirmation. Cutting
+ * a cable is aiming somewhere new rather than letting go, so the draft takes the selection and the
+ * inspector keeps speaking for it.
+ */
+export function releasedWithTheDraftSelected(world: CanvasWorld, modelId: string): void {
+  released(world, modelId, () => {
+    world.standings.select('draft');
+  });
+}
+
+/**
+ * Releases a binding and leaves nothing standing selected on the canvas.
+ *
+ * @summary Removing the entry route node takes the definition's whole binding with it, so the card
+ * a person had selected is gone by the time the write lands. Selecting the draft that replaced it
+ * would put the inspector on a card they never pressed, so the selection clears and the inspector
+ * closes. The draft still stands where the definition did, because the work a person typed survives
+ * either way out.
+ */
+export function releasedWithNothingSelected(world: CanvasWorld, modelId: string): void {
+  released(world, modelId, () => {
+    world.standings.select(undefined);
+    closeInspector();
   });
 }
 
@@ -211,20 +259,6 @@ function boundModelOf(world: CanvasWorld, nodeId: string) {
 export function askedTargetRemoval(world: CanvasWorld, nodeId: string): void {
   if (boundModelOf(world, nodeId) !== undefined) {
     world.standings.setRemoving(nodeId);
-  }
-}
-
-/**
- * Releases the one binding a confirmed target removal held, standing its model back as a draft.
- *
- * @summary Deleting the card unbinds rather than destroys, because the target is a reference to a
- * stored account and the definition aimed at it is the person's own work.
- */
-export function releasedTarget(world: CanvasWorld, nodeId: string): void {
-  const model = boundModelOf(world, nodeId);
-
-  if (model !== undefined) {
-    releasedBinding(world, model.id, false);
   }
 }
 

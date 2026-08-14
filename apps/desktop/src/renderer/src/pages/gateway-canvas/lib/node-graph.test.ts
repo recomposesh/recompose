@@ -1,4 +1,9 @@
-import type { Account, GatewayConfig, VirtualModel } from '@recompose/contracts';
+import type {
+  Account,
+  GatewayConfig,
+  SubscriptionAccountView,
+  VirtualModel,
+} from '@recompose/contracts';
 
 import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
@@ -34,13 +39,19 @@ const spare: Account = {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'a1', providerModel: 'claude-sonnet-5' },
+  routing: {
+    entry: 'seat-fast',
+    nodes: { 'seat-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+  },
 };
 
 const slow: VirtualModel = {
   id: 'slow',
   displayName: 'Slow',
-  target: { accountId: 'a2', providerModel: 'claude-opus-5' },
+  routing: {
+    entry: 'seat-slow',
+    nodes: { 'seat-slow': { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' } },
+  },
 };
 
 const codex: GatewayConfig = {
@@ -109,28 +120,56 @@ test('a target node carries the account and the identity it reads under the prov
     kind: 'target',
     account: work,
     modelId: 'fast',
+    routeNodeId: 'seat-fast',
+    depth: 0,
     detail: 'Work',
   });
 });
 
+function signedIn(id: string, address: string): SubscriptionAccountView {
+  return {
+    id,
+    provider: 'anthropic',
+    label: 'Work',
+    standing: 'connected',
+    provenance: 'sign-in',
+    active: true,
+    signedInAs: address,
+  };
+}
+
 test('a subscription target prefers the observed signed-in address over its stored label', () => {
   const graph = canvasGraph(codex, [work], nothingOverlaid, {}, [
-    {
-      id: work.id,
-      provider: 'anthropic',
-      label: work.label,
-      standing: 'connected',
-      provenance: 'sign-in',
-      active: true,
-      signedInAs: 'ada@example.com',
-    },
+    signedIn('a1', 'ada@example.com'),
   ]);
 
   expect(graph.nodes[2]).toMatchObject({ detail: 'ada@example.com' });
 });
 
+test('a subscription target reads the address observed for its own account and no other', () => {
+  const views = [signedIn('a9', 'bob@example.com'), signedIn('a1', 'ada@example.com')];
+  const graph = canvasGraph(codex, [work], nothingOverlaid, {}, views);
+
+  expect(graph.nodes[2]).toMatchObject({ detail: 'ada@example.com' });
+});
+
+test('a target on a stored key reads its own label, whatever a subscription of that id says', () => {
+  const keyed: Account = {
+    id: 'a1',
+    provider: 'anthropic',
+    kind: 'api-key',
+    label: 'Work key',
+    credentialRef: 'c-a1',
+  };
+  const graph = canvasGraph(codex, [keyed], nothingOverlaid, {}, [
+    signedIn('a1', 'ada@example.com'),
+  ]);
+
+  expect(graph.nodes[2]).toMatchObject({ detail: 'Work key' });
+});
+
 test('two virtual models reaching one account each keep a target card of their own', () => {
-  const bothOnWork = { ...codex, virtualModels: [fast, { ...slow, target: fast.target }] };
+  const bothOnWork = { ...codex, virtualModels: [fast, { ...slow, routing: fast.routing }] };
   const graph = canvasGraph(bothOnWork, [work], nothingOverlaid);
 
   expect(graph.nodes.filter((node) => node.kind === 'target')).toHaveLength(2);
@@ -150,6 +189,8 @@ test('a binding whose account left the registry stands as a ghost under a broken
     kind: 'ghost-target',
     accountId: 'a2',
     modelId: 'slow',
+    routeNodeId: 'seat-slow',
+    depth: 0,
   });
   expect(graph.edges).toEqual([
     { id: 'wire:model:slow', source: 'gateway', target: 'model:slow', standing: 'structural' },
@@ -222,8 +263,8 @@ test('a virtual model aliased draft keeps its own cable and wire, because both n
   const namesakes = {
     ...codex,
     virtualModels: [
-      { id: 'draft', displayName: 'Draft', target: fast.target },
-      { id: 'pending', displayName: 'Pending', target: fast.target },
+      { id: 'draft', displayName: 'Draft', routing: fast.routing },
+      { id: 'pending', displayName: 'Pending', routing: fast.routing },
     ],
   };
   const graph = canvasGraph(namesakes, [work], {
@@ -243,6 +284,7 @@ test('a virtual model aliased draft keeps its own cable and wire, because both n
 
 test('a rebound virtual model drops the cable it held, and the target it left stands down', () => {
   const rebound = gatewayRebinding(codex, 'fast', {
+    kind: 'target',
     accountId: 'a2',
     providerModel: 'claude-opus-5',
   });

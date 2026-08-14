@@ -24,7 +24,14 @@ const composedGateway = gatewaySeed({
   displayName: 'Codex',
   port: 51234,
   virtualModels: [
-    { id: 'fast', displayName: 'Fast', target: { accountId: 'k1', providerModel: 'sonnet' } },
+    {
+      id: 'fast',
+      displayName: 'Fast',
+      routing: {
+        entry: 'seat',
+        nodes: { seat: { kind: 'target', accountId: 'k1', providerModel: 'sonnet' } },
+      },
+    },
   ],
 });
 

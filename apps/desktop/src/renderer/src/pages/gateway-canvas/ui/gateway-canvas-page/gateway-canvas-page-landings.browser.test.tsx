@@ -15,7 +15,7 @@ import {
   storedModels,
   targetPortOf,
 } from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -85,6 +85,7 @@ test('a cable end let go on open canvas opens the rebind pick where it landed', 
 
   await pulledCable(await reconnectAnchorOf(screen.container, 'cable:creative'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
 
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
 
@@ -107,6 +108,7 @@ test('Delete on the pending card removes nothing and the pick keeps standing', a
   await userEvent.keyboard('{Enter}');
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
+  await pickedTheTarget(screen);
   await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
 
   toggleInspector();

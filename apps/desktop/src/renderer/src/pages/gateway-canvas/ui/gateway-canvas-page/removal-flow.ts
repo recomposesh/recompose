@@ -1,5 +1,7 @@
+import type { RouteNode, VirtualModel } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
+import { nameOfRouter } from '@recompose/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { CanvasWorld } from './canvas-standings';
@@ -15,12 +17,13 @@ import { dropCanvasPositions } from '../../lib/canvas-position-store';
 import { dropCanvasViewport } from '../../lib/canvas-viewport-store';
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting } from '../../lib/use-held-draft';
-import { removedDefinition, releasedTarget, spokenNameOf, targetNameIn } from './binding-acts';
-import { modelIdOf, targetAccountIdIn, targetModelIdOf } from './canvas-wiring';
+import { removedDefinition, spokenNameOf, targetNameIn } from './binding-acts';
+import { cardSeatOf, modelIdOf } from './canvas-wiring';
+import { removedRouteNode } from './router-acts';
 
 /** The removal a Delete press asked for, standing until the person answers. */
 export type RemovalAsked = {
-  kind: 'virtual-model' | 'gateway' | 'target';
+  kind: 'virtual-model' | 'gateway' | 'target' | 'child-target' | 'router' | 'child-router';
   name: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -60,21 +63,69 @@ function gatewayRemoval(world: CanvasWorld, deleteGateway: () => void): RemovalA
   };
 }
 
-function targetRemoval(world: CanvasWorld, nodeId: string): RemovalAsked | undefined {
-  const targetAccountId =
-    targetModelIdOf(nodeId) === undefined ? undefined : targetAccountIdIn(world.gateway, nodeId);
+type RouteNodeReading = Pick<RemovalAsked, 'kind' | 'name'>;
 
-  if (targetAccountId === undefined) {
+function routeNodeName(world: CanvasWorld, node: RouteNode): string {
+  return node.kind === 'router'
+    ? nameOfRouter(node.policy.mode, node.displayName)
+    : targetNameIn(world.accounts, node.accountId);
+}
+
+function entryRead(world: CanvasWorld, node: RouteNode): RouteNodeReading {
+  return {
+    kind: node.kind === 'router' ? 'router' : 'target',
+    name: routeNodeName(world, node),
+  };
+}
+
+function childRead(world: CanvasWorld, node: RouteNode): RouteNodeReading {
+  return {
+    kind: node.kind === 'router' ? 'child-router' : 'child-target',
+    name: routeNodeName(world, node),
+  };
+}
+
+/**
+ * How one route node reads, told apart by where in the routing it stands.
+ *
+ * @summary The entry and a node below it leave the composition differently, so they ask
+ * differently: a child leaves the ladder holding it and the rest keeps serving, while the entry
+ * takes the definition's whole binding with it. The node's own kind supplies the name.
+ */
+function readingOfTheNode(
+  world: CanvasWorld,
+  model: VirtualModel,
+  routeNodeId: string,
+): RouteNodeReading | undefined {
+  const node = model.routing.nodes[routeNodeId];
+
+  if (node === undefined) {
+    return undefined;
+  }
+
+  return routeNodeId === model.routing.entry ? entryRead(world, node) : childRead(world, node);
+}
+
+function routeNodeRemoval(world: CanvasWorld, nodeId: string): RemovalAsked | undefined {
+  const seat = cardSeatOf(nodeId);
+  const model = world.gateway.virtualModels.find((held) => held.id === seat?.modelId);
+
+  if (model === undefined) {
+    return undefined;
+  }
+
+  const reading = readingOfTheNode(world, model, seat?.routeNodeId ?? model.routing.entry);
+
+  if (reading === undefined) {
     return undefined;
   }
 
   const putTheAskAway = askPutAway(world);
 
   return {
-    kind: 'target',
-    name: targetNameIn(world.accounts, targetAccountId),
+    ...reading,
     onConfirm: () => {
-      releasedTarget(world, nodeId);
+      removedRouteNode(world, nodeId);
       putTheAskAway();
     },
     onCancel: putTheAskAway,
@@ -98,9 +149,10 @@ function definitionRemoval(world: CanvasWorld, nodeId: string): RemovalAsked {
 /**
  * The removal question the canvas is standing on, or nothing while no Delete press asked one.
  *
- * @summary The question reads what the press named: the gateway asks about itself, a target card
- * asks about the binding it serves, and anything else asks about a definition or the held draft.
- * Every answer puts the ask away, so no question outlives the person answering it.
+ * @summary The question reads what the press named: the gateway asks about itself, any card
+ * standing for a route node asks about that node and what leaves with it, and anything else asks
+ * about a definition or the held draft. Every answer puts the ask away, so no question outlives
+ * the person answering it.
  */
 export function removalAsked(
   world: CanvasWorld,
@@ -116,7 +168,7 @@ export function removalAsked(
     return gatewayRemoval(world, deleteGateway);
   }
 
-  return targetRemoval(world, nodeId) ?? definitionRemoval(world, nodeId);
+  return routeNodeRemoval(world, nodeId) ?? definitionRemoval(world, nodeId);
 }
 
 function withoutGateway<Carried>(

@@ -8,7 +8,13 @@ import { describe, expect, test } from 'vitest';
 
 import type { StorageIpcContext } from './storage-context';
 
-import { gatewayHolding, keyRow, planRow, pointingAt } from '../engine-host/spend-grant.testkit';
+import {
+  gatewayHolding,
+  keyRow,
+  planRow,
+  pointingAt,
+  seatedAs,
+} from '../engine-host/spend-grant.testkit';
 import { reversibleCodec } from '../storage/safe-storage-codec.testkit';
 import { createStorageIpcHandlers } from './storage-ipc';
 
@@ -109,7 +115,7 @@ describe('a save carrying a definition bound to a subscription account', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        target: { standing: 'bound', providerModel: 'claude-sonnet-5' },
+        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });

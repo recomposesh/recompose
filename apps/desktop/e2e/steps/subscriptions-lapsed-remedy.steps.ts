@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
+import { targetTheEntryNames } from '@recompose/contracts';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -120,6 +121,7 @@ Then("the account keeps its place among the virtual model's targets", async ({ p
   const plan = await accountHeldAs(page, 'subscription');
   const held = await storedGateway(page, focusedGateway(page));
   const bound = held.virtualModels.find((model) => model.id === VIRTUAL_MODEL);
+  const target = bound === undefined ? undefined : targetTheEntryNames(bound.routing);
 
-  expect(bound?.target.accountId).toBe(plan.id);
+  expect(target?.accountId).toBe(plan.id);
 });

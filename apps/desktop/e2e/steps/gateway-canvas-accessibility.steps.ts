@@ -7,16 +7,19 @@ import { dragCableOnto, fitCanvasToView, takeUpThePortAsk } from '../canvas-gest
 import { rememberComposition, virtualModelInFocus } from '../canvas-memory';
 import {
   accountPicker,
+  bindingKindAsk,
+  completeThePick,
+  providerModelPicker,
+} from '../canvas-picker';
+import {
   cableBetween,
   cableGrabEnd,
-  completeThePick,
   DRAFT_NODE,
   GATEWAY_NODE,
   hitTarget,
   modelNodeId,
   nodeTreatment,
   politelySaid,
-  providerModelPicker,
   sourcePort,
   standingCables,
   standingNodes,
@@ -25,6 +28,7 @@ import {
   urgentlySaid,
 } from '../canvas-screen';
 import { Then, When } from '../fixtures';
+import { pickWithTheKeyboard } from '../keyboard-walk';
 import { accountHeldAs, KEY_ACCOUNT } from '../stored-target-accounts';
 
 /** The real model the stored Anthropic key account serves, which every binding here names. */
@@ -32,38 +36,13 @@ const SERVED_MODEL = 'claude-sonnet-5';
 
 /** The words the canvas refuses a landing with, which the live region carries whole. */
 const REFUSAL =
-  'A cable binds a virtual model to a stored target it does not already hold, and nothing else connects.';
-
-/** How many presses a walk may spend before the keyboard is called unable to reach an option. */
-const TAB_LIMIT = 20;
+  'A cable binds a virtual model or a router to a stored target it does not already hold, and nothing else connects.';
 
 /** The card a name stands as, which is its stored definition or the draft still holding its seat. */
 async function cardStandingFor(page: Page, name: string): Promise<string> {
   const stored = modelNodeId(modelAliasFromName(name));
 
   return (await standingNodes(page)).includes(stored) ? stored : DRAFT_NODE;
-}
-
-/**
- * Walks the keyboard onto one option and presses it, the way a person without a pointer picks.
- *
- * @summary The walk is real presses rather than focus placed from script, because a scenario about
- * the keyboard alone proves nothing if the automation reaches past the keyboard to arrive.
- */
-async function pickWithTheKeyboard(page: Page, option: Locator, named: string): Promise<void> {
-  await expect(option).toBeVisible();
-
-  for (let presses = 0; presses < TAB_LIMIT; presses += 1) {
-    if (await option.evaluate((held) => held === document.activeElement)) {
-      await page.keyboard.press('Enter');
-
-      return;
-    }
-
-    await page.keyboard.press('Tab');
-  }
-
-  throw new Error(`no keyboard walk reached ${named}`);
 }
 
 /** One control a pointer has to be able to meet, and the measure it offers a pointer at. */
@@ -130,6 +109,11 @@ When(
   async ({ page }, name: string, providerModel: string) => {
     await takeUpThePortAsk(page, await cardStandingFor(page, name));
 
+    await pickWithTheKeyboard(
+      page,
+      bindingKindAsk(page).getByRole('button', { name: /^Target/u }),
+      'the target kind',
+    );
     await pickWithTheKeyboard(
       page,
       accountPicker(page).getByRole('button', { name: KEY_ACCOUNT }),

@@ -1,9 +1,14 @@
 import type {
   Account,
   EngineGateway,
+  EngineRouteNode,
+  EngineRouting,
+  EngineTargetStanding,
   EngineVirtualModel,
   GatewayConfig,
-  Target,
+  RouteNode,
+  RouteTarget,
+  Routing,
   VirtualModel,
 } from '@recompose/contracts';
 
@@ -14,12 +19,42 @@ import { loadAccountsFile } from '../storage/accounts-store';
 import { listGatewayConfigs } from '../storage/gateway-store';
 import { loadSettingsFile } from '../storage/settings-store';
 
-function standingOf(accounts: readonly Account[], target: Target): EngineVirtualModel['target'] {
+function standingOf(accounts: readonly Account[], target: RouteTarget): EngineTargetStanding {
   const held = accounts.find((account) => account.id === target.accountId);
 
   return held === undefined
     ? { standing: 'removed' }
     : { standing: 'bound', providerModel: target.providerModel };
+}
+
+/**
+ * One stored node as the child sees it: a target worn to its standing, or a router carried whole.
+ *
+ * @summary A target names the account paying for it, and that name is the one thing the lane must
+ * never carry, so it is spent here and dropped. A router keeps its mode and its declared order,
+ * because those two are the walk's entire instruction.
+ */
+function mirroredNode(accounts: readonly Account[], node: RouteNode): EngineRouteNode {
+  if (node.kind === 'target') {
+    return { kind: 'target', standing: standingOf(accounts, node) };
+  }
+
+  return {
+    kind: 'router',
+    ...(node.displayName === undefined ? {} : { displayName: node.displayName }),
+    policy: node.policy,
+    children: node.children,
+  };
+}
+
+function mirroredRouting(accounts: readonly Account[], routing: Routing): EngineRouting {
+  const nodes: Record<string, EngineRouteNode> = {};
+
+  for (const [id, node] of Object.entries(routing.nodes)) {
+    nodes[id] = mirroredNode(accounts, node);
+  }
+
+  return { entry: routing.entry, nodes };
 }
 
 function mintedAgainst(
@@ -29,7 +64,7 @@ function mintedAgainst(
   return stored.map((model) => ({
     id: model.id,
     displayName: model.displayName,
-    target: standingOf(accounts, model.target),
+    routing: mirroredRouting(accounts, model.routing),
   }));
 }
 

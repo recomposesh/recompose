@@ -16,7 +16,11 @@ const models: readonly OptionGroup[] = [
   { options: [{ id: 'claude-sonnet-5', name: 'claude-sonnet-5' }] },
 ];
 
-async function renderPicker(stage: PickerStage, groups: readonly OptionGroup[]) {
+async function renderPicker(
+  stage: PickerStage,
+  groups: readonly OptionGroup[],
+  standsBehind = true,
+) {
   const heard: string[] = [];
   const screen = await render(
     <DropPicker
@@ -28,18 +32,57 @@ async function renderPicker(stage: PickerStage, groups: readonly OptionGroup[]) 
       onPickAccount={(accountId) => {
         heard.push(`account ${accountId}`);
       }}
+      onPickKind={(kind) => {
+        heard.push(`kind ${kind}`);
+      }}
       onPickProviderModel={(providerModel) => {
         heard.push(`provider model ${providerModel}`);
       }}
-      onSelectDifferentProvider={() => {
-        heard.push('different provider');
-      }}
+      onStepBack={
+        standsBehind
+          ? () => {
+              heard.push('stepped back');
+            }
+          : undefined
+      }
       stage={stage}
     />,
   );
 
   return { heard, screen };
 }
+
+test('the ask offers a router or a target before anything else', async () => {
+  const { screen } = await renderPicker({ step: 'kind' }, []);
+
+  await expect.element(screen.getByRole('button', { name: /Router/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Target/ })).toBeVisible();
+  await expect.element(screen.getByRole('searchbox')).not.toBeInTheDocument();
+});
+
+test('picking the target hands the kind back, which is what carries the ask into the accounts', async () => {
+  const { heard, screen } = await renderPicker({ step: 'kind' }, []);
+
+  await screen.getByRole('button', { name: /Target/ }).click();
+
+  expect(heard).toEqual(['kind target']);
+});
+
+test('picking the router hands the kind back, which is what drops a wired router', async () => {
+  const { heard, screen } = await renderPicker({ step: 'kind' }, []);
+
+  await screen.getByRole('button', { name: /Router/ }).click();
+
+  expect(heard).toEqual(['kind router']);
+});
+
+test('Esc at the kind ask dismisses just as it does at every other stage', async () => {
+  const { heard } = await renderPicker({ step: 'kind' }, []);
+
+  await userEvent.keyboard('{Escape}');
+
+  expect(heard).toEqual(['dismissed']);
+});
 
 test('the picker opens on the stored accounts, gathered under the kinds they are', async () => {
   const { screen } = await renderPicker({ step: 'account' }, accounts);
@@ -76,7 +119,29 @@ test('the second stage offers the way back to the provider choices', async () =>
 
   await screen.getByRole('button', { name: 'Select different provider' }).click();
 
-  expect(heard).toEqual(['different provider']);
+  expect(heard).toEqual(['stepped back']);
+});
+
+test('the account stage offers the way back to the ask that opened it', async () => {
+  const { heard, screen } = await renderPicker({ step: 'account' }, accounts);
+
+  await screen.getByRole('button', { name: 'Select router or target' }).click();
+
+  expect(heard).toEqual(['stepped back']);
+});
+
+test('a stage nothing stands behind offers no way back, so the chevron never lies', async () => {
+  const { screen } = await renderPicker({ step: 'account' }, accounts, false);
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Select router or target' }))
+    .not.toBeInTheDocument();
+});
+
+test('the kind ask offers no way back, because it is the first thing a binding asks', async () => {
+  const { screen } = await renderPicker({ step: 'kind' }, []);
+
+  await expect.element(screen.getByRole('button', { name: /Select/ })).not.toBeInTheDocument();
 });
 
 test('Esc dismisses the picker, which is what takes the pending card away with it', async () => {
@@ -122,8 +187,9 @@ test('moving to the second stage carries focus onto the model list it opens on',
       refusal={undefined}
       onDismiss={() => {}}
       onPickAccount={() => {}}
+      onPickKind={() => {}}
       onPickProviderModel={() => {}}
-      onSelectDifferentProvider={() => {}}
+      onStepBack={() => {}}
       stage={{ step: 'provider-model', accountId: 'key-work' }}
     />,
   );
