@@ -224,6 +224,18 @@ Then("the app hands the sign-in to the provider's own tool", async ({ electronAp
   expect(JSON.stringify(record)).toContain('dev@example.com');
 });
 
+/**
+ * @summary Anthropic's tool names the address in plain text and Codex hides it inside a token, so
+ * this proves the record landed where the app pointed the tool rather than in the person's own
+ * home. That the app read the right account out of it is the next step's, off the screen.
+ */
+Then('Codex writes its record into the home the app gave it', async ({ electronApp }) => {
+  const home = await activeToolHome(electronApp, 'openai');
+  const record: unknown = JSON.parse(await readFile(join(home, 'auth.json'), 'utf8'));
+
+  expect(record).toEqual(expect.objectContaining({ auth_mode: 'chatgpt' }));
+});
+
 Then('the account appears once that tool reports success', async ({ page }) => {
   await expect(accountRows(page)).toHaveCount(1);
   await expect(accountRows(page).first()).toContainText('dev@example.com');
