@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-ui/css/generated/glass.css';
 
 :root {
   --brand-sans: 'area-normal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -300,40 +301,19 @@ html > body[data-scroll-locked] {
   }
 }
 
-#nd-docs-layout,
-#nd-page,
-.docs-shell {
-  font-family: var(--brand-sans);
+#nd-sidebar [data-radix-scroll-area-viewport] > div {
+  display: flex !important;
+  flex-direction: column;
 }
 
-[data-slot='docs-page'] h1,
-[data-slot='docs-page'] h2,
-[data-slot='docs-page'] h3,
-#nd-page h1,
-#nd-page h2,
-#nd-page h3,
-#nd-page h4 {
-  font-family: var(--brand-sans);
-  letter-spacing: -0.02em;
-}
-
-.docs-shell .site-nav {
-  position: sticky;
-  top: 0;
-  z-index: 30;
+.docs-brand img {
+  height: 22px;
   width: auto;
-  padding-inline: 1.5rem;
-  background: rgb(12 12 14 / 72%);
-  backdrop-filter: blur(16px) saturate(140%);
-  border-bottom: 1px solid var(--white-a13);
+  display: block;
+  filter: invert(1);
 }
 
-.docs-shell .site-links a,
-.docs-shell .site-cta {
-  text-shadow: none;
-}
-
-.docs-shell .site-brand img {
+:is(.dark, [data-theme='dark']) .docs-brand img {
   filter: none;
 }
 

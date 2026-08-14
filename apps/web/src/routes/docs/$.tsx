@@ -1,9 +1,9 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { GlassLayout } from 'fumadocs-ui/layouts/glass';
 import { Suspense } from 'react';
 
+import { DocsBrand } from '../../components/docs-brand';
 import { DocsContent } from '../../components/docs-content';
-import { SiteNav } from '../../components/site-nav';
 import { gitHubUrl } from '../../lib/layout.shared';
 import { docs, source } from '../../lib/source';
 
@@ -25,14 +25,14 @@ function Page() {
   const { path } = Route.useLoaderData();
 
   return (
-    <div className="docs-shell">
-      <SiteNav />
-
-      <DocsLayout nav={{ enabled: false }} githubUrl={gitHubUrl} tree={source.getPageTree()}>
-        <Suspense>
-          <DocsContent path={path} />
-        </Suspense>
-      </DocsLayout>
-    </div>
+    <GlassLayout
+      nav={{ title: DocsBrand, url: '/' }}
+      githubUrl={gitHubUrl}
+      tree={source.getPageTree()}
+    >
+      <Suspense>
+        <DocsContent path={path} />
+      </Suspense>
+    </GlassLayout>
   );
 }
