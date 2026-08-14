@@ -2,7 +2,7 @@ import type { Routing } from '@recompose/contracts';
 
 import { describe, expect, test } from 'vitest';
 
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
+import type { InspectorSubject } from './canvas-subjects';
 
 import { gatewaySeed } from '../../../../shared/testing';
 import { nodeIdOf, subjectOf } from './canvas-subjects';

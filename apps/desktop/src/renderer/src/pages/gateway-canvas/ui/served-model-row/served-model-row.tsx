@@ -8,9 +8,18 @@ type ServedModelRowProps = {
   served: ServedModel;
 };
 
+function boundAccountName(target: ServedModel['target']): string | undefined {
+  return target.standing === 'serving' || target.standing === 'thinned'
+    ? accountName(target.account)
+    : undefined;
+}
+
 function bindingLine(served: ServedModel): string {
-  const account =
-    served.target.standing === 'removed' ? undefined : accountName(served.target.account);
+  if (served.target.standing === 'incomplete') {
+    return served.id;
+  }
+
+  const account = boundAccountName(served.target);
 
   return account === undefined
     ? `${served.id} → ${served.providerModel}`
@@ -20,6 +29,10 @@ function bindingLine(served: ServedModel): string {
 function standingWord(target: ServedModel['target']): string | undefined {
   if (target.standing === 'serving') {
     return undefined;
+  }
+
+  if (target.standing === 'incomplete') {
+    return 'no target yet';
   }
 
   if (target.standing === 'removed') {
@@ -37,7 +50,8 @@ function standingWord(target: ServedModel['target']): string | undefined {
  * keeps its warning, and the binding stays visible so a person can repair it. A pool that lost one
  * target of several counts what left instead of wearing the broken binding's word, because a
  * request under this name still gets served and the row would otherwise send a person to repair
- * something that works.
+ * something that works. A composition naming no target says it is unfinished and prints its name
+ * alone, since nothing left it and an arrow into nothing points at nothing.
  */
 export function ServedModelRow({ served }: ServedModelRowProps) {
   const word = standingWord(served.target);

@@ -49,6 +49,18 @@ test('a row whose target account left the registry says so instead of serving', 
   await expect.element(screen.getByText('fast → claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
+test('a row whose composition names no target yet says so rather than claiming one went', async () => {
+  const screen = await renderRow({
+    ...serving,
+    providerModel: '',
+    target: { standing: 'incomplete' },
+  });
+
+  await expect.element(screen.getByText('no target yet', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('target removed', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByText('fast', { exact: true })).toBeVisible();
+});
+
 const spareKey: Account = {
   id: 'k2',
   provider: 'anthropic',

@@ -4,12 +4,13 @@ import { userEvent } from 'vitest/browser';
 import { draggedCable, sourcePortOf, targetPortOf } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 import {
+  cardAcross,
   cardSeat,
   droppedOnOpenCanvas,
   ladderUnder,
   routingOf,
 } from '../../testing/routed-canvas.testkit';
-import { pooledWorld } from '../../testing/routed-gateways.testkit';
+import { emptyRouterWorld, pooledWorld } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -118,6 +119,26 @@ test('a card born under a router stands where the cable was let go rather than a
   await expect.poll(() => cardSeat(screen.container, '[data-id^="route:pooled:"]')).toBe(letGoAt);
 });
 
+test("a child bound through the router's plus stands beyond the router rather than in its column", async () => {
+  const screen = await canvasPageOn(emptyRouterWorld);
+
+  await expect.element(screen.getByRole('button', { name: /Failover/ })).toBeVisible();
+
+  const routerAcross = cardAcross(screen.container, '[data-id="route:pooled"]');
+
+  await userEvent.click(screen.getByLabelText('Add a child'));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Target/ }));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect.poll(async () => (await ladderUnder('pooled'))?.length).toBe(1);
+  expect(cardAcross(screen.container, '[data-id^="target:pooled:"]')).toBeGreaterThan(
+    routerAcross ?? 0,
+  );
+});
+
 test('the inspector writes the mode a person switched the router to', async () => {
   const screen = await canvasPageOn(pooledWorld);
 
@@ -138,7 +159,7 @@ test('the keyboard reorders the failover ladder, and the write lands in the stor
   const screen = await canvasPageOn(pooledWorld);
 
   await userEvent.click(screen.getByRole('button', { name: /Failover/ }).first());
-  await userEvent.click(screen.getByRole('button', { name: 'Move OpenRouter up' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Move openrouter up' }));
 
   await expect.poll(async () => ladderUnder('pooled')).toEqual(['t2', 't1']);
 });

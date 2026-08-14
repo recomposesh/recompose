@@ -124,7 +124,7 @@ test('a definition bound straight to one target never reads as thinned', () => {
   expect([standing?.target.standing, gone?.target.standing]).toEqual(['serving', 'removed']);
 });
 
-test('a definition routed through a router holding no target names no real model at all', () => {
+test('a definition routed through a router holding no target reads as unfinished, not broken', () => {
   const empty: VirtualModel = {
     ...routed,
     routing: {
@@ -134,7 +134,29 @@ test('a definition routed through a router holding no target names no real model
   };
   const [served] = servedModels([empty], [workKey]);
 
-  expect(served).toMatchObject({ providerModel: '', target: { standing: 'removed' } });
+  expect(served).toMatchObject({ providerModel: '', target: { standing: 'incomplete' } });
+});
+
+test('a ladder of routers nobody filled is still unfinished rather than a lost binding', () => {
+  const nested: VirtualModel = {
+    ...routed,
+    routing: {
+      entry: 'ladder',
+      nodes: {
+        ladder: { kind: 'router', policy: { mode: 'failover' }, children: ['deeper'] },
+        deeper: { kind: 'router', policy: { mode: 'failover' }, children: [] },
+      },
+    },
+  };
+  const [served] = servedModels([nested], [workKey]);
+
+  expect(served?.target).toEqual({ standing: 'incomplete' });
+});
+
+test('a pool naming targets whose accounts all left is broken rather than unfinished', () => {
+  const [served] = servedModels([routed], []);
+
+  expect(served?.target.standing).toBe('removed');
 });
 
 test('the definitions read in the order the gateway stores them', () => {

@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import type { InspectorSubject } from './gateway-drawer';
+import type { InspectorSubject } from '../gateway-canvas-page/canvas-subjects';
 
 import {
   draftedOnMyGateway,

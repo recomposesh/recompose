@@ -1,11 +1,34 @@
 import type { GatewayConfig } from '@recompose/contracts';
 
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
-
 import { modelIdOf, targetAccountIdIn } from './canvas-wiring';
 import { routeNodeIn, seatUnder, seatWritten } from './route-seats';
 
 const DRAFT_CARD = 'draft';
+
+/**
+ * Where in a virtual model's routing a selected card or cable seats.
+ *
+ * @summary The entry carries no id of its own in a card's name, because every card a gateway stood
+ * before routers existed keeps the name it stood under, so nothing here reads as the entry.
+ */
+type SeatedInRouting = { modelId: string; routeNodeId?: string | undefined };
+
+/**
+ * What stands selected on the canvas, which is the one thing the inspector speaks for.
+ *
+ * @summary It lives beside the pair that reads a card into one and names a card back out of one,
+ * so a surface speaking about a subject asks that pair for the card rather than spelling an id of
+ * its own: a surface holding the seat but naming only the model would speak about the entry
+ * whichever card a person actually selected.
+ */
+export type InspectorSubject =
+  | { kind: 'gateway' }
+  | { kind: 'virtual-model'; modelId: string }
+  | ({ kind: 'cable' } & SeatedInRouting)
+  | ({ kind: 'router' } & SeatedInRouting)
+  | ({ kind: 'target'; accountId: string } & SeatedInRouting)
+  | ({ kind: 'ghost-target'; accountId: string } & SeatedInRouting)
+  | { kind: 'draft' };
 
 function modelSubject(selection: string): InspectorSubject | undefined {
   const modelId = modelIdOf(selection);

@@ -4,6 +4,7 @@ import { expect, test, vi } from 'vitest';
 
 import { gatewaySeed } from '../../../../shared/testing';
 import { renderDrawer } from '../../testing/gateway-drawer.testkit';
+import { oneProviderPool, twoKeysOneProvider } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -80,6 +81,24 @@ test('every child reads as the account behind it and the real model it serves', 
 
   await expect.element(screen.getByText('claude-haiku-4-5')).toBeVisible();
   await expect.element(screen.getByText('openai/gpt-5')).toBeVisible();
+});
+
+const twoKeys = { gateway: oneProviderPool, accounts: twoKeysOneProvider };
+
+test('two children on two accounts of one provider read as two rows a person tells apart', async () => {
+  const screen = await renderDrawer(onTheRouter, twoKeys);
+
+  await expect.element(screen.getByRole('list', { name: 'Children' })).toBeVisible();
+  expect(
+    [...screen.container.querySelectorAll('[data-child-name]')].map((cell) => cell.textContent),
+  ).toEqual(['work', 'spare']);
+});
+
+test('each move control names the child it carries, so two of one provider never share one', async () => {
+  const screen = await renderDrawer(onTheRouter, twoKeys);
+
+  await expect.element(screen.getByRole('button', { name: 'Move work down' })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: 'Move spare up' })).toBeVisible();
 });
 
 test('a router holding no child says so rather than standing an empty ladder', async () => {

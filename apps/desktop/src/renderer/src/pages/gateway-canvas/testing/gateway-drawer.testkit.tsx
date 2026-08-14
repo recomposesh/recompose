@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { render } from 'vitest-browser-react';
 
 import type { SettledDefinition } from '../lib/model-draft';
-import type { InspectorSubject } from '../ui/gateway-drawer/gateway-drawer';
+import type { InspectorSubject } from '../ui/gateway-canvas-page/canvas-subjects';
 
 import { installFakeBridge } from '../../../shared/testing';
 import { GatewayDrawer } from '../ui/gateway-drawer/gateway-drawer';

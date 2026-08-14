@@ -39,6 +39,18 @@ export function cardSeat(container: HTMLElement, selector: string): string | und
 }
 
 /**
+ * How far along the flow a card stands, which is what says the column it landed in.
+ *
+ * @operation A scenario about columns compares two cards rather than naming a pitch, so the
+ * arithmetic the arrangement owns stays in the arrangement and no spec pins a number to it.
+ */
+export function cardAcross(container: HTMLElement, selector: string): number | undefined {
+  const seated = /translate\((-?[\d.]+)px/u.exec(cardSeat(container, selector) ?? '');
+
+  return seated?.[1] === undefined ? undefined : Number(seated[1]);
+}
+
+/**
  * Presses one card until the canvas reads it as selected, which is what a Delete press then names.
  *
  * @operation Two accounts can wear the same label, so a scenario about one card of a pool has to
