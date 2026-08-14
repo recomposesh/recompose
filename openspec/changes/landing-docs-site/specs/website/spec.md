@@ -28,8 +28,8 @@ The landing page and the documentation MUST ship from a single application in th
 One build MUST produce both, and one deployment MUST publish both, so a person crossing from
 the landing page to the documentation stays inside the same site.
 
-That application MUST NOT import from the desktop application. It MAY read the shared design
-tokens, which is the one thing both surfaces MUST agree on.
+That application MUST NOT import from the desktop application, and it MUST carry its own
+palette. Nothing outside it MUST have to change for it to build.
 
 #### Scenario: a person crosses from the landing page to the documentation
 

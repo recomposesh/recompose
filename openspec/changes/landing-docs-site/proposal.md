@@ -50,6 +50,15 @@ answers every route.
    route may hold one.
 4. **The first release carries the landing page and a first documentation set.** A documentation
    shell holding nothing drags on the page and on the search index.
+5. **The site owns its palette and shares no tokens.** The repository has no shared token
+   package to read. `design-system/` at the root sits under `.gitignore`, so it never reaches a
+   build, and the tokens that do exist live inside the one application the site must not import
+   from. The hero already carries its own palette, and Fumadocs brings a theme for the
+   documentation, so a shared package would exist to serve an agreement neither surface is
+   asking for yet. Architecture decision record 0009 rejected that package while recompose had
+   one consumer. A second
+   consumer now exists and still doesn't want it, which is worth recording rather than
+   assuming the record has expired.
 
 ## Capabilities
 
@@ -67,8 +76,9 @@ answers every route.
 
 ## Impact
 
-The desktop application doesn't change. `apps/web` shares the design tokens under
-`design-system/` and imports nothing from `apps/desktop`.
+The desktop application doesn't change, and no file moves out of it. `apps/web` imports nothing
+from `apps/desktop` and carries its own palette, so the two surfaces can drift. Realigning them
+later costs a deliberate pass over both, and this change accepts that bill.
 
 Two questions stay open into discovery. The hero footage is a graded test clip, and a public
 launch needs licensed stock through the same crop, grade, and loop chain. The Typekit kit that
