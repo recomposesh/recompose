@@ -1,4 +1,4 @@
-import { expect, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -68,15 +68,19 @@ const meta = preview.meta({
  * once an account is standing there to take.
  */
 export const AccountFound = meta.story({
+  args: { onConnected: fn() },
   parameters: { bridge: accountOnTheMachine },
-  play: async ({ canvas }) => {
+  play: async ({ args, canvas }) => {
     await expect(await canvas.findByRole('heading', { name: 'Claude Code' })).toBeVisible();
-    await expect(
-      await canvas.findByRole('button', { name: 'Connect dev@example.com' }),
-    ).toBeEnabled();
     await expect(
       await canvas.findByRole('button', { name: 'Sign in with a different account' }),
     ).toBeEnabled();
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Connect dev@example.com' }));
+
+    await waitFor(() => {
+      void expect(args.onConnected).toHaveBeenCalled();
+    });
   },
 });
 
@@ -115,6 +119,12 @@ export const StoreRefused = meta.story({
       await canvas.findByText('macOS did not allow access to the login keychain.'),
     ).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Sign in to Anthropic' })).toBeEnabled();
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Check again' }));
+
+    await expect(
+      await canvas.findByText('macOS did not allow access to the login keychain.'),
+    ).toBeVisible();
   },
 });
 
