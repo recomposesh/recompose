@@ -125,18 +125,13 @@ function watchEngineStates(
 
 /**
  * @summary Boot is the one moment nothing else is writing either store, which is why the repair
- * ADR-0018 deferred runs here. It says what it took and what it found, because a store quietly
- * lightened is worse than one left diverged.
+ * runs here. What is worth saying is the repair's to decide, so this prints whatever it hands back.
  */
 async function repairedStore(deps: StoredBootDeps): Promise<void> {
   const settled = await reconcileVault(deps.recomposeHome(), deps.onCorrupt);
 
-  if (settled.swept.length > 0) {
-    console.warn(`swept ${String(settled.swept.length)} vault entries no account reached`);
-  }
-
-  if (settled.dangling.length > 0) {
-    console.warn(`accounts whose credential is gone: ${settled.dangling.join(', ')}`);
+  for (const note of settled.notes) {
+    console.warn(note);
   }
 }
 

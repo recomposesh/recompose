@@ -8,7 +8,28 @@ export type VaultMaintenance = {
   swept: readonly string[];
   /** The accounts whose credential is gone, left standing rather than removed. */
   dangling: readonly string[];
+  /**
+   * What a boot should say out loud, empty wherever the stores agreed.
+   *
+   * @summary The repair decides what is worth saying, rather than the boot that calls it. A store
+   * quietly lightened is worse than one left diverged, so a sweep always leaves a sentence behind.
+   */
+  notes: readonly string[];
 };
+
+function notesFor(swept: readonly string[], dangling: readonly string[]): string[] {
+  const notes: string[] = [];
+
+  if (swept.length > 0) {
+    notes.push(`swept ${String(swept.length)} vault entries no account reached`);
+  }
+
+  if (dangling.length > 0) {
+    notes.push(`accounts whose credential is gone: ${dangling.join(', ')}`);
+  }
+
+  return notes;
+}
 
 /**
  * Repairs the divergence a failed write between two files can leave behind.
@@ -36,5 +57,9 @@ export async function reconcileVault(
     await saveVaultFile(paths.vaultFile, settled.vault);
   }
 
-  return { swept: settled.swept, dangling: settled.dangling };
+  return {
+    swept: settled.swept,
+    dangling: settled.dangling,
+    notes: notesFor(settled.swept, settled.dangling),
+  };
 }

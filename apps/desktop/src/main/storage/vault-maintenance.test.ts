@@ -96,6 +96,41 @@ describe('the repair a boot runs over the two stores', () => {
     await expect(reconcileVault(home, () => undefined)).resolves.toEqual({
       swept: [],
       dangling: [],
+      notes: [],
     });
+  });
+});
+
+describe('what a boot is given to say', () => {
+  test('a sweep always leaves a sentence, so a lightened store is never silent', async () => {
+    const home = await aStoreHolding(vaultHolding(['c-1', 'c-orphan']), ['c-1']);
+
+    const settled = await reconcileVault(home, () => undefined);
+
+    expect(settled.notes).toEqual(['swept 1 vault entries no account reached']);
+  });
+
+  test('an account whose credential is gone is named in the sentence', async () => {
+    const home = await aStoreHolding(vaultHolding([]), ['c-missing']);
+
+    const settled = await reconcileVault(home, () => undefined);
+
+    expect(settled.notes).toEqual(['accounts whose credential is gone: acc-0']);
+  });
+
+  test('a store diverged both ways says both things', async () => {
+    const home = await aStoreHolding(vaultHolding(['c-orphan']), ['c-missing']);
+
+    const settled = await reconcileVault(home, () => undefined);
+
+    expect(settled.notes).toHaveLength(2);
+  });
+
+  test('a store that agrees leaves nothing to say', async () => {
+    const home = await aStoreHolding(vaultHolding(['c-1']), ['c-1']);
+
+    const settled = await reconcileVault(home, () => undefined);
+
+    expect(settled.notes).toEqual([]);
   });
 });
