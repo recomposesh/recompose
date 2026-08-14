@@ -120,6 +120,8 @@ describe('an answer whose body nobody read', () => {
     );
     const { rows, forget } = collecting();
 
+    held.send('data: {"type":"message_start","message":{"id":"msg_1"}}\n\n');
+
     await ask(app, 'fast', 'curl/8.7.1');
     forget();
 

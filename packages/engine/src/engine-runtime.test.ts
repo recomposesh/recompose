@@ -179,7 +179,7 @@ describe('the bindings a start carries into serving', () => {
     });
 
     expect(answer.status).toBe(502);
-    expect(grants.asked).toEqual([{ slug: 'codex', virtualModel: 'fast' }]);
+    expect(grants.asked).toEqual([{ slug: 'codex', virtualModel: 'fast', routeNode: 'only' }]);
   });
 });
 

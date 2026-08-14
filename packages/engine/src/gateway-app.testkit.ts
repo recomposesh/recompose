@@ -32,18 +32,20 @@ export function aGatewayHolding(...virtualModels: readonly EngineVirtualModel[])
   return { slug: 'codex', displayName: 'Codex', port: 8397, virtualModels: [...virtualModels] };
 }
 
+export type AskedGrant = { slug: string; virtualModel: string; routeNode: string };
+
 export type AskedGrants = {
-  asked: { slug: string; virtualModel: string }[];
+  asked: AskedGrant[];
   grantFor: SpendGrantFor;
 };
 
 export function granting(grant: SpendGrant): AskedGrants {
-  const asked: { slug: string; virtualModel: string }[] = [];
+  const asked: AskedGrant[] = [];
 
   return {
     asked,
-    grantFor: async (slug, virtualModel) => {
-      asked.push({ slug, virtualModel });
+    grantFor: async (slug, virtualModel, routeNode) => {
+      asked.push({ slug, virtualModel, routeNode });
 
       return Promise.resolve(grant);
     },

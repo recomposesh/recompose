@@ -1,14 +1,13 @@
 import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
 
-import { standingTheEntryNames } from '@recompose/contracts';
-
 import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 
 import { requestSessions } from './gateway-session';
 import { jsonResponse, readJsonBody, refusalResponse, virtualNameOf } from './gateway-wire';
 import { missingCredential, missingTarget, unknownModel } from './refusals';
+import { firstDeclaredTarget } from './routing/route-table';
 import { normalizeCodexError } from './subscription/codex-errors';
 import { restoreCodexMultiAgentValue } from './subscription/codex-multi-agent';
 import { reachCodexCompact } from './subscription/reach-compact';
@@ -78,16 +77,16 @@ function compactTarget(gateway: EngineGateway, model: string): CompactTarget {
     return { response: refusalResponse('responses', unknownModel(model)) };
   }
 
-  const standing = standingTheEntryNames(virtual.routing);
+  const declared = firstDeclaredTarget(virtual.routing);
 
-  if (standing.standing === 'removed') {
+  if (declared?.standing.standing !== 'bound') {
     return { response: refusalResponse('responses', missingTarget(gateway.displayName, model)) };
   }
 
   return {
-    providerModel: standing.providerModel,
+    providerModel: declared.standing.providerModel,
     virtualId: virtual.id,
-    routeNode: virtual.routing.entry,
+    routeNode: declared.routeNode,
   };
 }
 
