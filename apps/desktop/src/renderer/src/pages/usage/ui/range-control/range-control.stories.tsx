@@ -45,3 +45,11 @@ export const Drawing = meta.story({
     await userEvent.click(await canvas.findByRole('button', { name: 'Custom' }));
   },
 });
+
+/** The preset the standing window came from, reading as picked when the popover opens again. */
+export const PickedPreset = meta.story({
+  args: { search: { ...at24h, range: 'this-month' as const } },
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Custom' }));
+  },
+});

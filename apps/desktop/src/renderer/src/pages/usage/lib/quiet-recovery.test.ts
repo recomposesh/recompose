@@ -67,6 +67,11 @@ describe('given a quiet window that has to say which window it means', () => {
     expect(quietSentence(viewing({ range: '30d' }))).toBe('Nothing served in the last 30 days.');
   });
 
+  it('names a boundary window as the week or month it stands in, never as a reach back', () => {
+    expect(quietSentence(viewing({ range: 'this-week' }))).toBe('Nothing served this week.');
+    expect(quietSentence(viewing({ range: 'this-month' }))).toBe('Nothing served this month.');
+  });
+
   it('leaves a drawn window to the edges already printed under the title', () => {
     expect(quietSentence(viewing({ range: 'custom', from: 1, to: 2 }))).toBe(
       'Nothing served in the window you drew.',

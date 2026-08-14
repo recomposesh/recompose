@@ -6,6 +6,7 @@ import {
   spendSnappedRange,
   usageSearchFrom,
   withoutFilter,
+  withRange,
 } from './usage-search';
 
 describe('given an address with nothing usage understands', () => {
@@ -86,6 +87,10 @@ describe('given an address carrying a custom window', () => {
     expect(search.range).toBe('24h');
   });
 
+  it('reads the window a boundary preset stands on as a range of its own', () => {
+    expect(usageSearchFrom({ range: 'this-month' }).range).toBe('this-month');
+  });
+
   it('leaves a stray window off a standing preset range', () => {
     const search = usageSearchFrom({ range: '7d', from: 1_700_000_000_000, to: 1_700_086_400_000 });
 
@@ -146,6 +151,33 @@ describe('the scope sentence the header prints', () => {
 
   it('reads empty when every filter stands on everything', () => {
     expect(narrowedScope({ range: '24h', metric: 'requests', stackedBy: 'gateway' })).toEqual([]);
+  });
+});
+
+describe('moving the view onto another range', () => {
+  it('drops the edges the drawn window stood on, which the range no longer stands on', () => {
+    const drawn = usageSearchFrom({
+      range: 'custom',
+      from: 1_700_000_000_000,
+      to: 1_700_086_400_000,
+    });
+
+    expect(withRange(drawn, '7d')).toEqual({
+      range: '7d',
+      metric: 'requests',
+      stackedBy: 'gateway',
+    });
+  });
+
+  it('leaves the filters and the chart standing', () => {
+    const filtered = usageSearchFrom({ range: '24h', metric: 'tokens', gateways: ['relay'] });
+
+    expect(withRange(filtered, 'this-month')).toEqual({
+      range: 'this-month',
+      metric: 'tokens',
+      stackedBy: 'gateway',
+      gateways: ['relay'],
+    });
   });
 });
 

@@ -1,6 +1,6 @@
 import type { UsageSearch, UsageSearchRange } from './usage-search';
 
-import { filteredMembers, withoutFilter } from './usage-search';
+import { filteredMembers, withoutFilter, withRange } from './usage-search';
 
 /** What a quiet window offers to reach for, and the view that act lands on. */
 export type QuietRecovery = {
@@ -8,30 +8,33 @@ export type QuietRecovery = {
   next: UsageSearch;
 };
 
-const WIDER_RANGE: Readonly<Partial<Record<UsageSearchRange, UsageSearchRange>>> = {
-  '1h': '24h',
-  '24h': '7d',
-  '7d': '30d',
+type Widening = { range: Exclude<UsageSearchRange, 'custom'>; label: string };
+
+const WIDER_WINDOW: Readonly<Partial<Record<UsageSearchRange, Widening>>> = {
+  '1h': { range: '24h', label: '24 hours' },
+  '24h': { range: '7d', label: '7 days' },
+  '7d': { range: '30d', label: '30 days' },
 };
 
-const RANGE_WORDS: Readonly<Record<UsageSearchRange, string>> = {
-  '1h': 'hour',
-  '24h': '24 hours',
-  '7d': '7 days',
-  '30d': '30 days',
-  custom: 'window',
+const QUIET_WINDOW: Readonly<Record<UsageSearchRange, string>> = {
+  '1h': 'in the last hour',
+  '24h': 'in the last 24 hours',
+  '7d': 'in the last 7 days',
+  '30d': 'in the last 30 days',
+  'this-week': 'this week',
+  'this-month': 'this month',
+  custom: 'in the window you drew',
 };
 
 /**
  * The one line under the title of a window that served nothing.
  *
  * @summary A drawn window names itself as the window a person drew, because its edges are already
- * printed under the title and repeating them says nothing new.
+ * printed under the title and repeating them says nothing new. A window standing on the week or
+ * the month says so, because it never reached back a width from now.
  */
 export function quietSentence(search: UsageSearch): string {
-  return search.range === 'custom'
-    ? 'Nothing served in the window you drew.'
-    : `Nothing served in the last ${RANGE_WORDS[search.range]}.`;
+  return `Nothing served ${QUIET_WINDOW[search.range]}.`;
 }
 
 function narrowed(search: UsageSearch): boolean {
@@ -41,15 +44,13 @@ function narrowed(search: UsageSearch): boolean {
 }
 
 function widened(search: UsageSearch): QuietRecovery | undefined {
-  const wider = WIDER_RANGE[search.range];
+  const wider = WIDER_WINDOW[search.range];
 
   if (wider === undefined) {
     return undefined;
   }
 
-  const { from: _from, to: _to, ...kept } = search;
-
-  return { label: `Widen to ${RANGE_WORDS[wider]}`, next: { ...kept, range: wider } };
+  return { label: `Widen to ${wider.label}`, next: withRange(search, wider.range) };
 }
 
 /**
