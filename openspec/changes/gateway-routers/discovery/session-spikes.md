@@ -29,6 +29,12 @@ const routableSchema: z.ZodType<Routable> = z.union([targetNodeSchema, routerNod
 
 Cost of the fallback: no discriminator short-circuit, so a parse failure reports against every variant instead of the matching one, and the type is hand-written rather than inferred. That is what makes the `*.test-d.ts` load-bearing here rather than decorative.
 
+## The flat table restores the discriminated union
+
+A second spike ran after the solution design proposed the id-keyed table, because the table's whole claim is that it escapes the defect above. It does. With children held as string references, nothing recurses, so `z.discriminatedUnion('kind', ...)` typechecks clean across the package and the `z.union` fallback is unnecessary.
+
+The `superRefine` walk was exercised at runtime too. It parses a two-level graph, and it refuses a node naming itself, a child that names a missing node, and a node reached from two parents. The walk is iterative, so no input reaches the stack limit the next section records.
+
 ## Cyclic input crashes the parse
 
 Feeding the same schema a value whose `children` array contains the node itself raises `RangeError: Maximum call stack size exceeded`. Zod's own documentation warns of the infinite loop; this confirms it as a crash rather than a slow parse.
