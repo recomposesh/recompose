@@ -226,7 +226,7 @@ above 65536 bytes, and this one asks for 32.
 - `apps/desktop/e2e/features/gateways/api-key.feature`: the act in the drawer, graduated unchanged
   from `gherkin/gateways/` (create)
 - `apps/desktop/e2e/steps/gateways-api-key.steps.ts`: its steps (create)
-- `docs/adr/00NN-a-gateway-carries-its-own-key.md`: the record (create)
+- `docs/adr/0105-a-gateway-carries-its-own-key.md`: the record (create)
 - `cspell-words.txt`: any new vocabulary the diff introduces (modify, only where needed)
 
 ## Interfaces
@@ -299,7 +299,7 @@ what it buys on a machine that may hold no keyring. The vault with the digest al
 rejected because the guard needs no plaintext but the copy control does, which puts the read back
 where it started.
 
-**ADR draft:** `docs/adr/00NN-a-gateway-carries-its-own-key.md`
+**ADR draft:** `docs/adr/0105-a-gateway-carries-its-own-key.md`
 
 ### 2. The stored version moves to 3
 
