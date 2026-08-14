@@ -41,6 +41,12 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
   - **The serves box reads a routed definition through its lead target.** So a routed model whose lead account left reads as removed while a sibling could serve. Worth a second look from task 7.
 
 - [ ] **Task 7: renderer surface.** Depends on tasks 0 and 6. Lands the router card, the ladder, the kind ask, and the inspector body, each with its stories sibling. Owns the `ui/` folders the design's file map names, plus `app/styles/theme.css` and `primitives.css`.
+- [ ] **Task 7b: the gaps task 7 named rather than left silent.** Depends on task 7. Owns `ui/gateway-canvas-page/`, `ui/drop-picker/`, and `ui/cable-failure-chip/`.
+
+  The one that contradicts an approved decision comes first. Proposal decision 2 says a cable may meet a router card. `oneTargetRule` still refuses that drop, and its refusal copy still names a stored target. No approved scenario covers it, which is why task 7 stopped rather than inventing one.
+
+  The rest, in the order a person would meet them. A router has no removal path, and `REMOVAL_WORDING` has no arm for one. A child card born under a router takes its tidy seat rather than the drop point. The cause is that `gatewayBindingChild` mints the id inside the write, so nothing can name the card before it exists. The account stage offers no way back to the kind ask, where only the model stage has a back chevron. Rider #155's failure-chip anchoring rides here too, since it sits in this segment and this train agreed to carry it.
+
 - [ ] **Task 6b: the serves box tells a thinner pool from a broken one.** Depends on tasks 6 and 7 landing, because it crosses both segments. Owns `pages/gateway-canvas/model/served-models.ts` and `ui/served-model-row/`, plus their specs.
 
   Task 6 flagged it and task 7 measured it. A routed model reads through its lead target, so a pool whose lead account left reads "target removed" while a sibling would have answered. The shipped spec never caught it, because its fixture empties the registry and both children vanish at once.
