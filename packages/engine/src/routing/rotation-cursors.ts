@@ -1,10 +1,10 @@
-import type { RouteNodeSeat } from './route-node-key';
+import type { RouteNodeAddress } from './route-node-key';
 
 import { routeNodeKey } from './route-node-key';
 
 export type RotationCursors = {
-  cursorAt: (seat: RouteNodeSeat) => number;
-  advanceTo: (seat: RouteNodeSeat, cursor: number) => void;
+  cursorAt: (address: RouteNodeAddress) => number;
+  advanceTo: (address: RouteNodeAddress, cursor: number) => void;
 };
 
 /**
@@ -18,9 +18,9 @@ export function createRotationCursors(): RotationCursors {
   const turns = new Map<string, number>();
 
   return {
-    cursorAt: (seat) => turns.get(routeNodeKey(seat)) ?? 0,
-    advanceTo: (seat, cursor) => {
-      turns.set(routeNodeKey(seat), cursor);
+    cursorAt: (address) => turns.get(routeNodeKey(address)) ?? 0,
+    advanceTo: (address, cursor) => {
+      turns.set(routeNodeKey(address), cursor);
     },
   };
 }

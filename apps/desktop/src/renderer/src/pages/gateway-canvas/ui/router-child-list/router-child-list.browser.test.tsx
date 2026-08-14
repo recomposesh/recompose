@@ -40,22 +40,33 @@ function Ladder({ mode = 'failover' }: { mode?: RouterMode }) {
   );
 }
 
-function rankColumn(container: HTMLElement): (string | null)[] {
-  return [...container.querySelectorAll('[data-rank]')].map((cell) => cell.textContent);
+type Screen = Awaited<ReturnType<typeof render>>;
+
+async function expectChildOrder(screen: Screen, names: readonly string[]): Promise<void> {
+  const rows = screen.getByRole('listitem');
+
+  expect(rows.elements()).toHaveLength(names.length);
+
+  for (const [place, name] of names.entries()) {
+    await expect.element(rows.nth(place)).toHaveTextContent(name);
+  }
 }
 
 test('a failover ladder prints a rank on every row, so the order reads without counting', async () => {
   const screen = await render(<Ladder />);
 
   await expect.element(screen.getByRole('list', { name: 'Children' })).toBeVisible();
-  expect(rankColumn(screen.container)).toEqual(['1', '2', '3']);
+  await expect.element(screen.getByText('1', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('2', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('3', { exact: true })).toBeVisible();
 });
 
-test('a round-robin child list carries no rank, because no end of it wins', async () => {
+test('a round-robin child list carries no rank and no way to order it', async () => {
   const screen = await render(<Ladder mode="round-robin" />);
 
   await expect.element(screen.getByText('Ollama')).toBeVisible();
-  expect(rankColumn(screen.container)).toEqual([]);
+  await expect.element(screen.getByText('1', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole('button', { name: /^Move/u })).not.toBeInTheDocument();
 });
 
 test('the keyboard alone moves the third child up one rank', async () => {
@@ -63,9 +74,7 @@ test('the keyboard alone moves the third child up one rank', async () => {
 
   await userEvent.click(screen.getByRole('button', { name: 'Move Ollama up' }));
 
-  expect(
-    [...screen.container.querySelectorAll('[data-child-name]')].map((cell) => cell.textContent),
-  ).toEqual(['Work key', 'Ollama', 'Claude Max']);
+  await expectChildOrder(screen, ['Work key', 'Ollama', 'Claude Max']);
 });
 
 test('the live region announces the rank the moved row landed on', async () => {
@@ -110,9 +119,7 @@ test('a move the ladder cannot make changes nothing and says nothing', async () 
     .element()
     .dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-  expect(
-    [...screen.container.querySelectorAll('[data-child-name]')].map((cell) => cell.textContent),
-  ).toEqual(['Work key', 'Claude Max', 'Ollama']);
+  await expectChildOrder(screen, ['Work key', 'Claude Max', 'Ollama']);
   await expect.element(screen.getByRole('status')).toHaveTextContent('');
 });
 

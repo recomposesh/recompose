@@ -1,5 +1,7 @@
 import type { EngineGateway, EngineVirtualModel } from '@recompose/contracts';
 
+import { nameOfRouter } from '@recompose/contracts';
+
 import type { Crossing } from './gateway-wire';
 import type { WalkResult } from './routing/attempt-walk';
 
@@ -7,7 +9,7 @@ import { unreachableTargetAnswer } from './gateway-answers';
 import { attemptsRecorded } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
 import { emptyRouter, exhaustedRouter } from './refusals';
-import { nameOfRouter, routerTheEntryStands } from './router-entry';
+import { routerTheEntryStands } from './router-entry';
 
 export type WalkScene = {
   crossing: Crossing;
@@ -34,7 +36,7 @@ function exhaustedAnswer(
     exhaustedRouter(
       scene.gateway.displayName,
       scene.virtualModel.id,
-      nameOfRouter(router),
+      nameOfRouter(router.policy.mode, router.displayName),
       attemptsRecorded(scene.virtualModel.routing, result.notes),
       verdict.retryAtMs,
     ),
@@ -62,7 +64,11 @@ export function answerTheWalkGives(
   if (verdict.outcome === 'empty-router') {
     return refusalResponse(
       scene.crossing.dialect,
-      emptyRouter(scene.gateway.displayName, scene.virtualModel.id, nameOfRouter(verdict.router)),
+      emptyRouter(
+        scene.gateway.displayName,
+        scene.virtualModel.id,
+        nameOfRouter(verdict.router.policy.mode, verdict.router.displayName),
+      ),
     );
   }
 

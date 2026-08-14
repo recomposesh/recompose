@@ -1,6 +1,7 @@
-import type { RouteNode } from '@recompose/contracts';
+import type { RouteNode, VirtualModel } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
+import { nameOfRouter } from '@recompose/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { CanvasWorld } from './canvas-standings';
@@ -16,7 +17,6 @@ import { dropCanvasPositions } from '../../lib/canvas-position-store';
 import { dropCanvasViewport } from '../../lib/canvas-viewport-store';
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting } from '../../lib/use-held-draft';
-import { routerName } from '../router-node/router-reading';
 import { removedDefinition, spokenNameOf, targetNameIn } from './binding-acts';
 import { cardSeatOf, modelIdOf } from './canvas-wiring';
 import { removedRouteNode } from './router-acts';
@@ -65,27 +65,47 @@ function gatewayRemoval(world: CanvasWorld, deleteGateway: () => void): RemovalA
 
 type RouteNodeReading = Pick<RemovalAsked, 'kind' | 'name'>;
 
-function routeNodeRead(world: CanvasWorld, node: RouteNode, atTheEntry: boolean): RouteNodeReading {
-  if (node.kind === 'router') {
-    return {
-      kind: atTheEntry ? 'router' : 'child-router',
-      name: routerName(node.policy.mode, node.displayName),
-    };
-  }
+function routeNodeName(world: CanvasWorld, node: RouteNode): string {
+  return node.kind === 'router'
+    ? nameOfRouter(node.policy.mode, node.displayName)
+    : targetNameIn(world.accounts, node.accountId);
+}
 
+function entryRead(world: CanvasWorld, node: RouteNode): RouteNodeReading {
   return {
-    kind: atTheEntry ? 'target' : 'child-target',
-    name: targetNameIn(world.accounts, node.accountId),
+    kind: node.kind === 'router' ? 'router' : 'target',
+    name: routeNodeName(world, node),
+  };
+}
+
+function childRead(world: CanvasWorld, node: RouteNode): RouteNodeReading {
+  return {
+    kind: node.kind === 'router' ? 'child-router' : 'child-target',
+    name: routeNodeName(world, node),
   };
 }
 
 /**
- * The question a route node's card asks, read against where in the routing that node stands.
+ * How one route node reads, told apart by where in the routing it stands.
  *
  * @summary The entry and a node below it leave the composition differently, so they ask
  * differently: a child leaves the ladder holding it and the rest keeps serving, while the entry
- * takes the definition's whole binding with it. The card's own kind supplies the name.
+ * takes the definition's whole binding with it. The node's own kind supplies the name.
  */
+function readingOfTheNode(
+  world: CanvasWorld,
+  model: VirtualModel,
+  routeNodeId: string,
+): RouteNodeReading | undefined {
+  const node = model.routing.nodes[routeNodeId];
+
+  if (node === undefined) {
+    return undefined;
+  }
+
+  return routeNodeId === model.routing.entry ? entryRead(world, node) : childRead(world, node);
+}
+
 function routeNodeRemoval(world: CanvasWorld, nodeId: string): RemovalAsked | undefined {
   const seat = cardSeatOf(nodeId);
   const model = world.gateway.virtualModels.find((held) => held.id === seat?.modelId);
@@ -94,17 +114,16 @@ function routeNodeRemoval(world: CanvasWorld, nodeId: string): RemovalAsked | un
     return undefined;
   }
 
-  const routeNodeId = seat?.routeNodeId ?? model.routing.entry;
-  const node = model.routing.nodes[routeNodeId];
+  const reading = readingOfTheNode(world, model, seat?.routeNodeId ?? model.routing.entry);
 
-  if (node === undefined) {
+  if (reading === undefined) {
     return undefined;
   }
 
   const putTheAskAway = askPutAway(world);
 
   return {
-    ...routeNodeRead(world, node, routeNodeId === model.routing.entry),
+    ...reading,
     onConfirm: () => {
       removedRouteNode(world, nodeId);
       putTheAskAway();

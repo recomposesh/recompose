@@ -3,7 +3,7 @@ import type { Edge, Node } from '@xyflow/react';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasWorld } from './canvas-standings';
 
-import { askedTargetRemoval, releasedBinding } from './binding-acts';
+import { askedTargetRemoval, releasedWithTheDraftSelected } from './binding-acts';
 import {
   bindingCableId,
   editingText,
@@ -82,7 +82,7 @@ export function deletionWiring(
         const modelId = bindingCableId(edge.id);
 
         if (modelId !== undefined) {
-          releasedBinding(world, modelId);
+          releasedWithTheDraftSelected(world, modelId);
         }
       }
     },

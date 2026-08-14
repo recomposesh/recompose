@@ -11,11 +11,11 @@ describe('the turn a round-robin router remembers between requests', () => {
 
   test('a router remembers the turn it handed to the request after it', () => {
     const cursors = createRotationCursors();
-    const seat = { slug: 'main', virtualModel: 'fast', routeNode: 'ladder' };
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'ladder' };
 
-    cursors.advanceTo(seat, 3);
+    cursors.advanceTo(address, 3);
 
-    expect(cursors.cursorAt(seat)).toBe(3);
+    expect(cursors.cursorAt(address)).toBe(3);
   });
 
   test('two virtual models over the same router spin apart', () => {

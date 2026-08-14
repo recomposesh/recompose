@@ -6,7 +6,7 @@ import type {
 } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { targetTheEntryNames } from '@recompose/contracts';
+import { nameOfRouter, targetTheEntryNames } from '@recompose/contracts';
 
 import type { IconName } from '../../../../shared/ui';
 import type { ServedModel } from '../../model/served-models';
@@ -21,7 +21,6 @@ import { GatewayAccess } from '../gateway-access/gateway-access';
 import { GatewayGeneralInfo } from '../gateway-general-info/gateway-general-info';
 import { ModelGeneralInfo } from '../model-general-info/model-general-info';
 import { RouterInspector } from '../router-inspector/router-inspector';
-import { routerName } from '../router-node/router-reading';
 import { ServesBox } from '../serves-box/serves-box';
 import { factRow, glyph, sectionHeading, subjectShell } from '../subject-shell/subject-shell';
 
@@ -169,7 +168,7 @@ export function routerBody(
       lead: glyph('branch'),
       leadClasses: 'bg-router text-highlight-ink',
       kicker: 'Router',
-      name: routerName(router.policy.mode, router.displayName),
+      name: nameOfRouter(router.policy.mode, router.displayName),
     },
     <RouterInspector
       accounts={accounts}

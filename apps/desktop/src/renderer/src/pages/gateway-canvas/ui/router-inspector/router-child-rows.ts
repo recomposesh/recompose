@@ -1,15 +1,17 @@
 import type { Account, RouteNode, Routing } from '@recompose/contracts';
 
+import { nameOfRouter } from '@recompose/contracts';
+
 import type { RouterChild } from '../router-child-list/router-child-list';
 
 import { accountProductName } from '../../../../entities/account';
-import { childTally, routerName } from '../router-node/router-reading';
+import { childTally } from '../router-node/router-reading';
 
 function childRow(routeNodeId: string, node: RouteNode, accounts: readonly Account[]): RouterChild {
   if (node.kind === 'router') {
     return {
       routeNodeId,
-      name: routerName(node.policy.mode, node.displayName),
+      name: nameOfRouter(node.policy.mode, node.displayName),
       detail: childTally(node.children.length),
     };
   }

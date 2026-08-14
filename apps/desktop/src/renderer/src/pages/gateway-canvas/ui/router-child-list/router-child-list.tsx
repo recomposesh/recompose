@@ -78,7 +78,6 @@ function moveButton(row: LadderRow, toward: Toward): ReactElement {
       aria-disabled={held || undefined}
       aria-label={`Move ${row.child.name} ${toward}`}
       className={moveButtonFace}
-      data-move={toward}
       onClick={() => {
         row.onMove(toward);
       }}

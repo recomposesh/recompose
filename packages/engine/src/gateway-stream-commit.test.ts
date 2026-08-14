@@ -103,6 +103,57 @@ describe('the first upstream event decides whether the child keeps the request',
   });
 });
 
+function anOpenStream(text: string, whenReleased: () => void): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start: (controller) => {
+      controller.enqueue(new TextEncoder().encode(text));
+    },
+    cancel: whenReleased,
+  });
+}
+
+describe('a child the walk has decided against lets go of the body it was reading', () => {
+  it('releases the upstream body, so a refused child leaves no connection held open', async () => {
+    let released = false;
+
+    await upstreamAtTheCommitLatch(
+      anEventStream(
+        anOpenStream(RATE_LIMITED, () => {
+          released = true;
+        }),
+      ),
+    );
+
+    expect(released).toBe(true);
+  });
+
+  it('keeps the body of a child that committed, because that stream is still owed downstream', async () => {
+    let released = false;
+
+    await upstreamAtTheCommitLatch(
+      anEventStream(
+        anOpenStream(FIRST_TEXT, () => {
+          released = true;
+        }),
+      ),
+    );
+
+    expect(released).toBe(false);
+  });
+
+  it('still answers the refusal when the release fails, since that failure is the one already read', async () => {
+    const latched = await upstreamAtTheCommitLatch(
+      anEventStream(
+        anOpenStream(RATE_LIMITED, () => {
+          throw new Error('the connection was already gone');
+        }),
+      ),
+    );
+
+    expect(latched).toMatchObject({ kind: 'error-before-commit', equivalentStatus: 429 });
+  });
+});
+
 describe('holding relay until the first upstream event classifies is not buffering', () => {
   it('settles on the first event while the provider is still writing the rest', async () => {
     const held = aHeldStream();

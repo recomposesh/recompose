@@ -2,8 +2,8 @@ import type { GatewayConfig } from '@recompose/contracts';
 
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 
+import { routeNodeIn, seatUnder, seatWritten } from '../../lib/route-seats';
 import { modelIdOf, targetAccountIdIn } from './canvas-wiring';
-import { routeNodeIn, seatUnder, seatWritten } from './route-seats';
 
 const DRAFT_CARD = 'draft';
 

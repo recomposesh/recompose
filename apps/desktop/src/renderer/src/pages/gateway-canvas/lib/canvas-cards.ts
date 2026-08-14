@@ -63,19 +63,6 @@ export type Registry = {
 
 type RouterNode = Extract<SeatedRouteNode['node'], { kind: 'router' }>;
 
-/**
- * What names one route node's card apart from every other on the canvas.
- *
- * @summary A virtual model reaches exactly one entry, so the entry answers in the model's own name
- * and every card a gateway stood before routers existed keeps the id it stood under. A node below
- * the entry adds the id its ladder holds it by, which is what lets one model stand several targets
- * without two cards colliding. A cable reads the same rule for the router it leaves, so a parent
- * and its child never disagree about the card standing between them.
- */
-export function seatName(modelId: string, routeNodeId: string, entry: string): string {
-  return routeNodeId === entry ? modelId : `${modelId}:${routeNodeId}`;
-}
-
 function ghostCard(placed: PlacedRouteNode, bound: RouteTarget): CanvasNode {
   return {
     id: `ghost:${placed.name}`,

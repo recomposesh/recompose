@@ -6,6 +6,8 @@ import type {
 } from '@recompose/contracts';
 import type { Context } from 'hono';
 
+import { nameOfRouter } from '@recompose/contracts';
+
 import type { Crossing, JsonObject, ProxyDialect } from './gateway-wire';
 import type { EngineRouter } from './routing/route-table';
 
@@ -19,7 +21,7 @@ import {
 } from './gateway-session';
 import { ingressPayload, readJsonBody, refusalResponse, virtualNameOf } from './gateway-wire';
 import { chainedTurn, missingTarget, unknownModel } from './refusals';
-import { entryNodeOf, nameOfRouter } from './router-entry';
+import { entryNodeOf } from './router-entry';
 import { firstDeclaredTarget } from './routing/route-table';
 
 type CrossingLookup =
@@ -71,7 +73,10 @@ function refusalTheEntryEarns(
   }
 
   return spreadsEveryTurn(entry) && turnResumesServerState(raw)
-    ? refusalResponse(dialect, chainedTurn(gateway.displayName, model, nameOfRouter(entry)))
+    ? refusalResponse(
+        dialect,
+        chainedTurn(gateway.displayName, model, nameOfRouter(entry.policy.mode, entry.displayName)),
+      )
     : undefined;
 }
 

@@ -4,7 +4,7 @@ import type { CooldownLedger } from './cooldown-ledger';
 import type { AttemptReading, AttemptReason } from './outcome-classification';
 import type { ChildCanServe } from './policies';
 import type { RotationCursors } from './rotation-cursors';
-import type { RouteNodeSeat } from './route-node-key';
+import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
 
 import { classify } from './outcome-classification';
@@ -62,14 +62,14 @@ const PICK_BY_MODE: Record<RouterPolicy['mode'], ChildPicker> = {
   },
 };
 
-function seatOf(walking: Walking, routeNode: string): RouteNodeSeat {
+function addressOf(walking: Walking, routeNode: string): RouteNodeAddress {
   return { slug: walking.slug, virtualModel: walking.virtualModel, routeNode };
 }
 
 function canAttempt(walking: Walking, routeNode: string): boolean {
   return (
     !walking.attempted.has(routeNode) &&
-    walking.ledger.coolingAt(seatOf(walking, routeNode)) === undefined
+    walking.ledger.coolingAt(addressOf(walking, routeNode)) === undefined
   );
 }
 
@@ -93,15 +93,15 @@ function childTheRouterOffers(
   router: EngineRouter,
   path: ReadonlySet<string>,
 ): string | undefined {
-  const seat = seatOf(walking, routeNode);
+  const address = addressOf(walking, routeNode);
 
   return PICK_BY_MODE[router.policy.mode](
     router.children,
     (child) => subtreeCanServe(walking, child, new Set(path)),
     {
-      cursor: () => walking.cursors.cursorAt(seat),
+      cursor: () => walking.cursors.cursorAt(address),
       advanceTo: (cursor) => {
-        walking.cursors.advanceTo(seat, cursor);
+        walking.cursors.advanceTo(address, cursor);
       },
     },
   );
@@ -139,7 +139,7 @@ function noteForTarget(walking: Walking, routeNode: string): WalkNote | undefine
 
   if (attempted !== undefined) return attempted;
 
-  const cooling = walking.ledger.coolingAt(seatOf(walking, routeNode));
+  const cooling = walking.ledger.coolingAt(addressOf(walking, routeNode));
 
   return cooling === undefined
     ? undefined
@@ -217,7 +217,7 @@ export async function walkAttempts<TAnswer>(
       };
     }
 
-    request.ledger.cool(seatOf(walking, routeNode), verdict);
+    request.ledger.cool(addressOf(walking, routeNode), verdict);
     walking.attempted.set(routeNode, noteOf(routeNode, verdict.reason, verdict.retryAtMs));
   }
 

@@ -23,6 +23,36 @@ export const routerPolicySchema = z.discriminatedUnion('mode', [
 
 export type RouterPolicy = z.infer<typeof routerPolicySchema>;
 
+const NAME_OF_MODE: Record<RouterPolicy['mode'], string> = {
+  failover: 'Failover',
+  'round-robin': 'Round-robin',
+};
+
+/**
+ * What one routing mode is called wherever a person reads it or picks it.
+ *
+ * @summary The mode control offers these words and a nameless router wears one of them, so the two
+ * are the same string by construction rather than by two lists agreeing. A person who picks
+ * "Failover" and then reads "Failover" on the card is reading back exactly what they chose.
+ */
+export function nameOfRouterMode(mode: RouterPolicy['mode']): string {
+  return NAME_OF_MODE[mode];
+}
+
+/**
+ * The name a router answers to wherever one is spoken of.
+ *
+ * @summary A person wires a router in one gesture and never has to name it, so every surface owes it
+ * a name it did not ask for. The mode is the only fact a nameless router carries that a reader can
+ * use, and it is the fact a reader wants: a refusal that says which ladder stood in the way says it
+ * best by saying how that ladder chooses. A name a person did write outranks the mode, because a name
+ * that changes under an edit is not a name. The card, the inspector, and the refusal all ask here, so
+ * a person who reads a refusal in their client finds the very words the canvas showed them.
+ */
+export function nameOfRouter(mode: RouterPolicy['mode'], displayName?: string): string {
+  return displayName ?? NAME_OF_MODE[mode];
+}
+
 export const routeNodeSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('target'),
