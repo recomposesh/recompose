@@ -34,7 +34,12 @@ const registry: AccountsDocument = {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+  routing: {
+    entry: 'seat',
+    nodes: {
+      seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+    },
+  },
 };
 
 const fastBound = {
@@ -124,7 +129,12 @@ describe('what a rewrite asks the engine for', () => {
     const orphan: VirtualModel = {
       id: 'gone',
       displayName: 'Gone',
-      target: { accountId: 'acc-vanished', providerModel: 'claude-opus-5' },
+      routing: {
+        entry: 'seat',
+        nodes: {
+          seat: { kind: 'target', accountId: 'acc-vanished', providerModel: 'claude-opus-5' },
+        },
+      },
     };
 
     await desk.handlers['gateways:update'](gatewayServing([orphan]));

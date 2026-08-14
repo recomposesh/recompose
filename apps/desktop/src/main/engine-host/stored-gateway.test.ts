@@ -1,3 +1,5 @@
+import type { VirtualModel } from '@recompose/contracts';
+
 import { engineGatewaySchema } from '@recompose/contracts';
 import { describe, expect, test } from 'vitest';
 
@@ -15,10 +17,13 @@ import { engineGatewayOf, storedEngineGateway } from './stored-gateway';
 
 const noComplaint = (): void => undefined;
 
-const thorough = {
+const thorough: VirtualModel = {
   id: 'thorough',
   displayName: 'thorough',
-  target: { accountId: aggregatorRow.id, providerModel: 'gpt-5' },
+  routing: {
+    entry: 'seat',
+    nodes: { seat: { kind: 'target', accountId: aggregatorRow.id, providerModel: 'gpt-5' } },
+  },
 };
 
 describe('what the engine hears about a stored gateway', () => {

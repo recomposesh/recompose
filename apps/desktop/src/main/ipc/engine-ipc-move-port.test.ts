@@ -33,7 +33,16 @@ function gatewayServing(slug: string, port: number, accountId: string): GatewayC
   return {
     ...gatewayNamed(slug, port),
     virtualModels: [
-      { id: 'fast', displayName: 'fast', target: { accountId, providerModel: 'claude-sonnet-5' } },
+      {
+        id: 'fast',
+        displayName: 'fast',
+        routing: {
+          entry: 'seat',
+          nodes: {
+            seat: { kind: 'target', accountId, providerModel: 'claude-sonnet-5' },
+          },
+        },
+      },
     ],
   };
 }

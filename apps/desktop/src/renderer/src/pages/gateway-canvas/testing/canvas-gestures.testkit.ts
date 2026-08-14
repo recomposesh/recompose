@@ -1,5 +1,6 @@
-import type { VirtualModel } from '@recompose/contracts';
+import type { RouteTarget, VirtualModel } from '@recompose/contracts';
 
+import { targetTheEntryNames } from '@recompose/contracts';
 import { vi } from 'vitest';
 
 async function standingPort(
@@ -225,8 +226,12 @@ export async function storedModels(): Promise<readonly VirtualModel[]> {
 /** The stored binding of one definition, or nothing once it left the gateway. */
 export async function storedBindingOf(
   modelId: string,
-): Promise<VirtualModel['target'] | undefined> {
+): Promise<Omit<RouteTarget, 'kind'> | undefined> {
   const held = await storedModels();
+  const model = held.find((one) => one.id === modelId);
+  const bound = model === undefined ? undefined : targetTheEntryNames(model.routing);
 
-  return held.find((model) => model.id === modelId)?.target;
+  return bound === undefined
+    ? undefined
+    : { accountId: bound.accountId, providerModel: bound.providerModel };
 }

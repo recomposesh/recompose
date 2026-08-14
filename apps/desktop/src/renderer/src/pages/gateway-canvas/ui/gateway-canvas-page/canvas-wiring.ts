@@ -1,6 +1,8 @@
 import type { GatewayConfig } from '@recompose/contracts';
 import type { Connection, Edge, Node, NodeChange } from '@xyflow/react';
 
+import { targetTheEntryNames } from '@recompose/contracts';
+
 import type { NodePositions, XY } from '../../lib/canvas-positions';
 import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
 import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
@@ -36,11 +38,15 @@ export function targetModelIdOf(nodeId: string): string | undefined {
   return nodeId.startsWith('ghost:') ? nodeId.slice('ghost:'.length) : undefined;
 }
 
+function accountBoundTo(gateway: GatewayConfig, modelId: string | undefined): string | undefined {
+  const held = gateway.virtualModels.find((model) => model.id === modelId);
+
+  return held === undefined ? undefined : targetTheEntryNames(held.routing)?.accountId;
+}
+
 /** The account behind a target or ghost card, read through the binding the card stands for. */
 export function targetAccountIdIn(gateway: GatewayConfig, nodeId: string): string | undefined {
-  const modelId = targetModelIdOf(nodeId);
-
-  return gateway.virtualModels.find((model) => model.id === modelId)?.target.accountId;
+  return accountBoundTo(gateway, targetModelIdOf(nodeId));
 }
 
 /** The definition id inside a binding cable's id, or nothing for an overlay cable. */
@@ -94,9 +100,7 @@ export function oneTargetRule(gateway: GatewayConfig) {
       return false;
     }
 
-    const bound = gateway.virtualModels.find((model) => model.id === modelId);
-
-    return bound === undefined || bound.target.accountId !== accountId;
+    return accountBoundTo(gateway, modelId) !== accountId;
   };
 }
 

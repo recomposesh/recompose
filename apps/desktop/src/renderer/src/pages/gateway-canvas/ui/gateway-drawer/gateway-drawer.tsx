@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import {
   DEFAULT_GATEWAY_BIND_ADDRESS,
+  targetTheEntryNames,
   type Account,
   type GatewayConfig,
   type SubscriptionAccountView,
@@ -71,7 +72,8 @@ function bindingSubjectBody(
     return undefined;
   }
 
-  const account = world.accounts.find((held) => held.id === model.target.accountId);
+  const bound = targetTheEntryNames(model.routing);
+  const account = world.accounts.find((held) => held.id === bound?.accountId);
 
   return modelBody(
     world.gateway,
@@ -93,7 +95,7 @@ function accountSubjectBody(
 ): ReactNode | undefined {
   const account = world.accounts.find((held) => held.id === accountId);
   const models = world.gateway.virtualModels.filter(
-    (model) => model.target.accountId === accountId,
+    (model) => targetTheEntryNames(model.routing)?.accountId === accountId,
   );
 
   return account === undefined

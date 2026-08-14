@@ -9,7 +9,14 @@ const codex = {
   displayName: 'Codex',
   port: 8397,
   virtualModels: [
-    { id: 'fast', displayName: 'Fast', target: { accountId: 'acc-key', providerModel: 'gpt-5' } },
+    {
+      id: 'fast',
+      displayName: 'Fast',
+      routing: {
+        entry: 'seat',
+        nodes: { seat: { kind: 'target', accountId: 'acc-key', providerModel: 'gpt-5' } },
+      },
+    },
   ],
   layout: { nodes: {} },
 };

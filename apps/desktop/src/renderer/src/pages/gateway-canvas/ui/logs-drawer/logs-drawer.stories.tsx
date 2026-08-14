@@ -38,12 +38,22 @@ const meta = preview.meta({
         {
           id: 'fast',
           displayName: 'Fast',
-          target: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+          routing: {
+            entry: 'seat-fast',
+            nodes: {
+              'seat-fast': { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+            },
+          },
         },
         {
           id: 'creative',
           displayName: 'Creative',
-          target: { accountId: 'g1', providerModel: 'openai/gpt-5' },
+          routing: {
+            entry: 'seat-creative',
+            nodes: {
+              'seat-creative': { kind: 'target', accountId: 'g1', providerModel: 'openai/gpt-5' },
+            },
+          },
         },
       ],
     }),

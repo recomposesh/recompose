@@ -6,6 +6,8 @@ import type {
 } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
+import { targetTheEntryNames } from '@recompose/contracts';
+
 import type { IconName } from '../../../../shared/ui';
 import type { ServedModel } from '../../model/served-models';
 
@@ -126,6 +128,8 @@ export function modelBody(
   onDelete: () => void,
   onRenamed: (modelId: string) => void,
 ): ReactNode {
+  const bound = targetTheEntryNames(model.routing);
+
   return subjectShell(
     {
       lead: glyph('spark'),
@@ -135,12 +139,12 @@ export function modelBody(
     },
     <>
       <ModelGeneralInfo gateway={gateway} model={model} onRenamed={onRenamed} />
-      {account === undefined ? null : (
+      {account === undefined || bound === undefined ? null : (
         <>
           {sectionHeading('Goes to')}
           <div className="field-box">
             {targetFacts(account, subscriptions)}
-            {factRow('Model', model.target.providerModel)}
+            {factRow('Model', bound.providerModel)}
           </div>
         </>
       )}

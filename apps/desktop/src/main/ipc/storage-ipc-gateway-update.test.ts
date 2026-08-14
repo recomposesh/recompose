@@ -13,7 +13,12 @@ import { deskHolding, gatewayServing, storedBytes } from './gateway-storage.test
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+  routing: {
+    entry: 'seat',
+    nodes: {
+      seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+    },
+  },
 };
 
 function refusalIn(answer: { ok: true } | { ok: false; error: IpcError }): IpcError {

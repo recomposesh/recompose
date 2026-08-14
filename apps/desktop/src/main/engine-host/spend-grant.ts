@@ -1,6 +1,11 @@
-import type { LookCustody, ProviderModelPolicy, SpendGrant, Target } from '@recompose/contracts';
+import type {
+  LookCustody,
+  ProviderModelPolicy,
+  RouteTarget,
+  SpendGrant,
+} from '@recompose/contracts';
 
-import { providerModelIsCompat } from '@recompose/contracts';
+import { providerModelIsCompat, targetTheEntryNames } from '@recompose/contracts';
 
 import type { StoragePaths } from '../ipc/storage-context';
 import type { TargetCustodyContext } from './target-custody';
@@ -16,11 +21,12 @@ async function storedTarget(
   onCorrupt: (quarantinedPath: string) => void,
   slug: string,
   virtualModel: string,
-): Promise<Target | undefined> {
+): Promise<RouteTarget | undefined> {
   const stored = await listGatewayConfigs(paths.gatewaysDir, onCorrupt);
   const serving = stored.find((config) => config.slug === slug);
+  const bound = serving?.virtualModels.find((model) => model.id === virtualModel);
 
-  return serving?.virtualModels.find((model) => model.id === virtualModel)?.target;
+  return bound === undefined ? undefined : targetTheEntryNames(bound.routing);
 }
 
 type GrantedSpend = Extract<SpendGrant, { verdict: 'resolved' }>['spend'];

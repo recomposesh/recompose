@@ -1,5 +1,7 @@
 import type { Account, VirtualModel } from '@recompose/contracts';
 
+import { targetTheEntryNames } from '@recompose/contracts';
+
 /** Where a definition's target stands: on an account the registry holds, or on nothing at all. */
 type ServedTarget = { standing: 'serving'; account: Account } | { standing: 'removed' };
 
@@ -15,7 +17,8 @@ export type ServedModel = {
 };
 
 function targetStanding(model: VirtualModel, accounts: readonly Account[]): ServedTarget {
-  const account = accounts.find((held) => held.id === model.target.accountId);
+  const bound = targetTheEntryNames(model.routing);
+  const account = accounts.find((held) => held.id === bound?.accountId);
 
   return account === undefined ? { standing: 'removed' } : { standing: 'serving', account };
 }
@@ -35,7 +38,7 @@ export function servedModels(
   return models.map((model) => ({
     id: model.id,
     displayName: model.displayName,
-    providerModel: model.target.providerModel,
+    providerModel: targetTheEntryNames(model.routing)?.providerModel ?? '',
     target: targetStanding(model, accounts),
   }));
 }

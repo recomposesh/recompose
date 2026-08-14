@@ -31,7 +31,12 @@ const personal: GatewayConfig = {
     {
       id: 'fast',
       displayName: 'fast',
-      target: { accountId: keyRow.id, providerModel: 'claude-sonnet-5' },
+      routing: {
+        entry: 'seat',
+        nodes: {
+          seat: { kind: 'target', accountId: keyRow.id, providerModel: 'claude-sonnet-5' },
+        },
+      },
     },
   ],
   layout: { nodes: {} },

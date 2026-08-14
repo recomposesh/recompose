@@ -32,7 +32,12 @@ const registry: AccountsDocument = {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+  routing: {
+    entry: 'seat',
+    nodes: {
+      seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+    },
+  },
 };
 
 function codexServing(models: readonly VirtualModel[], port = FIRST_PORT): GatewayConfig {

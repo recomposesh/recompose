@@ -34,13 +34,19 @@ const spare: Account = {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'a1', providerModel: 'claude-sonnet-5' },
+  routing: {
+    entry: 'seat-fast',
+    nodes: { 'seat-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+  },
 };
 
 const slow: VirtualModel = {
   id: 'slow',
   displayName: 'Slow',
-  target: { accountId: 'a2', providerModel: 'claude-opus-5' },
+  routing: {
+    entry: 'seat-slow',
+    nodes: { 'seat-slow': { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' } },
+  },
 };
 
 const codex: GatewayConfig = {
@@ -130,7 +136,7 @@ test('a subscription target prefers the observed signed-in address over its stor
 });
 
 test('two virtual models reaching one account each keep a target card of their own', () => {
-  const bothOnWork = { ...codex, virtualModels: [fast, { ...slow, target: fast.target }] };
+  const bothOnWork = { ...codex, virtualModels: [fast, { ...slow, routing: fast.routing }] };
   const graph = canvasGraph(bothOnWork, [work], nothingOverlaid);
 
   expect(graph.nodes.filter((node) => node.kind === 'target')).toHaveLength(2);
@@ -222,8 +228,8 @@ test('a virtual model aliased draft keeps its own cable and wire, because both n
   const namesakes = {
     ...codex,
     virtualModels: [
-      { id: 'draft', displayName: 'Draft', target: fast.target },
-      { id: 'pending', displayName: 'Pending', target: fast.target },
+      { id: 'draft', displayName: 'Draft', routing: fast.routing },
+      { id: 'pending', displayName: 'Pending', routing: fast.routing },
     ],
   };
   const graph = canvasGraph(namesakes, [work], {
@@ -243,6 +249,7 @@ test('a virtual model aliased draft keeps its own cable and wire, because both n
 
 test('a rebound virtual model drops the cable it held, and the target it left stands down', () => {
   const rebound = gatewayRebinding(codex, 'fast', {
+    kind: 'target',
     accountId: 'a2',
     providerModel: 'claude-opus-5',
   });

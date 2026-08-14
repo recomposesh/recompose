@@ -74,6 +74,7 @@ function afterEdit(gateway: GatewayConfig, edit: Edit, index: number): GatewayCo
 
   return edit.act === 'rebind'
     ? gatewayRebinding(gateway, held.id, {
+        kind: 'target',
         accountId: edit.accountId,
         providerModel: 'claude-opus-5',
       })

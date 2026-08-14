@@ -3,6 +3,7 @@ export * from './model-policy';
 export * from './credential-policy';
 export * from './transport-policy';
 export * from './non-blank';
+export * from './gateway-routing';
 export * from './gateway-config';
 export * from './gateway-api-key';
 export * from './engine-state';

@@ -3,21 +3,28 @@ import type {
   EngineGateway,
   EngineVirtualModel,
   GatewayConfig,
-  Target,
+  RouteTarget,
   VirtualModel,
 } from '@recompose/contracts';
 
-import { DEFAULT_GATEWAY_BIND_ADDRESS, enforcedApiKey } from '@recompose/contracts';
+import {
+  DEFAULT_GATEWAY_BIND_ADDRESS,
+  enforcedApiKey,
+  targetTheEntryNames,
+} from '@recompose/contracts';
 
 import { storagePathsFor } from '../ipc/storage-context';
 import { loadAccountsFile } from '../storage/accounts-store';
 import { listGatewayConfigs } from '../storage/gateway-store';
 import { loadSettingsFile } from '../storage/settings-store';
 
-function standingOf(accounts: readonly Account[], target: Target): EngineVirtualModel['target'] {
-  const held = accounts.find((account) => account.id === target.accountId);
+function standingOf(
+  accounts: readonly Account[],
+  target: RouteTarget | undefined,
+): EngineVirtualModel['target'] {
+  const held = accounts.find((account) => account.id === target?.accountId);
 
-  return held === undefined
+  return target === undefined || held === undefined
     ? { standing: 'removed' }
     : { standing: 'bound', providerModel: target.providerModel };
 }
@@ -29,7 +36,7 @@ function mintedAgainst(
   return stored.map((model) => ({
     id: model.id,
     displayName: model.displayName,
-    target: standingOf(accounts, model.target),
+    target: standingOf(accounts, targetTheEntryNames(model.routing)),
   }));
 }
 

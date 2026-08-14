@@ -32,7 +32,10 @@ async function reportedStates() {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'fast',
-  target: { accountId: 'acc-key', providerModel: 'claude-sonnet-5' },
+  routing: {
+    entry: 'seat',
+    nodes: { seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-sonnet-5' } },
+  },
 };
 
 const claudeMax: SubscriptionAccountView = {

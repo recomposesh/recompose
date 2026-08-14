@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
-import type { VirtualModel } from '@recompose/contracts';
 
 import { expect } from '@playwright/test';
+import { targetTheEntryNames } from '@recompose/contracts';
 
 import { gatewayRow, storedGateway } from './gateway-screen';
 
@@ -285,8 +285,12 @@ export async function storedBinding(
   page: Page,
   gateway: string,
   modelId: string,
-): Promise<VirtualModel['target'] | undefined> {
+): Promise<{ accountId: string; providerModel: string } | undefined> {
   const { virtualModels } = await storedGateway(page, gateway);
+  const bound = virtualModels.find((model) => model.id === modelId);
+  const target = bound === undefined ? undefined : targetTheEntryNames(bound.routing);
 
-  return virtualModels.find((model) => model.id === modelId)?.target;
+  return target === undefined
+    ? undefined
+    : { accountId: target.accountId, providerModel: target.providerModel };
 }

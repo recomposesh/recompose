@@ -1,6 +1,6 @@
-import type { GatewayConfig, Target, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, RouteTarget, Routing, VirtualModel } from '@recompose/contracts';
 
-import { modelAliasFromName, modelAliasSchema } from '@recompose/contracts';
+import { mintRouteNodeId, modelAliasFromName, modelAliasSchema } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
 
@@ -75,6 +75,12 @@ export function emptyDefinition(): SettledDefinition {
   return { displayName: '', id: '', accountId: '', providerModel: '' };
 }
 
+function boundThroughOneNode(target: RouteTarget): Routing {
+  const entry = mintRouteNodeId();
+
+  return { entry, nodes: { [entry]: target } };
+}
+
 /** The gateway as it stands once it carries this definition too, ready for storage. */
 export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefinition): GatewayConfig {
   return {
@@ -84,10 +90,18 @@ export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefiniti
       {
         id: settled.id,
         displayName: settled.displayName,
-        target: { accountId: settled.accountId, providerModel: settled.providerModel },
+        routing: boundThroughOneNode({
+          kind: 'target',
+          accountId: settled.accountId,
+          providerModel: settled.providerModel,
+        }),
       },
     ],
   };
+}
+
+function reboundOnItsEntry(routing: Routing, target: RouteTarget): Routing {
+  return { entry: routing.entry, nodes: { ...routing.nodes, [routing.entry]: target } };
 }
 
 /**
@@ -100,12 +114,14 @@ export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefiniti
 export function gatewayRebinding(
   gateway: GatewayConfig,
   modelId: string,
-  target: Target,
+  target: RouteTarget,
 ): GatewayConfig {
   return {
     ...gateway,
     virtualModels: gateway.virtualModels.map((model) =>
-      model.id === modelId ? { ...model, target } : model,
+      model.id === modelId
+        ? { ...model, routing: reboundOnItsEntry(model.routing, target) }
+        : model,
     ),
   };
 }

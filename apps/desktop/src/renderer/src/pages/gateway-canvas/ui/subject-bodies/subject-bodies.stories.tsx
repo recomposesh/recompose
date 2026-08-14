@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { targetTheEntryNames } from '@recompose/contracts';
 import { expect, fn } from 'storybook/test';
 
 import preview from '#.storybook/preview';
@@ -45,7 +46,9 @@ function TargetSubjectUnderProof() {
       {targetBody(
         workKey,
         [],
-        servingGateway.virtualModels.filter((model) => model.target.accountId === workKey.id),
+        servingGateway.virtualModels.filter(
+          (model) => targetTheEntryNames(model.routing)?.accountId === workKey.id,
+        ),
         asked,
       )}
     </InspectorFrame>

@@ -18,13 +18,19 @@ const work: Account = {
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
-  target: { accountId: 'a1', providerModel: 'claude-sonnet-5' },
+  routing: {
+    entry: 'seat-fast',
+    nodes: { 'seat-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+  },
 };
 
 const stranded: VirtualModel = {
   id: 'slow',
   displayName: 'Slow',
-  target: { accountId: 'gone', providerModel: 'claude-opus-5' },
+  routing: {
+    entry: 'seat-slow',
+    nodes: { 'seat-slow': { kind: 'target', accountId: 'gone', providerModel: 'claude-opus-5' } },
+  },
 };
 
 const codex: GatewayConfig = {
