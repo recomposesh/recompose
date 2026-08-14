@@ -33,7 +33,7 @@
 
 - **Never write code comments.** Code must explain itself through naming and structure.
 - The only exception: a constraint or invariant that code genuinely can't express (for example, "Electron requires this before app.ready"). If in doubt, don't write it.
-- The `@summary` docstring pattern on exported declarations is API documentation the tooling reads (Storybook Controls docgen among others), not a comment. The ban covers inline explanations.
+- Content decides whether a `@summary` docstring belongs, never visibility. Write one on any declaration, exported or not, when it records a constraint, an invariant, a rejected alternative, or a cross-cutting reason the code can't state. Never write one that narrates what the code does, restates the name, or describes the diff. The ban on inline explanations holds either way (record 0115).
 
 ## Architecture decisions
 
