@@ -19,9 +19,9 @@ function Home() {
       <div className="relative mx-auto flex max-w-7xl flex-col px-10 pt-24 pb-32">
         <h1
           data-spot="text"
-          className="hero-lift max-w-3xl text-5xl leading-none font-medium text-fd-muted-foreground"
+          className="spot-copy hero-lift max-w-3xl text-5xl leading-none font-medium text-fd-muted-foreground"
         >
-          <span data-spot="text" className="block text-fd-foreground">
+          <span data-spot="text" className="spot-copy block text-fd-foreground">
             every model
           </span>
           one gateway you control
@@ -29,7 +29,10 @@ function Home() {
           for the new age with agents
         </h1>
 
-        <p data-spot="text" className="hero-lift mt-7 max-w-xl text-lg text-fd-muted-foreground">
+        <p
+          data-spot="text"
+          className="spot-copy hero-lift mt-7 max-w-xl text-lg text-fd-muted-foreground"
+        >
           recompose turns your accounts, models and providers into virtual models behind one local
           gateway.
         </p>

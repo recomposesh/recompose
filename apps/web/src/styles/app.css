@@ -138,6 +138,9 @@ html:not(.dark) [data-spot='text'] {
     0 0;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+html:not(.dark) .spot-copy {
   padding-bottom: 0.22em;
   margin-bottom: -0.22em;
 }
