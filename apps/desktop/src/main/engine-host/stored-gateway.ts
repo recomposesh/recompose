@@ -1,41 +1,60 @@
 import type {
   Account,
   EngineGateway,
+  EngineRouteNode,
   EngineRouting,
   EngineTargetStanding,
   EngineVirtualModel,
   GatewayConfig,
+  RouteNode,
   RouteTarget,
   Routing,
   VirtualModel,
 } from '@recompose/contracts';
 
-import {
-  DEFAULT_GATEWAY_BIND_ADDRESS,
-  enforcedApiKey,
-  targetTheEntryNames,
-} from '@recompose/contracts';
+import { DEFAULT_GATEWAY_BIND_ADDRESS, enforcedApiKey } from '@recompose/contracts';
 
 import { storagePathsFor } from '../ipc/storage-context';
 import { loadAccountsFile } from '../storage/accounts-store';
 import { listGatewayConfigs } from '../storage/gateway-store';
 import { loadSettingsFile } from '../storage/settings-store';
 
-function standingOf(
-  accounts: readonly Account[],
-  target: RouteTarget | undefined,
-): EngineTargetStanding {
-  const held = accounts.find((account) => account.id === target?.accountId);
+function standingOf(accounts: readonly Account[], target: RouteTarget): EngineTargetStanding {
+  const held = accounts.find((account) => account.id === target.accountId);
 
-  return target === undefined || held === undefined
+  return held === undefined
     ? { standing: 'removed' }
     : { standing: 'bound', providerModel: target.providerModel };
 }
 
-function mirroredRouting(accounts: readonly Account[], routing: Routing): EngineRouting {
-  const standing = standingOf(accounts, targetTheEntryNames(routing));
+/**
+ * One stored node as the child sees it: a target worn to its standing, or a router carried whole.
+ *
+ * @summary A target names the account paying for it, and that name is the one thing the lane must
+ * never carry, so it is spent here and dropped. A router keeps its mode and its declared order,
+ * because those two are the walk's entire instruction.
+ */
+function mirroredNode(accounts: readonly Account[], node: RouteNode): EngineRouteNode {
+  if (node.kind === 'target') {
+    return { kind: 'target', standing: standingOf(accounts, node) };
+  }
 
-  return { entry: routing.entry, nodes: { [routing.entry]: { kind: 'target', standing } } };
+  return {
+    kind: 'router',
+    ...(node.displayName === undefined ? {} : { displayName: node.displayName }),
+    policy: node.policy,
+    children: node.children,
+  };
+}
+
+function mirroredRouting(accounts: readonly Account[], routing: Routing): EngineRouting {
+  const nodes: Record<string, EngineRouteNode> = {};
+
+  for (const [id, node] of Object.entries(routing.nodes)) {
+    nodes[id] = mirroredNode(accounts, node);
+  }
+
+  return { entry: routing.entry, nodes };
 }
 
 function mintedAgainst(

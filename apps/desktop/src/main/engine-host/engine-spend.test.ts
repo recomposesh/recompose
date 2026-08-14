@@ -2,6 +2,8 @@ import type { EngineSpendGrant, EngineSpendRequest, SpendGrant } from '@recompos
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import type { SpendGrantFor } from './engine-spend';
+
 import { answerSpendRequest } from './engine-spend';
 
 const credential = 'sk-ant-api03-long-secret-7f2c';
@@ -89,6 +91,39 @@ describe('a lane that carries the grant', () => {
     await vi.waitFor(() => {
       expect(port.posted).toStrictEqual([
         { kind: 'spend-grant', answers: 's1', grant: credentialed },
+      ]);
+    });
+  });
+});
+
+describe('which node the child is asking custody for', () => {
+  const namingTheAsk: SpendGrantFor = async (slug, virtualModel, routeNode) =>
+    Promise.resolve({
+      verdict: 'resolved',
+      providerOrigin: `https://${slug}.example/${virtualModel}/${routeNode}`,
+      spend: { custody: 'open' },
+    });
+
+  test('the grant answers the route node the request named, not the model alone', async () => {
+    const port = recordingPort();
+
+    answerSpendRequest(port, namingTheAsk, asked);
+
+    await vi.waitFor(() => {
+      expect(port.posted).toMatchObject([
+        { answers: 's1', grant: { providerOrigin: 'https://codex.example/fast/only' } },
+      ]);
+    });
+  });
+
+  test('a second node under the same model draws its own seat', async () => {
+    const port = recordingPort();
+
+    answerSpendRequest(port, namingTheAsk, { ...asked, id: 's2', routeNode: 'spare' });
+
+    await vi.waitFor(() => {
+      expect(port.posted).toMatchObject([
+        { answers: 's2', grant: { providerOrigin: 'https://codex.example/fast/spare' } },
       ]);
     });
   });

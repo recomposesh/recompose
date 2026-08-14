@@ -13,8 +13,8 @@ export function noticingTheFirstGrant(
 ): SpendGrantFor {
   let unreported = true;
 
-  return async (slug, virtualModel) => {
-    const grant = await grantFor(slug, virtualModel);
+  return async (slug, virtualModel, routeNode) => {
+    const grant = await grantFor(slug, virtualModel, routeNode);
 
     if (grant.verdict === 'resolved' && unreported) {
       unreported = false;
