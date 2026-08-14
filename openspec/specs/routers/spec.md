@@ -26,7 +26,7 @@ A virtual model MUST be able to bind a router in place of a target. A router car
 
 ### Requirement: Failover tries the next eligible target in declared order
 
-A router in `failover` mode MUST offer its children in declared order and MUST hand the request to the first child that can answer. A child that refuses with a retryable outcome MUST pass the request to the next child. A child that refuses with a request-scoped outcome MUST end the attempt and MUST answer that refusal to the caller. A second target would refuse it the same way. Once the answer has begun streaming to the caller, the router MUST NOT begin another child, and it MUST forward the provider's stream error and record the failed attempt.
+A router in `failover` mode MUST offer its children in declared order and MUST hand the request to the first child that can answer. A child that refuses with a retryable outcome MUST pass the request to the next child. A child that refuses with a request-scoped outcome MUST end the attempt. It MUST answer that refusal to the caller, because a second target would refuse it the same way. A router MUST attempt each child at most once for one request. When every child has refused with a retryable outcome, the router MUST answer a typed refusal naming the exhausted router and every child it tried with the reason each gave. That refusal MUST carry a retry time only when every child it tried promised one. Once the first byte of the answer has reached the caller, the router MUST NOT begin another child. It MUST forward the provider's stream error and record the failed attempt.
 
 #### Scenario: a rate-limited target hands the request to the next one
 
@@ -35,6 +35,13 @@ A router in `failover` mode MUST offer its children in declared order and MUST h
 - Then the second target receives the request
 - And the answer travels back to the caller
 
+#### Scenario: a ladder every child refuses answers the exhausted refusal
+
+- Given a virtual model bound to a failover router over a first and a second target
+- When both targets refuse the request with rate limits
+- Then each target receives exactly one attempt
+- And the caller receives one typed refusal naming the router and both children
+
 #### Scenario: a malformed request stops at the first target
 
 - Given a virtual model bound to a failover router over a first and a second target
@@ -42,16 +49,16 @@ A router in `failover` mode MUST offer its children in declared order and MUST h
 - Then the caller receives that refusal
 - And the second target receives nothing
 
-#### Scenario: a failure after streaming began never moves target
+#### Scenario: a failure after the first byte never moves target
 
-- Given a failover router whose first target has begun streaming its answer to the caller
+- Given a failover router whose first target has written its first byte to the caller
 - When that target's stream fails partway
 - Then the caller receives the provider's stream error
 - And no other target receives the request
 
 ### Requirement: Round-robin spreads eligible requests across its children
 
-A router in `round-robin` mode MUST distribute eligible requests evenly across its children, and MUST skip a child that stands cooling from an earlier refusal. Every child cooling MUST answer a typed refusal naming the exhausted router rather than picking one anyway.
+A router in `round-robin` mode MUST distribute eligible requests evenly across its children, and MUST skip a child that stands cooling from an earlier refusal. If every child stands cooling, the router MUST answer a typed refusal naming the exhausted router rather than picking one anyway.
 
 #### Scenario: two requests reach two different targets
 
@@ -65,3 +72,10 @@ A router in `round-robin` mode MUST distribute eligible requests evenly across i
 - When a request arrives under the virtual model's name
 - Then the second target receives it
 - And the first target receives nothing until its cooling ends
+
+#### Scenario: every child cooling refuses instead of picking one anyway
+
+- Given a round-robin router whose every child stands cooling from an earlier rate limit
+- When a request arrives under the virtual model's name
+- Then the gateway answers a typed refusal naming the exhausted router and each cooling child
+- And no request leaves the machine
