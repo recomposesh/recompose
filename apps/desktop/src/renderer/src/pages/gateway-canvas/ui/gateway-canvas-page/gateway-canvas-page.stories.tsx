@@ -7,6 +7,7 @@ import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { dropCanvasPositions } from '../../lib/canvas-position-store';
 import { leaveDrafting } from '../../lib/use-held-draft';
 import { servingBridgeWorld } from '../../testing/gateway-canvas.testkit';
+import { pooledGateway } from '../../testing/routed-gateways.testkit';
 import { GatewayCanvasPage } from './gateway-canvas-page';
 
 function freshCanvas() {
@@ -100,3 +101,49 @@ export const InspectorClosed = meta.story({
 
 /** The whole surface in the dark scheme, where the canvas has to separate from the drawer. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+const pooledWorld = { ...servingBridgeWorld, gateways: [pooledGateway] };
+
+function childNames(canvasElement: HTMLElement): readonly HTMLElement[] {
+  return [...canvasElement.querySelectorAll<HTMLElement>('[data-child-name]')];
+}
+
+function clippedChildNames(canvasElement: HTMLElement): readonly string[] {
+  return childNames(canvasElement)
+    .filter((name) => name.scrollWidth > name.clientWidth)
+    .map((name) => name.innerText);
+}
+
+/**
+ * A pooled definition, where a router stands between the virtual model and the accounts.
+ *
+ * @summary The ladder prints each child's account whole: the real model beside it is the quieter
+ * fact, so a row too narrow for both gives up the model rather than the account it belongs to.
+ */
+export const APooledDefinition = meta.story({
+  parameters: { bridge: pooledWorld },
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: /Failover/ }));
+
+    await expect(await canvas.findByText('Children')).toBeVisible();
+    await waitFor(async () => expect(childNames(canvasElement)).toHaveLength(2));
+    await expect(clippedChildNames(canvasElement)).toEqual([]);
+  },
+});
+
+/**
+ * Deleting a router asks first, because a router leaves with the whole ladder under it.
+ *
+ * @summary The question names the router rather than the definition, and its consequence has to
+ * carry both facts: the children go, and a virtual model left reaching nothing stands back as a
+ * draft rather than saving a binding the stored shape refuses.
+ */
+export const DeletingARouterAsksFirst = meta.story({
+  parameters: { bridge: pooledWorld },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: /Failover/ }));
+    await userEvent.keyboard('{Delete}');
+
+    await expect(await canvas.findByText('Delete the router "Failover"?')).toBeVisible();
+  },
+});

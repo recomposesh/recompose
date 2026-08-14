@@ -1,68 +1,19 @@
-import type { GatewayConfig } from '@recompose/contracts';
-
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
-import type { XY } from '../../lib/canvas-positions';
-
-import { gatewaySeed } from '../../../../shared/testing';
-import {
-  pulledCable,
-  releasedAt,
-  sourcePortOf,
-  storedModels,
-} from '../../testing/canvas-gestures.testkit';
+import { draggedCable, sourcePortOf, targetPortOf } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
-import { listedModels, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import {
+  cardSeat,
+  droppedOnOpenCanvas,
+  ladderUnder,
+  routingOf,
+} from '../../testing/routed-canvas.testkit';
+import { pooledWorld } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
-
-const pooledGateway: GatewayConfig = gatewaySeed({
-  slug: 'my-gateway',
-  displayName: 'My Gateway',
-  port: 8397,
-  virtualModels: [
-    {
-      id: 'pooled',
-      displayName: 'Pooled',
-      routing: {
-        entry: 'r1',
-        nodes: {
-          r1: { kind: 'router', policy: { mode: 'failover' }, children: ['t1', 't2'] },
-          t1: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
-          t2: { kind: 'target', accountId: 'g1', providerModel: 'openai/gpt-5' },
-        },
-      },
-    },
-  ],
-});
-
-const pooledWorld = {
-  accounts: storedAccounts,
-  gateways: [pooledGateway],
-  providerModels: listedModels,
-};
-
-function paneSpot(container: HTMLElement, from: XY): XY {
-  const pane = container.querySelector('.react-flow')?.getBoundingClientRect() ?? new DOMRect();
-
-  return { x: pane.left + from.x, y: pane.top + from.y };
-}
-
-async function droppedOnOpenCanvas(container: HTMLElement, nodeId: string): Promise<void> {
-  const letGo = paneSpot(container, { x: 560, y: 440 });
-
-  await pulledCable(await sourcePortOf(container, nodeId), letGo);
-  releasedAt(letGo);
-}
-
-async function routingOf(modelId: string) {
-  const held = await storedModels();
-
-  return held.find((model) => model.id === modelId)?.routing;
-}
 
 test('a cable dropped on empty canvas asks router or target before anything else', async () => {
   const screen = await canvasPageOn();
@@ -131,6 +82,42 @@ test('the same ask from a router port nests a second router under the first', as
     .toBe(2);
 });
 
+test('a cable from a router lands on a stored target, which joins the ladder as one more child', async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await draggedCable(
+    await sourcePortOf(screen.container, 'route:pooled'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect.poll(async () => (await ladderUnder('pooled'))?.length).toBe(3);
+});
+
+test('a card born under a router stands where the cable was let go rather than at a tidy seat', async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await droppedOnOpenCanvas(screen.container, 'route:pooled');
+
+  const letGoAt = await vi.waitFor(() => {
+    const pending = cardSeat(screen.container, '[data-id="pending"]');
+
+    if (pending === undefined) {
+      throw new Error('no pending card stands where the cable was let go yet');
+    }
+
+    return pending;
+  });
+
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Router/ }));
+
+  await expect.poll(() => cardSeat(screen.container, '[data-id^="route:pooled:"]')).toBe(letGoAt);
+});
+
 test('the inspector writes the mode a person switched the router to', async () => {
   const screen = await canvasPageOn(pooledWorld);
 
@@ -153,12 +140,5 @@ test('the keyboard reorders the failover ladder, and the write lands in the stor
   await userEvent.click(screen.getByRole('button', { name: /Failover/ }).first());
   await userEvent.click(screen.getByRole('button', { name: 'Move OpenRouter up' }));
 
-  await expect
-    .poll(async () => {
-      const routing = await routingOf('pooled');
-      const entry = routing === undefined ? undefined : routing.nodes[routing.entry];
-
-      return entry?.kind === 'router' ? entry.children : undefined;
-    })
-    .toEqual(['t2', 't1']);
+  await expect.poll(async () => ladderUnder('pooled')).toEqual(['t2', 't1']);
 });

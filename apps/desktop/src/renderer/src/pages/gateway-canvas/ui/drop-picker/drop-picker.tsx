@@ -21,6 +21,7 @@ type StageWording = {
   heading: string;
   searchLabel: string;
   nothingMatched: string;
+  stepBack: string;
 };
 
 const wording: Record<PickerStage['step'], StageWording> = {
@@ -28,24 +29,27 @@ const wording: Record<PickerStage['step'], StageWording> = {
     heading: 'Bind a router or a target',
     searchLabel: 'Search kinds',
     nothingMatched: 'Nothing binds here.',
+    stepBack: '',
   },
   account: {
     heading: 'Pick an account',
     searchLabel: 'Search accounts',
     nothingMatched: 'No account matches that.',
+    stepBack: 'Select router or target',
   },
   'provider-model': {
     heading: 'Pick a provider model',
     searchLabel: 'Search models',
     nothingMatched: 'No model matches that.',
+    stepBack: 'Select different provider',
   },
 };
 
 const KIND_OPTIONS: readonly OptionGroup[] = [
   {
     options: [
-      { id: 'router', name: 'Router', detail: 'spreads requests across its children' },
-      { id: 'target', name: 'Target', detail: 'one account, one real model' },
+      { id: 'router', name: 'Router', detail: 'spreads over children' },
+      { id: 'target', name: 'Target', detail: 'account, real model' },
     ],
   },
 ];
@@ -94,22 +98,21 @@ function pickedAt(stage: PickerStage, acts: PickActs): (picked: string) => void 
 }
 
 function stageHeading(
-  stage: PickerStage,
   headingId: string,
   said: StageWording,
-  onSelectDifferentProvider: () => void,
+  onStepBack: (() => void) | undefined,
 ): ReactNode {
   return (
     <div className="flex items-center gap-1.5 px-2.5 pt-1 pb-1.5">
-      {stage.step === 'provider-model' ? (
+      {onStepBack === undefined || said.stepBack === '' ? null : (
         <Button
-          aria-label="Select different provider"
+          aria-label={said.stepBack}
           glyph="chevron"
           glyphClassName="rotate-90"
-          onPress={onSelectDifferentProvider}
+          onPress={onStepBack}
           variant="icon-secondary"
         />
-      ) : null}
+      )}
       <p className="picker-heading" id={headingId}>
         {said.heading}
       </p>
@@ -130,8 +133,8 @@ export type DropPickerProps = {
   onPickAccount: (accountId: string) => void;
   /** Receives the provider model that completes the binding. */
   onPickProviderModel: (providerModel: string) => void;
-  /** Returns the second stage to the account choices. */
-  onSelectDifferentProvider: () => void;
+  /** Returns this stage to the one that opened it, or nothing where no stage stands behind it. */
+  onStepBack: (() => void) | undefined;
   /** Runs when a person leaves the picker, which is what takes the pending card away. */
   onDismiss: () => void;
 };
@@ -142,7 +145,9 @@ export type DropPickerProps = {
  * @summary Render it inside the pending target card, so the question stands where the cable landed
  * rather than at a coordinate a person has to hunt for. A binding needs both an account and the
  * model that account serves, so the account settles first and the model second, and one write
- * commits them together. Esc leaves at either stage, which is the one way out that changes nothing.
+ * commits them together. Every stage a person walked into offers the chevron back out of it, and a
+ * stage nothing stands behind wears none, so the chevron never promises a step that is not there.
+ * Esc leaves at any stage, which is the one way out that changes nothing.
  */
 export function DropPicker({
   stage,
@@ -151,7 +156,7 @@ export function DropPicker({
   onPickKind,
   onPickAccount,
   onPickProviderModel,
-  onSelectDifferentProvider,
+  onStepBack,
   onDismiss,
 }: DropPickerProps) {
   const headingId = useId();
@@ -181,7 +186,7 @@ export function DropPicker({
       tabIndex={-1}
     >
       <div className={transition} key={stage.step}>
-        {stageHeading(stage, headingId, said, onSelectDifferentProvider)}
+        {stageHeading(headingId, said, onStepBack)}
         <div className="max-h-64 overflow-y-auto px-1.5 pb-1" data-picker-body="">
           {stageBody(
             refusal,

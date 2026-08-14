@@ -12,6 +12,6 @@ export function pickerMetaArgs(accounts: readonly OptionGroup[]) {
     onPickAccount: fn(),
     onPickKind: fn(),
     onPickProviderModel: fn(),
-    onSelectDifferentProvider: fn(),
+    onStepBack: fn(),
   };
 }

@@ -22,6 +22,7 @@ import { editingText } from './canvas-wiring';
 export type PickerStanding =
   | { step: 'kind'; from: string; at: XY; origin: PickerOrigin }
   | { step: 'account'; from: string; at: XY; origin: PickerOrigin }
+  | { step: 'account'; from: string; anchor: string }
   | { step: 'provider-model'; from: string; accountId: string; at: XY; origin: PickerOrigin }
   | { step: 'provider-model'; from: string; accountId: string; anchor: string };
 

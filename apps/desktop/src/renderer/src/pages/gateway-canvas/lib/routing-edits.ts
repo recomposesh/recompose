@@ -73,17 +73,18 @@ export function gatewayRoutingThrough(
  *
  * @summary A child joins the end rather than the front, because failover walks its children in
  * declared order and a new binding jumping ahead of the one already answering would reroute live
- * traffic nobody asked to reroute. A route node that routes nothing takes no child, so a stray ask
+ * traffic nobody asked to reroute. The caller names the child rather than the write minting it,
+ * because the canvas seats the card this write brings into being and a card cannot be seated
+ * under a name nobody knows yet. A route node that routes nothing takes no child, so a stray ask
  * leaves the document as it stood rather than writing a table the stored shape would refuse.
  */
 export function gatewayBindingChild(
   gateway: GatewayConfig,
   modelId: string,
   routerId: string,
+  childId: string,
   child: RouteNode,
 ): GatewayConfig {
-  const childId = mintRouteNodeId();
-
   return routedBy(gateway, modelId, (was) => {
     const grown = routerEdited(was, routerId, (router) => ({
       ...router,
@@ -94,6 +95,65 @@ export function gatewayBindingChild(
       ? was
       : { entry: grown.entry, nodes: { ...grown.nodes, [childId]: child } };
   });
+}
+
+function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
+  const reached = new Set<string>();
+  const walk = [nodeId];
+  let held = walk.pop();
+
+  while (held !== undefined) {
+    const node = routing.nodes[held];
+
+    if (node !== undefined && !reached.has(held)) {
+      reached.add(held);
+
+      if (node.kind === 'router') {
+        walk.push(...node.children);
+      }
+    }
+
+    held = walk.pop();
+  }
+
+  return reached;
+}
+
+/**
+ * The gateway once one route node and everything standing under it leaves the table.
+ *
+ * @summary A router is a branch rather than a leaf, so removing one removes the ladder it holds:
+ * leaving its children behind would strand nodes no entry can reach, which is exactly what the
+ * stored walk refuses at parse. The entry is never dropped here, because a routing binds something
+ * by construction, so releasing the whole definition is what a person deleting the entry asked for.
+ * A node the table never held drops nothing, which falls out of the walk rather than needing a
+ * guard of its own.
+ */
+function tableWithout(routing: Routing, gone: ReadonlySet<string>): Routing {
+  const kept: Record<string, RouteNode> = {};
+
+  for (const [id, node] of Object.entries(routing.nodes)) {
+    if (gone.has(id)) {
+      continue;
+    }
+
+    kept[id] =
+      node.kind === 'router'
+        ? { ...node, children: node.children.filter((child) => !gone.has(child)) }
+        : node;
+  }
+
+  return { entry: routing.entry, nodes: kept };
+}
+
+export function gatewayDroppingNode(
+  gateway: GatewayConfig,
+  modelId: string,
+  nodeId: string,
+): GatewayConfig {
+  return routedBy(gateway, modelId, (was) =>
+    nodeId === was.entry ? was : tableWithout(was, standingUnder(was, nodeId)),
+  );
 }
 
 function moved(children: readonly string[], from: number, to: number): string[] {

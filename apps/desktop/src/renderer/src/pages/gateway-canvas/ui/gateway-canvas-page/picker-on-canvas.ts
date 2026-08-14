@@ -18,7 +18,7 @@ export type PickerOnCanvas = {
   onPickKind: (kind: BoundKind) => void;
   onPickAccount: (accountId: string) => void;
   onPickProviderModel: (providerModel: string) => void;
-  onSelectDifferentProvider: () => void;
+  onStepBack: (() => void) | undefined;
   onDismiss: () => void;
 };
 
@@ -85,6 +85,36 @@ function pickerStage(picker: PickerStanding): PickerStage {
 }
 
 /**
+ * The step out of the one standing, or nothing where the ask opened on this stage.
+ *
+ * @summary The kind ask is the first thing every drop and every plus asks, so a stage carrying its
+ * drop point has that ask behind it and offers the way back to it. A cable let go on a stored
+ * target card opens on the model pick with the account already settled, and its way back reaches
+ * the account list and stops there, because nothing asked what kind to bind.
+ */
+function steppedBack(world: CanvasWorld, picker: PickerStanding): (() => void) | undefined {
+  if (picker.step === 'kind') {
+    return undefined;
+  }
+
+  if (picker.step === 'account') {
+    return 'at' in picker
+      ? () => {
+          world.standings.setPicker({ ...picker, step: 'kind' });
+        }
+      : undefined;
+  }
+
+  return () => {
+    world.standings.setPicker(
+      'at' in picker
+        ? { step: 'account', from: picker.from, at: picker.at, origin: picker.origin }
+        : { step: 'account', from: picker.from, anchor: picker.anchor },
+    );
+  };
+}
+
+/**
  * The picker the page renders onto the canvas, or nothing while no pick stands open.
  *
  * @summary Every answer the picker can give moves through a named act on the world, so the picker
@@ -110,31 +140,28 @@ export function pickerOnCanvas(
     anchorSeat: world.seats[anchorId] ?? { x: 0, y: 0 },
     onPickKind: answeredKind(world, picker),
     onPickAccount: (accountId) => {
-      if (picker.step === 'account') {
-        world.standings.setPicker({
-          step: 'provider-model',
-          from: picker.from,
-          accountId,
-          at: picker.at,
-          origin: picker.origin,
-        });
+      if (picker.step !== 'account') {
+        return;
       }
+
+      world.standings.setPicker(
+        'at' in picker
+          ? {
+              step: 'provider-model',
+              from: picker.from,
+              accountId,
+              at: picker.at,
+              origin: picker.origin,
+            }
+          : { step: 'provider-model', from: picker.from, accountId, anchor: picker.anchor },
+      );
     },
     onPickProviderModel: (providerModel) => {
       if (picker.step === 'provider-model') {
         completedPick(world, picker.from, picker.accountId, providerModel);
       }
     },
-    onSelectDifferentProvider: () => {
-      if (picker.step !== 'provider-model') {
-        return;
-      }
-
-      const at = 'at' in picker ? picker.at : (world.seats[picker.anchor] ?? { x: 0, y: 0 });
-      const origin = 'origin' in picker ? picker.origin : 'ask';
-
-      world.standings.setPicker({ step: 'account', from: picker.from, at, origin });
-    },
+    onStepBack: steppedBack(world, picker),
     onDismiss: () => {
       world.standings.setPicker(undefined);
     },

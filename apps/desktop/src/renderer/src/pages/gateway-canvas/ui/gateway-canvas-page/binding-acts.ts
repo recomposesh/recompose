@@ -244,20 +244,6 @@ export function askedTargetRemoval(world: CanvasWorld, nodeId: string): void {
 }
 
 /**
- * Releases the one binding a confirmed target removal held, standing its model back as a draft.
- *
- * @summary Deleting the card unbinds rather than destroys, because the target is a reference to a
- * stored account and the definition aimed at it is the person's own work.
- */
-export function releasedTarget(world: CanvasWorld, nodeId: string): void {
-  const model = boundModelOf(world, nodeId);
-
-  if (model !== undefined) {
-    releasedBinding(world, model.id, false);
-  }
-}
-
-/**
  * Removes what a confirmed deletion named: the held draft, or a whole stored definition.
  *
  * @summary A removal leaves no draft behind, because the person answered a question that named
