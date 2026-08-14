@@ -111,13 +111,17 @@ request
   -> route
 ```
 
-The comparison reduces both sides to a keyed SHA-256 tag and calls `timingSafeEqual`. Tagging first
-keeps the two buffers at 32 bytes whatever the inputs were. The compare therefore leaks neither the
-key's length nor how many leading characters a guess got right.
+The comparison hands both sides to `timingSafeEqual`, which refuses buffers of different lengths. The
+length decides first and the bytes decide in constant time, so nothing says how many leading bytes a
+guess got right.
 
-A secret each guard mints at start keys that tag rather than leaving it bare. Nobody can compute the
-tag of a guess offline. A bare digest also reads to a scanner as a password hash carrying no work
-factor. That's what it would be, if the value were a password rather than a 256-bit random token.
+That order tells an attacker how long the key is. Every minted key is 52 characters, a published fact
+of the format, so the leak names something already known.
+
+Two earlier drafts hid even the length by reducing both sides to a digest, and both came out. A digest
+over a value named `apiKey` reads to a scanner as a password hash carrying no work factor, whether
+it's bare or keyed. The honest answer to that reading isn't a slower hash on every request. It's no
+hash at all.
 
 An absent key and a wrong key draw the same 401 with the same body. Splitting them would tell a
 caller whether a gateway holds a key at all, and it buys a person nothing the status code hasn't
