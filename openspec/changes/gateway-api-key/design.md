@@ -180,12 +180,13 @@ above 65536 bytes, and this one asks for 32.
 
 ## File map
 
-- `packages/contracts/src/gateway-api-key.ts`: the prefix, the schema, `mintGatewayApiKey`,
-  `maskGatewayApiKey`, and `withGatewayApiKey` (create)
+- `packages/contracts/src/gateway-api-key.ts`: the prefix, the schema, `mintGatewayApiKey`, and
+  `maskGatewayApiKey` (create)
 - `packages/contracts/src/gateway-api-key.test.ts`: the mint shape, the mask, and the rewrite
   (create)
 - `packages/contracts/src/gateway-api-key.property.test.ts`: the mask laws under fast-check (create)
-- `packages/contracts/src/gateway-config.ts`: the field, the version bump, the migration (modify)
+- `packages/contracts/src/gateway-config.ts`: the field, the version bump, the migration,
+  `withGatewayApiKey`, and `enforcedApiKey` (modify)
 - `packages/contracts/src/gateway-config-migration.test.ts`: a version 2 document reads at 3 (modify)
 - `packages/contracts/src/gateway-config.test-d.ts`: the field stays optional on the derived type
   (modify)
@@ -235,6 +236,14 @@ above 65536 bytes, and this one asks for 32.
   - `type GatewayApiKey = { value: string; required: boolean }`
   - `function mintGatewayApiKey(): string`
   - `function maskGatewayApiKey(key: string): string`
+
+**`packages/contracts/src/gateway-config.ts`**
+
+The two rewrites live beside the document they rewrite rather than beside the key, which is also what
+keeps the dependency one-way. `gateway-config` reads the key schema, and the key module reads nothing
+back, so the no-circular rule holds. `settings.ts` already carries `withSettingsPatch` the same way.
+
+- Produces:
   - `function withGatewayApiKey(config: GatewayConfig, apiKey: GatewayApiKey | undefined): GatewayConfig`
   - `function enforcedApiKey(config: GatewayConfig): string | undefined`, the one authority on whether
     a stored gateway enforces its key, read by `engineGatewayOf` on the way to the snapshot

@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
+import { type GatewayApiKey, gatewayApiKeySchema } from './gateway-api-key';
 import { migrateDocument, type Migration } from './migration';
 import { nonBlankString } from './non-blank';
 
-export const GATEWAY_CONFIG_VERSION = 2;
+export const GATEWAY_CONFIG_VERSION = 3;
 
 export const GATEWAY_PORT_RANGE = { min: 1024, max: 65535 } as const;
 
@@ -122,6 +123,7 @@ export const gatewayConfigSchema = z.strictObject({
       (models) => new Set(models.map((model) => model.id)).size === models.length,
       'duplicate virtual model id',
     ),
+  apiKey: gatewayApiKeySchema.optional(),
   layout: layoutSchema,
 });
 
@@ -132,10 +134,44 @@ const noStoredGatewayEverMintedAVirtualModel: Migration = {
   migrate: (doc) => ({ ...doc, schemaVersion: 2 }),
 };
 
-const gatewayConfigMigrations: readonly Migration[] = [noStoredGatewayEverMintedAVirtualModel];
+const noStoredGatewayEverRequiredAKey: Migration = {
+  from: 2,
+  migrate: (doc) => ({ ...doc, schemaVersion: 3 }),
+};
+
+const gatewayConfigMigrations: readonly Migration[] = [
+  noStoredGatewayEverMintedAVirtualModel,
+  noStoredGatewayEverRequiredAKey,
+];
 
 export function loadGatewayConfig(doc: unknown): GatewayConfig {
   return gatewayConfigSchema.parse(
     migrateDocument(doc, gatewayConfigMigrations, GATEWAY_CONFIG_VERSION),
   );
+}
+
+/**
+ * The gateway that now carries the key it was handed, or none.
+ *
+ * @summary The one place that writes the field, so taking a key off leaves an absent property rather
+ * than an explicit undefined, which `exactOptionalPropertyTypes` refuses and a strict parse rejects.
+ */
+export function withGatewayApiKey(
+  config: GatewayConfig,
+  apiKey: GatewayApiKey | undefined,
+): GatewayConfig {
+  const { apiKey: _replaced, ...withoutKey } = config;
+
+  return apiKey === undefined ? withoutKey : { ...withoutKey, apiKey };
+}
+
+/**
+ * The key the engine is allowed to enforce, or nothing.
+ *
+ * @summary The single authority on the requirement, read on the way to the engine snapshot. A key the
+ * gateway stores but doesn't require never leaves the parent, so the child holds no secret it must not
+ * act on, and its guard mounts on presence alone.
+ */
+export function enforcedApiKey(config: GatewayConfig): string | undefined {
+  return config.apiKey?.required === true ? config.apiKey.value : undefined;
 }

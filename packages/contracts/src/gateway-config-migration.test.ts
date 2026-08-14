@@ -13,23 +13,23 @@ const storedUnderVersionOne = {
 };
 
 describe('a gateway stored before virtual models bound to one target', () => {
-  test('the version stamp reads 2, so the shape before it has a version to come from', () => {
-    expect(GATEWAY_CONFIG_VERSION).toBe(2);
+  test('the version stamp reads 3, so every shape before it has a version to come from', () => {
+    expect(GATEWAY_CONFIG_VERSION).toBe(3);
   });
 
-  test('a version 1 document loads as a version 2 document', () => {
-    expect(loadGatewayConfig(storedUnderVersionOne).schemaVersion).toBe(2);
+  test('a version 1 document loads at the version this build stores', () => {
+    expect(loadGatewayConfig(storedUnderVersionOne).schemaVersion).toBe(3);
   });
 
   test('the restamp carries the gateway forward untouched, because it held no binding', () => {
     expect(loadGatewayConfig(storedUnderVersionOne)).toEqual({
       ...storedUnderVersionOne,
-      schemaVersion: 2,
+      schemaVersion: 3,
     });
   });
 
-  test('a document already at version 2 loads unchanged', () => {
-    const current = { ...storedUnderVersionOne, schemaVersion: 2 };
+  test('a document already at version 3 loads unchanged', () => {
+    const current = { ...storedUnderVersionOne, schemaVersion: 3 };
 
     expect(loadGatewayConfig(current)).toEqual(current);
   });
@@ -42,6 +42,64 @@ describe('a gateway stored before virtual models bound to one target', () => {
 
   test('a version 1 document the restamp cannot rescue still fails validation', () => {
     expect(() => loadGatewayConfig({ ...storedUnderVersionOne, slug: 'x!' })).toThrow();
+  });
+});
+
+describe('a gateway stored before any of them could require a key', () => {
+  const storedUnderVersionTwo = { ...storedUnderVersionOne, schemaVersion: 2 };
+
+  test('a version 2 document loads at the version this build stores', () => {
+    expect(loadGatewayConfig(storedUnderVersionTwo).schemaVersion).toBe(3);
+  });
+
+  test('the restamp adds no key, because no build before it could mint one', () => {
+    expect(loadGatewayConfig(storedUnderVersionTwo)).toEqual({
+      ...storedUnderVersionTwo,
+      schemaVersion: 3,
+    });
+  });
+
+  test('a gateway that requires its key stores the value beside the requirement', () => {
+    const requiring = {
+      ...storedUnderVersionOne,
+      schemaVersion: 3,
+      apiKey: { value: 'rc-local-abcdef', required: true },
+    };
+
+    expect(loadGatewayConfig(requiring)).toEqual(requiring);
+  });
+
+  test('a gateway that stores a key it no longer requires reads back holding it', () => {
+    const holding = {
+      ...storedUnderVersionOne,
+      schemaVersion: 3,
+      apiKey: { value: 'rc-local-abcdef', required: false },
+    };
+
+    expect(loadGatewayConfig(holding).apiKey).toEqual({
+      value: 'rc-local-abcdef',
+      required: false,
+    });
+  });
+
+  test('a requirement standing on no key is not a shape this build stores', () => {
+    expect(() =>
+      loadGatewayConfig({
+        ...storedUnderVersionOne,
+        schemaVersion: 3,
+        apiKey: { required: true },
+      }),
+    ).toThrow();
+  });
+
+  test('a blank key is not a shape this build stores', () => {
+    expect(() =>
+      loadGatewayConfig({
+        ...storedUnderVersionOne,
+        schemaVersion: 3,
+        apiKey: { value: '  ', required: true },
+      }),
+    ).toThrow();
   });
 });
 
@@ -75,11 +133,18 @@ const versionOneDocumentArb = fc.record({
 
 describe('the restamp holds for every gateway a shipped build ever wrote', () => {
   test.prop([versionOneDocumentArb])(
-    'any stored version 1 document loads as a valid version 2 document',
+    'any stored version 1 document loads at the version this build stores',
     (document) => {
       const loaded = loadGatewayConfig(document);
 
-      expect(loaded).toEqual({ ...document, schemaVersion: 2 });
+      expect(loaded).toEqual({ ...document, schemaVersion: GATEWAY_CONFIG_VERSION });
+    },
+  );
+
+  test.prop([versionOneDocumentArb])(
+    'no restamp ever invents a key for a gateway that never held one',
+    (document) => {
+      expect(loadGatewayConfig(document).apiKey).toBeUndefined();
     },
   );
 });
