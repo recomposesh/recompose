@@ -45,11 +45,11 @@ parallel once Task 1 lands.
 
 ### Task 3: The main process owns delivery
 
-- [ ] `engineGatewayOf` reads `enforcedApiKey` and copies the value onto the snapshot only where the
+- [x] `engineGatewayOf` reads `enforcedApiKey` and copies the value onto the snapshot only where the
       gateway enforces it
-- [ ] Specs prove the snapshot carries the key for a required one, and that the property stays absent
+- [x] Specs prove the snapshot carries the key for a required one, and that the property stays absent
       rather than undefined for a stored key the gateway doesn't require and for no key at all
-- [ ] A spec proves `gateways:update` writing a document without the field leaves no key stored
+- [x] A spec proves `gateways:update` writing a document without the field leaves no key stored
 
 ### Task 4: The renderer owns the act
 
