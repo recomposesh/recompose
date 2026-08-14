@@ -4,13 +4,29 @@ import preview from '#.storybook/preview';
 
 import { ConnectWay } from './connect-way';
 
+const accountOnTheMachine = {
+  machineReading: {
+    holds: 'account' as const,
+    signedInAs: 'dev@example.com',
+    plan: 'max',
+    standing: 'connected' as const,
+  },
+};
+
 const meta = preview.meta({
   component: ConnectWay,
   args: {
+    lead: { mark: 'anthropic' as const },
     name: 'Anthropic',
     provider: 'anthropic' as const,
     toolName: 'Claude Code',
     command: 'CLAUDE_CONFIG_DIR="/Users/dev/.recompose/pending" claude',
+    terms: (
+      <p className="text-detail text-ink-secondary">
+        Claude Code signs in on its own and spends your Anthropic plan, under Anthropic&apos;s
+        terms. Claude Code serves one account at a time.
+      </p>
+    ),
     onConnected: () => undefined,
   },
   decorators: [
@@ -23,25 +39,21 @@ const meta = preview.meta({
 });
 
 /**
- * The machine already holds an account, so it leads and the sign-in drops to a quiet act.
+ * The machine already holds an account, so the step asks which of two ways to take.
+ *
+ * @summary The reading asks for both ways as rows of one list, because neither outranks the other
+ * once an account is standing there to take.
  */
 export const AccountFound = meta.story({
-  parameters: {
-    bridge: {
-      machineReading: {
-        holds: 'account' as const,
-        signedInAs: 'dev@example.com',
-        plan: 'max',
-        standing: 'connected' as const,
-      },
-    },
-  },
+  parameters: { bridge: accountOnTheMachine },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('dev@example.com')).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Connect' })).toBeEnabled();
+    await expect(await canvas.findByRole('heading', { name: 'Claude Code' })).toBeVisible();
+    await expect(
+      await canvas.findByRole('button', { name: 'Connect dev@example.com' }),
+    ).toBeEnabled();
     await expect(
       await canvas.findByRole('button', { name: 'Sign in with a different account' }),
-    ).toBeVisible();
+    ).toBeEnabled();
   },
 });
 
@@ -81,4 +93,10 @@ export const StoreRefused = meta.story({
     ).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Sign in to Anthropic' })).toBeEnabled();
   },
+});
+
+/** The two ways in the dark scheme, where the list has to lift off the sheet behind it. */
+export const DarkScheme = meta.story({
+  parameters: { bridge: accountOnTheMachine },
+  globals: { theme: 'dark' },
 });

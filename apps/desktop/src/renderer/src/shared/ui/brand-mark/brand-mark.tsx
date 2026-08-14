@@ -14,7 +14,6 @@ import GeminiMono from '@lobehub/icons/es/Gemini/components/Mono';
 import GithubCopilotMono from '@lobehub/icons/es/GithubCopilot/components/Mono';
 import GrokMono from '@lobehub/icons/es/Grok/components/Mono';
 import GroqMono from '@lobehub/icons/es/Groq/components/Mono';
-import KimiColor from '@lobehub/icons/es/Kimi/components/Color';
 import KimiMono from '@lobehub/icons/es/Kimi/components/Mono';
 import LmStudioMono from '@lobehub/icons/es/LmStudio/components/Mono';
 import MinimaxColor from '@lobehub/icons/es/Minimax/components/Color';
@@ -49,6 +48,17 @@ function inOneColorOnly(drawing: IconType): MarkDrawing {
   return { color: drawing, mono: drawing };
 }
 
+/**
+ * The drawing of a vendor whose colored mark knocks its own glyph out in white.
+ *
+ * @summary Nothing stands behind that glyph, so the colored drawing disappears into any light
+ * surface. Its outline drawing answers both variants instead, which takes the ink around it and so
+ * reads in either scheme.
+ */
+function knockedOutInWhite(drawing: IconType): MarkDrawing {
+  return { color: drawing, mono: drawing };
+}
+
 const marks = {
   anthropic: inOneColorOnly(AnthropicMono),
   cerebras: { color: CerebrasColor, mono: CerebrasMono },
@@ -59,7 +69,7 @@ const marks = {
   githubCopilot: inOneColorOnly(GithubCopilotMono),
   grok: inOneColorOnly(GrokMono),
   groq: inOneColorOnly(GroqMono),
-  kimi: { color: KimiColor, mono: KimiMono },
+  kimi: knockedOutInWhite(KimiMono),
   lmstudio: inOneColorOnly(LmStudioMono),
   minimax: { color: MinimaxColor, mono: MinimaxMono },
   mistral: { color: MistralColor, mono: MistralMono },

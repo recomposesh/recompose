@@ -24,7 +24,11 @@ import {
   signInThroughTheTool,
   SIGN_IN_WAIT_MS,
 } from '../subscription-sign-in';
-import { subscriptionAdoptedFromTheMachine, theMachineHoldsFor } from './machine-subscriptions';
+import {
+  adoptAct,
+  subscriptionAdoptedFromTheMachine,
+  theMachineHoldsFor,
+} from './machine-subscriptions';
 
 /** What one stored-account flow may spend on a runner already bringing up two applications. */
 const ONE_FLOW_MS = 10_000;
@@ -145,7 +149,7 @@ Then(
   async ({ page }, address: string, plan: string) => {
     await expect(catalog(page)).toContainText(address);
     await expect(catalog(page)).toContainText(plan);
-    await expect(catalog(page).getByRole('button', { name: 'Connect', exact: true })).toBeEnabled();
+    await expect(adoptAct(page)).toBeEnabled();
   },
 );
 

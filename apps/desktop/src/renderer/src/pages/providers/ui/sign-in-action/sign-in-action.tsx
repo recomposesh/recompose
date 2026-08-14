@@ -1,68 +1,35 @@
-import type { SubscriptionProviderId } from '@recompose/contracts';
-
-import { useSignInSubscription } from '../../../../shared/api';
 import { SheetActionSlot } from '../../../../shared/ui';
-import { WaitingOnTheTool } from '../waiting-on-the-tool/waiting-on-the-tool';
 
 type SignInActionProps = {
+  /** The provider the plan belongs to, which is what the act names rather than the tool. */
   name: string;
-  provider: SubscriptionProviderId;
-  onConnected: () => void;
-  toolName: string;
-  command: string;
-  /**
-   * @summary True when the machine already holds an account, so this act stops being the way in
-   * and becomes the second choice. At this width that reads as a quiet act in place rather than
-   * the sheet's primary button.
-   */
-  quieter?: boolean;
+  /** Stands the act inert where nothing on the machine can carry a sign-in out. */
+  disabled?: boolean;
+  /** Reaches for the sign-in the provider's own tool owns. */
+  onSignIn?: (() => void) | undefined;
+  /** Names what the act is held back by, for a screen reader reaching the disabled button. */
+  reasonId?: string | undefined;
 };
 
-/** The act that hands the sign-in to the provider's tool, and the waiting it turns into. */
-export function SignInAction({
-  name,
-  provider,
-  toolName,
-  command,
-  quieter = false,
-  onConnected,
-}: SignInActionProps) {
-  const signIn = useSignInSubscription();
-
-  if (signIn.isPending) {
-    return <WaitingOnTheTool command={command} toolName={toolName} />;
-  }
-
+/**
+ * The sheet's own act for handing a sign-in to the provider's tool.
+ *
+ * @summary Reach for it where the machine holds nothing, because then the sign-in is the only way
+ * in and belongs on the sheet's foot beside Cancel. Where the machine already holds an account the
+ * step offers two ways instead, and neither of them rides the foot.
+ */
+export function SignInAction({ name, disabled = false, onSignIn, reasonId }: SignInActionProps) {
   return (
-    <>
-      {signIn.refusal === undefined ? null : (
-        <p className="text-detail text-danger-ink" role="alert">
-          {signIn.refusal}
-        </p>
-      )}
-      {quieter ? (
-        <button
-          className="focus-ring text-detail text-ink-secondary underline underline-offset-2"
-          onClick={() => {
-            signIn.mutate({ provider }, { onSuccess: onConnected });
-          }}
-          type="button"
-        >
-          Sign in with a different account
-        </button>
-      ) : (
-        <SheetActionSlot>
-          <button
-            className="push-button-primary focus-ring"
-            onClick={() => {
-              signIn.mutate({ provider }, { onSuccess: onConnected });
-            }}
-            type="button"
-          >
-            Sign in to {name}
-          </button>
-        </SheetActionSlot>
-      )}
-    </>
+    <SheetActionSlot>
+      <button
+        aria-describedby={reasonId}
+        className="push-button-primary focus-ring disabled:bg-surface-inert disabled:text-ink-secondary"
+        disabled={disabled}
+        onClick={onSignIn}
+        type="button"
+      >
+        Sign in to {name}
+      </button>
+    </SheetActionSlot>
   );
 }
