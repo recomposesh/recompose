@@ -32,6 +32,7 @@ import { adoptLegacyConfigHome } from '../storage/config-home';
 import { firstRequestReporter } from '../storage/settings-amend';
 import { loadSettingsFile } from '../storage/settings-store';
 import { startStorageWatchers } from '../storage/storage-watchers';
+import { reconcileVault } from '../storage/vault-maintenance';
 import { subscriptionCredentialStore } from '../subscriptions/subscription-credential-store';
 import { machineCustody } from '../subscriptions/subscriptions-wiring';
 import { openAccountKinds } from '../usage/account-kinds';
@@ -122,10 +123,30 @@ function watchEngineStates(
   deps.repaintStates(engineHost.states());
 }
 
+/**
+ * @summary Boot is the one moment nothing else is writing either store, which is why the repair
+ * ADR-0018 deferred runs here. It says what it took and what it found, because a store quietly
+ * lightened is worse than one left diverged.
+ */
+async function repairedStore(deps: StoredBootDeps): Promise<void> {
+  const settled = await reconcileVault(deps.recomposeHome(), deps.onCorrupt);
+
+  if (settled.swept.length > 0) {
+    console.warn(`swept ${String(settled.swept.length)} vault entries no account reached`);
+  }
+
+  if (settled.dangling.length > 0) {
+    console.warn(`accounts whose credential is gone: ${settled.dangling.join(', ')}`);
+  }
+}
+
 export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredBoot> {
   await adoptLegacyConfigHome(deps.legacyUserDataPath, deps.recomposeHome());
 
   const boot = await storedBootState(deps.recomposeHome(), deps.onCorrupt);
+
+  await repairedStore(deps);
+
   const custody = machineCustody(deps.recomposeHome());
   const { accountKinds, usageStore } = await openUsageLedger(deps);
   const engineHost = createEngineHost({
