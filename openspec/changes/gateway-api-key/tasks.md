@@ -87,13 +87,13 @@ The maintainer picked option B, so the key gets an Access section of its own.
 
 ### Task 6: The whole loop
 
-- [ ] `gherkin/engine/api-key.feature` and `gherkin/gateways/api-key.feature` graduate unchanged to
+- [x] `gherkin/engine/api-key.feature` and `gherkin/gateways/api-key.feature` graduate unchanged to
       `apps/desktop/e2e/features/`, each landing in the same commit as its step file
-- [ ] `steps/engine-api-key.steps.ts` drives the refused request, the four accepted spellings, the
+- [x] `steps/engine-api-key.steps.ts` drives the refused request, the four accepted spellings, the
       open health path, the closed management path, and the requirement turned off
-- [ ] `steps/gateways-api-key.steps.ts` drives the switch, the copy, the regeneration, the switch back
+- [x] `steps/gateways-api-key.steps.ts` drives the switch, the copy, the regeneration, the switch back
       off, and the stopped gateway that stays stopped
-- [ ] Both written through the `playwright-best-practices` and `gherkin-best-practices` skills
+- [x] Both written through the `playwright-best-practices` and `gherkin-best-practices` skills
 
 ### Task 7: The record
 
