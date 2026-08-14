@@ -118,6 +118,24 @@ The decision folded three items from #155 and one from #154 into this train. The
 - **The failure reveal anchoring.** Task 7b owns it.
 - **The furniture scenario.** Task 8 owns it, on main's amended line.
 
+## A graduated scenario found a real defect, which is what they're for
+
+Unit 8a wrote the approved scenario _A credential refusal cools that child alone_ and it couldn't go green on the shipped app. With a failover router over two targets, an account leaving the registry makes the gateway answer 502 `holds no target` and the healthy sibling never hears about it. Nothing leaves the machine. That's the failure this whole change exists to prevent, and it reproduces CLIProxyAPI#3317 inside recompose.
+
+Two halves, both confirmed by reading the code rather than by report:
+
+- `readingFromGrant` in `gateway-attempt.ts` turns any grant verdict other than `resolved` and `missing-credential` into a recompose refusal carrying `retryableHint: false`, which ends the walk. An account that left produces `missing-target` from `target-custody.ts`, so it lands in exactly that arm.
+- `removeAccount` in `main/ipc/storage-ipc.ts` rewrites the accounts file and never re-mints the engine view. The gateway handlers and `stored-gateway-serving.ts` re-mint on gateway writes and bind changes only, so a standing goes stale and the short circuit in `readingAtNode` that would have moved on never fires.
+
+It contradicts proposal decision 6, `design.md` line 294, and the docstring on `resolveSpendGrant`, which says in as many words that a ladder whose first child lost its credential still spends its siblings.
+
+Task 4b owns the repair. The mandatory half is the walk, where one child's custody failure must never end it, however stale the view. The stale view is the second half and gets judged on its own, because a standing nobody refreshes misleads more readers than this one.
+
+Two facts unit 8a measured that correct earlier notes:
+
+- **The stand-in always writes `Retry-After` on a 429**, defaulting to one second. So a walk exhausted over 429s answers 429 with a time whether a step named one, and never 502. Task 4's note reads as though 502 were reachable that way from a test.
+- **Cooling reaches no log.** `notesThatCarriedARequest` filters a cooling note out of traffic, so the only evidence a caller or a scenario can see is the exhausted refusal naming the child. Task 4's note lists cooling among the log-only observations, and it isn't there either.
+
 ## The streaming scenarios the stand-in can't carry, and what happened to them
 
 Unit 8b answered the open question before writing a line, read-only, against `@copilotkit/aimock@1.38.0` itself rather than its docs.
