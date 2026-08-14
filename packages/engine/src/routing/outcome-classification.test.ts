@@ -20,16 +20,6 @@ describe('the failures another child could still cure', () => {
     });
   });
 
-  test('a child whose credential could not be granted moves the walk on alone', () => {
-    const verdict = classify({ kind: 'grant-missing-credential' }, NOW);
-
-    expect(verdict).toEqual({
-      verdict: 'move-on',
-      coolUntilMs: NOW + DEFAULT_COOLDOWN_MS,
-      reason: { because: 'missing-credential' },
-    });
-  });
-
   test('every status the table calls retryable moves the walk on', () => {
     for (const status of RETRYABLE_STATUSES) {
       expect(classify({ kind: 'refused', status, answer: 'upstream' }, NOW).verdict).toBe(
@@ -60,6 +50,35 @@ describe('the failures another child could still cure', () => {
       coolUntilMs: NOW + DEFAULT_COOLDOWN_MS,
       reason: { because: 'stream-error', status: 503 },
     });
+  });
+});
+
+describe('a child the walk could not spend at all', () => {
+  test('a credential the parent could not open cools that child and no other', () => {
+    const verdict = classify({ kind: 'grant-missing-credential' }, NOW);
+
+    expect(verdict).toEqual({
+      verdict: 'move-on',
+      coolUntilMs: NOW + DEFAULT_COOLDOWN_MS,
+      reason: { because: 'missing-credential' },
+    });
+  });
+
+  test('an account that left the registry cools that child and no other', () => {
+    const verdict = classify({ kind: 'grant-missing-target' }, NOW);
+
+    expect(verdict).toEqual({
+      verdict: 'move-on',
+      coolUntilMs: NOW + DEFAULT_COOLDOWN_MS,
+      reason: { because: 'missing-target' },
+    });
+  });
+
+  test('the two are told apart, so the refusal names the repair the seat needs', () => {
+    const missingTarget = classify({ kind: 'grant-missing-target' }, NOW);
+    const missingCredential = classify({ kind: 'grant-missing-credential' }, NOW);
+
+    expect(missingTarget).not.toEqual(missingCredential);
   });
 });
 

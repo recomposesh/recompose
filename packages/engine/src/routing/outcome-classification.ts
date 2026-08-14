@@ -3,6 +3,7 @@ import { DEFAULT_COOLDOWN_MS } from './cooldown-signal';
 export type AttemptReading<TAnswer> =
   | { kind: 'transport-failure' }
   | { kind: 'grant-missing-credential' }
+  | { kind: 'grant-missing-target' }
   | {
       kind: 'refused';
       status: number;
@@ -21,6 +22,7 @@ export type AttemptReading<TAnswer> =
 export type AttemptReason =
   | { because: 'transport-failure' }
   | { because: 'missing-credential' }
+  | { because: 'missing-target' }
   | { because: 'refused'; status: number }
   | { because: 'stream-error'; status: number };
 
@@ -47,7 +49,7 @@ type Answering<TAnswer> = Extract<
 
 type Unanswered = Extract<
   AttemptReading<never>,
-  { kind: 'transport-failure' | 'grant-missing-credential' }
+  { kind: 'transport-failure' | 'grant-missing-credential' | 'grant-missing-target' }
 >;
 
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504, 529]);
@@ -92,8 +94,10 @@ function verdictAnAnsweringReadingEarns<TAnswer>(
 }
 
 function reasonAnUnansweredAttemptGives(reading: Unanswered): AttemptReason {
-  return reading.kind === 'transport-failure'
-    ? { because: 'transport-failure' }
+  if (reading.kind === 'transport-failure') return { because: 'transport-failure' };
+
+  return reading.kind === 'grant-missing-target'
+    ? { because: 'missing-target' }
     : { because: 'missing-credential' };
 }
 

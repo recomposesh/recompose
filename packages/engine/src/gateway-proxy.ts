@@ -10,6 +10,7 @@ import type { WalkNote } from './gateway-walk-notes';
 import type { ProxyDialect } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
 import type { AIStudioRelay } from './provider/ai-studio-relay';
+import type { TranslationRefusal } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
 import type { CooldownLedger } from './routing/cooldown-ledger';
 import type { AttemptReading } from './routing/outcome-classification';
@@ -22,7 +23,7 @@ import { gatewayRequestCrossing } from './gateway-request-crossing';
 import { answerTheWalkGives } from './gateway-walk-answer';
 import { failedOutcome, notesThatCarriedARequest } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
-import { missingCredential } from './refusals';
+import { missingCredential, missingTarget } from './refusals';
 import { routerTheEntryStands } from './router-entry';
 import { walkAttempts } from './routing/attempt-walk';
 import { createCooldownLedger } from './routing/cooldown-ledger';
@@ -48,6 +49,24 @@ function ledgerTheTableUses(memory: RoutingMemory, routing: EngineRouting): Cool
     : memory.ledger;
 }
 
+type GrantUnmet = Extract<
+  AttemptReading<Response>,
+  { kind: 'grant-missing-credential' | 'grant-missing-target' }
+>;
+
+/**
+ * The sentence a seat whose custody failed owes the caller, in the words that seat earned.
+ *
+ * @summary An account that left the registry and a credential that could not be opened are two
+ * different repairs, so they keep the two refusals the gateway already shipped for them rather than
+ * collapsing into one. A ladder never reaches here, because it speaks for every child at once.
+ */
+function refusalUnresolvedCustodyEarns(deps: AttemptDeps, reading: GrantUnmet): TranslationRefusal {
+  return reading.kind === 'grant-missing-target'
+    ? missingTarget(deps.gateway.displayName, deps.virtualModel.id)
+    : missingCredential(deps.gateway.displayName, deps.virtualModel.id);
+}
+
 /**
  * What one attempt would have answered the caller, had the walk stopped there.
  *
@@ -61,10 +80,7 @@ function answerableOf(deps: AttemptDeps, reading: AttemptReading<Response>): Res
 
   if (reading.kind === 'transport-failure') return unreachableTargetAnswer(deps.crossing);
 
-  return refusalResponse(
-    deps.crossing.dialect,
-    missingCredential(deps.gateway.displayName, deps.virtualModel.id),
-  );
+  return refusalResponse(deps.crossing.dialect, refusalUnresolvedCustodyEarns(deps, reading));
 }
 
 /**

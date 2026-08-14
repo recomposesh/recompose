@@ -38,6 +38,10 @@ describe('the reason a refusal gives for each child it names', () => {
     expect(whyOf(noteOf({ because: 'missing-credential' }))).toBe('has no credential');
   });
 
+  it('says a child has no target when the account it named left the registry', () => {
+    expect(whyOf(noteOf({ because: 'missing-target' }))).toBe('has no target');
+  });
+
   it('says a child could not be reached when the connection carried nothing back', () => {
     expect(whyOf(noteOf({ because: 'transport-failure' }))).toBe('could not be reached');
   });
@@ -128,6 +132,13 @@ describe('what one failed attempt paints on its own cable', () => {
     expect(failedOutcome(noteOf({ because: 'missing-credential' }), 1200)).toMatchObject({
       status: 502,
       detail: 'The child has no credential.',
+    });
+  });
+
+  it('paints a departed account as unreachable too, and says which of the two it was', () => {
+    expect(failedOutcome(noteOf({ because: 'missing-target' }), 1200)).toMatchObject({
+      status: 502,
+      detail: 'The child has no target.',
     });
   });
 

@@ -23,23 +23,38 @@ function childNameOf(routing: EngineRouting, routeNode: string): string {
     : routeNode;
 }
 
+type StatuslessReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stream-error'>;
+
+/**
+ * Why a child nobody ever answered for could not take the request.
+ *
+ * @summary A child whose account left the registry is told apart from one whose account is still
+ * there without a credential, because the two ask a person for different repairs. A child that stood
+ * cooling reads as such rather than as a failure of this request, because it never carried one.
+ */
+function whyNothingAnswered(because: StatuslessReason): string {
+  if (because === 'missing-credential') return 'has no credential';
+
+  if (because === 'missing-target') return 'has no target';
+
+  return because === 'transport-failure' ? 'could not be reached' : 'stands cooling';
+}
+
 /**
  * Why one child could not take the request, in the words a refusal hands a person.
  *
  * @summary The walk records facts and no copy at all, so the sentence a person reads is written here
- * and only here. A child that stood cooling reads as such rather than as a failure of this request,
- * because it never carried one.
+ * and only here. A status appears only where a provider answered with one, so the two reasons that
+ * carry one are split from the four that were never answered at all.
  */
 function whyOf(note: WalkNote): string {
   const reason = note.reason;
 
   if (reason.because === 'refused') return `refused with ${String(reason.status)}`;
 
-  if (reason.because === 'stream-error') return `failed mid-stream with ${String(reason.status)}`;
-
-  if (reason.because === 'missing-credential') return 'has no credential';
-
-  return reason.because === 'transport-failure' ? 'could not be reached' : 'stands cooling';
+  return reason.because === 'stream-error'
+    ? `failed mid-stream with ${String(reason.status)}`
+    : whyNothingAnswered(reason.because);
 }
 
 function statusOf(note: WalkNote): number {
