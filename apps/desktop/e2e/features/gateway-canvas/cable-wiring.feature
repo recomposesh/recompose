@@ -1,8 +1,9 @@
 Feature: A dragged cable creates a binding
 
   Pulling a cable out of a port and dropping it wires the composition
-  directly. A drop on empty canvas becomes an add through the picker of
-  stored accounts, never a silent cancel, and Esc is the one way out.
+  directly. A drop on empty canvas asks what to bind and then becomes an add
+  through the picker of stored accounts, never a silent cancel, and Esc is
+  the one way out.
 
   Scenario: A cable dropped on a target binds the virtual model
     Given a virtual model "fast" holding no target
@@ -13,7 +14,7 @@ Feature: A dragged cable creates a binding
 
   Scenario: A drop on empty canvas opens the picker
     Given a virtual model "fast" holding no target
-    When the person drags a cable from the port of "fast" and drops it on empty canvas
+    When the person drops a cable from the port of "fast" on empty canvas and picks the target
     Then the picker of stored accounts opens
     And it anchors to a pending target card at the drop point
 

@@ -3,14 +3,8 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { modelAliasFromName } from '@recompose/contracts';
 
-import {
-  dragCableOnto,
-  dropCableOnEmptyCanvas,
-  fitCanvasToView,
-  pullCableTo,
-  releaseCable,
-  takeUpThePortAsk,
-} from '../canvas-gestures';
+import { cardNamed, draftNamed, letGoOnEmptyCanvas } from '../canvas-composition';
+import { dragCableOnto, fitCanvasToView, pullCableTo, releaseCable } from '../canvas-gestures';
 import {
   anchoredUnder,
   composition,
@@ -18,7 +12,6 @@ import {
   letGoOfAnyCableInFlight,
   rememberCableInFlight,
   rememberComposition,
-  rememberDropPoint,
   rememberPendingSeat,
   rememberVirtualModel,
   standsAt,
@@ -26,15 +19,18 @@ import {
   thePendingSeat,
   virtualModelInFocus,
 } from '../canvas-memory';
-import { emptyCanvasSpot } from '../canvas-room';
 import {
   accountPicker,
+  pickProviderModel,
+  pickTheStoredTarget,
+  pickTheTargetKind,
+} from '../canvas-picker';
+import { emptyCanvasSpot } from '../canvas-room';
+import {
   cableBetween,
-  wireBetween,
   cableId,
   cablePath,
   canvasNode,
-  completeThePick,
   DRAFT_CABLE,
   DRAFT_NODE,
   GATEWAY_NODE,
@@ -43,13 +39,13 @@ import {
   nodeTreatment,
   openGatewayCanvas,
   PENDING_NODE,
-  pickProviderModel,
   sourcePort,
   standingCables,
   standingNodes,
   storedBinding,
   targetNodeId,
   targetPort,
+  wireBetween,
 } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
 import { draftNameField } from '../gateway-drawer';
@@ -68,40 +64,6 @@ const SERVED_MODEL = 'claude-sonnet-5';
 
 /** The definition that stands an account on the canvas, since only a binding seats a target card. */
 const COMPANION = 'steady';
-
-/** The card a name stands as: the stored definition, or the draft while it holds no target yet. */
-async function cardNamed(page: Page, name: string): Promise<string> {
-  const standing = await standingNodes(page);
-  const stored = modelNodeId(modelAliasFromName(name));
-
-  rememberVirtualModel(page, name);
-
-  if (standing.includes(stored)) {
-    return stored;
-  }
-
-  if (standing.includes(DRAFT_NODE)) {
-    return DRAFT_NODE;
-  }
-
-  throw new Error(`no card on the canvas stands for the virtual model "${name}"`);
-}
-
-/** Stands a definition a person began and left unbound, the one shape holding no target at all. */
-async function draftNamed(page: Page, name: string): Promise<void> {
-  await openGatewayCanvas(page, focusedGateway(page));
-  await takeUpThePortAsk(page, GATEWAY_NODE);
-  await expect(draftNameField(page)).toBeVisible();
-  await draftNameField(page).fill(name);
-  rememberVirtualModel(page, name);
-
-  await expect.poll(async () => standingNodes(page)).toContain(DRAFT_NODE);
-  expect(await nodeTreatment(page, DRAFT_NODE)).toBe('draft-model');
-}
-
-async function letGoOnEmptyCanvas(page: Page, nodeId: string): Promise<void> {
-  rememberDropPoint(page, await dropCableOnEmptyCanvas(page, sourcePort(page, nodeId)));
-}
 
 async function standsBoundToTheKeyAccount(page: Page, name: string): Promise<void> {
   const key = await accountHeldAs(page, 'api-key');
@@ -165,6 +127,7 @@ Given(
     await gatewayTargetingAKey(page);
     await draftNamed(page, name);
     await letGoOnEmptyCanvas(page, DRAFT_NODE);
+    await pickTheTargetKind(page);
 
     await expect(accountPicker(page)).toBeVisible();
     await expect.poll(async () => standingNodes(page)).toContain(PENDING_NODE);
@@ -207,9 +170,17 @@ When(
 );
 
 When(
+  'the person drops a cable from the port of {string} on empty canvas and picks the target',
+  async ({ page }, name: string) => {
+    await letGoOnEmptyCanvas(page, await cardNamed(page, name));
+    await pickTheTargetKind(page);
+  },
+);
+
+When(
   'the person picks the stored Anthropic key account and the provider model {string}',
   async ({ page }, providerModel: string) => {
-    await completeThePick(page, KEY_ACCOUNT, providerModel);
+    await pickTheStoredTarget(page, KEY_ACCOUNT, providerModel);
   },
 );
 

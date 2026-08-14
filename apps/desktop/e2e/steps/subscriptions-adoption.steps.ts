@@ -1,7 +1,8 @@
 import { expect } from '@playwright/test';
 
 import { takeUpThePortAsk } from '../canvas-gestures';
-import { accountPicker, DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
+import { accountPicker, pickTheTargetKind } from '../canvas-picker';
+import { DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
 import { Then, When } from '../fixtures';
 import { catalog } from '../provider-screen';
 import { focusedGateway } from '../scenario-memory';
@@ -36,6 +37,7 @@ Then(
     await openGatewayCanvas(page, focusedGateway(page));
     await takeUpThePortAsk(page, GATEWAY_NODE);
     await takeUpThePortAsk(page, DRAFT_NODE);
+    await pickTheTargetKind(page);
     await expect(accountPicker(page).getByRole('button', { name: plan.label })).toBeVisible();
   },
 );

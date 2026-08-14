@@ -5,8 +5,8 @@ import { modelAliasFromName } from '@recompose/contracts';
 
 import { dragCableOnto, fitCanvasToView } from '../canvas-gestures';
 import { rememberVirtualModel, virtualModelInFocus } from '../canvas-memory';
+import { accountPicker, pickProviderModel } from '../canvas-picker';
 import {
-  accountPicker,
   cableGrabEnd,
   cableId,
   canvasCable,
@@ -17,7 +17,6 @@ import {
   modelNodeId,
   nodeTreatment,
   openGatewayCanvas,
-  pickProviderModel,
   removalConfirmation,
   sourcePort,
   standingNodes,

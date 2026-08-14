@@ -3,13 +3,8 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import { takeUpThePortAsk } from '../canvas-gestures';
-import {
-  canvasNode,
-  completeThePick,
-  DRAFT_NODE,
-  GATEWAY_NODE,
-  openGatewayCanvas,
-} from '../canvas-screen';
+import { completeThePick } from '../canvas-picker';
+import { canvasNode, DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
 import {
   draftInspector,

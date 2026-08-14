@@ -176,41 +176,6 @@ export async function cablePath(page: Page, cable: string): Promise<string> {
   return drawn ?? '';
 }
 
-/** The stage of the picker that asks which stored account a binding lands on. */
-export function accountPicker(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Pick an account' });
-}
-
-/** The stage of the picker that asks which model the chosen account serves. */
-export function providerModelPicker(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Pick a provider model' });
-}
-
-async function pickAccount(page: Page, account: string): Promise<void> {
-  await accountPicker(page).getByRole('button', { name: account }).click();
-}
-
-export async function pickProviderModel(page: Page, providerModel: string): Promise<void> {
-  await providerModelPicker(page).getByRole('button', { name: providerModel }).click();
-}
-
-/**
- * Settles both halves of a binding, which is what a drop on empty canvas or a plus opens.
- *
- * @summary A stored binding always carries a provider model, so no pick that stops after the
- * account can write one. A drop onto a card that already stands opens the second stage alone, and
- * such a step reaches for `pickProviderModel` instead.
- */
-export async function completeThePick(
-  page: Page,
-  account: string,
-  providerModel: string,
-): Promise<void> {
-  await pickAccount(page, account);
-  await pickProviderModel(page, providerModel);
-  await expect(providerModelPicker(page)).toBeHidden();
-}
-
 /**
  * What the canvas said out loud, without interrupting whatever a person was reading.
  *
