@@ -31,6 +31,27 @@ export async function rowsMatchingTheTurnsSent(page: Page): Promise<number> {
   return sent;
 }
 
+/**
+ * How many rows the run holds, which is not how many the list drew.
+ *
+ * @summary The list is virtualized, so the rows in the document are whichever window the
+ * virtualizer is showing, and that window moves with the scroll and the viewport's height. The
+ * count a scenario means is the whole run, which the list reports on every row as `aria-setsize`.
+ *
+ * Reading the drawn rows instead is what made "the new row waits at the top" fail on CI while
+ * passing everywhere the window happened to be tall enough to draw them all.
+ */
+export async function rowsTheRunHolds(page: Page): Promise<number> {
+  const reported = await loggedRows(page).first().getAttribute('aria-setsize');
+
+  return Number(reported ?? 0);
+}
+
+/** Waits for the run to hold exactly this many rows, however many of them the list drew. */
+export async function theRunHolds(page: Page, rows: number): Promise<void> {
+  await expect(loggedRows(page).first()).toHaveAttribute('aria-setsize', String(rows));
+}
+
 export async function theDetailStandsOpen(page: Page): Promise<void> {
   await openGatewayCanvas(page, SERVING_GATEWAY);
 }
