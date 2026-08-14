@@ -1,5 +1,6 @@
 {
   "$schema": "../../node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": ["**/routeTree.gen.ts"],
   "singleQuote": true,
   "embeddedLanguageFormatting": "auto",
   "jsxSingleQuote": false,
