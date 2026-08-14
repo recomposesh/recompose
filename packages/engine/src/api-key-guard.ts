@@ -1,12 +1,11 @@
-import type { Context, MiddlewareHandler } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 
 import { timingSafeEqual } from 'node:crypto';
 
+import { presentedCredentials } from './presented-credential';
 import { apiKeyRequired } from './refusals';
 
 const OPEN_PATHS = new Set(['/health', '/healthz']);
-
-const BEARER = 'bearer ';
 
 /**
  * Whether a value a caller presented is the key the gateway holds.
@@ -25,33 +24,6 @@ function matches(presented: string, held: Buffer): boolean {
   const offered = Buffer.from(presented);
 
   return offered.length === held.length && timingSafeEqual(offered, held);
-}
-
-/**
- * The credential inside an `Authorization` header, whether or not the client named its scheme.
- *
- * @summary Some clients send `Bearer <key>` and some send the key alone, so the scheme comes off
- * where it stands and the value passes through where it doesn't. The comparison is case-insensitive
- * because the scheme name is, and the trim covers a client that spaced its value out.
- */
-function offeredIn(authorization: string | undefined): string | undefined {
-  if (authorization === undefined) {
-    return undefined;
-  }
-
-  return authorization.toLowerCase().startsWith(BEARER)
-    ? authorization.slice(BEARER.length).trimStart()
-    : authorization;
-}
-
-const KEY_HEADERS = ['x-api-key', 'x-goog-api-key'];
-
-function presentedKeys(c: Context): (string | undefined)[] {
-  return [
-    offeredIn(c.req.header('authorization')),
-    ...KEY_HEADERS.map((header) => c.req.header(header)),
-    c.req.query('key')?.trim(),
-  ];
 }
 
 /**
@@ -76,7 +48,7 @@ export function guardApiKey(displayName: string, apiKey: string): MiddlewareHand
       return next();
     }
 
-    const presented = presentedKeys(c);
+    const presented = presentedCredentials(c);
 
     if (presented.some((candidate) => candidate !== undefined && matches(candidate, held))) {
       return next();

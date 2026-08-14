@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import type { JsonObject } from './gateway-wire';
 
 import { isJsonObject, parsedJson } from './gateway-wire';
+import { presentedCredential } from './presented-credential';
 
 function invalidCharacter(value: string): boolean {
   return value.split('').some((character) => {
@@ -92,12 +93,19 @@ export function requestReplayScopeId(c: Context, body: JsonObject): string | und
   ]);
 }
 
+/**
+ * The mark one caller leaves, which is the same mark whichever way it presents its credential.
+ *
+ * @summary It scopes a replay to the caller who opened it, so two clients sharing a gateway never
+ * read each other's thinking. It reads the same four places the guard reads and strips the scheme
+ * the same way, because a caller that changed how it sends the same key is not a second caller.
+ */
 export function requestCallerFingerprint(c: Context): string | undefined {
-  const credential = c.req.header('authorization') ?? c.req.header('x-api-key');
+  const credential = presentedCredential(c);
 
-  if (credential === undefined || credential.trim() === '') return undefined;
+  if (credential === undefined) return undefined;
 
-  return createHash('sha256').update(credential.trim()).digest('hex');
+  return createHash('sha256').update(credential).digest('hex');
 }
 
 export function requestSessions(
