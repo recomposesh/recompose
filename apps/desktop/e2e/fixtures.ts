@@ -13,6 +13,7 @@ import type { SubscriptionTools } from './subscription-tools';
 
 import { fakeKeyProbe } from './key-probe-stub';
 import { dropServer, holdPort, LOOPBACK_HOSTS } from './loopback-ports';
+import { theClipboardIsHeld } from './one-clipboard';
 import { fakeLocalRuntime } from './runtime-stub';
 import { fakeSubscriptionTools } from './subscription-tools';
 import { seededUsageHistoryWritten } from './usage-screen';
@@ -34,6 +35,14 @@ export type PortSquatter = {
 };
 
 type ElectronFixtures = {
+  /**
+   * Holds the machine's one clipboard for a scenario tagged `@one-clipboard`.
+   *
+   * @summary It is automatic rather than asked for, because the copy and the read sit in different
+   * steps and the hold has to span both. The tag is what says a scenario needs it, so a feature
+   * file reads as the whole requirement.
+   */
+  oneClipboard: void;
   electronApp: ElectronApplication;
   keyProbe: KeyProbeStub;
   localRuntime: RuntimeStub;
@@ -96,6 +105,18 @@ async function restoreLoginItem(
 }
 
 export const test = base.extend<ElectronFixtures>({
+  oneClipboard: [
+    async ({ $tags }, use) => {
+      const letGo = $tags.includes('@one-clipboard') ? await theClipboardIsHeld() : null;
+
+      try {
+        await use();
+      } finally {
+        await letGo?.();
+      }
+    },
+    { auto: true },
+  ],
   subscriptionTools: async ({}, use) => {
     const tools = await fakeSubscriptionTools();
 

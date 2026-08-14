@@ -12,6 +12,7 @@ Feature: The API key a gateway holds
     Then "codex" holds a minted key
     And "codex" requires that key
 
+  @one-clipboard
   Scenario: A person copies the key into a client
     Given "codex" requires an API key
     When a person copies the API key of "codex"
