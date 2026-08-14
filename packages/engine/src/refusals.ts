@@ -55,6 +55,16 @@ export function nonLoopbackClient(): AnthropicRefusal {
   };
 }
 
+export function apiKeyRequired(displayName: string): AnthropicRefusal {
+  return {
+    type: 'error',
+    error: {
+      type: 'authentication_error',
+      message: `The gateway "${displayName}" requires an API key.`,
+    },
+  };
+}
+
 export function requestCarriesOrigin(): AnthropicRefusal {
   return {
     type: 'error',

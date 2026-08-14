@@ -29,19 +29,19 @@ parallel once Task 1 lands.
 
 ### Task 2: The engine owns the check
 
-- [ ] `apiKeyRequired(displayName)` joins the two loopback refusals in `refusals.ts`
-- [ ] `packages/engine/src/api-key-guard.ts` holds `guardApiKey(displayName, apiKey)`
-- [ ] Specs prove each of the four spellings serves, with a `Bearer` prefix and without one
-- [ ] Specs prove a request presenting a wrong candidate beside a right one serves
-- [ ] Specs prove an absent key and a wrong key draw the same 401 body and the same
+- [x] `apiKeyRequired(displayName)` joins the two loopback refusals in `refusals.ts`
+- [x] `packages/engine/src/api-key-guard.ts` holds `guardApiKey(displayName, apiKey)`
+- [x] Specs prove each of the four spellings serves, with a `Bearer` prefix and without one
+- [x] Specs prove a request presenting a wrong candidate beside a right one serves
+- [x] Specs prove an absent key and a wrong key draw the same 401 body and the same
       `WWW-Authenticate` header
-- [ ] Specs prove `/health` and `/healthz` serve without a key
-- [ ] Specs prove a candidate carrying surrounding whitespace still matches
-- [ ] `createGatewayApp` mounts the guard after `guardLoopback` and before `openServingTurn`, and
+- [x] Specs prove `/health` and `/healthz` serve without a key
+- [x] Specs prove a candidate carrying surrounding whitespace still matches
+- [x] `createGatewayApp` mounts the guard after `guardLoopback` and before `openServingTurn`, and
       mounts nothing when the snapshot carries no key
-- [ ] Specs through a built app prove a model path and a management path refuse without the key and
+- [x] Specs through a built app prove a model path and a management path refuse without the key and
       serve with it, and that a gateway holding no key keeps today's answers
-- [ ] A spec proves no engine log row carries an inbound credential in plain text
+- [x] A spec proves no engine log row carries an inbound credential in plain text
 
 ### Task 3: The main process owns delivery
 
