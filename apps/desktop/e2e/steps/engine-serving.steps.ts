@@ -16,6 +16,7 @@ import {
   sendTurn,
   turnUnder,
 } from '../gateway-client';
+import { heldExchanges, recordExchange } from '../gateway-exchanges';
 import { storedGateway } from '../gateway-screen';
 
 /** Where an SDK habitually starts against a base URL, before it adds a path of its own. */
@@ -30,24 +31,6 @@ const OPENAI_TURN = '/v1/chat/completions';
 const BOTH_DIALECTS = 2;
 
 const NO_SUCH_MODEL = 404;
-
-type Exchange = { gateway: string; answer: GatewayAnswer };
-
-const exchanges = new WeakMap<Page, Exchange[]>();
-
-function record(page: Page, gateway: string, answer: GatewayAnswer): void {
-  exchanges.set(page, [...(exchanges.get(page) ?? []), { gateway, answer }]);
-}
-
-function heldExchanges(page: Page): Exchange[] {
-  const held = exchanges.get(page) ?? [];
-
-  if (held.length === 0) {
-    throw new Error('no step sent a request the scenario could read an answer from');
-  }
-
-  return held;
-}
 
 /** The two answers one turn drew, the Anthropic reading first, in the order they were sent. */
 function bothDialects(page: Page): [GatewayAnswer, GatewayAnswer] {
@@ -76,13 +59,13 @@ async function addressOf(page: Page, name: string): Promise<string> {
 }
 
 async function checkHealth(page: Page, name: string): Promise<void> {
-  record(page, name, await readFrom(await addressOf(page, name), '/health'));
+  recordExchange(page, name, await readFrom(await addressOf(page, name), '/health'));
 }
 
 When(
   'a client using the address of {string} as its base URL sends a request',
   async ({ page }, name: string) => {
-    record(page, name, await readFrom(await addressOf(page, name), MODEL_LISTING));
+    recordExchange(page, name, await readFrom(await addressOf(page, name), MODEL_LISTING));
   },
 );
 
@@ -118,8 +101,8 @@ When(
   async ({ page }, name: string, model: string) => {
     const address = await addressOf(page, name);
 
-    record(page, name, await sendTurn(address, ANTHROPIC_TURN, turnUnder(model)));
-    record(page, name, await sendTurn(address, OPENAI_TURN, turnUnder(model)));
+    recordExchange(page, name, await sendTurn(address, ANTHROPIC_TURN, turnUnder(model)));
+    recordExchange(page, name, await sendTurn(address, OPENAI_TURN, turnUnder(model)));
   },
 );
 

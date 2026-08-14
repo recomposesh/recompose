@@ -1,3 +1,4 @@
+import { engineGatewaySchema } from '@recompose/contracts';
 import { describe, expect, test } from 'vitest';
 
 import {
@@ -133,5 +134,53 @@ describe('the snapshot a gateway about to be written serves under', () => {
         },
       ],
     });
+  });
+});
+
+describe('which key the engine is trusted with', () => {
+  const requiring = {
+    ...gatewayHolding([]),
+    apiKey: { value: 'rc-local-abcdef', required: true },
+  };
+
+  const holdingUnenforced = {
+    ...gatewayHolding([]),
+    apiKey: { value: 'rc-local-abcdef', required: false },
+  };
+
+  test('a gateway that requires its key hands the child the value to compare against', async () => {
+    const userDataPath = await storageHolding([], []);
+
+    await expect(engineGatewayOf(userDataPath, noComplaint, requiring)).resolves.toMatchObject({
+      apiKey: 'rc-local-abcdef',
+    });
+  });
+
+  test('a key the gateway stores but no longer requires never leaves the parent', async () => {
+    const userDataPath = await storageHolding([], []);
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, holdingUnenforced);
+
+    expect(snapshot.apiKey).toBeUndefined();
+  });
+
+  test('an unenforced key leaves the property absent rather than undefined', async () => {
+    const userDataPath = await storageHolding([], []);
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, holdingUnenforced);
+
+    expect('apiKey' in snapshot).toBe(false);
+  });
+
+  test('a gateway that never minted a key hands the child none', async () => {
+    const userDataPath = await storageHolding([], []);
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, gatewayHolding([]));
+
+    expect('apiKey' in snapshot).toBe(false);
+  });
+
+  test('the snapshot the child receives is one the protocol accepts', async () => {
+    const userDataPath = await storageHolding([], []);
+    const snapshot = await engineGatewayOf(userDataPath, noComplaint, requiring);
+
+    expect(() => engineGatewaySchema.parse(snapshot)).not.toThrow();
   });
 });

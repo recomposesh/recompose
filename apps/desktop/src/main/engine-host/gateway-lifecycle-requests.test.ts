@@ -1,107 +1,18 @@
-import {
-  ACCOUNTS_VERSION,
-  GATEWAY_CONFIG_VERSION,
-  type Account,
-  type EngineGateway,
-  type GatewayConfig,
-} from '@recompose/contracts';
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { EngineHost } from './engine-host';
 
 import { createGatewayLifecycleRequests } from './gateway-lifecycle-requests';
+import {
+  complained,
+  directoryHolding,
+  gatewayNamed,
+  gatewayServing,
+  recordingHost,
+  requestsOver,
+} from './gateway-lifecycle.testkit';
 import { keyRow } from './spend-grant.testkit';
-
-function gatewayNamed(slug: string, port: number): GatewayConfig {
-  return {
-    schemaVersion: GATEWAY_CONFIG_VERSION,
-    slug,
-    displayName: slug,
-    port,
-    virtualModels: [],
-    layout: { nodes: {} },
-  };
-}
-
-function gatewayServing(slug: string, port: number, accountId: string): GatewayConfig {
-  return {
-    ...gatewayNamed(slug, port),
-    virtualModels: [
-      { id: 'fast', displayName: 'fast', target: { accountId, providerModel: 'claude-sonnet-5' } },
-    ],
-  };
-}
-
-function recordingHost() {
-  const started: EngineGateway[] = [];
-  const stopped: string[] = [];
-  const restarted: EngineGateway[] = [];
-
-  const host: EngineHost = {
-    replayLogs: () => undefined,
-    retainedLogRows: () => [],
-    start: async (gateway) => {
-      started.push(gateway);
-
-      return Promise.resolve({ status: 'running' });
-    },
-    stop: async (slug) => {
-      stopped.push(slug);
-
-      return Promise.resolve({ status: 'stopped' });
-    },
-    restart: async (gateway) => {
-      restarted.push(gateway);
-
-      return Promise.resolve({ status: 'running' });
-    },
-    states: () => ({}),
-    onStatesChanged: () => () => undefined,
-    probe: async () => Promise.resolve({ verdict: 'could-not-check' as const }),
-    probeRuntime: async () => Promise.resolve({ verdict: 'unreachable' as const }),
-    listModels: async () => Promise.resolve({ standing: 'unlisted' as const }),
-    dispose: () => undefined,
-  };
-
-  return { host, started, stopped, restarted };
-}
-
-async function directoryHolding(
-  stored: readonly GatewayConfig[],
-  accounts: readonly Account[] = [],
-): Promise<string> {
-  const userDataPath = await mkdtemp(join(tmpdir(), 'recompose-lifecycle-'));
-  const gatewaysDir = join(userDataPath, 'gateways');
-
-  await mkdir(gatewaysDir, { recursive: true });
-
-  for (const config of stored) {
-    await writeFile(join(gatewaysDir, `${config.slug}.json`), JSON.stringify(config), 'utf8');
-  }
-
-  await writeFile(
-    join(userDataPath, 'accounts.json'),
-    JSON.stringify({ schemaVersion: ACCOUNTS_VERSION, accounts }),
-    'utf8',
-  );
-
-  return userDataPath;
-}
-
-function complained(spy: { mock: { calls: unknown[][] } }): string {
-  return spy.mock.calls.flat().map(String).join(' ');
-}
-
-function requestsOver(host: EngineHost | null, userDataPath: string) {
-  return createGatewayLifecycleRequests({
-    host: () => host,
-    userDataPath: () => userDataPath,
-    onCorrupt: () => undefined,
-  });
-}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -130,14 +41,14 @@ describe('the snapshot a slug-only request serves under', () => {
     });
   });
 
-  test('restarting hands the engine a target the registry still holds, bound', async () => {
-    const recorded = recordingHost();
+  test('reapplying hands the engine a target the registry still holds, bound', async () => {
+    const recorded = recordingHost(['codex']);
     const requests = requestsOver(
       recorded.host,
       await directoryHolding([gatewayServing('codex', 8397, keyRow.id)], [keyRow]),
     );
 
-    requests.restart('codex');
+    requests.reapply('codex');
 
     await vi.waitFor(() => {
       expect(recorded.restarted[0]?.virtualModels).toStrictEqual(boundToTheStoredModel);
@@ -189,14 +100,14 @@ describe('asking the engine to act on a gateway named only by its slug', () => {
     });
   });
 
-  test('restarting hands the engine the gateway it looked up', async () => {
-    const recorded = recordingHost();
+  test('reapplying hands the engine the gateway it looked up', async () => {
+    const recorded = recordingHost(['codex']);
     const requests = requestsOver(
       recorded.host,
       await directoryHolding([gatewayNamed('codex', 8397)]),
     );
 
-    requests.restart('codex');
+    requests.reapply('codex');
 
     await vi.waitFor(() => {
       expect(recorded.restarted).toEqual([
@@ -273,18 +184,18 @@ describe('an engine that refuses a directive', () => {
     expect(complained(complaint)).toContain('stop the gateway "codex"');
   });
 
-  test('a restart the engine refuses names the restart, not some other act', async () => {
+  test('a reapply the engine refuses names the reapply, not some other act', async () => {
     const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const refusing: EngineHost = {
-      ...recordingHost().host,
+      ...recordingHost(['codex']).host,
       restart: async () => Promise.reject(new Error('the engine did not report')),
     };
     const requests = requestsOver(refusing, await directoryHolding([gatewayNamed('codex', 8397)]));
 
-    requests.restart('codex');
+    requests.reapply('codex');
 
     await vi.waitFor(() => {
-      expect(complained(complaint)).toContain('restart the gateway "codex"');
+      expect(complained(complaint)).toContain('reapply the gateway "codex"');
     });
   });
 });

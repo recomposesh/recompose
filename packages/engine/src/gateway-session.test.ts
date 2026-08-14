@@ -1,7 +1,11 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 
-import { requestReplayScopeId, requestSessionId } from './gateway-session';
+import {
+  requestCallerFingerprint,
+  requestReplayScopeId,
+  requestSessionId,
+} from './gateway-session';
 
 async function sessionFrom(body: Record<string, unknown>, headers: Record<string, string> = {}) {
   const app = new Hono();
@@ -115,5 +119,39 @@ describe('replay session namespaces', () => {
     await expect(replayScopeFrom({}, { 'x-codex-window-id': 'window-1' })).resolves.toEqual({
       scope: 'window:window-1',
     });
+  });
+});
+
+async function fingerprintFrom(headers: Record<string, string> = {}): Promise<string> {
+  const app = new Hono();
+
+  app.post('/', (c) => c.text(requestCallerFingerprint(c) ?? ''));
+
+  const response = await app.request('http://local/', { method: 'POST', headers });
+
+  return response.text();
+}
+
+describe('what a caller leaves behind in the log', () => {
+  it('records a digest rather than the credential the caller presented', async () => {
+    const key = 'rc-local-J8xQm2NpVr4wYs6bZa1cLd3fGh5jKm9';
+
+    await expect(fingerprintFrom({ 'x-api-key': key })).resolves.not.toBe(key);
+  });
+
+  it('records a digest of the fixed width a log row accepts', async () => {
+    await expect(fingerprintFrom({ 'x-api-key': 'rc-local-abcdef' })).resolves.toMatch(
+      /^[0-9a-f]{64}$/u,
+    );
+  });
+
+  it('reads the bearer header the same way, so no spelling escapes the digest', async () => {
+    await expect(fingerprintFrom({ authorization: 'Bearer rc-local-abcdef' })).resolves.toMatch(
+      /^[0-9a-f]{64}$/u,
+    );
+  });
+
+  it('records nothing at all when the caller presented no credential', async () => {
+    await expect(fingerprintFrom()).resolves.toBe('');
   });
 });

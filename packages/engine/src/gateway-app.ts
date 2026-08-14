@@ -8,6 +8,7 @@ import type { ProxyDialect } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
 import type { ProviderLogStore } from './provider/provider-log-store';
 
+import { guardApiKey } from './api-key-guard';
 import { proxyCodexAlphaSearch } from './gateway-codex-alpha-search';
 import { proxyCodexCompactRequest } from './gateway-codex-compact';
 import { proxyTokenCountRequest } from './gateway-count-tokens';
@@ -254,6 +255,11 @@ export function createGatewayApp(
   const watched = watchingTraffic(spendGrantFor, note ?? (() => undefined));
 
   app.use(guardLoopback(gateway.port, gateway.bindAddress));
+
+  if (gateway.apiKey !== undefined) {
+    app.use(guardApiKey(gateway.displayName, gateway.apiKey));
+  }
+
   app.use(openServingTurn(gateway.slug));
 
   app.onError((error, c) => {

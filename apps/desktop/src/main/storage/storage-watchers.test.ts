@@ -120,7 +120,7 @@ async function startedWatchers() {
   const watchers = await startStorageWatchers({
     userDataPath,
     lifecycle: {
-      restart: (slug) => {
+      reapply: (slug) => {
         restarts.push(slug);
       },
       stop: () => undefined,

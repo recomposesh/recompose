@@ -1,12 +1,12 @@
 import { describe, expectTypeOf, test } from 'vitest';
 
-import type { GatewayConfig, Target, VirtualModel } from './index';
+import type { GatewayApiKey, GatewayConfig, Target, VirtualModel } from './index';
 
 import { modelAliasSchema } from './gateway-config';
 
 describe('the stored shape of a virtual model', () => {
-  test('the config pins itself to schema version 2', () => {
-    expectTypeOf<GatewayConfig['schemaVersion']>().toEqualTypeOf<2>();
+  test('the config pins itself to schema version 3', () => {
+    expectTypeOf<GatewayConfig['schemaVersion']>().toEqualTypeOf<3>();
   });
 
   test('a gateway holds a list of virtual models', () => {
@@ -31,6 +31,27 @@ describe('the stored shape of a virtual model', () => {
   test('a virtual model structurally cannot hold a routing ladder', () => {
     expectTypeOf<VirtualModel>().not.toHaveProperty('routing');
     expectTypeOf<VirtualModel>().not.toHaveProperty('slug');
+  });
+});
+
+describe('the stored shape of the key a gateway hands its callers', () => {
+  test('a gateway may carry no key at all', () => {
+    expectTypeOf<GatewayConfig['apiKey']>().toEqualTypeOf<GatewayApiKey | undefined>();
+  });
+
+  test('the key travels with the answer to whether the gateway requires it', () => {
+    expectTypeOf<keyof GatewayApiKey>().toEqualTypeOf<'value' | 'required'>();
+    expectTypeOf<GatewayApiKey['value']>().toEqualTypeOf<string>();
+    expectTypeOf<GatewayApiKey['required']>().toEqualTypeOf<boolean>();
+  });
+
+  test('a requirement structurally cannot stand without the key it requires', () => {
+    expectTypeOf<Required<GatewayApiKey>>().toEqualTypeOf<GatewayApiKey>();
+  });
+
+  test('the key structurally cannot carry a scope or a lifetime', () => {
+    expectTypeOf<GatewayApiKey>().not.toHaveProperty('scope');
+    expectTypeOf<GatewayApiKey>().not.toHaveProperty('expiresAt');
   });
 });
 

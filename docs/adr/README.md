@@ -111,3 +111,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0103](0103-the-patch-gate-asks-for-ninety.md)                                  | The Patch Gate Asks for Ninety                                                      | Accepted   | 2026-08-14 |
 | [0104](0104-a-window-names-the-range-it-stands-on.md)                           | A Window Names the Range It Stands On                                               | Accepted   | 2026-08-14 |
 | [0105](0105-two-ways-in-read-as-two-rows.md)                                    | Two Ways into a Plan Read as Two Rows                                               | Accepted   | 2026-08-14 |
+| [0106](0106-a-gateway-carries-its-own-key.md)                                   | A Gateway Carries Its Own Key, in Its Own Document                                  | Accepted   | 2026-08-14 |

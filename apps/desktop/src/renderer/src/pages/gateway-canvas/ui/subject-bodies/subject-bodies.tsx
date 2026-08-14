@@ -14,6 +14,7 @@ import { BrandMark, CopyButton } from '../../../../shared/ui';
 import { accountKindTextTint } from '../../lib/account-kind-paint';
 import { servesTally } from '../../model/served-models';
 import { EndpointBox } from '../endpoint-box/endpoint-box';
+import { GatewayAccess } from '../gateway-access/gateway-access';
 import { GatewayGeneralInfo } from '../gateway-general-info/gateway-general-info';
 import { ModelGeneralInfo } from '../model-general-info/model-general-info';
 import { ServesBox } from '../serves-box/serves-box';
@@ -44,6 +45,7 @@ export function gatewayBody(
     },
     <>
       <GatewayGeneralInfo gateway={gateway} />
+      <GatewayAccess gateway={gateway} />
       {sectionHeading('Endpoint')}
       <EndpointBox bindAddress={bindAddress} gateway={gateway} status={status} />
       {sectionHeading('Serves', servesTallyLine(served))}

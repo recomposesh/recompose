@@ -7,7 +7,7 @@ import type {
   VirtualModel,
 } from '@recompose/contracts';
 
-import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
+import { DEFAULT_GATEWAY_BIND_ADDRESS, enforcedApiKey } from '@recompose/contracts';
 
 import { storagePathsFor } from '../ipc/storage-context';
 import { loadAccountsFile } from '../storage/accounts-store';
@@ -38,8 +38,12 @@ function mintedAgainst(
  *
  * @summary A stored target names an account, and the account may be gone by the time the gateway
  * serves, so the standing is minted here rather than trusted from the document. The snapshot says
- * which names serve and which refuse; it never carries a credential, because a turn asks for one
- * per request.
+ * which names serve and which refuse, and it carries no provider credential, because a turn asks for
+ * one per request.
+ *
+ * The gateway's own key is the one secret that travels, and only where the gateway enforces it. A key
+ * a person stored and then stopped requiring stays in the parent, so the child never holds a value it
+ * must not act on.
  */
 export async function engineGatewayOf(
   userDataPath: string,
@@ -51,6 +55,8 @@ export async function engineGatewayOf(
     loadSettingsFile(storagePathsFor(userDataPath).settingsFile, onCorrupt),
   ]);
 
+  const enforced = enforcedApiKey(config);
+
   return {
     slug: config.slug,
     displayName: config.displayName,
@@ -58,6 +64,7 @@ export async function engineGatewayOf(
     ...(settings.bindAddress === undefined || settings.bindAddress === DEFAULT_GATEWAY_BIND_ADDRESS
       ? {}
       : { bindAddress: settings.bindAddress }),
+    ...(enforced === undefined ? {} : { apiKey: enforced }),
     virtualModels: mintedAgainst(registry.accounts, config.virtualModels),
   };
 }

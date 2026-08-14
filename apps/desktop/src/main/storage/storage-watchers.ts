@@ -7,7 +7,7 @@ import { startGatewayWatcher } from './gateway-watcher-wiring';
 
 type StorageWatchersOptions = {
   userDataPath: string;
-  lifecycle: Pick<GatewayLifecycleRequests, 'restart' | 'stop'>;
+  lifecycle: Pick<GatewayLifecycleRequests, 'reapply' | 'stop'>;
   onCorrupt: (quarantinedPath: string) => void;
   onAccountsChanged: () => void;
 };

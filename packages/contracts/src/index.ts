@@ -4,6 +4,7 @@ export * from './credential-policy';
 export * from './transport-policy';
 export * from './non-blank';
 export * from './gateway-config';
+export * from './gateway-api-key';
 export * from './engine-state';
 export * from './engine-traffic';
 export * from './engine-logs';

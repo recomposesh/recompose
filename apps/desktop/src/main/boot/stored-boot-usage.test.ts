@@ -113,7 +113,7 @@ function depsOver(home: string): StoredBootDeps {
     spendGrantContext: () => contextFor(home),
     reflectSettings: () => undefined,
     repaintStates: () => undefined,
-    lifecycle: { restart: () => undefined, stop: () => undefined },
+    lifecycle: { reapply: () => undefined, stop: () => undefined },
   };
 }
 
