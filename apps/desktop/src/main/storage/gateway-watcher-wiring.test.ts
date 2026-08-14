@@ -95,7 +95,7 @@ async function watchedGateways() {
   const watcher = await startGatewayWatcher({
     userDataPath,
     lifecycle: {
-      restart: (slug) => {
+      reapply: (slug) => {
         restarts.push(slug);
       },
       stop: (slug) => {

@@ -202,10 +202,14 @@ above 65536 bytes, and this one asks for 32.
 - `apps/desktop/src/main/engine-host/stored-gateway.ts`: carries the field onto the snapshot (modify)
 - `apps/desktop/src/main/engine-host/stored-gateway.test.ts`: the snapshot carries it, and omits it
   when the document holds none or holds one it doesn't enforce (modify)
-- `apps/desktop/src/main/engine-host/gateway-lifecycle-requests.ts`: `restart` becomes `reapply` and
+- `apps/desktop/src/main/engine-host/gateway-lifecycle-requests.ts`: `reapply` joins `restart` and
   skips a gateway whose state isn't `running` (modify)
-- `apps/desktop/src/main/engine-host/gateway-lifecycle-requests.test.ts`: a serving gateway reapplies,
-  a stopped one stays stopped (modify)
+- `apps/desktop/src/main/engine-host/gateway-lifecycle.testkit.ts`: the recording engine, which now
+  reports which gateways serve (create)
+- `apps/desktop/src/main/engine-host/gateway-lifecycle-requests.test.ts`: reads its seams from the
+  testkit (modify)
+- `apps/desktop/src/main/engine-host/gateway-lifecycle-reapply.test.ts`: a serving gateway reapplies, a
+  stopped one stays stopped, and a restart a person picked still acts (create)
 - `apps/desktop/src/main/storage/gateway-watcher-wiring.ts`: calls `reapply` on an upsert (modify)
 - `apps/desktop/src/main/storage/storage-watchers.ts`: threads the renamed request (modify)
 - `apps/desktop/src/main/boot/stored-boot.ts`: threads the renamed request (modify)
@@ -385,14 +389,19 @@ This change repairs it rather than filing it, because the API key makes the cons
 one. A hand edit that drops a stopped gateway's key would have the app stand that gateway up, open. The
 edit asked for nothing of the kind.
 
-The lifecycle request the watcher holds takes the name `reapply` in place of `restart`, and skips a
-gateway whose state isn't `running`. The name states the intent, and the watcher is its only caller, so
-the blast radius is the four files that thread it.
+The lifecycle gains `reapply` beside `restart`, and the watcher moves onto it. Reapply skips a gateway
+whose state isn't `running`.
+
+The two names stay apart because two different things ask. A restart is a person picking Restart from
+the menu bar, and it acts. A reapply is a document that changed, and it never reads as a request to
+serve. Folding them into one name would have made the domain lean on a menu item's `enabled` flag for
+its correctness.
 
 **Alternatives considered:** guarding inside `EngineHost.restart`, rejected because `movePort` restarts
 a gateway that stopped on a port conflict on purpose, and the guard would break that recovery. Guarding
 in the watcher wiring, rejected because the wiring holds no engine state and would need a new port
-threaded to it. Leaving it as a rider, rejected by the maintainer.
+threaded to it. One guarded name for both callers, rejected above. Leaving it as a rider, rejected by
+the maintainer.
 
 ### 10. The key gets its own section, the switch applies at once, and only the regeneration asks
 

@@ -6,25 +6,26 @@ parallel once Task 1 lands.
 
 ### Task 1: The contract owns the value
 
-- [ ] `packages/contracts/src/gateway-api-key.ts` holds `GATEWAY_API_KEY_PREFIX`,
-      `gatewayApiKeySchema`, `mintGatewayApiKey`, `maskGatewayApiKey`, `withGatewayApiKey`, and
-      `enforcedApiKey`
-- [ ] Specs prove `enforcedApiKey` answers the value for a required key, and nothing for a stored key
+- [x] `packages/contracts/src/gateway-api-key.ts` holds `GATEWAY_API_KEY_PREFIX`,
+      `gatewayApiKeySchema`, `mintGatewayApiKey`, and `maskGatewayApiKey`
+- [x] `gateway-config.ts` holds `withGatewayApiKey` and `enforcedApiKey`, beside the document they
+      rewrite, which is also what keeps the dependency one-way for the no-circular rule
+- [x] Specs prove `enforcedApiKey` answers the value for a required key, and nothing for a stored key
       the gateway doesn't require, and nothing for a gateway holding none
-- [ ] Specs prove the mint carries the prefix, 43 base64url characters, and no padding
-- [ ] Specs prove two mints differ
-- [ ] Specs prove the mask hides everything between the prefix and the last four characters, and
+- [x] Specs prove the mint carries the prefix, 43 base64url characters, and no padding
+- [x] Specs prove two mints differ
+- [x] Specs prove the mask hides everything between the prefix and the last four characters, and
       that it shows no tail at all for a value too short to hide eight characters
-- [ ] Specs prove `withGatewayApiKey` adds a key, replaces a key, turns the requirement off while
+- [x] Specs prove `withGatewayApiKey` adds a key, replaces a key, turns the requirement off while
       keeping the value, and drops the field for `undefined`
-- [ ] Property specs over arbitrary keys, each beside its deterministic twin
-- [ ] `gatewayConfigSchema` carries `apiKey` as one nested field holding the value and the
+- [x] Property specs over arbitrary keys, each beside its deterministic twin
+- [x] `gatewayConfigSchema` carries `apiKey` as one nested field holding the value and the
       requirement, `GATEWAY_CONFIG_VERSION` reads 3, and a migration from 2 bumps the version and
       changes nothing else
-- [ ] A type-level spec asserts the schema admits no requirement without a key
-- [ ] `engineGatewaySchema` carries `apiKey`
-- [ ] The type-level spec asserts the field stays optional on both derived types
-- [ ] The barrel exports the module
+- [x] A type-level spec asserts the schema admits no requirement without a key
+- [x] `engineGatewaySchema` carries `apiKey`
+- [x] The type-level spec asserts the field stays optional on both derived types
+- [x] The barrel exports the module
 
 ### Task 2: The engine owns the check
 
@@ -73,14 +74,16 @@ The maintainer picked option B, so the key gets an Access section of its own.
 
 ### Task 5: A document change never starts a stopped gateway
 
-- [ ] `GatewayLifecycleRequests.restart` becomes `reapply` and skips a gateway whose state isn't
-      `running`, threaded through `gateway-watcher-wiring.ts`, `storage-watchers.ts`,
-      `stored-boot.ts`, and `index.ts`
-- [ ] Specs prove a serving gateway reapplies under the changed document
-- [ ] Specs prove a stopped gateway stays stopped, and that nothing starts a listener on its port
-- [ ] Specs prove the engine-not-ready failure still reaches the log
-- [ ] A spec proves `movePort` still restarts a gateway that stopped on a port conflict, because that
-      path calls `EngineHost.restart` rather than the lifecycle request
+- [x] `GatewayLifecycleRequests.reapply` joins `restart` and skips a gateway whose state isn't
+      `running`, threaded through `gateway-watcher-wiring.ts`, `storage-watchers.ts`, and
+      `stored-boot.ts`
+- [x] `restart` stays for the menu bar's Restart, which is a person's own act rather than a document
+      change
+- [x] Specs prove a serving gateway reapplies under the changed document
+- [x] Specs prove a stopped gateway stays stopped, and that nothing starts a listener on its port
+- [x] Specs prove the engine-not-ready failure still reaches the log
+- [x] `movePort` still restarts a gateway that stopped on a port conflict, because that path calls
+      `EngineHost.restart` rather than the lifecycle request
 
 ### Task 6: The whole loop
 

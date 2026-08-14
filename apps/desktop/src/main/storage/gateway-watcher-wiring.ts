@@ -6,7 +6,7 @@ import { GatewayConfigWatcher } from './gateway-config-watcher';
 
 type WatcherWiring = {
   userDataPath: string;
-  lifecycle: Pick<GatewayLifecycleRequests, 'restart' | 'stop'>;
+  lifecycle: Pick<GatewayLifecycleRequests, 'reapply' | 'stop'>;
   onCorrupt: (quarantinedPath: string) => void;
   signal?: AbortSignal | undefined;
 };
@@ -15,7 +15,7 @@ export async function startGatewayWatcher(wiring: WatcherWiring): Promise<Gatewa
   const watcher = new GatewayConfigWatcher({
     directory: join(wiring.userDataPath, 'gateways'),
     onUpsert: (gateway) => {
-      wiring.lifecycle.restart(gateway.slug);
+      wiring.lifecycle.reapply(gateway.slug);
     },
     onRemove: (slug) => {
       wiring.lifecycle.stop(slug);
