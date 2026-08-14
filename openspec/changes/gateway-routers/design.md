@@ -546,7 +546,7 @@ Per proposal decision 15 and rider #140. `@copilotkit/aimock` enters as an exact
 
 ### Draft record 0104: the router walks an id-keyed node table
 
-The next free number at writing time is 0104. The implementation lands it through the `new-adr` skill and renumbers if the sequence moved.
+The next free number at writing time was 0104. The sequence has since moved: 0104, 0105, and 0106 belong to the usage window, the two ways into a plan, and the gateway's own key. This record lands at **0107** and the AIMock record at **0108**, both through the `new-adr` skill, which checks the sequence again at the moment it writes. The draft headings below keep their original numbers so the cross-references in this document still resolve.
 
 > **Status**: Draft, lands with the gateway-routers implementation
 >
