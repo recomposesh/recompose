@@ -18,7 +18,7 @@ let desk: string;
 
 type Answer = { said: string; status: number };
 
-async function ask(argv: readonly string[]): Promise<Answer> {
+async function ask(argv: readonly string[], input?: string): Promise<Answer> {
   const child = spawn(process.execPath, [fake, ...argv], {
     env: {
       ...process.env,
@@ -27,6 +27,12 @@ async function ask(argv: readonly string[]): Promise<Answer> {
     },
   });
   let said = '';
+
+  if (input === undefined) {
+    child.stdin.end();
+  } else {
+    child.stdin.end(input);
+  }
 
   child.stdout.setEncoding('utf8');
   child.stdout.on('data', (chunk: string) => {
@@ -102,5 +108,26 @@ describe('the fake security tool', () => {
     await ask(['find-generic-password', ...item]);
 
     expect(await opens()).toBe(1);
+  });
+});
+
+describe('the command a real security reads off its standard input', () => {
+  test('a write handed on standard input stores what a write handed in argv would', async () => {
+    const blob = '{"a":"b c","d":"e\\"f"}';
+
+    await ask(
+      ['-i'],
+      `add-generic-password -U -s "recompose-parked-credentials" -a "acc-one" -w "{\\"a\\":\\"b c\\",\\"d\\":\\"e\\\\\\"f\\"}"\n`,
+    );
+
+    const read = await ask(['find-generic-password', ...item, '-w']);
+
+    expect(read.said).toBe(`${blob}\n`);
+  });
+
+  test('a standard input carrying no command answers that it read no request', async () => {
+    const answered = await ask(['-i'], '\n');
+
+    expect(answered.status).not.toBe(0);
   });
 });
