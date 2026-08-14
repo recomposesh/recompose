@@ -5,7 +5,7 @@ import { Wordmark } from './wordmark';
 export function NavTitle({ href, className }: ComponentProps<'a'>) {
   return (
     <a href={href} className={className}>
-      <Wordmark height={24} />
+      <Wordmark height={22} />
     </a>
   );
 }
