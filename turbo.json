@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build", "typecheck"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.strict.json"],
-      "outputs": ["dist/**", "out/**"]
+      "outputs": ["dist/**", "out/**", ".output/**"]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],

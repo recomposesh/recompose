@@ -77,6 +77,18 @@ module.exports = {
       to: { path: '^packages/engine/' },
     },
     {
+      name: 'web-not-into-desktop',
+      severity: 'error',
+      from: { path: '^apps/web/' },
+      to: { path: '^apps/desktop/' },
+    },
+    {
+      name: 'web-not-into-desktop-transitive',
+      severity: 'error',
+      from: { path: '^apps/web/' },
+      to: { path: '^apps/desktop/', reachable: true },
+    },
+    {
       name: 'headless-scope',
       severity: 'error',
       from: { path: '^apps/headless/' },

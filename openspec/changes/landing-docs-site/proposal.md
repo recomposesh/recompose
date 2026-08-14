@@ -84,10 +84,13 @@ answers every route.
    marketing page isn't. Every other gate applies. The edit-time test-first gate reaches the new
    application through the `apps/*/src/**` glob it already carries, and narrowing that glob
    would weaken a gate for no reason anyone has given.
-10. **Vale learns to read the documentation before anyone writes it.** The prose gate binds a
-    `*.md` glob, so content authored as `.mdx` would pass it vacuously. Vale parses that format
-    natively from version 3.18.0, and `mise.toml` pins 3.15.2, so the version and the glob move
-    together or the gate stays blind.
+10. **The documentation stays in a format the prose gate can already read.** The gate binds a
+    `*.md` glob, so a page authored as `.mdx` would pass it vacuously. Vale reads that format
+    natively from version 3.18.0, which isn't released: the newest build is 3.17.1, from
+    2026-08-05. The earlier reading of the vendor's page mistook forward-looking documentation
+    for a shipped feature. Every page therefore stays `.md`, which Fumadocs renders all the
+    same, and the format question reopens when 3.18.0 lands. Standing up the external
+    converter the older versions need would install machinery for content nobody has written.
 
 ## Capabilities
 

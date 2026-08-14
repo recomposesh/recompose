@@ -37,7 +37,8 @@ because writing the real documentation is its own change.
   `apps/web/src` with no config change. This drove the decision to pull the hero's motion
   math as a pure module, so there is something a failing test can drive.
 - Code map, `.vale.ini` binds `[*.md]` only: drove the choice to author the example pages as
-  `.md` rather than `.mdx`, and the task that moves the Vale version and the glob together.
+  `.md` rather than `.mdx`. The version that reads `.mdx` natively hasn't shipped, so the glob
+  stays as it stands and the pages stay in the format the gate already reads.
 - Code map, `turbo.json` outputs `dist/**` and `out/**`: adds the emitted directory to the task
   graph, or every run rebuilds the site uncached.
 - Code map, `.dependency-cruiser.cjs` keys every rule on `^apps/desktop/`: the spec's ban on
@@ -240,9 +241,6 @@ the build. A missing document for a content page fails the output check.
 - `turbo.json`: the emitted directory joins the build outputs (modify)
 - `pnpm-workspace.yaml`: exclude entries for the packages whose releases outrun the supply chain
   window (modify)
-- `mise.toml`: Vale moves to 3.18.0 or later, which reads the documentation format natively
-  (modify)
-- `.vale.ini`: a section naming the `.mdx` extension (modify)
 - `.oxlintrc.json`: the second Tailwind entry point (modify)
 - `.oxfmtrc.json`: the second stylesheet for class sorting (modify)
 - `.dependency-cruiser.cjs`: a forbidden rule stopping `apps/web` from reaching
