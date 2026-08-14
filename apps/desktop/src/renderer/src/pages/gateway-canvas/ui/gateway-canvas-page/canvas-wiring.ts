@@ -5,10 +5,10 @@ import { targetTheEntryNames } from '@recompose/contracts';
 
 import type { NodePositions, XY } from '../../lib/canvas-positions';
 import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
-import type { SeatReading } from './route-seats';
+import type { SeatReading } from '../../lib/route-seats';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { routeNodeIn, seatUnder, seatWritten } from './route-seats';
+import { routeNodeIn, seatUnder, seatWritten } from '../../lib/route-seats';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {

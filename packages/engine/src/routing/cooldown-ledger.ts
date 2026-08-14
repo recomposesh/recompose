@@ -1,12 +1,12 @@
-import type { RouteNodeSeat } from './route-node-key';
+import type { RouteNodeAddress } from './route-node-key';
 
 import { routeNodeKey } from './route-node-key';
 
 type Cooling = { coolUntilMs: number; retryAtMs?: number };
 
 export type CooldownLedger = {
-  cool: (seat: RouteNodeSeat, cooling: Cooling) => void;
-  coolingAt: (seat: RouteNodeSeat) => Cooling | undefined;
+  cool: (address: RouteNodeAddress, cooling: Cooling) => void;
+  coolingAt: (address: RouteNodeAddress) => Cooling | undefined;
 };
 
 function recorded(cooling: Cooling): Cooling {
@@ -28,11 +28,11 @@ export function createCooldownLedger(now: () => number): CooldownLedger {
   const standingDown = new Map<string, Cooling>();
 
   return {
-    cool: (seat, cooling) => {
-      standingDown.set(routeNodeKey(seat), recorded(cooling));
+    cool: (address, cooling) => {
+      standingDown.set(routeNodeKey(address), recorded(cooling));
     },
-    coolingAt: (seat) => {
-      const cooling = standingDown.get(routeNodeKey(seat));
+    coolingAt: (address) => {
+      const cooling = standingDown.get(routeNodeKey(address));
 
       return cooling !== undefined && cooling.coolUntilMs > now() ? cooling : undefined;
     },

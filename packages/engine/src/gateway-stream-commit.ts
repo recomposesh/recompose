@@ -60,12 +60,14 @@ function statusTheFirstEventEquals(held: Held): number | undefined {
   return undefined;
 }
 
-function replaying(held: Held, relayRest: boolean): ReadableStream<Uint8Array> {
+function enqueueHeld(controller: ReadableStreamDefaultController<Uint8Array>, held: Held): void {
+  for (const chunk of held.bytes) controller.enqueue(chunk);
+}
+
+function replayingAllOfIt(held: Held): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
     start(controller) {
-      for (const chunk of held.bytes) controller.enqueue(chunk);
-
-      if (!relayRest) controller.close();
+      enqueueHeld(controller, held);
     },
     async pull(controller) {
       const step = await held.reader.read();
@@ -82,12 +84,34 @@ function replaying(held: Held, relayRest: boolean): ReadableStream<Uint8Array> {
   });
 }
 
+function replayingOnlyWhatWasHeld(held: Held): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      enqueueHeld(controller, held);
+      controller.close();
+    },
+  });
+}
+
 function rebuilt(upstream: Response, body: ReadableStream<Uint8Array>): Response {
   return new Response(body, { status: upstream.status, headers: upstream.headers });
 }
 
 function carriesEventStream(upstream: Response): boolean {
   return upstream.headers.get('content-type')?.includes('text/event-stream') === true;
+}
+
+/**
+ * Lets go of an upstream body the walk has already decided against.
+ *
+ * @summary The first event classified as an error, so the answer this child gives is already fixed
+ * and nothing downstream reads another byte of it. Cancelling only frees the socket, and a stream
+ * that opened with an error is the one stream whose cancel is expected to reject, carrying back the
+ * very failure already classified. Raising it here would replace an outcome the walk can act on,
+ * which is moving to the next child, with a throw about a body nobody reads.
+ */
+async function letGoOf(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
+  await reader.cancel().catch(() => undefined);
 }
 
 async function latchedStream(
@@ -98,15 +122,15 @@ async function latchedStream(
   const equivalentStatus = statusTheFirstEventEquals(held);
 
   if (equivalentStatus === undefined) {
-    return { kind: 'committed', upstream: rebuilt(upstream, replaying(held, true)) };
+    return { kind: 'committed', upstream: rebuilt(upstream, replayingAllOfIt(held)) };
   }
 
-  await held.reader.cancel().catch(() => undefined);
+  await letGoOf(held.reader);
 
   return {
     kind: 'error-before-commit',
     equivalentStatus,
-    upstream: rebuilt(upstream, replaying(held, false)),
+    upstream: rebuilt(upstream, replayingOnlyWhatWasHeld(held)),
   };
 }
 

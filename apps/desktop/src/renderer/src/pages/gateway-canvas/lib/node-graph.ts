@@ -12,8 +12,9 @@ import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
 
 import { carriedBy, failureCarried, latestAcrossNodes, standingCarried } from './cable-traffic';
-import { routeCard, seatName } from './canvas-cards';
+import { routeCard } from './canvas-cards';
 import { firstDeclaredTarget, seatedRouteNodes } from './route-graph';
+import { seatName } from './route-seats';
 
 export type { CableFailure, CableStanding } from './cable-traffic';
 export type { CanvasNode, CanvasNodeKind } from './canvas-cards';

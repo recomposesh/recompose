@@ -1,11 +1,12 @@
 import type { RouteNode } from '@recompose/contracts';
 import type { Edge, Node } from '@xyflow/react';
 
+import type { SeatReading } from '../../lib/route-seats';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasWorld } from './canvas-standings';
-import type { SeatReading } from './route-seats';
 
-import { askedTargetRemoval, releasedBinding } from './binding-acts';
+import { routeNodeIn, seatWritten } from '../../lib/route-seats';
+import { askedTargetRemoval, releasedWithTheDraftSelected } from './binding-acts';
 import {
   bindingCableId,
   cableSeatOf,
@@ -14,7 +15,6 @@ import {
   routerSeatOf,
   targetModelIdOf,
 } from './canvas-wiring';
-import { routeNodeIn, seatWritten } from './route-seats';
 
 function removalQuestionAsked(world: CanvasWorld, nodes: Node[]): boolean {
   const removable = nodes.find(
@@ -130,7 +130,7 @@ export function deletionWiring(
         const modelId = bindingCableId(edge.id);
 
         if (modelId !== undefined && releaseDestroys(world, edge.id) === undefined) {
-          releasedBinding(world, modelId);
+          releasedWithTheDraftSelected(world, modelId);
         }
       }
     },

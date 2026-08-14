@@ -1,7 +1,9 @@
+import { nameOfRouter } from '@recompose/contracts';
+
 import type { CanvasNode } from '../../lib/node-graph';
 
 import { NodeCard } from '../node-card/node-card';
-import { childTally, routerName } from './router-reading';
+import { childTally } from './router-reading';
 
 /** What a router card reads itself off, the stored router plus the one ask it carries. */
 export type RouterNodeData = Extract<CanvasNode, { kind: 'router' }> & {
@@ -40,7 +42,7 @@ export function RouterNode({ data, selected }: RouterNodeProps) {
       incoming
       kicker="Router"
       kickerTint="text-router-ink"
-      name={routerName(mode, displayName)}
+      name={nameOfRouter(mode, displayName)}
       nameInk="text-ink"
       outgoing={{ bound: !incomplete, ask: 'Add a child', onAsk: onAddChild }}
       selected={selected}

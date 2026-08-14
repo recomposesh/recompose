@@ -26,21 +26,3 @@ export function routerTheEntryStands(routing: EngineRouting): EngineRouter | und
 
   return entry?.kind === 'router' ? entry : undefined;
 }
-
-const NAME_OF_MODE: Record<EngineRouter['policy']['mode'], string> = {
-  failover: 'Failover',
-  'round-robin': 'Round-robin',
-};
-
-/**
- * The name a router answers to wherever one is spoken of.
- *
- * @summary A person wires a router in one gesture and never has to name it, so every surface owes it
- * a name it did not ask for. The mode is the only fact a nameless router carries that a reader can
- * use, and it is the fact a reader wants: a refusal that says which ladder stood in the way says it
- * best by saying how that ladder chooses. A name a person did write outranks the mode, because a name
- * that changes under an edit is not a name.
- */
-export function nameOfRouter(router: EngineRouter): string {
-  return router.displayName ?? NAME_OF_MODE[router.policy.mode];
-}

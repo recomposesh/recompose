@@ -4,7 +4,7 @@ import type { GatewayConfig } from '@recompose/contracts';
 export type SeatReading = { modelId: string; routeNodeId?: string | undefined };
 
 /**
- * The virtual model and the route node one seat name holds, which is the inverse of `seatName`.
+ * The virtual model and the route node one seat name holds, which is the inverse of `seatWritten`.
  *
  * @summary A card standing for the entry keeps the bare definition id it stood under before
  * routers existed, and every card below the entry adds the id its ladder holds it by. A model id
@@ -45,9 +45,27 @@ export function routeNodeIn(gateway: GatewayConfig, seat: SeatReading | undefine
 /**
  * The seat name one reading writes back, which is the inverse of `seatRead`.
  *
- * @summary The pair lives side by side on purpose: a change to how a card is named has to move
- * both, and reading a name back and writing it out again is what proves it did.
+ * @summary The one writer of a seat name on this canvas, so a card id, a cable id, and the id a
+ * pick commits under all join their two parts the same way. The pair lives side by side on purpose:
+ * a change to how a card is named has to move both, and reading a name back and writing it out
+ * again is what proves it did.
  */
 export function seatWritten(seat: SeatReading): string {
   return seat.routeNodeId === undefined ? seat.modelId : `${seat.modelId}:${seat.routeNodeId}`;
+}
+
+/**
+ * What names one route node's card apart from every other on the canvas.
+ *
+ * @summary A virtual model reaches exactly one entry, so the entry answers in the model's own name
+ * and every card a gateway stood before routers existed keeps the id it stood under. A node below
+ * the entry adds the id its ladder holds it by, which is what lets one model stand several targets
+ * without two cards colliding. A cable reads the same rule for the router it leaves, so a parent
+ * and its child never disagree about the card standing between them.
+ */
+export function seatName(modelId: string, routeNodeId: string, entry: string): string {
+  return seatWritten({
+    modelId,
+    routeNodeId: routeNodeId === entry ? undefined : routeNodeId,
+  });
 }

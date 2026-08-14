@@ -7,10 +7,21 @@ export type RouterRefusal = Extract<
 
 type ExhaustedRouter = Extract<RouterRefusal, { reason: 'exhausted-router' }>;
 
-const routerReasons = ['empty-router', 'exhausted-router', 'chained-turn'];
+const ROUTER_REASONS = {
+  'empty-router': true,
+  'exhausted-router': true,
+  'chained-turn': true,
+} as const satisfies Record<RouterRefusal['reason'], true>;
 
+/**
+ * Whether one refusal is a router's to explain rather than the translation layer's.
+ *
+ * @summary The reasons are keys of a record the compiler holds to `RouterRefusal`, so a fourth arm
+ * added to that union fails the build here rather than shipping a predicate that narrows to a shape
+ * the refusal never had. A list would only catch a misspelling; a record catches the omission too.
+ */
 export function isRouterFault(refusal: TranslationRefusal): refusal is RouterRefusal {
-  return routerReasons.includes(refusal.reason);
+  return Object.hasOwn(ROUTER_REASONS, refusal.reason);
 }
 
 function whereItStood(refusal: RouterRefusal): string {

@@ -26,50 +26,50 @@ describe('the children a gateway remembers standing down', () => {
 
   test('a child cooled until a named instant still stands down before that instant', () => {
     const { ledger } = aLedgerAt(NOW);
-    const seat = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
 
-    ledger.cool(seat, { coolUntilMs: NOW + 30_000 });
+    ledger.cool(address, { coolUntilMs: NOW + 30_000 });
 
-    expect(ledger.coolingAt(seat)).toStrictEqual({ coolUntilMs: NOW + 30_000 });
+    expect(ledger.coolingAt(address)).toStrictEqual({ coolUntilMs: NOW + 30_000 });
   });
 
   test('a child whose cooling has run out stands ready again', () => {
     const { ledger, tick } = aLedgerAt(NOW);
-    const seat = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
 
-    ledger.cool(seat, { coolUntilMs: NOW + 30_000 });
+    ledger.cool(address, { coolUntilMs: NOW + 30_000 });
     tick(30_000);
 
-    expect(ledger.coolingAt(seat)).toBeUndefined();
+    expect(ledger.coolingAt(address)).toBeUndefined();
   });
 
   test('a child one tick short of its cooling instant still stands down', () => {
     const { ledger, tick } = aLedgerAt(NOW);
-    const seat = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
 
-    ledger.cool(seat, { coolUntilMs: NOW + 30_000 });
+    ledger.cool(address, { coolUntilMs: NOW + 30_000 });
     tick(29_999);
 
-    expect(ledger.coolingAt(seat)).toStrictEqual({ coolUntilMs: NOW + 30_000 });
+    expect(ledger.coolingAt(address)).toStrictEqual({ coolUntilMs: NOW + 30_000 });
   });
 
   test('a later refusal moves the cooling to the instant it names', () => {
     const { ledger } = aLedgerAt(NOW);
-    const seat = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
 
-    ledger.cool(seat, { coolUntilMs: NOW + 30_000 });
-    ledger.cool(seat, { coolUntilMs: NOW + 5_000 });
+    ledger.cool(address, { coolUntilMs: NOW + 30_000 });
+    ledger.cool(address, { coolUntilMs: NOW + 5_000 });
 
-    expect(ledger.coolingAt(seat)).toStrictEqual({ coolUntilMs: NOW + 5_000 });
+    expect(ledger.coolingAt(address)).toStrictEqual({ coolUntilMs: NOW + 5_000 });
   });
 
   test('a cooling the provider itself promised is remembered as promised', () => {
     const { ledger } = aLedgerAt(NOW);
-    const seat = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'first' };
 
-    ledger.cool(seat, { coolUntilMs: NOW + 30_000, retryAtMs: NOW + 30_000 });
+    ledger.cool(address, { coolUntilMs: NOW + 30_000, retryAtMs: NOW + 30_000 });
 
-    expect(ledger.coolingAt(seat)).toStrictEqual({
+    expect(ledger.coolingAt(address)).toStrictEqual({
       coolUntilMs: NOW + 30_000,
       retryAtMs: NOW + 30_000,
     });

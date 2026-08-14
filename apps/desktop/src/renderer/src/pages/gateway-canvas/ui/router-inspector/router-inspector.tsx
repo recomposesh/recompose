@@ -1,5 +1,7 @@
 import type { Account, GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
 
+import { nameOfRouterMode } from '@recompose/contracts';
+
 import type { RouterMode } from '../../lib/routing-edits';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
@@ -33,8 +35,8 @@ const modeSentences: Record<RouterMode, string> = {
 };
 
 const modeOptions = [
-  { value: 'failover', label: 'Failover' },
-  { value: 'round-robin', label: 'Round-robin' },
+  { value: 'failover', label: nameOfRouterMode('failover') },
+  { value: 'round-robin', label: nameOfRouterMode('round-robin') },
 ] as const satisfies readonly { value: RouterMode; label: string }[];
 
 /**

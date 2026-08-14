@@ -2,38 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { refusalResponse } from './gateway-wire';
 import { chainedTurn, emptyRouter, exhaustedRouter, renderRefusal } from './refusals';
-import { nameOfRouter } from './router-entry';
 
 const NOON = Date.parse('2026-08-14T12:00:00.000Z');
 
 function messageOf(rendered: ReturnType<typeof renderRefusal>): string {
   return rendered.body.error.message;
 }
-
-describe('a router names itself from its mode until a person renames it', () => {
-  it('reads a failover router by its mode', () => {
-    expect(nameOfRouter({ kind: 'router', policy: { mode: 'failover' }, children: [] })).toBe(
-      'Failover',
-    );
-  });
-
-  it('reads a round-robin router by its mode', () => {
-    expect(nameOfRouter({ kind: 'router', policy: { mode: 'round-robin' }, children: [] })).toBe(
-      'Round-robin',
-    );
-  });
-
-  it('reads the name a person wrote over the mode it runs', () => {
-    expect(
-      nameOfRouter({
-        kind: 'router',
-        displayName: 'Ladder',
-        policy: { mode: 'failover' },
-        children: [],
-      }),
-    ).toBe('Ladder');
-  });
-});
 
 describe('a router holding no child refuses before any request leaves the machine', () => {
   it('answers a 502 naming the router and the virtual model', () => {

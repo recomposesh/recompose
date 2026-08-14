@@ -190,14 +190,7 @@ export function completedRebindPick(
   );
 }
 
-/**
- * Releases a binding into a held draft that keeps its name, its id, and its seat.
- *
- * @summary The stored shape carries no virtual model without a target, so unbinding takes the
- * definition out of the gateway and stands what a person typed as a draft card in the same place.
- * Rebinding the draft writes it back, which is why the unbind itself needs no confirmation.
- */
-export function releasedBinding(world: CanvasWorld, modelId: string, selectDraft = true): void {
+function released(world: CanvasWorld, modelId: string, standAfter: () => void): void {
   const model = world.gateway.virtualModels.find((held) => held.id === modelId);
 
   if (model === undefined) {
@@ -213,15 +206,41 @@ export function releasedBinding(world: CanvasWorld, modelId: string, selectDraft
         { displayName: model.displayName, id: model.id, accountId: '', providerModel: '' },
         seat,
       );
-      world.standings.select(selectDraft ? 'draft' : undefined);
-
-      if (!selectDraft) {
-        closeInspector();
-      }
-
+      standAfter();
       world.standings.announce({ kind: 'released', virtualModel: model.displayName });
     },
     onError: world.standings.refuse,
+  });
+}
+
+/**
+ * Releases a binding and hands the person the draft it became, ready to rebind.
+ *
+ * @summary The stored shape carries no virtual model without a target, so unbinding takes the
+ * definition out of the gateway and stands what a person typed as a draft card in the same place.
+ * Rebinding the draft writes it back, which is why the unbind itself needs no confirmation. Cutting
+ * a cable is aiming somewhere new rather than letting go, so the draft takes the selection and the
+ * inspector keeps speaking for it.
+ */
+export function releasedWithTheDraftSelected(world: CanvasWorld, modelId: string): void {
+  released(world, modelId, () => {
+    world.standings.select('draft');
+  });
+}
+
+/**
+ * Releases a binding and leaves nothing standing selected on the canvas.
+ *
+ * @summary Removing the entry route node takes the definition's whole binding with it, so the card
+ * a person had selected is gone by the time the write lands. Selecting the draft that replaced it
+ * would put the inspector on a card they never pressed, so the selection clears and the inspector
+ * closes. The draft still stands where the definition did, because the work a person typed survives
+ * either way out.
+ */
+export function releasedWithNothingSelected(world: CanvasWorld, modelId: string): void {
+  released(world, modelId, () => {
+    world.standings.select(undefined);
+    closeInspector();
   });
 }
 

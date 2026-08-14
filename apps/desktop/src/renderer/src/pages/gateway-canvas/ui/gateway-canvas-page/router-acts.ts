@@ -1,21 +1,26 @@
 import type { VirtualModel } from '@recompose/contracts';
 
-import { mintRouteNodeId } from '@recompose/contracts';
+import { mintRouteNodeId, nameOfRouter } from '@recompose/contracts';
 
+import type { SeatReading } from '../../lib/route-seats';
 import type { RouterMode } from '../../lib/routing-edits';
 import type { CanvasWorld } from './canvas-standings';
-import type { SeatReading } from './route-seats';
 
 import { closeInspector } from '../../../../shared/lib';
 import { emptyDefinition, gatewayDefiningRouted } from '../../lib/model-draft';
+import { seatWritten } from '../../lib/route-seats';
 import {
   gatewayBindingChild,
   gatewayDroppingNode,
   gatewayRoutingThrough,
 } from '../../lib/routing-edits';
 import { heldDraft } from '../../lib/use-held-draft';
-import { routerName } from '../router-node/router-reading';
-import { committedPick, graduatedDraft, releasedBinding, targetNameIn } from './binding-acts';
+import {
+  committedPick,
+  graduatedDraft,
+  releasedWithNothingSelected,
+  targetNameIn,
+} from './binding-acts';
 import { cardSeatOf, modelIdOf, routerSeatOf } from './canvas-wiring';
 
 /**
@@ -27,7 +32,7 @@ import { cardSeatOf, modelIdOf, routerSeatOf } from './canvas-wiring';
  */
 const BORN_ROUTER_MODE: RouterMode = 'failover';
 
-const BORN_ROUTER_NAME = routerName(BORN_ROUTER_MODE, undefined);
+const BORN_ROUTER_NAME = nameOfRouter(BORN_ROUTER_MODE);
 
 function modelHolding(world: CanvasWorld, modelId: string | undefined): VirtualModel | undefined {
   return world.gateway.virtualModels.find((held) => held.id === modelId);
@@ -87,7 +92,7 @@ function nestedUnderARouter(world: CanvasWorld, seat: SeatReading): void {
 
   committedPick(
     world,
-    `route:${seat.modelId}:${born}`,
+    `route:${seatWritten({ modelId: seat.modelId, routeNodeId: born })}`,
     gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, born, {
       kind: 'router',
       policy: { mode: BORN_ROUTER_MODE },
@@ -159,7 +164,7 @@ export function completedChildPick(
 
   committedPick(
     world,
-    `target:${seat.modelId}:${born}`,
+    `target:${seatWritten({ modelId: seat.modelId, routeNodeId: born })}`,
     gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, born, {
       kind: 'target',
       accountId,
@@ -194,7 +199,7 @@ export function removedRouteNode(world: CanvasWorld, nodeId: string): void {
   }
 
   if (parent.routeNodeId === parent.model.routing.entry) {
-    releasedBinding(world, seat.modelId, false);
+    releasedWithNothingSelected(world, seat.modelId);
 
     return;
   }
