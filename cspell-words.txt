@@ -81,6 +81,7 @@ DINIT
 dllexport
 dmgbuild
 docblocks
+docstrings
 domcontentloaded
 dorny
 dotless
