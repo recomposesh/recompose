@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { RemovalAsked } from './removal-flow';
+import type { RemovalAsked } from '../gateway-canvas-page/removal-flow';
 
 import { shownAsAskModal } from '../../../../shared/lib';
 import { Button } from '../../../../shared/ui';
@@ -45,6 +45,11 @@ const REMOVAL_WORDING = {
   },
 } as const;
 
+type RemovalDialogProps = {
+  /** The question a press raised, or nothing while the canvas stands unasked. */
+  removal: RemovalAsked | undefined;
+};
+
 /**
  * The removal question standing over the canvas, or nothing while no press asked one.
  *
@@ -52,7 +57,7 @@ const REMOVAL_WORDING = {
  * card that raised it. It names the subject and what removing it costs before the destructive
  * press is reachable, so nothing on this canvas leaves unannounced.
  */
-export function removalDialog(removal: RemovalAsked | undefined): ReactNode {
+export function RemovalDialog({ removal }: RemovalDialogProps): ReactNode {
   if (removal === undefined) {
     return null;
   }

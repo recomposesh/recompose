@@ -33,6 +33,7 @@ import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
 import { LogsDrawer } from '../logs-drawer/logs-drawer';
+import { RemovalDialog } from '../removal-dialog/removal-dialog';
 import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import {
   useInspectorPutAwayOnLeave,
@@ -40,7 +41,6 @@ import {
   useMenuReadsTheDrawer,
   useSelectionPutAwayWithInspector,
 } from './canvas-page-hooks';
-import { removalDialog } from './removal-dialog';
 import { useGatewayCanvas } from './use-gateway-canvas';
 
 function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
@@ -235,7 +235,7 @@ export function GatewayCanvasPage({
         canvas,
       })}
       {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
-      {removalDialog(canvas.removal)}
+      <RemovalDialog removal={canvas.removal} />
     </div>
   );
 }
