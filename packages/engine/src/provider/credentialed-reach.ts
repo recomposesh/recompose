@@ -19,7 +19,7 @@ import {
 import { observeKimiReplay } from './kimi-replay-runtime';
 import { providerObservability, providerRequestId } from './provider-observability';
 import { observeXAIReplay } from './xai-replay-runtime';
-import { withXaiRetryAfter } from './xai-response';
+import { asXaiRefusalReads } from './xai-response';
 import { filterXAIInternalSearchResponse } from './xai-search-response';
 import { restoreXAIToolResponse } from './xai-tool-response';
 
@@ -80,7 +80,7 @@ async function providerAnswer(
   if (observer !== undefined) return observer(crossing, answer);
   if (grant.spend.provider !== 'xai') return answer;
 
-  const decorated = await withXaiRetryAfter(answer);
+  const decorated = await asXaiRefusalReads(answer);
   const restored = restoreXAIToolResponse(decorated, crossing.xaiNamespaceTools ?? {});
   const filtered = filterXAIInternalSearchResponse(restored, crossing);
 
