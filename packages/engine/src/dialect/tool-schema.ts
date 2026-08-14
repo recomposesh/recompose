@@ -73,6 +73,44 @@ export function hubToolSchemaFrom(schema: HubJsonObject | undefined): HubToolSch
   };
 }
 
+/**
+ * Whether a value is an object schema, which is the only thing strictness has anything to say to.
+ *
+ * @summary A schema declares `type: 'object'` and holds its fields under `properties`. Anything
+ * else, a string, an array of numbers, an enum, has no extra properties to refuse.
+ */
+function isObjectSchema(value: unknown): value is HubJsonObject {
+  return isJsonObject(value) && value['type'] === 'object';
+}
+
+/**
+ * Every object inside a schema, made to refuse extra properties the way the outermost one does.
+ *
+ * @summary A provider running structured output strictly demands `additionalProperties: false` on
+ * every object, not only the one at the top. Setting it once left a schema whose nested objects
+ * still accepted anything, which either fails the provider's own validation or lets a field
+ * through that the tool never declared.
+ *
+ * A nested object that already answers the question keeps its answer, so a tool deliberately
+ * allowing extras somewhere inside is not overruled here.
+ */
+function strictlyNested(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(strictlyNested);
+  if (!isJsonObject(value)) return value;
+
+  const walked = eachValueStrictlyNested(value);
+
+  return isObjectSchema(walked) && walked['additionalProperties'] === undefined
+    ? { ...walked, additionalProperties: false }
+    : walked;
+}
+
+function eachValueStrictlyNested(held: HubJsonObject): HubJsonObject {
+  return Object.fromEntries(
+    Object.entries(held).map(([key, nested]) => [key, strictlyNested(nested)]),
+  );
+}
+
 export function strictProviderToolSchema(schema: HubToolSchema): HubToolSchema {
   if (providerSchemaIsCanonical(schema)) return schema;
 
@@ -88,7 +126,8 @@ export function strictProviderToolSchema(schema: HubToolSchema): HubToolSchema {
         key !== 'required',
     ),
   );
-  const properties = isJsonObject(source['properties']) ? source['properties'] : {};
+  const declared = isJsonObject(source['properties']) ? source['properties'] : {};
+  const properties = eachValueStrictlyNested(declared);
   const required = requiredFrom(source['required'])?.filter((name) => name in properties);
 
   return {
@@ -143,10 +182,21 @@ function completedSchemaValue(value: unknown): unknown {
     : completed;
 }
 
+/**
+ * What Anthropic is told about extra properties, which is what the tool said.
+ *
+ * @summary JSON Schema lets `additionalProperties` be a schema as well as a boolean: `{"type":
+ * "string"}` means extras are allowed and must be strings. Reading that as `false` says the
+ * opposite, so a tool that accepted extras stopped accepting them on the way across. A schema
+ * passes through, a boolean passes through, and only a value no schema could mean is read as a
+ * refusal, because guessing wider than the tool asked for is the one direction that costs safety.
+ */
 function anthropicAdditionalProperties(value: unknown): HubJsonObject {
   if (value === undefined) return {};
 
-  return { additionalProperties: typeof value === 'boolean' ? value : false };
+  const carried = typeof value === 'boolean' || isJsonObject(value) ? value : false;
+
+  return { additionalProperties: carried };
 }
 
 function anthropicSchemaDeclaration(value: unknown): HubJsonObject {

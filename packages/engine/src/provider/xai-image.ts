@@ -1,7 +1,7 @@
 import type { JsonObject } from '../gateway-wire';
 
 import { isJsonObject } from '../gateway-wire';
-import { withXaiRetryAfter } from './xai-response';
+import { asXaiRefusalReads } from './xai-response';
 
 function imageUrlValue(value: unknown): unknown {
   return isJsonObject(value) && 'url' in value ? value['url'] : value;
@@ -53,5 +53,5 @@ export async function reachXAIImage(
     body: JSON.stringify(normalized),
   });
 
-  return withXaiRetryAfter(response);
+  return asXaiRefusalReads(response);
 }
