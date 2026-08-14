@@ -15,6 +15,11 @@ Feature: Nodes move freely and the arrangement persists per gateway
     When the person leaves the gateway detail and returns
     Then the node of "fast" stands at that spot
 
+  Scenario: Positions survive closing the app
+    Given the person dragged the node of "fast" to a new spot
+    When the app starts again
+    Then the node of "fast" stands at that spot
+
   Scenario: Each gateway keeps its own arrangement
     Given a gateway "alpha" with a dragged arrangement and a gateway "beta" left untouched
     When the person opens the detail of "beta"

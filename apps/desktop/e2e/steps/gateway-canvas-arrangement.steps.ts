@@ -23,7 +23,11 @@ import {
 import { Given, Then, When } from '../fixtures';
 import { seedGateway } from '../gateway-screen';
 import { focusedGateway, focusGateway } from '../scenario-memory';
-import { accountHeldAs, gatewayTargetingAKey } from '../stored-target-accounts';
+import {
+  accountHeldAs,
+  gatewayTargetingAKey,
+  theKeyAccountStandsStored,
+} from '../stored-target-accounts';
 import { bindingOf, seedVirtualModels } from '../stored-virtual-models';
 
 /** The real model the stored Anthropic key account serves, which every binding here names. */
@@ -152,11 +156,15 @@ Given('the person dragged the node of {string} to a new spot', async ({ page }, 
  * @summary Both hold the same binding onto the same account, so the arrangement read off the one
  * before anybody dragged it is the arrangement the other must be standing in: a reading that would
  * be nothing but a guess if the two compositions differed.
+ *
+ * Only the account is seeded here, rather than an account and a gateway, so the two this scenario
+ * names are the only two standing. A third would leave the scenario reading past a gateway nobody
+ * in it ever mentions.
  */
 Given(
   'a gateway {string} with a dragged arrangement and a gateway {string} left untouched',
   async ({ page }, dragged: string, untouched: string) => {
-    await gatewayTargetingAKey(page);
+    await theKeyAccountStandsStored(page);
 
     for (const gateway of [dragged, untouched]) {
       await seedGateway(page, gateway);
@@ -179,6 +187,21 @@ When('the person drags the node of {string} across the canvas', async ({ page },
 
   linesBeforeADrag.set(page, await theLineDrawnBy(page, cableId(alias)));
   seatsDraggedTo.set(page, await draggedAcrossTheCanvas(page, modelNodeId(alias)));
+});
+
+/**
+ * The app started over, which is what tells a held arrangement from a written one.
+ *
+ * @summary Leaving the detail and returning proves the map the renderer keeps in memory, and that
+ * map survives a route change whether anything was written or not. A reload throws the map away,
+ * so only a seat that reached storage stands afterwards.
+ */
+When('the app starts again', async ({ page }) => {
+  await page.reload();
+  await openGatewayCanvas(page, focusedGateway(page));
+  await expect(
+    canvasNode(page, modelNodeId(modelAliasFromName(virtualModelInFocus(page)))),
+  ).toBeVisible();
 });
 
 When('the person opens the detail of {string}', async ({ page }, name: string) => {

@@ -5,11 +5,15 @@ import { expect } from '@playwright/test';
 import type { Seat } from '../canvas-screen';
 
 import {
+  canvasNode,
   canvasTool,
   minimap,
   minimapCards,
+  modelNodeId,
   nodeSeats,
+  openGatewayCanvas,
   standingNodes,
+  targetNodeId,
   viewportZoom,
 } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
@@ -101,13 +105,33 @@ async function schemeBehind(furniture: Locator): Promise<Scheme> {
   return schemeOfGround(await groundBehind(furniture));
 }
 
-Given('a gateway holding a virtual model bound to a target', async ({ page }) => {
+async function aCompositionStands(page: Page): Promise<void> {
   await gatewayTargetingAKey(page);
 
   const target = await accountHeldAs(page, 'api-key');
   const bound = bindingOf(BOUND_MODEL, target.id, SERVED_MODEL);
 
   await seedVirtualModels(page, focusedGateway(page), [bound]);
+}
+
+Given('a gateway holding a virtual model bound to a target', async ({ page }) => {
+  await aCompositionStands(page);
+});
+
+/**
+ * A composition standing open, rather than a gateway standing alone.
+ *
+ * @summary A gateway with nothing bound seats one card, and the canvas seats it at the origin. The
+ * origin is a fixed point of any scaling, so a zoom that wrongly re-seated every card would leave
+ * that one card where it was and pass. Three cards, two of them away from the origin, is what makes
+ * the arrangement something a zoom can be caught moving.
+ */
+Given('an open gateway detail holding a composition', async ({ page }) => {
+  await aCompositionStands(page);
+  await openGatewayCanvas(page, focusedGateway(page));
+
+  await expect(canvasNode(page, modelNodeId(BOUND_MODEL))).toBeVisible();
+  await expect(canvasNode(page, targetNodeId(BOUND_MODEL))).toBeVisible();
 });
 
 /**
@@ -150,8 +174,27 @@ Then('the canvas view magnifies', async ({ page }) => {
   await expect.poll(async () => viewportZoom(page)).toBeGreaterThan(viewBeforeTheZoom(page).zoom);
 });
 
+/**
+ * The seats every card held before the zoom, held to be worth comparing at all.
+ *
+ * @summary React Flow seats a card in graph space and scales the viewport around it, so a correct
+ * zoom leaves every seat untouched. That reads the same as a wrong zoom whenever the only seat is
+ * the origin, because scaling fixes the origin. The guard refuses to compare an arrangement that
+ * could not have moved, so pointing this scenario back at a bare gateway fails loudly rather than
+ * passing quietly.
+ */
+function anArrangementAZoomCouldMove(page: Page): Record<string, Seat> {
+  const seats = viewBeforeTheZoom(page).seats;
+  const held = Object.values(seats);
+
+  expect(held.length).toBeGreaterThan(1);
+  expect(held.some((seat) => seat.x !== 0 || seat.y !== 0)).toBe(true);
+
+  return seats;
+}
+
 Then('the nodes keep their arrangement', async ({ page }) => {
-  expect(await nodeSeats(page)).toEqual(viewBeforeTheZoom(page).seats);
+  expect(await nodeSeats(page)).toEqual(anArrangementAZoomCouldMove(page));
 });
 
 Then('the minimap and the zoom controls draw in the dark scheme', async ({ page }) => {
