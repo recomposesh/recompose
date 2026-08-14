@@ -6,3 +6,11 @@
 @theme {
   --font-sans: 'neue-haas-grotesk-text', ui-sans-serif, system-ui, sans-serif;
 }
+
+#nd-sidebar > div:first-child {
+  align-items: center;
+}
+
+#nd-sidebar > div:first-child > div {
+  margin-top: 0;
+}
