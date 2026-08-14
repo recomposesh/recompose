@@ -97,10 +97,10 @@ The maintainer picked option B, so the key gets an Access section of its own.
 
 ### Task 7: The record
 
-- [ ] The Architecture Decision Record (ADR) through the `architecture-decision-records` skill,
+- [x] The Architecture Decision Record (ADR) through the `architecture-decision-records` skill,
       stating the departure from ADR 0047, the exposure that departure accepts, the version bump ADR
       0062 required, and why the requirement flag rides beside the key
-- [ ] The ADR index carries it
+- [x] The ADR index carries it
 
 ### Closing
 
