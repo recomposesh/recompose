@@ -1,6 +1,6 @@
 ---
 tier: full
-phase: discovery
-approvals: []
+phase: design
+approvals: [gate-1]
 branch: worktree-gateway-routers
 ---
