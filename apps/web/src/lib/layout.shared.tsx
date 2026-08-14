@@ -1,9 +1,11 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
-import { appName, gitConfig } from './shared';
+type LayoutOptions = BaseLayoutProps & { nav: NonNullable<BaseLayoutProps['nav']> };
 
-export const navOptions: NonNullable<BaseLayoutProps['nav']> = {
-  title: appName,
-};
-
-export const gitHubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
+export function baseOptions(): LayoutOptions {
+  return {
+    nav: {
+      title: 'recompose',
+    },
+  };
+}

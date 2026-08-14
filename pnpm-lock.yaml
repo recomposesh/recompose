@@ -488,6 +488,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@base-ui/react':
+        specifier: 1.7.0
+        version: 1.7.0(@date-fns/tz@1.5.0)(@types/react@19.2.17)(date-fns@4.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tanstack/react-router':
         specifier: 1.170.25
         version: 1.170.25(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -503,9 +506,6 @@ importers:
       fumadocs-ui:
         specifier: npm:@fumadocs/base-ui@16.14.3
         version: '@fumadocs/base-ui@16.14.3(@date-fns/tz@1.5.0)(@types/mdx@2.0.14)(@types/react@19.2.17)(date-fns@4.4.0)(fumadocs-core@16.14.3(@mdx-js/mdx@3.1.1(supports-color@7.2.0))(@tanstack/react-router@1.170.25(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.31.0(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)(zod@4.4.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)'
-      lucide-react:
-        specifier: 1.31.0
-        version: 1.31.0(react@19.2.8)
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -519,9 +519,6 @@ importers:
       '@types/mdx':
         specifier: 2.0.14
         version: 2.0.14
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
       '@types/react':
         specifier: 19.2.17
         version: 19.2.17
@@ -531,9 +528,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: 6.0.4
         version: 6.0.4(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
-      '@vitest/browser-playwright':
-        specifier: 4.1.10
-        version: 4.1.10(playwright@1.62.0-alpha-1783623505000)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))(vitest@4.1.10)
       nitro:
         specifier: 3.0.260610-beta
         version: 3.0.260610-beta(chokidar@5.0.0)(dotenv@16.6.1)(jiti@2.7.0)(lru-cache@11.5.2)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
@@ -546,9 +540,6 @@ importers:
       vite:
         specifier: 8.1.5
         version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.13.3)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
 
   packages/contracts:
     dependencies:
@@ -13198,6 +13189,7 @@ snapshots:
       - msw
       - utf-8-validate
       - vite
+    optional: true
 
   '@vitest/browser@4.1.10(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:

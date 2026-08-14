@@ -6,27 +6,8 @@ import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  server: {
-    port: 3000,
-  },
-  plugins: [
-    fumadocsMdx(),
-    tailwindcss(),
-    tanstackStart({
-      prerender: {
-        enabled: true,
-        crawlLinks: true,
-      },
-
-      pages: [{ path: '/' }, { path: '/docs' }, { path: '/api/search' }],
-    }),
-    react(),
-    nitro(),
-  ],
+  plugins: [fumadocsMdx(), tailwindcss(), tanstackStart(), react(), nitro()],
   resolve: {
     tsconfigPaths: true,
-    alias: {
-      tslib: 'tslib/tslib.es6.js',
-    },
   },
 });

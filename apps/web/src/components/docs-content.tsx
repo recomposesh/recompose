@@ -8,7 +8,7 @@ export function DocsContent({ path }: { path: string }) {
   const components = useMDXComponents();
   const page = docs.getPage(path);
 
-  if (!page) throw new Error(`unknown documentation page: ${path}`);
+  if (!page) throw new Error(`unknown page: ${path}`);
 
   const { toc } = use(page.load());
   const Mdx = page.body;

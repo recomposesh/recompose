@@ -1,7 +1,6 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
-import { RootProvider } from 'fumadocs-ui/provider/tanstack';
+import { Outlet, createRootRoute } from '@tanstack/react-router';
 
-import SearchDialog from '../components/search';
+import { RootDocument } from '../components/root-document';
 import appCss from '../styles/app.css?url';
 
 export const Route = createRootRoute({
@@ -10,15 +9,9 @@ export const Route = createRootRoute({
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: 'recompose' },
-      {
-        name: 'description',
-        content: 'Wire up your own AI network. Compose your AI providers into local gateways.',
-      },
     ],
     links: [
-      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
       { rel: 'preconnect', href: 'https://use.typekit.net' },
-      { rel: 'preconnect', href: 'https://p.typekit.net', crossOrigin: 'anonymous' },
       { rel: 'stylesheet', href: 'https://use.typekit.net/vva5dyp.css' },
       { rel: 'stylesheet', href: appCss },
     ],
@@ -28,16 +21,8 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className="page">
-        <RootProvider search={{ SearchDialog }}>
-          <Outlet />
-        </RootProvider>
-        <Scripts />
-      </body>
-    </html>
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
   );
 }
