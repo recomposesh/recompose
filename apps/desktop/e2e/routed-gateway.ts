@@ -27,6 +27,14 @@ export const FIRST_TARGET: RoutedTarget = { account: 'work', providerModel: 'cla
 
 export const SECOND_TARGET: RoutedTarget = { account: 'spare', providerModel: 'claude-haiku-5' };
 
+/**
+ * The child a scenario needs a rung below the second, which is what a ladder reads as one.
+ *
+ * @summary A pool of two proves a failover hand-off and nothing about order, because rank two is
+ * also the last rung. A third child is what lets a move land somewhere that is neither end.
+ */
+export const THIRD_TARGET: RoutedTarget = { account: 'standby', providerModel: 'claude-opus-5' };
+
 /** The vendor every routed account answers under, so one dialect reaches one stand-in path. */
 const PROVIDER = 'anthropic';
 
