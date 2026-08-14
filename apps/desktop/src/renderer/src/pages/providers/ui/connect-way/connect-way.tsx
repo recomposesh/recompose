@@ -11,6 +11,7 @@ import {
   useSignInSubscription,
 } from '../../../../shared/api';
 import { Icon } from '../../../../shared/ui';
+import { useLaunchRefusal } from '../../model/launch-refusal';
 import { FoundAccountRow } from '../found-account-row/found-account-row';
 import { PickRow } from '../pick-row/pick-row';
 import { PickedIdentity } from '../picked-identity/picked-identity';
@@ -37,6 +38,7 @@ type Arm = {
   command: string;
   waiting: boolean;
   refusal: string | undefined;
+  launchNote: string | undefined;
 };
 
 type EmptyArm = Arm & {
@@ -127,8 +129,19 @@ function twoWaysIn({ reading, toolName, adopting, onAdopt, onSignIn }: FoundArm)
 }
 
 function emptyMachineArm(arm: EmptyArm): ReactElement {
-  const { command, lead, name, onAskAgain, onSignIn, reading, refusal, terms, toolName, waiting } =
-    arm;
+  const {
+    command,
+    launchNote,
+    lead,
+    name,
+    onAskAgain,
+    onSignIn,
+    reading,
+    refusal,
+    terms,
+    toolName,
+    waiting,
+  } = arm;
 
   return (
     <>
@@ -136,7 +149,7 @@ function emptyMachineArm(arm: EmptyArm): ReactElement {
         {terms}
       </PickedIdentity>
       {waiting ? (
-        <WaitingOnTheTool command={command} toolName={toolName} />
+        <WaitingOnTheTool command={command} note={launchNote} toolName={toolName} />
       ) : (
         <>
           {nothingToAdopt(reading, toolName, onAskAgain)}
@@ -155,7 +168,7 @@ function foundAccountArm(arm: FoundArm): ReactElement {
         <p className="text-detail text-ink-secondary">Pick the account this gateway spends.</p>
       </PickedIdentity>
       {arm.waiting ? (
-        <WaitingOnTheTool command={arm.command} toolName={arm.toolName} />
+        <WaitingOnTheTool command={arm.command} note={arm.launchNote} toolName={arm.toolName} />
       ) : (
         twoWaysIn(arm)
       )}
@@ -187,11 +200,21 @@ export function ConnectWay({
   const adopt = useAdoptSubscription();
   const signIn = useSignInSubscription();
 
+  const launch = useLaunchRefusal(provider);
+
   const onSignIn = () => {
+    launch.forget();
     signIn.mutate({ provider }, { onSuccess: onConnected });
   };
 
-  const standing = { command, lead, onSignIn, toolName, waiting: signIn.isPending };
+  const standing = {
+    command,
+    launchNote: signIn.isPending ? launch.note : undefined,
+    lead,
+    onSignIn,
+    toolName,
+    waiting: signIn.isPending,
+  };
 
   if (reading.holds !== 'account') {
     return emptyMachineArm({

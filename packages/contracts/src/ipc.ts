@@ -20,6 +20,7 @@ import {
 } from './local-runtimes';
 import { nonBlankString } from './non-blank';
 import { settingsPatchSchema, settingsSchema } from './settings';
+import { subscriptionProviderIdSchema } from './subscriptions';
 import {
   accountBalanceSchema,
   quotaWindowSchema,
@@ -213,6 +214,12 @@ export const ipcEvents = {
   },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
+  'subscriptions:launch-refused': {
+    payload: z.strictObject({
+      provider: subscriptionProviderIdSchema,
+      note: nonBlankString,
+    }),
+  },
 } as const;
 
 export type IpcEvent = keyof typeof ipcEvents;

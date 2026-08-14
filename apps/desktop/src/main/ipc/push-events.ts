@@ -61,3 +61,9 @@ export function pushDevtoolsToggle(): void {
     window.webContents.send('devtools:toggle', 'asked');
   }
 }
+
+export function pushLaunchRefused(refused: IpcEventPayload<'subscriptions:launch-refused'>): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('subscriptions:launch-refused', refused);
+  }
+}

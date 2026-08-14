@@ -59,6 +59,7 @@ describe('the push vocabulary', () => {
       | 'usage:command'
       | 'settings:changed'
       | 'devtools:toggle'
+      | 'subscriptions:launch-refused'
     >();
   });
 });
