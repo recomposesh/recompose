@@ -1,3 +1,5 @@
+import type { CoolingSignal } from './cooldown-signal';
+
 import { DEFAULT_COOLDOWN_MS } from './cooldown-signal';
 
 export type AttemptReading<TAnswer> =
@@ -9,13 +11,13 @@ export type AttemptReading<TAnswer> =
       status: number;
       answer: TAnswer;
       retryableHint?: boolean;
-      coolUntilMs?: number;
+      cooling?: CoolingSignal;
     }
   | {
       kind: 'stream-error-before-commit';
       equivalentStatus: number;
       answer: TAnswer;
-      coolUntilMs?: number;
+      cooling?: CoolingSignal;
     }
   | { kind: 'served'; answer: TAnswer };
 
@@ -54,10 +56,33 @@ type Unanswered = Extract<
 
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504, 529]);
 
-function movingOn(reason: AttemptReason, promised: number | undefined, now: number): MovingOn {
-  return promised === undefined
-    ? { verdict: 'move-on', coolUntilMs: now + DEFAULT_COOLDOWN_MS, reason }
-    : { verdict: 'move-on', coolUntilMs: promised, retryAtMs: promised, reason };
+/**
+ * The stand-down one failed attempt earns, and whether a caller may be told to wait it out.
+ *
+ * @summary The two are told apart because a stand-down is this gateway's own guess at when to ask a
+ * child again, while a wait handed to a caller is a promise the provider made. A refusal reporting
+ * only a bucket's reopening times the guess and promises nothing, so it steers the walk without ever
+ * becoming a `Retry-After` a client would obey. A pool downed by dead upstreams therefore reaches
+ * the exhausted refusal carrying no wait at all, which is what makes it read as a fault rather than
+ * a limit.
+ */
+function movingOn(
+  reason: AttemptReason,
+  cooling: CoolingSignal | undefined,
+  now: number,
+): MovingOn {
+  if (cooling === undefined) {
+    return { verdict: 'move-on', coolUntilMs: now + DEFAULT_COOLDOWN_MS, reason };
+  }
+
+  return cooling.promised
+    ? {
+        verdict: 'move-on',
+        coolUntilMs: cooling.coolUntilMs,
+        retryAtMs: cooling.coolUntilMs,
+        reason,
+      }
+    : { verdict: 'move-on', coolUntilMs: cooling.coolUntilMs, reason };
 }
 
 function verdictARefusalEarns<TAnswer>(
@@ -65,7 +90,7 @@ function verdictARefusalEarns<TAnswer>(
   now: number,
 ): AttemptVerdict<TAnswer> {
   return (reading.retryableHint ?? RETRYABLE_STATUSES.has(reading.status))
-    ? movingOn({ because: 'refused', status: reading.status }, reading.coolUntilMs, now)
+    ? movingOn({ because: 'refused', status: reading.status }, reading.cooling, now)
     : { verdict: 'answer', answer: reading.answer };
 }
 
@@ -74,11 +99,7 @@ function verdictAStreamErrorEarns<TAnswer>(
   now: number,
 ): AttemptVerdict<TAnswer> {
   return RETRYABLE_STATUSES.has(reading.equivalentStatus)
-    ? movingOn(
-        { because: 'stream-error', status: reading.equivalentStatus },
-        reading.coolUntilMs,
-        now,
-      )
+    ? movingOn({ because: 'stream-error', status: reading.equivalentStatus }, reading.cooling, now)
     : { verdict: 'answer', answer: reading.answer };
 }
 

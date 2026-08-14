@@ -6,11 +6,25 @@ import type { ParsedSubscriptionCredential } from './credentials';
 import { isJsonObject } from '../gateway-wire';
 import { codexReachRequest } from './codex-reach-request';
 import { CodexReasoningReplay } from './codex-replay';
+import { codexReplayKey } from './reach-observation';
 
 const credential: ParsedSubscriptionCredential = {
   accessToken: 'codex-access',
   accountId: 'acct-work',
   planType: 'pro',
+};
+
+const reasoning = {
+  type: 'reasoning',
+  id: 'rs_1',
+  summary: [],
+  encrypted_content: 'gAAAAA',
+};
+
+const assistant = {
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'output_text', text: 'answer' }],
 };
 
 type ReachOptions = Parameters<typeof codexReachRequest>[0];
@@ -20,6 +34,7 @@ function reachOptions(body: JsonObject, replay: CodexReasoningReplay | undefined
     providerOrigin: 'https://chatgpt.com/backend-api/codex',
     body,
     credential,
+    accountId: 'acc-openai',
     replay,
     replayScopeId: 'claude:session-1',
     sessionId: 'session-1',
@@ -78,5 +93,19 @@ describe('replaying reasoning into a Codex turn', () => {
 
     expect(sentBody(request.body)['input']).toStrictEqual([]);
     expect(sentBody(request.body)['prompt_cache_key']).toBe('session-1');
+  });
+
+  test('a caller already speaking the Responses dialect is sent the history it wrote', () => {
+    const replay = new CodexReasoningReplay();
+    const held = { model: 'gpt-5', input: [assistant] };
+
+    replay.commit(codexReplayKey('acc-openai', held, 'claude:session-1'), [reasoning, assistant]);
+
+    const request = codexReachRequest({
+      ...reachOptions(held, replay),
+      sourceDialect: 'responses',
+    });
+
+    expect(sentBody(request.body)['input']).toStrictEqual([assistant]);
   });
 });

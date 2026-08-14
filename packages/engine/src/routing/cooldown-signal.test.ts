@@ -8,19 +8,25 @@ describe('the retry time a provider names in its own headers', () => {
   test('a delay in seconds counts forward from the moment the refusal arrived', () => {
     const headers = new Headers({ 'retry-after': '120' });
 
-    expect(coolUntilTheProviderNames(headers, NOW)).toBe(NOW + 120_000);
+    expect(coolUntilTheProviderNames(headers, NOW)).toEqual({
+      coolUntilMs: NOW + 120_000,
+      promised: true,
+    });
   });
 
   test('a delay of zero seconds names the moment the refusal arrived', () => {
     const headers = new Headers({ 'retry-after': '0' });
 
-    expect(coolUntilTheProviderNames(headers, NOW)).toBe(NOW);
+    expect(coolUntilTheProviderNames(headers, NOW)).toEqual({ coolUntilMs: NOW, promised: true });
   });
 
   test('a date names the instant it stands for rather than a span', () => {
     const headers = new Headers({ 'retry-after': 'Fri, 14 Aug 2026 12:05:00 GMT' });
 
-    expect(coolUntilTheProviderNames(headers, NOW)).toBe(NOW + 300_000);
+    expect(coolUntilTheProviderNames(headers, NOW)).toEqual({
+      coolUntilMs: NOW + 300_000,
+      promised: true,
+    });
   });
 
   test('a header reading as neither a delay nor a date names no retry time', () => {
@@ -52,7 +58,10 @@ describe('the reset windows a rate limit reports beside its refusal', () => {
       'anthropic-ratelimit-requests-reset': '2026-08-14T12:00:30.000Z',
     });
 
-    expect(coolUntilTheProviderNames(headers, NOW)).toBe(NOW + 30_000);
+    expect(coolUntilTheProviderNames(headers, NOW)).toEqual({
+      coolUntilMs: NOW + 30_000,
+      promised: false,
+    });
   });
 
   test('several windows reporting at once name the one that reopens first', () => {
@@ -62,7 +71,10 @@ describe('the reset windows a rate limit reports beside its refusal', () => {
       'anthropic-ratelimit-output-tokens-reset': '2026-08-14T12:02:00.000Z',
     });
 
-    expect(coolUntilTheProviderNames(headers, NOW)).toBe(NOW + 20_000);
+    expect(coolUntilTheProviderNames(headers, NOW)).toEqual({
+      coolUntilMs: NOW + 20_000,
+      promised: false,
+    });
   });
 
   test('an explicit retry header outranks the reset windows beside it', () => {
@@ -71,7 +83,10 @@ describe('the reset windows a rate limit reports beside its refusal', () => {
       'anthropic-ratelimit-requests-reset': '2026-08-14T12:10:00.000Z',
     });
 
-    expect(coolUntilTheProviderNames(headers, NOW)).toBe(NOW + 5_000);
+    expect(coolUntilTheProviderNames(headers, NOW)).toEqual({
+      coolUntilMs: NOW + 5_000,
+      promised: true,
+    });
   });
 
   test('a reset window reading as no date at all names no retry time', () => {
@@ -79,7 +94,9 @@ describe('the reset windows a rate limit reports beside its refusal', () => {
 
     expect(coolUntilTheProviderNames(headers, NOW)).toBeUndefined();
   });
+});
 
+describe('which header a reset window is read from, and which only looks like one', () => {
   test('a header that merely mentions the limit without reporting a reset is passed over', () => {
     const headers = new Headers({ 'anthropic-ratelimit-requests-remaining': '0' });
 
@@ -100,6 +117,22 @@ describe('the reset windows a rate limit reports beside its refusal', () => {
     });
 
     expect(coolUntilTheProviderNames(headers, NOW)).toBeUndefined();
+  });
+});
+
+describe('only a retry header is the provider promising the failure clears', () => {
+  test('a reset window beside a 5xx times the stand-down and promises nothing', () => {
+    const headers = new Headers({
+      'anthropic-ratelimit-requests-reset': '2026-08-14T12:00:45.000Z',
+    });
+
+    expect(coolUntilTheProviderNames(headers, NOW)?.promised).toBe(false);
+  });
+
+  test('a retry header names a wait a caller may be told to obey', () => {
+    const headers = new Headers({ 'retry-after': '45' });
+
+    expect(coolUntilTheProviderNames(headers, NOW)?.promised).toBe(true);
   });
 });
 

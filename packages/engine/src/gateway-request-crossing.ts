@@ -6,13 +6,9 @@ import type {
 } from '@recompose/contracts';
 import type { Context } from 'hono';
 
-import { nameOfRouter } from '@recompose/contracts';
-
-import type { Crossing, JsonObject, ProxyDialect } from './gateway-wire';
-import type { EngineRouter } from './routing/route-table';
+import type { Crossing, ProxyDialect } from './gateway-wire';
 
 import { responsesToolRefs } from './dialect/responses-extended-tools';
-import { turnResumesServerState } from './gateway-chained-turn';
 import { requestHeaderMap, requestQueryMap } from './gateway-request-metadata';
 import {
   requestCallerFingerprint,
@@ -20,7 +16,7 @@ import {
   requestsResponsesLite,
 } from './gateway-session';
 import { ingressPayload, readJsonBody, refusalResponse, virtualNameOf } from './gateway-wire';
-import { chainedTurn, missingTarget, unknownModel } from './refusals';
+import { missingTarget, unknownModel } from './refusals';
 import { entryNodeOf } from './router-entry';
 import { firstDeclaredTarget } from './routing/route-table';
 
@@ -46,37 +42,24 @@ function standsRemoved(entry: EngineRouteNode): boolean {
   return entry.kind === 'target' && entry.standing.standing === 'removed';
 }
 
-function spreadsEveryTurn(entry: EngineRouteNode): entry is EngineRouter {
-  return entry.kind === 'router' && entry.policy.mode === 'round-robin';
-}
-
 /**
  * The refusal a table earns before any child is tried, or nothing where the walk may begin.
  *
  * @summary A lone target whose account left refuses for the binding a person can see is broken,
- * before any walk begins, because no walk could cure it. A ladder told to spread refuses a turn
- * that resumes state one account alone is holding, rather than handing a second account a token it
- * cannot read. A ladder told to fail over serves that turn in declared order, because declared order
- * lands the chain back where it began whenever the child that began it can still answer.
+ * before any walk begins, because no walk could cure it. Nothing about a chained turn is decided
+ * here, because routers chain and the router that would spread a turn is the one the walk reaches
+ * rather than the one the table opens with.
  */
 function refusalTheEntryEarns(
   dialect: ProxyDialect,
   gateway: EngineGateway,
   model: string,
   routing: EngineRouting,
-  raw: JsonObject,
 ): Response | undefined {
   const entry = entryNodeOf(routing);
 
-  if (entry === undefined || standsRemoved(entry)) {
-    return refusalResponse(dialect, missingTarget(gateway.displayName, model));
-  }
-
-  return spreadsEveryTurn(entry) && turnResumesServerState(raw)
-    ? refusalResponse(
-        dialect,
-        chainedTurn(gateway.displayName, model, nameOfRouter(entry.policy.mode, entry.displayName)),
-      )
+  return entry === undefined || standsRemoved(entry)
+    ? refusalResponse(dialect, missingTarget(gateway.displayName, model))
     : undefined;
 }
 
@@ -108,7 +91,7 @@ export async function gatewayRequestCrossing(
     return { response: refusalResponse(dialect, unknownModel(name)) };
   }
 
-  const refusal = refusalTheEntryEarns(dialect, gateway, name, virtualModel.routing, raw);
+  const refusal = refusalTheEntryEarns(dialect, gateway, name, virtualModel.routing);
 
   if (refusal !== undefined) {
     return { response: refusal };

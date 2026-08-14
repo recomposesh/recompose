@@ -11,7 +11,7 @@ export const NOW = 1_700_000_000_000;
 
 export type Replies = Readonly<Record<string, AttemptReading<string>>>;
 
-export function aGatewayServing(routing: EngineRouting) {
+export function aGatewayServing(routing: EngineRouting, resumesServerState = false) {
   let clock = NOW;
   const ledger = createCooldownLedger(() => clock);
   const cursors = createRotationCursors();
@@ -30,6 +30,7 @@ export function aGatewayServing(routing: EngineRouting) {
         virtualModel: 'fast',
         ledger,
         cursors,
+        resumesServerState,
         now: () => clock,
         attempt: async (routeNode) => {
           attempted.push(routeNode);

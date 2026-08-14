@@ -20,6 +20,7 @@ type WalkNote = { routeNode: string; reason: NoteReason; retryAtMs?: number };
 type WalkVerdict<TAnswer> =
   | { outcome: 'answered'; routeNode: string; answer: TAnswer }
   | { outcome: 'empty-router'; routeNode: string; router: EngineRouter }
+  | { outcome: 'chained-turn'; routeNode: string; router: EngineRouter }
   | { outcome: 'exhausted'; retryAtMs?: number };
 
 export type WalkResult<TAnswer> = { notes: readonly WalkNote[]; verdict: WalkVerdict<TAnswer> };
@@ -30,6 +31,7 @@ export type WalkRequest<TAnswer> = {
   virtualModel: string;
   ledger: CooldownLedger;
   cursors: RotationCursors;
+  resumesServerState: boolean;
   now: () => number;
   attempt: (routeNode: string) => Promise<AttemptReading<TAnswer>>;
 };
@@ -40,8 +42,14 @@ type Walking = {
   virtualModel: string;
   ledger: CooldownLedger;
   cursors: RotationCursors;
+  resumesServerState: boolean;
   attempted: Map<string, WalkNote>;
 };
+
+type WalkStep =
+  | { at: 'target'; routeNode: string }
+  | { at: 'rotation'; routeNode: string; router: EngineRouter }
+  | { at: 'nowhere' };
 
 type Turn = { cursor: () => number; advanceTo: (cursor: number) => void };
 
@@ -107,11 +115,24 @@ function childTheRouterOffers(
   );
 }
 
-function attemptableTarget(walking: Walking, routeNode: string): string | undefined {
-  return canAttempt(walking, routeNode) ? routeNode : undefined;
+function stepAtTarget(walking: Walking, routeNode: string): WalkStep {
+  return canAttempt(walking, routeNode) ? { at: 'target', routeNode } : { at: 'nowhere' };
 }
 
-function targetTheWalkTriesNext(walking: Walking): string | undefined {
+function wouldRotate(walking: Walking, router: EngineRouter): boolean {
+  return walking.resumesServerState && router.policy.mode === 'round-robin';
+}
+
+/**
+ * Where the walk arrives next: a child to try, a router it must not spread, or nowhere left.
+ *
+ * @summary A turn resuming state one account holds is refused at the router that would have spread
+ * it, whichever depth that router stands at, because routers chain and only the router about to
+ * rotate knows it is about to. Asking the entry alone would let a ladder below it hand a second
+ * account a token it cannot read. The question is asked before the router picks, so a spreading
+ * router holding no child still refuses the chain rather than reporting itself empty.
+ */
+function stepTheWalkTakesNext(walking: Walking): WalkStep {
   const path = new Set<string>();
   let routeNode: string | undefined = walking.routing.entry;
 
@@ -120,14 +141,16 @@ function targetTheWalkTriesNext(walking: Walking): string | undefined {
 
     const node = walking.routing.nodes[routeNode];
 
-    if (node === undefined) return undefined;
+    if (node === undefined) return { at: 'nowhere' };
 
-    if (node.kind === 'target') return attemptableTarget(walking, routeNode);
+    if (node.kind === 'target') return stepAtTarget(walking, routeNode);
+
+    if (wouldRotate(walking, node)) return { at: 'rotation', routeNode, router: node };
 
     routeNode = childTheRouterOffers(walking, routeNode, node, path);
   }
 
-  return undefined;
+  return { at: 'nowhere' };
 }
 
 function noteOf(routeNode: string, reason: NoteReason, retryAtMs: number | undefined): WalkNote {
@@ -188,6 +211,44 @@ function verdictWhenNoChildServed<TAnswer>(
   return retryAtMs === undefined ? { outcome: 'exhausted' } : { outcome: 'exhausted', retryAtMs };
 }
 
+async function verdictOneChildSettled<TAnswer>(
+  walking: Walking,
+  request: WalkRequest<TAnswer>,
+  routeNode: string,
+): Promise<WalkVerdict<TAnswer> | undefined> {
+  const verdict = classify(await request.attempt(routeNode), request.now());
+
+  if (verdict.verdict === 'answer') {
+    return { outcome: 'answered', routeNode, answer: verdict.answer };
+  }
+
+  request.ledger.cool(addressOf(walking, routeNode), verdict);
+  walking.attempted.set(routeNode, noteOf(routeNode, verdict.reason, verdict.retryAtMs));
+
+  return undefined;
+}
+
+async function verdictTheWalkSettles<TAnswer>(
+  walking: Walking,
+  request: WalkRequest<TAnswer>,
+): Promise<WalkVerdict<TAnswer> | undefined> {
+  while (walking.attempted.size < ATTEMPT_LIMIT) {
+    const step = stepTheWalkTakesNext(walking);
+
+    if (step.at === 'nowhere') return undefined;
+
+    if (step.at === 'rotation') {
+      return { outcome: 'chained-turn', routeNode: step.routeNode, router: step.router };
+    }
+
+    const settled = await verdictOneChildSettled(walking, request, step.routeNode);
+
+    if (settled !== undefined) return settled;
+  }
+
+  return undefined;
+}
+
 /**
  * The walk one request takes across a route table until a child answers or none can.
  *
@@ -202,26 +263,8 @@ export async function walkAttempts<TAnswer>(
   request: WalkRequest<TAnswer>,
 ): Promise<WalkResult<TAnswer>> {
   const walking: Walking = { ...request, attempted: new Map() };
-
-  while (walking.attempted.size < ATTEMPT_LIMIT) {
-    const routeNode = targetTheWalkTriesNext(walking);
-
-    if (routeNode === undefined) break;
-
-    const verdict = classify(await request.attempt(routeNode), request.now());
-
-    if (verdict.verdict === 'answer') {
-      return {
-        notes: notesOfTheWalk(walking),
-        verdict: { outcome: 'answered', routeNode, answer: verdict.answer },
-      };
-    }
-
-    request.ledger.cool(addressOf(walking, routeNode), verdict);
-    walking.attempted.set(routeNode, noteOf(routeNode, verdict.reason, verdict.retryAtMs));
-  }
-
+  const settled = await verdictTheWalkSettles(walking, request);
   const notes = notesOfTheWalk(walking);
 
-  return { notes, verdict: verdictWhenNoChildServed(walking, notes) };
+  return { notes, verdict: settled ?? verdictWhenNoChildServed(walking, notes) };
 }

@@ -5,7 +5,12 @@ import type { AttemptReading } from './outcome-classification';
 export function aRateLimit(coolUntilMs?: number): AttemptReading<string> {
   return coolUntilMs === undefined
     ? { kind: 'refused', status: 429, answer: 'rate limited' }
-    : { kind: 'refused', status: 429, coolUntilMs, answer: 'rate limited' };
+    : {
+        kind: 'refused',
+        status: 429,
+        cooling: { coolUntilMs, promised: true },
+        answer: 'rate limited',
+      };
 }
 
 export function aMalformedRequest(): AttemptReading<string> {
