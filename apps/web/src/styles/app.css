@@ -206,6 +206,100 @@ html > body[data-scroll-locked] {
   color: var(--landing-ink-quiet);
 }
 
+.note-run {
+  display: inline-flex;
+}
+
+.note {
+  display: inline-block;
+  transition: transform 0.25s ease var(--stagger, 0s);
+}
+
+.site-links a {
+  position: relative;
+}
+
+.site-links a::before {
+  content: '';
+  position: absolute;
+  inset-inline: -8px;
+  top: 50%;
+  height: 17px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 35%) 0 1px,
+    transparent 1px 4px
+  );
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.site-links a:hover::before {
+  transform: translateY(-50%) scaleX(1);
+}
+
+.site-links a:hover .note {
+  transform: translateY(var(--note-shift, 0));
+}
+
+.note-flat,
+.note-notehead {
+  position: relative;
+  transition:
+    transform 0.25s ease var(--stagger, 0s),
+    color 0.12s ease 0.12s;
+}
+
+.note-flat::after,
+.note-notehead::after {
+  content: '';
+  position: absolute;
+  left: 0.04em;
+  bottom: 0.24em;
+  height: 0.95em;
+  opacity: 0;
+  transition: opacity 0.12s ease 0s;
+}
+
+.note-flat::after {
+  width: 0.56em;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'><path d='M1.2 0.5 V10.4'/><path d='M1.2 6.4 C 4.4 5.2 5.6 6.6 5.0 8.2 C 4.4 9.6 2.8 10.2 1.2 10.4'/></svg>")
+    no-repeat center / contain;
+}
+
+.note-notehead::after {
+  width: 0.6em;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7.5 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round'><path d='M6.1 0.5 V8.6'/><ellipse cx='3.4' cy='8.7' rx='2.4' ry='1.7' transform='rotate(-18 3.4 8.7)'/></svg>")
+    no-repeat center / contain;
+}
+
+.site-links a:hover .note-flat,
+.site-links a:hover .note-notehead {
+  color: transparent;
+  text-shadow: none;
+  transition:
+    transform 0.25s ease var(--stagger, 0s),
+    color 0.12s ease 0s;
+}
+
+.site-links a:hover .note-flat::after,
+.site-links a:hover .note-notehead::after {
+  opacity: 1;
+  transition: opacity 0.12s ease 0.12s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .site-links a::before {
+    transition: none;
+  }
+
+  .site-links a:hover .note {
+    transform: none;
+  }
+}
+
 @media (max-width: 720px) {
   .landing-claim h1 {
     max-width: none;
