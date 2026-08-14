@@ -158,6 +158,13 @@ describe('a gateway stored while a virtual model could bind only one target', ()
 });
 
 describe('the rewrite that carried a stored binding into its graph', () => {
+  test('two loads of one stored document name the same route node, so a later reader can find it', () => {
+    const first = loadGatewayConfig(boundDirectly).virtualModels[0]?.routing.entry;
+    const second = loadGatewayConfig(boundDirectly).virtualModels[0]?.routing.entry;
+
+    expect(first).toBe(second);
+  });
+
   test('no two virtual models are handed the same route node id', () => {
     const entries = loadGatewayConfig(boundDirectly).virtualModels.map(
       (model) => model.routing.entry,

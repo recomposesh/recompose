@@ -12,6 +12,7 @@ import {
   inspectorModelOption,
   inspectorRefusal,
   pickTargetInInspector,
+  revealTheInspector,
   rowLines,
   servedRow,
   servedRows,
@@ -69,6 +70,7 @@ When('the person picks that account as the target for a new virtual model', asyn
 Then('the Models list holds {string} as one row', async ({ page }, name: string) => {
   const gateway = focusedGateway(page);
 
+  await revealTheInspector(page, gateway);
   await expect(servedRows(page, gateway)).toHaveCount(1);
   await expect(servedRow(page, gateway, name)).toBeVisible();
 });

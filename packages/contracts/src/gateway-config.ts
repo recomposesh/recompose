@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { type GatewayApiKey, gatewayApiKeySchema } from './gateway-api-key';
-import { mintRouteNodeId, routingSchema } from './gateway-routing';
+import { routingSchema } from './gateway-routing';
 import { migrateDocument, type Migration } from './migration';
 import { nonBlankString } from './non-blank';
 
@@ -136,9 +136,19 @@ const noStoredGatewayEverRequiredAKey: Migration = {
 const storedBindingsSchema = z.array(z.unknown());
 
 const storedDirectTargetSchema = z.looseObject({
+  id: nonBlankString,
   target: z.strictObject({ accountId: nonBlankString, providerModel: nonBlankString }),
 });
 
+/**
+ * The one stored binding, carried into the table a graph reads, seated under a name it keeps.
+ *
+ * @summary The seat is derived from the model's own id rather than minted, because this runs on
+ * every load of a document nothing rewrites. A minted seat would differ between the snapshot the
+ * engine holds and the lookup a request makes against the same file, and every request would refuse
+ * for a target that is plainly there. Stored ids are unique within a document, and a migrated table
+ * stands one node, so the derived name collides with nothing.
+ */
 function boundThroughAOneNodeGraph(model: unknown): unknown {
   const direct = storedDirectTargetSchema.safeParse(model);
 
@@ -147,7 +157,7 @@ function boundThroughAOneNodeGraph(model: unknown): unknown {
   }
 
   const { target, ...beyondTheTarget } = direct.data;
-  const entry = mintRouteNodeId();
+  const entry = `seat:${direct.data.id}`;
 
   return {
     ...beyondTheTarget,
