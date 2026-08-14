@@ -1,7 +1,5 @@
-import type { EngineGateway, EngineVirtualModel, SpendGrant } from '@recompose/contracts';
+import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 import type { Context } from 'hono';
-
-import { standingTheEntryNames } from '@recompose/contracts';
 
 import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
@@ -14,6 +12,7 @@ import { ingressPayload, jsonResponse, readJsonBody, refusalResponse } from './g
 import { pluginTokenCount } from './plugin-count';
 import { nativeProviderCount } from './provider/native-token-count';
 import { emptyConversation, missingCredential, missingTarget, unknownModel } from './refusals';
+import { firstDeclaredTarget } from './routing/route-table';
 import { parseSubscriptionCredential } from './subscription/credentials';
 import { reachSubscriptionCount } from './subscription/reach-count';
 import { countClaudeInputTokens, countCodexInputTokens } from './token-count';
@@ -113,7 +112,9 @@ async function resolvedCount(
   );
 }
 
-type VirtualLookup = { virtual: EngineVirtualModel } | { refusal: Response };
+type CountedTarget = { routeNode: string; providerModel: string };
+
+type VirtualLookup = { target: CountedTarget } | { refusal: Response };
 
 function countVirtual(gateway: EngineGateway, model: string): VirtualLookup {
   const virtual = gateway.virtualModels.find((candidate) => candidate.id === model);
@@ -122,9 +123,11 @@ function countVirtual(gateway: EngineGateway, model: string): VirtualLookup {
     return { refusal: refusalResponse('anthropic', unknownModel(model)) };
   }
 
-  return standingTheEntryNames(virtual.routing).standing === 'removed'
-    ? { refusal: refusalResponse('anthropic', missingTarget(gateway.displayName, model)) }
-    : { virtual };
+  const declared = firstDeclaredTarget(virtual.routing);
+
+  return declared?.standing.standing === 'bound'
+    ? { target: { routeNode: declared.routeNode, providerModel: declared.standing.providerModel } }
+    : { refusal: refusalResponse('anthropic', missingTarget(gateway.displayName, model)) };
 }
 
 async function countWithGrant(
@@ -132,14 +135,14 @@ async function countWithGrant(
   gateway: EngineGateway,
   raw: JsonObject,
   model: string,
-  virtual: EngineVirtualModel,
+  target: CountedTarget,
   spendGrantFor: SpendGrantFor,
   subscriptions: SubscriptionRuntime,
   fetchLike: typeof fetch,
   aiStudio?: AIStudioRelay,
   plugins?: PluginHost,
 ): Promise<Response> {
-  const grant = await spendGrantFor(gateway.slug, model, virtual.routing.entry);
+  const grant = await spendGrantFor(gateway.slug, model, target.routeNode);
   const denied = deniedCount(gateway, model, grant);
 
   if (grant.verdict !== 'resolved') {
@@ -150,17 +153,13 @@ async function countWithGrant(
     return denied;
   }
 
-  const standing = standingTheEntryNames(virtual.routing);
-
-  const providerModel = standing.standing === 'bound' ? standing.providerModel : model;
-
   return safeResolvedCount(
     c,
     gateway,
     raw,
     model,
     grant,
-    providerModel,
+    target.providerModel,
     subscriptions,
     fetchLike,
     aiStudio,
@@ -220,7 +219,7 @@ export async function proxyTokenCountRequest(
     gateway,
     raw,
     model,
-    lookup.virtual,
+    lookup.target,
     spendGrantFor,
     subscriptions,
     fetchLike,

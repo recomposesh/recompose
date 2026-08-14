@@ -1,27 +1,23 @@
 import type {
   AnthropicRefusal,
   Dialect,
-  OpenAiCode,
   OpenAiRefusal,
   RenderedRefusal,
-  ResponsesRefusal,
+  RouterAttempt,
+  TranslationRefusal,
 } from './refusal-wire';
 
-import { geminiRefusal } from './gemini-refusal';
+import { bodyInDialect } from './refusal-bodies';
+import { factsOf } from './refusal-facts';
 
-export type { AnthropicRefusal, Dialect, OpenAiRefusal, RenderedRefusal } from './refusal-wire';
-
-export type TranslationRefusal =
-  | { reason: 'unknown-model'; model: string }
-  | { reason: 'unmappable-stop-reason'; stopReason: string }
-  | { reason: 'unrepairable-tool-call'; unmatchedId: string }
-  | { reason: 'unsupported-field'; field: string }
-  | { reason: 'empty-conversation' }
-  | { reason: 'tool-id-collision'; sanitizedId: string }
-  | { reason: 'missing-target'; displayName: string; model: string }
-  | { reason: 'missing-credential'; displayName: string; model: string }
-  | { reason: 'unstreamable-answer'; displayName: string; model: string; target: string }
-  | { reason: 'invalid-json'; message: string };
+export type {
+  AnthropicRefusal,
+  Dialect,
+  OpenAiRefusal,
+  RenderedRefusal,
+  RouterAttempt,
+  TranslationRefusal,
+} from './refusal-wire';
 
 function missingModelMessage(displayName: string): string {
   return `The gateway "${displayName}" holds no virtual model.`;
@@ -118,6 +114,40 @@ export function missingCredential(displayName: string, model: string): Translati
   return { reason: 'missing-credential', displayName, model };
 }
 
+export function emptyRouter(
+  displayName: string,
+  model: string,
+  routerName: string,
+): TranslationRefusal {
+  return { reason: 'empty-router', displayName, model, routerName };
+}
+
+export function exhaustedRouter(
+  displayName: string,
+  model: string,
+  routerName: string,
+  attempts: readonly RouterAttempt[],
+  retryAtMs?: number,
+): TranslationRefusal {
+  const exhausted = {
+    reason: 'exhausted-router',
+    displayName,
+    model,
+    routerName,
+    attempts,
+  } as const;
+
+  return retryAtMs === undefined ? exhausted : { ...exhausted, retryAtMs };
+}
+
+export function chainedTurn(
+  displayName: string,
+  model: string,
+  routerName: string,
+): TranslationRefusal {
+  return { reason: 'chained-turn', displayName, model, routerName };
+}
+
 export function invalidJson(message: string): TranslationRefusal {
   return { reason: 'invalid-json', message };
 }
@@ -130,171 +160,17 @@ export function unstreamableAnswer(
   return { reason: 'unstreamable-answer', displayName, model, target };
 }
 
-type RefusalFacts = {
-  status: number;
-  message: string;
-  code: OpenAiCode;
-  anthropicType: AnthropicRefusal['error']['type'];
-};
-
-type ClientErrorRefusal = Extract<
-  TranslationRefusal,
-  { reason: 'unsupported-field' | 'empty-conversation' | 'tool-id-collision' | 'invalid-json' }
->;
-
-function clientErrorFacts(refusal: ClientErrorRefusal): RefusalFacts {
-  switch (refusal.reason) {
-    case 'unsupported-field':
-      return {
-        status: 400,
-        message: `This dialect cannot carry the field "${refusal.field}".`,
-        code: 'unsupported_field',
-        anthropicType: 'invalid_request_error',
-      };
-    case 'empty-conversation':
-      return {
-        status: 400,
-        message: 'The request carries no message to translate.',
-        code: 'empty_conversation',
-        anthropicType: 'invalid_request_error',
-      };
-    case 'tool-id-collision':
-      return {
-        status: 400,
-        message: `Two tool calls share the sanitized id "${refusal.sanitizedId}", so their pairing is ambiguous.`,
-        code: 'tool_id_collision',
-        anthropicType: 'invalid_request_error',
-      };
-    case 'invalid-json':
-      return {
-        status: 400,
-        message: refusal.message,
-        code: 'invalid_json',
-        anthropicType: 'invalid_request_error',
-      };
-
-    default: {
-      const unhandled: never = refusal;
-
-      throw new Error(`unhandled client-error refusal: ${JSON.stringify(unhandled)}`);
-    }
-  }
-}
-
-type ConfigFaultRefusal = Extract<
-  TranslationRefusal,
-  { reason: 'missing-target' | 'missing-credential' | 'unstreamable-answer' }
->;
-
-function configFaultFacts(refusal: ConfigFaultRefusal): RefusalFacts {
-  if (refusal.reason === 'missing-target') {
-    return {
-      status: 502,
-      message: `The gateway "${refusal.displayName}" holds no target for the virtual model "${refusal.model}".`,
-      code: 'missing_target',
-      anthropicType: 'api_error',
-    };
-  }
-
-  if (refusal.reason === 'unstreamable-answer') {
-    return {
-      status: 502,
-      message: `The gateway "${refusal.displayName}" could not stream the answer that the target "${refusal.target}" returned for the virtual model "${refusal.model}".`,
-      code: 'unstreamable_answer',
-      anthropicType: 'api_error',
-    };
-  }
-
-  return {
-    status: 502,
-    message: `The gateway "${refusal.displayName}" holds no credential for the virtual model "${refusal.model}".`,
-    code: 'missing_credential',
-    anthropicType: 'api_error',
-  };
-}
-
-const configFaultReasons = ['missing-target', 'missing-credential', 'unstreamable-answer'];
-
-function isConfigFault(refusal: TranslationRefusal): refusal is ConfigFaultRefusal {
-  return configFaultReasons.includes(refusal.reason);
-}
-
-function factsOf(refusal: TranslationRefusal): RefusalFacts {
-  if (refusal.reason === 'unknown-model') {
-    return {
-      status: 404,
-      message: `No model named "${refusal.model}" is defined.`,
-      code: 'model_not_found',
-      anthropicType: 'not_found_error',
-    };
-  }
-
-  if (refusal.reason === 'unmappable-stop-reason') {
-    return {
-      status: 422,
-      message: `The stop reason "${refusal.stopReason}" has no counterpart in this dialect.`,
-      code: 'unmappable_stop_reason',
-      anthropicType: 'invalid_request_error',
-    };
-  }
-
-  if (refusal.reason === 'unrepairable-tool-call') {
-    return {
-      status: 422,
-      message: `The tool call "${refusal.unmatchedId}" has no matching tool result, and no repair is possible.`,
-      code: 'unrepairable_tool_call',
-      anthropicType: 'invalid_request_error',
-    };
-  }
-
-  if (isConfigFault(refusal)) {
-    return configFaultFacts(refusal);
-  }
-
-  return clientErrorFacts(refusal);
-}
-
-function anthropicBody(facts: RefusalFacts): AnthropicRefusal {
-  return { type: 'error', error: { type: facts.anthropicType, message: facts.message } };
-}
-
-function chatCompletionsBody(facts: RefusalFacts): OpenAiRefusal {
-  return {
-    error: { message: facts.message, type: 'invalid_request_error', param: null, code: facts.code },
-  };
-}
-
-function responsesBody(facts: RefusalFacts): ResponsesRefusal {
-  return {
-    error: { message: facts.message, type: 'invalid_request_error', code: facts.code, param: null },
-  };
-}
-
-function bodyOutsideGemini(
-  dialect: Exclude<Dialect, 'gemini'>,
-  facts: RefusalFacts,
-): RenderedRefusal['body'] {
-  switch (dialect) {
-    case 'anthropic':
-      return anthropicBody(facts);
-    case 'chat-completions':
-      return chatCompletionsBody(facts);
-    case 'responses':
-    case 'interactions':
-      return responsesBody(facts);
-    default:
-      throw new Error(`unhandled dialect: ${String(dialect)}`);
-  }
-}
-
-function bodyInDialect(dialect: Dialect, facts: RefusalFacts): RenderedRefusal['body'] {
-  return dialect === 'gemini'
-    ? geminiRefusal(facts.status, facts.message)
-    : bodyOutsideGemini(dialect, facts);
-}
-
+/**
+ * One refusal shaped for the wire: a status, a body the caller's dialect reads, and any wait it owes.
+ *
+ * @summary A refusal that names a moment has to tell the caller how long from now, so the wait is
+ * worked out here rather than left as an instant only the gateway's own clock could read.
+ */
 export function renderRefusal(dialect: Dialect, refusal: TranslationRefusal): RenderedRefusal {
   const facts = factsOf(refusal);
+  const rendered = { status: facts.status, body: bodyInDialect(dialect, facts) };
 
-  return { status: facts.status, body: bodyInDialect(dialect, facts) };
+  return facts.retryAfterSeconds === undefined
+    ? rendered
+    : { ...rendered, retryAfterSeconds: facts.retryAfterSeconds };
 }

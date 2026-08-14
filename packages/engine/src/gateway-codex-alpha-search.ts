@@ -3,10 +3,11 @@ import type { Context } from 'hono';
 
 import { proxyFetchBoundMs } from '@recompose/contracts';
 
-import type { SpendGrantFor } from './gateway-proxy';
+import type { SpendGrantContext, SpendGrantFor } from './gateway-proxy';
 
 import { isJsonObject, parsedJson } from './gateway-wire';
 import { providerObservability, providerRequestId } from './provider/provider-observability';
+import { firstDeclaredTarget } from './routing/route-table';
 import { parseSubscriptionCredential } from './subscription/credentials';
 
 type JsonObject = Record<string, unknown>;
@@ -91,6 +92,16 @@ class AlphaSearchError extends Error {
   }
 }
 
+function searchCustodyContext(c: Context, body: JsonObject): SpendGrantContext {
+  const sessionId = typeof body['id'] === 'string' ? body['id'] : undefined;
+
+  return {
+    headers: new Headers(c.req.raw.headers),
+    query: new URL(c.req.url).searchParams,
+    ...(sessionId === undefined ? {} : { sessionId }),
+  };
+}
+
 async function resolvedGrant(
   c: Context,
   gateway: EngineGateway,
@@ -98,12 +109,13 @@ async function resolvedGrant(
   virtualModel: EngineVirtualModel,
   spendGrantFor: SpendGrantFor,
 ): Promise<ResolvedGrant> {
-  const sessionId = typeof body['id'] === 'string' ? body['id'] : undefined;
-  const grant = await spendGrantFor(gateway.slug, virtualModel.id, virtualModel.routing.entry, {
-    headers: new Headers(c.req.raw.headers),
-    query: new URL(c.req.url).searchParams,
-    ...(sessionId === undefined ? {} : { sessionId }),
-  });
+  const routing = virtualModel.routing;
+  const grant = await spendGrantFor(
+    gateway.slug,
+    virtualModel.id,
+    firstDeclaredTarget(routing)?.routeNode ?? routing.entry,
+    searchCustodyContext(c, body),
+  );
 
   if (grant.verdict !== 'resolved') throw new AlphaSearchError('Codex auth unavailable', 503);
 

@@ -1,0 +1,88 @@
+import type { RefusalFacts, RouterAttempt, TranslationRefusal } from './refusal-wire';
+
+export type RouterRefusal = Extract<
+  TranslationRefusal,
+  { reason: 'empty-router' | 'exhausted-router' | 'chained-turn' }
+>;
+
+type ExhaustedRouter = Extract<RouterRefusal, { reason: 'exhausted-router' }>;
+
+const routerReasons = ['empty-router', 'exhausted-router', 'chained-turn'];
+
+export function isRouterFault(refusal: TranslationRefusal): refusal is RouterRefusal {
+  return routerReasons.includes(refusal.reason);
+}
+
+function whereItStood(refusal: RouterRefusal): string {
+  return `The router "${refusal.routerName}" in the gateway "${refusal.displayName}"`;
+}
+
+function attemptsRead(attempts: readonly RouterAttempt[]): string {
+  return attempts.map((attempt) => `${attempt.child} ${attempt.why}`).join(', ');
+}
+
+function delaySeconds(retryAtMs: number): number {
+  return Math.max(0, Math.ceil((retryAtMs - Date.now()) / 1000));
+}
+
+function exhaustedAccount(refusal: ExhaustedRouter): string {
+  return `${whereItStood(refusal)} has no child left to try for the virtual model "${refusal.model}": ${attemptsRead(refusal.attempts)}.`;
+}
+
+/**
+ * What a router that ran out of children tells the caller, and when trying again can work.
+ *
+ * @summary Every child the walk touched is named with the reason it could not serve, because a person
+ * reading this refusal is being asked to fix something and cannot fix what the gateway will not say.
+ * The wait rides only when every attempted child promised one: a pool downed by dead connections is
+ * not a rate limit, and a wait invented for it would be a lie a client would obey.
+ */
+function exhaustedFacts(refusal: ExhaustedRouter): RefusalFacts {
+  const account = exhaustedAccount(refusal);
+
+  if (refusal.retryAtMs === undefined) {
+    return { status: 502, message: account, code: 'exhausted_router', anthropicType: 'api_error' };
+  }
+
+  const seconds = delaySeconds(refusal.retryAtMs);
+
+  return {
+    status: 429,
+    message: `${account} Try again in ${String(seconds)} seconds.`,
+    code: 'exhausted_router',
+    anthropicType: 'api_error',
+    retryAfterSeconds: seconds,
+  };
+}
+
+function emptyFacts(refusal: RouterRefusal): RefusalFacts {
+  return {
+    status: 502,
+    message: `${whereItStood(refusal)} holds no child, so the virtual model "${refusal.model}" cannot serve.`,
+    code: 'empty_router',
+    anthropicType: 'api_error',
+  };
+}
+
+function chainedFacts(refusal: RouterRefusal): RefusalFacts {
+  return {
+    status: 400,
+    message: `${whereItStood(refusal)} spreads requests across accounts, so it cannot carry a turn that resumes server-side state for the virtual model "${refusal.model}". Switch this router to failover, or start a conversation that doesn't resume server-side state.`,
+    code: 'chained_turn',
+    anthropicType: 'invalid_request_error',
+  };
+}
+
+/**
+ * The wire facts of the three refusals only a router can raise.
+ *
+ * @summary An empty ladder and an exhausted one are the gateway's own faults to report, so they wear
+ * the config-fault shape beside a missing target. A chained turn is the caller's, because the request
+ * asked for state one account holds and the ladder was told to spread, so it carries the two ways out
+ * rather than a status alone.
+ */
+export function routerFaultFacts(refusal: RouterRefusal): RefusalFacts {
+  if (refusal.reason === 'empty-router') return emptyFacts(refusal);
+
+  return refusal.reason === 'chained-turn' ? chainedFacts(refusal) : exhaustedFacts(refusal);
+}

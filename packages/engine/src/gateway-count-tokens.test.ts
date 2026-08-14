@@ -68,7 +68,7 @@ describe('token counting through a subscription target', () => {
 
     expect(answer.status).toBe(200);
     expect(await answer.json()).toEqual({ input_tokens: 17 });
-    expect(grants.asked).toEqual([{ slug: 'codex', virtualModel: 'fast' }]);
+    expect(grants.asked).toEqual([{ slug: 'codex', virtualModel: 'fast', routeNode: 'only' }]);
     expect(answering.sent).toHaveLength(1);
     expect(answering.sent[0]?.request.url).toBe(
       'https://api.anthropic.com/v1/messages/count_tokens?beta=true',

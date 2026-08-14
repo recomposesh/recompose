@@ -122,7 +122,7 @@ describe('the count_tokens path of a defined model', () => {
   test('a bound model resolves a live grant for every count', async () => {
     const { asked } = await countTokensUnder('fast');
 
-    expect(asked).toEqual([{ slug: 'codex', virtualModel: 'fast' }]);
+    expect(asked).toEqual([{ slug: 'codex', virtualModel: 'fast', routeNode: 'only' }]);
   });
 });
 

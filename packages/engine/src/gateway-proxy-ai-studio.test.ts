@@ -112,12 +112,17 @@ describe('AI Studio streaming serving', () => {
         payload: { status: 200, headers: { 'content-type': 'text/event-stream' } },
       }),
     );
+    serving.relay.receive(
+      'aistudio-build',
+      streamChunk(sent.id, { candidates: [{ content: { parts: [{ text: 'selam' }] } }] }),
+    );
+
     const response = await answer;
     const reading = response.text();
 
     serving.relay.receive(
       'aistudio-build',
-      streamChunk(sent.id, { candidates: [{ content: { parts: [{ text: 'selam' }] } }] }),
+      streamChunk(sent.id, { candidates: [{ content: { parts: [{ text: ' world' }] } }] }),
     );
     serving.relay.receive(
       'aistudio-build',
@@ -125,6 +130,7 @@ describe('AI Studio streaming serving', () => {
     );
 
     await expect(reading).resolves.toContain('selam');
+    await expect(reading).resolves.toContain('world');
     expect(sent.payload.url).toContain(':streamGenerateContent?alt=sse');
   });
 });

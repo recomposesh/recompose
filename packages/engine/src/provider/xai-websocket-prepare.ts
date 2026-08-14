@@ -1,11 +1,10 @@
 import type { EngineGateway, SpendGrant } from '@recompose/contracts';
 
-import { standingTheEntryNames } from '@recompose/contracts';
-
 import type { SpendGrantFor } from '../gateway-proxy';
 import type { Crossing, JsonObject } from '../gateway-wire';
 
 import { isJsonObject } from '../gateway-wire';
+import { firstDeclaredTarget } from '../routing/route-table';
 import { credentialedRequestHeaders } from './credentialed-headers';
 import { credentialedRequestBody } from './credentialed-target';
 
@@ -36,13 +35,13 @@ function boundSeatIn(gateway: EngineGateway, model: string) {
     return null;
   }
 
-  const standing = standingTheEntryNames(virtual.routing);
+  const declared = firstDeclaredTarget(virtual.routing);
 
-  return standing.standing === 'bound'
+  return declared?.standing.standing === 'bound'
     ? {
         virtualModel: virtual.id,
-        routeNode: virtual.routing.entry,
-        providerModel: standing.providerModel,
+        routeNode: declared.routeNode,
+        providerModel: declared.standing.providerModel,
       }
     : null;
 }

@@ -1,14 +1,23 @@
-import type { EngineGateway, SpendGrant } from '@recompose/contracts';
+import type {
+  EngineGateway,
+  EngineTargetStanding,
+  EngineVirtualModel,
+  SpendGrant,
+} from '@recompose/contracts';
 import type { Context } from 'hono';
-
-import { standingTheEntryNames } from '@recompose/contracts';
 
 import type { SpendGrantFor } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 import type { XAIVideoPath } from './provider/xai-video';
+import type { DeclaredTarget } from './routing/route-table';
+
+type BoundTarget = DeclaredTarget & {
+  standing: Extract<EngineTargetStanding, { standing: 'bound' }>;
+};
 
 import { readJsonBody } from './gateway-wire';
 import { reachXAIVideo } from './provider/xai-video';
+import { firstDeclaredTarget } from './routing/route-table';
 
 function videoError(message: string, status: 400 | 404 = 400): Response {
   return Response.json({ error: { type: 'invalid_request_error', message } }, { status });
@@ -36,6 +45,30 @@ function providerBody(body: JsonObject, providerModel: string): JsonObject {
   return { ...body, model: providerModel };
 }
 
+async function videoAnswerForTarget(
+  c: Context,
+  gateway: EngineGateway,
+  path: XAIVideoPath,
+  spendGrantFor: SpendGrantFor,
+  made: { body: JsonObject; virtual: EngineVirtualModel; declared: BoundTarget },
+  fetchLike: typeof fetch,
+): Promise<Response> {
+  const grant = await spendGrantFor(gateway.slug, made.virtual.id, made.declared.routeNode);
+
+  if (!xaiGrant(grant)) {
+    return videoError('The video target has no xAI credential.');
+  }
+
+  return reachXAIVideo(
+    grant.providerOrigin,
+    path,
+    grant.spend.credential,
+    providerBody(made.body, made.declared.standing.providerModel),
+    idempotencyKey(c),
+    fetchLike,
+  );
+}
+
 export async function proxyVideoRequest(
   c: Context,
   gateway: EngineGateway,
@@ -49,22 +82,16 @@ export async function proxyVideoRequest(
 
   if (virtual === undefined) return videoError(`The model "${model}" does not exist.`, 404);
 
-  const standing = standingTheEntryNames(virtual.routing);
+  const declared = firstDeclaredTarget(virtual.routing);
 
-  if (standing.standing !== 'bound') return videoError('The video model has no target.');
+  if (declared?.standing.standing !== 'bound') return videoError('The video model has no target.');
 
-  const grant = await spendGrantFor(gateway.slug, virtual.id, virtual.routing.entry);
-
-  if (!xaiGrant(grant)) {
-    return videoError('The video target has no xAI credential.');
-  }
-
-  return reachXAIVideo(
-    grant.providerOrigin,
+  return videoAnswerForTarget(
+    c,
+    gateway,
     path,
-    grant.spend.credential,
-    providerBody(body, standing.providerModel),
-    idempotencyKey(c),
+    spendGrantFor,
+    { body, virtual, declared: { routeNode: declared.routeNode, standing: declared.standing } },
     fetchLike,
   );
 }
