@@ -109,7 +109,10 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
   - [x] **8c round-robin.** Landed as `93ba2178`. Rotation spreads, a cooling child loses its turn, a chained turn refuses. Three mutations, one per scenario, each killing only its own.
   - [x] **8d refusals.** Landed as `1dacbe34`. The empty router and the exhausted one. Three mutations, including one that survived and was the cluster's own mistake rather than a weak test: it moved the constant the assertion also reads, so both sides moved together.
   - [x] **8g inspector.** Landed as `9ce89ff7`. The keyboard reorders the ladder and the live region says where the child landed, and a round-robin list carries no rank. It added the third target the shared surface had left out on purpose.
-  - [ ] **8a failover.** Written, green on three of four scenarios, blocked on the defect above. Its steps are already written against the fixed behaviour, so they're the check on task 4b.
+  - [x] **8a failover.** Landed as `cd8514c9`. A rate-limited child hands on, a malformed request stops at the child that refused it, a child whose account left cools alone while its sibling answers, and a refused walk asks each child once.
+
+    Its third scenario is the guard on task 4b, and it proved that both ways. Restoring the terminal reading reddens that scenario and no other, and flattening the default cooldown to nothing reddens it again through the other half of its sentence. Neither half passes on its own.
+
   - [x] **8b streaming.** Landed as `60d1b993`. The two scenarios the maintainer left standing: a failure past the first byte closes without moving on, and a status-less drop fails over.
 
     **It disproved the fact task 4 recorded and three briefs repeated.** `truncateAfterChunks: 1` doesn't land a chunk past the commit latch. Node corks an HTTP write and uncorks on the next tick. The stand-in destroys the socket synchronously after writing, so nothing ever flushes the opening event, and the gateway reads a plain transport failure. Measured from the child: `bytesWritten: 420, bytesRead: 0`, and the caller held a whole answer from the sibling. With no pacing this holds for any value, because the whole answer composes inside one tick. `{ latency: 25, truncateAfterChunks: 2 }` is what works: the await before the second write is the tick boundary that flushes the first. Same run after: `bytesRead: 548`, one `message_start`, ending broken.
@@ -119,7 +122,11 @@ Ownership is disjoint by construction. A dependency below is a data dependency, 
     **jscpd forced a scope extension.** A verbatim copy of unit 8c's `theRoutedModelName` tripped the zero-threshold duplicate gate. No honest way keeps it, so the helper moved to `routed-gateway.ts` and both step files read it there.
 
   - [ ] **8e stored-shape.** Running.
-  - [ ] **8f canvas.** Waits on task 7b, because its scenarios exercise what 7b is changing.
+  - [x] **8f canvas.** Landed as `a2682bfb`. The kind ask on a drop, the walk into the account pick, a router standing with no child, a second router nested through the same ask, and one failed-over request painting each cable it touched.
+
+    Its fifth scenario is the one most able to fake a pass, so it answered from three sides. The failed cable's standing comes from the skipped child's own note. The served cable proves out while the first assertion still passes, and spreading one reading over every cable reddens it. A missing reading defaults to resting rather than served, so neither assertion can pass on a default.
+
+    It found two reds it didn't cause. Task 7b widened the cable refusal's wording and left the shipped accessibility step asserting the old sentence, which the train repaired. And a theme scenario fails locally only, because the restart helper inherits the environment without re-adding the stays-back flag, so an exported flag leaks into it.
 
   Four measurements the remaining units and the review should have.
 
@@ -205,6 +212,12 @@ The maintainer settled both open questions.
 **Delete the two clauses with no expression, rather than defer or reword them.** The approved `streaming.feature` loses the scenario about a stream opening with an error event, and the post-commit scenario loses its `Then the caller receives the provider's stream error unchanged`. What survives is what the suite can prove: the stream closes, no sibling begins, and a status-less transport failure moves on.
 
 Nothing about the product changed, and the behaviour is still proven. Task 4 covers the pre-commit error-open path and the verbatim forward in unit specs. It scored 88.71 mutation on the serving path, after killing 29 survivors in the file that owns the wording. What went away is the end-to-end witness, not the guarantee. `specs/routers/spec.md` still requires the forward, and it should: a requirement describes the product, not the test rig.
+
+## Two operational facts the end-to-end units measured
+
+**The harness shares its user-data directory across worktrees.** Every run uses `~/.recompose-e2e-w<parallelIndex>`, so two clusters running end-to-end at once fight over the same folder. The symptoms read like product defects and aren't: `ENOTEMPTY` on the fixture's own cleanup, `ENOENT` making a gateways folder, and `Another gateway already holds the name "Codex"`. A repeat run at ten workers produced 56 failures on an unmodified baseline. Judge this suite on single serial passes, and never run two clusters' end-to-end at once.
+
+**Stray Electron processes survive a mutation run and poison the next suite.** Unit 8a saw 19 failed and 17 flaky across four unrelated features, then 260 passed after `pkill -f Electron`, on the same tree. The tell is wall time, since the poisoned run took twice as long. A broad red at double the usual duration wants the processes cleared before anyone reads it as a branch failure.
 
 ## Two observations the streaming unit left standing
 
