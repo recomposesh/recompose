@@ -251,6 +251,22 @@ The rules review found one user-visible rule written three times, which is how a
 
 Three things the reviewers proved sound, recorded so nobody repeats the work. The contracts walk refuses every malformed table they could construct, including four separate ways to express a cycle. The walk can't spin whatever the table's shape. And the version 4 migration is now pure, with derived and minted ids in disjoint namespaces.
 
+### What the repairs landed
+
+Three clusters answered the round, and each pushed back somewhere.
+
+**The renderer repair** (`a7724e71`, mutation 98.98) closed both data-loss paths and four of the five smaller findings. Its judgement on the cable: a release asks whenever it would destroy work and passes through only when it wouldn't. It re-derived that from the premise the old rule already stated, rather than writing new wording. The card path stays the single authority on what a removal question says. It left the child-cable reconnect alone. An honest repair needs a rebind act beside the append act, in a file another cluster held, and growing a ladder isn't data loss.
+
+**The rules repair** (`e2bfbcf4`) put the router naming rule in contracts, with a spec pinning the mode a person picks against the name they read back. The card-id encoding went to one writer and one reader, and three boolean parameters became six named functions. It went past what the review asked on the reason list: `satisfies` catches a typo, so it used a keyed record read through `Object.hasOwn`, and a fourth arm now fails the build.
+
+It also disagreed with the review and was right. The review asked for three markup hooks deleted as test coupling. Two of them have six more readers across three gates, and three of those readers prove geometry. One story measures the rank column's alignment, another compares `scrollWidth` against `clientWidth` to prove a narrow row drops the model rather than the account. The accessible tree carries no geometry. Only the hook with no reader anywhere went.
+
+**The engine repair** (`f524b9ea`, mutation 93.11 against a measured 89.45 baseline) closed all five, and answered the latch-timeout question by checking the platform rather than asserting. Node's fetch already bounds an idle body read at undici's 300 second default. The escape this repair closed is what makes that bound useful, since the worst case moved from hang, then 500, no failover, to hang, then failover. It recommends no bound here. The number is a product decision, the bound evaporates under an injected `fetchLike`, and the shape that fits is a deadline on the fetch rather than a timer inside the latch.
+
+Two things it recorded rather than buried. Moving the chained-turn refusal into the walk moves it after the plugin hook. A plugin now sees a turn the walk will refuse, which it judged an improvement and no document anticipated. And `design.md` decision 8 is now wrong on both the file and the condition, because the crossing no longer decides anything about chained turns.
+
+One finding stays open by choice: `configFaultReasons` in `refusal-facts.ts` carries the same unchecked predicate, on main, outside this change.
+
 ## One question for the review gate
 
 The rules review on task 4 read every `@summary` docstring on a module-private function as a banned comment. The cluster checked before following it and found 53 already committed across `packages/engine/src` and `apps/desktop/src/main`, several of them written by this change's own earlier clusters. CLAUDE.md carves the pattern out for API documentation the tooling reads, which names exported declarations, so the strict reading and the house practice genuinely disagree.
