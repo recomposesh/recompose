@@ -159,6 +159,50 @@ describe('what a failed virtual model hands a person to read', () => {
   });
 });
 
+describe('what the cables of a routed virtual model carry', () => {
+  const routed: VirtualModel = {
+    id: 'fast',
+    displayName: 'Fast',
+    routing: {
+      entry: 'ladder',
+      nodes: {
+        ladder: { kind: 'router', policy: { mode: 'failover' }, children: ['first'] },
+        first: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' },
+      },
+    },
+  };
+
+  const overARouter: GatewayConfig = { ...codex, virtualModels: [routed] };
+
+  test('the cable into the router carries what the last request through the model came to', () => {
+    const graph = graphAt(flowed, JUST_AFTER, overARouter);
+
+    expect(cableIn(graph, 'cable:fast')?.standing).toBe('served');
+  });
+
+  test('a cable below the router waits for traffic named against its own route node', () => {
+    const graph = graphAt(flowed, JUST_AFTER, overARouter);
+
+    expect(cableIn(graph, 'cable:fast:first')?.standing).toBe('resting');
+  });
+
+  test('a failed request through a routed model stands its error on the cable out of the model', () => {
+    const graph = graphAt(wentRed, JUST_AFTER, overARouter);
+
+    expect(cableIn(graph, 'cable:fast')?.failure).toEqual({
+      status: 502,
+      detail: 'The gateway could not reach the target.',
+    });
+    expect(cableIn(graph, 'cable:fast:first')?.failure).toBeUndefined();
+  });
+
+  test('the gateway wire of a routed model paints with the model it serves', () => {
+    const graph = graphAt(flowed, JUST_AFTER, overARouter);
+
+    expect(cableIn(graph, 'wire:model:fast')?.standing).toBe('served');
+  });
+});
+
 describe('how the tints cool once the traffic goes quiet', () => {
   test('a served reading cools back to rest once the minute passes it by', () => {
     expect(standingsOf(graphAt(flowed, A_MINUTE_LATER))).toEqual(['structural', 'resting']);

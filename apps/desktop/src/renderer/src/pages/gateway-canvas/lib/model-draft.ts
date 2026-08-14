@@ -3,8 +3,10 @@ import type { GatewayConfig, RouteTarget, Routing, VirtualModel } from '@recompo
 import { mintRouteNodeId, modelAliasFromName, modelAliasSchema } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
+import type { RouterMode } from './routing-edits';
 
 import { IpcResultError, refusalSentence } from '../../../shared/api';
+import { routedThroughARouter } from './routing-edits';
 
 const MISSING_NAME_REFUSAL = 'Give the virtual model a name.';
 const UNSERVABLE_ID_REFUSAL = 'recompose cannot serve a virtual model under this id.';
@@ -100,8 +102,29 @@ export function gatewayDefining(gateway: GatewayConfig, settled: SettledDefiniti
   };
 }
 
+/** What a definition answers to before it reaches any target, which is all a router needs. */
+export type NamedDefinition = { id: string; displayName: string };
+
+/**
+ * The gateway as it stands once it carries a definition routing through a fresh router.
+ *
+ * @summary A person picking the router at the binding ask finishes their draft there, so the
+ * definition stores with a router in the place a target would have taken and no account named yet.
+ * The router holds no child, which the canvas draws as incomplete and a request refuses.
+ */
+export function gatewayDefiningRouted(
+  gateway: GatewayConfig,
+  named: NamedDefinition,
+  mode: RouterMode,
+): GatewayConfig {
+  return {
+    ...gateway,
+    virtualModels: [...gateway.virtualModels, { ...named, routing: routedThroughARouter(mode) }],
+  };
+}
+
 function reboundOnItsEntry(routing: Routing, target: RouteTarget): Routing {
-  return { entry: routing.entry, nodes: { ...routing.nodes, [routing.entry]: target } };
+  return { entry: routing.entry, nodes: { [routing.entry]: target } };
 }
 
 /**
@@ -110,6 +133,8 @@ function reboundOnItsEntry(routing: Routing, target: RouteTarget): Routing {
  * @summary A virtual model answers with one target, so a cable dragged onto another card replaces
  * the binding rather than joining it. The definition keeps its id and its name, because a person
  * rebinding is aiming the model they already named somewhere new rather than composing a second one.
+ * A routed model rebinds down to that one target, taking its whole ladder with it, because a router
+ * whose parent stopped naming it would leave nodes no request could reach.
  */
 export function gatewayRebinding(
   gateway: GatewayConfig,

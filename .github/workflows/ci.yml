@@ -147,6 +147,8 @@ jobs:
           desktop=$(git diff --name-only "$BASE_SHA"...HEAD \
             -- ':(glob)apps/desktop/src/main/**/*.ts' ':(glob)apps/desktop/scripts/**/*.mts' \
             "$canvas_lib/node-graph.ts" "$canvas_lib/tidy-layout.ts" \
+            "$canvas_lib/canvas-cards.ts" "$canvas_lib/route-graph.ts" \
+            "$canvas_lib/routing-edits.ts" "$canvas_lib/cable-traffic.ts" \
             "$canvas_lib/canvas-positions.ts" "$canvas_lib/model-draft.ts" \
             "$canvas_lib/cable-announcements.ts" "$canvas_lib/cable-standing.ts" \
             "$canvas_lib/traffic-aggregates.ts" "$canvas_lib/log-scope.ts" \

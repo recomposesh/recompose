@@ -21,6 +21,7 @@ const cards = {
   target: Card,
   'draft-model': Card,
   'ghost-target': Card,
+  router: Card,
   'pending-target': Card,
 } satisfies Record<CanvasNodeKind, typeof Card>;
 

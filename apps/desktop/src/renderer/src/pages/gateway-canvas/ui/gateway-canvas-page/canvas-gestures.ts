@@ -7,7 +7,7 @@ import type { CanvasStandings, CanvasWorld } from './canvas-standings';
 import { closeInspector, inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { flowPointOf, viewportOf } from '../../lib/canvas-viewport';
 import { emptyDefinition } from '../../lib/model-draft';
-import { seatForNewNode } from '../../lib/tidy-layout';
+import { MODEL_COLUMN, ROUTE_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, startDrafting } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import {
@@ -190,14 +190,14 @@ function cardAsks(world: CanvasWorld) {
     onAddVirtualModel: () => {
       birthedDraftAt(
         world,
-        heldDraft(world.slug)?.seat ?? seatForNewNode('draft-model', world.seats),
+        heldDraft(world.slug)?.seat ?? seatForNewNode(MODEL_COLUMN, world.seats),
       );
     },
     onPickTargetFor: (from: string) => {
       world.standings.setPicker({
         step: 'account',
         from,
-        at: seatForNewNode('pending-target', world.seats),
+        at: seatForNewNode(ROUTE_COLUMN, world.seats),
         origin: 'ask',
       });
     },

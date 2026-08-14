@@ -15,7 +15,7 @@ import {
   gatewayRebinding,
   gatewayReleasing,
 } from '../../lib/model-draft';
-import { seatForNewNode } from '../../lib/tidy-layout';
+import { ROUTE_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
 import { shownWhereItWasBorn } from './born-card-camera';
 import { modelIdOf, targetModelIdOf } from './canvas-wiring';
@@ -68,7 +68,7 @@ function seatOfTheBornTarget(world: CanvasWorld, bornTargetId: string): XY | und
     return picker.origin === 'drop' ? undefined : picker.at;
   }
 
-  return seatForNewNode('target', world.seats);
+  return seatForNewNode(ROUTE_COLUMN, world.seats);
 }
 
 function committedPick(

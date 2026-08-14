@@ -44,6 +44,50 @@ test('a definition still names the model it was bound to after its account left'
   expect(served?.providerModel).toBe('claude-haiku-4-5');
 });
 
+const routed: VirtualModel = {
+  id: 'spread',
+  displayName: 'Spread',
+  routing: {
+    entry: 'ladder',
+    nodes: {
+      ladder: { kind: 'router', policy: { mode: 'failover' }, children: ['lead', 'spare'] },
+      lead: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+      spare: { kind: 'target', accountId: 'k2', providerModel: 'claude-opus-5' },
+    },
+  },
+};
+
+test('a routed definition reads the real model the target its ladder tries first serves', () => {
+  const [served] = servedModels([routed], [workKey]);
+
+  expect(served?.providerModel).toBe('claude-haiku-4-5');
+});
+
+test('a routed definition whose lead account still stands reads as serving through it', () => {
+  const [served] = servedModels([routed], [workKey]);
+
+  expect(served?.target).toEqual({ standing: 'serving', account: workKey });
+});
+
+test('a routed definition whose lead account left the registry reads as removed', () => {
+  const [served] = servedModels([routed], []);
+
+  expect(served?.target).toEqual({ standing: 'removed' });
+});
+
+test('a definition routed through a router holding no target names no real model at all', () => {
+  const empty: VirtualModel = {
+    ...routed,
+    routing: {
+      entry: 'ladder',
+      nodes: { ladder: { kind: 'router', policy: { mode: 'round-robin' }, children: [] } },
+    },
+  };
+  const [served] = servedModels([empty], [workKey]);
+
+  expect(served).toMatchObject({ providerModel: '', target: { standing: 'removed' } });
+});
+
 test('the definitions read in the order the gateway stores them', () => {
   const creative: VirtualModel = { ...fast, id: 'creative', displayName: 'Creative' };
 

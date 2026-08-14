@@ -1,0 +1,71 @@
+import type { GatewayConfig, GatewayTraffic, RequestOutcome } from '@recompose/contracts';
+
+/** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
+export type CableStanding =
+  | 'resting'
+  | 'live'
+  | 'served'
+  | 'failed'
+  | 'broken'
+  | 'draft'
+  | 'pending'
+  | 'structural';
+
+/** What a request the gateway refused or could not finish came to, as a person reads it. */
+export type CableFailure = { status: number; detail: string };
+
+/** The latest outcome of every virtual model this gateway serves, warm ones only. */
+export type CarriedTraffic = Readonly<Record<string, RequestOutcome>>;
+
+const CABLE_TRAFFIC_MEMORY_MS = 60_000;
+
+/**
+ * Whether a carried outcome still deserves its tint: a live request always, a served one for a
+ * minute, and a failure until newer traffic answers it, because a break needs a person to see it.
+ */
+function stillWarm(carried: RequestOutcome, now: number): boolean {
+  if (carried.outcome === 'served') {
+    return now - carried.at <= CABLE_TRAFFIC_MEMORY_MS;
+  }
+
+  return true;
+}
+
+/**
+ * What each of a gateway's virtual models last came to, once the cold readings fall away.
+ *
+ * @summary A served reading cools back to rest once the minute passes it by, because a warm tint is
+ * a claim about now rather than a plaque about ever, and a failure stays until newer traffic answers
+ * it, since a break is a thing a person has to see.
+ */
+export function carriedBy(
+  gateway: GatewayConfig,
+  traffic: GatewayTraffic,
+  now: number,
+): CarriedTraffic {
+  const flowed = traffic[gateway.slug] ?? {};
+
+  return Object.fromEntries(
+    Object.entries(flowed).filter(([, carried]) => stillWarm(carried, now)),
+  );
+}
+
+/** The standing an outcome paints a cable, or nothing where no request has flowed. */
+export function standingCarried(carried: RequestOutcome | undefined): CableStanding | undefined {
+  if (carried === undefined) {
+    return undefined;
+  }
+
+  if (carried.outcome === 'live') {
+    return 'live';
+  }
+
+  return carried.outcome === 'served' ? 'served' : 'failed';
+}
+
+/** The error a person can press on a cable, which only a failed request leaves behind. */
+export function failureCarried(carried: RequestOutcome | undefined): CableFailure | undefined {
+  return carried?.outcome === 'failed'
+    ? { status: carried.status, detail: carried.detail }
+    : undefined;
+}

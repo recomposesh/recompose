@@ -3,52 +3,24 @@ import type {
   GatewayConfig,
   GatewayTraffic,
   RequestOutcome,
-  RouteTarget,
   SubscriptionAccountView,
   VirtualModel,
 } from '@recompose/contracts';
 
-import { targetTheEntryNames } from '@recompose/contracts';
-
+import type { CableFailure, CableStanding, CarriedTraffic } from './cable-traffic';
+import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
 
-import { accountDetail } from '../../../entities/account';
+import { carriedBy, failureCarried, standingCarried } from './cable-traffic';
+import { routeCard, seatName } from './canvas-cards';
+import { firstDeclaredTarget, seatedRouteNodes } from './route-graph';
+
+export type { CableFailure, CableStanding } from './cable-traffic';
+export type { CanvasNode, CanvasNodeKind } from './canvas-cards';
 
 const GATEWAY_NODE_ID = 'gateway';
 const DRAFT_NODE_ID = 'draft';
 const PENDING_NODE_ID = 'pending';
-
-/** A card standing on the canvas, which is either engine truth or one of the two overlay cards. */
-export type CanvasNode =
-  | { id: string; kind: 'gateway'; displayName: string; port: number }
-  | {
-      id: string;
-      kind: 'virtual-model';
-      modelId: string;
-      displayName: string;
-      providerModel: string;
-    }
-  | { id: string; kind: 'target'; account: Account; modelId: string; detail?: string }
-  | { id: string; kind: 'ghost-target'; accountId: string; modelId: string }
-  | { id: string; kind: 'draft-model'; modelId: string; displayName: string }
-  | { id: string; kind: 'pending-target' };
-
-/** Which card a node stands as, which is what decides the column it seats in. */
-export type CanvasNodeKind = CanvasNode['kind'];
-
-/** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
-export type CableStanding =
-  | 'resting'
-  | 'live'
-  | 'served'
-  | 'failed'
-  | 'broken'
-  | 'draft'
-  | 'pending'
-  | 'structural';
-
-/** What a request the gateway refused or could not finish came to, as a person reads it. */
-export type CableFailure = { status: number; detail: string };
 
 /** A cable drawn between two cards standing on the canvas. */
 export type CanvasEdge = {
@@ -78,91 +50,43 @@ function modelNodeId(modelId: string): string {
   return `model:${modelId}`;
 }
 
-function ghostNode(modelId: string, bound: RouteTarget | undefined): CanvasNode {
-  const accountId = bound?.accountId ?? '';
-
-  return { id: `ghost:${modelId}`, kind: 'ghost-target', accountId, modelId };
-}
-
-function targetNode(
-  model: VirtualModel,
-  bound: RouteTarget | undefined,
-  accounts: readonly Account[],
-  subscriptions: readonly SubscriptionAccountView[],
-): CanvasNode {
-  const account = accounts.find((held) => held.id === bound?.accountId);
-
-  if (account === undefined) {
-    return ghostNode(model.id, bound);
-  }
-
-  const signedInAs =
-    account.kind === 'subscription'
-      ? subscriptions.find((view) => view.id === account.id)?.signedInAs
-      : undefined;
-
-  return {
-    id: `target:${model.id}`,
-    kind: 'target',
-    account,
-    modelId: model.id,
-    detail: accountDetail(account, signedInAs),
-  };
-}
-
-type CarriedTraffic = Readonly<Record<string, RequestOutcome>>;
-
-const CABLE_TRAFFIC_MEMORY_MS = 60_000;
-
 /**
- * Whether a carried outcome still deserves its tint: a live request always, a served one for a
- * minute, and a failure until newer traffic answers it, because a break needs a person to see it.
+ * What the last request through a model says about the cable feeding one of its route nodes.
+ *
+ * @summary Traffic names the virtual model a request passed through, so the cable out of the
+ * model carries it and a cable below a router waits for a reading named against its own route node.
+ * Painting every cable of a ladder from one reading would say two children each failed where one
+ * did. A cable onto a card whose account left the registry carries nothing at all, because it
+ * cannot serve the next request and stale green would say it could.
  */
-function stillWarm(carried: RequestOutcome, now: number): boolean {
-  if (carried.outcome === 'served') {
-    return now - carried.at <= CABLE_TRAFFIC_MEMORY_MS;
-  }
-
-  return true;
-}
-
-function carriedBy(gateway: GatewayConfig, traffic: GatewayTraffic, now: number): CarriedTraffic {
-  const flowed = traffic[gateway.slug] ?? {};
-
-  return Object.fromEntries(
-    Object.entries(flowed).filter(([, carried]) => stillWarm(carried, now)),
-  );
-}
-
-function standingCarried(carried: RequestOutcome | undefined): CableStanding | undefined {
-  if (carried === undefined) {
+function outcomeInto(
+  carried: CarriedTraffic,
+  card: CanvasNode,
+  placed: PlacedRouteNode,
+): RequestOutcome | undefined {
+  if (card.kind === 'ghost-target' || placed.seat.parent !== undefined) {
     return undefined;
   }
 
-  if (carried.outcome === 'live') {
-    return 'live';
-  }
-
-  return carried.outcome === 'served' ? 'served' : 'failed';
+  return carried[placed.modelId];
 }
 
-function failureCarried(carried: RequestOutcome | undefined): CableFailure | undefined {
-  return carried?.outcome === 'failed'
-    ? { status: carried.status, detail: carried.detail }
-    : undefined;
-}
-
-function bindingCable(
-  model: VirtualModel,
-  target: CanvasNode,
+function cableInto(
+  placed: PlacedRouteNode,
+  card: CanvasNode,
   carried: RequestOutcome | undefined,
+  entry: string,
 ): CanvasEdge {
-  const unserved: CableStanding = target.kind === 'target' ? 'resting' : 'broken';
+  const { modelId, seat } = placed;
+  const unserved: CableStanding = card.kind === 'ghost-target' ? 'broken' : 'resting';
 
   return {
-    id: `cable:${model.id}`,
-    source: modelNodeId(model.id),
-    target: target.id,
+    id: `cable:${placed.name}`,
+    source:
+      seat.parent === undefined
+        ? modelNodeId(modelId)
+        : `route:${seatName(modelId, seat.parent, entry)}`,
+    target: card.id,
     standing: standingCarried(carried) ?? unserved,
     failure: failureCarried(carried),
   };
@@ -178,11 +102,45 @@ function structuralWire(servedNodeId: string, carried: RequestOutcome | undefine
   };
 }
 
+type RoutedCards = { nodes: CanvasNode[]; edges: CanvasEdge[]; flowed: RequestOutcome | undefined };
+
+function routedCards(
+  model: VirtualModel,
+  registry: Registry,
+  carried: CarriedTraffic,
+): RoutedCards {
+  const { entry } = model.routing;
+  const nodes: CanvasNode[] = [];
+  const edges: CanvasEdge[] = [];
+  let flowed: RequestOutcome | undefined;
+
+  for (const seat of seatedRouteNodes(model.routing)) {
+    const placed = { modelId: model.id, name: seatName(model.id, seat.routeNodeId, entry), seat };
+    const card = routeCard(placed, registry);
+    const into = outcomeInto(carried, card, placed);
+
+    flowed = seat.parent === undefined ? into : flowed;
+    nodes.push(card);
+    edges.push(cableInto(placed, card, into, entry));
+  }
+
+  return { nodes, edges, flowed };
+}
+
+function modelCard(model: VirtualModel): CanvasNode {
+  return {
+    id: modelNodeId(model.id),
+    kind: 'virtual-model',
+    modelId: model.id,
+    displayName: model.displayName,
+    providerModel: firstDeclaredTarget(model.routing)?.providerModel ?? '',
+  };
+}
+
 function servedGraph(
   gateway: GatewayConfig,
-  accounts: readonly Account[],
+  registry: Registry,
   carried: CarriedTraffic,
-  subscriptions: readonly SubscriptionAccountView[],
 ): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
   const nodes: CanvasNode[] = [
     {
@@ -195,20 +153,10 @@ function servedGraph(
   const edges: CanvasEdge[] = [];
 
   for (const model of gateway.virtualModels) {
-    const bound = targetTheEntryNames(model.routing);
-    const target = targetNode(model, bound, accounts, subscriptions);
-    const flowed = target.kind === 'target' ? carried[model.id] : undefined;
+    const routed = routedCards(model, registry, carried);
 
-    nodes.push({
-      id: modelNodeId(model.id),
-      kind: 'virtual-model',
-      modelId: model.id,
-      displayName: model.displayName,
-      providerModel: bound?.providerModel ?? '',
-    });
-
-    nodes.push(target);
-    edges.push(structuralWire(modelNodeId(model.id), flowed), bindingCable(model, target, flowed));
+    nodes.push(modelCard(model), ...routed.nodes);
+    edges.push(structuralWire(modelNodeId(model.id), routed.flowed), ...routed.edges);
   }
 
   return { nodes, edges };
@@ -218,22 +166,22 @@ function servedGraph(
  * Every card and cable the canvas stands on, read off the gateway, the registry, and the overlay.
  *
  * @summary This is the only thing that writes graph shape, so what a person sees is the stored
- * composition rather than a second copy of it drifting beside one. A binding whose account left the
- * registry keeps its cable onto a ghost card, because a broken binding is what a person came back
- * to repair and a blank space says nothing about it. The gateway wires to every virtual model and
- * draft it serves, so the template's spine reads on the canvas; a wire is structural, which no
+ * composition rather than a second copy of it drifting beside one. A virtual model stands every
+ * route node its table holds, so a router stands its own card between the model and the targets
+ * under it, and each child hangs off the router by a cable of its own. A binding whose account left
+ * the registry keeps its cable onto a ghost card, because a broken binding is what a person came
+ * back to repair and a blank space says nothing about it. The gateway wires to every virtual model
+ * and draft it serves, so the template's spine reads on the canvas; a wire is structural, which no
  * gesture selects, reconnects, or deletes. The overlay card keeps its own `draft` identity while
  * the person edits the client-facing model id, so temporarily matching a stored id never makes the
- * draft disappear. Every stored model and cable keeps its namespaced node id.
+ * draft disappear.
  *
- * Traffic paints both cables of the virtual model it flowed through, and a virtual model nothing
- * has flowed through yet stays at rest, so a cable reading served says a request truly came back.
- * A served reading cools back to rest once the minute passes it by, because a warm tint is a claim
- * about now rather than a plaque about ever; a failure stays until newer traffic answers it, since
- * a break is a thing a person has to see. A binding whose account left the registry keeps reading
- * broken whatever last flowed through it, because it cannot serve the next request and stale green
- * would say it could. Only the binding cable carries the failure a person reads, so one failed
- * request stands one error to press rather than repeating itself along the wire.
+ * Traffic paints the wire and the cable of the virtual model it flowed through, and a virtual model
+ * nothing has flowed through yet stays at rest, so a cable reading served says a request truly came
+ * back. A binding whose account left the registry keeps reading broken whatever last flowed through
+ * it, because it cannot serve the next request and stale green would say it could. Only the cable
+ * out of the model carries the failure a person reads, so one failed request stands one error to
+ * press rather than repeating itself along the wire.
  */
 export function canvasGraph(
   gateway: GatewayConfig,
@@ -245,9 +193,8 @@ export function canvasGraph(
 ): CanvasGraph {
   const { nodes, edges } = servedGraph(
     gateway,
-    accounts,
+    { accounts, subscriptions },
     carriedBy(gateway, traffic, now),
-    subscriptions,
   );
 
   appendDraftCard(nodes, edges, overlay.draft);

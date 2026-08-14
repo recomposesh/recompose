@@ -25,7 +25,7 @@ import {
   subscribeToCanvasPositions,
 } from '../../lib/canvas-position-store';
 import { canvasGraph } from '../../lib/node-graph';
-import { targetSeatBeside } from '../../lib/tidy-layout';
+import { childSeatBeside } from '../../lib/tidy-layout';
 import { heldDraft, leaveDrafting, useHeldDraft } from '../../lib/use-held-draft';
 import { askedTargetRemoval, spokenNameOf, targetNameIn } from './binding-acts';
 import { flowWiring } from './canvas-gestures';
@@ -64,7 +64,7 @@ function draftGraduation(world: CanvasWorld): (definition: SettledDefinition) =>
 
     if (draft !== undefined) {
       setNodePosition(world.slug, `model:${definition.id}`, draft.seat);
-      setNodePosition(world.slug, `target:${definition.id}`, targetSeatBeside(draft.seat));
+      setNodePosition(world.slug, `target:${definition.id}`, childSeatBeside(draft.seat));
       keepCanvasPositions(world.slug);
     }
 

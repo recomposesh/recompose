@@ -33,6 +33,8 @@ test('a runtime that names itself reads as the server it is rather than as nothi
     kind: 'target',
     account: ollama,
     modelId: 'fast',
+    routeNodeId: 'seat',
+    depth: 0,
   });
 
   await expect
@@ -46,6 +48,8 @@ test('a target leads with its provider product and connection kind rather than t
     kind: 'target',
     account: claude,
     modelId: 'fast',
+    routeNodeId: 'seat',
+    depth: 0,
     detail: 'ada@example.com',
   });
   const card = screen.getByRole('button', { name: /ada@example.com/ });
@@ -62,6 +66,8 @@ test('an account that left the registry keeps its card and says what became of i
     kind: 'ghost-target',
     accountId: 'a9',
     modelId: 'slow',
+    routeNodeId: 'seat',
+    depth: 0,
   });
 
   const card = screen.getByRole('button', { name: /Removed/ });
