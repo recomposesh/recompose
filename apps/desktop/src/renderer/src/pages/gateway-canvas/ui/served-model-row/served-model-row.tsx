@@ -17,14 +17,31 @@ function bindingLine(served: ServedModel): string {
     : `${served.id} → ${account} · ${served.providerModel}`;
 }
 
+function standingWord(target: ServedModel['target']): string | undefined {
+  if (target.standing === 'serving') {
+    return undefined;
+  }
+
+  if (target.standing === 'removed') {
+    return 'target removed';
+  }
+
+  return target.lost === 1 ? '1 target removed' : `${String(target.lost)} targets removed`;
+}
+
 /**
  * One virtual model, read leading to trailing as the name it answers to and what serves it.
  *
  * @summary Every row leads with the virtual-model star, because the list answers what the gateway
  * serves rather than which account kind stands behind each model. A target that left the registry
- * keeps its warning, and the binding stays visible so a person can repair it.
+ * keeps its warning, and the binding stays visible so a person can repair it. A pool that lost one
+ * target of several counts what left instead of wearing the broken binding's word, because a
+ * request under this name still gets served and the row would otherwise send a person to repair
+ * something that works.
  */
 export function ServedModelRow({ served }: ServedModelRowProps) {
+  const word = standingWord(served.target);
+
   return (
     <li className="flex min-h-sheet-row items-center gap-2.5 border-b border-line-faint px-3 py-1.5 last:border-b-0">
       <span
@@ -39,9 +56,7 @@ export function ServedModelRow({ served }: ServedModelRowProps) {
           {bindingLine(served)}
         </span>
       </span>
-      {served.target.standing === 'removed' ? (
-        <StatusChip tone="attention" word="target removed" />
-      ) : null}
+      {word === undefined ? null : <StatusChip tone="attention" word={word} />}
       <CopyButton announcement="Model id copied." label="Copy model id" value={served.id} />
     </li>
   );

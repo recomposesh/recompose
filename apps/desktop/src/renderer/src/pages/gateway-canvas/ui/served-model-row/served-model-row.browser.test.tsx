@@ -49,6 +49,39 @@ test('a row whose target account left the registry says so instead of serving', 
   await expect.element(screen.getByText('fast → claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
+const spareKey: Account = {
+  id: 'k2',
+  provider: 'anthropic',
+  kind: 'api-key',
+  label: 'spare',
+  credentialRef: 'c2',
+};
+
+const thinned: ServedModel = {
+  id: 'spread',
+  displayName: 'Spread',
+  providerModel: 'claude-opus-5',
+  target: { standing: 'thinned', account: spareKey, lost: 1 },
+};
+
+test('a row still serving through a sibling reads how many targets left, not a broken binding', async () => {
+  const screen = await renderRow(thinned);
+
+  await expect.element(screen.getByText('1 target removed', { exact: true })).toBeVisible();
+  await expect
+    .element(screen.getByText('spread → spare · claude-opus-5', { exact: true }))
+    .toBeVisible();
+});
+
+test('a row that lost several targets counts them in the plural', async () => {
+  const screen = await renderRow({
+    ...thinned,
+    target: { standing: 'thinned', account: spareKey, lost: 2 },
+  });
+
+  await expect.element(screen.getByText('2 targets removed', { exact: true })).toBeVisible();
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
