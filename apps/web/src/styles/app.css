@@ -25,11 +25,8 @@
   inset-inline: -8px;
   top: 50%;
   height: 17px;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgb(255 255 255 / 35%) 0 1px,
-    transparent 1px 4px
-  );
+  background: repeating-linear-gradient(to bottom, currentColor 0 1px, transparent 1px 4px);
+  opacity: 0.35;
   transform: translateY(-50%) scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -64,13 +61,15 @@
 
 .note-flat::after {
   width: 0.56em;
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'><path d='M1.2 0.5 V10.4'/><path d='M1.2 6.4 C 4.4 5.2 5.6 6.6 5.0 8.2 C 4.4 9.6 2.8 10.2 1.2 10.4'/></svg>")
+  background-color: currentColor;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'><path d='M1.2 0.5 V10.4'/><path d='M1.2 6.4 C 4.4 5.2 5.6 6.6 5.0 8.2 C 4.4 9.6 2.8 10.2 1.2 10.4'/></svg>")
     no-repeat center / contain;
 }
 
 .note-notehead::after {
   width: 0.6em;
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7.5 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round'><path d='M6.1 0.5 V8.6'/><ellipse cx='3.4' cy='8.7' rx='2.4' ry='1.7' transform='rotate(-18 3.4 8.7)'/></svg>")
+  background-color: currentColor;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7.5 11' fill='none' stroke='white' stroke-width='1.25' stroke-linecap='round'><path d='M6.1 0.5 V8.6'/><ellipse cx='3.4' cy='8.7' rx='2.4' ry='1.7' transform='rotate(-18 3.4 8.7)'/></svg>")
     no-repeat center / contain;
 }
 
@@ -101,7 +100,7 @@
 }
 
 :root {
-  --hero-lift: rgb(255 255 255 / 85%);
+  --hero-lift: transparent;
 }
 
 .dark {
@@ -113,4 +112,31 @@
     0 1px 2px var(--hero-lift),
     0 2px 14px var(--hero-lift),
     0 0 36px var(--hero-lift);
+}
+
+html:not(.dark) .note-link:hover .note-flat,
+html:not(.dark) .note-link:hover .note-notehead {
+  background-image: none;
+}
+
+html:not(.dark) [data-spot='text'] {
+  background-image:
+    radial-gradient(
+      circle 260px at 260px 260px,
+      var(--color-white) 0%,
+      var(--color-white) 40%,
+      transparent 100%
+    ),
+    linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-size:
+    520px 520px,
+    100% 100%;
+  background-position:
+    -1000px -1000px,
+    0 0;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-bottom: 0.22em;
+  margin-bottom: -0.22em;
 }

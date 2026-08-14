@@ -80,8 +80,11 @@ void main() {
   color *= mix(0.35, 1.0, vig);
 
   float glow = (beams.r + beams.g + beams.b) * 0.3333 * u_beam;
-  float reveal = clamp(0.04 + mask * 0.88 + glow * 0.22, 0.0, 1.0);
-  color = mix(color, mix(vec3(1.0), img, reveal), u_invert);
+  float reveal = clamp(mask * 0.85 + glow * 0.06, 0.0, 1.0);
+  vec3 print = mix(vec3(1.0), clamp(img * 2.1, 0.0, 1.0), 0.72);
+  vec3 paper = mix(vec3(1.0), print, reveal);
+  float shade = clamp(glow * 1.35 + mask * 0.30, 0.0, 1.0);
+  color = mix(color, mix(paper, paper * vec3(0.66, 0.665, 0.675), shade), u_invert);
 
   float grain = hash(gl_FragCoord.xy + fract(u_time * 7.31) * vec2(191.0, 122.0)) - 0.5;
   color += grain * u_grain;

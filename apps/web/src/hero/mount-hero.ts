@@ -8,6 +8,9 @@ export type { HeroSources };
 const MAX_PIXEL_RATIO = 1.75;
 const TRAIL_SCALE = 4;
 const REVEAL_EASE = 0.12;
+const SPOT_RADIUS = 260;
+const INK_LAG = 0.05;
+const INK_STEP = 0.4;
 
 function watchVisibility(canvas: HTMLCanvasElement) {
   let onScreen = false;
@@ -106,6 +109,80 @@ function createSurface(gl: WebGLRenderingContext, canvas: HTMLCanvasElement, pix
   };
 }
 
+type Stage = {
+  gl: WebGLRenderingContext;
+  programs: ReturnType<typeof createPrograms>;
+  plateTexture: ReturnType<typeof createPlateTexture>;
+  plates: ReturnType<typeof createPlateSource>;
+  surface: ReturnType<typeof createSurface>;
+};
+
+function paintStage(stage: Stage, motion: HeroMotion, frame: Frame, still: boolean) {
+  const pair = stage.surface.pair();
+
+  paintTrail(stage.gl, stage.programs.trail, pair, motion, frame);
+  paintComposite(
+    stage.gl,
+    stage.programs.composite,
+    { plate: stage.plateTexture, trail: pair.into },
+    { plate: stage.plates.current(still), motion },
+    frame,
+  );
+  stage.surface.swap();
+}
+
+type Head = { x: number; y: number };
+
+function easeInk(ink: Head | null, head: Head): Head {
+  if (!ink) return head;
+
+  return { x: ink.x + (head.x - ink.x) * INK_LAG, y: ink.y + (head.y - ink.y) * INK_LAG };
+}
+
+function settled(ink: Head | null, next: Head) {
+  return ink !== null && Math.hypot(next.x - ink.x, next.y - ink.y) < INK_STEP;
+}
+
+function litBySpot(mark: HTMLElement, box: DOMRect, ink: Head) {
+  const left = ink.x - box.left - SPOT_RADIUS;
+  const top = ink.y - box.top - SPOT_RADIUS;
+
+  mark.style.backgroundPosition = `${left}px ${top}px, 0 0`;
+}
+
+function trackSpot(canvas: HTMLCanvasElement) {
+  const marks = [...(canvas.parentElement?.querySelectorAll<HTMLElement>('[data-spot]') ?? [])];
+
+  let boxes = marks.map((mark) => mark.getBoundingClientRect());
+
+  const remeasure = () => {
+    boxes = marks.map((mark) => mark.getBoundingClientRect());
+  };
+
+  let ink: Head | null = null;
+
+  addEventListener('resize', remeasure);
+
+  return {
+    move: (head: Head) => {
+      const next = easeInk(ink, head);
+
+      if (settled(ink, next)) return;
+
+      ink = next;
+
+      for (const [index, mark] of marks.entries()) {
+        const box = boxes[index];
+
+        if (box) litBySpot(mark, box, ink);
+      }
+    },
+    dispose: () => {
+      removeEventListener('resize', remeasure);
+    },
+  };
+}
+
 function restingFrame(pixelRatio: number): Frame {
   return { width: 0, height: 0, pixelRatio, seconds: 0, reveal: 0, inverted: false };
 }
@@ -127,7 +204,9 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
   };
 
   const surface = createSurface(gl, canvas, pixelRatio);
-  const parts = [surface, plates, ...Object.values(watchers)];
+  const spot = trackSpot(canvas);
+  const stage: Stage = { gl, programs, plateTexture, plates, surface };
+  const parts = [surface, plates, spot, ...Object.values(watchers)];
 
   let frame = restingFrame(pixelRatio);
   let motion: HeroMotion = restingMotion({ width: innerWidth, height: innerHeight });
@@ -157,17 +236,8 @@ export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () =
       viewport: { width: innerWidth, height: innerHeight },
     });
 
-    const pair = surface.pair();
-
-    paintTrail(gl, programs.trail, pair, motion, frame);
-    paintComposite(
-      gl,
-      programs.composite,
-      { plate: plateTexture, trail: pair.into },
-      { plate: plates.current(still), motion },
-      frame,
-    );
-    surface.swap();
+    spot.move(motion.head);
+    paintStage(stage, motion, frame, still);
   };
 
   handle = requestAnimationFrame(draw);

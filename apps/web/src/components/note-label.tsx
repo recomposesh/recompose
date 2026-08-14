@@ -19,6 +19,7 @@ export function NoteLabel({ label }: { label: string }) {
       {noteLetters(label).map((note, index) => (
         <span
           key={`${note.letter}${String(index)}`}
+          data-spot="text"
           className={NOTE_CLASS[note.kind]}
           style={{
             '--stagger': `${String(note.staggerMs)}ms`,
