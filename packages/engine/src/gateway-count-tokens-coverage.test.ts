@@ -58,7 +58,7 @@ describe('token counting refuses a gateway that cannot spend', () => {
     const answer = await countedWith({ verdict: 'missing-credential' }, conversation());
 
     expect(answer.status).toBe(502);
-    await expect(refusalOf(answer)).resolves.toContain('holds no credential');
+    await expect(refusalOf(answer)).resolves.toContain('has no account behind it');
   });
 
   test('a subscription credential that is not readable refuses the count', async () => {
@@ -67,7 +67,7 @@ describe('token counting refuses a gateway that cannot spend', () => {
     const answer = await countedWith(grant, conversation());
 
     expect(answer.status).toBe(502);
-    await expect(refusalOf(answer)).resolves.toContain('holds no credential');
+    await expect(refusalOf(answer)).resolves.toContain('has no account behind it');
   });
 
   test('a request naming no model refuses with unknown_model', async () => {
