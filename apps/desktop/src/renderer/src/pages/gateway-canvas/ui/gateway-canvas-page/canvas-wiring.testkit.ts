@@ -1,6 +1,8 @@
 import type { Routing } from '@recompose/contracts';
 import type { Connection } from '@xyflow/react';
 
+import { vi } from 'vitest';
+
 import { gatewaySeed } from '../../../../shared/testing';
 
 function boundThrough(seat: string, accountId: string, providerModel: string): Routing {
@@ -52,4 +54,29 @@ export const gateway = gatewaySeed({
 /** One cable in flight, from the card it left to the card it points at. */
 export function pulled(source: string, target: string): Connection {
   return { source, target, sourceHandle: null, targetHandle: null };
+}
+
+class TextField {}
+
+function fieldConstructors(): void {
+  vi.stubGlobal('HTMLInputElement', TextField);
+  vi.stubGlobal('HTMLTextAreaElement', class {});
+  vi.stubGlobal('HTMLElement', class {});
+}
+
+/**
+ * Puts the keyboard on the canvas, which is where Delete is the canvas's own to answer.
+ *
+ * @summary The canvas asks the live document who holds the keyboard, so a scenario standing
+ * outside a browser has to say. Nothing focused is the canvas holding it.
+ */
+export function keyboardOnTheCanvas(): void {
+  fieldConstructors();
+  vi.stubGlobal('document', { activeElement: null });
+}
+
+/** Puts the keyboard in a text field mid-edit, where Delete edits text rather than the canvas. */
+export function keyboardInAText(): void {
+  fieldConstructors();
+  vi.stubGlobal('document', { activeElement: new TextField() });
 }
