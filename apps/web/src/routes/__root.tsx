@@ -11,7 +11,7 @@ export const Route = createRootRoute({
       { title: 'recompose' },
     ],
     links: [
-      { rel: 'icon', href: '/favicon.png', type: 'image/png' },
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
       { rel: 'preconnect', href: 'https://use.typekit.net' },
       { rel: 'stylesheet', href: 'https://use.typekit.net/vva5dyp.css' },
       { rel: 'stylesheet', href: appCss },
