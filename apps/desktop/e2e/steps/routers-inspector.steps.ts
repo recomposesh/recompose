@@ -5,6 +5,7 @@ import { expect } from '@playwright/test';
 import { openGatewayCanvas } from '../canvas-screen';
 import { nodeStandsSelected } from '../canvas-selection';
 import { Given, Then, When } from '../fixtures';
+import { pickWithTheKeyboard } from '../keyboard-walk';
 import { aRoutedModelStands, FIRST_TARGET, SECOND_TARGET, THIRD_TARGET } from '../routed-gateway';
 import { focusedGateway } from '../scenario-memory';
 
@@ -68,13 +69,11 @@ Given(
 );
 
 When('the person, with the keyboard alone, moves the third child up one rank', async ({ page }) => {
-  const lifted = childRow(page, THIRD_TARGET.providerModel).getByRole('button', {
-    name: TOWARD_THE_FRONT,
-  });
-
-  await lifted.focus();
-  await expect(lifted).toBeFocused();
-  await page.keyboard.press('Enter');
+  await pickWithTheKeyboard(
+    page,
+    childRow(page, THIRD_TARGET.providerModel).getByRole('button', { name: TOWARD_THE_FRONT }),
+    `the move-up control of the child serving "${THIRD_TARGET.providerModel}"`,
+  );
 });
 
 Then("the moved child's row prints rank {int}", async ({ page }, rank: number) => {
@@ -86,6 +85,13 @@ Then("the moved child's row prints rank {int}", async ({ page }, rank: number) =
 Then('the live region announces {string}', async ({ page }, said: string) => {
   await expect(inspectorPane(page).getByRole('status')).toContainText(said);
 });
+
+Then(
+  'the ladder names the children {string}, {string} and {string}',
+  async ({ page }, lead: string, second: string, third: string) => {
+    await expect(childList(page).locator('[data-child-name]')).toHaveText([lead, second, third]);
+  },
+);
 
 When('the person selects the router node', async ({ page }) => {
   await theRouterStandsInspected(page);

@@ -6,9 +6,9 @@ import { useRef, useSyncExternalStore } from 'react';
 
 import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { ModelListReading, SettledDefinition } from '../../lib/model-draft';
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasWorld, DragWatch } from './canvas-standings';
+import type { InspectorSubject } from './canvas-subjects';
 import type { PickerOnCanvas } from './picker-on-canvas';
 import type { RemovalAsked } from './removal-flow';
 

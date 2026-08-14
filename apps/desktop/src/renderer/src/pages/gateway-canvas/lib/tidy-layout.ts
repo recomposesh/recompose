@@ -35,6 +35,19 @@ export function childSeatBeside(parentSeat: XY): XY {
 }
 
 /**
+ * The column a card bound from another stands in, which is one beyond the card it was bound from.
+ *
+ * @summary A request travels left to right, so what a card binds stands beyond it whether the ask
+ * came from a plus or from a dropped cable. The column counts out of the parent's own depth rather
+ * than off the binding column, so a child of a nested router lands beyond that router instead of
+ * back on the entry's row with its cable running the wrong way. A card the canvas no longer stands
+ * falls back to the binding column, which is where every binding stood before routers existed.
+ */
+export function columnBeyond(parent: CanvasNode | undefined): number {
+  return parent === undefined ? ROUTE_COLUMN : columnOf(parent) + 1;
+}
+
+/**
  * Where every card stands once the canvas arranges itself, read left to right by role.
  *
  * @summary A request travels from the gateway through a virtual model to a target, so the columns

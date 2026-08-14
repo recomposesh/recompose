@@ -10,6 +10,7 @@ import type { CanvasNode, CanvasNodeKind } from './node-graph';
 import { canvasGraph } from './node-graph';
 import {
   childSeatBeside,
+  columnBeyond,
   MODEL_COLUMN,
   ROUTE_COLUMN,
   seatForNewNode,
@@ -220,6 +221,19 @@ test('a gateway holding no router seats every card exactly where it seated befor
 
 test("a child born beside its parent seats one column out, on the parent's own row", () => {
   expect(childSeatBeside({ x: 320, y: 150 })).toEqual({ x: 320 + columnStep(), y: 150 });
+});
+
+test('a card bound from another stands one column beyond the card it was bound from', () => {
+  expect([
+    columnBeyond(nodeOfKind['virtual-model']('model:fast')),
+    columnBeyond(nodeOfKind['draft-model']('draft')),
+    columnBeyond(nodeOfKind.router('route:fast')),
+    columnBeyond(oneRouterDeep('route:fast:r2', 1)),
+  ]).toEqual([ROUTE_COLUMN, ROUTE_COLUMN, ROUTE_COLUMN + 1, ROUTE_COLUMN + 2]);
+});
+
+test('a card bound from nothing the canvas stands falls back to the binding column', () => {
+  expect(columnBeyond(undefined)).toBe(ROUTE_COLUMN);
 });
 
 test('a new virtual model is born below the lowest card already standing in its column', () => {

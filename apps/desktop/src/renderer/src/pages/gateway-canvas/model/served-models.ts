@@ -3,13 +3,14 @@ import type { Account, RouteTarget, Routing, VirtualModel } from '@recompose/con
 import { seatedRouteNodes } from '../lib/route-graph';
 
 /**
- * Where a definition stands: on a pool the registry holds whole, on one it holds in part, or on
- * nothing at all.
+ * Where a definition stands: on a pool the registry holds whole, on one it holds in part, on
+ * nothing the registry still holds, or on a composition that names no target yet.
  */
 type ServedTarget =
   | { standing: 'serving'; account: Account }
   | { standing: 'thinned'; account: Account; lost: number }
-  | { standing: 'removed' };
+  | { standing: 'removed' }
+  | { standing: 'incomplete' };
 
 export type ServedModel = {
   /** The id a client asks this gateway for. */
@@ -42,6 +43,24 @@ function stillServing(
 }
 
 /**
+ * Where a definition stands once no target it names is one the registry still holds.
+ *
+ * @summary A routing naming no target at all is unfinished rather than broken: nothing left it, so
+ * a word about removal would send a person to repair a binding that never stood, which is the
+ * state a freshly dropped router opens in. A routing naming targets whose accounts all left keeps
+ * the real model of the one it tried first, because that binding is what a person comes back to.
+ */
+function nothingStillServing(
+  targets: readonly RouteTarget[],
+): Omit<ServedModel, 'id' | 'displayName'> {
+  const [tried] = targets;
+
+  return tried === undefined
+    ? { providerModel: '', target: { standing: 'incomplete' } }
+    : { providerModel: tried.providerModel, target: { standing: 'removed' } };
+}
+
+/**
  * The real model a definition names and where its pool stands, read as one answer.
  *
  * @summary Both readings come off the same target, because a row naming one account's real model
@@ -59,7 +78,7 @@ function readThrough(
   const lost = targets.length - serving.length;
 
   if (leading === undefined) {
-    return { providerModel: targets[0]?.providerModel ?? '', target: { standing: 'removed' } };
+    return nothingStillServing(targets);
   }
 
   return {

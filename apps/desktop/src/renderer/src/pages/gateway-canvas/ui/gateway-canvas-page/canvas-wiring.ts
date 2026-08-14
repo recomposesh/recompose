@@ -57,6 +57,17 @@ export function bindingCableId(edgeId: string): string | undefined {
   return seatUnder(['cable:'], edgeId)?.modelId;
 }
 
+/**
+ * Where a binding cable's far end seats, or nothing for an overlay cable.
+ *
+ * @summary A ladder stands one cable per child, so a reader acting on the cable a person selected
+ * needs the seat that cable ends at rather than the definition holding it: the definition alone
+ * names the entry, and acting on the entry when a child was selected takes every sibling with it.
+ */
+export function cableSeatOf(edgeId: string): SeatReading | undefined {
+  return seatUnder(['cable:'], edgeId);
+}
+
 /** Where a router card seats in its definition's routing, or nothing for any other card. */
 export function routerSeatOf(nodeId: string): SeatReading | undefined {
   return seatUnder(['route:'], nodeId);

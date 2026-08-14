@@ -3,7 +3,7 @@ import type { Account, GatewayConfig, LogRow as LoggedRequest } from '@recompose
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import type { InspectorSubject } from '../ui/gateway-drawer/gateway-drawer';
+import type { InspectorSubject } from '../ui/gateway-canvas-page/canvas-subjects';
 
 import { logsDrawerOpen, toggleLogsDrawer } from '../../../shared/lib';
 import { LogsDrawer } from '../ui/logs-drawer/logs-drawer';

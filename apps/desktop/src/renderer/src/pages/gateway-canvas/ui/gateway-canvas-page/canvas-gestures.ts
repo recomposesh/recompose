@@ -7,7 +7,7 @@ import type { CanvasStandings, CanvasWorld } from './canvas-standings';
 import { closeInspector, inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { flowPointOf, viewportOf } from '../../lib/canvas-viewport';
 import { emptyDefinition } from '../../lib/model-draft';
-import { MODEL_COLUMN, ROUTE_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
+import { columnBeyond, MODEL_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, startDrafting } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import {
@@ -190,6 +190,20 @@ function selectionWiring(
   };
 }
 
+/**
+ * Where a card bound through a plus is born, which is the free row beyond the card that asked.
+ *
+ * @summary A plus and a dropped cable are twins, so the one that names no point of its own reads
+ * the column off the card it left rather than off the binding column: a child born from a router's
+ * plus would otherwise land in that router's own column with its cable running backwards, and the
+ * pointer and the keyboard would disagree about where a composition grows.
+ */
+function seatForABoundCard(world: CanvasWorld, from: string): XY {
+  const parent = world.graph.nodes.find((node) => node.id === from);
+
+  return seatForNewNode(columnBeyond(parent), world.seats);
+}
+
 function cardAsks(world: CanvasWorld) {
   return {
     onAddVirtualModel: () => {
@@ -202,7 +216,7 @@ function cardAsks(world: CanvasWorld) {
       world.standings.setPicker({
         step: 'kind',
         from,
-        at: seatForNewNode(ROUTE_COLUMN, world.seats),
+        at: seatForABoundCard(world, from),
         origin: 'ask',
       });
     },

@@ -1,6 +1,6 @@
 import type { Account, GatewayConfig } from '@recompose/contracts';
 
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
+import type { InspectorSubject } from '../gateway-canvas-page/canvas-subjects';
 
 import { accountName } from '../../../../entities/account';
 

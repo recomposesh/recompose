@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useState, useSyncExternalStore } from 'react';
 
-import type { InspectorSubject } from '../gateway-drawer/gateway-drawer';
+import type { InspectorSubject } from '../gateway-canvas-page/canvas-subjects';
 import type { LogFilter, SubjectHeading } from './log-subject-wording';
 
 import { requestFailed, requestInFlight } from '../../../../entities/request-log';

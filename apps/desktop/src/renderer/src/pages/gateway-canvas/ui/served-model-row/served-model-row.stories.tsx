@@ -120,6 +120,25 @@ export const ThinnedFurther = meta.story({
   },
 });
 
+/**
+ * A definition routed through a router nobody has filled, which names no target to lose.
+ *
+ * @summary The row says the composition is unfinished rather than that a target was removed,
+ * because nothing left: a person who dropped a router and has not bound a child yet would
+ * otherwise be sent to repair a binding that never existed. The line carries the name alone,
+ * since an arrow into nothing points at nothing.
+ */
+export const NoTargetYet = meta.story({
+  args: {
+    served: { ...serving, providerModel: '', target: { standing: 'incomplete' } },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('no target yet')).toBeVisible();
+    await expect(canvas.queryByText('target removed')).toBeNull();
+    await expect(await canvas.findByText('fast')).toBeVisible();
+  },
+});
+
 /** Copying the id says so out loud, because a copy that answers nothing reads as broken. */
 export const CopyingTheId = meta.story({
   play: async ({ canvas, userEvent }) => {
