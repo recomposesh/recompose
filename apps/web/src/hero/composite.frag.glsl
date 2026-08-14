@@ -18,14 +18,13 @@ uniform float u_grain;
 
 vec3 scene(vec2 st) {
   float screenAspect = u_res.x / u_res.y;
-  vec2 uv;
+  vec2 uv = st;
   if (screenAspect >= u_imgAspect) {
-    uv = vec2(st.x, st.y * u_imgAspect / screenAspect);
+    uv.y = 0.5 + (st.y - 0.5) * (u_imgAspect / screenAspect);
   } else {
-    uv = vec2(0.5 + (st.x - 0.5) * screenAspect / u_imgAspect, st.y);
+    uv.x = 0.5 + (st.x - 0.5) * (screenAspect / u_imgAspect);
   }
-  if (uv.x < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec3(0.0);
-  return texture2D(u_tex, uv).rgb;
+  return texture2D(u_tex, clamp(uv, 0.0, 1.0)).rgb;
 }
 
 float beam(vec2 p, vec2 anchor, vec2 aim) {

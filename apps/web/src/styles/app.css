@@ -3,15 +3,16 @@
 @import 'fumadocs-ui/css/preset.css';
 
 :root {
+  --brand-sans: 'area-normal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --white-a92: rgb(255 255 255 / 92%);
   --white-a55: rgb(255 255 255 / 55%);
-  --white-a28: rgb(255 255 255 / 28%);
   --white-a13: rgb(255 255 255 / 13%);
   --white-a08: rgb(255 255 255 / 8.5%);
   --gray-950: #1c1c1e;
   --landing-ink: var(--white-a92);
   --landing-ink-quiet: var(--white-a55);
-  --landing-ground: #000;
+  --landing-lift:
+    0 1px 2px rgb(0 0 0 / 65%), 0 2px 14px rgb(0 0 0 / 78%), 0 0 36px rgb(0 0 0 / 65%);
 }
 
 html {
@@ -30,20 +31,90 @@ html > body[data-scroll-locked] {
 }
 
 .landing {
+  font-family: var(--brand-sans);
+  position: relative;
+  min-height: 100svh;
+  background: #000;
+  color: var(--landing-ink);
+  overflow: hidden;
+}
+
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.landing-overlay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  pointer-events: none;
+}
+
+.landing-overlay a,
+.landing-overlay button {
+  pointer-events: auto;
+}
+
+.site-nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   width: 90%;
   margin-inline: auto;
-  padding-block: 9vh 6vh;
+  padding-block: 22px;
+  font-size: 14px;
+}
+
+.site-brand {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+}
+
+.site-brand img {
+  height: 25px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 65%)) drop-shadow(0 2px 14px rgb(0 0 0 / 78%));
+}
+
+.site-links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-self: center;
+}
+
+.site-links a,
+.site-cta {
   color: var(--landing-ink);
+  font-weight: 500;
+  text-shadow: var(--landing-lift);
+}
+
+.site-cta {
+  justify-self: end;
 }
 
 .landing-claim {
-  max-width: 32ch;
+  width: 90%;
+  margin-inline: auto;
+  padding-top: 9vh;
+}
+
+.landing-claim h1 {
+  max-width: 50vw;
   font-size: clamp(2rem, 1.4rem + 2.6vw, 3.125rem);
   font-weight: 400;
   line-height: 1.07;
   letter-spacing: -0.02em;
   color: var(--landing-ink-quiet);
-  text-wrap: balance;
+  text-shadow: var(--landing-lift);
 }
 
 .landing-lead {
@@ -53,34 +124,35 @@ html > body[data-scroll-locked] {
 }
 
 .landing-support {
-  max-width: 60ch;
-  margin-top: 1.75rem;
-  font-size: 1.125rem;
-  line-height: 1.75rem;
+  max-width: 600px;
+  margin-top: 28px;
+  font-size: 18px;
+  line-height: 28px;
   letter-spacing: 0.01em;
   color: var(--landing-ink-quiet);
+  text-shadow: var(--landing-lift);
   text-wrap: balance;
 }
 
 .landing-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 6px;
   align-items: center;
   width: fit-content;
-  margin-top: 2.25rem;
+  margin-top: 36px;
 }
 
 .landing-download {
   display: inline-flex;
-  gap: 0.5rem;
+  gap: 8px;
   align-items: center;
-  padding: 0.8125rem 1.375rem;
-  font-size: 0.9375rem;
+  padding: 13px 22px;
+  font-size: 15px;
   font-weight: 500;
   color: #000;
   background: var(--white-a92);
-  border-radius: 0.5rem;
+  border-radius: 8px;
   transition: background-color 0.15s ease;
 }
 
@@ -89,13 +161,57 @@ html > body[data-scroll-locked] {
 }
 
 .landing-secondary {
-  padding: 0.8125rem 1.375rem;
-  font-size: 0.9375rem;
+  padding: 13px 22px;
+  font-size: 15px;
   color: var(--landing-ink);
-  border-radius: 0.5rem;
+  border-radius: 8px;
+  text-shadow: var(--landing-lift);
   transition: background-color 0.15s ease;
 }
 
 .landing-secondary:hover {
   background: rgb(28 28 30 / 90%);
+}
+
+.app-window {
+  width: 90%;
+  height: 24vh;
+  margin: auto auto 0;
+  background: rgb(28 28 30 / 92%);
+  border: 1px solid var(--white-a13);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -30px 80px rgb(0 0 0 / 55%);
+  backdrop-filter: blur(6px);
+}
+
+.app-window-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--white-a08);
+}
+
+.app-window-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--white-a13);
+}
+
+.app-window-title {
+  margin-left: 10px;
+  font-size: 13px;
+  color: var(--landing-ink-quiet);
+}
+
+@media (max-width: 720px) {
+  .landing-claim h1 {
+    max-width: none;
+  }
+
+  .site-links {
+    display: none;
+  }
 }

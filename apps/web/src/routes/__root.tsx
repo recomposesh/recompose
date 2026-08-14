@@ -15,7 +15,12 @@ export const Route = createRootRoute({
         content: 'Wire up your own AI network. Compose your AI providers into local gateways.',
       },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'preconnect', href: 'https://use.typekit.net' },
+      { rel: 'preconnect', href: 'https://p.typekit.net', crossOrigin: 'anonymous' },
+      { rel: 'stylesheet', href: 'https://use.typekit.net/vva5dyp.css' },
+      { rel: 'stylesheet', href: appCss },
+    ],
   }),
   component: RootComponent,
 });

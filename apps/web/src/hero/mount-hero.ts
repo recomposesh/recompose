@@ -1,84 +1,153 @@
-import { COMPOSITE_FRAGMENT, QUAD_VERTEX, TRAIL_FRAGMENT } from './shaders';
+import { createPlateTexture, createPrograms, createTarget } from './hero-gl';
+import { type HeroMotion, heroMotionStep, restingMotion } from './hero-motion';
+import { type Frame, paintComposite, paintTrail } from './hero-paint';
+import { type HeroSources, createPlateSource } from './hero-plate-source';
 
-export type HeroSources = { poster: string; loop: string };
+export type { HeroSources };
 
 const MAX_PIXEL_RATIO = 1.75;
+const TRAIL_SCALE = 4;
+const REVEAL_EASE = 0.12;
 
-function compile(gl: WebGLRenderingContext, type: number, source: string) {
-  const shader = gl.createShader(type);
+function watchVisibility(canvas: HTMLCanvasElement) {
+  let onScreen = false;
 
-  if (!shader) throw new Error('the hero could not create a shader');
+  const observer = new IntersectionObserver(
+    (entries) => {
+      onScreen = entries[0]?.isIntersecting ?? false;
+    },
+    { threshold: 0 },
+  );
 
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
+  observer.observe(canvas);
 
-  const compiled: unknown = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-
-  if (compiled !== true) {
-    throw new Error(gl.getShaderInfoLog(shader) ?? 'the hero could not compile a shader');
-  }
-
-  return shader;
+  return {
+    showing: () => onScreen,
+    dispose: () => {
+      observer.disconnect();
+    },
+  };
 }
 
-function link(gl: WebGLRenderingContext, fragment: string) {
-  const program = gl.createProgram();
+function watchPointer() {
+  let pointer: { x: number; y: number } | null = null;
 
-  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, QUAD_VERTEX));
-  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, fragment));
-  gl.linkProgram(program);
+  const onPointerMove = (event: PointerEvent) => {
+    pointer = { x: event.clientX, y: event.clientY };
+  };
 
-  const linked: unknown = gl.getProgramParameter(program, gl.LINK_STATUS);
+  addEventListener('pointermove', onPointerMove);
 
-  if (linked !== true) {
-    throw new Error(gl.getProgramInfoLog(program) ?? 'the hero could not link a program');
-  }
-
-  return program;
+  return {
+    read: () => pointer,
+    dispose: () => {
+      removeEventListener('pointermove', onPointerMove);
+    },
+  };
 }
 
-export function mountHero(canvas: HTMLCanvasElement, _sources: HeroSources): () => void {
+function createSurface(gl: WebGLRenderingContext, canvas: HTMLCanvasElement, pixelRatio: number) {
+  let width = 0;
+  let height = 0;
+  let front = createTarget(gl, 2, 2);
+  let back = createTarget(gl, 2, 2);
+
+  const resize = () => {
+    const box = canvas.getBoundingClientRect();
+    const nextWidth = Math.max(1, Math.round(box.width * pixelRatio));
+    const nextHeight = Math.max(1, Math.round(box.height * pixelRatio));
+
+    if (nextWidth === width && nextHeight === height) return;
+
+    width = nextWidth;
+    height = nextHeight;
+    canvas.width = width;
+    canvas.height = height;
+    front = createTarget(gl, Math.max(2, width / TRAIL_SCALE), Math.max(2, height / TRAIL_SCALE));
+    back = createTarget(gl, front.width, front.height);
+  };
+
+  const boxWatcher = new ResizeObserver(resize);
+
+  resize();
+  boxWatcher.observe(canvas);
+
+  return {
+    size: () => ({ width, height }),
+    pair: () => ({ from: front, into: back }),
+    swap: () => {
+      const spent = front;
+
+      front = back;
+      back = spent;
+    },
+    dispose: () => {
+      boxWatcher.disconnect();
+    },
+  };
+}
+
+export function mountHero(canvas: HTMLCanvasElement, sources: HeroSources): () => void {
   const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
 
   if (!gl) return () => undefined;
 
+  const stillness = matchMedia('(prefers-reduced-motion: reduce)');
   const pixelRatio = Math.min(devicePixelRatio || 1, MAX_PIXEL_RATIO);
+  const programs = createPrograms(gl);
+  const plateTexture = createPlateTexture(gl);
+  const plates = createPlateSource(sources, stillness);
+  const visibility = watchVisibility(canvas);
+  const pointer = watchPointer();
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const surface = createSurface(gl, canvas, pixelRatio);
+  const parts = [surface, pointer, visibility, plates];
 
-  const trailProgram = link(gl, TRAIL_FRAGMENT);
-  const compositeProgram = link(gl, COMPOSITE_FRAGMENT);
+  let frame: Frame = { width: 0, height: 0, pixelRatio, seconds: 0, reveal: 0 };
+  let motion: HeroMotion = restingMotion({ width: innerWidth, height: innerHeight });
+  let handle = 0;
 
-  for (const program of [trailProgram, compositeProgram]) {
-    const position = gl.getAttribLocation(program, 'a_pos');
+  const startedAt = performance.now();
 
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-  }
+  const draw = (now: number) => {
+    handle = requestAnimationFrame(draw);
 
-  const resize = () => {
-    canvas.width = Math.round(innerWidth * pixelRatio);
-    canvas.height = Math.round(innerHeight * pixelRatio);
+    if (!visibility.showing()) return;
+
+    const still = stillness.matches;
+
+    frame = {
+      ...frame,
+      ...surface.size(),
+      seconds: still ? 0 : (now - startedAt) / 1000,
+      reveal: frame.reveal + (1 - frame.reveal) * REVEAL_EASE,
+    };
+
+    motion = heroMotionStep(motion, {
+      pointer: pointer.read(),
+      elapsedSeconds: frame.seconds,
+      stillness: still,
+      viewport: { width: innerWidth, height: innerHeight },
+    });
+
+    const pair = surface.pair();
+
+    paintTrail(gl, programs.trail, pair, motion, frame);
+    paintComposite(
+      gl,
+      programs.composite,
+      { plate: plateTexture, trail: pair.into },
+      { plate: plates.current(still), motion },
+      frame,
+    );
+    surface.swap();
   };
 
-  resize();
-  addEventListener('resize', resize);
-
-  let frameHandle = 0;
-
-  const draw = () => {
-    frameHandle = requestAnimationFrame(draw);
-
-    gl.useProgram(compositeProgram);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  };
-
-  frameHandle = requestAnimationFrame(draw);
+  handle = requestAnimationFrame(draw);
 
   return () => {
-    cancelAnimationFrame(frameHandle);
-    removeEventListener('resize', resize);
+    cancelAnimationFrame(handle);
+
+    for (const part of parts) part.dispose();
   };
 }
