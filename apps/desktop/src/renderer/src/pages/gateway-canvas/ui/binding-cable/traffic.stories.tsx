@@ -1,4 +1,4 @@
-import { expect, waitFor } from 'storybook/test';
+import { expect, screen } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -106,8 +106,10 @@ export const AFailedBindingCarriesItsLastError = meta.story({
 
     await userEvent.click(chip);
 
-    await waitFor(async () => expect(await canvas.findByText(REFUSED.detail)).toBeVisible());
-    await waitFor(async () => expect(await canvas.findByText(/Status 502/)).toBeVisible());
+    const reading = await screen.findByRole('dialog', { name: 'Last error' });
+
+    await expect(reading).toHaveTextContent(REFUSED.detail);
+    await expect(reading).toHaveTextContent(/Status 502/u);
 
     const lifted = chip.closest('.react-flow__edgelabel-renderer > div');
 
@@ -123,7 +125,7 @@ export const ReadingTheErrorSelectsNothing = meta.story({
 
     await userEvent.click(await canvas.findByRole('button', { name: /last error/i }));
 
-    await waitFor(async () => expect(await canvas.findByText(REFUSED.detail)).toBeVisible());
+    await expect(await screen.findByRole('dialog', { name: 'Last error' })).toBeVisible();
     await expect(canvasElement.querySelector('.react-flow__edge.selected')).toBeNull();
   },
 });

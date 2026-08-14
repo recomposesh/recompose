@@ -1,4 +1,4 @@
-import { expect, waitFor } from 'storybook/test';
+import { expect, screen, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -16,36 +16,26 @@ const meta = preview.meta({
   ),
 });
 
-function chipIn(canvasElement: HTMLElement): HTMLElement {
-  const chip = canvasElement.querySelector<HTMLElement>('button[aria-controls]');
-
-  if (chip === null) {
-    throw new Error('no last-error chip stands on the canvas');
-  }
-
-  return chip;
+/** The reading, found the way anything reading the screen finds it rather than through the markup. */
+function theError(): HTMLElement {
+  return screen.getByRole('dialog', { name: 'Last error' });
 }
 
-function errorUnder(chip: HTMLElement): HTMLElement {
-  const reading = document.getElementById(chip.getAttribute('aria-controls') ?? '');
-
-  if (reading === null) {
-    throw new Error('the chip points at no reading of its own');
-  }
-
-  return reading;
+function theChip(): HTMLElement {
+  return screen.getByRole('button', { name: 'Last error' });
 }
 
-async function pressedOpen(
-  canvasElement: HTMLElement,
-  press: (on: Element) => Promise<void>,
-): Promise<HTMLElement> {
-  const chip = chipIn(canvasElement);
+async function pressedOpen(press: (on: Element) => Promise<void>): Promise<void> {
+  await press(theChip());
+  await waitFor(() => {
+    void expect(theError()).toBeVisible();
+  });
+}
 
-  await press(chip);
-  await waitFor(async () => expect(errorUnder(chip)).toBeVisible());
-
-  return chip;
+async function theErrorIsPutAway(): Promise<void> {
+  await waitFor(() => {
+    void expect(screen.queryByRole('dialog', { name: 'Last error' })).toBeNull();
+  });
 }
 
 /** The chip as a failed cable carries it: an error is waiting, and nothing else is said yet. */
@@ -53,33 +43,53 @@ export const Basic = meta.story({});
 
 /** Pressing it hands over what the last request came to, the status and the sentence. */
 export const PressingItShowsTheLastError = meta.story({
-  play: async ({ canvasElement, userEvent }) => {
-    const chip = await pressedOpen(canvasElement, userEvent.click);
+  play: async ({ userEvent }) => {
+    await pressedOpen(userEvent.click);
 
-    await expect(errorUnder(chip)).toHaveTextContent(/Status 502/);
-    await expect(errorUnder(chip)).toHaveTextContent(REFUSED);
+    await expect(theError()).toHaveTextContent(/Status 502/u);
+    await expect(theError()).toHaveTextContent(REFUSED);
   },
 });
 
 /** Pressing it a second time puts the error away and gives the canvas back uncovered. */
 export const PressingItAgainPutsTheErrorAway = meta.story({
-  play: async ({ canvasElement, userEvent }) => {
-    const chip = await pressedOpen(canvasElement, userEvent.click);
+  play: async ({ userEvent }) => {
+    await pressedOpen(userEvent.click);
+    await userEvent.click(theChip());
 
-    await userEvent.click(chip);
-
-    await waitFor(async () => expect(errorUnder(chip)).not.toBeVisible());
+    await theErrorIsPutAway();
   },
 });
 
 /** Esc leaves the error the same way, which is the way out that changes nothing. */
 export const EscapePutsTheErrorAway = meta.story({
-  play: async ({ canvasElement, userEvent }) => {
-    const chip = await pressedOpen(canvasElement, userEvent.click);
-
+  play: async ({ userEvent }) => {
+    await pressedOpen(userEvent.click);
     await userEvent.keyboard('{Escape}');
 
-    await waitFor(async () => expect(errorUnder(chip)).not.toBeVisible());
+    await theErrorIsPutAway();
+  },
+});
+
+/**
+ * A chip at the very bottom of the canvas, where an error anchored below it would be cut off.
+ *
+ * @summary The reveal used to sit under the chip and nowhere else, so a cable near the foot of the
+ * viewport hid its own reason. The reading has to stand inside the view wherever the cable is.
+ */
+export const AtTheFootOfTheView = meta.story({
+  render: (args) => (
+    <div className="flex h-screen w-72 items-end bg-surface-content p-4 dot-grid">
+      <CableFailureChip {...args} />
+    </div>
+  ),
+  play: async ({ userEvent }) => {
+    await pressedOpen(userEvent.click);
+
+    const reading = theError().getBoundingClientRect();
+
+    await expect(reading.bottom).toBeLessThanOrEqual(window.innerHeight);
+    await expect(reading.top).toBeGreaterThanOrEqual(0);
   },
 });
 

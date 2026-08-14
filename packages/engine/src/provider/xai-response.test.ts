@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest';
 
-import { theAnswerXaiMeant } from './xai-response';
+import { asXaiRefusalReads } from './xai-response';
 
 test('free xAI usage exhaustion carries a 24-hour retry delay', async () => {
   const response = Response.json(
     { code: 'subscription:free-usage-exhausted', error: 'free usage exhausted' },
     { status: 429 },
   );
-  const decorated = await theAnswerXaiMeant(response);
+  const decorated = await asXaiRefusalReads(response);
 
   expect(decorated.status).toBe(429);
   expect(decorated.headers.get('retry-after')).toBe('86400');
@@ -18,7 +18,7 @@ test.each([
   [400, { error: 'nope' }],
 ] as const)('does not invent retry metadata for status %s', async (status, body) => {
   const response = Response.json(body, { status });
-  const decorated = await theAnswerXaiMeant(response);
+  const decorated = await asXaiRefusalReads(response);
 
   expect(decorated).toBe(response);
   expect(decorated.headers.get('retry-after')).toBeNull();
@@ -32,7 +32,7 @@ test.each([
   ],
 ] as const)('an xAI 403 naming %s is answered as unauthorized', async (_signature, body) => {
   const response = Response.json(body, { status: 403, headers: { 'x-request-id': 'req-1' } });
-  const remapped = await theAnswerXaiMeant(response);
+  const remapped = await asXaiRefusalReads(response);
 
   expect(remapped.status).toBe(401);
   expect(remapped.headers.get('x-request-id')).toBe('req-1');
@@ -42,25 +42,25 @@ test.each([
 test('an xAI 403 naming bad credentials in another casing is answered as unauthorized', async () => {
   const response = Response.json({ code: 'Unauthenticated:BAD-CREDENTIALS' }, { status: 403 });
 
-  await expect(theAnswerXaiMeant(response)).resolves.toHaveProperty('status', 401);
+  await expect(asXaiRefusalReads(response)).resolves.toHaveProperty('status', 401);
 });
 
 test('a credential failure reported under any other status keeps that status', async () => {
   const response = Response.json({ code: 'unauthenticated:bad-credentials' }, { status: 500 });
 
-  await expect(theAnswerXaiMeant(response)).resolves.toBe(response);
+  await expect(asXaiRefusalReads(response)).resolves.toBe(response);
 });
 
 test('an xAI 403 that names no credential failure keeps its status', async () => {
   const response = Response.json({ error: { code: 'permission_denied' } }, { status: 403 });
 
-  await expect(theAnswerXaiMeant(response)).resolves.toBe(response);
+  await expect(asXaiRefusalReads(response)).resolves.toBe(response);
 });
 
 test('an xAI 403 without a body keeps its status', async () => {
   const response = new Response(null, { status: 403 });
 
-  await expect(theAnswerXaiMeant(response)).resolves.toBe(response);
+  await expect(asXaiRefusalReads(response)).resolves.toBe(response);
 });
 
 test('an xAI 403 whose body cannot be read keeps its status', async () => {
@@ -71,12 +71,12 @@ test('an xAI 403 whose body cannot be read keeps its status', async () => {
   });
   const response = new Response(unreadable, { status: 403 });
 
-  await expect(theAnswerXaiMeant(response)).resolves.toBe(response);
+  await expect(asXaiRefusalReads(response)).resolves.toBe(response);
 });
 
 test('free usage exhaustion reported under any other status carries no retry delay', async () => {
   const response = Response.json({ code: 'subscription:free-usage-exhausted' }, { status: 402 });
-  const decorated = await theAnswerXaiMeant(response);
+  const decorated = await asXaiRefusalReads(response);
 
   expect(decorated).toBe(response);
   expect(decorated.headers.get('retry-after')).toBeNull();

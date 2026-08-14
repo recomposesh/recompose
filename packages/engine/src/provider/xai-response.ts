@@ -40,14 +40,16 @@ async function withFreeUsageDelay(response: Response): Promise<Response> {
 }
 
 /**
- * The answer xAI meant, which twice differs from the one it sent.
+ * An xAI refusal, read as what it means rather than as what it said.
  *
- * @summary A 403 whose body names a bad credential is an authentication failure, and saying so lets
- * a caller reconnect rather than wonder what it lacked permission for. A 429 from exhausted free
- * usage owes a day, and xAI names no time, so the wait is stated rather than guessed at. Every other
- * answer passes through as it arrived.
+ * @summary xAI answers two things in words the rest of the engine would act on wrongly. A rejected
+ * credential comes back 403, which reads as a permission the account lacks rather than a key to
+ * replace, so it becomes 401. Exhausted free usage comes back 429 with no `retry-after`, which
+ * reads as a rate limit to try again in a moment rather than a day, so it gets the day.
+ *
+ * Every other answer passes through untouched.
  */
-export async function theAnswerXaiMeant(response: Response): Promise<Response> {
+export async function asXaiRefusalReads(response: Response): Promise<Response> {
   if (response.status === 403) return asUnauthorized(response);
   if (response.status !== 429) return response;
 

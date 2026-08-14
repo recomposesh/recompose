@@ -21,7 +21,7 @@ import {
   rememberWholeStream,
   wholeStreamBefore,
 } from '../telemetry-memory';
-import { rowsMatchingTheTurnsSent } from '../telemetry-standing';
+import { rowsMatchingTheTurnsSent, rowsTheRunHolds, theRunHolds } from '../telemetry-standing';
 
 /** How many requests fill the run past the drawer's own height, so history can be scrolled back. */
 const MORE_THAN_ONE_SCREEN = 25;
@@ -39,7 +39,7 @@ Given('the person scrolled down the list', async ({ page }) => {
   await expect.poll(async () => scrolledBy(page)).toBeGreaterThan(0);
 
   rememberCursorRow(page, await rowAtTheTopOfTheView(page));
-  rememberWholeStream(page, await loggedRows(page).count());
+  rememberWholeStream(page, await rowsTheRunHolds(page));
 });
 
 Given('rows standing in the list', async ({ page }) => {
@@ -63,7 +63,7 @@ When('the person stops {string}', async ({ page }, gateway: string) => {
 });
 
 Then('a new row stands at the top of the list', async ({ page }) => {
-  await expect(loggedRows(page)).toHaveCount(wholeStreamBefore(page) + 1);
+  await theRunHolds(page, wholeStreamBefore(page) + 1);
 
   const newest = await rowCells(loggedRows(page).first());
 
@@ -75,7 +75,7 @@ Then('the list holds its scroll place', async ({ page }) => {
 });
 
 Then('the new row waits at the top', async ({ page }) => {
-  await expect(loggedRows(page)).toHaveCount(wholeStreamBefore(page) + 1);
+  await theRunHolds(page, wholeStreamBefore(page) + 1);
   await expect.poll(async () => scrolledBy(page)).toBeGreaterThan(0);
 });
 
