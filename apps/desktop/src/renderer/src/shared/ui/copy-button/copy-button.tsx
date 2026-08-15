@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const ADDRESS_COPIED = 'Address copied.';
-const COPYING_REFUSED = 'Copying failed.';
+const COPYING_REFUSED = "Couldn't copy. Try again.";
 
 type CopyButtonProps = {
   /** Accessible name of the button, naming the value it copies. */

@@ -1,0 +1,196 @@
+<!doctype html>
+<meta charset="utf-8" />
+<style>
+  html,
+  body {
+    margin: 0;
+    background: #888;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+<canvas id="wall" width="2560" height="1792"></canvas>
+<script>
+  const q = new URLSearchParams(location.search);
+  const concept = q.get('c') || 'ridges';
+  const scheme = q.get('s') || 'light';
+  const W = 2560,
+    H = 1792;
+  const cv = document.getElementById('wall');
+  const ctx = cv.getContext('2d');
+
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0;
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let rand = mulberry32(1207);
+
+  function valueNoise(seed) {
+    const r = mulberry32(seed),
+      g = [];
+    for (let i = 0; i < 256; i++) g.push(r());
+    const smooth = (t) => t * t * (3 - 2 * t);
+    return (x, y) => {
+      const xi = Math.floor(x) & 255,
+        yi = Math.floor(y) & 255;
+      const xf = x - Math.floor(x),
+        yf = y - Math.floor(y);
+      const v = (a, b) => g[(a * 57 + b) & 255];
+      const a = v(xi, yi),
+        b = v(xi + 1, yi),
+        c = v(xi, yi + 1),
+        d = v(xi + 1, yi + 1);
+      const u = smooth(xf),
+        w = smooth(yf);
+      return a + (b - a) * u + (c - a) * w + (a - b - c + d) * u * w;
+    };
+  }
+  const noise = valueNoise(41);
+  function fbm(x, y) {
+    return noise(x, y) * 0.6 + noise(x * 2.1, y * 2.1) * 0.25 + noise(x * 4.3, y * 4.3) * 0.15;
+  }
+
+  const palettes = {
+    light: {
+      sky: ['#f0ebdf', '#e6e0d2'],
+      ridges: ['#d3cdbc', '#bec2b0', '#a3b2a6', '#8aa29b', '#71908c', '#5c7d7d', '#4b6a71'],
+      strokes: ['#8ba39b', '#6d8296', '#c0b092', '#9fb1a4', '#ab8f74'],
+      bands: ['#e6e0d2', '#cfd2c2', '#b3c1b6', '#d8cdb6'],
+      bg: ['#efe9dc', '#e2dccd'],
+    },
+    dark: {
+      sky: ['#0d1117', '#131922'],
+      ridges: ['#151c24', '#1a2630', '#20333a', '#274144', '#2e504e', '#356057', '#3d6f60'],
+      strokes: ['#3d5a55', '#37485c', '#5c5244', '#44554b', '#54453e'],
+      bands: ['#131922', '#1a2a2e', '#22383a', '#252f3b'],
+      bg: ['#0e1319', '#151b24'],
+    },
+  };
+  const P = palettes[scheme];
+
+  function grain(alpha) {
+    const img = ctx.getImageData(0, 0, W, H),
+      d = img.data;
+    const gr = mulberry32(99);
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (gr() - 0.5) * alpha * 255;
+      d[i] += n;
+      d[i + 1] += n;
+      d[i + 2] += n;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function skyGradient(colors) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, colors[0]);
+    g.addColorStop(1, colors[1]);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  if (concept === 'ridges') {
+    skyGradient(P.sky);
+    const layers = P.ridges.length;
+    for (let i = 0; i < layers; i++) {
+      const base = H * (0.4 + (0.6 * (i + 1)) / layers);
+      const amp = H * (0.05 + 0.045 * i);
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 4) {
+        const t = x / W;
+        const wave =
+          Math.sin(t * Math.PI * (2.0 + i * 0.7) + i * 2.1) * 0.45 +
+          Math.sin(t * Math.PI * (5.3 + i * 1.3) + i * 0.7) * 0.2 +
+          (fbm(t * 3 + i * 11, i * 7) - 0.5) * 1.3;
+        ctx.lineTo(x, base - amp * wave - amp * 0.4);
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, base - amp * 1.6, 0, H);
+      g.addColorStop(0, P.ridges[i]);
+      g.addColorStop(1, scheme === 'light' ? shade(P.ridges[i], -14) : shade(P.ridges[i], 10));
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+    grain(0.035);
+  }
+
+  if (concept === 'flow') {
+    skyGradient(P.bg);
+    ctx.lineWidth = 1.4;
+    ctx.lineCap = 'round';
+    const cell = 0.0016;
+    for (let p = 0; p < 4200; p++) {
+      let x = rand() * W,
+        y = rand() * H;
+      const col = P.strokes[Math.floor(rand() * P.strokes.length)];
+      ctx.strokeStyle = col;
+      ctx.globalAlpha = scheme === 'light' ? 0.16 + rand() * 0.12 : 0.2 + rand() * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      const steps = 90 + Math.floor(rand() * 70);
+      for (let s = 0; s < steps; s++) {
+        const a = fbm(x * cell, y * cell) * Math.PI * 4;
+        x += Math.cos(a) * 3.2;
+        y += Math.sin(a) * 3.2;
+        if (x < -20 || x > W + 20 || y < -20 || y > H + 20) break;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    grain(0.03);
+  }
+
+  if (concept === 'cymatics') {
+    skyGradient(P.bg);
+    const sources = [];
+    for (let i = 0; i < 5; i++)
+      sources.push({
+        x: rand() * W,
+        y: rand() * H,
+        k: 0.004 + rand() * 0.004,
+        ph: rand() * Math.PI * 2,
+      });
+    const img = ctx.getImageData(0, 0, W, H),
+      d = img.data;
+    const bandCols = P.bands.map(hexToRgb);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        let v = 0;
+        for (const s of sources) {
+          const dx = x - s.x,
+            dy = y - s.y;
+          v += Math.cos(Math.sqrt(dx * dx + dy * dy) * s.k + s.ph);
+        }
+        const t = (v / sources.length + 1) / 2;
+        const band = bandCols[Math.min(bandCols.length - 1, Math.floor(t * bandCols.length))];
+        const soft = 0.55;
+        const i4 = (y * W + x) * 4;
+        d[i4] = d[i4] * (1 - soft) + band[0] * soft;
+        d[i4 + 1] = d[i4 + 1] * (1 - soft) + band[1] * soft;
+        d[i4 + 2] = d[i4 + 2] * (1 - soft) + band[2] * soft;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    grain(0.03);
+  }
+
+  function shade(hex, amt) {
+    const [r, g, b] = hexToRgb(hex);
+    const c = (v) => Math.max(0, Math.min(255, v + amt));
+    return `rgb(${c(r)},${c(g)},${c(b)})`;
+  }
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  document.title = 'done:' + concept + ':' + scheme;
+</script>

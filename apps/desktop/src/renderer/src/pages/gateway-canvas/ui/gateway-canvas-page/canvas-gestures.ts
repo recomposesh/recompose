@@ -83,7 +83,7 @@ function escapedOrLanded(world: CanvasWorld, landed: boolean): boolean {
 }
 
 const REFUSED_LANDING =
-  'A cable binds a virtual model or a router to a stored target it does not already hold, and nothing else connects.';
+  'A cable binds a virtual model or a router to a provider it does not already hold.';
 
 function asksWhatToBind(from: string): boolean {
   return from === 'draft' || modelIdOf(from) !== undefined || routerAddressOf(from) !== undefined;

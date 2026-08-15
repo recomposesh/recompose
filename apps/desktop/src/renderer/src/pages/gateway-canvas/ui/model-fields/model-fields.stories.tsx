@@ -78,7 +78,7 @@ export const Settled = meta.story({
     );
     await expect(await canvas.findByText('Pick a model', { exact: true })).toBeVisible();
     await expect(
-      await canvas.findByRole('button', { name: 'Select different provider' }),
+      await canvas.findByRole('button', { name: 'Select a different provider' }),
     ).toBeVisible();
   },
 });

@@ -42,7 +42,7 @@ export const TheAskNamesATarget = meta.story({
   play: async ({ args, canvas, userEvent }) => {
     await pressedByKeyboard(
       canvas,
-      { role: 'button', name: 'Choose a target' },
+      { role: 'button', name: 'Pick a provider' },
       userEvent.keyboard,
       '{Enter}',
     );

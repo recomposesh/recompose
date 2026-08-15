@@ -20,13 +20,13 @@ export function EmptyState({ onCreateGateway }: EmptyStateProps) {
       <GhostGraph />
       <h1 className="mb-1.5 text-invitation text-ink">Create your first gateway</h1>
       <p className="mb-4.5 max-w-102.5 text-body text-ink-secondary">
-        A gateway is one local address that routes requests across your AI accounts. Everything
+        A gateway is one local address that routes requests across your AI providers. Everything
         stays on this machine.
       </p>
       <div className="flex items-center gap-2.5">
         <button className="push-button-primary focus-ring" onClick={onCreateGateway} type="button">
           <Icon className="size-3.75" name="plus" />
-          Create Gateway
+          Create gateway
         </button>
         <a className="push-button focus-ring" href={GUIDE_URL} rel="noreferrer" target="_blank">
           <Icon className="size-3.75" name="book" />

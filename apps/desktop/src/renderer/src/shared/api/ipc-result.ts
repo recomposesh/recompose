@@ -9,7 +9,7 @@ export class IpcResultError extends Error {
   }
 }
 
-const UNEXPLAINED_REFUSAL = 'recompose gave no reason for refusing.';
+const UNEXPLAINED_REFUSAL = 'recompose refused this without a reason. Try again.';
 
 /**
  * The sentence a refused request reaches the screen as.

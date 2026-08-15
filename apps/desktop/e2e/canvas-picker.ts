@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 
 /** The stage a released cable opens on, which names the two kinds a binding may meet. */
 export function bindingKindAsk(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Bind a router or a target' });
+  return page.getByRole('dialog', { name: 'Bind this model to' });
 }
 
 /**
@@ -21,12 +21,12 @@ export async function pickTheTargetKind(page: Page): Promise<void> {
 
 /** The stage of the picker that asks which stored account a binding lands on. */
 export function accountPicker(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Pick an account' });
+  return page.getByRole('dialog', { name: 'Connected providers' });
 }
 
 /** The stage of the picker that asks which model the chosen account serves. */
 export function providerModelPicker(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Pick a provider model' });
+  return page.getByRole('dialog', { name: /^Models .+ serves$/ });
 }
 
 async function pickAccount(page: Page, account: string): Promise<void> {

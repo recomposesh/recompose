@@ -13,7 +13,7 @@ const CARRIED_IN = 'Clients send it as Authorization, x-api-key, x-goog-api-key,
 const REACHED_WITHOUT = 'Clients reach this gateway without a key.';
 
 const WHAT_REGENERATING_COSTS =
-  'Clients carrying the current key stop reaching this gateway until you paste the new one.';
+  'Clients using the current key stop reaching this gateway until you paste the new one.';
 
 function noticeLine(sentence: string): ReactNode {
   return <p className="mt-2 px-1 text-caption text-ink-secondary">{sentence}</p>;

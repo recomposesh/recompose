@@ -63,7 +63,7 @@ function stoodTogether(canvasElement: HTMLElement): { card: DOMRect; asking: DOM
 /** The picker hanging off the card the cable landed on, at the seat the canvas gave it. */
 export const StandingOnItsCard = meta.story({
   play: async ({ canvas, canvasElement }) => {
-    await expect(await canvas.findByRole('dialog', { name: 'Pick an account' })).toBeVisible();
+    await expect(await canvas.findByRole('dialog', { name: 'Connected providers' })).toBeVisible();
 
     const stood = stoodTogether(canvasElement);
 
@@ -76,9 +76,7 @@ export const StandingOnItsCard = meta.story({
 export const TheSecondStageKeepsTheSeat = meta.story({
   args: { stage: { step: 'provider-model', accountId: 'key-work' }, groups: models },
   play: async ({ canvas, canvasElement }) => {
-    await expect(
-      await canvas.findByRole('dialog', { name: 'Pick a provider model' }),
-    ).toBeVisible();
+    await expect(await canvas.findByRole('dialog', { name: 'Pick a model' })).toBeVisible();
 
     const stood = stoodTogether(canvasElement);
 

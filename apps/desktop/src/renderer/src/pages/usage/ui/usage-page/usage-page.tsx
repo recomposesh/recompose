@@ -36,7 +36,7 @@ function quietReading(
     return (
       <QuietReading
         sentence="Send a request through a gateway and it collects here."
-        title="No Requests Yet"
+        title="No requests yet"
       />
     );
   }
@@ -56,7 +56,7 @@ function quietReading(
             }
       }
       sentence={quietSentence(search)}
-      title="No Requests"
+      title="No requests"
     />
   );
 }
@@ -66,7 +66,7 @@ function refusalCard(failure: string, retry: () => void) {
     <div className="flex items-center justify-between gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-3">
       <p className="text-body text-danger-ink">{failure}</p>
       <Button onPress={retry} variant="secondary">
-        Retry
+        Try again
       </Button>
     </div>
   );

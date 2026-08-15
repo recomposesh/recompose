@@ -70,7 +70,7 @@ export const TheCardQuietensRatherThanDims = meta.story({
 /** A keyboard alone finishes the draft, which is the path a pointer-free person is left with. */
 export const AKeyboardAloneAsksForTheTarget = meta.story({
   play: async ({ args, canvas, userEvent }) => {
-    (await canvas.findByRole('button', { name: 'Choose a target' })).focus();
+    (await canvas.findByRole('button', { name: 'Pick a provider' })).focus();
 
     await userEvent.keyboard('{Enter}');
 

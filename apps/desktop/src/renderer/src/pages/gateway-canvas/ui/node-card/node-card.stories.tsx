@@ -24,7 +24,7 @@ const worn: NodeCardProps = {
   kickerTint: 'text-virtual-model-ink',
   name: 'Everyday Sonnet',
   nameInk: 'text-ink',
-  outgoing: { bound: true, ask: 'Choose a target', onAsk: fn(() => {}) },
+  outgoing: { bound: true, ask: 'Pick a provider', onAsk: fn(() => {}) },
   selected: false,
   subtitle: 'sonnet-latest',
   subtitleInk: 'text-ink-secondary',
@@ -37,7 +37,7 @@ const meta = preview.meta({
   render: (args) => cardOnCanvas('virtual-model', CardUnderProof, args, args.selected),
 });
 
-const plus = { name: 'Choose a target' };
+const plus = { name: 'Pick a provider' };
 
 /** The template every canvas card wears, which is the one place its measure is decided. */
 export const Basic = meta.story({});

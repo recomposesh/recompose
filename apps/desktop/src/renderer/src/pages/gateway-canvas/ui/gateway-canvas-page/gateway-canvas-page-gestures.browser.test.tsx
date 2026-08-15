@@ -135,12 +135,12 @@ test('a pane press while the picker stands puts the pick and its pending card aw
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
   await pickedTheTarget(screen);
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
   await userEvent.click(paneOf(screen.container), { position: { x: 30, y: 30 } });
 
   await expect
-    .element(screen.getByText('Pick an account', { exact: true }))
+    .element(screen.getByText('Connected providers', { exact: true }))
     .not.toBeInTheDocument();
   await expect.poll(() => screen.container.querySelector('[data-id="pending"]')).toBeNull();
   expect(await storedModels()).toEqual(before);
@@ -197,7 +197,7 @@ test('a dragged pending card carries the pick it stands for with it', async () =
   await expect
     .poll(() => cardCornerOn(screen.container, 'pending'))
     .toEqual({ x: letGo.x + 40, y: letGo.y + 30 });
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 });
 
 test('tidying seats a dragged draft card back in its own column', async () => {
@@ -255,9 +255,7 @@ test('Esc during a cable-endpoint drag rebinds nothing', async () => {
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
   await expect.poll(() => document.querySelector('.react-flow__connectionline')).toBeNull();
-  await expect
-    .element(screen.getByText('Pick a provider model', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
 
@@ -270,8 +268,6 @@ test('dragging a cable source endpoint onto another virtual model binds nothing'
     await sourcePortOf(screen.container, 'model:fast'),
   );
 
-  await expect
-    .element(screen.getByText('Pick a provider model', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });

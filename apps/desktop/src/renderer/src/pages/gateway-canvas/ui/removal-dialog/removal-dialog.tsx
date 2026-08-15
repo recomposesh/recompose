@@ -25,13 +25,13 @@ const REMOVAL_WORDING = {
     consequence: 'The gateway stops serving, and its whole composition leaves this app.',
   },
   target: {
-    subject: 'target',
+    subject: 'provider',
     consequence: 'The binding releases, and the virtual model returns to the canvas as a draft.',
   },
   'child-target': {
-    subject: 'target',
+    subject: 'provider',
     consequence:
-      'The target leaves the router holding it, and everything else that router holds keeps serving.',
+      'The provider leaves the router holding it, and everything else that router holds keeps serving.',
   },
   router: {
     subject: 'router',

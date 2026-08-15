@@ -35,5 +35,5 @@
     "cspell-words.txt"
   ],
   "useGitignore": true,
-  "words": ["elif", "nohup", "Qwen"]
+  "words": ["Qwen", "cymatics", "elif", "nohup"]
 }

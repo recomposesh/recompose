@@ -89,7 +89,7 @@ test('a target born where the view already reaches leaves the view where it stan
 
   const resting = viewportTransform(screen.container);
 
-  screen.getByLabelText('Choose a target').first().element().focus();
+  screen.getByLabelText('Pick a provider').first().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));

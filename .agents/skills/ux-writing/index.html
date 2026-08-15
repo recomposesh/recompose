@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A comprehensive UX Writing Skill for Claude and Codex. Write accessible, user-centered interface copy with research-backed best practices.">
+    <title>UX Writing Skill for Claude & Codex</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,300;1,8..60,400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cream: #FAF8EE;
+            --ink: #1a1614;
+            --ink-light: #4a4540;
+            --ink-muted: #8a857f;
+            --accent: #BACDD9;
+            --accent-dark: #9ab5c4;
+            --border: rgba(26, 22, 20, 0.08);
+            --border-dark: rgba(26, 22, 20, 0.15);
+        }
+
+        body {
+            font-family: 'Source Serif 4', Georgia, serif;
+            line-height: 1.75;
+            color: var(--ink);
+            background: var(--cream);
+            font-size: 18px;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+
+        /* Background pattern - subtle dots */
+        body::before {
+            content: '·';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            font-size: 20px;
+            line-height: 40px;
+            letter-spacing: 40px;
+            color: var(--ink);
+            opacity: 0.06;
+            overflow: hidden;
+            white-space: pre;
+            word-wrap: break-word;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--cream);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: var(--ink);
+        }
+
+        header nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        header nav a {
+            color: var(--ink-light);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            letter-spacing: 0.2px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: transparent;
+        }
+
+        header nav a:hover {
+            color: var(--ink);
+            background: rgba(186, 205, 217, 0.15);
+        }
+
+        .terminal-trigger {
+            color: var(--ink-light);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            letter-spacing: 0.2px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal-trigger:hover {
+            color: var(--ink);
+            background: rgba(186, 205, 217, 0.15);
+        }
+
+        .video-trigger {
+            color: var(--ink-light);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            letter-spacing: 0.2px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        .video-trigger:hover {
+            color: var(--ink);
+            background: rgba(186, 205, 217, 0.15);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 160px 0 200px;
+            text-align: center;
+        }
+
+        .hero h2 {
+            font-size: clamp(48px, 7vw, 96px);
+            font-weight: 300;
+            line-height: 1.1;
+            margin-bottom: 40px;
+            color: var(--ink);
+            letter-spacing: -0.02em;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(20px, 2.5vw, 28px);
+            color: var(--ink-light);
+            margin-bottom: 80px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 20px 48px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-dark);
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--cream);
+            border-color: var(--ink);
+        }
+
+        .btn-primary:hover {
+            background: var(--ink-light);
+            border-color: var(--ink-light);
+            transform: translate3d(0, -2px, 0);
+            box-shadow: 0 8px 24px rgba(26, 22, 20, 0.15);
+            backface-visibility: hidden;
+            -webkit-font-smoothing: subpixel-antialiased;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--ink);
+        }
+
+        .btn-secondary:hover {
+            background: var(--ink);
+            color: var(--cream);
+            transform: translate3d(0, -2px, 0);
+            backface-visibility: hidden;
+            -webkit-font-smoothing: subpixel-antialiased;
+        }
+
+        /* Stats */
+        .stats {
+            padding: 120px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 80px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 72px;
+            font-weight: 300;
+            color: var(--ink);
+            margin-bottom: 16px;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 400;
+        }
+
+        /* Features */
+        .features {
+            padding: 160px 0;
+        }
+
+        .section-title {
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 300;
+            text-align: center;
+            margin-bottom: 120px;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 80px;
+        }
+
+        .feature-card {
+            padding: 0;
+        }
+
+        .feature-card h4 {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 24px;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            color: var(--ink-light);
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 32px;
+        }
+
+        .feature-card ul {
+            list-style: none;
+        }
+
+        .feature-card li {
+            color: var(--ink-light);
+            font-size: 16px;
+            padding: 12px 0 12px 32px;
+            position: relative;
+            line-height: 1.6;
+            border-bottom: 1px solid var(--border);
+            transition: color 0.3s ease;
+        }
+
+        .feature-card li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-card li:before {
+            content: "—";
+            position: absolute;
+            left: 8px;
+            color: var(--accent);
+            font-weight: 400;
+            width: 16px;
+            text-align: left;
+        }
+
+        /* Integrations */
+        .integrations {
+            padding: 160px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .integrations .section-title {
+            margin-bottom: 40px;
+        }
+
+        .integrations .intro {
+            text-align: center;
+            color: var(--ink-light);
+            font-size: 20px;
+            margin-bottom: 80px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.7;
+        }
+
+        .integration-card {
+            background: rgba(212, 165, 116, 0.06);
+            border: 1px solid var(--border);
+            padding: 80px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .integration-card h4 {
+            font-size: 20px;
+            font-weight: 400;
+            margin-bottom: 32px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--ink-muted);
+        }
+
+        .integration-card code {
+            background: var(--ink);
+            color: var(--accent);
+            padding: 32px;
+            display: block;
+            margin: 32px 0;
+            font-size: 15px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            overflow-x: auto;
+            line-height: 1.6;
+            border: 1px solid var(--ink);
+        }
+
+        .integration-card .help-text {
+            margin-top: 32px;
+            color: var(--ink-light);
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        .integration-card .guide-link {
+            margin-top: 32px;
+            display: inline-block;
+        }
+
+        .integration-card .guide-link a {
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 400;
+            border-bottom: 1px solid var(--accent);
+            padding-bottom: 2px;
+            transition: border-color 0.3s ease;
+        }
+
+        .integration-card .guide-link a:hover {
+            border-color: var(--ink);
+        }
+
+        /* Quick Start */
+        .quickstart {
+            padding: 160px 0;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 80px;
+            margin-bottom: 80px;
+        }
+
+        .step {
+            text-align: left;
+            padding: 48px 0;
+            border-top: 1px solid var(--border-dark);
+        }
+
+        .step-number {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--ink-muted);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .step h4 {
+            font-size: 28px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+        }
+
+        .step p {
+            color: var(--ink-light);
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        .quickstart-cta {
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            margin-top: 160px;
+        }
+
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        footer p {
+            color: var(--ink-muted);
+            font-size: 14px;
+        }
+
+        footer p a {
+            color: var(--ink-light);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        footer p a:hover {
+            color: var(--ink);
+            background: rgba(186, 205, 217, 0.15);
+        }
+
+        footer nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        footer nav a {
+            color: var(--ink-light);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: transparent;
+        }
+
+        footer nav a:hover {
+            color: var(--ink);
+            background: rgba(186, 205, 217, 0.15);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h2,
+        .hero .subtitle,
+        .cta-buttons {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .hero .subtitle {
+            animation-delay: 0.2s;
+        }
+
+        .cta-buttons {
+            animation-delay: 0.4s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
+
+            header {
+                padding: 40px 0;
+            }
+
+            header nav {
+                gap: 24px;
+            }
+
+            header nav a {
+                font-size: 14px;
+            }
+
+            .hero {
+                padding: 100px 0 120px;
+            }
+
+            .hero .subtitle {
+                margin-bottom: 60px;
+            }
+
+            .stats {
+                padding: 80px 0;
+            }
+
+            .stats-grid {
+                gap: 60px;
+            }
+
+            .features {
+                padding: 100px 0;
+            }
+
+            .section-title {
+                margin-bottom: 80px;
+            }
+
+            .feature-grid {
+                gap: 60px;
+            }
+
+            .integrations {
+                padding: 100px 0;
+            }
+
+            .integration-card {
+                padding: 40px;
+            }
+
+            .quickstart {
+                padding: 100px 0;
+            }
+
+            .steps {
+                gap: 60px;
+            }
+
+            footer {
+                padding: 60px 0;
+                margin-top: 100px;
+            }
+
+            footer .container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            footer nav {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+
+        /* Refined details */
+        ::selection {
+            background: #BACDD9;
+            color: var(--ink);
+        }
+
+        a {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .feature-card li:hover {
+            color: var(--ink);
+        }
+
+        /* Terminal Window */
+        .terminal-window {
+            position: fixed;
+            width: 600px;
+            height: 500px;
+            background: #1a1614;
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(26, 22, 20, 0.3);
+            overflow: hidden;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-header {
+            padding: 12px 16px;
+            background: #141413;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .terminal-header:active {
+            cursor: grabbing;
+        }
+
+        .terminal-title {
+            font-size: 12px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .terminal-control.close {
+            background: #ff5f56;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .terminal-control.close::before {
+            content: '×';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: #4a0a07;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .terminal-control.close:hover::before {
+            opacity: 1;
+        }
+
+        .terminal-control.minimize {
+            background: #ffbd2e;
+        }
+
+        .terminal-control.maximize {
+            background: #27c93f;
+        }
+
+        .terminal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #1a1614;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #faf8ee;
+        }
+
+        .terminal-line {
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeInLine 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeInLine {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .terminal-prompt {
+            color: #BACDD9;
+        }
+
+        .terminal-command {
+            color: #faf8ee;
+        }
+
+        .terminal-output {
+            color: #b0aea5;
+        }
+
+        .terminal-success {
+            color: #788c5d;
+        }
+
+        .terminal-highlight {
+            color: #BACDD9;
+            font-weight: 600;
+        }
+
+        /* Video Modal Window */
+        .video-window {
+            position: fixed;
+            width: 800px;
+            height: 500px;
+            background: #1a1614;
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(26, 22, 20, 0.3);
+            overflow: hidden;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-header {
+            padding: 12px 16px;
+            background: #141413;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .video-header:active {
+            cursor: grabbing;
+        }
+
+        .video-title {
+            font-size: 12px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .video-content {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            background: #1a1614;
+            overflow: hidden;
+        }
+
+        .video-content video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border: none;
+        }
+
+        @media (max-width: 768px) {
+            .video-window {
+                width: 90vw;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .terminal-window {
+                width: 90vw;
+                max-height: 70vh;
+            }
+
+            header nav {
+                gap: 4px;
+            }
+
+            header nav a,
+            .terminal-trigger,
+            .video-trigger {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>UX WRITING SKILL</h1>
+            <nav>
+                <a href="https://github.com/content-designer/ux-writing-skill">Repository</a>
+                <a href="https://github.com/content-designer/ux-writing-skill/blob/main/docs/figma-integration.md">Figma</a>
+                <a href="https://github.com/content-designer/ux-writing-skill#usage-examples">Documentation</a>
+                <button class="video-trigger" onclick="toggleVideo()">▷</button>
+                <button class="terminal-trigger" onclick="toggleTerminal()">></button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2>Write better<br>interface copy</h2>
+                <p class="subtitle">A comprehensive agent skill for Claude, Codex, and Cursor that helps content designers and product teams create accessible, user-centered text following research-backed best practices.</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/content-designer/ux-writing-skill/raw/main/dist/ux-writing-skill.zip" class="btn btn-primary">Download skill</a>
+                    <a href="https://github.com/content-designer/ux-writing-skill" class="btn btn-secondary">View on GitHub</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-number">25+</div>
+                        <div class="stat-label">Pages of guidance</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">40+</div>
+                        <div class="stat-label">UI patterns</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">8</div>
+                        <div class="stat-label">Fillable templates</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">Free</div>
+                        <div class="stat-label">Open source</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h3 class="section-title">What's included</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Accessibility guidelines</h4>
+                        <p>Comprehensive guidance for writing inclusive UX text that works for everyone.</p>
+                        <ul>
+                            <li>Screen reader optimization</li>
+                            <li>Cognitive accessibility</li>
+                            <li>WCAG compliance</li>
+                            <li>Multi-modal communication</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Research-backed metrics</h4>
+                        <p>Quantifiable benchmarks based on comprehension research and industry standards.</p>
+                        <ul>
+                            <li>Sentence length targets</li>
+                            <li>Comprehension rates</li>
+                            <li>Reading level guidelines</li>
+                            <li>Character limits by type</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Expanded error patterns</h4>
+                        <p>Four distinct error types with clear timing, location, and recovery guidance.</p>
+                        <ul>
+                            <li>Validation errors</li>
+                            <li>System errors</li>
+                            <li>Blocking errors</li>
+                            <li>Permission errors</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Tone adaptation framework</h4>
+                        <p>Map user emotional states to appropriate tone while maintaining consistent voice.</p>
+                        <ul>
+                            <li>By emotional state</li>
+                            <li>By content type</li>
+                            <li>Context-specific examples</li>
+                            <li>Voice chart templates</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Real-world examples</h4>
+                        <p>Before/after improvements with detailed scoring against our quality standards.</p>
+                        <ul>
+                            <li>E-commerce patterns</li>
+                            <li>SaaS applications</li>
+                            <li>Mobile experiences</li>
+                            <li>Common anti-patterns</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Fillable templates</h4>
+                        <p>Practical guides and frameworks for creating consistent, high-quality UX text.</p>
+                        <ul>
+                            <li>Error message templates</li>
+                            <li>Empty state guides</li>
+                            <li>Onboarding flows</li>
+                            <li>Voice charts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="integrations">
+            <div class="container">
+                <h3 class="section-title">Figma integration</h3>
+                <p class="intro">Review and improve UX copy directly from your Figma designs. Works with Claude Code, Codex, and Cursor. Perfect for content designers and product teams.</p>
+
+                <div class="feature-grid" style="margin-bottom: 0;">
+                    <div class="integration-card" style="background: rgba(186, 205, 217, 0.08); border: 1px solid var(--border); padding: 48px;">
+                        <h4>Any agent + Figma MCP</h4>
+                        <code>npx skills add content-designer/ux-writing-skill</code>
+                        <p class="help-text">Share any Figma frame link with your agent to get instant UX writing feedback, accessibility audits, and specific improvements. Setup instructions available for Claude Code, Codex, and Cursor.</p>
+                        <p class="guide-link"><a href="https://github.com/content-designer/ux-writing-skill/blob/main/docs/figma-integration.md">Read the Figma setup guide →</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="quickstart">
+            <div class="container">
+                <h3 class="section-title">Get started</h3>
+
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">Step 1</div>
+                        <h4>Download</h4>
+                        <p>Download <strong>ux-writing-skill.zip</strong> — contains the skill file and all supporting documentation for Claude and Codex.</p>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">Step 2 — Claude</div>
+                        <h4>Install in Claude Desktop</h4>
+                        <p>Open <strong>Settings → Capabilities → Skills</strong>, click <strong>Upload skill</strong>, and select the ZIP file directly (no extraction needed).</p>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">Step 2 — Codex</div>
+                        <h4>Install in Codex</h4>
+                        <p>Extract the ZIP and copy to <strong>~/.codex/skills/</strong> (Mac/Linux) or <strong>%USERPROFILE%\.codex\skills\</strong> (Windows), then restart Codex or your IDE.</p>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">Step 3</div>
+                        <h4>Use</h4>
+                        <p>Ask your AI assistant to review any interface copy and it will automatically apply UX writing best practices.</p>
+                    </div>
+                </div>
+                <div class="quickstart-cta">
+                    <a href="https://github.com/content-designer/ux-writing-skill#installation" class="btn btn-secondary">View detailed instructions</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Built by <a href="https://www.linkedin.com/in/christopher-greer/">Christopher Greer</a> · MIT License</p>
+            <nav>
+                <a href="https://github.com/content-designer/ux-writing-skill/blob/main/CONTRIBUTING.md">Contributing</a>
+                <a href="https://github.com/content-designer/ux-writing-skill/blob/main/CHANGELOG.md">Changelog</a>
+                <a href="https://github.com/content-designer/ux-writing-skill/issues">Issues</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- Terminal Window -->
+    <div class="terminal-window" id="terminal-window" style="top: 100px; left: 100px; display: none;">
+        <div class="terminal-header" id="terminal-header">
+            <div class="terminal-title">ux-writing-skill — demo</div>
+            <div class="terminal-controls">
+                <button class="terminal-control close" onclick="closeTerminal()"></button>
+            </div>
+        </div>
+        <div class="terminal-content" id="terminal-content">
+            <div class="terminal-line"><span class="terminal-prompt">→</span> <span class="terminal-command">Review this empty state message</span></div>
+            <div class="terminal-line"><span class="terminal-output">"You don't have any saved items."</span></div>
+            <div class="terminal-line">&nbsp;</div>
+            <div class="terminal-line"><span class="terminal-success">✓ Analyzing against 4 quality standards</span></div>
+            <div class="terminal-line">&nbsp;</div>
+            <div class="terminal-line"><span class="terminal-highlight">Evaluation:</span></div>
+            <div class="terminal-line"><span class="terminal-output">✗ Purposeful: Doesn't help user take action or achieve goals</span></div>
+            <div class="terminal-line"><span class="terminal-output">✓ Concise: Word count is appropriate (6 words)</span></div>
+            <div class="terminal-line"><span class="terminal-output">✗ Conversational: Negative framing, sounds discouraging</span></div>
+            <div class="terminal-line"><span class="terminal-output">✓ Clear: Message is unambiguous</span></div>
+            <div class="terminal-line">&nbsp;</div>
+            <div class="terminal-line"><span class="terminal-highlight">Issues:</span></div>
+            <div class="terminal-line"><span class="terminal-output">• Missing call-to-action to populate the empty state</span></div>
+            <div class="terminal-line"><span class="terminal-output">• Negative framing ("don't have") instead of neutral/positive</span></div>
+            <div class="terminal-line"><span class="terminal-output">• No guidance on what to do next</span></div>
+            <div class="terminal-line">&nbsp;</div>
+            <div class="terminal-line"><span class="terminal-highlight">Recommended:</span></div>
+            <div class="terminal-line"><span class="terminal-output">"No saved items yet. Browse products to start building your list."</span></div>
+            <div class="terminal-line">&nbsp;</div>
+            <div class="terminal-line"><span class="terminal-highlight">Why this works:</span></div>
+            <div class="terminal-line"><span class="terminal-output">• Purposeful: Clear CTA guides user to next action</span></div>
+            <div class="terminal-line"><span class="terminal-output">• Conversational: "yet" implies this is temporary and expected</span></div>
+            <div class="terminal-line"><span class="terminal-output">• Follows empty state pattern: Explanation + CTA</span></div>
+            <div class="terminal-line">&nbsp;</div>
+            <div class="terminal-line"><span class="terminal-prompt">→</span> <span class="terminal-command">_</span></div>
+        </div>
+    </div>
+
+    <!-- Video Window -->
+    <div class="video-window" id="video-window" style="top: 100px; left: 100px; display: none;">
+        <div class="video-header" id="video-header">
+            <div class="video-title">demo — ux-writing-skill</div>
+            <div class="terminal-controls">
+                <button class="terminal-control close" onclick="closeVideo()"></button>
+            </div>
+        </div>
+        <div class="video-content">
+            <video controls>
+                <source src="https://raw.githubusercontent.com/content-designer/ux-writing-skill/main/ux-writing-skill-vid.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+    <script>
+        // Draggable terminal window
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        const terminalWindow = document.getElementById('terminal-window');
+        const terminalHeader = document.getElementById('terminal-header');
+
+        terminalHeader.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        // Touch events for mobile
+        terminalHeader.addEventListener('touchstart', dragStart);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', dragEnd);
+
+        function dragStart(e) {
+            // Don't start dragging if clicking on terminal control
+            if (e.target.classList.contains('terminal-control')) {
+                return;
+            }
+
+            if (e.type === 'touchstart') {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+
+            if (e.target === terminalHeader || terminalHeader.contains(e.target)) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+
+                if (e.type === 'touchmove') {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, terminalWindow);
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        }
+
+        function toggleTerminal() {
+            const isHidden = terminalWindow.style.display === 'none';
+            terminalWindow.style.display = isHidden ? 'flex' : 'none';
+
+            if (isHidden) {
+                // Add staggered typing animation
+                const lines = document.querySelectorAll('.terminal-line');
+                lines.forEach((line, index) => {
+                    line.style.animationDelay = `${index * 0.15}s`;
+                });
+            }
+        }
+
+        function closeTerminal() {
+            terminalWindow.style.display = 'none';
+        }
+
+        // Draggable video window
+        let isVideoDragging = false;
+        let videoCurrentX;
+        let videoCurrentY;
+        let videoInitialX;
+        let videoInitialY;
+        let videoXOffset = 0;
+        let videoYOffset = 0;
+
+        const videoWindow = document.getElementById('video-window');
+        const videoHeader = document.getElementById('video-header');
+
+        videoHeader.addEventListener('mousedown', videoDragStart);
+        document.addEventListener('mousemove', videoDrag);
+        document.addEventListener('mouseup', videoDragEnd);
+
+        // Touch events for mobile
+        videoHeader.addEventListener('touchstart', videoDragStart);
+        document.addEventListener('touchmove', videoDrag);
+        document.addEventListener('touchend', videoDragEnd);
+
+        function videoDragStart(e) {
+            // Don't start dragging if clicking on terminal control
+            if (e.target.classList.contains('terminal-control')) {
+                return;
+            }
+
+            if (e.type === 'touchstart') {
+                videoInitialX = e.touches[0].clientX - videoXOffset;
+                videoInitialY = e.touches[0].clientY - videoYOffset;
+            } else {
+                videoInitialX = e.clientX - videoXOffset;
+                videoInitialY = e.clientY - videoYOffset;
+            }
+
+            if (e.target === videoHeader || videoHeader.contains(e.target)) {
+                isVideoDragging = true;
+            }
+        }
+
+        function videoDrag(e) {
+            if (isVideoDragging) {
+                e.preventDefault();
+
+                if (e.type === 'touchmove') {
+                    videoCurrentX = e.touches[0].clientX - videoInitialX;
+                    videoCurrentY = e.touches[0].clientY - videoInitialY;
+                } else {
+                    videoCurrentX = e.clientX - videoInitialX;
+                    videoCurrentY = e.clientY - videoInitialY;
+                }
+
+                videoXOffset = videoCurrentX;
+                videoYOffset = videoCurrentY;
+
+                setVideoTranslate(videoCurrentX, videoCurrentY, videoWindow);
+            }
+        }
+
+        function videoDragEnd(e) {
+            videoInitialX = videoCurrentX;
+            videoInitialY = videoCurrentY;
+            isVideoDragging = false;
+        }
+
+        function setVideoTranslate(xPos, yPos, el) {
+            el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        }
+
+        function toggleVideo() {
+            const isHidden = videoWindow.style.display === 'none';
+            videoWindow.style.display = isHidden ? 'flex' : 'none';
+        }
+
+        function closeVideo() {
+            const video = videoWindow.querySelector('video');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+            videoWindow.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

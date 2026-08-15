@@ -1,13 +1,13 @@
 import type { ReactNode, RefObject } from 'react';
 
 import { Field } from '@base-ui/react/field';
-import { Link } from '@tanstack/react-router';
 
 import type { OptionGroup } from '../option-list/option-list';
 
 import { useStepTransition } from '../../../../shared/lib';
 import { Button, CopyButton } from '../../../../shared/ui';
 import { discoveryHint } from '../../lib/model-draft';
+import { NoProviderNote } from '../no-provider-note/no-provider-note';
 import { OptionList } from '../option-list/option-list';
 
 const MODEL_ID_HELP = 'Clients send this exact string as the model.';
@@ -129,38 +129,22 @@ function pickedFrom(label: ReactNode, control: ReactNode): ReactNode {
   );
 }
 
-function nothingCanServe(): ReactNode {
-  return (
-    <div className="flex flex-col items-start gap-1.5 rounded-control border border-line-faint bg-surface-inert p-2.5">
-      <p className="text-control font-semibold text-ink">No account can serve yet</p>
-      <p className="text-detail text-ink-secondary">Connect an account in Providers first.</p>
-      <Link
-        className="mt-1 push-button whitespace-nowrap"
-        search={{ kind: 'api-key' }}
-        to="/providers"
-      >
-        Open Providers
-      </Link>
-    </div>
-  );
-}
-
 function targetControl(props: ModelFieldsProps): ReactNode {
   if (props.targets === undefined) {
     return null;
   }
 
   if (props.targets.length === 0) {
-    return nothingCanServe();
+    return <NoProviderNote />;
   }
 
   return (
     <OptionList
       groups={props.targets}
-      nothingMatched="No account matches that."
+      nothingMatched="No provider matches that."
       onPick={props.onPickTarget}
       picked={props.target}
-      searchLabel="Search accounts"
+      searchLabel="Search providers"
     />
   );
 }
@@ -178,7 +162,7 @@ function modelControl(props: ModelFieldsProps): ReactNode {
   }
 
   if (props.target === undefined) {
-    return <p className="px-2 py-1.5 text-detail text-ink-secondary">Pick a target first.</p>;
+    return <p className="px-2 py-1.5 text-detail text-ink-secondary">Pick a provider first.</p>;
   }
 
   return (
@@ -198,13 +182,15 @@ function modelStep(props: ModelFieldsProps): ReactNode {
     <div className="px-3 py-2.5">
       <div className="mb-2 flex items-center gap-1.5">
         <Button
-          aria-label="Select different provider"
+          aria-label="Select a different provider"
           glyph="chevron"
           glyphClassName="-translate-y-px rotate-90"
           onPress={props.onSelectDifferentProvider}
           variant="icon-secondary"
         />
-        <p className="drawer-picker-heading">Pick a model</p>
+        <p className="drawer-picker-heading">
+          {props.targetName === undefined ? 'Pick a model' : `Models ${props.targetName} serves`}
+        </p>
       </div>
       <div className="max-h-64 overflow-y-auto overscroll-contain">{modelControl(props)}</div>
     </div>

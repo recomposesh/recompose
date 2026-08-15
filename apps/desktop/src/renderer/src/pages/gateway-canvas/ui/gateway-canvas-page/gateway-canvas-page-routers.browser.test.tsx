@@ -33,9 +33,9 @@ test('a cable dropped on empty canvas asks router or target before anything else
 
   const asked = screen.getByRole('dialog');
 
-  await expect.element(screen.getByText('Bind a router or a target')).toBeVisible();
+  await expect.element(screen.getByText('Bind this model to')).toBeVisible();
   await expect.element(asked.getByRole('button', { name: /Router/ })).toBeVisible();
-  await expect.element(asked.getByRole('button', { name: /Target/ })).toBeVisible();
+  await expect.element(asked.getByRole('button', { name: /Provider/ })).toBeVisible();
   await expect.element(asked.getByRole('button', { name: 'work' })).not.toBeInTheDocument();
 });
 
@@ -47,9 +47,9 @@ test('picking the target continues into the account pick that ships today', asyn
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
 
   await droppedOnOpenCanvas(screen.container, 'draft');
-  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Target/ }));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Provider/ }));
 
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 });
 
 test('picking the router stands a wired router holding no child', async () => {
@@ -97,7 +97,7 @@ test('a cable from a router lands on a stored target, which joins the ladder as 
     await targetPortOf(screen.container, 'target:fast'),
   );
 
-  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).toBeVisible();
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
   );
@@ -129,7 +129,7 @@ test('stepping back mid-child-rebind reopens the accounts, and the fresh pick st
     await reconnectAnchorOf(screen.container, 'cable:pooled:t2'),
     await targetPortOf(screen.container, 'target:fast'),
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Select a different provider' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
@@ -167,7 +167,7 @@ test("a child bound through the router's plus stands beyond the router rather th
   const routerAcross = cardAcross(screen.container, '[data-id="route:pooled"]');
 
   await userEvent.click(screen.getByLabelText('Add a child'));
-  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Target/ }));
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Provider/ }));
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),

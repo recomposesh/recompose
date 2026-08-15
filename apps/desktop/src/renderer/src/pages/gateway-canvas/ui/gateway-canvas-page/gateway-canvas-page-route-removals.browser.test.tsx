@@ -101,7 +101,7 @@ test('the drawer link removes a router too, asking the same question the Delete 
   const screen = await canvasPageOn(nestedWorld);
 
   await selectedCard(screen.container, 'route:pooled:r2');
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete router' }));
 
   await expect.element(screen.getByText('Delete the router "Round-robin"?')).toBeVisible();
 

@@ -30,9 +30,9 @@ type RouterInspectorProps = {
 
 const modeSentences: Record<RouterMode, string> = {
   failover:
-    'The topmost healthy target answers. Each child below it stands in only when everything above it cannot.',
+    'The topmost healthy provider answers. Each child below it stands in only when everything above it fails.',
   'round-robin':
-    'Requests alternate across the children, which spreads the load and costs the prompt cache a hit every time a turn lands on a different account.',
+    'Requests alternate across the children. This spreads the load, and each switch costs a prompt cache hit.',
 };
 
 const modeOptions = [

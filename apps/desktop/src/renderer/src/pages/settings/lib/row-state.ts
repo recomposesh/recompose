@@ -25,7 +25,7 @@ export function launchAtLoginRow(availability: SystemState['loginItem']): Launch
     return {
       rendered: true,
       inert: true,
-      reason: 'A development build cannot register itself as a login item.',
+      reason: "A development build can't add itself as a login item.",
     };
   }
 

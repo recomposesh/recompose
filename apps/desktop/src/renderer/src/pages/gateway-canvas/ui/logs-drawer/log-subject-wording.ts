@@ -13,8 +13,8 @@ const NOTHING_YET: Record<InspectorSubject['kind'], string> = {
   'virtual-model': 'No requests through this virtual model yet.',
   cable: 'No requests through this virtual model yet.',
   router: 'No requests through this virtual model yet.',
-  target: 'No requests reached this target yet.',
-  'ghost-target': 'No requests reached the removed target yet.',
+  target: 'No requests reached this provider yet.',
+  'ghost-target': 'No requests reached the removed provider yet.',
 };
 
 const NO_ERRORS_YET: Record<InspectorSubject['kind'], string> = {
@@ -23,8 +23,8 @@ const NO_ERRORS_YET: Record<InspectorSubject['kind'], string> = {
   'virtual-model': 'No errors through this virtual model yet.',
   cable: 'No errors through this virtual model yet.',
   router: 'No errors through this virtual model yet.',
-  target: 'No errors from this target yet.',
-  'ghost-target': 'No errors from the removed target yet.',
+  target: 'No errors from this provider yet.',
+  'ghost-target': 'No errors from the removed provider yet.',
 };
 
 const NO_SUCCESSES_YET: Record<InspectorSubject['kind'], string> = {
@@ -33,8 +33,8 @@ const NO_SUCCESSES_YET: Record<InspectorSubject['kind'], string> = {
   'virtual-model': 'No successful requests through this virtual model yet.',
   cable: 'No successful requests through this virtual model yet.',
   router: 'No successful requests through this virtual model yet.',
-  target: 'No successful requests from this target yet.',
-  'ghost-target': 'No successful requests from the removed target yet.',
+  target: 'No successful requests from this provider yet.',
+  'ghost-target': 'No successful requests from the removed provider yet.',
 };
 
 /** The sentence a list with no rows under this subject and filter stands as. */
@@ -49,7 +49,14 @@ export function nothingYetFor(subject: InspectorSubject, filter: LogFilter): str
 /** What the drawer heading says a selection is, beside the name it answers to. */
 export type SubjectHeading = {
   name: string;
-  type: 'Gateway' | 'Virtual Model' | 'Binding' | 'Router' | 'Target' | 'Removed Target' | 'Draft';
+  type:
+    | 'Gateway'
+    | 'Virtual model'
+    | 'Binding'
+    | 'Router'
+    | 'Provider'
+    | 'Removed provider'
+    | 'Draft';
 };
 
 function nameOrId(displayName: string, id: string): string {
@@ -83,11 +90,11 @@ function targetName(accounts: readonly Account[], accountId: string): string {
 
 const SUBJECT_TYPE: Record<InspectorSubject['kind'], SubjectHeading['type']> = {
   gateway: 'Gateway',
-  'virtual-model': 'Virtual Model',
+  'virtual-model': 'Virtual model',
   cable: 'Binding',
   router: 'Router',
-  target: 'Target',
-  'ghost-target': 'Removed Target',
+  target: 'Provider',
+  'ghost-target': 'Removed provider',
   draft: 'Draft',
 };
 

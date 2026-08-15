@@ -34,7 +34,7 @@ Feature: The canvas selection scopes the rows
     Given rows that reached a target since removed from the registry
     When the person selects the ghost target node
     Then those rows remain listed
-    And the drawer shows subject type "Removed Target"
+    And the drawer shows subject type "Removed Provider"
 
   Scenario: A draft narrows nothing
     Given a draft virtual model node on the canvas

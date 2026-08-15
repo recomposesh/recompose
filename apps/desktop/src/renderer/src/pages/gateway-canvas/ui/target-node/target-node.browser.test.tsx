@@ -79,7 +79,7 @@ test('an account that left the registry keeps its card and says what became of i
 test('the spot a cable was let go at offers the pick without a redundant waiting line', async () => {
   const screen = await renderTarget({ id: 'pending', kind: 'pending-target' });
 
-  await expect.element(screen.getByRole('button', { name: /Choose a target/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Pick a provider/ })).toBeVisible();
   await expect.element(screen.getByText('waiting on a pick')).not.toBeInTheDocument();
 });
 

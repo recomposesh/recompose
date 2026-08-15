@@ -91,7 +91,7 @@ export const TheGatewaySubject = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Endpoint', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('http://127.0.0.1:8397')).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Delete Gateway' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Delete gateway' })).toBeVisible();
   },
 });
 
@@ -124,7 +124,7 @@ export const TheRouterSubject = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Mode', { exact: true })).toBeVisible();
     await expect(await canvas.findByRole('list', { name: 'Children' })).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Delete Router' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Delete router' })).toBeVisible();
   },
 });
 

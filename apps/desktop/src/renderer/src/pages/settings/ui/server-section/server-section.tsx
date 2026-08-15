@@ -126,7 +126,7 @@ function bindAddressRow(address: BindAddressDraft, unsavedFields: readonly strin
   return (
     <FieldRow
       control={bindAddressField(address)}
-      description="Defaults to this machine. Use 0.0.0.0 or another host to serve the network."
+      description="Defaults to this machine. Use 0.0.0.0 or another host to serve other devices."
       label="Bind address"
       status={saveStatusFor('bindAddress', unsavedFields)}
     />
@@ -149,7 +149,7 @@ function launchRow(
           }}
         />
       }
-      description="Starts every gateway as recompose opens. Off, they return as you left them."
+      description="Starts every gateway when recompose opens. When off, gateways return as you left them."
       label="Start gateways on launch"
       status={saveStatusFor('startGatewaysOnLaunch', unsavedFields)}
     />

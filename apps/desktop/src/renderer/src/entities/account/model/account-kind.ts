@@ -8,16 +8,16 @@ type StoredAccounts = AccountsDocument['accounts'];
 
 const titles: Record<AccountKind, string> = {
   subscription: 'Subscriptions',
-  'api-key': 'API Keys',
+  'api-key': 'API keys',
   aggregator: 'Aggregators',
-  local: 'Local Runtimes',
+  local: 'Local runtimes',
 };
 
 const names: Record<AccountKind, string> = {
   subscription: 'Subscription',
-  'api-key': 'API Key',
+  'api-key': 'API key',
   aggregator: 'Aggregator',
-  local: 'Local Runtime',
+  local: 'Local runtime',
 };
 
 /**

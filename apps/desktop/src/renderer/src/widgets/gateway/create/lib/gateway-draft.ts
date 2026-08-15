@@ -8,10 +8,11 @@ import {
 
 import { IpcResultError, refusalSentence } from '../../../../shared/api';
 
-const RESERVED_NAME_REFUSAL = 'Windows reserves this name.';
+const RESERVED_NAME_REFUSAL = 'Windows reserves this name. Pick another one.';
 const MISSING_NAME_REFUSAL = 'Give the gateway a name.';
-const MALFORMED_DRAFT_REFUSAL = 'recompose cannot store this gateway as it stands.';
-const PORT_RANGE_REFUSAL = `Accepts ${String(GATEWAY_PORT_RANGE.min)} through ${String(GATEWAY_PORT_RANGE.max)}.`;
+const MALFORMED_DRAFT_REFUSAL =
+  "recompose can't store this gateway. Check the name and the port, then try again.";
+const PORT_RANGE_REFUSAL = `Port must be between ${String(GATEWAY_PORT_RANGE.min)} and ${String(GATEWAY_PORT_RANGE.max)}.`;
 
 /**
  * What the name field says back when the name is one the app can't store a gateway under.

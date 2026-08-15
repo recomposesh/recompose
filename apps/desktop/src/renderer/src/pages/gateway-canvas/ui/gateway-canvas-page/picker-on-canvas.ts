@@ -14,6 +14,7 @@ export type PickerOnCanvas = {
   stage: PickerStage;
   groups: readonly OptionGroup[];
   refusal: string | undefined;
+  pickedName: string | undefined;
   anchorSeat: XY;
   onPickKind: (kind: BoundKind) => void;
   onPickAccount: (accountId: string) => void;
@@ -21,6 +22,16 @@ export type PickerOnCanvas = {
   onStepBack: (() => void) | undefined;
   onDismiss: () => void;
 };
+
+function pickedProviderName(world: CanvasWorld, picker: PickerStanding): string | undefined {
+  if (picker.step !== 'provider-model') {
+    return undefined;
+  }
+
+  return targetGroups([...world.accounts])
+    .flatMap((group) => group.options)
+    .find((option) => option.id === picker.accountId)?.name;
+}
 
 function pickerGroups(
   world: CanvasWorld,
@@ -162,6 +173,7 @@ export function pickerOnCanvas(
     stage: pickerStage(picker),
     groups: pickerGroups(world, picker, models.offered),
     refusal: picker.step === 'provider-model' ? models.refusal : undefined,
+    pickedName: pickedProviderName(world, picker),
     anchorSeat: world.seats[anchorId] ?? { x: 0, y: 0 },
     onPickKind: answeredKind(world, picker),
     onPickAccount: (accountId) => {

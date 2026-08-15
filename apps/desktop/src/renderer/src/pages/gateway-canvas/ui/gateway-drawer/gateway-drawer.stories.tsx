@@ -54,8 +54,8 @@ export const VirtualModelSubject = meta.story({
   args: { subject: subject({ kind: 'virtual-model', modelId: 'fast' }) },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Virtual model', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('General Info', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('Model Name', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('General info', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Model name', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Goes to', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('API Key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
@@ -82,7 +82,7 @@ export const TargetSubject = meta.story({
     await expect((await canvas.findAllByText('Anthropic', { exact: true }))[0]).toBeVisible();
     await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Behind of', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('Model Name', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Model name', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Model id', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Fast', { exact: true })).toBeVisible();
   },

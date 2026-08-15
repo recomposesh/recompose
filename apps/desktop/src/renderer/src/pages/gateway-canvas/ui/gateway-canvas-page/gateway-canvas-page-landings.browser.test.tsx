@@ -46,7 +46,7 @@ test('a fresh cable landed on a stored target opens the pick on that very target
     await targetPortOf(screen.container, 'target:fast'),
   );
 
-  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).toBeVisible();
 
   await userEvent.click(
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
@@ -71,9 +71,7 @@ test('a cable taken back up at its model end and dropped on the draft rebinds no
     await sourcePortOf(screen.container, 'draft'),
   );
 
-  await expect
-    .element(screen.getByText('Pick a provider model', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
 
@@ -87,7 +85,7 @@ test('a cable end let go on open canvas opens the rebind pick where it landed', 
   releasedAt(spot);
   await pickedTheTarget(screen);
 
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(
@@ -109,7 +107,7 @@ test('Delete on the pending card removes nothing and the pick keeps standing', a
   await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
   releasedAt(spot);
   await pickedTheTarget(screen);
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
   toggleInspector();
 
@@ -127,7 +125,7 @@ test('Delete on the pending card removes nothing and the pick keeps standing', a
   await userEvent.keyboard('{Delete}');
 
   await expect.element(screen.getByText(/Delete the/)).not.toBeInTheDocument();
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
   expect(screen.container.querySelector('[data-id="pending"]')).not.toBeNull();
   expect(await storedModels()).toEqual(before);
 });

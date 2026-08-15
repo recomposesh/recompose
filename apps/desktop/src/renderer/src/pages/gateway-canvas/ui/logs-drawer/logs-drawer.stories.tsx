@@ -120,7 +120,7 @@ export const ScopedToARemovedTarget = meta.story({
   args: { subject: theRemovedTarget },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Logs for openrouter')).toBeVisible();
-    await expect(await canvas.findByText('Removed Target', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Removed Provider', { exact: true })).toBeVisible();
   },
 });
 

@@ -121,7 +121,7 @@ export const ServedLocally = meta.story({
 export const TargetRemoved = meta.story({
   args: { served: { ...serving, target: { standing: 'removed' } } },
   play: async ({ canvas, canvasElement }) => {
-    await expect(await canvas.findByText('target removed')).toBeVisible();
+    await expect(await canvas.findByText('provider removed')).toBeVisible();
     await expect(await canvas.findByText('claude-haiku-4-5')).toBeVisible();
     await expect(clippedLines(canvasElement)).toEqual([]);
   },
@@ -146,7 +146,7 @@ export const ThinnedPool = meta.story({
     },
   },
   play: async ({ canvas, canvasElement }) => {
-    await expect(await canvas.findByText('1 target removed')).toBeVisible();
+    await expect(await canvas.findByText('1 provider removed')).toBeVisible();
     await expect(await canvas.findByText('work · claude-opus-5')).toBeVisible();
     await expect(clippedLines(canvasElement)).toEqual(['spread']);
   },
@@ -163,7 +163,7 @@ export const ThinnedFurther = meta.story({
     },
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('2 targets removed')).toBeVisible();
+    await expect(await canvas.findByText('2 providers removed')).toBeVisible();
   },
 });
 
@@ -180,8 +180,8 @@ export const NoTargetYet = meta.story({
     served: { ...serving, providerModel: '', target: { standing: 'incomplete' } },
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('no target yet')).toBeVisible();
-    await expect(canvas.queryByText('target removed')).toBeNull();
+    await expect(await canvas.findByText('no provider yet')).toBeVisible();
+    await expect(canvas.queryByText('provider removed')).toBeNull();
     await expect(await canvas.findByText('fast')).toBeVisible();
   },
 });

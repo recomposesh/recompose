@@ -44,19 +44,21 @@ test('a serving row reads its name over the binding a request under it reaches',
 test('a row whose target account left the registry says so instead of serving', async () => {
   const screen = await renderRow({ ...serving, target: { standing: 'removed' } });
 
-  await expect.element(screen.getByText('target removed', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('provider removed', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
-test('a row whose composition names no target yet says so rather than claiming one went', async () => {
+test('a row whose composition names no provider yet says so rather than claiming one went', async () => {
   const screen = await renderRow({
     ...serving,
     providerModel: '',
     target: { standing: 'incomplete' },
   });
 
-  await expect.element(screen.getByText('no target yet', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('target removed', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByText('no provider yet', { exact: true })).toBeVisible();
+  await expect
+    .element(screen.getByText('provider removed', { exact: true }))
+    .not.toBeInTheDocument();
   await expect.element(screen.getByText('fast', { exact: true })).toBeVisible();
 });
 
@@ -78,7 +80,7 @@ const thinned: ServedModel = {
 test('a row still serving through a sibling reads how many targets left, not a broken binding', async () => {
   const screen = await renderRow(thinned);
 
-  await expect.element(screen.getByText('1 target removed', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('1 provider removed', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('spare · claude-opus-5', { exact: true })).toBeVisible();
 });
 
@@ -88,7 +90,7 @@ test('a row that lost several targets counts them in the plural', async () => {
     target: { standing: 'thinned', account: spareKey, lost: 2 },
   });
 
-  await expect.element(screen.getByText('2 targets removed', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('2 providers removed', { exact: true })).toBeVisible();
 });
 
 afterEach(() => {

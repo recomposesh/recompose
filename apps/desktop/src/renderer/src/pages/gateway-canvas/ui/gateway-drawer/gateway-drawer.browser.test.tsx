@@ -43,12 +43,12 @@ test('the virtual model subject separates general info from where it goes', asyn
   const screen = await renderDrawer({ kind: 'virtual-model', modelId: 'fast' });
 
   await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('General Info', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Model Name', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('General info', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Model name', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Fast', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('Model id', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Goes to', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Target type', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Provider type', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('API Key', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Provider', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Anthropic', { exact: true })).toBeVisible();
@@ -73,16 +73,16 @@ test('the target subject reads the account behind it', async () => {
   await expect.element(screen.getByText('Anthropic', { exact: true }).last()).toBeVisible();
   await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Behind of', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Model Name', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Model name', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Model id', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Fast', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('fast', { exact: true })).toBeVisible();
 });
 
 test.each([
-  [{ kind: 'gateway' } as const, 'Delete Gateway', 'gateway'],
-  [{ kind: 'virtual-model', modelId: 'fast' } as const, 'Delete Virtual Model', 'model:fast'],
-  [{ kind: 'target', accountId: 'k1', modelId: 'fast' } as const, 'Delete Target', 'target:fast'],
+  [{ kind: 'gateway' } as const, 'Delete gateway', 'gateway'],
+  [{ kind: 'virtual-model', modelId: 'fast' } as const, 'Delete virtual model', 'model:fast'],
+  [{ kind: 'target', accountId: 'k1', modelId: 'fast' } as const, 'Delete provider', 'target:fast'],
 ])(
   'the drawer deletion link asks through the shared confirmation',
   async (subject, label, nodeId) => {
@@ -106,7 +106,7 @@ const pooledChild = {
   routeNodeId: 't1',
 } as const;
 
-test('Delete Target on one child of a pool names that child rather than the definition', async () => {
+test('Delete provider on one child of a pool names that child rather than the definition', async () => {
   const asked: string[] = [];
   const screen = await renderDrawer(pooledChild, {
     gateway: pooledGateway,
@@ -115,7 +115,7 @@ test('Delete Target on one child of a pool names that child rather than the defi
     },
   });
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Target' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete provider' }));
 
   expect(asked).toEqual(['target:pooled:t1']);
 });
@@ -225,7 +225,7 @@ test('a virtual model whose account left the registry reads that bare account id
   await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Goes to', { exact: true })).not.toBeInTheDocument();
   await expect.element(screen.getByText('Provider', { exact: true })).not.toBeInTheDocument();
-  await expect.element(screen.getByText('Target type', { exact: true })).not.toBeInTheDocument();
+  await expect.element(screen.getByText('Provider type', { exact: true })).not.toBeInTheDocument();
 });
 
 test('a subject naming a virtual model the gateway no longer holds reads the gateway', async () => {

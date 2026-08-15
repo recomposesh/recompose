@@ -27,14 +27,14 @@ function ShellUnderProof() {
           name: 'My Gateway',
         },
         <>
-          {sectionHeading('General Info')}
+          {sectionHeading('General info')}
           <div className="field-box">
             {factRow('Name', 'My Gateway')}
             {factRow('Port', '8397')}
           </div>
           {savedNotice(true)}
         </>,
-        { label: 'Delete Gateway', onPress: asked },
+        { label: 'Delete gateway', onPress: asked },
       )}
     </aside>
   );
@@ -43,7 +43,7 @@ function ShellUnderProof() {
 function RestingBoxUnderProof() {
   return (
     <div className="w-76 bg-surface-toolbar p-3">
-      {editableSectionHeading('General Info', false, asked)}
+      {editableSectionHeading('General info', false, asked)}
       <div className="field-box">{factRow('Name', 'My Gateway')}</div>
     </div>
   );
@@ -54,7 +54,7 @@ function EditingBoxUnderProof() {
 
   return (
     <div className="w-76 bg-surface-toolbar p-3">
-      {editableSectionHeading('General Info', true, asked)}
+      {editableSectionHeading('General info', true, asked)}
       <div className="field-box">
         {editRow(
           'Name',
@@ -94,7 +94,7 @@ const meta = preview.meta({
 export const TheShellCarriesItsSubject = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('heading', { name: 'My Gateway' })).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Delete Gateway' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Delete gateway' })).toBeVisible();
     await expect(await canvas.findByRole('status')).toHaveTextContent(/Restart the harness/);
   },
 });

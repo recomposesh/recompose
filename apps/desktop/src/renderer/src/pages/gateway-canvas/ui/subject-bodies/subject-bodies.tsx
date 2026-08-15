@@ -55,7 +55,7 @@ export function gatewayBody(
       {sectionHeading('Serves', servesTallyLine(served))}
       <ServesBox served={served} />
     </>,
-    { label: 'Delete Gateway', onPress: onDelete },
+    { label: 'Delete gateway', onPress: onDelete },
   );
 }
 
@@ -113,7 +113,7 @@ function targetFacts(
 ): ReactNode {
   return (
     <>
-      {factRow('Target type', accountKindName(account.kind))}
+      {factRow('Provider type', accountKindName(account.kind))}
       {factRow('Provider', accountProductName(account))}
       {accountSpecificRow(account, subscriptions)}
     </>
@@ -151,7 +151,7 @@ export function modelBody(
         </>
       )}
     </>,
-    { label: 'Delete Virtual Model', onPress: onDelete },
+    { label: 'Delete virtual model', onPress: onDelete },
   );
 }
 
@@ -185,7 +185,7 @@ export function routerBody(
       routeNodeId={routeNodeId}
       router={router}
     />,
-    { label: 'Delete Router', onPress: onDelete },
+    { label: 'Delete router', onPress: onDelete },
   );
 }
 
@@ -206,15 +206,15 @@ export function targetBody(
       name: accountProductName(account),
     },
     <>
-      {sectionHeading('General Info')}
+      {sectionHeading('General info')}
       <div className="field-box">{targetFacts(account, subscriptions)}</div>
       {models.length === 0 ? null : (
         <>
-          {sectionHeading('Behind of')}
+          {sectionHeading('Serves')}
           <div className="flex flex-col gap-2">
             {models.map((model) => (
               <div className="field-box" key={model.id}>
-                {factRow('Model Name', model.displayName)}
+                {factRow('Model name', model.displayName)}
                 {factRow(
                   'Model id',
                   model.id,
@@ -226,7 +226,7 @@ export function targetBody(
         </>
       )}
     </>,
-    { label: 'Delete Target', onPress: onDelete },
+    { label: 'Delete provider', onPress: onDelete },
   );
 }
 

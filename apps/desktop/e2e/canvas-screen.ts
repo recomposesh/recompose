@@ -21,7 +21,7 @@ export const DRAFT_CABLE = 'wire:draft';
 const GATEWAY_ASK = 'Add a virtual model';
 
 /** What the plus on a virtual model's port asks for, draft or stored alike. */
-const TARGET_ASK = 'Choose a target';
+const TARGET_ASK = 'Pick a provider';
 
 const PLUS_ASKS = new RegExp(`^(${GATEWAY_ASK}|${TARGET_ASK})$`, 'u');
 

@@ -21,10 +21,10 @@ async function openTheDraftFields(accounts: AccountsDocument) {
 test('with nothing stored that can serve, the target says so instead of offering nothing', async () => {
   const screen = await openTheDraftFields(noAccounts);
 
-  await expect.element(screen.getByText('No account can serve yet')).toBeVisible();
+  await expect.element(screen.getByText('No provider connected yet')).toBeVisible();
   await expect.element(screen.getByRole('link', { name: 'Open Providers' })).toBeVisible();
   await expect
-    .element(screen.getByRole('searchbox', { name: 'Search accounts' }))
+    .element(screen.getByRole('searchbox', { name: 'Search providers' }))
     .not.toBeInTheDocument();
 });
 

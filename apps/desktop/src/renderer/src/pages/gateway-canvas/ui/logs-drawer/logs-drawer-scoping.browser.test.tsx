@@ -95,7 +95,7 @@ test('a target since removed keeps its available name and reads as a removed tar
   });
 
   await expect.element(screen.getByText('Logs for openrouter')).toBeVisible();
-  await expect.element(screen.getByText('Removed Target', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Removed Provider', { exact: true })).toBeVisible();
 });
 
 test('a draft names the new virtual model and narrows nothing', async () => {

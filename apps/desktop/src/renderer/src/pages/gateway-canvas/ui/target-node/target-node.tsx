@@ -80,7 +80,7 @@ function readingOf(data: TargetNodeData): CardReading {
       chipMark: undefined,
       name: data.accountId,
       nameInk: 'text-ink',
-      subtitle: 'not in the registry',
+      subtitle: 'no longer connected',
       frame: 'border-dashed',
       tint: 'node-tint-danger',
     };
@@ -92,7 +92,7 @@ function readingOf(data: TargetNodeData): CardReading {
     kickerTint: 'text-ink-secondary',
     chipGlyph: 'plus',
     chipMark: undefined,
-    name: 'Choose a target',
+    name: 'Pick a provider',
     nameInk: 'text-ink-secondary',
     subtitle: undefined,
     frame: 'border-dashed',

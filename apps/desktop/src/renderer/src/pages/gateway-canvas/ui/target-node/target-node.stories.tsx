@@ -202,7 +202,7 @@ export const ARemovedTargetDashesAndSaysSo = meta.story({
 export const ACardWaitingOnAPickSaysItIsWaiting = meta.story({
   args: { data: waiting },
   play: async ({ canvas }) => {
-    const card = await canvas.findByRole('button', { name: /Choose a target/ });
+    const card = await canvas.findByRole('button', { name: /Pick a provider/ });
 
     await expect(card).not.toHaveTextContent('waiting on a pick');
     await expect(paintedStyle(card).borderStyle).toBe('dashed');

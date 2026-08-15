@@ -9,8 +9,10 @@ import { IpcResultError, refusalSentence } from '../../../shared/api';
 import { routedThroughARouter } from './routing-edits';
 
 const MISSING_NAME_REFUSAL = 'Give the virtual model a name.';
-const UNSERVABLE_ID_REFUSAL = 'recompose cannot serve a virtual model under this id.';
-const MALFORMED_DEFINITION_REFUSAL = 'recompose cannot store this virtual model as it stands.';
+const UNSERVABLE_ID_REFUSAL =
+  "recompose can't serve a virtual model under this id. Pick another one.";
+const MALFORMED_DEFINITION_REFUSAL =
+  "recompose can't store this virtual model. Check the name and the id, then try again.";
 const SKIPPED_ID_HINT = 'Claude Code lists only ids starting with claude or anthropic.';
 const DISCOVERED_PREFIXES = ['claude', 'anthropic'];
 

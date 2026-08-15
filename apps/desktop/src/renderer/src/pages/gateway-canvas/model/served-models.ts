@@ -4,7 +4,7 @@ import { walkedRouteNodes } from '../lib/route-graph';
 
 /**
  * Where a definition stands: on a pool the registry holds whole, on one it holds in part, on
- * nothing the registry still holds, or on a composition that names no target yet.
+ * nothing the registry still holds, or on a composition that names no provider yet.
  */
 type ServedTarget =
   | { standing: 'serving'; account: Account }

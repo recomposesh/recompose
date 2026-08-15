@@ -5,6 +5,7 @@ import { userEvent } from 'vitest/browser';
 import type { OptionGroup } from '../option-list/option-list';
 import type { PickerStage } from './drop-picker';
 
+import { RouterFooting } from '../../testing/router-footing.testkit';
 import { DropPicker } from './drop-picker';
 
 const accounts: readonly OptionGroup[] = [
@@ -23,30 +24,33 @@ async function renderPicker(
 ) {
   const heard: string[] = [];
   const screen = await render(
-    <DropPicker
-      groups={groups}
-      refusal={undefined}
-      onDismiss={() => {
-        heard.push('dismissed');
-      }}
-      onPickAccount={(accountId) => {
-        heard.push(`account ${accountId}`);
-      }}
-      onPickKind={(kind) => {
-        heard.push(`kind ${kind}`);
-      }}
-      onPickProviderModel={(providerModel) => {
-        heard.push(`provider model ${providerModel}`);
-      }}
-      onStepBack={
-        standsBehind
-          ? () => {
-              heard.push('stepped back');
-            }
-          : undefined
-      }
-      stage={stage}
-    />,
+    <RouterFooting>
+      <DropPicker
+        groups={groups}
+        pickedName={undefined}
+        refusal={undefined}
+        onDismiss={() => {
+          heard.push('dismissed');
+        }}
+        onPickAccount={(accountId) => {
+          heard.push(`account ${accountId}`);
+        }}
+        onPickKind={(kind) => {
+          heard.push(`kind ${kind}`);
+        }}
+        onPickProviderModel={(providerModel) => {
+          heard.push(`provider model ${providerModel}`);
+        }}
+        onStepBack={
+          standsBehind
+            ? () => {
+                heard.push('stepped back');
+              }
+            : undefined
+        }
+        stage={stage}
+      />
+    </RouterFooting>,
   );
 
   return { heard, screen };
@@ -56,14 +60,14 @@ test('the ask offers a router or a target before anything else', async () => {
   const { screen } = await renderPicker({ step: 'kind' }, []);
 
   await expect.element(screen.getByRole('button', { name: /Router/ })).toBeVisible();
-  await expect.element(screen.getByRole('button', { name: /Target/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Provider/ })).toBeVisible();
   await expect.element(screen.getByRole('searchbox')).not.toBeInTheDocument();
 });
 
 test('picking the target hands the kind back, which is what carries the ask into the accounts', async () => {
   const { heard, screen } = await renderPicker({ step: 'kind' }, []);
 
-  await screen.getByRole('button', { name: /Target/ }).click();
+  await screen.getByRole('button', { name: /Provider/ }).click();
 
   expect(heard).toEqual(['kind target']);
 });
@@ -117,7 +121,7 @@ test('the second stage offers the way back to the provider choices', async () =>
     models,
   );
 
-  await screen.getByRole('button', { name: 'Select different provider' }).click();
+  await screen.getByRole('button', { name: 'Select a different provider' }).click();
 
   expect(heard).toEqual(['stepped back']);
 });
@@ -125,7 +129,7 @@ test('the second stage offers the way back to the provider choices', async () =>
 test('the account stage offers the way back to the ask that opened it', async () => {
   const { heard, screen } = await renderPicker({ step: 'account' }, accounts);
 
-  await screen.getByRole('button', { name: 'Select router or target' }).click();
+  await screen.getByRole('button', { name: 'Select router or provider' }).click();
 
   expect(heard).toEqual(['stepped back']);
 });
@@ -134,7 +138,7 @@ test('a stage nothing stands behind offers no way back, so the chevron never lie
   const { screen } = await renderPicker({ step: 'account' }, accounts, false);
 
   await expect
-    .element(screen.getByRole('button', { name: 'Select router or target' }))
+    .element(screen.getByRole('button', { name: 'Select router or provider' }))
     .not.toBeInTheDocument();
 });
 
@@ -182,16 +186,19 @@ test('moving to the second stage carries focus onto the model list it opens on',
   await expect.element(screen.getByRole('button', { name: 'work key' })).toHaveFocus();
 
   await screen.rerender(
-    <DropPicker
-      groups={models}
-      refusal={undefined}
-      onDismiss={() => {}}
-      onPickAccount={() => {}}
-      onPickKind={() => {}}
-      onPickProviderModel={() => {}}
-      onStepBack={() => {}}
-      stage={{ step: 'provider-model', accountId: 'key-work' }}
-    />,
+    <RouterFooting>
+      <DropPicker
+        groups={models}
+        pickedName="work key"
+        refusal={undefined}
+        onDismiss={() => {}}
+        onPickAccount={() => {}}
+        onPickKind={() => {}}
+        onPickProviderModel={() => {}}
+        onStepBack={() => {}}
+        stage={{ step: 'provider-model', accountId: 'key-work' }}
+      />
+    </RouterFooting>,
   );
 
   await expect.element(screen.getByRole('searchbox', { name: 'Search models' })).toHaveFocus();

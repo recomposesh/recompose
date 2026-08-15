@@ -131,7 +131,7 @@ test('the router subject offers the drawer link into removal that every other su
     },
   });
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete router' }));
 
   expect(asked).toEqual(['route:pooled']);
 });
@@ -148,7 +148,7 @@ test('the drawer link on a nested router names that router rather than the one a
     },
   );
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete router' }));
 
   expect(asked).toEqual(['route:pooled:r2']);
 });

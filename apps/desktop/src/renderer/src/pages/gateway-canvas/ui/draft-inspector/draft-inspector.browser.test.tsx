@@ -76,7 +76,7 @@ test('stepping back to the target choice lets the picked model go with the targe
 
   await expect.poll(() => heldDraft('my-gateway')?.definition.providerModel).toBe('claude-opus-5');
 
-  await userEvent.click(panel.getByRole('button', { name: 'Select different provider' }));
+  await userEvent.click(panel.getByRole('button', { name: 'Select a different provider' }));
 
   await expect.element(panel.getByRole('button', { name: 'work' })).toBeVisible();
   expect(heldDraft('my-gateway')?.definition.accountId).toBe('');

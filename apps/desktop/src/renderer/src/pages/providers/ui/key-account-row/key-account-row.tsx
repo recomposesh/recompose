@@ -12,15 +12,15 @@ type KeyAccountRowProps = {
 
 const answered: Record<KeyCheckVerdict, { sentence: string; ink: string }> = {
   authenticates: {
-    sentence: 'This key authenticated as of this check.',
+    sentence: 'This key worked at the last check.',
     ink: 'text-ink',
   },
   'not-accepted': {
-    sentence: "The provider didn't accept this key as of this check.",
+    sentence: 'The provider rejected this key at the last check.',
     ink: 'text-attention-ink',
   },
   'could-not-check': {
-    sentence: "This check couldn't reach the provider, so the key stands unverified.",
+    sentence: "Couldn't reach the provider, so this key is unverified.",
     ink: 'text-ink-secondary',
   },
 };

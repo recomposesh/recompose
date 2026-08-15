@@ -87,5 +87,5 @@ export function inspectorRefusal(page: Page): Locator {
 /** Picks a target in the inspector, and waits for the model field to stop waiting on one. */
 export async function pickTargetInInspector(page: Page, account: string): Promise<void> {
   await draftInspector(page).getByRole('button', { name: account }).click();
-  await expect(draftInspector(page).getByText('Pick a target first.')).toBeHidden();
+  await expect(draftInspector(page).getByText('Pick a provider first.')).toBeHidden();
 }

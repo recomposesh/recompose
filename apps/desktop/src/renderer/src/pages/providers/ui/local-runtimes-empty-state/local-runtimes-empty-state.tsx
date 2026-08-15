@@ -10,7 +10,7 @@ import { KindEmptyState } from '../kind-empty-state/kind-empty-state';
 export function LocalRuntimesEmptyState() {
   return (
     <KindEmptyState
-      explanation="A local runtime serves models from this machine, and its account holds only the address it answers at, with no credential to store. Each row reads whether its server answers as of the last look."
+      explanation="A local runtime serves models from this machine, and stores only the address it answers at. Each row shows whether that server answered at the last check."
       title="Nothing connected yet"
     />
   );

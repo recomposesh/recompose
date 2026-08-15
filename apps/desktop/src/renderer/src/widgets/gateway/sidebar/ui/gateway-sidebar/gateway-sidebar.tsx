@@ -37,7 +37,7 @@ export function GatewaySidebar({ onNewGateway }: GatewaySidebarProps) {
   const navigate = useNavigate();
 
   return (
-    <NavGroup title="Local Gateways">
+    <NavGroup title="Local gateways">
       {gateways.map((gateway) => (
         <Link
           data-panel-control=""
@@ -60,7 +60,7 @@ export function GatewaySidebar({ onNewGateway }: GatewaySidebarProps) {
       ))}
       <button className="nav-item-action text-start" onClick={onNewGateway} type="button">
         <Icon className="size-3.5 icon-emphasis" name="plus" />
-        New Gateway…
+        New gateway…
       </button>
     </NavGroup>
   );

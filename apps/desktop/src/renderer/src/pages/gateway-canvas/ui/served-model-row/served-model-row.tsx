@@ -38,14 +38,14 @@ function standingWord(target: ServedModel['target']): string | undefined {
   }
 
   if (target.standing === 'incomplete') {
-    return 'no target yet';
+    return 'no provider yet';
   }
 
   if (target.standing === 'removed') {
-    return 'target removed';
+    return 'provider removed';
   }
 
-  return target.lost === 1 ? '1 target removed' : `${String(target.lost)} targets removed`;
+  return target.lost === 1 ? '1 provider removed' : `${String(target.lost)} providers removed`;
 }
 
 /**
