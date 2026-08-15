@@ -2,11 +2,11 @@ import type { Routing } from '@recompose/contracts';
 
 import { expect, test } from 'vitest';
 
-import { firstDeclaredTarget, seatedRouteNodes } from './route-graph';
+import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
 const directlyBound: Routing = {
-  entry: 'seat',
-  nodes: { seat: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+  entry: 't1',
+  nodes: { t1: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
 };
 
 const overTwoTargets: Routing = {
@@ -29,10 +29,10 @@ const overANestedRouter: Routing = {
 };
 
 test('a model bound straight to a target seats that target at the entry, with no router above it', () => {
-  expect(seatedRouteNodes(directlyBound)).toEqual([
+  expect(walkedRouteNodes(directlyBound)).toEqual([
     {
-      routeNodeId: 'seat',
-      node: directlyBound.nodes['seat'],
+      routeNodeId: 't1',
+      node: directlyBound.nodes['t1'],
       depth: 0,
       parent: undefined,
     },
@@ -41,7 +41,11 @@ test('a model bound straight to a target seats that target at the entry, with no
 
 test('a router seats at the entry and its children one level deeper, in declared order', () => {
   expect(
-    seatedRouteNodes(overTwoTargets).map((seat) => [seat.routeNodeId, seat.depth, seat.parent]),
+    walkedRouteNodes(overTwoTargets).map((walked) => [
+      walked.routeNodeId,
+      walked.depth,
+      walked.parent,
+    ]),
   ).toEqual([
     ['ladder', 0, undefined],
     ['first', 1, 'ladder'],
@@ -51,7 +55,11 @@ test('a router seats at the entry and its children one level deeper, in declared
 
 test('a nested router carries its own children a level deeper again', () => {
   expect(
-    seatedRouteNodes(overANestedRouter).map((seat) => [seat.routeNodeId, seat.depth, seat.parent]),
+    walkedRouteNodes(overANestedRouter).map((walked) => [
+      walked.routeNodeId,
+      walked.depth,
+      walked.parent,
+    ]),
   ).toEqual([
     ['ladder', 0, undefined],
     ['first', 1, 'ladder'],
@@ -61,7 +69,7 @@ test('a nested router carries its own children a level deeper again', () => {
 });
 
 test('a routing whose entry names no node seats nothing at all', () => {
-  expect(seatedRouteNodes({ entry: 'gone', nodes: {} })).toEqual([]);
+  expect(walkedRouteNodes({ entry: 'gone', nodes: {} })).toEqual([]);
 });
 
 test('a router naming a child the table never held seats the router alone', () => {
@@ -70,7 +78,7 @@ test('a router naming a child the table never held seats the router alone', () =
     nodes: { ladder: { kind: 'router', policy: { mode: 'failover' }, children: ['gone'] } },
   };
 
-  expect(seatedRouteNodes(dangling).map((seat) => seat.routeNodeId)).toEqual(['ladder']);
+  expect(walkedRouteNodes(dangling).map((walked) => walked.routeNodeId)).toEqual(['ladder']);
 });
 
 test('a model bound straight to a target leads with that target', () => {

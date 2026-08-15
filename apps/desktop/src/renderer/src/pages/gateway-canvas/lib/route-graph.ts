@@ -1,7 +1,7 @@
 import type { RouteNode, RouteTarget, Routing } from '@recompose/contracts';
 
 /** One node of a virtual model's route table, read with where it stands in the routing. */
-export type SeatedRouteNode = {
+export type WalkedRouteNode = {
   /** The id the stored table holds this node under. */
   routeNodeId: string;
   /** The node itself, which is a target or a router. */
@@ -12,21 +12,21 @@ export type SeatedRouteNode = {
   parent: string | undefined;
 };
 
-function seatSubtree(routing: Routing, seat: SeatedRouteNode, seated: SeatedRouteNode[]): void {
-  seated.push(seat);
+function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRouteNode[]): void {
+  into.push(walked);
 
-  if (seat.node.kind !== 'router') {
+  if (walked.node.kind !== 'router') {
     return;
   }
 
-  for (const childId of seat.node.children) {
+  for (const childId of walked.node.children) {
     const child = routing.nodes[childId];
 
     if (child !== undefined) {
-      seatSubtree(
+      walkSubtree(
         routing,
-        { routeNodeId: childId, node: child, depth: seat.depth + 1, parent: seat.routeNodeId },
-        seated,
+        { routeNodeId: childId, node: child, depth: walked.depth + 1, parent: walked.routeNodeId },
+        into,
       );
     }
   }
@@ -40,25 +40,25 @@ function seatSubtree(routing: Routing, seat: SeatedRouteNode, seated: SeatedRout
  * order a ladder declares, entry first and each child before its own children, which is what makes
  * a router's children land on adjacent rows and its cables fan without crossing. The depth is what
  * the column derives from, so a node one router down stands one pitch further out. A child naming
- * no node in the table seats nothing, because the stored shape refuses that table at parse and a
+ * no node in the table adds nothing, because the stored shape refuses that table at parse and a
  * card standing for nothing would say a binding exists where none does.
  */
-export function seatedRouteNodes(routing: Routing): readonly SeatedRouteNode[] {
+export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
   const entry = routing.nodes[routing.entry];
 
   if (entry === undefined) {
     return [];
   }
 
-  const seated: SeatedRouteNode[] = [];
+  const walked: WalkedRouteNode[] = [];
 
-  seatSubtree(
+  walkSubtree(
     routing,
     { routeNodeId: routing.entry, node: entry, depth: 0, parent: undefined },
-    seated,
+    walked,
   );
 
-  return seated;
+  return walked;
 }
 
 /**
@@ -70,9 +70,9 @@ export function seatedRouteNodes(routing: Routing): readonly SeatedRouteNode[] {
  * than as bound to something.
  */
 export function firstDeclaredTarget(routing: Routing): RouteTarget | undefined {
-  for (const seat of seatedRouteNodes(routing)) {
-    if (seat.node.kind === 'target') {
-      return seat.node;
+  for (const walked of walkedRouteNodes(routing)) {
+    if (walked.node.kind === 'target') {
+      return walked.node;
     }
   }
 

@@ -52,19 +52,19 @@ describe('the reason a refusal gives for each child it names', () => {
 });
 
 describe('the name a person reads a child by', () => {
-  it('names a bound child by the model it serves, never by the seat it sits in', () => {
+  it('names a bound child by the model it serves, never by the node it sits in', () => {
     expect(attemptsRecorded(LADDER, [noteOf({ because: 'transport-failure' })])).toEqual([
       { child: 'gpt-5-mini', why: 'could not be reached' },
     ]);
   });
 
-  it('falls back to the seat when the model left with the account', () => {
+  it('falls back to the route node when the model left with the account', () => {
     expect(
       attemptsRecorded(LADDER, [noteOf({ because: 'missing-credential' }, 'child-2')]),
     ).toEqual([{ child: 'child-2', why: 'has no credential' }]);
   });
 
-  it('falls back to the seat when the table holds no such node at all', () => {
+  it('falls back to the route node when the table holds no such node at all', () => {
     expect(attemptsRecorded(LADDER, [noteOf({ because: 'cooling' }, 'child-9')])).toEqual([
       { child: 'child-9', why: 'stands cooling' },
     ]);

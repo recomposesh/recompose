@@ -122,7 +122,7 @@ describe('what one child standing down never says about another', () => {
     ).toBeUndefined();
   });
 
-  test('two seats whose names run together into one are still told apart', () => {
+  test('two route nodes whose names run together into one are still told apart', () => {
     const { ledger } = aLedgerAt(NOW);
 
     ledger.cool(

@@ -16,8 +16,9 @@ export type RouterMode = RouterPolicy['mode'];
  *
  * @summary Decision 18's ask drops a wired router with no dialog, so a router is born empty and
  * refuses only when a request arrives, rather than a person having to fill it before it will save.
- * The id comes from the one contracts rule every route node id comes from, so nothing here can
- * drift from what the stored migration mints.
+ * The id is minted rather than spelled here, but the mint is not the only writer of one: the
+ * version 4 migration derives its own without coming through it, so a table can hold both shapes
+ * at once and no reader may assume the one this writes.
  */
 export function routedThroughARouter(mode: RouterMode): Routing {
   const entry = mintRouteNodeId();

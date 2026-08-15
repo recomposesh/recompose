@@ -19,6 +19,7 @@ const acceptanceDir = defineBddConfig({
 const ELECTRON_LAUNCHES_AT_ONCE = process.env['CI'] === undefined ? 10 : 2;
 
 export default defineConfig({
+  globalSetup: './global-setup.ts',
   timeout: 30_000,
   workers: ELECTRON_LAUNCHES_AT_ONCE,
   retries: process.env['CI'] === undefined ? 1 : 2,

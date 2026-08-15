@@ -5,10 +5,10 @@ import { targetTheEntryNames } from '@recompose/contracts';
 
 import type { NodePositions, XY } from '../../lib/canvas-positions';
 import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
-import type { SeatReading } from '../../lib/route-seats';
+import type { RouteAddress } from '../../lib/route-addresses';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { routeNodeIn, seatUnder, seatWritten } from '../../lib/route-seats';
+import { routeNodeIn, addressUnder, addressWritten } from '../../lib/route-addresses';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
@@ -30,7 +30,7 @@ export function modelIdOf(nodeId: string): string | undefined {
 
 /** The binding's model id inside a target or ghost card's node id, or nothing otherwise. */
 export function targetModelIdOf(nodeId: string): string | undefined {
-  return seatUnder(['target:', 'ghost:'], nodeId)?.modelId;
+  return addressUnder(['target:', 'ghost:'], nodeId)?.modelId;
 }
 
 function accountBoundTo(gateway: GatewayConfig, modelId: string | undefined): string | undefined {
@@ -40,42 +40,42 @@ function accountBoundTo(gateway: GatewayConfig, modelId: string | undefined): st
 }
 
 /**
- * The account behind a target or ghost card, read through the route node the card seats at.
+ * The account behind a target or ghost card, read through the route node the card stands at.
  *
  * @summary A ladder stands several target cards for one definition, so the account comes from the
  * card's own route node rather than from whatever the definition tries first: reading them all
  * through the entry would paint every card of a pool as the first account it holds.
  */
 export function targetAccountIdIn(gateway: GatewayConfig, nodeId: string): string | undefined {
-  const node = routeNodeIn(gateway, seatUnder(['target:', 'ghost:'], nodeId));
+  const node = routeNodeIn(gateway, addressUnder(['target:', 'ghost:'], nodeId));
 
   return node?.kind === 'target' ? node.accountId : undefined;
 }
 
 /** The definition id inside a binding cable's id, or nothing for an overlay cable. */
 export function bindingCableId(edgeId: string): string | undefined {
-  return seatUnder(['cable:'], edgeId)?.modelId;
+  return addressUnder(['cable:'], edgeId)?.modelId;
 }
 
 /**
- * Where a binding cable's far end seats, or nothing for an overlay cable.
+ * Where a binding cable's far end lands, or nothing for an overlay cable.
  *
  * @summary A ladder stands one cable per child, so a reader acting on the cable a person selected
- * needs the seat that cable ends at rather than the definition holding it: the definition alone
+ * needs the address that cable ends at rather than the definition holding it: the definition alone
  * names the entry, and acting on the entry when a child was selected takes every sibling with it.
  */
-export function cableSeatOf(edgeId: string): SeatReading | undefined {
-  return seatUnder(['cable:'], edgeId);
+export function cableAddressOf(edgeId: string): RouteAddress | undefined {
+  return addressUnder(['cable:'], edgeId);
 }
 
-/** Where a router card seats in its definition's routing, or nothing for any other card. */
-export function routerSeatOf(nodeId: string): SeatReading | undefined {
-  return seatUnder(['route:'], nodeId);
+/** Where a router card stands in its definition's routing, or nothing for any other card. */
+export function routerAddressOf(nodeId: string): RouteAddress | undefined {
+  return addressUnder(['route:'], nodeId);
 }
 
-/** Where any card standing for a route node seats, whichever of the three prefixes it wears. */
-export function cardSeatOf(nodeId: string): SeatReading | undefined {
-  return seatUnder(['target:', 'ghost:', 'route:'], nodeId);
+/** Where any card standing for a route node stands, whichever of the three prefixes it wears. */
+export function cardAddressOf(nodeId: string): RouteAddress | undefined {
+  return addressUnder(['target:', 'ghost:', 'route:'], nodeId);
 }
 
 /**
@@ -106,24 +106,24 @@ export function movedSeats(changes: readonly NodeChange[]): readonly MovedSeat[]
  * cable between the same pair would say the one-cable rule out loud and then break it, and a card
  * standing under another definition is always a fresh child rather than a duplicate.
  */
-function targetSeatIn(gateway: GatewayConfig, nodeId: string): SeatReading | undefined {
-  const seat = seatUnder(['target:', 'ghost:'], nodeId);
+function targetAddressIn(gateway: GatewayConfig, nodeId: string): RouteAddress | undefined {
+  const address = addressUnder(['target:', 'ghost:'], nodeId);
 
-  return routeNodeIn(gateway, seat)?.kind === 'target' ? seat : undefined;
+  return routeNodeIn(gateway, address)?.kind === 'target' ? address : undefined;
 }
 
-function laddersOnto(gateway: GatewayConfig, parent: SeatReading, targetId: string): boolean {
+function laddersOnto(gateway: GatewayConfig, parent: RouteAddress, targetId: string): boolean {
   const router = routeNodeIn(gateway, parent);
-  const landing = targetSeatIn(gateway, targetId);
+  const landing = targetAddressIn(gateway, targetId);
 
   if (router?.kind !== 'router' || landing === undefined) {
     return false;
   }
 
-  const standing = seatWritten(landing);
+  const standing = addressWritten(landing);
 
   return !router.children.some(
-    (child) => seatWritten({ modelId: parent.modelId, routeNodeId: child }) === standing,
+    (child) => addressWritten({ modelId: parent.modelId, routeNodeId: child }) === standing,
   );
 }
 
@@ -139,7 +139,7 @@ function laddersOnto(gateway: GatewayConfig, parent: SeatReading, targetId: stri
  */
 export function oneTargetRule(gateway: GatewayConfig) {
   return (connection: Edge | Connection): boolean => {
-    const parent = routerSeatOf(connection.source);
+    const parent = routerAddressOf(connection.source);
 
     if (parent !== undefined) {
       return laddersOnto(gateway, parent, connection.target);

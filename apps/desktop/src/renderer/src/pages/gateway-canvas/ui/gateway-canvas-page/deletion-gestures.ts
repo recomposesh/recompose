@@ -1,18 +1,18 @@
 import type { RouteNode } from '@recompose/contracts';
 import type { Edge, Node } from '@xyflow/react';
 
-import type { SeatReading } from '../../lib/route-seats';
+import type { RouteAddress } from '../../lib/route-addresses';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasWorld } from './canvas-standings';
 
-import { routeNodeIn, seatWritten } from '../../lib/route-seats';
+import { routeNodeIn, addressWritten } from '../../lib/route-addresses';
 import { askedTargetRemoval, releasedWithTheDraftSelected } from './binding-acts';
 import {
   bindingCableId,
-  cableSeatOf,
+  cableAddressOf,
   editingText,
   modelIdOf,
-  routerSeatOf,
+  routerAddressOf,
   targetModelIdOf,
 } from './canvas-wiring';
 
@@ -35,7 +35,7 @@ function removalQuestionAsked(world: CanvasWorld, nodes: Node[]): boolean {
     return true;
   }
 
-  const router = nodes.find((node) => routerSeatOf(node.id) !== undefined);
+  const router = nodes.find((node) => routerAddressOf(node.id) !== undefined);
 
   if (router !== undefined) {
     world.standings.setRemoving(router.id);
@@ -46,8 +46,8 @@ function removalQuestionAsked(world: CanvasWorld, nodes: Node[]): boolean {
   return false;
 }
 
-function releasesIntoADraft(seat: SeatReading, node: RouteNode): boolean {
-  return seat.routeNodeId === undefined && node.kind === 'target';
+function releasesIntoADraft(address: RouteAddress, node: RouteNode): boolean {
+  return address.routeNodeId === undefined && node.kind === 'target';
 }
 
 /**
@@ -60,14 +60,14 @@ function releasesIntoADraft(seat: SeatReading, node: RouteNode): boolean {
  * end, which is the card whose own Delete press already asks the right question about it.
  */
 function releaseDestroys(world: CanvasWorld, edgeId: string): string | undefined {
-  const seat = cableSeatOf(edgeId);
-  const node = routeNodeIn(world.gateway, seat);
+  const address = cableAddressOf(edgeId);
+  const node = routeNodeIn(world.gateway, address);
 
-  if (seat === undefined || node === undefined || releasesIntoADraft(seat, node)) {
+  if (address === undefined || node === undefined || releasesIntoADraft(address, node)) {
     return undefined;
   }
 
-  return `${node.kind === 'router' ? 'route' : 'target'}:${seatWritten(seat)}`;
+  return `${node.kind === 'router' ? 'route' : 'target'}:${addressWritten(address)}`;
 }
 
 function cableQuestionAsked(world: CanvasWorld, cables: readonly Edge[]): boolean {

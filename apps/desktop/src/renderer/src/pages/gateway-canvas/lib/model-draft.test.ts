@@ -18,14 +18,14 @@ import {
   servesPreview,
 } from './model-draft';
 
-function boundThrough(seat: string, target: RouteTarget): Routing {
-  return { entry: seat, nodes: { [seat]: target } };
+function boundThrough(routeNodeId: string, target: RouteTarget): Routing {
+  return { entry: routeNodeId, nodes: { [routeNodeId]: target } };
 }
 
 const fast: VirtualModel = {
   id: 'fast',
   displayName: 'fast',
-  routing: boundThrough('seat-fast', {
+  routing: boundThrough('node-fast', {
     kind: 'target',
     accountId: 'a1',
     providerModel: 'claude-sonnet-5',
@@ -44,7 +44,7 @@ const codex: GatewayConfig = {
 const slow: VirtualModel = {
   id: 'slow',
   displayName: 'slow',
-  routing: boundThrough('seat-slow', {
+  routing: boundThrough('node-slow', {
     kind: 'target',
     accountId: 'a1',
     providerModel: 'claude-opus-5',
@@ -156,14 +156,14 @@ test('a definition joins the ones the gateway already holds rather than replacin
 test('a rebound virtual model reaches the new target and nothing of the old one is left', () => {
   const rebound = gatewayRebinding({ ...codex, virtualModels: [fast] }, 'fast', onWork);
 
-  expect(rebound.virtualModels).toEqual([{ ...fast, routing: boundThrough('seat-fast', onWork) }]);
+  expect(rebound.virtualModels).toEqual([{ ...fast, routing: boundThrough('node-fast', onWork) }]);
 });
 
 test('rebinding one virtual model leaves every other definition standing as it was', () => {
   const rebound = gatewayRebinding({ ...codex, virtualModels: [fast, slow] }, 'fast', onWork);
 
   expect(rebound.virtualModels).toEqual([
-    { ...fast, routing: boundThrough('seat-fast', onWork) },
+    { ...fast, routing: boundThrough('node-fast', onWork) },
     slow,
   ]);
 });

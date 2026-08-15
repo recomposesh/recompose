@@ -23,9 +23,9 @@ describe('noticing the first grant', () => {
       reports += 1;
     });
 
-    await grantFor('personal', 'fast', 'seat');
-    await grantFor('personal', 'fast', 'seat');
-    await grantFor('work', 'careful', 'seat');
+    await grantFor('personal', 'fast', 't1');
+    await grantFor('personal', 'fast', 't1');
+    await grantFor('work', 'careful', 't1');
 
     expect(reports).toBe(1);
   });
@@ -36,8 +36,8 @@ describe('noticing the first grant', () => {
       reports += 1;
     });
 
-    await grantFor('personal', 'fast', 'seat');
-    await grantFor('personal', 'fast', 'seat');
+    await grantFor('personal', 'fast', 't1');
+    await grantFor('personal', 'fast', 't1');
 
     expect(reports).toBe(0);
   });
@@ -52,11 +52,11 @@ describe('noticing the first grant', () => {
       },
     );
 
-    await grantFor('personal', 'fast', 'seat');
+    await grantFor('personal', 'fast', 't1');
     expect(reports).toBe(0);
 
-    await grantFor('personal', 'fast', 'seat');
-    await grantFor('personal', 'fast', 'seat');
+    await grantFor('personal', 'fast', 't1');
+    await grantFor('personal', 'fast', 't1');
     expect(reports).toBe(1);
   });
 });
@@ -65,10 +65,10 @@ describe('what the latch hands on either way', () => {
   test('the grant passes through untouched', async () => {
     const grantFor = noticingTheFirstGrant(answering(resolved), () => {});
 
-    expect(await grantFor('personal', 'fast', 'seat')).toEqual(resolved);
+    expect(await grantFor('personal', 'fast', 't1')).toEqual(resolved);
   });
 
-  test('the seat the child named reaches the resolver behind the latch', async () => {
+  test('the route node the child named reaches the resolver behind the latch', async () => {
     const naming: SpendGrantFor = async (slug, virtualModel, routeNode) =>
       Promise.resolve({
         verdict: 'resolved',

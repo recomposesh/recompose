@@ -28,7 +28,7 @@ function xaiGrant(grant: SpendGrant): grant is XAIWebSocketGrant {
   );
 }
 
-function boundSeatIn(gateway: EngineGateway, model: string) {
+function boundNodeIn(gateway: EngineGateway, model: string) {
   const virtual = gateway.virtualModels.find((candidate) => candidate.id === model);
 
   if (virtual === undefined) {
@@ -49,9 +49,9 @@ function boundSeatIn(gateway: EngineGateway, model: string) {
 function socketTarget(gateway: EngineGateway, message: JsonObject) {
   const body = isJsonObject(message['response']) ? message['response'] : message;
   const model = typeof body['model'] === 'string' ? body['model'] : '';
-  const seat = boundSeatIn(gateway, model);
+  const bound = boundNodeIn(gateway, model);
 
-  return seat === null ? null : { body, ...seat };
+  return bound === null ? null : { body, ...bound };
 }
 
 function crossingFor(

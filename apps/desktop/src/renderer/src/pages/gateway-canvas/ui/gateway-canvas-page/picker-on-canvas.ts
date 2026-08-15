@@ -6,7 +6,7 @@ import type { CanvasWorld, PickerStanding } from './canvas-standings';
 
 import { targetGroups } from '../../lib/target-groups';
 import { completedDraftPick, completedRebindPick } from './binding-acts';
-import { routerSeatOf } from './canvas-wiring';
+import { routerAddressOf } from './canvas-wiring';
 import { boundThroughARouter, completedChildPick, completedChildRebindPick } from './router-acts';
 
 /** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
@@ -54,9 +54,9 @@ function completedPick(
     return;
   }
 
-  const seat = routerSeatOf(from);
+  const address = routerAddressOf(from);
 
-  if (seat === undefined) {
+  if (address === undefined) {
     completedRebindPick(world, accountId, providerModel);
 
     return;
@@ -65,12 +65,12 @@ function completedPick(
   const replacing = 'replacing' in picker ? picker.replacing : undefined;
 
   if (replacing === undefined) {
-    completedChildPick(world, seat, accountId, providerModel);
+    completedChildPick(world, address, accountId, providerModel);
 
     return;
   }
 
-  completedChildRebindPick(world, seat, replacing, accountId, providerModel);
+  completedChildRebindPick(world, address, replacing, accountId, providerModel);
 }
 
 /**

@@ -23,7 +23,7 @@ const wired: TargetNodeData = {
   kind: 'target',
   account: workKey,
   modelId: 'fast',
-  routeNodeId: 'seat',
+  routeNodeId: 't1',
   depth: 0,
 };
 
@@ -32,7 +32,7 @@ const removed: TargetNodeData = {
   kind: 'ghost-target',
   accountId: 'a9',
   modelId: 'slow',
-  routeNodeId: 'seat',
+  routeNodeId: 't1',
   depth: 0,
 };
 
@@ -42,7 +42,7 @@ const keyed: TargetNodeData = {
   id: 'target:a5',
   kind: 'target',
   modelId: 'fast',
-  routeNodeId: 'seat',
+  routeNodeId: 't1',
   depth: 0,
   account: {
     id: 'a5',
@@ -57,7 +57,7 @@ const subscribed: TargetNodeData = {
   id: 'target:a2',
   kind: 'target',
   modelId: 'fast',
-  routeNodeId: 'seat',
+  routeNodeId: 't1',
   depth: 0,
   account: {
     id: 'a2',
@@ -73,7 +73,7 @@ const aggregated: TargetNodeData = {
   id: 'target:a3',
   kind: 'target',
   modelId: 'fast',
-  routeNodeId: 'seat',
+  routeNodeId: 't1',
   depth: 0,
   account: {
     id: 'a3',
@@ -88,7 +88,7 @@ const runtime: TargetNodeData = {
   id: 'target:a4',
   kind: 'target',
   modelId: 'fast',
-  routeNodeId: 'seat',
+  routeNodeId: 't1',
   depth: 0,
   account: { id: 'a4', provider: 'ollama', kind: 'local', address: '127.0.0.1:11434' },
 };

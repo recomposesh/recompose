@@ -26,7 +26,7 @@ export function aRoutedModel(
   children: readonly EngineTargetStanding[],
   overrides: Partial<Omit<EngineVirtualModel, 'routing'>> = {},
 ): EngineVirtualModel {
-  const seats = children.map((standing, at) => [childRouteNode(at + 1), standing] as const);
+  const bound = children.map((standing, at) => [childRouteNode(at + 1), standing] as const);
 
   return {
     id: 'fast',
@@ -38,10 +38,10 @@ export function aRoutedModel(
         [ROUTER_ROUTE_NODE]: {
           kind: 'router',
           policy: { mode },
-          children: seats.map(([routeNode]) => routeNode),
+          children: bound.map(([routeNode]) => routeNode),
         },
         ...Object.fromEntries(
-          seats.map(([routeNode, standing]) => [routeNode, { kind: 'target', standing }]),
+          bound.map(([routeNode, standing]) => [routeNode, { kind: 'target', standing }]),
         ),
       },
     },

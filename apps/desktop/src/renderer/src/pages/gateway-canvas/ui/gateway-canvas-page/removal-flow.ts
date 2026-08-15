@@ -18,7 +18,7 @@ import { dropCanvasViewport } from '../../lib/canvas-viewport-store';
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting } from '../../lib/use-held-draft';
 import { removedDefinition, spokenNameOf, targetNameIn } from './binding-acts';
-import { cardSeatOf, modelIdOf } from './canvas-wiring';
+import { cardAddressOf, modelIdOf } from './canvas-wiring';
 import { removedRouteNode } from './router-acts';
 
 /** The removal a Delete press asked for, standing until the person answers. */
@@ -107,14 +107,14 @@ function readingOfTheNode(
 }
 
 function routeNodeRemoval(world: CanvasWorld, nodeId: string): RemovalAsked | undefined {
-  const seat = cardSeatOf(nodeId);
-  const model = world.gateway.virtualModels.find((held) => held.id === seat?.modelId);
+  const address = cardAddressOf(nodeId);
+  const model = world.gateway.virtualModels.find((held) => held.id === address?.modelId);
 
   if (model === undefined) {
     return undefined;
   }
 
-  const reading = readingOfTheNode(world, model, seat?.routeNodeId ?? model.routing.entry);
+  const reading = readingOfTheNode(world, model, address?.routeNodeId ?? model.routing.entry);
 
   if (reading === undefined) {
     return undefined;

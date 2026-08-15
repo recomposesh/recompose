@@ -6,7 +6,7 @@ import { ROUTER_DEPTH_LIMIT, routingSchema } from './gateway-routing';
 
 type Refusal = { code: string; path: PropertyKey[]; message: string };
 
-const ENTRY = 'seat-one';
+const ENTRY = 'node-one';
 
 function targetNode(accountId: string): Record<string, unknown> {
   return { kind: 'target', accountId, providerModel: 'a-real-model' };

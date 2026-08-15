@@ -17,11 +17,11 @@ import { resolveTargetCustody } from './target-custody';
 export type SpendGrantContext = TargetCustodyContext;
 
 /**
- * The stored target one named seat of one virtual model holds, or nothing where no target stands.
+ * The stored target one named route node of one virtual model holds, or nothing where none stands.
  *
- * @summary The seat is read straight out of the table the child was handed, so a ladder spending a
- * different account per child resolves each one against the account that child names. A seat the
- * table does not hold, and a seat standing a router, both answer nothing rather than falling back
+ * @summary The node is read straight out of the table the child was handed, so a ladder spending a
+ * different account per child resolves each one against the account that child names. A node the
+ * table does not hold, and a node standing a router, both answer nothing rather than falling back
  * to a sibling, because spending the wrong person's account is worse than refusing the turn.
  */
 async function storedTarget(
@@ -34,9 +34,9 @@ async function storedTarget(
   const stored = await listGatewayConfigs(paths.gatewaysDir, onCorrupt);
   const serving = stored.find((config) => config.slug === slug);
   const bound = serving?.virtualModels.find((model) => model.id === virtualModel);
-  const seat = bound?.routing.nodes[routeNode];
+  const standing = bound?.routing.nodes[routeNode];
 
-  return seat?.kind === 'target' ? seat : undefined;
+  return standing?.kind === 'target' ? standing : undefined;
 }
 
 type GrantedSpend = Extract<SpendGrant, { verdict: 'resolved' }>['spend'];
@@ -72,12 +72,12 @@ function spendFrom(
 /**
  * What one attempt may be spent against, resolved against live storage for every request.
  *
- * @summary The child names the seat it is about to try, and only the parent turns that name into a
+ * @summary The child names the node it is about to try, and only the parent turns that name into a
  * credential. The account may be gone or may have turned out to be a subscription by the time the
- * gateway serves, so the seat is resolved per attempt rather than trusted from the start directive.
+ * gateway serves, so the node is resolved per attempt rather than trusted from the start directive.
  * The secret lives in this call's scope and in the message that answers the child, and nowhere else.
  *
- * A refusal is the answer for one seat and says nothing about any other, so a ladder whose first
+ * A refusal is the answer for one node and says nothing about any other, so a ladder whose first
  * child lost its credential still spends its siblings.
  */
 export async function resolveSpendGrant(
