@@ -13,8 +13,8 @@ import type { XY } from './canvas-positions';
 
 import { carriedBy, failureCarried, latestAcrossNodes, standingCarried } from './cable-traffic';
 import { routeCard } from './canvas-cards';
-import { firstDeclaredTarget, seatedRouteNodes } from './route-graph';
-import { seatName } from './route-seats';
+import { addressName } from './route-addresses';
+import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
 export type { CableFailure, CableStanding } from './cable-traffic';
 export type { CanvasNode, CanvasNodeKind } from './canvas-cards';
@@ -70,7 +70,7 @@ function outcomeInto(
     return undefined;
   }
 
-  return carried[placed.modelId]?.[placed.seat.routeNodeId];
+  return carried[placed.modelId]?.[placed.walked.routeNodeId];
 }
 
 function cableInto(
@@ -79,15 +79,15 @@ function cableInto(
   carried: RequestOutcome | undefined,
   entry: string,
 ): CanvasEdge {
-  const { modelId, seat } = placed;
+  const { modelId, walked } = placed;
   const unserved: CableStanding = card.kind === 'ghost-target' ? 'broken' : 'resting';
 
   return {
     id: `cable:${placed.name}`,
     source:
-      seat.parent === undefined
+      walked.parent === undefined
         ? modelNodeId(modelId)
-        : `route:${seatName(modelId, seat.parent, entry)}`,
+        : `route:${addressName(modelId, walked.parent, entry)}`,
     target: card.id,
     standing: standingCarried(carried) ?? unserved,
     failure: failureCarried(carried),
@@ -116,13 +116,17 @@ function routedCards(
   const edges: CanvasEdge[] = [];
   const painted: Record<string, RequestOutcome> = {};
 
-  for (const seat of seatedRouteNodes(model.routing)) {
-    const placed = { modelId: model.id, name: seatName(model.id, seat.routeNodeId, entry), seat };
+  for (const walked of walkedRouteNodes(model.routing)) {
+    const placed = {
+      modelId: model.id,
+      name: addressName(model.id, walked.routeNodeId, entry),
+      walked,
+    };
     const card = routeCard(placed, registry);
     const into = outcomeInto(carried, card, placed);
 
     if (into !== undefined) {
-      painted[seat.routeNodeId] = into;
+      painted[walked.routeNodeId] = into;
     }
 
     nodes.push(card);

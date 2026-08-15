@@ -33,7 +33,7 @@ test('a runtime that names itself reads as the server it is rather than as nothi
     kind: 'target',
     account: ollama,
     modelId: 'fast',
-    routeNodeId: 'seat',
+    routeNodeId: 't1',
     depth: 0,
   });
 
@@ -48,7 +48,7 @@ test('a target leads with its provider product and connection kind rather than t
     kind: 'target',
     account: claude,
     modelId: 'fast',
-    routeNodeId: 'seat',
+    routeNodeId: 't1',
     depth: 0,
     detail: 'ada@example.com',
   });
@@ -66,7 +66,7 @@ test('an account that left the registry keeps its card and says what became of i
     kind: 'ghost-target',
     accountId: 'a9',
     modelId: 'slow',
-    routeNodeId: 'seat',
+    routeNodeId: 't1',
     depth: 0,
   });
 

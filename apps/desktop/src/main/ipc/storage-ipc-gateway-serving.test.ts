@@ -13,7 +13,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { StorageIpcContext } from './storage-context';
 
-import { seatedAs } from '../engine-host/spend-grant.testkit';
+import { routedAs } from '../engine-host/spend-grant.testkit';
 import { storedEngineGateway } from '../engine-host/stored-gateway';
 import { reversibleCodec } from '../storage/safe-storage-codec.testkit';
 import { createStorageIpcHandlers } from './storage-ipc';
@@ -36,9 +36,9 @@ const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
   routing: {
-    entry: 'seat',
+    entry: 't1',
     nodes: {
-      seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+      t1: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
     },
   },
 };
@@ -46,7 +46,7 @@ const fast: VirtualModel = {
 const fastBound = {
   id: 'fast',
   displayName: 'Fast',
-  routing: seatedAs({ standing: 'bound', providerModel: 'claude-haiku-4-5' }),
+  routing: routedAs({ standing: 'bound', providerModel: 'claude-haiku-4-5' }),
 };
 
 function gatewayServing(models: readonly VirtualModel[]): GatewayConfig {
@@ -131,9 +131,9 @@ describe('what a rewrite asks the engine for', () => {
       id: 'gone',
       displayName: 'Gone',
       routing: {
-        entry: 'seat',
+        entry: 't1',
         nodes: {
-          seat: { kind: 'target', accountId: 'acc-vanished', providerModel: 'claude-opus-5' },
+          t1: { kind: 'target', accountId: 'acc-vanished', providerModel: 'claude-opus-5' },
         },
       },
     };
@@ -141,7 +141,7 @@ describe('what a rewrite asks the engine for', () => {
     await desk.handlers['gateways:update'](gatewayServing([orphan]));
 
     expect(desk.restarted[0]?.virtualModels).toEqual([
-      { id: 'gone', displayName: 'Gone', routing: seatedAs({ standing: 'removed' }) },
+      { id: 'gone', displayName: 'Gone', routing: routedAs({ standing: 'removed' }) },
     ]);
   });
 });

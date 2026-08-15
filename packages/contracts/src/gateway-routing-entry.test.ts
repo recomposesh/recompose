@@ -4,8 +4,8 @@ import { routingSchema, targetTheEntryNames } from './gateway-routing';
 
 function oneNodeGraph(accountId: string): unknown {
   return {
-    entry: 'seat',
-    nodes: { seat: { kind: 'target', accountId, providerModel: 'a-real-model' } },
+    entry: 't1',
+    nodes: { t1: { kind: 'target', accountId, providerModel: 'a-real-model' } },
   };
 }
 

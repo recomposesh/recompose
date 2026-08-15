@@ -206,8 +206,8 @@ test('a model bound straight to a target keeps the very cable and card it stood 
     id: 'fast',
     displayName: 'Fast',
     routing: {
-      entry: 'seat',
-      nodes: { seat: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+      entry: 't1',
+      nodes: { t1: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
     },
   };
 

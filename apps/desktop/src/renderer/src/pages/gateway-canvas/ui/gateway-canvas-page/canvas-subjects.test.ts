@@ -7,8 +7,11 @@ import type { InspectorSubject } from './canvas-subjects';
 import { gatewaySeed } from '../../../../shared/testing';
 import { nodeIdOf, subjectOf } from './canvas-subjects';
 
-function boundThrough(seat: string, accountId: string, providerModel: string): Routing {
-  return { entry: seat, nodes: { [seat]: { kind: 'target', accountId, providerModel } } };
+function boundThrough(routeNodeId: string, accountId: string, providerModel: string): Routing {
+  return {
+    entry: routeNodeId,
+    nodes: { [routeNodeId]: { kind: 'target', accountId, providerModel } },
+  };
 }
 
 const gateway = gatewaySeed({
@@ -19,17 +22,17 @@ const gateway = gatewaySeed({
     {
       id: 'fast',
       displayName: 'Fast',
-      routing: boundThrough('seat-fast', 'k1', 'claude-haiku-4-5'),
+      routing: boundThrough('node-fast', 'k1', 'claude-haiku-4-5'),
     },
     {
       id: 'creative',
       displayName: 'Creative',
-      routing: boundThrough('seat-creative', 'g1', 'openai/gpt-5'),
+      routing: boundThrough('node-creative', 'g1', 'openai/gpt-5'),
     },
     {
       id: 'slow',
       displayName: 'Slow',
-      routing: boundThrough('seat-slow', 'gone', 'claude-opus-5'),
+      routing: boundThrough('node-slow', 'gone', 'claude-opus-5'),
     },
     {
       id: 'pooled',
@@ -40,6 +43,21 @@ const gateway = gatewaySeed({
           r1: { kind: 'router', policy: { mode: 'failover' }, children: ['t1', 't2'] },
           t1: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
           t2: { kind: 'target', accountId: 'gone', providerModel: 'claude-opus-5' },
+        },
+      },
+    },
+    {
+      id: 'migrated',
+      displayName: 'Migrated',
+      routing: {
+        entry: 'r2',
+        nodes: {
+          r2: { kind: 'router', policy: { mode: 'failover' }, children: ['seat:migrated'] },
+          'seat:migrated': {
+            kind: 'target',
+            accountId: 'k1',
+            providerModel: 'claude-sonnet-5',
+          },
         },
       },
     },
@@ -87,6 +105,15 @@ describe('the subject a card below a routing entry reads as', () => {
       accountId: 'gone',
       modelId: 'pooled',
       routeNodeId: 't2',
+    });
+  });
+
+  test('a card standing a route node the migration minted names its own binding', () => {
+    expect(subjectOf(gateway, 'target:migrated:seat:migrated')).toEqual({
+      kind: 'target',
+      accountId: 'k1',
+      modelId: 'migrated',
+      routeNodeId: 'seat:migrated',
     });
   });
 

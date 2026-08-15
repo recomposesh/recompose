@@ -87,7 +87,7 @@ describe('what the mirror refuses to carry', () => {
     expect(() => engineRoutingSchema.parse(guessed)).toThrow();
   });
 
-  test('a router holding a blank child id is refused, because it names no seat', () => {
+  test('a router holding a blank child id is refused, because it names no route node', () => {
     const blank = aTableStanding({ ...failover, children: ['   '] });
 
     expect(() => engineRoutingSchema.parse(blank)).toThrow();

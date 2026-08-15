@@ -10,11 +10,11 @@ import { reconciledVault } from './vault-reconcile';
 function accountsHolding(refs: readonly string[]): AccountsDocument {
   return {
     schemaVersion: ACCOUNTS_VERSION,
-    accounts: refs.map((ref, seat) => ({
-      id: `acc-${String(seat)}`,
+    accounts: refs.map((ref, at) => ({
+      id: `acc-${String(at)}`,
       provider: 'anthropic',
       kind: 'api-key' as const,
-      label: `key ${String(seat)}`,
+      label: `key ${String(at)}`,
       credentialRef: ref,
     })),
   };

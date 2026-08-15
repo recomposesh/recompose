@@ -27,11 +27,11 @@ async function grantOrNothing(
 }
 
 /**
- * Answers one child request to spend the target seated at a named route node.
+ * Answers one child request to spend the target standing at a named route node.
  *
  * @summary Every request draws an answer, including the ones nothing can be granted for, because a
  * child left waiting holds an open turn. One request walking a ladder asks once per attempt and
- * each ask names its own seat, so a refusal answers that seat alone. The credential a resolved
+ * each ask names its own node, so a refusal answers that node alone. The credential a resolved
  * grant carries lives in this call's scope and in the message it posts, so nothing longer-lived
  * ever holds it.
  *

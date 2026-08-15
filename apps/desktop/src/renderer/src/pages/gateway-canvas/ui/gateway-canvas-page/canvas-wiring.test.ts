@@ -2,10 +2,10 @@ import { describe, expect, test } from 'vitest';
 
 import {
   bindingCableId,
-  cableSeatOf,
-  cardSeatOf,
+  cableAddressOf,
+  cardAddressOf,
   oneTargetRule,
-  routerSeatOf,
+  routerAddressOf,
   targetAccountIdIn,
   targetModelIdOf,
 } from './canvas-wiring';
@@ -53,7 +53,7 @@ describe('what a cable leaving a router may meet', () => {
     expect(valid(pulled('route:pooled', 'ghost:slow'))).toBe(true);
   });
 
-  test('a cable from a route seat holding a target rather than a router refuses', () => {
+  test('a cable from a route node holding a target rather than a router refuses', () => {
     expect(valid(pulled('route:pooled:t1', 'target:fast'))).toBe(false);
   });
 
@@ -61,7 +61,7 @@ describe('what a cable leaving a router may meet', () => {
     expect(valid(pulled('route:absent', 'target:fast'))).toBe(false);
   });
 
-  test('a cable onto a seat holding a router rather than a target refuses', () => {
+  test('a cable onto a route node holding a router rather than a target refuses', () => {
     expect(valid(pulled('route:pooled', 'target:pooled'))).toBe(false);
   });
 
@@ -92,23 +92,23 @@ describe('what a route node card and cable name', () => {
     expect(targetAccountIdIn(gateway, 'target:pooled')).toBeUndefined();
   });
 
-  test('a cable names the seat its far end lands at, not just the definition holding it', () => {
-    expect(cableSeatOf('cable:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
-    expect(cableSeatOf('cable:fast')).toEqual({ modelId: 'fast', routeNodeId: undefined });
-    expect(cableSeatOf('wire:model:fast')).toBeUndefined();
+  test('a cable names the route node its far end lands at, not just the definition holding it', () => {
+    expect(cableAddressOf('cable:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
+    expect(cableAddressOf('cable:fast')).toEqual({ modelId: 'fast', routeNodeId: undefined });
+    expect(cableAddressOf('wire:model:fast')).toBeUndefined();
   });
 
   test('a router card names where it seats, and no other card answers as one', () => {
-    expect(routerSeatOf('route:pooled')).toEqual({ modelId: 'pooled', routeNodeId: undefined });
-    expect(routerSeatOf('route:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
-    expect(routerSeatOf('target:pooled:t1')).toBeUndefined();
+    expect(routerAddressOf('route:pooled')).toEqual({ modelId: 'pooled', routeNodeId: undefined });
+    expect(routerAddressOf('route:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
+    expect(routerAddressOf('target:pooled:t1')).toBeUndefined();
   });
 
-  test('every card standing for a route node names its seat, whichever prefix it wears', () => {
-    expect(cardSeatOf('target:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
-    expect(cardSeatOf('ghost:pooled:t2')).toEqual({ modelId: 'pooled', routeNodeId: 't2' });
-    expect(cardSeatOf('route:pooled')).toEqual({ modelId: 'pooled', routeNodeId: undefined });
-    expect(cardSeatOf('model:fast')).toBeUndefined();
+  test('every card standing for a route node names its address, whichever prefix it wears', () => {
+    expect(cardAddressOf('target:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
+    expect(cardAddressOf('ghost:pooled:t2')).toEqual({ modelId: 'pooled', routeNodeId: 't2' });
+    expect(cardAddressOf('route:pooled')).toEqual({ modelId: 'pooled', routeNodeId: undefined });
+    expect(cardAddressOf('model:fast')).toBeUndefined();
   });
 });
 

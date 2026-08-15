@@ -33,9 +33,9 @@ const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
   routing: {
-    entry: 'seat',
+    entry: 't1',
     nodes: {
-      seat: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
+      t1: { kind: 'target', accountId: 'acc-key', providerModel: 'claude-haiku-4-5' },
     },
   },
 };

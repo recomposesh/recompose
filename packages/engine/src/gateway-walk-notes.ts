@@ -8,11 +8,11 @@ export type WalkNote = WalkResult<never>['notes'][number];
 const UNREACHED_STATUS = 502;
 
 /**
- * The name a person reads a child by, which is the model it serves rather than the seat it sits in.
+ * The name a person reads a child by, which is the model it serves rather than the node it sits in.
  *
- * @summary The seat name is a minted id and says nothing to anyone, while the account paying for the
+ * @summary The route node id is minted and says nothing to anyone, while the account paying for the
  * child never crosses into the engine at all. What is left, and what a person actually recognizes, is
- * the provider model the child was bound to. A child whose account left names its seat, because that
+ * the provider model the child was bound to. A child whose account left names its node, because that
  * is the only handle left once the model went with the account.
  */
 function childNameOf(routing: EngineRouting, routeNode: string): string {

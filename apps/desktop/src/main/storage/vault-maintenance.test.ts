@@ -16,11 +16,11 @@ async function aStoreHolding(vault: VaultDocument, refs: readonly string[]): Pro
     join(home, 'accounts.json'),
     JSON.stringify({
       schemaVersion: ACCOUNTS_VERSION,
-      accounts: refs.map((ref, seat) => ({
-        id: `acc-${String(seat)}`,
+      accounts: refs.map((ref, at) => ({
+        id: `acc-${String(at)}`,
         provider: 'anthropic',
         kind: 'api-key',
-        label: `key ${String(seat)}`,
+        label: `key ${String(at)}`,
         credentialRef: ref,
       })),
     }),

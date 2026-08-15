@@ -49,6 +49,21 @@ export function restartedAppFor(page: Page): RestartedApp {
   return restarted;
 }
 
+/**
+ * A second application over the first one's folder, closed again if it never finishes coming up.
+ *
+ * @summary Only the returned application reaches the `After` hook that closes it, so an app that
+ * fails while its window is opening would be one nothing holds and nothing ends. It outlives the
+ * whole run, holding the worker's user data folder, and the next run reads a folder a live process
+ * still owns. A failing close is reported rather than thrown, because the launch failure under it
+ * is the one worth reading.
+ *
+ * The restart shows its window whatever the shell asked of the run. `RECOMPOSE_WINDOW_STAYS_BACK`
+ * stops `show()` outright rather than ordering the window behind others, and the whole point of a
+ * restart scenario is that the window appears, painted in the stored theme. The fixture decides
+ * that marker per launch for the same reason, so a shell that exports it globally reaches every
+ * launch through `inheritedEnv` and would leave this one invisible forever.
+ */
 async function launchFrom(userDataDir: string): Promise<RestartedApp> {
   const app = await electron.launch({
     args: [appRoot],
@@ -58,15 +73,26 @@ async function launchFrom(userDataDir: string): Promise<RestartedApp> {
       NODE_ENV: 'production',
       ELECTRON_RENDERER_URL: '',
       RECOMPOSE_USER_DATA_DIR: userDataDir,
+      RECOMPOSE_WINDOW_STAYS_BACK: '',
     },
   });
 
-  const page = await app.firstWindow();
-  const visibleBeforeContentReady = await windowVisibility(app);
+  try {
+    const page = await app.firstWindow();
+    const visibleBeforeContentReady = await windowVisibility(app);
 
-  await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('domcontentloaded');
 
-  return { app, page, visibleBeforeContentReady };
+    return { app, page, visibleBeforeContentReady };
+  } catch (comingUp) {
+    await app.close().catch((closing: unknown) => {
+      process.stderr.write(
+        `the restarted app failed to close after failing to open: ${String(closing)}\n`,
+      );
+    });
+
+    throw comingUp;
+  }
 }
 
 When('the maintainer switches the theme to dark', async ({ electronApp, page }) => {
