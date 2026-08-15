@@ -55,7 +55,10 @@ export function usePickerModels(picker: PickerStanding | undefined): ModelListRe
  * Throws away a cable drag the moment Esc asks, before anything lands.
  *
  * @summary Letting the pointer go for the person is what stops the release from opening a picker
- * at wherever the cable happened to hang.
+ * at wherever the cable happened to hang. The press stops here rather than carrying on to the
+ * canvas: releasing the pointer ends the connection in the same tick, which clears the in-flight
+ * mark, so a later listener on this same press would read a quiet canvas and put away the
+ * selection the person never asked to lose.
  */
 export function useEscapeCancelledDrag(dragging: RefObject<DragWatch>): void {
   useEffect(() => {
@@ -64,6 +67,7 @@ export function useEscapeCancelledDrag(dragging: RefObject<DragWatch>): void {
         return;
       }
 
+      event.stopImmediatePropagation();
       dragging.current.escaped = true;
       document.dispatchEvent(new MouseEvent('mouseup'));
     };
