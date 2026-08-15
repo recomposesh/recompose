@@ -1,6 +1,9 @@
+import type { GatewayConfig } from '@recompose/contracts';
+
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
+import { gatewaySeed } from '../../../../shared/testing';
 import { draftCardOn, storedBindingOf, storedModels } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
 
@@ -33,6 +36,35 @@ function fitsReading(seat: RegExpExecArray, view: RegExpExecArray, pane: DOMRect
   };
 
   return paintedWithin(corner, zoom, pane) ? 'fits' : 'past the pane';
+}
+
+/**
+ * Holds until every look a birth schedules has either moved the view or decided not to.
+ *
+ * @operation The look waits for frames rather than for anything a scenario can poll, so proving
+ * the view stood still means outlasting it. A quarter second is well past the frames it waits and
+ * still short of the timeout a scenario budget allows.
+ */
+async function afterEveryLookHasRun(): Promise<void> {
+  await new Promise((settle) => {
+    setTimeout(settle, 250);
+  });
+}
+
+function gatewayServing(models: number): GatewayConfig {
+  return gatewaySeed({
+    slug: 'my-gateway',
+    displayName: 'My Gateway',
+    port: 8397,
+    virtualModels: Array.from({ length: models }, (_, row) => ({
+      id: `m${row}`,
+      displayName: `Model ${row}`,
+      routing: {
+        entry: 'bound',
+        nodes: { bound: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' } },
+      },
+    })),
+  });
 }
 
 function bornCardReading(container: HTMLElement, nodeId: string): string {
@@ -211,6 +243,35 @@ test('a target born past the pane zooms the view out until it shows', async () =
   await expect.poll(async () => storedBindingOf('steady')).toBeDefined();
   await expect
     .poll(() => bornCardReading(screen.container, 'target:steady'), { timeout: 10_000 })
+    .toBe('fits');
+});
+
+test('a draft born inside the pane leaves the view exactly where it stood', async () => {
+  const screen = await canvasPageOn();
+
+  await expect.poll(() => transformOf(screen.container, '.react-flow__viewport')).not.toBe('');
+
+  const resting = transformOf(screen.container, '.react-flow__viewport');
+
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+
+  await expect.poll(() => draftCardOn(screen.container)).not.toBeNull();
+  await afterEveryLookHasRun();
+
+  expect(bornCardReading(screen.container, 'draft')).toBe('fits');
+  expect(transformOf(screen.container, '.react-flow__viewport')).toBe(resting);
+});
+
+test('a draft born past the pane zooms the view out until it shows', async () => {
+  const screen = await canvasPageOn({ gateways: [gatewayServing(5)] });
+
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+
+  await expect.poll(() => draftCardOn(screen.container)).not.toBeNull();
+  await expect
+    .poll(() => bornCardReading(screen.container, 'draft'), { timeout: 10_000 })
     .toBe('fits');
 });
 
