@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { flowEdgesOf, flowNodesOf, movedSeats } from './canvas-wiring';
+import { CARD_MEASURE, flowEdgesOf, flowNodesOf, movedSeats } from './canvas-wiring';
 
 describe('the controlled flow applies position changes only', () => {
   test('a position change in flight moves a seat without settling it', () => {
@@ -90,40 +90,72 @@ describe('what the flow hands each card to stand on', () => {
 
     expect(seated.map((node) => node.selected)).toEqual([false, true]);
   });
+
+  test('a card stands under its own kind, carrying the measure edges draw against', () => {
+    const seated = flowNodesOf(graph, {}, undefined, asks);
+
+    expect(seated.map((node) => node.type)).toEqual(['gateway', 'virtual-model']);
+    expect(seated.map((node) => ({ width: node.width, height: node.height }))).toEqual([
+      CARD_MEASURE,
+      CARD_MEASURE,
+    ]);
+  });
+});
+
+const drawn: readonly CanvasEdge[] = [
+  {
+    id: 'wire:model:fast',
+    source: 'gateway',
+    target: 'model:fast',
+    standing: 'structural',
+    failure: undefined,
+  },
+  {
+    id: 'cable:fast',
+    source: 'model:fast',
+    target: 'target:k1',
+    standing: 'resting',
+    failure: undefined,
+  },
+  {
+    id: 'wire:draft',
+    source: 'gateway',
+    target: 'draft',
+    standing: 'structural',
+    failure: undefined,
+  },
+  {
+    id: 'overlay:draft',
+    source: 'gateway',
+    target: 'draft',
+    standing: 'draft',
+    failure: undefined,
+  },
+];
+
+describe('what every cable draws as', () => {
+  test('one cable each, between the two cards its own ends name', () => {
+    const drawnAs = flowEdgesOf(drawn, undefined);
+
+    expect(drawnAs.map((edge) => [edge.id, edge.type, edge.source, edge.target])).toEqual([
+      ['wire:model:fast', 'cable', 'gateway', 'model:fast'],
+      ['cable:fast', 'cable', 'model:fast', 'target:k1'],
+      ['wire:draft', 'cable', 'gateway', 'draft'],
+      ['overlay:draft', 'cable', 'gateway', 'draft'],
+    ]);
+  });
+
+  test('only the selected cable reads as selected', () => {
+    expect(flowEdgesOf(drawn, 'cable:fast').map((edge) => edge.selected)).toEqual([
+      false,
+      true,
+      false,
+      false,
+    ]);
+  });
 });
 
 describe('what the flow hands each cable to answer gestures by', () => {
-  const drawn: readonly CanvasEdge[] = [
-    {
-      id: 'wire:model:fast',
-      source: 'gateway',
-      target: 'model:fast',
-      standing: 'structural',
-      failure: undefined,
-    },
-    {
-      id: 'cable:fast',
-      source: 'model:fast',
-      target: 'target:k1',
-      standing: 'resting',
-      failure: undefined,
-    },
-    {
-      id: 'wire:draft',
-      source: 'gateway',
-      target: 'draft',
-      standing: 'structural',
-      failure: undefined,
-    },
-    {
-      id: 'overlay:draft',
-      source: 'gateway',
-      target: 'draft',
-      standing: 'draft',
-      failure: undefined,
-    },
-  ];
-
   test('a binding cable keeps the wide grab band its reconnect drag is sized by', () => {
     const cable = flowEdgesOf(drawn, undefined).find((edge) => edge.id === 'cable:fast');
 

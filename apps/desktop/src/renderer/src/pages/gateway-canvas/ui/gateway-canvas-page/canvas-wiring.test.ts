@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
-import { bindingCableId, oneTargetRule, targetAccountIdIn, targetModelIdOf } from './canvas-wiring';
+import {
+  bindingCableId,
+  cableSeatOf,
+  cardSeatOf,
+  oneTargetRule,
+  routerSeatOf,
+  targetAccountIdIn,
+  targetModelIdOf,
+} from './canvas-wiring';
 import { gateway, pulled } from './canvas-wiring.testkit';
 
 describe('the one-target rule during a drag', () => {
@@ -82,5 +90,37 @@ describe('what a route node card and cable name', () => {
     expect(targetAccountIdIn(gateway, 'target:pooled:t1')).toBe('k1');
     expect(targetAccountIdIn(gateway, 'ghost:pooled:t2')).toBe('gone');
     expect(targetAccountIdIn(gateway, 'target:pooled')).toBeUndefined();
+  });
+
+  test('a cable names the seat its far end lands at, not just the definition holding it', () => {
+    expect(cableSeatOf('cable:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
+    expect(cableSeatOf('cable:fast')).toEqual({ modelId: 'fast', routeNodeId: undefined });
+    expect(cableSeatOf('wire:model:fast')).toBeUndefined();
+  });
+
+  test('a router card names where it seats, and no other card answers as one', () => {
+    expect(routerSeatOf('route:pooled')).toEqual({ modelId: 'pooled', routeNodeId: undefined });
+    expect(routerSeatOf('route:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
+    expect(routerSeatOf('target:pooled:t1')).toBeUndefined();
+  });
+
+  test('every card standing for a route node names its seat, whichever prefix it wears', () => {
+    expect(cardSeatOf('target:pooled:t1')).toEqual({ modelId: 'pooled', routeNodeId: 't1' });
+    expect(cardSeatOf('ghost:pooled:t2')).toEqual({ modelId: 'pooled', routeNodeId: 't2' });
+    expect(cardSeatOf('route:pooled')).toEqual({ modelId: 'pooled', routeNodeId: undefined });
+    expect(cardSeatOf('model:fast')).toBeUndefined();
+  });
+});
+
+describe('what a definition already answers through, read at its entry', () => {
+  const valid = oneTargetRule(gateway);
+
+  test('a pooled definition answers through no single account, so any target is a rebind', () => {
+    expect(valid(pulled('model:pooled', 'target:fast'))).toBe(true);
+    expect(valid(pulled('model:pooled', 'target:creative'))).toBe(true);
+  });
+
+  test('a definition the gateway never stored answers through nothing, so any target is welcome', () => {
+    expect(valid(pulled('model:absent', 'target:fast'))).toBe(true);
   });
 });
