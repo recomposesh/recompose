@@ -140,12 +140,11 @@ export function boundThroughARouter(world: CanvasWorld, from: string): void {
   }
 }
 
-/** The ladder a binding ask left from, or nothing where the card it names routes nothing. */
-function ladderAsking(world: CanvasWorld, from: string) {
-  const seat = routerSeatOf(from);
-  const parent = seat === undefined ? undefined : parentRouterAt(world, seat);
+/** The ladder a binding ask left from, or nothing where the definition holding it has left. */
+function ladderAsking(world: CanvasWorld, seat: SeatReading) {
+  const parent = parentRouterAt(world, seat);
 
-  return seat === undefined || parent === undefined ? undefined : { seat, parent };
+  return parent === undefined ? undefined : { seat, parent };
 }
 
 type LadderAsking = NonNullable<ReturnType<typeof ladderAsking>>;
@@ -195,11 +194,11 @@ function committedChild(
  */
 export function completedChildPick(
   world: CanvasWorld,
-  from: string,
+  seat: SeatReading,
   accountId: string,
   providerModel: string,
 ): void {
-  const asking = ladderAsking(world, from);
+  const asking = ladderAsking(world, seat);
 
   if (asking === undefined) {
     return;
@@ -235,12 +234,12 @@ export function completedChildPick(
  */
 export function completedChildRebindPick(
   world: CanvasWorld,
-  from: string,
+  seat: SeatReading,
   replacing: string,
   accountId: string,
   providerModel: string,
 ): void {
-  const asking = ladderAsking(world, from);
+  const asking = ladderAsking(world, seat);
 
   if (asking === undefined) {
     return;

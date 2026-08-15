@@ -54,7 +54,9 @@ function completedPick(
     return;
   }
 
-  if (routerSeatOf(from) === undefined) {
+  const seat = routerSeatOf(from);
+
+  if (seat === undefined) {
     completedRebindPick(world, accountId, providerModel);
 
     return;
@@ -63,12 +65,12 @@ function completedPick(
   const replacing = 'replacing' in picker ? picker.replacing : undefined;
 
   if (replacing === undefined) {
-    completedChildPick(world, from, accountId, providerModel);
+    completedChildPick(world, seat, accountId, providerModel);
 
     return;
   }
 
-  completedChildRebindPick(world, from, replacing, accountId, providerModel);
+  completedChildRebindPick(world, seat, replacing, accountId, providerModel);
 }
 
 /**

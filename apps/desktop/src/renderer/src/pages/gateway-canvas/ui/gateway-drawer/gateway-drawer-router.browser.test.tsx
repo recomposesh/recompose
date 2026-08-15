@@ -3,7 +3,8 @@ import type { GatewayConfig } from '@recompose/contracts';
 import { expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
-import { gatewaySeed } from '../../../../shared/testing';
+import { gatewaySeed, installFakeBridge } from '../../../../shared/testing';
+import { listedModels, storedAccounts } from '../../testing/gateway-canvas.testkit';
 import { renderDrawer } from '../../testing/gateway-drawer.testkit';
 import {
   nestedGateway,
@@ -12,6 +13,21 @@ import {
 } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
+
+function refusingEveryRewrite(gateway: GatewayConfig): void {
+  installFakeBridge({
+    accounts: storedAccounts,
+    gateways: [gateway],
+    providerModels: listedModels,
+    overrides: {
+      'gateways:update': async () =>
+        Promise.resolve({
+          ok: false,
+          error: { code: 'storage-failed', message: 'the gateway file could not be written' },
+        }),
+    },
+  });
+}
 
 function pooledGateway(mode: 'failover' | 'round-robin'): GatewayConfig {
   return gatewaySeed({
@@ -135,6 +151,41 @@ test('the drawer link on a nested router names that router rather than the one a
   await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
 
   expect(asked).toEqual(['route:pooled:r2']);
+});
+
+test('a router subject naming a virtual model the gateway no longer holds reads the gateway', async () => {
+  const screen = await renderDrawer(
+    { kind: 'router', modelId: 'gone', routeNodeId: undefined },
+    { gateway: pooledGateway('failover') },
+  );
+
+  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Router', { exact: true })).not.toBeInTheDocument();
+});
+
+test('a router subject seated where a target now stands reads the gateway', async () => {
+  const screen = await renderDrawer(
+    { kind: 'router', modelId: 'pooled', routeNodeId: 't1' },
+    { gateway: pooledGateway('failover') },
+  );
+
+  await expect.element(screen.getByText('Endpoint', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Router', { exact: true })).not.toBeInTheDocument();
+});
+
+test('a refused rename keeps the name a person typed and says why it did not land', async () => {
+  const screen = await renderDrawer(onTheRouter, { gateway: pooledGateway('failover') });
+
+  refusingEveryRewrite(pooledGateway('failover'));
+
+  await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+  await screen.getByRole('textbox', { name: 'Router name' }).fill('Ladder');
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await expect
+    .element(screen.getByRole('alert'))
+    .toHaveTextContent('the gateway file could not be written');
+  await expect.element(screen.getByRole('textbox', { name: 'Router name' })).toHaveValue('Ladder');
 });
 
 test('a router holding no child says so rather than standing an empty ladder', async () => {
