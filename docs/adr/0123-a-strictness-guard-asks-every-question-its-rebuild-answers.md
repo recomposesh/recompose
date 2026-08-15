@@ -119,7 +119,9 @@ tool said and adds nothing, which matches what the non-strict Anthropic path doc
   Rejected on two counts. `tool-schema.test.ts` pins referential identity: a canonical schema comes
   back as the same object rather than a copy, and dropping the guard breaks that spec. The rebuild
   also reallocates the whole schema graph while the predicate reads it, and this runs once per tool
-  per request.
+  per request. This record carries no benchmark figure, on purpose. The same measurement read 4.0x
+  and then 61.8x on unchanged code, minutes apart, as machine load shifted. A pinned contract and an
+  allocation count argue the point without moving.
 - **Add only the nested clause, leaving `title` and `required` alone.** The smallest change that
   closes the reported defect. Rejected because the predicate stays unsound, and an unsound predicate
   produced this bug. The next rule added to the rebuild would drift the same way.
