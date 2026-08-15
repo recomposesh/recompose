@@ -17,6 +17,7 @@ import {
   CLAUDE_SIGNATURES,
   CLAUDE_TLS_FINGERPRINT,
 } from './claude-transport-fingerprint';
+import { subscriptionBounds } from './transport-bounds';
 
 export { CLAUDE_OAUTH_TLS_FINGERPRINT, CLAUDE_TLS_FINGERPRINT };
 
@@ -125,6 +126,7 @@ function requestOptions(
 ): WreqInit {
   return {
     ...subscriptionTransportOptions(provider, policy),
+    ...subscriptionBounds,
     method: 'POST',
     headers: request.headers,
     body: request.body,

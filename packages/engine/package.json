@@ -20,6 +20,7 @@
     "js-tiktoken": "1.0.21",
     "koffi": "3.1.4",
     "node-wreq": "3.1.0",
+    "undici": "7.29.0",
     "ws": "8.21.1"
   },
   "devDependencies": {
