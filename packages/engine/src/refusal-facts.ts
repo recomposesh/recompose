@@ -47,7 +47,7 @@ function clientErrorFacts(refusal: ClientErrorRefusal): RefusalFacts {
   }
 }
 
-type ConfigFaultRefusal = Extract<
+export type ConfigFaultRefusal = Extract<
   TranslationRefusal,
   { reason: 'missing-target' | 'missing-credential' | 'unstreamable-answer' }
 >;
@@ -79,10 +79,22 @@ function configFaultFacts(refusal: ConfigFaultRefusal): RefusalFacts {
   };
 }
 
-const configFaultReasons = ['missing-target', 'missing-credential', 'unstreamable-answer'];
+const CONFIG_FAULT_REASONS = {
+  'missing-target': true,
+  'missing-credential': true,
+  'unstreamable-answer': true,
+} as const satisfies Record<ConfigFaultRefusal['reason'], true>;
 
+/**
+ * Whether one refusal names something a person left unwired rather than something a request asked for.
+ *
+ * @summary The reasons are keys of a record the compiler holds to `ConfigFaultRefusal`, so a fourth
+ * arm added to that union fails the build here rather than shipping a predicate that narrows to a
+ * shape the refusal never had. A list would only catch a misspelling; a record catches the omission
+ * too, and the omission is the one that reaches a caller as a throw about an unhandled arm.
+ */
 function isConfigFault(refusal: TranslationRefusal): refusal is ConfigFaultRefusal {
-  return configFaultReasons.includes(refusal.reason);
+  return Object.hasOwn(CONFIG_FAULT_REASONS, refusal.reason);
 }
 
 type TranslationFault = Exclude<TranslationRefusal, ConfigFaultRefusal | RouterRefusal>;

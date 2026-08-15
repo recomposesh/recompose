@@ -93,6 +93,20 @@ export const runtimeLookBoundMs = 3_000;
 export const proxyFetchBoundMs = 600_000;
 
 /**
+ * How long a target has to open its answer before the gateway hands the turn to the next child.
+ *
+ * @summary It bounds the wait for the first event alone and stops counting once that event lands, so
+ * a model that thinks for three minutes before its first token still streams for as long as it likes
+ * afterwards. Four minutes sits under the 300 seconds Node's own fetch allows between body chunks, so
+ * the failure a person reads is this one, naming the gateway and the target, rather than an untyped
+ * dispatcher error. It cannot be much tighter, and the room above it is thin: a reasoning model at
+ * high effort publishes a median near a hundred seconds to its first token, higher again at the
+ * efforts above that, and no vendor publishes a tail. Cutting a healthy request spends a second
+ * account proving the first one was fine, so the bound errs long inside the room it has.
+ */
+export const firstEventBoundMs = 240_000;
+
+/**
  * How long a look at an account's model list waits for the vendor before it counts as silence.
  *
  * @summary A person is watching the Model field while this runs, so it is a look rather than a

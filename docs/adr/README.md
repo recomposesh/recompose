@@ -121,3 +121,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0113](0113-a-router-walks-an-id-keyed-table.md)                                | A router walks an id-keyed table, one attempt at a time                             | Accepted   | 2026-08-14 |
 | [0114](0114-the-serving-suite-answers-from-a-scripted-upstream.md)              | The serving suite answers from a scripted upstream                                  | Accepted   | 2026-08-14 |
 | [0115](0115-a-docstring-earns-its-place-by-content.md)                          | A docstring earns its place by content, not by visibility                           | Accepted   | 2026-08-15 |
+| [0116](0116-a-first-event-has-a-deadline-the-gateway-owns.md)                   | A first event has a deadline the gateway owns                                       | Accepted   | 2026-08-15 |
