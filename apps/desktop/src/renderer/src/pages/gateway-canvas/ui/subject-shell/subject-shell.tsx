@@ -56,7 +56,13 @@ export function sectionHeading(title: string, tally?: ReactNode): ReactNode {
   );
 }
 
-/** A section title that carries the Edit affordance while its box rests. */
+/**
+ * A section title that carries the Edit affordance while its box rests.
+ *
+ * @summary The affordance prints at caption size beside the title, which leaves its ink shorter
+ * than the 24 pixel target the canvas accessibility contract names. It wears `hit-area` rather
+ * than growing, because a taller button would push the title and every field under it down.
+ */
 export function editableSectionHeading(
   title: string,
   editing: boolean,
@@ -66,7 +72,7 @@ export function editableSectionHeading(
     title,
     editing ? null : (
       <button
-        className="ms-auto shrink-0 rounded-control focus-ring px-1 text-caption font-medium text-accent-ink"
+        className="hit-area ms-auto shrink-0 rounded-control focus-ring px-1 text-caption font-medium text-accent-ink"
         onClick={onEdit}
         type="button"
       >

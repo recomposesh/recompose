@@ -2,6 +2,7 @@ import { attachEngineChild } from './engine-child';
 import { openGatewayListeners } from './gateway-listener';
 import { readParentPort } from './parent-port';
 import { loadInstalledPluginHost } from './plugin-runtime';
+import { providerFetch } from './provider/provider-dispatcher';
 import { stayResident } from './stay-resident';
 
 async function startEngineChild(): Promise<void> {
@@ -10,7 +11,7 @@ async function startEngineChild(): Promise<void> {
   attachEngineChild(
     readParentPort(process),
     openGatewayListeners,
-    globalThis.fetch,
+    providerFetch(),
     undefined,
     plugins,
   );
