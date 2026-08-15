@@ -61,6 +61,7 @@ copilotkit
 conv
 cooldown
 covguard
+crashpad
 credentialweight
 ctco
 cyclonedx
@@ -224,6 +225,7 @@ packfiles
 paeth
 pannable
 panresponder
+pgid
 pierrec
 pipx
 pluginhost
