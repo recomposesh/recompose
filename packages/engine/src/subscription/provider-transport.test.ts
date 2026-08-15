@@ -4,6 +4,7 @@ import { expect, test, vi } from 'vitest';
 import type { ProviderRequest } from './claude-request';
 
 import { providerSilenceBoundMs } from '../provider-bounds';
+import { CLAUDE_CIPHERS, CLAUDE_SIGNATURES } from './claude-transport-fingerprint';
 import {
   CLAUDE_OAUTH_TLS_FINGERPRINT,
   CLAUDE_TLS_FINGERPRINT,
@@ -38,23 +39,28 @@ test('the Claude transport carries the captured 2.1.220 TLS fingerprint', () => 
 });
 
 test('Claude uses HTTP/1.1 with the captured TLS controls and no injected headers', () => {
-  expect(subscriptionTransportOptions('anthropic')).toMatchObject({
+  const options = subscriptionTransportOptions('anthropic');
+
+  expect(options).toMatchObject({
     http1Only: true,
     disableDefaultHeaders: true,
     tlsSessionCacheCapacity: 32,
-    tlsOptions: {
-      alpnProtocols: ['HTTP1'],
-      minTlsVersion: 'TLS1.2',
-      maxTlsVersion: 'TLS1.3',
-      curvesList: 'X25519:P-256:P-384',
-      keyShares: ['X25519'],
-      sessionTicket: true,
-      preSharedKey: true,
-      pskDheKe: true,
-      enableOcspStapling: true,
-      enableSignedCertTimestamps: true,
-      extensionPermutation: CLAUDE_TLS_FINGERPRINT.extensionTypes,
-    },
+  });
+  expect(options.tlsOptions).toEqual({
+    alpnProtocols: ['HTTP1'],
+    minTlsVersion: 'TLS1.2',
+    maxTlsVersion: 'TLS1.3',
+    curvesList: 'X25519:P-256:P-384',
+    cipherList: CLAUDE_CIPHERS,
+    sigalgsList: CLAUDE_SIGNATURES,
+    keyShares: ['X25519'],
+    sessionTicket: true,
+    preSharedKey: true,
+    pskDheKe: true,
+    enableOcspStapling: true,
+    enableSignedCertTimestamps: true,
+    extensionPermutation: CLAUDE_TLS_FINGERPRINT.extensionTypes,
+    preserveTls13CipherList: true,
   });
 });
 
@@ -65,15 +71,25 @@ test('the Claude OAuth transport carries the captured control-plane fingerprint'
     ja3Md5: '203503b7023848ab87b9836c336b8e81',
     extensionTypes: [0, 23, 65281, 10, 11, 35, 13, 51, 45, 43],
   });
-  expect(
-    subscriptionRefreshTransportOptions('https://platform.claude.com/v1/oauth/token'),
-  ).toMatchObject({
+  const options = subscriptionRefreshTransportOptions('https://platform.claude.com/v1/oauth/token');
+
+  expect(options).toMatchObject({
     http1Only: true,
     disableDefaultHeaders: true,
     tlsSessionCacheCapacity: 8,
-    tlsOptions: {
-      extensionPermutation: CLAUDE_OAUTH_TLS_FINGERPRINT.extensionTypes,
-    },
+  });
+  expect(options.tlsOptions).toEqual({
+    minTlsVersion: 'TLS1.2',
+    maxTlsVersion: 'TLS1.3',
+    curvesList: 'X25519:P-256:P-384',
+    cipherList: CLAUDE_CIPHERS,
+    sigalgsList: CLAUDE_SIGNATURES,
+    keyShares: ['X25519'],
+    sessionTicket: true,
+    preSharedKey: true,
+    pskDheKe: true,
+    extensionPermutation: CLAUDE_OAUTH_TLS_FINGERPRINT.extensionTypes,
+    preserveTls13CipherList: true,
   });
 });
 
