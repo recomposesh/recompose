@@ -296,6 +296,8 @@ storybookjs
 strcmp
 streamable
 subline
+subschema
+subschemas
 Substack
 Supabase
 surfaceless
