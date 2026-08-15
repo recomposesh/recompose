@@ -28,18 +28,18 @@ import { childSeatBeside } from '../../lib/tidy-layout';
 import { useHeldDraft } from '../../lib/use-held-draft';
 import { askedTargetRemoval, graduatedDraft, targetNameIn } from './binding-acts';
 import { flowWiring } from './canvas-gestures';
+import { overlayOf, seatsOf } from './canvas-standings';
 import {
-  overlayOf,
-  seatsOf,
   useCanvasStandings,
   useEscapeCancelledDrag,
   useEscapeSettledCanvas,
   usePickerModels,
-} from './canvas-standings';
+} from './canvas-standings-hooks';
 import { subjectOf } from './canvas-subjects';
 import { targetModelIdOf } from './canvas-wiring';
 import { pickerOnCanvas } from './picker-on-canvas';
-import { removalAsked, useGatewayRemoval } from './removal-flow';
+import { removalAsked } from './removal-flow';
+import { useGatewayRemoval } from './removal-flow-hooks';
 
 const CANVAS_CLOCK_TICK_MS = 10_000;
 

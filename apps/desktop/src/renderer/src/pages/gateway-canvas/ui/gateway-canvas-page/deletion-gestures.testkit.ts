@@ -3,41 +3,16 @@ import type { Edge, Node } from '@xyflow/react';
 
 import type { CanvasWorld } from './canvas-standings';
 
+import { worldWhereWritesHang } from './canvas-world.testkit';
+
 /** Every write and every standing one Delete press left behind, in the order it made them. */
 export type DeletionRecord = {
   asked: (string | undefined)[];
   released: GatewayConfig[];
 };
 
-function idleDefinition(record: DeletionRecord): CanvasWorld['define'] {
-  return {
-    mutate: (written) => {
-      record.released.push(written);
-    },
-    mutateAsync: async (written) => {
-      record.released.push(written);
-
-      return Promise.resolve([]);
-    },
-    reset: () => {},
-    data: undefined,
-    error: null,
-    failureCount: 0,
-    failureReason: null,
-    isError: false,
-    isIdle: true,
-    isPaused: false,
-    isPending: false,
-    isSuccess: false,
-    status: 'idle',
-    submittedAt: 0,
-    variables: undefined,
-    context: undefined,
-  };
-}
-
 /**
- * A canvas world that records what a gesture asked and what it wrote, without a React tree.
+ * A canvas world that records what a Delete press asked and what it wrote, without a React tree.
  *
  * @summary The write never reports success, so a scenario reads the gateway a release would store
  * rather than the standings that would follow one landing: what a release costs is exactly the
@@ -47,34 +22,9 @@ export function worldOver(gateway: GatewayConfig): {
   world: CanvasWorld;
   record: DeletionRecord;
 } {
-  const record: DeletionRecord = { asked: [], released: [] };
-  const world: CanvasWorld = {
-    slug: gateway.slug,
-    gateway,
-    accounts: [],
-    standings: {
-      selection: undefined,
-      picker: undefined,
-      removing: undefined,
-      announced: undefined,
-      refusal: undefined,
-      select: () => {},
-      setPicker: () => {},
-      movePendingTo: () => {},
-      setRemoving: (nodeId) => {
-        record.asked.push(nodeId);
-      },
-      announce: () => {},
-      refuse: () => {},
-    },
-    graph: { nodes: [], edges: [] },
-    seats: {},
-    define: idleDefinition(record),
-    dragging: { current: { inFlight: false, escaped: false } },
-    view: { current: null },
-  };
+  const { world, record } = worldWhereWritesHang(gateway);
 
-  return { world, record };
+  return { world, record: { asked: record.asked, released: record.written } };
 }
 
 /** A card standing under one id, which is all a Delete press reads off it. */

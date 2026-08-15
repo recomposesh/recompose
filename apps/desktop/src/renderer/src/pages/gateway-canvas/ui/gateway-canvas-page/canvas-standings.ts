@@ -2,21 +2,15 @@ import type { Account, GatewayConfig } from '@recompose/contracts';
 import type { ReactFlowInstance } from '@xyflow/react';
 import type { RefObject } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-
+import type { useDefineVirtualModel } from '../../../../shared/api';
 import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { NodePositions, XY } from '../../lib/canvas-positions';
-import type { ModelListReading } from '../../lib/model-draft';
 import type { CanvasGraph, CanvasOverlay } from '../../lib/node-graph';
 import type { HeldDraft } from '../../lib/use-held-draft';
 
-import { providerModelsQueryOptions, useDefineVirtualModel } from '../../../../shared/api';
-import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { heldOver } from '../../lib/canvas-positions';
-import { modelListReading, refusalFromMain } from '../../lib/model-draft';
+import { refusalFromMain } from '../../lib/model-draft';
 import { tidyPositions } from '../../lib/tidy-layout';
-import { editingText } from './canvas-wiring';
 
 /**
  * A binding ask hanging off a card that already stands, which is where a cable was let go.
@@ -74,129 +68,117 @@ export type CanvasWorld = {
   view: RefObject<ReactFlowInstance | null>;
 };
 
-/**
- * The renderer-held standings of the canvas: selection, the picker, a removal, and what to say.
- *
- * @summary These five are what the canvas holds beyond engine truth, so they live in one place
- * and every gesture moves them through named acts. A refusal lands twice on purpose: once in the
- * live region as an interruption, and once beside the inspector where the person reads why.
- */
-export function useCanvasStandings(): CanvasStandings {
-  const [selection, setSelection] = useState<string | undefined>(undefined);
-  const [picker, setPicker] = useState<PickerStanding | undefined>(undefined);
-  const [removing, setRemoving] = useState<string | undefined>(undefined);
-  const [announced, setAnnounced] = useState<BindingOutcome | undefined>(undefined);
-  const [refusal, setRefusal] = useState<string | undefined>(undefined);
+/** What the five standings read as right now, which the acts answer beside. */
+export type HeldStandings = Pick<
+  CanvasStandings,
+  'selection' | 'picker' | 'removing' | 'announced' | 'refusal'
+>;
 
+/**
+ * Where each standing is written down, which a hook backs with state.
+ *
+ * @summary The pending card is moved through its own writer rather than written outright, because
+ * a drag moves it many times a second and only the standing as it reads at that moment says
+ * whether there is a card to move at all.
+ */
+export type StandingWriters = {
+  writeSelection: (subject: string | undefined) => void;
+  writePicker: (standing: PickerStanding | undefined) => void;
+  movePicker: (moved: (was: PickerStanding | undefined) => PickerStanding | undefined) => void;
+  writeRemoving: (nodeId: string | undefined) => void;
+  writeAnnounced: (outcome: BindingOutcome) => void;
+  writeRefusal: (sentence: string | undefined) => void;
+};
+
+/**
+ * Moves the pending card a drag is carrying, and leaves an anchored ask exactly where it stands.
+ *
+ * @summary Only an ask holding its own point has a card to move: one anchored to a stored target
+ * draws on that card, so a drag passing through would otherwise tear the ask off the thing it asks
+ * about.
+ */
+export function pendingMovedTo(
+  held: PickerStanding | undefined,
+  at: XY,
+): PickerStanding | undefined {
+  return held !== undefined && 'at' in held ? { ...held, at } : held;
+}
+
+/**
+ * The renderer-held standings of the canvas, each moved through a named act.
+ *
+ * @summary These five are what the canvas holds beyond engine truth, so they answer in one place
+ * rather than wherever a gesture happens to reach. Choosing something new clears the refusal, since
+ * a person who moved on is no longer reading why the last thing failed. A refusal lands twice on
+ * purpose: once in the live region as an interruption, and once beside the inspector where the
+ * person reads why.
+ */
+export function standingsOver(held: HeldStandings, writers: StandingWriters): CanvasStandings {
   return {
-    selection,
-    picker,
-    removing,
-    announced,
-    refusal,
+    ...held,
     select: (subject) => {
-      setSelection(subject);
-      setRefusal(undefined);
+      writers.writeSelection(subject);
+      writers.writeRefusal(undefined);
     },
-    setPicker,
+    setPicker: writers.writePicker,
     movePendingTo: (at) => {
-      setPicker((held) => (held !== undefined && 'at' in held ? { ...held, at } : held));
+      writers.movePicker((was) => pendingMovedTo(was, at));
     },
-    setRemoving,
-    announce: setAnnounced,
+    setRemoving: writers.writeRemoving,
+    announce: writers.writeAnnounced,
     refuse: (failure) => {
       const sentence = refusalFromMain(failure);
 
-      setAnnounced({ kind: 'refused', refusal: sentence });
-      setRefusal(sentence);
+      writers.writeAnnounced({ kind: 'refused', refusal: sentence });
+      writers.writeRefusal(sentence);
     },
   };
 }
 
-/** What the picker's second stage may offer: the models, or the refusal that stands for them. */
-export function usePickerModels(picker: PickerStanding | undefined): ModelListReading {
-  const accountId = picker?.step === 'provider-model' ? picker.accountId : '';
-  const look = useQuery({
-    ...providerModelsQueryOptions(accountId),
-    enabled: accountId !== '',
-  });
-
-  return modelListReading(look.data);
+/** The key that puts the most recent thing away, wherever the canvas is listening for it. */
+export function isEscape(key: string): boolean {
+  return key === 'Escape';
 }
 
 /**
- * Throws away a cable drag the moment Esc asks, before anything lands.
+ * Whether this key press throws away the cable drag in flight.
  *
- * @summary The library holds no cancel of its own, so Esc lets the pointer go for the person and
- * marks the drag escaped, which is what stops the release from opening a picker at wherever the
- * cable happened to hang.
+ * @summary The library holds no cancel of its own, so Esc has to let the pointer go for the person,
+ * and only while a cable is actually hanging: a press with nothing in flight belongs to whatever
+ * else is listening.
  */
-export function useEscapeCancelledDrag(dragging: RefObject<DragWatch>): void {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape' || !dragging.current.inFlight) {
-        return;
-      }
-
-      dragging.current.escaped = true;
-      document.dispatchEvent(new MouseEvent('mouseup'));
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [dragging]);
+export function escapeThrowsTheDragAway(key: string, dragging: DragWatch): boolean {
+  return isEscape(key) && dragging.inFlight;
 }
 
-function escapeAnsweredElsewhere(dragging: RefObject<DragWatch>): boolean {
-  return (
-    dragging.current.inFlight ||
-    editingText(document.activeElement) ||
-    document.querySelector('dialog[open]') !== null
-  );
-}
+/** What already answers Escape with a cancel of its own, so the canvas leaves it alone. */
+export type EscapeHolders = { dragging: boolean; editing: boolean; dialogOpen: boolean };
+
+/** What one Escape press settles on the canvas. */
+export type EscapeSettling = 'picker' | 'canvas' | 'nobody';
 
 /**
  * Lets Escape settle the canvas: the picker goes first, then the selection with its inspector.
  *
- * @summary Escape means "put away the most recent thing", so it works outward: a picker in
- * flight dismisses alone, and only a quiet canvas lets go of the selection. A drag in flight, a
- * text field mid-edit, and an open dialog all keep Escape to themselves, because each already
- * answers it with a cancel of its own.
+ * @summary Escape means "put away the most recent thing", so it works outward: a picker in flight
+ * dismisses alone, and only a quiet canvas lets go of the selection. A drag in flight, a text field
+ * mid-edit, and an open dialog all keep Escape to themselves, because each already answers it with
+ * a cancel of its own.
  */
-export function useEscapeSettledCanvas(
-  standings: CanvasStandings,
-  dragging: RefObject<DragWatch>,
-): void {
-  const { picker, setPicker, select } = standings;
+export function escapeSettling(
+  picker: PickerStanding | undefined,
+  holders: EscapeHolders,
+): EscapeSettling {
+  if (holders.dragging || holders.editing || holders.dialogOpen) {
+    return 'nobody';
+  }
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape' || escapeAnsweredElsewhere(dragging)) {
-        return;
-      }
+  return picker === undefined ? 'canvas' : 'picker';
+}
 
-      if (picker !== undefined) {
-        setPicker(undefined);
-
-        return;
-      }
-
-      select(undefined);
-
-      if (inspectorOpen()) {
-        toggleInspector();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [picker, setPicker, select, dragging]);
+/** The account whose models the picker asks for, or none while it is asking something else. */
+export function pickedAccountId(picker: PickerStanding | undefined): string {
+  return picker?.step === 'provider-model' ? picker.accountId : '';
 }
 
 /** The two renderer standings the graph draws beside engine truth. */

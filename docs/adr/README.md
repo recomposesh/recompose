@@ -124,3 +124,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0116](0116-a-first-event-has-a-deadline-the-gateway-owns.md)                   | A first event has a deadline the gateway owns                                       | Accepted   | 2026-08-15 |
 | [0117](0117-every-test-project-restates-its-pacing.md)                          | Every test project restates its pacing                                              | Accepted   | 2026-08-15 |
 | [0118](0118-a-scenario-folder-carries-its-checkout.md)                          | A scenario's folder carries its checkout                                            | Accepted   | 2026-08-15 |
+| [0125](0125-a-mutated-module-holds-no-hooks.md)                                 | A mutated module holds no hooks                                                     | Accepted   | 2026-08-15 |
