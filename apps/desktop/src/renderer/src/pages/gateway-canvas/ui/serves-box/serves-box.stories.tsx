@@ -4,6 +4,7 @@ import preview from '#.storybook/preview';
 
 import { servedModels } from '../../model/served-models';
 import { servingGateway, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { ServesBox } from './serves-box';
 
 const serving = servedModels(servingGateway.virtualModels, storedAccounts.accounts);
@@ -11,13 +12,7 @@ const serving = servedModels(servingGateway.virtualModels, storedAccounts.accoun
 const meta = preview.meta({
   component: ServesBox,
   args: { served: serving },
-  decorators: [
-    (Story) => (
-      <div className="mx-auto my-4 w-76">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [framedAsDrawerBox],
 });
 
 /** A gateway with virtual models on it, which is the box a person reads most of the time. */
@@ -25,6 +20,25 @@ export const Serving = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('list')).toBeVisible();
     await expect(canvas.getAllByRole('listitem')).toHaveLength(serving.length);
+  },
+});
+
+/**
+ * Every binding the box holds reads whole at the width the inspector stands at.
+ *
+ * @summary A row telling a person to repair a binding has to say which binding it means, and the
+ * longest one this gateway serves is the one that would run out of panel first, so the box is
+ * measured against that row rather than against a name short enough to prove nothing.
+ */
+export const EveryBindingReadsWhole = meta.story({
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByText('openrouter · openai/gpt-5')).toBeVisible();
+
+    const clipped = [...canvasElement.querySelectorAll<HTMLElement>('span.text-mono-value')].filter(
+      (line) => line.scrollWidth > line.clientWidth,
+    );
+
+    await expect(clipped.map((line) => line.innerText)).toEqual([]);
   },
 });
 

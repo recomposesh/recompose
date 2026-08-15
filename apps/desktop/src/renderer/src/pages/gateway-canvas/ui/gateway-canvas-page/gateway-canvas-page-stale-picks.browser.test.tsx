@@ -15,6 +15,8 @@ import {
   targetPortOf,
 } from '../../testing/canvas-gestures.testkit';
 import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
+import { ladderUnder } from '../../testing/routed-canvas.testkit';
+import { pooledWorld } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -88,6 +90,53 @@ test('the pick outlives its anchor card and still lands where a person takes it'
   await expect
     .poll(async () => storedBindingOf('creative'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
+});
+
+async function deletedThePool(screen: Awaited<ReturnType<typeof canvasPageOn>>): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: /Pooled/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Virtual Model' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete', exact: true }));
+
+  await expect.poll(async () => ladderUnder('pooled')).toBeUndefined();
+}
+
+test('a child pick answered after its pool left the gateway joins no ladder', async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await draggedCable(
+    await sourcePortOf(screen.container, 'route:pooled'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+
+  await deletedThePool(screen);
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  expect((await storedModels()).map((model) => model.id)).toEqual(['fast']);
+});
+
+test("a child rebind answered after its pool left the gateway moves nobody's binding", async () => {
+  const screen = await canvasPageOn(pooledWorld);
+
+  await draggedCable(
+    await reconnectAnchorOf(screen.container, 'cable:pooled:t2'),
+    await targetPortOf(screen.container, 'target:fast'),
+  );
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+
+  await deletedThePool(screen);
+  await userEvent.click(
+    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
+  );
+
+  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  expect(await storedBindingOf('fast')).toEqual({
+    accountId: 'k1',
+    providerModel: 'claude-haiku-4-5',
+  });
 });
 
 test('a pick answered after its draft left refuses out loud and stores nothing', async () => {

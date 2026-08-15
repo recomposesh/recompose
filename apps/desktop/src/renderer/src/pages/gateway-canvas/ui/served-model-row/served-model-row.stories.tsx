@@ -4,6 +4,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { ServedModelRow } from './served-model-row';
 
 const workKey: Account = {
@@ -33,24 +34,66 @@ const meta = preview.meta({
   args: { served: serving },
   decorators: [
     (Story) => (
-      <ul className="mx-auto my-4 w-76 field-box">
+      <ul className="field-box">
         <Story />
       </ul>
     ),
+    framedAsDrawerBox,
   ],
 });
+
+/** The lines a row gave up on, which is what it lets go of when it runs out of room. */
+function clippedLines(canvasElement: HTMLElement): readonly string[] {
+  return [...canvasElement.querySelectorAll<HTMLElement>('li span.truncate')]
+    .filter((line) => line.scrollWidth > line.clientWidth)
+    .map((line) => line.innerText);
+}
 
 /**
  * A definition whose target still stands, which is the row a person reads most of the time.
  *
- * @summary The name a client asks for leads, and the binding reads beneath it in the direction a
- * request travels, so what a request under this name will spend is visible without opening anything.
+ * @summary The name a person gave it leads with the id a client sends beside it, and what serves
+ * reads beneath the pair, so the account and the real model a request under this name will spend
+ * are visible without opening anything.
  */
 export const Serving = meta.story({
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByText('Fast')).toBeVisible();
-    await expect(await canvas.findByText('fast → work · claude-haiku-4-5')).toBeVisible();
+    await expect(await canvas.findByText('fast')).toBeVisible();
+    await expect(await canvas.findByText('work · claude-haiku-4-5')).toBeVisible();
     await expect(canvas.queryByText('serving')).toBeNull();
+    await expect(clippedLines(canvasElement)).toEqual([]);
+  },
+});
+
+/**
+ * A binding long enough to test the panel, which still reads whole rather than trailing off.
+ *
+ * @summary The binding is the fact a person opened this box for, so it keeps the row's width and
+ * the client-facing id beside the name gives its own up first: a row that hides which account and
+ * which real model answer under a name is a row that cannot be acted on.
+ */
+export const ALongBindingStillReadsWhole = meta.story({
+  args: {
+    served: {
+      id: 'creative',
+      displayName: 'Creative',
+      providerModel: 'openai/gpt-5',
+      target: {
+        standing: 'serving',
+        account: {
+          id: 'g1',
+          provider: 'openrouter',
+          kind: 'aggregator',
+          label: 'openrouter',
+          credentialRef: 'c2',
+        },
+      },
+    },
+  },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByText('openrouter · openai/gpt-5')).toBeVisible();
+    await expect(clippedLines(canvasElement)).toEqual([]);
   },
 });
 
@@ -65,7 +108,7 @@ export const ServedLocally = meta.story({
     },
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('local → Ollama · llama3.2')).toBeVisible();
+    await expect(await canvas.findByText('Ollama · llama3.2')).toBeVisible();
   },
 });
 
@@ -77,9 +120,10 @@ export const ServedLocally = meta.story({
  */
 export const TargetRemoved = meta.story({
   args: { served: { ...serving, target: { standing: 'removed' } } },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByText('target removed')).toBeVisible();
-    await expect(await canvas.findByText('fast → claude-haiku-4-5')).toBeVisible();
+    await expect(await canvas.findByText('claude-haiku-4-5')).toBeVisible();
+    await expect(clippedLines(canvasElement)).toEqual([]);
   },
 });
 
@@ -88,7 +132,9 @@ export const TargetRemoved = meta.story({
  *
  * @summary The row counts what left rather than declaring the binding removed, because a request
  * under this name still reaches an account. The binding names the account that answers now, so the
- * line and the count describe the same target rather than two.
+ * line and the count describe the same target rather than two. The longer count leaves the top
+ * line too narrow for everything, and what gives way is the client-facing id: the name and the
+ * binding both read whole, which is the pair a person acts on.
  */
 export const ThinnedPool = meta.story({
   args: {
@@ -99,9 +145,10 @@ export const ThinnedPool = meta.story({
       target: { standing: 'thinned', account: workKey, lost: 1 },
     },
   },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByText('1 target removed')).toBeVisible();
-    await expect(await canvas.findByText('spread → work · claude-opus-5')).toBeVisible();
+    await expect(await canvas.findByText('work · claude-opus-5')).toBeVisible();
+    await expect(clippedLines(canvasElement)).toEqual(['spread']);
   },
 });
 

@@ -18,13 +18,27 @@ import { modelListReading, refusalFromMain } from '../../lib/model-draft';
 import { tidyPositions } from '../../lib/tidy-layout';
 import { editingText } from './canvas-wiring';
 
+/**
+ * A binding ask hanging off a card that already stands, which is where a cable was let go.
+ *
+ * @summary A cable let go on a stored target either binds one more thing or moves the binding a
+ * cable already stood for, and only the gesture that opened the ask knows which. Carrying the
+ * route node the drop replaces is what lets the pick write in that node's place: an ask that
+ * forgot it would append where a person meant to move, and grow the ladder they were rearranging.
+ */
+type AnchoredAsk = {
+  from: string;
+  anchor: string;
+  replacing?: string | undefined;
+};
+
 /** Where the binding ask stands: on a pending card, or anchored to a stored target. */
 export type PickerStanding =
   | { step: 'kind'; from: string; at: XY; origin: PickerOrigin }
   | { step: 'account'; from: string; at: XY; origin: PickerOrigin }
-  | { step: 'account'; from: string; anchor: string }
+  | ({ step: 'account' } & AnchoredAsk)
   | { step: 'provider-model'; from: string; accountId: string; at: XY; origin: PickerOrigin }
-  | { step: 'provider-model'; from: string; accountId: string; anchor: string };
+  | ({ step: 'provider-model'; accountId: string } & AnchoredAsk);
 
 /** What opened the picker: a cable let go by hand, or an ask answered with the keyboard. */
 type PickerOrigin = 'drop' | 'ask';

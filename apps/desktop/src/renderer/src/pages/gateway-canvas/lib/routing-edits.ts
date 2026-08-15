@@ -1,4 +1,10 @@
-import type { GatewayConfig, RouteNode, RouterPolicy, Routing } from '@recompose/contracts';
+import type {
+  GatewayConfig,
+  RouteNode,
+  RouterPolicy,
+  RouteTarget,
+  Routing,
+} from '@recompose/contracts';
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
@@ -156,6 +162,41 @@ export function gatewayDroppingNode(
   );
 }
 
+function beneath(routing: Routing, nodeId: string): ReadonlySet<string> {
+  const reached = new Set(standingUnder(routing, nodeId));
+
+  reached.delete(nodeId);
+
+  return reached;
+}
+
+/**
+ * The gateway once one route node stands for a different target, in the very place it held.
+ *
+ * @summary Dragging one end of a cable somewhere else moves a binding rather than adding one, so
+ * the picked target takes the replaced node's own id and keeps the rank its siblings order it by:
+ * a write that appended instead would leave the ladder a request walks longer than the person
+ * meant. A router replaced this way takes the ladder it held with it, the same way rebinding a
+ * routed definition's entry does, because a node whose parent stopped naming it would stand where
+ * no request could reach it. A node the table never held is rebound by nobody.
+ */
+export function gatewayRebindingNode(
+  gateway: GatewayConfig,
+  modelId: string,
+  nodeId: string,
+  target: RouteTarget,
+): GatewayConfig {
+  return routedBy(gateway, modelId, (was) => {
+    if (was.nodes[nodeId] === undefined) {
+      return was;
+    }
+
+    const thinned = tableWithout(was, beneath(was, nodeId));
+
+    return { entry: thinned.entry, nodes: { ...thinned.nodes, [nodeId]: target } };
+  });
+}
+
 function moved(children: readonly string[], from: number, to: number): string[] {
   const held = children[from];
 
@@ -188,6 +229,26 @@ export function gatewayReordering(
       ...router,
       children: moved(router.children, from, to),
     })),
+  );
+}
+
+/**
+ * The gateway once one router answers to a name a person gave it, or back to its mode.
+ *
+ * @summary A composition standing two routers that spread the same way reads as two cards saying
+ * one word, and a refusal naming the ladder that stood in the way names both, so a person owes
+ * themselves the chance to tell them apart. Nothing is the name of a router nobody named, which is
+ * what clearing the field writes: the mode speaks again rather than a blank card standing there.
+ * The children and the mode are untouched, because naming a thing is not rebuilding it.
+ */
+export function gatewayNamingRouter(
+  gateway: GatewayConfig,
+  modelId: string,
+  routerId: string,
+  displayName: string | undefined,
+): GatewayConfig {
+  return routedBy(gateway, modelId, (was) =>
+    routerEdited(was, routerId, (router) => ({ ...router, displayName })),
   );
 }
 

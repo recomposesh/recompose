@@ -41,7 +41,7 @@ export const Serving = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: /My Gateway/ })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: /Fast/ })).toBeVisible();
-    await expect(await canvas.findByText('fast → work · claude-haiku-4-5')).toBeVisible();
+    await expect(await canvas.findByText('work · claude-haiku-4-5')).toBeVisible();
   },
 });
 

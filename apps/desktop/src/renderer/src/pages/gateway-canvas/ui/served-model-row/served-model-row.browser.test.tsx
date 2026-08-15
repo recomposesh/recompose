@@ -35,9 +35,8 @@ test('a serving row reads its name over the binding a request under it reaches',
   const screen = await renderRow(serving);
 
   await expect.element(screen.getByText('Fast', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('fast → work · claude-haiku-4-5', { exact: true }))
-    .toBeVisible();
+  await expect.element(screen.getByText('fast', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('work · claude-haiku-4-5', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('serving', { exact: true })).not.toBeInTheDocument();
   expect(screen.container.querySelector('.text-virtual-model svg')).not.toBeNull();
 });
@@ -46,7 +45,7 @@ test('a row whose target account left the registry says so instead of serving', 
   const screen = await renderRow({ ...serving, target: { standing: 'removed' } });
 
   await expect.element(screen.getByText('target removed', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('fast → claude-haiku-4-5', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
 test('a row whose composition names no target yet says so rather than claiming one went', async () => {
@@ -80,9 +79,7 @@ test('a row still serving through a sibling reads how many targets left, not a b
   const screen = await renderRow(thinned);
 
   await expect.element(screen.getByText('1 target removed', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('spread → spare · claude-opus-5', { exact: true }))
-    .toBeVisible();
+  await expect.element(screen.getByText('spare · claude-opus-5', { exact: true })).toBeVisible();
 });
 
 test('a row that lost several targets counts them in the plural', async () => {

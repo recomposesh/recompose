@@ -46,7 +46,8 @@ export const pooledGateway: GatewayConfig = pooledSeed(
   [{ id: 'fast', displayName: 'Fast', routing: { entry: 'f1', nodes: { f1: HAIKU } } }],
 );
 
-const nestedGateway: GatewayConfig = pooledSeed({
+/** A pool whose second child is a router of its own, for the scenarios about a nested ladder. */
+export const nestedGateway: GatewayConfig = pooledSeed({
   r1: { kind: 'router', policy: { mode: 'failover' }, children: ['t1', 'r2'] },
   t1: HAIKU,
   r2: { kind: 'router', policy: { mode: 'round-robin' }, children: ['t2'] },

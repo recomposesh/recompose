@@ -97,6 +97,19 @@ test("Delete on a routed model's own cable asks before it takes the whole ladder
   await expect.poll(async () => ladderUnder('pooled')).toEqual(['t1', 't2']);
 });
 
+test('the drawer link removes a router too, asking the same question the Delete key does', async () => {
+  const screen = await canvasPageOn(nestedWorld);
+
+  await selectedCard(screen.container, 'route:pooled:r2');
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+
+  await expect.element(screen.getByText('Delete the router "Round-robin"?')).toBeVisible();
+
+  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
+
+  await expect.poll(async () => ladderUnder('pooled')).toEqual(['t1']);
+});
+
 test('confirming a nested router removal drops it and its children and leaves the ladder serving', async () => {
   const screen = await canvasPageOn(nestedWorld);
 

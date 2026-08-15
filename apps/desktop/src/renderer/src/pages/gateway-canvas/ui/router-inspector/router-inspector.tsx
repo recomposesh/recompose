@@ -8,6 +8,7 @@ import { useDefineVirtualModel } from '../../../../shared/api';
 import { SegmentedControl } from '../../../../shared/ui';
 import { gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
 import { RouterChildList } from '../router-child-list/router-child-list';
+import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
 import { routerChildRows } from './router-child-rows';
 
@@ -40,14 +41,15 @@ const modeOptions = [
 ] as const satisfies readonly { value: RouterMode; label: string }[];
 
 /**
- * The whole of what a person decides about a router: how it spreads, and over what.
+ * The whole of what a person decides about a router: what it is called, how it spreads, over what.
  *
- * @summary The mode sits at the top and the children stack under it, so the sentence between them
- * describes the very control a person just moved rather than standing as fixed helper text. Under
- * failover the sentence says which end wins; under round-robin it names the prompt-cache cost of
- * rotation at the point of choice, because that cost is the reason to weigh one mode against the
- * other. Switching the mode leaves the children and their order exactly as they stood, so trying
- * the other mode is never a rebuild.
+ * @summary The name leads, because it is the one fact a person writes rather than picks, and every
+ * other surface calls the router by it from then on. The mode sits under the name and the children
+ * stack below it, so the sentence between them describes the very control a person just moved
+ * rather than standing as fixed helper text. Under failover the sentence says which end wins;
+ * under round-robin it names the prompt-cache cost of rotation at the point of choice, because
+ * that cost is the reason to weigh one mode against the other. Switching the mode leaves the
+ * children and their order exactly as they stood, so trying the other mode is never a rebuild.
  */
 export function RouterInspector({
   gateway,
@@ -61,6 +63,13 @@ export function RouterInspector({
 
   return (
     <>
+      <RouterGeneralInfo
+        displayName={router.displayName}
+        gateway={gateway}
+        mode={mode}
+        modelId={model.id}
+        routeNodeId={routeNodeId}
+      />
       {sectionHeading('Mode')}
       <SegmentedControl
         label="Routing mode"

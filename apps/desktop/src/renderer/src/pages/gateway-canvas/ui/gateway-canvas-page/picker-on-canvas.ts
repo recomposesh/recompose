@@ -7,7 +7,7 @@ import type { CanvasWorld, PickerStanding } from './canvas-standings';
 import { targetGroups } from '../../lib/target-groups';
 import { completedDraftPick, completedRebindPick } from './binding-acts';
 import { routerSeatOf } from './canvas-wiring';
-import { boundThroughARouter, completedChildPick } from './router-acts';
+import { boundThroughARouter, completedChildPick, completedChildRebindPick } from './router-acts';
 
 /** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
 export type PickerOnCanvas = {
@@ -32,25 +32,45 @@ function pickerGroups(
     : [{ options: offered.map((id) => ({ id, name: id })) }];
 }
 
+/**
+ * Where the answer to a completed pick goes, which is one act per shape of the ask behind it.
+ *
+ * @summary A draft becomes a whole definition, a virtual model's own cable aims that definition
+ * somewhere new, and a cable off a router either moves the child it already ended at or binds one
+ * more. The ask carries which of the last two it is, because only the gesture that opened it knows
+ * whether the person was rearranging a binding or composing another.
+ */
 function completedPick(
   world: CanvasWorld,
-  from: string,
+  picker: PickerStanding,
   accountId: string,
   providerModel: string,
 ): void {
+  const { from } = picker;
+
   if (from === 'draft') {
     completedDraftPick(world, accountId, providerModel);
 
     return;
   }
 
-  if (routerSeatOf(from) === undefined) {
+  const seat = routerSeatOf(from);
+
+  if (seat === undefined) {
     completedRebindPick(world, accountId, providerModel);
 
     return;
   }
 
-  completedChildPick(world, from, accountId, providerModel);
+  const replacing = 'replacing' in picker ? picker.replacing : undefined;
+
+  if (replacing === undefined) {
+    completedChildPick(world, seat, accountId, providerModel);
+
+    return;
+  }
+
+  completedChildRebindPick(world, seat, replacing, accountId, providerModel);
 }
 
 /**
@@ -109,7 +129,12 @@ function steppedBack(world: CanvasWorld, picker: PickerStanding): (() => void) |
     world.standings.setPicker(
       'at' in picker
         ? { step: 'account', from: picker.from, at: picker.at, origin: picker.origin }
-        : { step: 'account', from: picker.from, anchor: picker.anchor },
+        : {
+            step: 'account',
+            from: picker.from,
+            anchor: picker.anchor,
+            replacing: picker.replacing,
+          },
     );
   };
 }
@@ -153,12 +178,18 @@ export function pickerOnCanvas(
               at: picker.at,
               origin: picker.origin,
             }
-          : { step: 'provider-model', from: picker.from, accountId, anchor: picker.anchor },
+          : {
+              step: 'provider-model',
+              from: picker.from,
+              accountId,
+              anchor: picker.anchor,
+              replacing: picker.replacing,
+            },
       );
     },
     onPickProviderModel: (providerModel) => {
       if (picker.step === 'provider-model') {
-        completedPick(world, picker.from, picker.accountId, providerModel);
+        completedPick(world, picker, picker.accountId, providerModel);
       }
     },
     onStepBack: steppedBack(world, picker),
