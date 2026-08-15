@@ -14,10 +14,26 @@ function declaredTypeName(key: string, value: unknown): string | undefined {
   return key === 'type' && typeof value === 'string' ? value : undefined;
 }
 
+/**
+ * Whether a value could be what JSON Schema means by `additionalProperties`.
+ *
+ * @summary The keyword takes a schema as well as a boolean: `{"type": "string"}` allows extras and
+ * demands they be strings. Anything else says nothing a provider can act on, and the safe reading
+ * of an unreadable value is a refusal, because guessing wider than the tool asked for is the one
+ * direction that costs safety. The Anthropic encoder once read the root this way while every depth
+ * below it read the value literally, so one schema carried two readings of the same garbage.
+ */
+function extrasAreReadable(value: unknown): boolean {
+  return typeof value === 'boolean' || isJsonObject(value);
+}
+
 function normalizedEntry([key, value]: [string, unknown]): [string, unknown] {
   const declared = declaredTypeName(key, value);
 
-  return [key, declared === undefined ? normalizedSchemaValue(value) : declared.toLowerCase()];
+  if (declared !== undefined) return [key, declared.toLowerCase()];
+  if (key === 'additionalProperties' && !extrasAreReadable(value)) return [key, false];
+
+  return [key, normalizedSchemaValue(value)];
 }
 
 function normalizedSchemaValue(value: unknown): unknown {
@@ -41,9 +57,10 @@ export function normalizedSchema(schema: HubJsonObject): HubJsonObject {
 function entryIsNormalized([key, value]: [string, unknown]): boolean {
   const declared = declaredTypeName(key, value);
 
-  return declared === undefined
-    ? schemaTypesAreNormalized(value)
-    : declared === declared.toLowerCase();
+  if (declared !== undefined) return declared === declared.toLowerCase();
+  if (key === 'additionalProperties' && !extrasAreReadable(value)) return false;
+
+  return schemaTypesAreNormalized(value);
 }
 
 export function schemaTypesAreNormalized(value: unknown): boolean {

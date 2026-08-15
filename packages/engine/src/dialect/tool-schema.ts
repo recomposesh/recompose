@@ -226,18 +226,13 @@ function completedSchemaValue(value: unknown): unknown {
 /**
  * What Anthropic is told about extra properties, which is what the tool said.
  *
- * @summary JSON Schema lets `additionalProperties` be a schema as well as a boolean: `{"type":
- * "string"}` means extras are allowed and must be strings. Reading that as `false` says the
- * opposite, so a tool that accepted extras stopped accepting them on the way across. A schema
- * passes through, a boolean passes through, and only a value no schema could mean is read as a
- * refusal, because guessing wider than the tool asked for is the one direction that costs safety.
+ * @summary A schema passes through and a boolean passes through, because reading `{"type":
+ * "string"}` as `false` says the opposite of what the tool asked for. Normalization has already
+ * turned an unreadable value into a refusal, at this depth and every other, so nothing is left to
+ * decide here.
  */
 function anthropicAdditionalProperties(value: unknown): HubJsonObject {
-  if (value === undefined) return {};
-
-  const carried = typeof value === 'boolean' || isJsonObject(value) ? value : false;
-
-  return { additionalProperties: carried };
+  return value === undefined ? {} : { additionalProperties: value };
 }
 
 function anthropicSchemaDeclaration(value: unknown): HubJsonObject {

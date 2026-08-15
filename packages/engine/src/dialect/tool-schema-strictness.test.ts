@@ -150,6 +150,27 @@ describe('what a schema already refusing extras at its root still gets cleaned o
   });
 });
 
+describe('what a nested answer about extras that no schema could mean becomes', () => {
+  it('reaches Anthropic as a refusal, the reading its root has always had', () => {
+    const encoded = anthropicToolSchema({
+      type: 'object',
+      properties: { user: { type: 'object', properties: {}, additionalProperties: 'yes' } },
+    });
+
+    expect(propertyOf(encoded, 'user')['additionalProperties']).toBe(false);
+  });
+
+  it('reaches a strict provider as a refusal, though the root looked canonical', () => {
+    const strict = strictProviderToolSchema({
+      type: 'object',
+      additionalProperties: false,
+      properties: { user: { type: 'object', properties: {}, additionalProperties: 'yes' } },
+    });
+
+    expect(propertyOf(strict, 'user')['additionalProperties']).toBe(false);
+  });
+});
+
 describe('what a nested object carries into Anthropic', () => {
   it('leaves a nested object saying nothing about extras still saying nothing', () => {
     const encoded = anthropicToolSchema({
