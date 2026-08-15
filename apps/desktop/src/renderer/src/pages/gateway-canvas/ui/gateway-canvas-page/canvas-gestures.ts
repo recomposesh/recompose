@@ -10,6 +10,7 @@ import { emptyDefinition } from '../../lib/model-draft';
 import { columnBeyond, MODEL_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, startDrafting } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
+import { shownWhereItWasBorn } from './born-card-camera';
 import {
   bindingCableId,
   cableAddressOf,
@@ -244,10 +245,20 @@ function seatForABornDraft(world: CanvasWorld): XY {
   return heldDraft(world.slug)?.seat ?? seatForNewNode(MODEL_COLUMN, world.seats);
 }
 
+/**
+ * The asks a card hangs off its own port, which a keyboard reaches without a pointer.
+ *
+ * @summary A plus names no point, so what it stands can seat past the pane at the zoom a person
+ * was working at, and the view widens until it shows. A cable let go names its own point and gets
+ * no such look, which is the line a completed pick already draws.
+ */
 function cardAsks(world: CanvasWorld) {
   return {
     onAddVirtualModel: () => {
-      birthedDraftAt(world, seatForABornDraft(world));
+      const seat = seatForABornDraft(world);
+
+      birthedDraftAt(world, seat);
+      shownWhereItWasBorn(world, seat);
     },
     onBindFrom: (from: string) => {
       world.standings.setPicker({

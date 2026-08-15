@@ -24,24 +24,71 @@ function boundsAroundEveryCard(world: CanvasWorld, born: XY) {
  * pane at the zoom a person was working at. A composition that grew where nobody can see it reads
  * as a pick that did nothing, so the view widens exactly then and holds still otherwise. The
  * bounds come from the seats this side already holds rather than from the flow, because the born
- * card reaches the flow a render after the write lands. The look itself waits two frames, since
- * the pick also opens the inspector and the pane it narrows is the pane the card must fit.
+ * card reaches the flow a render after the write lands.
  */
-function fitTheBornCard(world: CanvasWorld, seat: XY): void {
+function fitTheBornCard(world: CanvasWorld, seat: XY, pane: DOMRect): void {
   const view = world.view.current;
-  const pane = document.querySelector('.react-flow')?.getBoundingClientRect();
 
-  if (view === null || pane === undefined) {
-    return;
-  }
-
-  if (cardFitsTheView(seat, CARD_MEASURE, viewportOf(view), pane)) {
+  if (view === null || cardFitsTheView(seat, CARD_MEASURE, viewportOf(view), pane)) {
     return;
   }
 
   void view.fitBounds(boundsAroundEveryCard(world, seat), { padding: 0.1 });
 }
 
+/** The pane a born card has to fit inside, or nothing at all while the canvas stands hidden. */
+function paneTheCanvasShows(): DOMRect | undefined {
+  const pane = document.querySelector('.react-flow')?.getBoundingClientRect();
+
+  if (pane === undefined || pane.width === 0 || pane.height === 0) {
+    return undefined;
+  }
+
+  return pane;
+}
+
+/**
+ * Looks at the born card once there is a canvas to look at, and asks nothing of one that never is.
+ *
+ * @summary React hides a suspended subtree outright, and a hidden pane measures nothing, which
+ * reads exactly like a card standing past it. Widening the view on that reading moves the canvas
+ * for a card that shows fine, so the look waits for the box to come back rather than judging a
+ * canvas nobody can see. The wait is the platform's own, because how long a page suspends is a
+ * question about data rather than about frames.
+ */
+function lookedAtOnceTheCanvasShows(world: CanvasWorld, seat: XY): void {
+  const showing = paneTheCanvasShows();
+
+  if (showing !== undefined) {
+    fitTheBornCard(world, seat, showing);
+
+    return;
+  }
+
+  const canvas = document.querySelector('.react-flow');
+
+  if (canvas === null) {
+    return;
+  }
+
+  const watch = new ResizeObserver(() => {
+    const shown = paneTheCanvasShows();
+
+    if (shown !== undefined) {
+      watch.disconnect();
+      fitTheBornCard(world, seat, shown);
+    }
+  });
+
+  watch.observe(canvas);
+}
+
+/**
+ * Shows a card born at a seat, once the canvas has settled around the birth.
+ *
+ * @summary The look waits two frames before it measures anything, since the birth also opens the
+ * inspector and the pane it narrows is the pane the card must fit.
+ */
 export function shownWhereItWasBorn(world: CanvasWorld, seat: XY | undefined): void {
   if (seat === undefined) {
     return;
@@ -49,7 +96,7 @@ export function shownWhereItWasBorn(world: CanvasWorld, seat: XY | undefined): v
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      fitTheBornCard(world, seat);
+      lookedAtOnceTheCanvasShows(world, seat);
     });
   });
 }
