@@ -106,6 +106,33 @@ test('selecting a node opens a closed inspector back up on that subject', async 
   await expect.element(drawer.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
 });
 
+test('Escape while a name is being typed is kept by the field, not by the canvas', async () => {
+  const screen = await canvasPageOn();
+
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  await userEvent.keyboard('{Escape}');
+
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Steady');
+});
+
+test('Escape on a canvas holding no selection opens nothing, least of all the inspector', async () => {
+  const screen = await canvasPageOn();
+
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+
+  await userEvent.keyboard('{Escape}');
+
+  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: /work/ }))
+    .toHaveAttribute('aria-pressed', 'false');
+});
+
 test('Escape on a quiet canvas lets the selection go and puts the inspector away', async () => {
   const screen = await canvasPageOn();
 

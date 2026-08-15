@@ -2,7 +2,6 @@ import type { RouteNode, VirtualModel } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { nameOfRouter } from '@recompose/contracts';
-import { useQueryClient } from '@tanstack/react-query';
 
 import type { CanvasWorld } from './canvas-standings';
 
@@ -10,7 +9,6 @@ import {
   engineLogsQueryOptions,
   engineStatesQueryOptions,
   engineTrafficQueryOptions,
-  useRemoveGateway,
 } from '../../../../shared/api';
 import { forgetLookedAtGateway } from '../../../../shared/lib';
 import { dropCanvasPositions } from '../../lib/canvas-position-store';
@@ -186,7 +184,14 @@ function withoutGateway<Carried>(
   return remaining;
 }
 
-function forgottenEverywhere(queryClient: QueryClient, slug: string): void {
+/**
+ * Everything this side held about one gateway, forgotten the moment the delete lands.
+ *
+ * @summary A landed delete drops the arrangement, the viewport, the draft, the last-looked-at
+ * memory, and every cached reading held under the slug, because a gateway that no longer exists
+ * must not greet its own ghost on the next visit.
+ */
+export function forgottenEverywhere(queryClient: QueryClient, slug: string): void {
   dropCanvasPositions(slug);
   dropCanvasViewport(slug);
   leaveDrafting(slug);
@@ -196,34 +201,4 @@ function forgottenEverywhere(queryClient: QueryClient, slug: string): void {
     withoutGateway(slug, held),
   );
   queryClient.setQueryData(engineStatesQueryOptions.queryKey, (held) => withoutGateway(slug, held));
-}
-
-/**
- * The one act that deletes this gateway, leaving nothing of it behind on this side.
- *
- * @summary A landed delete drops the arrangement, the viewport, the draft, the last-looked-at
- * memory, and every cached reading held under the slug, because a gateway that no longer exists
- * must not greet its own ghost on the next visit. Only then does the caller hear it is gone, so
- * the leave lands on a canvas already clean. A refused delete answers through the standings.
- */
-export function useGatewayRemoval(
-  slug: string,
-  refuse: (failure: unknown) => void,
-  onGatewayRemoved: () => void,
-): () => void {
-  const queryClient = useQueryClient();
-  const removeGateway = useRemoveGateway();
-
-  return () => {
-    removeGateway.mutate(
-      { slug },
-      {
-        onSuccess: () => {
-          forgottenEverywhere(queryClient, slug);
-          onGatewayRemoved();
-        },
-        onError: refuse,
-      },
-    );
-  };
 }

@@ -198,6 +198,25 @@ test('Esc cancels a drag in flight and the composition stands unchanged', async 
   expect(await storedModels()).toEqual(before);
 });
 
+test('Esc cancelling a drag leaves the selection standing beside it', async () => {
+  const screen = await canvasPageOn();
+
+  screen.getByLabelText('Add a virtual model').element().focus();
+  await userEvent.keyboard('{Enter}');
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+
+  await pulledCable(await sourcePortOf(screen.container, 'draft'), { x: 620, y: 320 });
+
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+  await expect.poll(() => document.querySelector('.react-flow__connectionline')).toBeNull();
+  await expect.element(screen.getByRole('complementary')).toBeVisible();
+});
+
 test('Esc over a valid target port cancels the drag instead of opening the picker', async () => {
   seatedInsideThePane();
 
