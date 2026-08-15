@@ -7,12 +7,14 @@ export type RouteAddress = { modelId: string; routeNodeId?: string | undefined }
  * The virtual model and the route node one name holds, which is the inverse of `addressWritten`.
  *
  * @summary A card standing for the entry keeps the bare definition id it stood under before
- * routers existed, and every card below the entry adds the id its ladder holds it by. A model id
- * is lowercase letters, digits, dots and dashes, so the last colon is the only place the two parts
- * can ever meet and reading back from it can never mistake one for the other.
+ * routers existed, and every card below the entry adds the id its ladder holds it by. Only the
+ * first half is colon-free: `modelAliasSchema` admits lowercase letters, digits, dots and dashes,
+ * while a route node id carries whatever minted it, and the version 4 migration mints `seat:` plus
+ * the model's own id. So the first colon is the only boundary that can be trusted, and reading
+ * from the last one would tear a migrated id in half once a router displaced it below the entry.
  */
 function addressRead(name: string): RouteAddress {
-  const split = name.lastIndexOf(':');
+  const split = name.indexOf(':');
 
   return split === -1
     ? { modelId: name, routeNodeId: undefined }

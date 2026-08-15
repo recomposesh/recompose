@@ -80,9 +80,8 @@ async function theRoutedModel(page: Page): Promise<RoutedEntry> {
 /**
  * The address one route node's card and its incoming cable are both named by.
  *
- * @summary The entry answers in the virtual model's own name and every node below it adds the id
- * its ladder holds it by. A route node id is minted rather than authored, so reading the address
- * off the stored table is the only way a step can name a card the canvas wrote.
+ * @summary A route node id is minted rather than authored, so reading the address off the stored
+ * table is the only way a step can name a card the canvas wrote.
  */
 function addressNamed(routed: RoutedEntry, routeNodeId: string): string {
   return routeNodeId === routed.routing.entry ? routed.modelId : `${routed.modelId}:${routeNodeId}`;

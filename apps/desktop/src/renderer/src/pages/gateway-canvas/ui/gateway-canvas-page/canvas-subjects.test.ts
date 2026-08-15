@@ -46,6 +46,21 @@ const gateway = gatewaySeed({
         },
       },
     },
+    {
+      id: 'migrated',
+      displayName: 'Migrated',
+      routing: {
+        entry: 'r2',
+        nodes: {
+          r2: { kind: 'router', policy: { mode: 'failover' }, children: ['seat:migrated'] },
+          'seat:migrated': {
+            kind: 'target',
+            accountId: 'k1',
+            providerModel: 'claude-sonnet-5',
+          },
+        },
+      },
+    },
   ],
 });
 
@@ -90,6 +105,15 @@ describe('the subject a card below a routing entry reads as', () => {
       accountId: 'gone',
       modelId: 'pooled',
       routeNodeId: 't2',
+    });
+  });
+
+  test('a card standing a route node the migration minted names its own binding', () => {
+    expect(subjectOf(gateway, 'target:migrated:seat:migrated')).toEqual({
+      kind: 'target',
+      accountId: 'k1',
+      modelId: 'migrated',
+      routeNodeId: 'seat:migrated',
     });
   });
 
