@@ -128,4 +128,6 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0120](0120-a-run-clears-what-the-last-one-stranded.md)                         | A run clears what the last one stranded                                             | Accepted   | 2026-08-15 |
 | [0121](0121-a-streamed-answer-rides-a-transport-recompose-owns.md)              | A streamed answer rides a transport recompose owns                                  | Accepted   | 2026-08-15 |
 | [0122](0122-a-launch-decides-whether-its-window-shows.md)                       | A launch decides whether its window shows                                           | Accepted   | 2026-08-15 |
+| [0123](0123-a-strictness-guard-asks-every-question-its-rebuild-answers.md)      | A strictness guard asks every question its rebuild answers                          | Accepted   | 2026-08-15 |
+| [0124](0124-a-signed-block-replays-only-to-its-own-account.md)                  | A signed thinking block replays only to the account that minted it                  | Accepted   | 2026-08-15 |
 | [0125](0125-a-mutated-module-holds-no-hooks.md)                                 | A mutated module holds no hooks                                                     | Accepted   | 2026-08-15 |

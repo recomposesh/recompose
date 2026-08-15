@@ -11,23 +11,43 @@ type ReplaySession = { model: string; scope: string };
 const replay = new ClaudeThinkingReplay();
 const applied = new WeakSet<Crossing>();
 
-function replaySession(crossing: Crossing): ReplaySession | undefined {
-  const { callerFingerprint, dialect, providerModel, replayScopeId } = crossing;
+/**
+ * The slot one conversation keeps its signed thinking in.
+ *
+ * @summary The account names the slot alongside the caller and the conversation, because a router
+ * ladder can serve one virtual model from two Anthropic accounts and a signed thinking block is
+ * minted by the account that served the turn. Anthropic documents the block as encrypted content
+ * the server decrypts to rebuild the prompt, and documents no account scope either way, so handing
+ * one account's block to another rests on behavior no vendor page promises. An account the grant
+ * cannot name earns no slot at all, since nothing else tells it apart from the next one.
+ */
+function replayScope(crossing: Crossing, accountId: string | undefined): string | undefined {
+  const { callerFingerprint, replayScopeId } = crossing;
 
-  if (
-    crossing.isCompat !== true ||
-    dialect !== 'anthropic' ||
-    replayScopeId === undefined ||
-    callerFingerprint === undefined
-  ) {
+  if (accountId === undefined || callerFingerprint === undefined || replayScopeId === undefined) {
     return undefined;
   }
 
-  return { model: providerModel, scope: `${callerFingerprint}:${replayScopeId}` };
+  return `${accountId}\0${callerFingerprint}:${replayScopeId}`;
 }
 
-export function prepareClaudeReplay(crossing: Crossing, body: JsonObject): JsonObject {
-  const session = replaySession(crossing);
+function replaySession(
+  crossing: Crossing,
+  accountId: string | undefined,
+): ReplaySession | undefined {
+  if (crossing.isCompat !== true || crossing.dialect !== 'anthropic') return undefined;
+
+  const scope = replayScope(crossing, accountId);
+
+  return scope === undefined ? undefined : { model: crossing.providerModel, scope };
+}
+
+export function prepareClaudeReplay(
+  crossing: Crossing,
+  body: JsonObject,
+  accountId: string | undefined,
+): JsonObject {
+  const session = replaySession(crossing, accountId);
 
   if (session === undefined) return body;
 
@@ -103,8 +123,9 @@ function clearRejectedSession(
 export async function observeClaudeReplay(
   crossing: Crossing,
   response: Response,
+  accountId: string | undefined,
 ): Promise<Response> {
-  const session = replaySession(crossing);
+  const session = replaySession(crossing, accountId);
 
   if (session === undefined) return response;
 

@@ -1,63 +1,19 @@
 import type { HubJsonObject, HubToolSchema } from './hub';
 
+import {
+  isJsonObject,
+  normalizedSchema,
+  requiredFrom,
+  schemaTypesAreNormalized,
+} from './tool-schema-normalize';
+
 const coreFields = new Set(['type', 'properties', 'required']);
-
-function isJsonObject(value: unknown): value is HubJsonObject {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function requiredFrom(value: unknown): readonly string[] | undefined {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : undefined;
-}
+const rebuiltFields = new Set([...coreFields, '$schema', 'title']);
+const definitionFields = new Set(['$defs', 'definitions']);
+const unionFields = new Set(['anyOf', 'oneOf']);
 
 function schemaMetadata(schema: HubJsonObject): HubJsonObject {
   return Object.fromEntries(Object.entries(schema).filter(([key]) => !coreFields.has(key)));
-}
-
-function declaredTypeName(key: string, value: unknown): string | undefined {
-  return key === 'type' && typeof value === 'string' ? value : undefined;
-}
-
-function normalizedEntry([key, value]: [string, unknown]): [string, unknown] {
-  const declared = declaredTypeName(key, value);
-
-  return [key, declared === undefined ? normalizedSchemaValue(value) : declared.toLowerCase()];
-}
-
-function normalizedSchemaValue(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(normalizedSchemaValue);
-  if (!isJsonObject(value)) return value;
-
-  return Object.fromEntries(Object.entries(value).map(normalizedEntry));
-}
-
-function normalizedSchema(schema: HubJsonObject): HubJsonObject {
-  return Object.fromEntries(Object.entries(schema).map(normalizedEntry));
-}
-
-function entryIsNormalized([key, value]: [string, unknown]): boolean {
-  const declared = declaredTypeName(key, value);
-
-  return declared === undefined
-    ? schemaTypesAreNormalized(value)
-    : declared === declared.toLowerCase();
-}
-
-function schemaTypesAreNormalized(value: unknown): boolean {
-  if (Array.isArray(value)) return value.every(schemaTypesAreNormalized);
-  if (!isJsonObject(value)) return true;
-
-  return Object.entries(value).every(entryIsNormalized);
-}
-
-function providerSchemaIsCanonical(schema: HubToolSchema): boolean {
-  return (
-    schema['$schema'] === undefined &&
-    schema['additionalProperties'] === false &&
-    schemaTypesAreNormalized(schema)
-  );
 }
 
 export function hubToolSchemaFrom(schema: HubJsonObject | undefined): HubToolSchema {
@@ -111,21 +67,107 @@ function eachValueStrictlyNested(held: HubJsonObject): HubJsonObject {
   );
 }
 
+/**
+ * Everything the schema carries besides the fields rebuilt by name, its definitions made strict.
+ *
+ * @summary `$defs` and `definitions` hold subschemas a `$ref` names, so an object living there
+ * reaches the provider exactly as an inline one does and owes the same refusal. Walking only the
+ * root's `properties` left them untouched, which is a second way to hand a strict provider a
+ * permissive object and one the canonical guard never had a chance to catch.
+ */
+function carriedMetadata(source: HubJsonObject): HubJsonObject {
+  const carried: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(source)) {
+    if (!rebuiltFields.has(key)) carried[key] = definitionsStrictlyNested(key, value);
+  }
+
+  return carried;
+}
+
+function definitionsStrictlyNested(key: string, value: unknown): unknown {
+  return definitionFields.has(key) && isJsonObject(value) ? eachValueStrictlyNested(value) : value;
+}
+
+/**
+ * Whether `strictlyNested` would hand this value straight back.
+ *
+ * @summary It mirrors `strictlyNested` clause for clause, so the two are read and changed
+ * together. A question this side forgets to ask does not cost a needless rebuild, it skips a
+ * repair that then never runs at all.
+ */
+function alreadyStrictlyNested(value: unknown): boolean {
+  if (Array.isArray(value)) return value.every(alreadyStrictlyNested);
+  if (!isJsonObject(value)) return true;
+  if (isObjectSchema(value) && value['additionalProperties'] === undefined) return false;
+
+  return eachValueAlreadyStrictlyNested(value);
+}
+
+function eachValueAlreadyStrictlyNested(held: HubJsonObject): boolean {
+  return Object.values(held).every(alreadyStrictlyNested);
+}
+
+function everySubschemaAlreadyStrictlyNested(
+  source: HubJsonObject,
+  declared: HubJsonObject,
+): boolean {
+  return eachValueAlreadyStrictlyNested(declared) && eachDefinitionAlreadyStrictlyNested(source);
+}
+
+function eachDefinitionAlreadyStrictlyNested(source: HubJsonObject): boolean {
+  return Object.entries(source).every(
+    ([key, value]) =>
+      !definitionFields.has(key) || !isJsonObject(value) || eachValueAlreadyStrictlyNested(value),
+  );
+}
+
+function requiredNeedsNoCleaning(schema: HubToolSchema, declared: HubJsonObject): boolean {
+  const required = schema.required;
+
+  if (required === undefined) return true;
+
+  return requiredFrom(required)?.filter((name) => name in declared).length === required.length;
+}
+
+function providerSchemaRootIsCanonical(schema: HubToolSchema): boolean {
+  return (
+    schema['$schema'] === undefined &&
+    schema['title'] === undefined &&
+    schema['additionalProperties'] === false
+  );
+}
+
+/**
+ * Whether rebuilding this schema for a strict provider would give back what it was handed.
+ *
+ * @summary Every clause answers one thing `strictProviderToolSchema` would otherwise change, so
+ * the predicate is only as true as its weakest question. Reading the root alone once let a
+ * root-strict schema through untouched, which is the shape strict structured output asks clients
+ * to send, so the nested repair never ran for the inputs most likely to need it.
+ *
+ * The order is load-bearing: `schemaTypesAreNormalized` must hold before the nested question is
+ * asked, because that question reads `type` names as they stand and a schema still carrying
+ * `OBJECT` would be judged on a name the rebuild is about to lowercase.
+ */
+function providerSchemaIsCanonical(schema: HubToolSchema): boolean {
+  const declared = schema.properties;
+
+  return (
+    providerSchemaRootIsCanonical(schema) &&
+    isJsonObject(declared) &&
+    requiredNeedsNoCleaning(schema, declared) &&
+    schemaTypesAreNormalized(schema) &&
+    everySubschemaAlreadyStrictlyNested(schema, declared)
+  );
+}
+
 export function strictProviderToolSchema(schema: HubToolSchema): HubToolSchema {
   if (providerSchemaIsCanonical(schema)) return schema;
 
   const source = normalizedSchema(schema);
 
-  const metadata = Object.fromEntries(
-    Object.entries(source).filter(
-      ([key]) =>
-        key !== '$schema' &&
-        key !== 'title' &&
-        key !== 'type' &&
-        key !== 'properties' &&
-        key !== 'required',
-    ),
-  );
+  const metadata = carriedMetadata(source);
   const declared = isJsonObject(source['properties']) ? source['properties'] : {};
   const properties = eachValueStrictlyNested(declared);
   const required = requiredFrom(source['required'])?.filter((name) => name in properties);
@@ -185,18 +227,13 @@ function completedSchemaValue(value: unknown): unknown {
 /**
  * What Anthropic is told about extra properties, which is what the tool said.
  *
- * @summary JSON Schema lets `additionalProperties` be a schema as well as a boolean: `{"type":
- * "string"}` means extras are allowed and must be strings. Reading that as `false` says the
- * opposite, so a tool that accepted extras stopped accepting them on the way across. A schema
- * passes through, a boolean passes through, and only a value no schema could mean is read as a
- * refusal, because guessing wider than the tool asked for is the one direction that costs safety.
+ * @summary A schema passes through and a boolean passes through, because reading `{"type":
+ * "string"}` as `false` says the opposite of what the tool asked for. Normalization has already
+ * turned an unreadable value into a refusal, at this depth and every other, so nothing is left to
+ * decide here.
  */
 function anthropicAdditionalProperties(value: unknown): HubJsonObject {
-  if (value === undefined) return {};
-
-  const carried = typeof value === 'boolean' || isJsonObject(value) ? value : false;
-
-  return { additionalProperties: carried };
+  return value === undefined ? {} : { additionalProperties: value };
 }
 
 function anthropicSchemaDeclaration(value: unknown): HubJsonObject {
@@ -207,14 +244,24 @@ function anthropicSchemaDeclaration(value: unknown): HubJsonObject {
   };
 }
 
-export function strictHubToolSchemaFrom(schema: HubJsonObject): HubToolSchema {
-  if (schema['anyOf'] !== undefined || schema['oneOf'] !== undefined) {
-    return {
-      type: 'object',
-      properties: isJsonObject(schema['properties']) ? schema['properties'] : {},
-      additionalProperties: false,
-    };
+/**
+ * A schema whose root offers a union of shapes, reduced to the single object a provider will read.
+ *
+ * @summary A strict provider takes an object at the root and refuses `anyOf` there, so the union
+ * cannot survive. Dropping it once meant returning a bare shell of type, properties, and the
+ * refusal, which threw away `$defs` while keeping the `$ref` that named it, so the schema left
+ * here pointing at a definition it no longer carried.
+ */
+function withoutRootUnion(schema: HubJsonObject): HubJsonObject {
+  const kept: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(schema)) {
+    if (!unionFields.has(key)) kept[key] = value;
   }
 
-  return strictProviderToolSchema(hubToolSchemaFrom(schema));
+  return kept;
+}
+
+export function strictHubToolSchemaFrom(schema: HubJsonObject): HubToolSchema {
+  return strictProviderToolSchema(hubToolSchemaFrom(withoutRootUnion(schema)));
 }
