@@ -133,4 +133,5 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0125](0125-a-mutated-module-holds-no-hooks.md)                                 | A mutated module holds no hooks                                                     | Accepted   | 2026-08-15 |
 | [0126](0126-a-card-born-without-a-pointer-takes-the-canvas-next-seat.md)        | A card born without a pointer takes the canvas's own next seat                      | Accepted   | 2026-08-15 |
 | [0127](0127-a-plus-brings-the-card-it-stands-into-view.md)                      | A plus brings the card it stands into view                                          | Accepted   | 2026-08-15 |
+| [0128](0128-a-gate-reads-the-text-that-lands.md)                                | A gate reads the text that lands                                                    | Accepted   | 2026-08-15 |
 | [0129](0129-an-optional-spread-carries-one-mutant-no-test-can-kill.md)          | An optional spread carries one mutant no test can kill                              | Accepted   | 2026-08-15 |
