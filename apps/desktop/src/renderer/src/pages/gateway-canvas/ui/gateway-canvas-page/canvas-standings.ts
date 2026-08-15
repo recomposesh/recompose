@@ -155,25 +155,18 @@ export function escapeThrowsTheDragAway(key: string, dragging: DragWatch): boole
 export type EscapeHolders = { dragging: boolean; editing: boolean; dialogOpen: boolean };
 
 /** What one Escape press settles on the canvas. */
-export type EscapeSettling = 'picker' | 'canvas' | 'nobody';
+export type EscapeSettling = 'canvas' | 'nobody';
 
 /**
- * Lets Escape settle the canvas: the picker goes first, then the selection with its inspector.
+ * Lets Escape put the selection away, unless something nearer is already answering it.
  *
- * @summary Escape means "put away the most recent thing", so it works outward: a picker in flight
- * dismisses alone, and only a quiet canvas lets go of the selection. A drag in flight, a text field
- * mid-edit, and an open dialog all keep Escape to themselves, because each already answers it with
- * a cancel of its own.
+ * @summary A drag in flight, a text field mid-edit, and an open dialog each answer Escape with a
+ * cancel of their own, so the canvas stands down rather than settling on top of them. The binding
+ * ask is one of those dialogs: it dismisses itself and stops the press there, which is why putting
+ * it away is never this decision's to make.
  */
-export function escapeSettling(
-  picker: PickerStanding | undefined,
-  holders: EscapeHolders,
-): EscapeSettling {
-  if (holders.dragging || holders.editing || holders.dialogOpen) {
-    return 'nobody';
-  }
-
-  return picker === undefined ? 'canvas' : 'picker';
+export function escapeSettling(holders: EscapeHolders): EscapeSettling {
+  return holders.dragging || holders.editing || holders.dialogOpen ? 'nobody' : 'canvas';
 }
 
 /** The account whose models the picker asks for, or none while it is asking something else. */

@@ -1,15 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import type { PickerStanding } from './canvas-standings';
-
 import { escapeSettling, escapeThrowsTheDragAway, isEscape } from './canvas-standings';
-
-const droppedAsk: PickerStanding = {
-  step: 'account',
-  from: 'draft',
-  at: { x: 10, y: 20 },
-  origin: 'drop',
-};
 
 const quietCanvas = { dragging: false, editing: false, dialogOpen: false };
 
@@ -38,23 +29,19 @@ describe('a cable drag Escape asks to throw away', () => {
 });
 
 describe('what one Escape press settles on the canvas', () => {
-  test('a binding ask in flight dismisses alone, ahead of the selection', () => {
-    expect(escapeSettling(droppedAsk, quietCanvas)).toBe('picker');
-  });
-
   test('a quiet canvas lets go of the selection and its inspector', () => {
-    expect(escapeSettling(undefined, quietCanvas)).toBe('canvas');
+    expect(escapeSettling(quietCanvas)).toBe('canvas');
   });
 
   test('a cable mid-drag keeps Escape to itself, because it cancels its own', () => {
-    expect(escapeSettling(undefined, { ...quietCanvas, dragging: true })).toBe('nobody');
+    expect(escapeSettling({ ...quietCanvas, dragging: true })).toBe('nobody');
   });
 
   test('a text field mid-edit keeps Escape to itself', () => {
-    expect(escapeSettling(undefined, { ...quietCanvas, editing: true })).toBe('nobody');
+    expect(escapeSettling({ ...quietCanvas, editing: true })).toBe('nobody');
   });
 
-  test('an open dialog keeps Escape to itself, even with a binding ask standing', () => {
-    expect(escapeSettling(droppedAsk, { ...quietCanvas, dialogOpen: true })).toBe('nobody');
+  test('an open dialog keeps Escape to itself, the binding ask among them', () => {
+    expect(escapeSettling({ ...quietCanvas, dialogOpen: true })).toBe('nobody');
   });
 });

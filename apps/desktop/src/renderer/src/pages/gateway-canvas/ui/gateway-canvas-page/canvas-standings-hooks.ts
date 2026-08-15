@@ -90,7 +90,7 @@ export function useEscapeSettledCanvas(
   standings: CanvasStandings,
   dragging: RefObject<DragWatch>,
 ): void {
-  const { picker, setPicker, select } = standings;
+  const { select } = standings;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -98,19 +98,13 @@ export function useEscapeSettledCanvas(
         return;
       }
 
-      const settling = escapeSettling(picker, {
+      const settling = escapeSettling({
         dragging: dragging.current.inFlight,
         editing: editingText(document.activeElement),
         dialogOpen: document.querySelector('dialog[open]') !== null,
       });
 
       if (settling === 'nobody') {
-        return;
-      }
-
-      if (settling === 'picker') {
-        setPicker(undefined);
-
         return;
       }
 
@@ -126,5 +120,5 @@ export function useEscapeSettledCanvas(
     return () => {
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [picker, setPicker, select, dragging]);
+  }, [select, dragging]);
 }
