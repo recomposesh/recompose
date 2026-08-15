@@ -1,6 +1,8 @@
 import type { HubJsonObject, HubToolSchema } from './hub';
 
 const coreFields = new Set(['type', 'properties', 'required']);
+const rebuiltFields = new Set([...coreFields, '$schema', 'title']);
+const definitionFields = new Set(['$defs', 'definitions']);
 
 function isJsonObject(value: unknown): value is HubJsonObject {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -50,14 +52,6 @@ function schemaTypesAreNormalized(value: unknown): boolean {
   if (!isJsonObject(value)) return true;
 
   return Object.entries(value).every(entryIsNormalized);
-}
-
-function providerSchemaIsCanonical(schema: HubToolSchema): boolean {
-  return (
-    schema['$schema'] === undefined &&
-    schema['additionalProperties'] === false &&
-    schemaTypesAreNormalized(schema)
-  );
 }
 
 export function hubToolSchemaFrom(schema: HubJsonObject | undefined): HubToolSchema {
@@ -111,21 +105,107 @@ function eachValueStrictlyNested(held: HubJsonObject): HubJsonObject {
   );
 }
 
+/**
+ * Everything the schema carries besides the fields rebuilt by name, its definitions made strict.
+ *
+ * @summary `$defs` and `definitions` hold subschemas a `$ref` names, so an object living there
+ * reaches the provider exactly as an inline one does and owes the same refusal. Walking only the
+ * root's `properties` left them untouched, which is a second way to hand a strict provider a
+ * permissive object and one the canonical guard never had a chance to catch.
+ */
+function carriedMetadata(source: HubJsonObject): HubJsonObject {
+  const carried: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(source)) {
+    if (!rebuiltFields.has(key)) carried[key] = definitionsStrictlyNested(key, value);
+  }
+
+  return carried;
+}
+
+function definitionsStrictlyNested(key: string, value: unknown): unknown {
+  return definitionFields.has(key) && isJsonObject(value) ? eachValueStrictlyNested(value) : value;
+}
+
+/**
+ * Whether `strictlyNested` would hand this value straight back.
+ *
+ * @summary It mirrors `strictlyNested` clause for clause, so the two are read and changed
+ * together. A question this side forgets to ask does not cost a needless rebuild, it skips a
+ * repair that then never runs at all.
+ */
+function alreadyStrictlyNested(value: unknown): boolean {
+  if (Array.isArray(value)) return value.every(alreadyStrictlyNested);
+  if (!isJsonObject(value)) return true;
+  if (isObjectSchema(value) && value['additionalProperties'] === undefined) return false;
+
+  return eachValueAlreadyStrictlyNested(value);
+}
+
+function eachValueAlreadyStrictlyNested(held: HubJsonObject): boolean {
+  return Object.values(held).every(alreadyStrictlyNested);
+}
+
+function everySubschemaAlreadyStrictlyNested(
+  source: HubJsonObject,
+  declared: HubJsonObject,
+): boolean {
+  return eachValueAlreadyStrictlyNested(declared) && eachDefinitionAlreadyStrictlyNested(source);
+}
+
+function eachDefinitionAlreadyStrictlyNested(source: HubJsonObject): boolean {
+  return Object.entries(source).every(
+    ([key, value]) =>
+      !definitionFields.has(key) || !isJsonObject(value) || eachValueAlreadyStrictlyNested(value),
+  );
+}
+
+function requiredNeedsNoCleaning(schema: HubToolSchema, declared: HubJsonObject): boolean {
+  const required = schema.required;
+
+  if (required === undefined) return true;
+
+  return requiredFrom(required)?.filter((name) => name in declared).length === required.length;
+}
+
+function providerSchemaRootIsCanonical(schema: HubToolSchema): boolean {
+  return (
+    schema['$schema'] === undefined &&
+    schema['title'] === undefined &&
+    schema['additionalProperties'] === false
+  );
+}
+
+/**
+ * Whether rebuilding this schema for a strict provider would give back what it was handed.
+ *
+ * @summary Every clause answers one thing `strictProviderToolSchema` would otherwise change, so
+ * the predicate is only as true as its weakest question. Reading the root alone once let a
+ * root-strict schema through untouched, which is the shape strict structured output asks clients
+ * to send, so the nested repair never ran for the inputs most likely to need it.
+ *
+ * The order is load-bearing: `schemaTypesAreNormalized` must hold before the nested question is
+ * asked, because that question reads `type` names as they stand and a schema still carrying
+ * `OBJECT` would be judged on a name the rebuild is about to lowercase.
+ */
+function providerSchemaIsCanonical(schema: HubToolSchema): boolean {
+  const declared = schema.properties;
+
+  return (
+    providerSchemaRootIsCanonical(schema) &&
+    isJsonObject(declared) &&
+    requiredNeedsNoCleaning(schema, declared) &&
+    schemaTypesAreNormalized(schema) &&
+    everySubschemaAlreadyStrictlyNested(schema, declared)
+  );
+}
+
 export function strictProviderToolSchema(schema: HubToolSchema): HubToolSchema {
   if (providerSchemaIsCanonical(schema)) return schema;
 
   const source = normalizedSchema(schema);
 
-  const metadata = Object.fromEntries(
-    Object.entries(source).filter(
-      ([key]) =>
-        key !== '$schema' &&
-        key !== 'title' &&
-        key !== 'type' &&
-        key !== 'properties' &&
-        key !== 'required',
-    ),
-  );
+  const metadata = carriedMetadata(source);
   const declared = isJsonObject(source['properties']) ? source['properties'] : {};
   const properties = eachValueStrictlyNested(declared);
   const required = requiredFrom(source['required'])?.filter((name) => name in properties);
