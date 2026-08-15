@@ -213,10 +213,10 @@ async function readingFromResolved(
 /**
  * What one child's custody came to, which is a reading about that child and about nothing else.
  *
- * @summary Neither answer a grant can refuse with ends the walk, because both describe the one seat
+ * @summary Neither answer a grant can refuse with ends the walk, because both describe the one node
  * that was asked about: an account that left the registry took nothing from its siblings, and a
  * credential that could not be opened took nothing either. They stay two readings rather than one so
- * the refusal a person eventually reads names the repair the seat actually needs.
+ * the refusal a person eventually reads names the repair the node actually needs.
  */
 async function readingFromGrant(
   deps: AttemptDeps,
@@ -238,9 +238,9 @@ async function readingFromGrant(
  * What one child made of the request: an answer to keep, or a reason to try the next child.
  *
  * @summary Custody is resolved here rather than once per request, so a ladder spends the account each
- * child names and a refusal about one child says nothing about any other. A seat the table already
+ * child names and a refusal about one child says nothing about any other. A node the table already
  * stands unbound reads as a missing target without a grant ever being asked, which is the same
- * reading a grant answers for the same seat once the table catches up, so the words a person reads
+ * reading a grant answers for the same node once the table catches up, so the words a person reads
  * never turn on how fresh the table is. Every refusal recompose writes itself is marked as one no
  * sibling could cure, so a translation the gateway could not perform never spends a second account
  * proving it again.

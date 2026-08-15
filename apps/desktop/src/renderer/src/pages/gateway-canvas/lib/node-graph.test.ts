@@ -40,8 +40,8 @@ const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
   routing: {
-    entry: 'seat-fast',
-    nodes: { 'seat-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+    entry: 'node-fast',
+    nodes: { 'node-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
   },
 };
 
@@ -49,8 +49,8 @@ const slow: VirtualModel = {
   id: 'slow',
   displayName: 'Slow',
   routing: {
-    entry: 'seat-slow',
-    nodes: { 'seat-slow': { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' } },
+    entry: 'node-slow',
+    nodes: { 'node-slow': { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' } },
   },
 };
 
@@ -120,7 +120,7 @@ test('a target node carries the account and the identity it reads under the prov
     kind: 'target',
     account: work,
     modelId: 'fast',
-    routeNodeId: 'seat-fast',
+    routeNodeId: 'node-fast',
     depth: 0,
     detail: 'Work',
   });
@@ -189,7 +189,7 @@ test('a binding whose account left the registry stands as a ghost under a broken
     kind: 'ghost-target',
     accountId: 'a2',
     modelId: 'slow',
-    routeNodeId: 'seat-slow',
+    routeNodeId: 'node-slow',
     depth: 0,
   });
   expect(graph.edges).toEqual([

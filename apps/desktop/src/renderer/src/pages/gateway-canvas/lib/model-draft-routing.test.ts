@@ -10,8 +10,8 @@ const fast: VirtualModel = {
   id: 'fast',
   displayName: 'fast',
   routing: {
-    entry: 'seat-fast',
-    nodes: { 'seat-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+    entry: 'node-fast',
+    nodes: { 'node-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
   },
 };
 

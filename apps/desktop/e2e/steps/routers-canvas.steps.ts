@@ -78,18 +78,18 @@ async function theRoutedModel(page: Page): Promise<RoutedEntry> {
 }
 
 /**
- * The seat one route node's card and its incoming cable are both named by.
+ * The address one route node's card and its incoming cable are both named by.
  *
  * @summary The entry answers in the virtual model's own name and every node below it adds the id
- * its ladder holds it by. A route node id is minted rather than authored, so reading the seat off
- * the stored table is the only way a step can name a card the canvas wrote.
+ * its ladder holds it by. A route node id is minted rather than authored, so reading the address
+ * off the stored table is the only way a step can name a card the canvas wrote.
  */
-function seatNamed(routed: RoutedEntry, routeNodeId: string): string {
+function addressNamed(routed: RoutedEntry, routeNodeId: string): string {
   return routeNodeId === routed.routing.entry ? routed.modelId : `${routed.modelId}:${routeNodeId}`;
 }
 
 function routeCard(routed: RoutedEntry, routeNodeId: string): string {
-  return `route:${seatNamed(routed, routeNodeId)}`;
+  return `route:${addressNamed(routed, routeNodeId)}`;
 }
 
 function entryCard(routed: RoutedEntry): string {
@@ -106,7 +106,7 @@ function entryCard(routed: RoutedEntry): string {
 function cableInto(routed: RoutedEntry, providerModel: string): string {
   for (const [routeNodeId, node] of Object.entries(routed.routing.nodes)) {
     if (node.kind === 'target' && node.providerModel === providerModel) {
-      return `cable:${seatNamed(routed, routeNodeId)}`;
+      return `cable:${addressNamed(routed, routeNodeId)}`;
     }
   }
 

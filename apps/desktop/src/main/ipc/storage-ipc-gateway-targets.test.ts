@@ -13,7 +13,7 @@ import {
   keyRow,
   planRow,
   pointingAt,
-  seatedAs,
+  routedAs,
 } from '../engine-host/spend-grant.testkit';
 import { reversibleCodec } from '../storage/safe-storage-codec.testkit';
 import { createStorageIpcHandlers } from './storage-ipc';
@@ -115,7 +115,7 @@ describe('a save carrying a definition bound to a subscription account', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
+        routing: routedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });

@@ -2,13 +2,13 @@ import type { GatewayConfig, VirtualModel } from '@recompose/contracts';
 
 import { mintRouteNodeId, nameOfRouter } from '@recompose/contracts';
 
-import type { SeatReading } from '../../lib/route-seats';
+import type { RouteAddress } from '../../lib/route-addresses';
 import type { RouterMode } from '../../lib/routing-edits';
 import type { CanvasWorld } from './canvas-standings';
 
 import { closeInspector } from '../../../../shared/lib';
 import { emptyDefinition, gatewayDefiningRouted } from '../../lib/model-draft';
-import { seatWritten } from '../../lib/route-seats';
+import { addressWritten } from '../../lib/route-addresses';
 import {
   gatewayBindingChild,
   gatewayDroppingNode,
@@ -22,7 +22,7 @@ import {
   releasedWithNothingSelected,
   targetNameIn,
 } from './binding-acts';
-import { cardSeatOf, modelIdOf, routerSeatOf } from './canvas-wiring';
+import { cardAddressOf, modelIdOf, routerAddressOf } from './canvas-wiring';
 
 /**
  * The mode a router is born in, since the binding ask drops one without a dialog.
@@ -74,16 +74,16 @@ function routedThroughANewRouter(world: CanvasWorld, modelId: string): void {
   );
 }
 
-function parentRouterAt(world: CanvasWorld, seat: SeatReading) {
-  const model = modelHolding(world, seat.modelId);
+function parentRouterAt(world: CanvasWorld, address: RouteAddress) {
+  const model = modelHolding(world, address.modelId);
 
   return model === undefined
     ? undefined
-    : { model, routeNodeId: seat.routeNodeId ?? model.routing.entry };
+    : { model, routeNodeId: address.routeNodeId ?? model.routing.entry };
 }
 
-function nestedUnderARouter(world: CanvasWorld, seat: SeatReading): void {
-  const parent = parentRouterAt(world, seat);
+function nestedUnderARouter(world: CanvasWorld, address: RouteAddress): void {
+  const parent = parentRouterAt(world, address);
 
   if (parent === undefined) {
     return;
@@ -93,8 +93,8 @@ function nestedUnderARouter(world: CanvasWorld, seat: SeatReading): void {
 
   committedPick(
     world,
-    `route:${seatWritten({ modelId: seat.modelId, routeNodeId: born })}`,
-    gatewayBindingChild(world.gateway, seat.modelId, parent.routeNodeId, born, {
+    `route:${addressWritten({ modelId: address.modelId, routeNodeId: born })}`,
+    gatewayBindingChild(world.gateway, address.modelId, parent.routeNodeId, born, {
       kind: 'router',
       policy: { mode: BORN_ROUTER_MODE },
       children: [],
@@ -119,10 +119,10 @@ function nestedUnderARouter(world: CanvasWorld, seat: SeatReading): void {
  * router's own port nests another, so one gesture reaches a nested router rather than two.
  */
 export function boundThroughARouter(world: CanvasWorld, from: string): void {
-  const seat = routerSeatOf(from);
+  const address = routerAddressOf(from);
 
-  if (seat !== undefined) {
-    nestedUnderARouter(world, seat);
+  if (address !== undefined) {
+    nestedUnderARouter(world, address);
 
     return;
   }
@@ -141,10 +141,10 @@ export function boundThroughARouter(world: CanvasWorld, from: string): void {
 }
 
 /** The ladder a binding ask left from, or nothing where the definition holding it has left. */
-function ladderAsking(world: CanvasWorld, seat: SeatReading) {
-  const parent = parentRouterAt(world, seat);
+function ladderAsking(world: CanvasWorld, address: RouteAddress) {
+  const parent = parentRouterAt(world, address);
 
-  return parent === undefined ? undefined : { seat, parent };
+  return parent === undefined ? undefined : { address, parent };
 }
 
 type LadderAsking = NonNullable<ReturnType<typeof ladderAsking>>;
@@ -168,11 +168,11 @@ function committedChild(
   landed: LandedChild,
   accountId: string,
 ): void {
-  const { modelId } = asking.seat;
+  const { modelId } = asking.address;
 
   committedPick(
     world,
-    `target:${seatWritten({ modelId, routeNodeId: landed.routeNodeId })}`,
+    `target:${addressWritten({ modelId, routeNodeId: landed.routeNodeId })}`,
     landed.rewritten,
     () => {
       world.standings.announce({
@@ -194,18 +194,18 @@ function committedChild(
  */
 export function completedChildPick(
   world: CanvasWorld,
-  seat: SeatReading,
+  address: RouteAddress,
   accountId: string,
   providerModel: string,
 ): void {
-  const asking = ladderAsking(world, seat);
+  const asking = ladderAsking(world, address);
 
   if (asking === undefined) {
     return;
   }
 
   const born = mintRouteNodeId();
-  const { modelId } = asking.seat;
+  const { modelId } = asking.address;
 
   committedChild(
     world,
@@ -234,12 +234,12 @@ export function completedChildPick(
  */
 export function completedChildRebindPick(
   world: CanvasWorld,
-  seat: SeatReading,
+  address: RouteAddress,
   replacing: string,
   accountId: string,
   providerModel: string,
 ): void {
-  const asking = ladderAsking(world, seat);
+  const asking = ladderAsking(world, address);
 
   if (asking === undefined) {
     return;
@@ -251,7 +251,7 @@ export function completedChildRebindPick(
     {
       routeNodeId: replacing,
       outcome: 'rebound',
-      rewritten: gatewayRebindingNode(world.gateway, asking.seat.modelId, replacing, {
+      rewritten: gatewayRebindingNode(world.gateway, asking.address.modelId, replacing, {
         kind: 'target',
         accountId,
         providerModel,
@@ -272,20 +272,20 @@ export function completedChildRebindPick(
  * one thing a virtual model reached has always worked on this canvas.
  */
 export function removedRouteNode(world: CanvasWorld, nodeId: string): void {
-  const seat = cardSeatOf(nodeId);
-  const parent = seat === undefined ? undefined : parentRouterAt(world, seat);
+  const address = cardAddressOf(nodeId);
+  const parent = address === undefined ? undefined : parentRouterAt(world, address);
 
-  if (seat === undefined || parent === undefined) {
+  if (address === undefined || parent === undefined) {
     return;
   }
 
   if (parent.routeNodeId === parent.model.routing.entry) {
-    releasedWithNothingSelected(world, seat.modelId);
+    releasedWithNothingSelected(world, address.modelId);
 
     return;
   }
 
-  world.define.mutate(gatewayDroppingNode(world.gateway, seat.modelId, parent.routeNodeId), {
+  world.define.mutate(gatewayDroppingNode(world.gateway, address.modelId, parent.routeNodeId), {
     onSuccess: () => {
       world.standings.select(undefined);
       closeInspector();

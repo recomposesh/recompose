@@ -65,7 +65,7 @@ type GrantUnmet = Extract<
 >;
 
 /**
- * The sentence a seat whose custody failed owes the caller, in the words that seat earned.
+ * The sentence a node whose custody failed owes the caller, in the words that node earned.
  *
  * @summary An account that left the registry and a credential that could not be opened are two
  * different repairs, so they keep the two refusals the gateway already shipped for them rather than
@@ -146,7 +146,7 @@ async function walkedAnswer(
  * One client request served across the table its virtual model binds.
  *
  * @summary The walk decides which child to try and this composes what a try means: resolve custody
- * for that one seat, forward, read the answer at the commit latch, and hand back a reading. Nothing
+ * for that one node, forward, read the answer at the commit latch, and hand back a reading. Nothing
  * here knows the order children are tried in, and the walk knows nothing about credentials or
  * transports, which is what lets one of them be reasoned about without the other.
  */

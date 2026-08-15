@@ -74,7 +74,7 @@ describe('a child the walk could not spend at all', () => {
     });
   });
 
-  test('the two are told apart, so the refusal names the repair the seat needs', () => {
+  test('the two are told apart, so the refusal names the repair the route node needs', () => {
     const missingTarget = classify({ kind: 'grant-missing-target' }, NOW);
     const missingCredential = classify({ kind: 'grant-missing-credential' }, NOW);
 

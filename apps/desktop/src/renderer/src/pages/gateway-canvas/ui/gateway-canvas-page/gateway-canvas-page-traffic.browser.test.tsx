@@ -13,12 +13,12 @@ beforeEach(freshCanvasRun);
 const REFUSED = 'The gateway could not reach the target.';
 
 const served: GatewayTraffic = {
-  'my-gateway': { fast: { 'seat-fast': { outcome: 'served', at: Date.now() } } },
+  'my-gateway': { fast: { 'node-fast': { outcome: 'served', at: Date.now() } } },
 };
 
 const failed: GatewayTraffic = {
   'my-gateway': {
-    fast: { 'seat-fast': { outcome: 'failed', at: 2, status: 502, detail: REFUSED } },
+    fast: { 'node-fast': { outcome: 'failed', at: 2, status: 502, detail: REFUSED } },
   },
 };
 

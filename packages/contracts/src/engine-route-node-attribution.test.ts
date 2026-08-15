@@ -34,7 +34,7 @@ const report = {
   request: served,
 };
 
-describe('the seat a spend request asks custody for', () => {
+describe('the route node a spend request asks custody for', () => {
   test('a request names the node it is about to try, beside the gateway and the model', () => {
     expect(engineSpendRequestSchema.parse(spendRequest)).toEqual(spendRequest);
   });
@@ -46,11 +46,11 @@ describe('the seat a spend request asks custody for', () => {
     expect(() => engineSpendRequestSchema.parse(withoutTheNode)).toThrow();
   });
 
-  test('a request naming a blank node is refused, because no seat carries that name', () => {
+  test('a request naming a blank node is refused, because no route node carries that name', () => {
     expect(() => engineSpendRequestSchema.parse({ ...spendRequest, routeNode: '   ' })).toThrow();
   });
 
-  test('two attempts through one virtual model ask under their own seats', () => {
+  test('two attempts through one virtual model ask under their own route nodes', () => {
     const second = { ...spendRequest, id: 'g2', routeNode: secondChild };
 
     expect(engineSpendRequestSchema.parse(second).routeNode).toBe(secondChild);
@@ -58,7 +58,7 @@ describe('the seat a spend request asks custody for', () => {
   });
 });
 
-describe('the seat a finished attempt is reported against', () => {
+describe('the route node a finished attempt is reported against', () => {
   test('a report names the node the attempt went through', () => {
     expect(engineTrafficReportSchema.parse(report)).toEqual(report);
   });

@@ -198,7 +198,7 @@ export type EngineLogReport = z.infer<typeof engineLogReportSchema>;
  * The child asking the parent for custody of one attempt.
  *
  * @summary It names the route node it is about to try rather than the virtual model alone, because
- * a ladder spends a different account per child and only the parent may turn a seat name into a
+ * a ladder spends a different account per child and only the parent may turn a route node id into a
  * credential.
  */
 export const engineSpendRequestSchema = z.strictObject({

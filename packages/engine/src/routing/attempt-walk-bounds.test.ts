@@ -10,12 +10,12 @@ import { aBoundTarget, aFailoverOver, aRateLimit, aTableEnteredAt } from './rout
 function aTableOfLadders(routers: number, childrenEach: number) {
   const nodes: Record<string, EngineRouteNode> = {};
   const children: string[] = [];
-  const inner = Array.from({ length: routers }, (_, seat) => `inner-${String(seat)}`);
+  const inner = Array.from({ length: routers }, (_, at) => `inner-${String(at)}`);
 
-  for (const [seat, router] of inner.entries()) {
+  for (const [at, router] of inner.entries()) {
     const under = Array.from(
       { length: childrenEach },
-      (_, place) => `child-${String(seat)}-${String(place)}`,
+      (_, place) => `child-${String(at)}-${String(place)}`,
     );
 
     nodes[router] = aFailoverOver(...under);
@@ -33,7 +33,7 @@ function aTableOfLadders(routers: number, childrenEach: number) {
 
 describe('what bounds a walk however its table is shaped', () => {
   test('a ladder of twelve refusing children stops at the recorded attempt cap', async () => {
-    const children = Array.from({ length: 12 }, (_, seat) => `child-${String(seat)}`);
+    const children = Array.from({ length: 12 }, (_, at) => `child-${String(at)}`);
     const gateway = aGatewayServing(aLadderOver(...children));
 
     const walk = await gateway.send(refusedBy(children, () => aRateLimit()));

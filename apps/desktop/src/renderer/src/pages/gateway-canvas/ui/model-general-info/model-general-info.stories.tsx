@@ -12,8 +12,8 @@ const fastModel: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
   routing: {
-    entry: 'seat',
-    nodes: { seat: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' } },
+    entry: 't1',
+    nodes: { t1: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' } },
   },
 };
 

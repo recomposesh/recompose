@@ -1,6 +1,6 @@
 import type { Account, RouteTarget, Routing, VirtualModel } from '@recompose/contracts';
 
-import { seatedRouteNodes } from '../lib/route-graph';
+import { walkedRouteNodes } from '../lib/route-graph';
 
 /**
  * Where a definition stands: on a pool the registry holds whole, on one it holds in part, on
@@ -26,8 +26,8 @@ export type ServedModel = {
 type ServingTarget = { target: RouteTarget; account: Account };
 
 function declaredTargets(routing: Routing): readonly RouteTarget[] {
-  return seatedRouteNodes(routing).flatMap((seat) =>
-    seat.node.kind === 'target' ? [seat.node] : [],
+  return walkedRouteNodes(routing).flatMap((walked) =>
+    walked.node.kind === 'target' ? [walked.node] : [],
   );
 }
 

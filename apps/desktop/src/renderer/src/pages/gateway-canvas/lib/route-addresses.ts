@@ -1,17 +1,17 @@
 import type { GatewayConfig } from '@recompose/contracts';
 
-/** Where in a routing a card or cable seats, read out of the seat name it was built from. */
-export type SeatReading = { modelId: string; routeNodeId?: string | undefined };
+/** Where in a routing a card or cable stands, read out of the name it was built from. */
+export type RouteAddress = { modelId: string; routeNodeId?: string | undefined };
 
 /**
- * The virtual model and the route node one seat name holds, which is the inverse of `seatWritten`.
+ * The virtual model and the route node one name holds, which is the inverse of `addressWritten`.
  *
  * @summary A card standing for the entry keeps the bare definition id it stood under before
  * routers existed, and every card below the entry adds the id its ladder holds it by. A model id
  * is lowercase letters, digits, dots and dashes, so the last colon is the only place the two parts
  * can ever meet and reading back from it can never mistake one for the other.
  */
-function seatRead(name: string): SeatReading {
+function addressRead(name: string): RouteAddress {
   const split = name.lastIndexOf(':');
 
   return split === -1
@@ -20,38 +20,40 @@ function seatRead(name: string): SeatReading {
 }
 
 /**
- * The seat one prefixed card or cable id names, or nothing where it wears none of the prefixes.
+ * The address one prefixed card or cable id names, or nothing where it wears none of the prefixes.
  *
- * @summary Every id on this canvas is a prefix and a seat name, so one reader serves the cards,
+ * @summary Every id on this canvas is a prefix and an address, so one reader serves the cards,
  * the cables, and the subjects rather than three that drift on what a colon means.
  */
-export function seatUnder(prefixes: readonly string[], id: string): SeatReading | undefined {
+export function addressUnder(prefixes: readonly string[], id: string): RouteAddress | undefined {
   const worn = prefixes.find((prefix) => id.startsWith(prefix));
 
-  return worn === undefined ? undefined : seatRead(id.slice(worn.length));
+  return worn === undefined ? undefined : addressRead(id.slice(worn.length));
 }
 
-/** The stored route node a seat names, or nothing where the definition or the node is gone. */
-export function routeNodeIn(gateway: GatewayConfig, seat: SeatReading | undefined) {
-  const held = gateway.virtualModels.find((model) => model.id === seat?.modelId);
+/** The stored route node an address names, or nothing where the definition or the node is gone. */
+export function routeNodeIn(gateway: GatewayConfig, address: RouteAddress | undefined) {
+  const held = gateway.virtualModels.find((model) => model.id === address?.modelId);
 
   if (held === undefined) {
     return undefined;
   }
 
-  return held.routing.nodes[seat?.routeNodeId ?? held.routing.entry];
+  return held.routing.nodes[address?.routeNodeId ?? held.routing.entry];
 }
 
 /**
- * The seat name one reading writes back, which is the inverse of `seatRead`.
+ * The name one address writes back, which is the inverse of `addressRead`.
  *
- * @summary The one writer of a seat name on this canvas, so a card id, a cable id, and the id a
+ * @summary The one writer of an address on this canvas, so a card id, a cable id, and the id a
  * pick commits under all join their two parts the same way. The pair lives side by side on purpose:
  * a change to how a card is named has to move both, and reading a name back and writing it out
  * again is what proves it did.
  */
-export function seatWritten(seat: SeatReading): string {
-  return seat.routeNodeId === undefined ? seat.modelId : `${seat.modelId}:${seat.routeNodeId}`;
+export function addressWritten(address: RouteAddress): string {
+  return address.routeNodeId === undefined
+    ? address.modelId
+    : `${address.modelId}:${address.routeNodeId}`;
 }
 
 /**
@@ -63,8 +65,8 @@ export function seatWritten(seat: SeatReading): string {
  * without two cards colliding. A cable reads the same rule for the router it leaves, so a parent
  * and its child never disagree about the card standing between them.
  */
-export function seatName(modelId: string, routeNodeId: string, entry: string): string {
-  return seatWritten({
+export function addressName(modelId: string, routeNodeId: string, entry: string): string {
+  return addressWritten({
     modelId,
     routeNodeId: routeNodeId === entry ? undefined : routeNodeId,
   });
