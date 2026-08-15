@@ -1,31 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import type { HubJsonObject } from './hub';
-
 import {
   anthropicToolSchema,
   strictHubToolSchemaFrom,
   strictProviderToolSchema,
 } from './tool-schema';
-
-function isJsonObject(value: unknown): value is HubJsonObject {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-/** One named schema out of another, read the way the encoder writes it. */
-function held(schema: HubJsonObject, key: string): HubJsonObject {
-  const nested = schema[key];
-
-  if (!isJsonObject(nested)) {
-    throw new Error(`the schema carried nothing readable under ${key}`);
-  }
-
-  return nested;
-}
-
-function propertyOf(schema: HubJsonObject, name: string): HubJsonObject {
-  return held(held(schema, 'properties'), name);
-}
+import { held, propertyOf } from './tool-schema.testkit';
 
 describe('what a nested object carries into a provider that demands strictness', () => {
   it('gives every nested object its own refusal of extra properties', () => {
@@ -142,6 +122,16 @@ describe('what a schema already refusing extras at its root still gets cleaned o
     expect(strict.required).toEqual(['country']);
   });
 
+  it('invents no required list for a schema that named none', () => {
+    const strict = strictProviderToolSchema({
+      type: 'object',
+      additionalProperties: false,
+      properties: { country: { type: 'string' } },
+    });
+
+    expect('required' in strict).toBe(false);
+  });
+
   it('drops the title, which is no part of what the provider is asked to fill in', () => {
     const strict = strictProviderToolSchema({
       type: 'object',
@@ -151,6 +141,37 @@ describe('what a schema already refusing extras at its root still gets cleaned o
     });
 
     expect('title' in strict).toBe(false);
+  });
+});
+
+describe('where the canonical guard stopped looking behind a root that already refused', () => {
+  it('reaches an object listed among the shapes a property may take', () => {
+    const strict = strictProviderToolSchema({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        choice: { anyOf: [{ type: 'string' }, { type: 'object', properties: { at: {} } }] },
+      },
+    });
+
+    const shapes = propertyOf(strict, 'choice')['anyOf'];
+
+    expect(shapes).toContainEqual(
+      expect.objectContaining({ type: 'object', additionalProperties: false }),
+    );
+  });
+
+  it('reaches the one nested object that fell short, beside a sibling that did not', () => {
+    const strict = strictProviderToolSchema({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        settled: { type: 'object', properties: {}, additionalProperties: false },
+        open: { type: 'object', properties: { name: { type: 'string' } } },
+      },
+    });
+
+    expect(propertyOf(strict, 'open')['additionalProperties']).toBe(false);
   });
 });
 
@@ -183,6 +204,16 @@ describe('what a root offering a union of shapes carries into a strict provider'
 
     expect('anyOf' in strict).toBe(false);
   });
+
+  it('drops the exclusive spelling of that union too', () => {
+    const strict = strictHubToolSchemaFrom({
+      oneOf: [{ required: ['step'] }],
+      type: 'object',
+      properties: { step: { type: 'string' } },
+    });
+
+    expect('oneOf' in strict).toBe(false);
+  });
 });
 
 describe('what a nested answer about extras that no schema could mean becomes', () => {
@@ -203,84 +234,5 @@ describe('what a nested answer about extras that no schema could mean becomes', 
     });
 
     expect(propertyOf(strict, 'user')['additionalProperties']).toBe(false);
-  });
-});
-
-describe('what a nested object carries into Anthropic', () => {
-  it('leaves a nested object saying nothing about extras still saying nothing', () => {
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: { user: { type: 'object', properties: { name: { type: 'string' } } } },
-    });
-
-    expect('additionalProperties' in propertyOf(encoded, 'user')).toBe(false);
-  });
-
-  it('lets a nested object naming what extras must look like keep saying it', () => {
-    const allowed = { type: 'string' };
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: { user: { type: 'object', properties: {}, additionalProperties: allowed } },
-    });
-
-    expect(propertyOf(encoded, 'user')['additionalProperties']).toEqual(allowed);
-  });
-
-  it('lowercases a type name declared inside a nested object', () => {
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: { user: { type: 'OBJECT', properties: { name: { type: 'STRING' } } } },
-    });
-
-    expect(propertyOf(propertyOf(encoded, 'user'), 'name')['type']).toBe('string');
-  });
-});
-
-describe('what Anthropic is told about extra properties', () => {
-  it('a schema naming what extras must look like keeps saying it', () => {
-    const allowed = { type: 'string' };
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: {},
-      additionalProperties: allowed,
-    });
-
-    expect(encoded['additionalProperties']).toEqual(allowed);
-  });
-
-  it('a schema allowing any extra still allows any extra', () => {
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: {},
-      additionalProperties: true,
-    });
-
-    expect(encoded['additionalProperties']).toBe(true);
-  });
-
-  it('a schema refusing extras still refuses them', () => {
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: {},
-      additionalProperties: false,
-    });
-
-    expect(encoded['additionalProperties']).toBe(false);
-  });
-
-  it('a value no schema could mean is read as refusing extras', () => {
-    const encoded = anthropicToolSchema({
-      type: 'object',
-      properties: {},
-      additionalProperties: 'yes',
-    });
-
-    expect(encoded['additionalProperties']).toBe(false);
-  });
-
-  it('a schema saying nothing about extras still says nothing', () => {
-    const encoded = anthropicToolSchema({ type: 'object', properties: {} });
-
-    expect('additionalProperties' in encoded).toBe(false);
   });
 });

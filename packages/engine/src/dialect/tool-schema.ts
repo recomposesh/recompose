@@ -252,13 +252,7 @@ function anthropicSchemaDeclaration(value: unknown): HubJsonObject {
  * refusal, which threw away `$defs` while keeping the `$ref` that named it, so the schema left
  * here pointing at a definition it no longer carried.
  */
-function rootOffersUnion(schema: HubJsonObject): boolean {
-  return schema['anyOf'] !== undefined || schema['oneOf'] !== undefined;
-}
-
 function withoutRootUnion(schema: HubJsonObject): HubJsonObject {
-  if (!rootOffersUnion(schema)) return schema;
-
   const kept: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(schema)) {

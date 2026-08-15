@@ -145,6 +145,13 @@ The `max-lines` budget then ran out while closing the last of these defects, so 
 its mirror moved into `tool-schema-normalize.ts`. That gives one such pair a module of its own and
 leaves the rest of the file room to grow.
 
+A guard that only skips work carries mutants no test can kill. Weaken a clause so the predicate
+turns more conservative, and it rebuilds a schema that needed nothing, which produces the same
+output. Those survivors stay, and this record names the class rather than chasing them one by one.
+Only the unsafe direction can hurt, where the predicate calls a schema canonical that isn't, and
+every clause has a spec covering that direction. Two such gaps turned up this way: an object listed
+inside `anyOf`, and a nested object failing beside a sibling that passed.
+
 The Anthropic encoder adds `additionalProperties` to nothing. That matches the non-strict path it
 serves, and nothing in the codebase sets `strict: true` on an Anthropic tool. Should anything ever do
 so, this encoder won't meet Anthropic's documented strict requirement. That's a known gap rather than
