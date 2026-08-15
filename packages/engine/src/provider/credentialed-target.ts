@@ -24,7 +24,11 @@ import { collectXAINamespaceTools } from './xai-tools';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 type GrantedSpend = ResolvedGrant['spend'];
-type BodyBuilder = (crossing: Crossing, body: JsonObject) => JsonObject;
+type BodyBuilder = (
+  crossing: Crossing,
+  body: JsonObject,
+  accountId: string | undefined,
+) => JsonObject;
 
 /**
  * The dialect Kimi serves, which is whichever one the caller opened with.
@@ -76,7 +80,7 @@ function preparedCredentialedBody(
     );
   }
 
-  const prepared = BODY_BUILDERS.get(spend.provider)?.(crossing, body) ?? body;
+  const prepared = BODY_BUILDERS.get(spend.provider)?.(crossing, body, spend.accountId) ?? body;
   const cached = withOpenAICompatPromptCache(prepared, {
     ...(crossing.sessionId === undefined ? {} : { sessionId: crossing.sessionId }),
     model: crossing.providerModel,
