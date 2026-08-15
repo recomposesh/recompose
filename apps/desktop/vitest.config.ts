@@ -42,7 +42,9 @@ const chromium = () => ({
   instances: [{ browser: 'chromium' as const, viewport: { width: 1280, height: 800 } }],
 });
 
-/* A shared runner starves parallel pages into forty-second click timeouts. */
+// A shared runner starves parallel pages into forty-second click timeouts, and starves a node file
+// waiting on a real filesystem read the same way. Every project restates this, because a `projects`
+// entry carrying its own `test` block inherits nothing from the root one.
 const pacedForCi = process.env['CI'] === undefined ? {} : { fileParallelism: false, retry: 1 };
 
 export default defineConfig({
@@ -79,12 +81,9 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
-          include: [
-            'src/**/*.test.{ts,tsx}',
-            'scripts/**/*.test.mts',
-            'e2e/fake-tools/**/*.test.mts',
-          ],
+          include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mts', 'e2e/**/*.test.{mts,ts}'],
           exclude: [...defaultExclude, '**/*.browser.test.*'],
+          ...pacedForCi,
         },
       },
       {

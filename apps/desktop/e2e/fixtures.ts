@@ -3,7 +3,6 @@ import type { ElectronApplication, Page, TestInfo } from '@playwright/test';
 import { _electron as electron } from '@playwright/test';
 import { mkdir, rm } from 'node:fs/promises';
 import { type Server } from 'node:net';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createBdd, test as base } from 'playwright-bdd';
 
@@ -16,6 +15,7 @@ import { fakeKeyProbe } from './key-probe-stub';
 import { dropServer, holdPort, LOOPBACK_HOSTS } from './loopback-ports';
 import { theClipboardIsHeld } from './one-clipboard';
 import { fakeLocalRuntime } from './runtime-stub';
+import { scenarioUserDataDir } from './scenario-user-data';
 import { fakeScriptedProvider } from './scripted-provider';
 import { fakeSubscriptionTools } from './subscription-tools';
 import { seededUsageHistoryWritten } from './usage-screen';
@@ -208,7 +208,7 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
     use,
     testInfo,
   ) => {
-    const userDataDir = join(homedir(), `.recompose-e2e-w${String(testInfo.parallelIndex)}`);
+    const userDataDir = scenarioUserDataDir(appRoot, testInfo.parallelIndex);
 
     await rm(userDataDir, { force: true, recursive: true });
     await mkdir(userDataDir, { recursive: true });
