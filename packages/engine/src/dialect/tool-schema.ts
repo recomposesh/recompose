@@ -1,57 +1,18 @@
 import type { HubJsonObject, HubToolSchema } from './hub';
 
+import {
+  isJsonObject,
+  normalizedSchema,
+  requiredFrom,
+  schemaTypesAreNormalized,
+} from './tool-schema-normalize';
+
 const coreFields = new Set(['type', 'properties', 'required']);
 const rebuiltFields = new Set([...coreFields, '$schema', 'title']);
 const definitionFields = new Set(['$defs', 'definitions']);
 
-function isJsonObject(value: unknown): value is HubJsonObject {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function requiredFrom(value: unknown): readonly string[] | undefined {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : undefined;
-}
-
 function schemaMetadata(schema: HubJsonObject): HubJsonObject {
   return Object.fromEntries(Object.entries(schema).filter(([key]) => !coreFields.has(key)));
-}
-
-function declaredTypeName(key: string, value: unknown): string | undefined {
-  return key === 'type' && typeof value === 'string' ? value : undefined;
-}
-
-function normalizedEntry([key, value]: [string, unknown]): [string, unknown] {
-  const declared = declaredTypeName(key, value);
-
-  return [key, declared === undefined ? normalizedSchemaValue(value) : declared.toLowerCase()];
-}
-
-function normalizedSchemaValue(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(normalizedSchemaValue);
-  if (!isJsonObject(value)) return value;
-
-  return Object.fromEntries(Object.entries(value).map(normalizedEntry));
-}
-
-function normalizedSchema(schema: HubJsonObject): HubJsonObject {
-  return Object.fromEntries(Object.entries(schema).map(normalizedEntry));
-}
-
-function entryIsNormalized([key, value]: [string, unknown]): boolean {
-  const declared = declaredTypeName(key, value);
-
-  return declared === undefined
-    ? schemaTypesAreNormalized(value)
-    : declared === declared.toLowerCase();
-}
-
-function schemaTypesAreNormalized(value: unknown): boolean {
-  if (Array.isArray(value)) return value.every(schemaTypesAreNormalized);
-  if (!isJsonObject(value)) return true;
-
-  return Object.entries(value).every(entryIsNormalized);
 }
 
 export function hubToolSchemaFrom(schema: HubJsonObject | undefined): HubToolSchema {
