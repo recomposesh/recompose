@@ -24,7 +24,11 @@ import { filterXAIInternalSearchResponse } from './xai-search-response';
 import { restoreXAIToolResponse } from './xai-tool-response';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
-type AnswerObserver = (crossing: Crossing, answer: Response) => Promise<Response>;
+type AnswerObserver = (
+  crossing: Crossing,
+  answer: Response,
+  accountId: string | undefined,
+) => Promise<Response>;
 
 const ANSWER_OBSERVERS = new Map<string, AnswerObserver>([
   ['anthropic', observeClaudeReplay],
@@ -77,7 +81,7 @@ async function providerAnswer(
 
   const observer = ANSWER_OBSERVERS.get(grant.spend.provider);
 
-  if (observer !== undefined) return observer(crossing, answer);
+  if (observer !== undefined) return observer(crossing, answer, grant.spend.accountId);
   if (grant.spend.provider !== 'xai') return answer;
 
   const decorated = await asXaiRefusalReads(answer);
