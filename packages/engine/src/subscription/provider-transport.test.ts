@@ -1,7 +1,9 @@
+import { proxyFetchBoundMs } from '@recompose/contracts';
 import { expect, test, vi } from 'vitest';
 
 import type { ProviderRequest } from './claude-request';
 
+import { providerSilenceBoundMs } from '../provider-bounds';
 import {
   CLAUDE_OAUTH_TLS_FINGERPRINT,
   CLAUDE_TLS_FINGERPRINT,
@@ -195,6 +197,8 @@ test('the native transport receives the exact ordered headers and streams its re
 
   expect(fetchLike).toHaveBeenCalledWith(request.url, {
     ...subscriptionTransportOptions('anthropic'),
+    timeout: proxyFetchBoundMs,
+    readTimeout: providerSilenceBoundMs,
     method: 'POST',
     headers: request.headers,
     body: request.body,

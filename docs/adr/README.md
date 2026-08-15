@@ -126,4 +126,5 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0118](0118-a-scenario-folder-carries-its-checkout.md)                          | A scenario's folder carries its checkout                                            | Accepted   | 2026-08-15 |
 | [0119](0119-a-pointer-target-may-exceed-its-visible-ink.md)                     | A pointer target may exceed its visible ink                                         | Accepted   | 2026-08-15 |
 | [0120](0120-a-run-clears-what-the-last-one-stranded.md)                         | A run clears what the last one stranded                                             | Accepted   | 2026-08-15 |
+| [0121](0121-a-streamed-answer-rides-a-transport-recompose-owns.md)              | A streamed answer rides a transport recompose owns                                  | Accepted   | 2026-08-15 |
 | [0122](0122-a-launch-decides-whether-its-window-shows.md)                       | A launch decides whether its window shows                                           | Accepted   | 2026-08-15 |
