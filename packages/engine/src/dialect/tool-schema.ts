@@ -10,6 +10,7 @@ import {
 const coreFields = new Set(['type', 'properties', 'required']);
 const rebuiltFields = new Set([...coreFields, '$schema', 'title']);
 const definitionFields = new Set(['$defs', 'definitions']);
+const unionFields = new Set(['anyOf', 'oneOf']);
 
 function schemaMetadata(schema: HubJsonObject): HubJsonObject {
   return Object.fromEntries(Object.entries(schema).filter(([key]) => !coreFields.has(key)));
@@ -243,14 +244,30 @@ function anthropicSchemaDeclaration(value: unknown): HubJsonObject {
   };
 }
 
-export function strictHubToolSchemaFrom(schema: HubJsonObject): HubToolSchema {
-  if (schema['anyOf'] !== undefined || schema['oneOf'] !== undefined) {
-    return {
-      type: 'object',
-      properties: isJsonObject(schema['properties']) ? schema['properties'] : {},
-      additionalProperties: false,
-    };
+/**
+ * A schema whose root offers a union of shapes, reduced to the single object a provider will read.
+ *
+ * @summary A strict provider takes an object at the root and refuses `anyOf` there, so the union
+ * cannot survive. Dropping it once meant returning a bare shell of type, properties, and the
+ * refusal, which threw away `$defs` while keeping the `$ref` that named it, so the schema left
+ * here pointing at a definition it no longer carried.
+ */
+function rootOffersUnion(schema: HubJsonObject): boolean {
+  return schema['anyOf'] !== undefined || schema['oneOf'] !== undefined;
+}
+
+function withoutRootUnion(schema: HubJsonObject): HubJsonObject {
+  if (!rootOffersUnion(schema)) return schema;
+
+  const kept: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(schema)) {
+    if (!unionFields.has(key)) kept[key] = value;
   }
 
-  return strictProviderToolSchema(hubToolSchemaFrom(schema));
+  return kept;
+}
+
+export function strictHubToolSchemaFrom(schema: HubJsonObject): HubToolSchema {
+  return strictProviderToolSchema(hubToolSchemaFrom(withoutRootUnion(schema)));
 }

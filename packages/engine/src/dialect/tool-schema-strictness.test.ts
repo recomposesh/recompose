@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { HubJsonObject } from './hub';
 
-import { anthropicToolSchema, strictProviderToolSchema } from './tool-schema';
+import {
+  anthropicToolSchema,
+  strictHubToolSchemaFrom,
+  strictProviderToolSchema,
+} from './tool-schema';
 
 function isJsonObject(value: unknown): value is HubJsonObject {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -147,6 +151,37 @@ describe('what a schema already refusing extras at its root still gets cleaned o
     });
 
     expect('title' in strict).toBe(false);
+  });
+});
+
+describe('what a root offering a union of shapes carries into a strict provider', () => {
+  function unionRootedSchema() {
+    return {
+      anyOf: [{ required: ['step'] }, { required: ['note'] }],
+      type: 'object',
+      properties: { step: { $ref: '#/$defs/step' } },
+      $defs: { step: { type: 'object', properties: { output: { type: 'string' } } } },
+    };
+  }
+
+  it('keeps the definition its properties refer to by name', () => {
+    const strict = strictHubToolSchemaFrom(unionRootedSchema());
+
+    expect(held(held(strict, '$defs'), 'step')['properties']).toEqual({
+      output: { type: 'string' },
+    });
+  });
+
+  it('gives that definition the refusal every other object schema gets', () => {
+    const strict = strictHubToolSchemaFrom(unionRootedSchema());
+
+    expect(held(held(strict, '$defs'), 'step')['additionalProperties']).toBe(false);
+  });
+
+  it('drops the union the provider refuses to read at a root', () => {
+    const strict = strictHubToolSchemaFrom(unionRootedSchema());
+
+    expect('anyOf' in strict).toBe(false);
   });
 });
 
