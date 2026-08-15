@@ -40,6 +40,15 @@ function ShellUnderProof() {
   );
 }
 
+function RestingBoxUnderProof() {
+  return (
+    <div className="w-76 bg-surface-toolbar p-3">
+      {editableSectionHeading('General Info', false, asked)}
+      <div className="field-box">{factRow('Name', 'My Gateway')}</div>
+    </div>
+  );
+}
+
 function EditingBoxUnderProof() {
   const [name, setName] = useState('My Gateway');
 
@@ -87,6 +96,35 @@ export const TheShellCarriesItsSubject = meta.story({
     await expect(await canvas.findByRole('heading', { name: 'My Gateway' })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Delete Gateway' })).toBeVisible();
     await expect(await canvas.findByRole('status')).toHaveTextContent(/Restart the harness/);
+  },
+});
+
+const HIT_TARGET = 24;
+
+function pointerTargetAt(control: Element, awayX: number, awayY: number): Element | null {
+  const box = control.getBoundingClientRect();
+
+  return document.elementFromPoint(box.x + box.width / 2 + awayX, box.y + box.height / 2 + awayY);
+}
+
+/**
+ * A box at rest, wearing the Edit affordance that opens it.
+ *
+ * @summary The affordance prints as small as the caption beside it, so the proof a pointer can
+ * land on it reads from the page rather than from the ink: a press anywhere inside the 24 pixel
+ * square the canvas accessibility contract names has to reach the button.
+ */
+export const ARestingBoxOffersItsEdit = meta.story({
+  render: () => <RestingBoxUnderProof />,
+  play: async ({ canvas }) => {
+    const edit = await canvas.findByRole('button', { name: 'Edit' });
+    const reach = HIT_TARGET / 2 - 1;
+
+    await expect(edit).toBeVisible();
+    await expect(pointerTargetAt(edit, 0, -reach)).toBe(edit);
+    await expect(pointerTargetAt(edit, 0, reach)).toBe(edit);
+    await expect(pointerTargetAt(edit, -reach, 0)).toBe(edit);
+    await expect(pointerTargetAt(edit, reach, 0)).toBe(edit);
   },
 });
 

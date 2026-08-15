@@ -51,7 +51,7 @@ test('dropping a node the table never held leaves the whole gateway as it stood'
 });
 
 test('dropping from a model the gateway does not serve leaves the whole gateway as it stood', () => {
-  expect(gatewayDroppingNode(codex, 'unknown', 'seat')).toEqual(codex);
+  expect(gatewayDroppingNode(codex, 'unknown', 't1')).toEqual(codex);
 });
 
 test('a branch naming a child the table never held still drops the children it does hold', () => {
@@ -65,8 +65,8 @@ test('a branch naming a child the table never held still drops the children it d
           entry: 'r1',
           nodes: {
             r1: { kind: 'router', policy: { mode: 'failover' }, children: ['r2'] },
-            r2: { kind: 'router', policy: { mode: 'failover' }, children: ['gone', 'seat'] },
-            seat: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' },
+            r2: { kind: 'router', policy: { mode: 'failover' }, children: ['gone', 't1'] },
+            t1: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' },
           },
         },
       },

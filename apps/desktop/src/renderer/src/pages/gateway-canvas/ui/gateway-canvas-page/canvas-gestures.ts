@@ -12,13 +12,13 @@ import { heldDraft, startDrafting } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import {
   bindingCableId,
-  cableSeatOf,
+  cableAddressOf,
   CARD_MEASURE,
   flowEdgesOf,
   flowNodesOf,
   modelIdOf,
   oneTargetRule,
-  routerSeatOf,
+  routerAddressOf,
   targetAccountIdIn,
 } from './canvas-wiring';
 import { deletionWiring } from './deletion-gestures';
@@ -74,7 +74,7 @@ const REFUSED_LANDING =
   'A cable binds a virtual model or a router to a stored target it does not already hold, and nothing else connects.';
 
 function asksWhatToBind(from: string): boolean {
-  return from === 'draft' || modelIdOf(from) !== undefined || routerSeatOf(from) !== undefined;
+  return from === 'draft' || modelIdOf(from) !== undefined || routerAddressOf(from) !== undefined;
 }
 
 function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
@@ -155,7 +155,7 @@ function connectWiring(
           world,
           connection.source,
           connection.target,
-          cableSeatOf(oldEdge.id)?.routeNodeId,
+          cableAddressOf(oldEdge.id)?.routeNodeId,
         );
       }
     },

@@ -11,7 +11,7 @@ export function bindingOf(id: string, accountId: string, providerModel: string):
   return {
     id,
     displayName: id,
-    routing: { entry: 'seat', nodes: { seat: { kind: 'target', accountId, providerModel } } },
+    routing: { entry: 't1', nodes: { t1: { kind: 'target', accountId, providerModel } } },
   };
 }
 

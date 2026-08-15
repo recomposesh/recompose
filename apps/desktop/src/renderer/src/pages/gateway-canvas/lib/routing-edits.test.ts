@@ -48,7 +48,7 @@ test('routing a bound model through a router keeps what it bound as the first ch
   const [first] = childrenOf(routing, routing.entry);
 
   expect(ladder).toMatchObject({ kind: 'router', policy: { mode: 'failover' } });
-  expect(first === undefined ? undefined : routing.nodes[first]).toEqual(bound.nodes['seat']);
+  expect(first === undefined ? undefined : routing.nodes[first]).toEqual(bound.nodes['t1']);
 });
 
 test('a model routed through a router still parses as a table the gateway can serve', () => {
@@ -79,13 +79,13 @@ test('a child bound under a router joins the end of the ladder it already holds'
   expect(children[1] === undefined ? undefined : grown.nodes[children[1]]).toEqual(spare);
 });
 
-test('a child stands under the id its caller named, so a card can be seated before it exists', () => {
+test('a child stands under the id its caller named, so a card can be placed before it exists', () => {
   const routed = gatewayRoutingThrough(codex, 'fast', 'failover');
   const ladder = routerIn(routingOf(routed));
-  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, 'named-seat', spare));
+  const grown = routingOf(gatewayBindingChild(routed, 'fast', ladder, 'named-node', spare));
 
-  expect(childrenOf(grown, ladder)[1]).toBe('named-seat');
-  expect(grown.nodes['named-seat']).toEqual(spare);
+  expect(childrenOf(grown, ladder)[1]).toBe('named-node');
+  expect(grown.nodes['named-node']).toEqual(spare);
 });
 
 test('a router bound as a child nests under the one that named it', () => {
@@ -245,7 +245,7 @@ test('switching a router to another mode leaves the children standing under it',
 });
 
 test('switching the mode of a node that routes nothing leaves the whole gateway as it stood', () => {
-  expect(gatewaySwitching(codex, 'fast', 'seat', 'round-robin')).toEqual(codex);
+  expect(gatewaySwitching(codex, 'fast', 't1', 'round-robin')).toEqual(codex);
 });
 
 test('an edit naming a model the gateway does not serve leaves the whole gateway as it stood', () => {

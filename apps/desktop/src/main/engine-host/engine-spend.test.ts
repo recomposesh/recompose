@@ -116,7 +116,7 @@ describe('which node the child is asking custody for', () => {
     });
   });
 
-  test('a second node under the same model draws its own seat', async () => {
+  test('a second node under the same model draws its own account', async () => {
     const port = recordingPort();
 
     answerSpendRequest(port, namingTheAsk, { ...asked, id: 's2', routeNode: 'spare' });

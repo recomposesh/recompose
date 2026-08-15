@@ -24,7 +24,7 @@ import {
 } from '../../../../shared/api';
 import { subscribeToPanelWidths } from '../../../../shared/lib';
 import { inspectorWidth } from '../../lib/inspector-width';
-import { seatedRouteNodes } from '../../lib/route-graph';
+import { walkedRouteNodes } from '../../lib/route-graph';
 import { servedModels } from '../../model/served-models';
 import { DraftInspector } from '../draft-inspector/draft-inspector';
 import { nodeIdOf } from '../gateway-canvas-page/canvas-subjects';
@@ -94,8 +94,8 @@ function bindingSubjectBody(
 }
 
 function servedByTheAccount(model: VirtualModel, accountId: string): boolean {
-  return seatedRouteNodes(model.routing).some(
-    (seat) => seat.node.kind === 'target' && seat.node.accountId === accountId,
+  return walkedRouteNodes(model.routing).some(
+    (walked) => walked.node.kind === 'target' && walked.node.accountId === accountId,
   );
 }
 
@@ -133,10 +133,10 @@ function accountSubjectBody(
  * every sibling with it.
  */
 function routerAt(model: VirtualModel, routeNodeId: string | undefined) {
-  const seat = routeNodeId ?? model.routing.entry;
-  const node = model.routing.nodes[seat];
+  const named = routeNodeId ?? model.routing.entry;
+  const node = model.routing.nodes[named];
 
-  return node?.kind === 'router' ? { seat, node } : undefined;
+  return node?.kind === 'router' ? { named, node } : undefined;
 }
 
 function routerSubjectBody(
@@ -154,7 +154,7 @@ function routerSubjectBody(
 
   return held === undefined
     ? undefined
-    : routerBody(world.gateway, model, held.seat, held.node, world.accounts, () => {
+    : routerBody(world.gateway, model, held.named, held.node, world.accounts, () => {
         world.onAskRemoval(card);
       });
 }

@@ -6,7 +6,7 @@ export type DeclaredTarget = { routeNode: string; standing: EngineTargetStanding
 
 export type ChildlessRouter = { routeNode: string; router: EngineRouter };
 
-type SeatedNode = { routeNode: string; node: EngineRouteNode };
+type NamedRouteNode = { routeNode: string; node: EngineRouteNode };
 
 function nodeNotYetPassed(
   routing: EngineRouting,
@@ -20,7 +20,7 @@ function nodeNotYetPassed(
   return routing.nodes[routeNode];
 }
 
-function* nodesInDeclaredOrder(routing: EngineRouting): Generator<SeatedNode> {
+function* nodesInDeclaredOrder(routing: EngineRouting): Generator<NamedRouteNode> {
   const passed = new Set<string>();
   const pending = [routing.entry];
 

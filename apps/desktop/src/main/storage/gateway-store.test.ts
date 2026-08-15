@@ -16,8 +16,8 @@ const config: GatewayConfig = {
       id: 'fast',
       displayName: 'fast',
       routing: {
-        entry: 'seat',
-        nodes: { seat: { kind: 'target', accountId: 'acc1', providerModel: 'claude-sonnet-5' } },
+        entry: 't1',
+        nodes: { t1: { kind: 'target', accountId: 'acc1', providerModel: 'claude-sonnet-5' } },
       },
     },
   ],

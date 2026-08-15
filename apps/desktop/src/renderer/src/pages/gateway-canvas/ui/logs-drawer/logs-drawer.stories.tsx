@@ -39,9 +39,9 @@ const meta = preview.meta({
           id: 'fast',
           displayName: 'Fast',
           routing: {
-            entry: 'seat-fast',
+            entry: 'node-fast',
             nodes: {
-              'seat-fast': { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+              'node-fast': { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
             },
           },
         },
@@ -49,9 +49,9 @@ const meta = preview.meta({
           id: 'creative',
           displayName: 'Creative',
           routing: {
-            entry: 'seat-creative',
+            entry: 'node-creative',
             nodes: {
-              'seat-creative': { kind: 'target', accountId: 'g1', providerModel: 'openai/gpt-5' },
+              'node-creative': { kind: 'target', accountId: 'g1', providerModel: 'openai/gpt-5' },
             },
           },
         },

@@ -32,9 +32,9 @@ export function gatewayServing(slug: string, port: number, accountId: string): G
         id: 'fast',
         displayName: 'fast',
         routing: {
-          entry: 'seat',
+          entry: 't1',
           nodes: {
-            seat: { kind: 'target', accountId, providerModel: 'claude-sonnet-5' },
+            t1: { kind: 'target', accountId, providerModel: 'claude-sonnet-5' },
           },
         },
       },

@@ -91,7 +91,7 @@ async function anOlderDocumentStands(
  *
  * @summary Read off the stored table rather than written as a literal, because a route node id is
  * minted rather than authored. The entry answers in the virtual model's own name, which is the rule
- * every card on the canvas is seated under.
+ * every card on the canvas is named under.
  */
 function routerCardOf(gateway: GatewayConfig): string {
   const routed = gateway.virtualModels.find(

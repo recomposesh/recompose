@@ -105,7 +105,7 @@ describe('the readings a forgotten gateway leaves behind', () => {
       kind: 'traffic',
       slug: 'codex',
       virtualModel: 'fast',
-      routeNode: 'seat',
+      routeNode: 't1',
       request: { outcome: 'served', at },
     });
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
