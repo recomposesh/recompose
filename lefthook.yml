@@ -1,7 +1,7 @@
 # Lefthook v2 runs jobs in array order; `priority` belongs to the legacy
 # `commands:` and `scripts:` maps and is silently ignored here. The writers
 # (fmt, lint) must precede every job that reads the text, or a gate passes on
-# text that never lands (ADR-0127).
+# text that never lands (ADR-0128).
 pre-commit:
   jobs:
     - name: protect-main

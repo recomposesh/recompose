@@ -1,4 +1,4 @@
-# 0127: A gate reads the text that lands
+# 0128: A gate reads the text that lands
 
 **Status**: Accepted
 **Date**: 2026-08-15
