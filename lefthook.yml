@@ -1,53 +1,43 @@
+# Lefthook v2 runs jobs in array order; `priority` is a `commands:`-only option
+# and is silently ignored here. The writers (fmt, lint) must precede every job
+# that reads the text, or a gate passes on text that never lands (ADR-0127).
 pre-commit:
   jobs:
     - name: protect-main
-      priority: 0
       run: test "$(git branch --show-current)" != "main"
       fail_text: main is protected — create a branch (one job = one worktree/branch + PR)
-    - name: gitleaks
-      priority: 0
-      run: mise install -q && mise exec -- gitleaks git --staged --redact --no-banner
+    - name: fmt
+      glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml,html,css}'
+      run: ./node_modules/.bin/oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
     - name: lint
-      priority: 1
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs}'
       run: ./node_modules/.bin/oxlint --fix --deny-warnings --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
+    - name: gitleaks
+      run: mise install -q && mise exec -- gitleaks git --staged --redact --no-banner
     - name: boundaries
-      priority: 1
       run: pnpm run lint:boundaries
     - name: fsd
-      priority: 1
       run: pnpm run lint:fsd
     - name: dead
-      priority: 1
       run: pnpm run lint:dead
     - name: hig
-      priority: 1
       glob: '*.{ts,tsx,css,html}'
       run: pnpm run lint:hig
     - name: dup
-      priority: 1
       run: pnpm run lint:dup
     - name: spell
-      priority: 1
       run: pnpm exec cspell --no-progress --no-must-find-files {staged_files}
     - name: prose
-      priority: 1
       glob: '*.md'
       run: mise install -q && (test .vale/styles/Microsoft -nt .vale.ini || mise exec -- vale sync) && pnpm run lint:prose
     - name: openspec
-      priority: 1
       glob:
         - 'openspec/*'
         - 'openspec/**'
       run: pnpm run lint:openspec
-    - name: fmt
-      priority: 2
-      glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml,html,css}'
-      run: ./node_modules/.bin/oxfmt --no-error-on-unmatched-pattern {staged_files}
-      stage_fixed: true
     - name: typecheck
-      priority: 3
       run: pnpm run typecheck
 
 pre-push:
