@@ -86,7 +86,17 @@ Playwright loads its control channel retires the marker. The sweep would go back
 nothing, and no test would go red, because every spec feeds it recorded text rather than a live
 process.
 
-No test proves the sweep end to end. Its selection has unit tests, its reach met a live process
-table, and the acceptance suite ran green over it. But a green suite only shows the sweep harms
-nothing, because it strands no application to find. No test kills a run and watches the next one
-clear what it left, so the path that matters most is the path nothing exercises.
+A green acceptance suite would prove only that the sweep harms nothing, because a suite that
+finishes tidily strands nothing to find. So one spec strands an application on purpose.
+
+It spawns a detached process carrying the loader argument and an application root. It kills the
+runner that started it with `SIGKILL`, then reads `ps` to confirm the survivor now answers to
+process 1. Only then does it run the sweep and confirm the survivor went.
+
+The spec strands a stand-in rather than a real Electron, because the sweep reads a command line and
+knows nothing about Electron. Its root is a temporary folder, so a suite running from this checkout
+at the same time can never match it.
+
+Measured: with `process.kill` removed from `endApp`, the spec polls its whole 5 second window and
+fails on the survivor still standing. With the kill restored it passes in 222 milliseconds, and
+leaves no process of its own behind.

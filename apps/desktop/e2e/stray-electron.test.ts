@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { strayElectronApps } from './stray-electron';
+import { strayElectronApps, sweptStrayElectron } from './stray-electron';
 
 const checkout = '/checkouts/recompose';
 
@@ -62,5 +66,119 @@ describe('the sweep that clears what an interrupted acceptance run left behind',
     expect(strayElectronApps([launchedByTheSuite, '', '   '], appRoot)).toEqual([
       { pid: 4101, groupId: 4101 },
     ]);
+  });
+});
+
+const LOADER_LEAF = 'node_modules/playwright-core/lib/server/electron/loader.js';
+
+const STRANDS_A_CHILD = `
+const { spawn } = require('node:child_process');
+const kid = spawn(process.argv[1], process.argv.slice(2), { detached: true, stdio: 'ignore' });
+kid.unref();
+setInterval(() => {}, 1000);
+`;
+
+const NAMES_ITSELF_AND_WAITS = `
+require('node:fs').writeFileSync(process.argv[1], String(process.pid));
+setInterval(() => {}, 1000);
+`;
+
+function parentOf(pid: number): number | undefined {
+  const listed = spawnSync('ps', ['-o', 'ppid=', '-p', String(pid)], { encoding: 'utf8' });
+  const parent = Number(listed.stdout.trim());
+
+  return listed.status === 0 && Number.isInteger(parent) ? parent : undefined;
+}
+
+function processListing(): string[] {
+  return spawnSync('ps', ['-Ao', 'pid=,pgid=,args='], { encoding: 'utf8' }).stdout.split('\n');
+}
+
+async function settles(reads: () => boolean): Promise<boolean> {
+  for (let look = 0; look < 100; look += 1) {
+    if (reads()) {
+      return true;
+    }
+
+    await new Promise((resume) => {
+      setTimeout(resume, 50);
+    });
+  }
+
+  return reads();
+}
+
+/**
+ * The one path the sweep exists for, which a green suite never walks.
+ *
+ * @summary A suite that finishes tidily strands nothing, so it proves only that the sweep harms
+ * nothing. This strands an application on purpose and kills its runner with `SIGKILL`, which is the
+ * ending no handler can observe. The stand-in is a plain node process carrying the loader argument
+ * and an application root on its command line, because the sweep reads `ps` output and knows
+ * nothing about Electron. Its root is a temporary folder, so a suite running from this checkout at
+ * the same time can never match it.
+ */
+describe('the sweep against an application a killed run left behind', () => {
+  let sandbox: string | undefined;
+  let stranded: number | undefined;
+
+  afterEach(() => {
+    if (stranded !== undefined && parentOf(stranded) !== undefined) {
+      process.kill(-stranded, 'SIGKILL');
+    }
+
+    if (sandbox !== undefined) {
+      rmSync(sandbox, { force: true, recursive: true });
+    }
+
+    stranded = undefined;
+    sandbox = undefined;
+  });
+
+  it('ends the orphan, and leaves the run that follows nothing to trip over', async () => {
+    sandbox = mkdtempSync(join(tmpdir(), 'recompose-sweep-'));
+
+    const appRoot = join(sandbox, 'apps/desktop');
+    const named = join(sandbox, 'stranded.pid');
+    const runner = spawn(
+      process.execPath,
+      [
+        '-e',
+        STRANDS_A_CHILD,
+        process.execPath,
+        '-e',
+        NAMES_ITSELF_AND_WAITS,
+        named,
+        join(appRoot, LOADER_LEAF),
+        appRoot,
+      ],
+      { stdio: 'ignore' },
+    );
+
+    const namedItself = await settles(() => {
+      const reading = spawnSync('cat', [named], { encoding: 'utf8' });
+
+      return reading.status === 0 && reading.stdout.trim().length > 0;
+    });
+
+    expect(namedItself).toBe(true);
+
+    stranded = Number(readFileSync(named, 'utf8').trim());
+
+    process.kill(runner.pid ?? 0, 'SIGKILL');
+
+    const orphaned = await settles(() => parentOf(stranded ?? 0) === 1);
+
+    expect(orphaned).toBe(true);
+    expect(strayElectronApps(processListing(), appRoot)).toEqual([
+      { pid: stranded, groupId: stranded },
+    ]);
+
+    expect(sweptStrayElectron(appRoot)).toEqual([{ pid: stranded, groupId: stranded }]);
+
+    const cleared = await settles(() => parentOf(stranded ?? 0) === undefined);
+
+    expect(cleared).toBe(true);
+    expect(strayElectronApps(processListing(), appRoot)).toEqual([]);
   });
 });
