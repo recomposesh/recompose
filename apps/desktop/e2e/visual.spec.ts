@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page } from '@playwright/test';
+import type { ElectronApplication, Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
@@ -79,9 +79,23 @@ test('the providers screen matches its baseline with a connected account', async
   await expect(page).toHaveScreenshot('providers-connected.png', capture);
 });
 
+/**
+ * The one value on this screen that belongs to the machine rather than to the design.
+ *
+ * @summary The config folder names where this checkout keeps its data, so it differs between a
+ * runner and a laptop and between two worktrees on one laptop. A baseline that asserted it would
+ * pin the runner rather than the screen, which is the whole thing this suite is built not to do.
+ */
+function theFolderThisMachineUses(page: Page): Locator {
+  return page.getByText('Config folder').locator('xpath=following-sibling::*[1]');
+}
+
 test('the settings screen matches its baseline', async ({ electronApp, page }) => {
   await pinLightScheme(electronApp);
   await openSettings(page);
   await settleFonts(electronApp, page);
-  await expect(page).toHaveScreenshot('settings.png', capture);
+  await expect(page).toHaveScreenshot('settings.png', {
+    ...capture,
+    mask: [theFolderThisMachineUses(page)],
+  });
 });
