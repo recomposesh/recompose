@@ -141,7 +141,9 @@ spec that fails when that clause alone goes missing, which this change verified 
 **Bad**: the predicate duplicates the rebuild's knowledge, and that duplication is what failed here.
 Adjacency and the per-clause specs reduce the risk without removing it. A rule added to the rebuild
 without a matching clause brings this defect back in its original form, and no linter catches that.
-The file has little room left under `max-lines`, so the next rule may force a split first.
+The `max-lines` budget then ran out while closing the last of these defects, so normalization and
+its mirror moved into `tool-schema-normalize.ts`. That gives one such pair a module of its own and
+leaves the rest of the file room to grow.
 
 The Anthropic encoder adds `additionalProperties` to nothing. That matches the non-strict path it
 serves, and nothing in the codebase sets `strict: true` on an Anthropic tool. Should anything ever do
