@@ -75,22 +75,22 @@ export function pointingAt(accountId: string, providerModel = 'claude-sonnet-5')
   return {
     id: 'fast',
     displayName: 'fast',
-    routing: { entry: 'seat', nodes: { seat: { kind: 'target', accountId, providerModel } } },
+    routing: { entry: 't1', nodes: { t1: { kind: 'target', accountId, providerModel } } },
   };
 }
 
-export type LadderSeat = { node: string; accountId: string; providerModel?: string };
+export type LadderChild = { node: string; accountId: string; providerModel?: string };
 
 const LADDER = 'ladder';
 
-function seatedNodes(seats: readonly LadderSeat[]): Record<string, RouteNode> {
+function childNodes(children: readonly LadderChild[]): Record<string, RouteNode> {
   const nodes: Record<string, RouteNode> = {};
 
-  for (const seat of seats) {
-    nodes[seat.node] = {
+  for (const child of children) {
+    nodes[child.node] = {
       kind: 'target',
-      accountId: seat.accountId,
-      providerModel: seat.providerModel ?? 'claude-sonnet-5',
+      accountId: child.accountId,
+      providerModel: child.providerModel ?? 'claude-sonnet-5',
     };
   }
 
@@ -98,13 +98,13 @@ function seatedNodes(seats: readonly LadderSeat[]): Record<string, RouteNode> {
 }
 
 /**
- * A virtual model whose entry hands the request to a router over the seats named.
+ * A virtual model whose entry hands the request to a router over the children named.
  *
  * @summary Every per-node spec stands the same stored shape up, so the one rule that writes it
  * lives here rather than in each spec's own literal.
  */
 export function ladderedOver(
-  seats: readonly LadderSeat[],
+  children: readonly LadderChild[],
   policy: RouterPolicy = { mode: 'failover' },
 ): VirtualModel {
   return {
@@ -113,19 +113,19 @@ export function ladderedOver(
     routing: {
       entry: LADDER,
       nodes: {
-        [LADDER]: { kind: 'router', policy, children: seats.map((seat) => seat.node) },
-        ...seatedNodes(seats),
+        [LADDER]: { kind: 'router', policy, children: children.map((child) => child.node) },
+        ...childNodes(children),
       },
     },
   };
 }
 
-export function seatedAs(standing: EngineTargetStanding): EngineVirtualModel['routing'] {
-  return { entry: 'seat', nodes: { seat: { kind: 'target', standing } } };
+export function routedAs(standing: EngineTargetStanding): EngineVirtualModel['routing'] {
+  return { entry: 't1', nodes: { t1: { kind: 'target', standing } } };
 }
 
 export function spendAskFor(id: string, slug: string, virtualModel: string): unknown {
-  return { kind: 'spend-request', id, slug, virtualModel, routeNode: 'seat' };
+  return { kind: 'spend-request', id, slug, virtualModel, routeNode: 't1' };
 }
 
 export function gatewayHolding(models: readonly VirtualModel[]): GatewayConfig {

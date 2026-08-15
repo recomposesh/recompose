@@ -13,8 +13,8 @@ const codex = {
       id: 'fast',
       displayName: 'Fast',
       routing: {
-        entry: 'seat',
-        nodes: { seat: { kind: 'target', accountId: 'acc-key', providerModel: 'gpt-5' } },
+        entry: 't1',
+        nodes: { t1: { kind: 'target', accountId: 'acc-key', providerModel: 'gpt-5' } },
       },
     },
   ],

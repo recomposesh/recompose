@@ -6,8 +6,8 @@ import { gatewayBindingChild, gatewayRoutingThrough } from './routing-edits';
 
 /** One target standing as a whole routing, which is what a direct binding stores as. */
 export const bound: Routing = {
-  entry: 'seat',
-  nodes: { seat: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+  entry: 't1',
+  nodes: { t1: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
 };
 
 /** A gateway serving two plainly bound definitions, which every route edit starts from. */

@@ -5,7 +5,7 @@ import type {
   SubscriptionAccountView,
 } from '@recompose/contracts';
 
-import type { SeatedRouteNode } from './route-graph';
+import type { WalkedRouteNode } from './route-graph';
 
 import { accountDetail } from '../../../entities/account';
 
@@ -53,7 +53,7 @@ export type CanvasNode =
 export type CanvasNodeKind = CanvasNode['kind'];
 
 /** One route node placed on the canvas, holding the name its card and its cable both read. */
-export type PlacedRouteNode = { modelId: string; name: string; seat: SeatedRouteNode };
+export type PlacedRouteNode = { modelId: string; name: string; walked: WalkedRouteNode };
 
 /** The registry a target card reads itself against, as the drawer holds it. */
 export type Registry = {
@@ -61,7 +61,7 @@ export type Registry = {
   subscriptions: readonly SubscriptionAccountView[];
 };
 
-type RouterNode = Extract<SeatedRouteNode['node'], { kind: 'router' }>;
+type RouterNode = Extract<WalkedRouteNode['node'], { kind: 'router' }>;
 
 function ghostCard(placed: PlacedRouteNode, bound: RouteTarget): CanvasNode {
   return {
@@ -69,8 +69,8 @@ function ghostCard(placed: PlacedRouteNode, bound: RouteTarget): CanvasNode {
     kind: 'ghost-target',
     accountId: bound.accountId,
     modelId: placed.modelId,
-    routeNodeId: placed.seat.routeNodeId,
-    depth: placed.seat.depth,
+    routeNodeId: placed.walked.routeNodeId,
+    depth: placed.walked.depth,
   };
 }
 
@@ -88,8 +88,8 @@ function targetCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Regis
     kind: 'target',
     account,
     modelId: placed.modelId,
-    routeNodeId: placed.seat.routeNodeId,
-    depth: placed.seat.depth,
+    routeNodeId: placed.walked.routeNodeId,
+    depth: placed.walked.depth,
     detail: accountDetail(account, signedInAs),
   };
 }
@@ -99,8 +99,8 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
     id: `route:${placed.name}`,
     kind: 'router',
     modelId: placed.modelId,
-    routeNodeId: placed.seat.routeNodeId,
-    depth: placed.seat.depth,
+    routeNodeId: placed.walked.routeNodeId,
+    depth: placed.walked.depth,
     mode: node.policy.mode,
     displayName: node.displayName,
     childCount: node.children.length,
@@ -118,7 +118,7 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
  * an address is the account identity's own rule and stating it twice would let the two drift.
  */
 export function routeCard(placed: PlacedRouteNode, registry: Registry): CanvasNode {
-  return placed.seat.node.kind === 'router'
-    ? routerCard(placed, placed.seat.node)
-    : targetCard(placed, placed.seat.node, registry);
+  return placed.walked.node.kind === 'router'
+    ? routerCard(placed, placed.walked.node)
+    : targetCard(placed, placed.walked.node, registry);
 }

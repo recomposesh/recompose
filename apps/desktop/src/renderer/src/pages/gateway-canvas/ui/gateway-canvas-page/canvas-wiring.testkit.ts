@@ -5,8 +5,11 @@ import { vi } from 'vitest';
 
 import { gatewaySeed } from '../../../../shared/testing';
 
-function boundThrough(seat: string, accountId: string, providerModel: string): Routing {
-  return { entry: seat, nodes: { [seat]: { kind: 'target', accountId, providerModel } } };
+function boundThrough(routeNodeId: string, accountId: string, providerModel: string): Routing {
+  return {
+    entry: routeNodeId,
+    nodes: { [routeNodeId]: { kind: 'target', accountId, providerModel } },
+  };
 }
 
 /**
@@ -24,17 +27,17 @@ export const gateway = gatewaySeed({
     {
       id: 'fast',
       displayName: 'Fast',
-      routing: boundThrough('seat-fast', 'k1', 'claude-haiku-4-5'),
+      routing: boundThrough('node-fast', 'k1', 'claude-haiku-4-5'),
     },
     {
       id: 'creative',
       displayName: 'Creative',
-      routing: boundThrough('seat-creative', 'g1', 'openai/gpt-5'),
+      routing: boundThrough('node-creative', 'g1', 'openai/gpt-5'),
     },
     {
       id: 'slow',
       displayName: 'Slow',
-      routing: boundThrough('seat-slow', 'gone', 'claude-opus-5'),
+      routing: boundThrough('node-slow', 'gone', 'claude-opus-5'),
     },
     {
       id: 'pooled',

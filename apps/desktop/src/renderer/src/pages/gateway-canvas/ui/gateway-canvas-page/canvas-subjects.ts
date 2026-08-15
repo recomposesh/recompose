@@ -1,33 +1,27 @@
 import type { GatewayConfig } from '@recompose/contracts';
 
-import { routeNodeIn, seatUnder, seatWritten } from '../../lib/route-seats';
+import type { RouteAddress } from '../../lib/route-addresses';
+
+import { addressUnder, addressWritten, routeNodeIn } from '../../lib/route-addresses';
 import { modelIdOf, targetAccountIdIn } from './canvas-wiring';
 
 const DRAFT_CARD = 'draft';
-
-/**
- * Where in a virtual model's routing a selected card or cable seats.
- *
- * @summary The entry carries no id of its own in a card's name, because every card a gateway stood
- * before routers existed keeps the name it stood under, so nothing here reads as the entry.
- */
-type SeatedInRouting = { modelId: string; routeNodeId?: string | undefined };
 
 /**
  * What stands selected on the canvas, which is the one thing the inspector speaks for.
  *
  * @summary It lives beside the pair that reads a card into one and names a card back out of one,
  * so a surface speaking about a subject asks that pair for the card rather than spelling an id of
- * its own: a surface holding the seat but naming only the model would speak about the entry
+ * its own: a surface holding the address but naming only the model would speak about the entry
  * whichever card a person actually selected.
  */
 export type InspectorSubject =
   | { kind: 'gateway' }
   | { kind: 'virtual-model'; modelId: string }
-  | ({ kind: 'cable' } & SeatedInRouting)
-  | ({ kind: 'router' } & SeatedInRouting)
-  | ({ kind: 'target'; accountId: string } & SeatedInRouting)
-  | ({ kind: 'ghost-target'; accountId: string } & SeatedInRouting)
+  | ({ kind: 'cable' } & RouteAddress)
+  | ({ kind: 'router' } & RouteAddress)
+  | ({ kind: 'target'; accountId: string } & RouteAddress)
+  | ({ kind: 'ghost-target'; accountId: string } & RouteAddress)
   | { kind: 'draft' };
 
 function modelSubject(selection: string): InspectorSubject | undefined {
@@ -37,32 +31,32 @@ function modelSubject(selection: string): InspectorSubject | undefined {
 }
 
 function cableSubject(selection: string): InspectorSubject | undefined {
-  const seat = seatUnder(['cable:'], selection);
+  const address = addressUnder(['cable:'], selection);
 
-  return seat === undefined ? undefined : { kind: 'cable', ...seat };
+  return address === undefined ? undefined : { kind: 'cable', ...address };
 }
 
 function targetSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
-  const seat = seatUnder(['target:', 'ghost:'], selection);
+  const address = addressUnder(['target:', 'ghost:'], selection);
   const accountId = targetAccountIdIn(gateway, selection);
 
-  if (seat === undefined || accountId === undefined) {
+  if (address === undefined || accountId === undefined) {
     return undefined;
   }
 
   return selection.startsWith('ghost:')
-    ? { kind: 'ghost-target', accountId, ...seat }
-    : { kind: 'target', accountId, ...seat };
+    ? { kind: 'ghost-target', accountId, ...address }
+    : { kind: 'target', accountId, ...address };
 }
 
 function routerSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
-  const seat = seatUnder(['route:'], selection);
+  const address = addressUnder(['route:'], selection);
 
-  if (seat === undefined || routeNodeIn(gateway, seat)?.kind !== 'router') {
+  if (address === undefined || routeNodeIn(gateway, address)?.kind !== 'router') {
     return undefined;
   }
 
-  return { kind: 'router', ...seat };
+  return { kind: 'router', ...address };
 }
 
 function prefixedSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
@@ -99,19 +93,19 @@ function modelCardOf(subject: InspectorSubject): string | undefined {
     return `model:${subject.modelId}`;
   }
 
-  return subject.kind === 'cable' ? `cable:${seatWritten(subject)}` : undefined;
+  return subject.kind === 'cable' ? `cable:${addressWritten(subject)}` : undefined;
 }
 
 function routeCardOf(subject: InspectorSubject): string | undefined {
   if (subject.kind === 'router') {
-    return `route:${seatWritten(subject)}`;
+    return `route:${addressWritten(subject)}`;
   }
 
   if (subject.kind === 'target') {
-    return `target:${seatWritten(subject)}`;
+    return `target:${addressWritten(subject)}`;
   }
 
-  return subject.kind === 'ghost-target' ? `ghost:${seatWritten(subject)}` : undefined;
+  return subject.kind === 'ghost-target' ? `ghost:${addressWritten(subject)}` : undefined;
 }
 
 /**

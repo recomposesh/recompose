@@ -69,7 +69,7 @@ function routedBinding(
   children: readonly { accountId: string; providerModel: string }[],
 ): VirtualModel {
   const router = mintRouteNodeId();
-  const seats = children.map((child) => ({ id: mintRouteNodeId(), ...child }));
+  const bound = children.map((child) => ({ id: mintRouteNodeId(), ...child }));
 
   return {
     id,
@@ -77,14 +77,14 @@ function routedBinding(
     routing: {
       entry: router,
       nodes: {
-        [router]: { kind: 'router', policy: { mode }, children: seats.map((seat) => seat.id) },
+        [router]: { kind: 'router', policy: { mode }, children: bound.map((child) => child.id) },
         ...Object.fromEntries(
-          seats.map((seat) => [
-            seat.id,
+          bound.map((child) => [
+            child.id,
             {
               kind: 'target' as const,
-              accountId: seat.accountId,
-              providerModel: seat.providerModel,
+              accountId: child.accountId,
+              providerModel: child.providerModel,
             },
           ]),
         ),

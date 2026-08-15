@@ -14,10 +14,10 @@ const boundTarget = {
   providerModel: 'anthropic/claude-sonnet-5',
 };
 
-const SEAT = 'seat-one';
+const ROUTE_NODE = 'node-one';
 
 function bindingThrough(node: Record<string, unknown>): Record<string, unknown> {
-  return { entry: SEAT, nodes: { [SEAT]: node } };
+  return { entry: ROUTE_NODE, nodes: { [ROUTE_NODE]: node } };
 }
 
 function modelNamed(
@@ -49,7 +49,7 @@ describe('a virtual model bound to one target', () => {
   test('a binding names the account it spends and the real model it asks for', () => {
     const parsed = gatewayConfigSchema.parse(validConfig);
 
-    expect(parsed.virtualModels[0]?.routing.nodes[SEAT]).toEqual({
+    expect(parsed.virtualModels[0]?.routing.nodes[ROUTE_NODE]).toEqual({
       kind: 'target',
       accountId: 'acc-openrouter',
       providerModel: 'anthropic/claude-sonnet-5',
@@ -133,7 +133,7 @@ describe('the stored shape holds its ladder flat', () => {
         {
           id: 'fast',
           displayName: 'Fast',
-          routing: { entry: SEAT, nodes: [boundTarget, boundTarget] },
+          routing: { entry: ROUTE_NODE, nodes: [boundTarget, boundTarget] },
         },
       ],
     };

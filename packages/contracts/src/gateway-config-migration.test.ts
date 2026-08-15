@@ -205,8 +205,8 @@ describe('the rewrite that carried a stored binding into its graph', () => {
           id: 'fast',
           displayName: 'Fast',
           routing: {
-            entry: 'seat',
-            nodes: { seat: { kind: 'target', accountId: 'acc-ollama', providerModel: 'qwen3' } },
+            entry: 't1',
+            nodes: { t1: { kind: 'target', accountId: 'acc-ollama', providerModel: 'qwen3' } },
           },
         },
       ],

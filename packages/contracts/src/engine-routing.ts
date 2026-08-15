@@ -12,9 +12,9 @@ const targetStandingSchema = z.discriminatedUnion('standing', [
  * One node of a route table as the child sees it: a target worn down to its standing, or a router.
  *
  * @summary The stored target names the account paying for it, and that name never crosses the lane.
- * The parent resolves custody per attempt against live storage, so the child holds a seat name and
- * nothing it could spend. A router mirrors whole, because its mode and its declared order are the
- * walk's entire instruction.
+ * The parent resolves custody per attempt against live storage, so the child holds a route node id
+ * and nothing it could spend. A router mirrors whole, because its mode and its declared order are
+ * the walk's entire instruction.
  */
 const engineRouteNodeSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('target'), standing: targetStandingSchema }),
@@ -33,9 +33,9 @@ export type EngineTargetStanding = Extract<EngineRouteNode, { kind: 'target' }>[
 /**
  * The table one virtual model serves through, as the child sees it.
  *
- * @summary It mirrors the stored table id for id, so a seat name means the same thing on both sides
- * of the lane. It walks nothing of its own, because the parent mints it from a table the stored
- * parse already proved servable.
+ * @summary It mirrors the stored table id for id, so a route node id means the same thing on both
+ * sides of the lane. It walks nothing of its own, because the parent mints it from a table the
+ * stored parse already proved servable.
  */
 export const engineRoutingSchema = z.strictObject({
   entry: routeNodeIdSchema,

@@ -25,7 +25,7 @@ describe('what a spend request draws for a credentialed target', () => {
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], [keyRow]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
       providerOrigin: 'https://api.anthropic.com',
@@ -42,7 +42,7 @@ describe('what a spend request draws for a credentialed target', () => {
     const userDataPath = await storageHolding([pointingAt(aggregatorRow.id)], [aggregatorRow]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
       providerOrigin: 'https://openrouter.ai/api',
@@ -60,7 +60,7 @@ describe('what a spend request draws for a credentialed target', () => {
       'cred-key': 'sk-openai-another-secret-1a2b',
     });
 
-    const grant = await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat');
+    const grant = await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1');
 
     expect(JSON.stringify(grant)).toContain('sk-openai-another-secret-1a2b');
   });
@@ -71,7 +71,7 @@ describe('what a spend request draws for a local target', () => {
     const userDataPath = await storageHolding([pointingAt(localRow.id)], [localRow], {});
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
       providerOrigin: 'http://127.0.0.1:11434',
@@ -88,7 +88,7 @@ describe('what a spend request draws for a subscription target', () => {
     await holdSubscriptionCredential(userDataPath, 'anthropic', planRow.id, credential);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
       providerOrigin: 'https://api.anthropic.com',
@@ -112,7 +112,7 @@ describe('what a spend request draws for a subscription target', () => {
     await holdSubscriptionCredential(userDataPath, 'openai', codexPlanRow.id, credential);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
       providerOrigin: 'https://chatgpt.com/backend-api/codex',
@@ -130,7 +130,7 @@ describe('what a spend request draws for a subscription target', () => {
     const userDataPath = await storageHolding([pointingAt(planRow.id)], [planRow]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-credential' });
   });
 });
@@ -140,7 +140,7 @@ describe('what a spend request draws when no target stands', () => {
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], [keyRow]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'thorough', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'thorough', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-target' });
   });
 
@@ -148,7 +148,7 @@ describe('what a spend request draws when no target stands', () => {
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], [keyRow]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'shared', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'shared', 'fast', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-target' });
   });
 
@@ -156,7 +156,7 @@ describe('what a spend request draws when no target stands', () => {
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], []);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-target' });
   });
 
@@ -165,7 +165,7 @@ describe('what a spend request draws when no target stands', () => {
     const userDataPath = await storageHolding([pointingAt(stranger.id)], [stranger]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({
       verdict: 'resolved',
       providerOrigin: 'plugin://a-plugin-vendor',
@@ -185,7 +185,7 @@ describe('what a spend request draws when no target stands', () => {
     await mkdir(join(userDataPath, 'accounts.json'));
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).rejects.toThrow();
   });
 });
@@ -196,7 +196,7 @@ describe('which account a grant is resolved against', () => {
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], [decoy, keyRow]);
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toMatchObject({ providerOrigin: 'https://api.anthropic.com' });
   });
 });
@@ -206,7 +206,7 @@ describe('what a spend request draws when the credential is gone', () => {
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], [keyRow], {});
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-credential' });
   });
 
@@ -219,7 +219,7 @@ describe('what a spend request draws when the credential is gone', () => {
     await mkdir(join(userDataPath, 'vault.bin'));
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-credential' });
   });
 
@@ -235,7 +235,7 @@ describe('what a spend request draws when the credential is gone', () => {
     );
 
     await expect(
-      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat'),
+      resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1'),
     ).resolves.toStrictEqual({ verdict: 'missing-credential' });
   });
 });
@@ -248,7 +248,7 @@ describe('how a vault that refuses the read is written down', () => {
     await rm(join(userDataPath, 'vault.bin'));
     await mkdir(join(userDataPath, 'vault.bin'));
 
-    await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat');
+    await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1');
 
     const spoken = complaint.mock.calls.flat().map(String).join(' ');
 
@@ -267,7 +267,7 @@ describe('how a vault that refuses the read is written down', () => {
       'utf8',
     );
 
-    await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat');
+    await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1');
 
     const spoken = complaint.mock.calls.flat().map(String).join(' ');
 
@@ -279,7 +279,7 @@ describe('how a vault that refuses the read is written down', () => {
     const complaint = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const userDataPath = await storageHolding([pointingAt(keyRow.id)], [keyRow], {});
 
-    await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 'seat');
+    await resolveSpendGrant(contextFor(userDataPath), 'personal', 'fast', 't1');
 
     expect(complaint).not.toHaveBeenCalled();
   });

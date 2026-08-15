@@ -11,7 +11,7 @@ import {
   planRow,
   pointingAt,
   rewriteSettings,
-  seatedAs,
+  routedAs,
   secret,
   storageHolding,
 } from './spend-grant.testkit';
@@ -23,8 +23,8 @@ const thorough: VirtualModel = {
   id: 'thorough',
   displayName: 'thorough',
   routing: {
-    entry: 'seat',
-    nodes: { seat: { kind: 'target', accountId: aggregatorRow.id, providerModel: 'gpt-5' } },
+    entry: 't1',
+    nodes: { t1: { kind: 'target', accountId: aggregatorRow.id, providerModel: 'gpt-5' } },
   },
 };
 
@@ -60,7 +60,7 @@ describe('the standing each virtual model is minted with', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
+        routing: routedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -73,7 +73,7 @@ describe('the standing each virtual model is minted with', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
+        routing: routedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -92,7 +92,7 @@ describe('a virtual model whose target no longer stands', () => {
     const gateway = await storedEngineGateway(userDataPath, noComplaint, 'personal');
 
     expect(gateway?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
+      { id: 'fast', displayName: 'fast', routing: routedAs({ standing: 'removed' }) },
     ]);
   });
 
@@ -104,7 +104,7 @@ describe('a virtual model whose target no longer stands', () => {
       {
         id: 'fast',
         displayName: 'fast',
-        routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
+        routing: routedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
       },
     ]);
   });
@@ -114,11 +114,11 @@ describe('a virtual model whose target no longer stands', () => {
     const gateway = await storedEngineGateway(userDataPath, noComplaint, 'personal');
 
     expect(gateway?.virtualModels).toStrictEqual([
-      { id: 'fast', displayName: 'fast', routing: seatedAs({ standing: 'removed' }) },
+      { id: 'fast', displayName: 'fast', routing: routedAs({ standing: 'removed' }) },
       {
         id: 'thorough',
         displayName: 'thorough',
-        routing: seatedAs({ standing: 'bound', providerModel: 'gpt-5' }),
+        routing: routedAs({ standing: 'bound', providerModel: 'gpt-5' }),
       },
     ]);
   });
@@ -137,7 +137,7 @@ describe('the snapshot a gateway about to be written serves under', () => {
         {
           id: 'fast',
           displayName: 'fast',
-          routing: seatedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
+          routing: routedAs({ standing: 'bound', providerModel: 'claude-sonnet-5' }),
         },
       ],
     });

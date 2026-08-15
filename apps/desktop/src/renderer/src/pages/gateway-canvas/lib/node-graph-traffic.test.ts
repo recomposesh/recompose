@@ -19,8 +19,8 @@ const fast: VirtualModel = {
   id: 'fast',
   displayName: 'Fast',
   routing: {
-    entry: 'seat-fast',
-    nodes: { 'seat-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
+    entry: 'node-fast',
+    nodes: { 'node-fast': { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' } },
   },
 };
 
@@ -28,8 +28,8 @@ const stranded: VirtualModel = {
   id: 'slow',
   displayName: 'Slow',
   routing: {
-    entry: 'seat-slow',
-    nodes: { 'seat-slow': { kind: 'target', accountId: 'gone', providerModel: 'claude-opus-5' } },
+    entry: 'node-slow',
+    nodes: { 'node-slow': { kind: 'target', accountId: 'gone', providerModel: 'claude-opus-5' } },
   },
 };
 
@@ -45,7 +45,7 @@ const codex: GatewayConfig = {
 const nothingOverlaid: CanvasOverlay = { draft: undefined, pending: undefined };
 
 const flowed: GatewayTraffic = {
-  codex: { fast: { 'seat-fast': { outcome: 'served', at: 1_754_600_000_000 } } },
+  codex: { fast: { 'node-fast': { outcome: 'served', at: 1_754_600_000_000 } } },
 };
 
 const JUST_AFTER = 1_754_600_000_500;
@@ -59,7 +59,7 @@ function graphAt(traffic: GatewayTraffic, now: number, gateway: GatewayConfig = 
 const wentRed: GatewayTraffic = {
   codex: {
     fast: {
-      'seat-fast': {
+      'node-fast': {
         outcome: 'failed',
         at: 1_754_600_000_001,
         status: 502,
@@ -92,7 +92,7 @@ describe('what the cables of a virtual model say about the traffic they carried'
 
   test('a request still in flight paints both its cables live', () => {
     const inFlight: GatewayTraffic = {
-      codex: { fast: { 'seat-fast': { outcome: 'live', at: 1_754_600_000_000 } } },
+      codex: { fast: { 'node-fast': { outcome: 'live', at: 1_754_600_000_000 } } },
     };
 
     expect(standingsOf(graphAt(inFlight, JUST_AFTER))).toEqual(['live', 'live']);
@@ -100,7 +100,7 @@ describe('what the cables of a virtual model say about the traffic they carried'
 
   test('a request in flight stays live however long it has been running', () => {
     const inFlight: GatewayTraffic = {
-      codex: { fast: { 'seat-fast': { outcome: 'live', at: 1_754_600_000_000 } } },
+      codex: { fast: { 'node-fast': { outcome: 'live', at: 1_754_600_000_000 } } },
     };
 
     expect(standingsOf(graphAt(inFlight, A_MINUTE_LATER))).toEqual(['live', 'live']);
@@ -115,7 +115,7 @@ describe('what the cables of a virtual model say about the traffic they carried'
 
   test('traffic recorded under another gateway paints nothing on this one', () => {
     const elsewhere: GatewayTraffic = {
-      other: { fast: { 'seat-fast': { outcome: 'served', at: 1_754_600_000_000 } } },
+      other: { fast: { 'node-fast': { outcome: 'served', at: 1_754_600_000_000 } } },
     };
     const graph = graphAt(elsewhere, JUST_AFTER);
 
@@ -126,7 +126,7 @@ describe('what the cables of a virtual model say about the traffic they carried'
     const departed: GatewayTraffic = {
       codex: {
         removed: {
-          'seat-gone': { outcome: 'failed', at: 1, status: 500, detail: 'It fell over.' },
+          'node-gone': { outcome: 'failed', at: 1, status: 500, detail: 'It fell over.' },
         },
       },
     };
@@ -160,7 +160,7 @@ describe('what a failed virtual model hands a person to read', () => {
 
   test('a binding whose account left the registry stays broken, whatever last flowed through it', () => {
     const stale: GatewayTraffic = {
-      codex: { slow: { 'seat-slow': { outcome: 'served', at: 1_754_600_000_000 } } },
+      codex: { slow: { 'node-slow': { outcome: 'served', at: 1_754_600_000_000 } } },
     };
     const graph = graphAt(stale, JUST_AFTER, { ...codex, virtualModels: [stranded] });
 

@@ -28,8 +28,8 @@ const composedGateway = gatewaySeed({
       id: 'fast',
       displayName: 'Fast',
       routing: {
-        entry: 'seat',
-        nodes: { seat: { kind: 'target', accountId: 'k1', providerModel: 'sonnet' } },
+        entry: 't1',
+        nodes: { t1: { kind: 'target', accountId: 'k1', providerModel: 'sonnet' } },
       },
     },
   ],

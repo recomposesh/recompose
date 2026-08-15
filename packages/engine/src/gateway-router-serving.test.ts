@@ -80,7 +80,7 @@ describe('failover hands a curable refusal to the next child in declared order',
   });
 });
 
-describe('a seat the table already stands unbound', () => {
+describe('a route node the table already stands unbound', () => {
   it('hands the request to a sibling without asking main for a credential', async () => {
     const scene = serving(
       aRoutedModel('failover', [
@@ -96,7 +96,7 @@ describe('a seat the table already stands unbound', () => {
     expect(answer.status).toBe(200);
   });
 
-  it('reads as a missing target, the same words a grant answers for the same seat', async () => {
+  it('reads as a missing target, the same words a grant answers for the same route node', async () => {
     const scene = serving(
       aRoutedModel('failover', [{ standing: 'removed' }, { standing: 'removed' }]),
       answeringInTurn(served),

@@ -5,12 +5,15 @@ import { nonBlankString } from './non-blank';
 export const routeNodeIdSchema = nonBlankString;
 
 /**
- * A fresh id for one route node, minted where a person binds one or where a stored target becomes
- * a graph.
+ * A fresh id for one route node, minted where a person binds one.
  *
- * @summary The only rule that writes a route node id, so the canvas and the stored migration never
- * drift apart on format. Every runtime key pairs the id with its gateway and its virtual model, so
- * an id needs to stand apart only inside the table that holds it.
+ * @summary Not the only writer of a route node id, and a reader must not take this shape for the
+ * only shape: the version 4 migration derives `seat:` plus the model's own id without coming
+ * through here, because it runs on every load of a document nothing rewrites and a random id would
+ * differ between the snapshot the engine holds and the lookup a request makes against the same
+ * file. So a stored id is either a UUID or a colon-carrying derivation, and anything reading one
+ * apart has to tolerate both. Every runtime key pairs the id with its gateway and its virtual
+ * model, so an id needs to stand apart only inside the table that holds it.
  */
 export function mintRouteNodeId(): string {
   return crypto.randomUUID();
