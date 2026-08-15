@@ -10,6 +10,7 @@ import {
 } from '../../../../shared/api';
 import { lookedAtGateway, rememberedGateway } from '../../../../shared/lib';
 import { canvasPositions, setNodePosition } from '../../lib/canvas-position-store';
+import { canvasViewport, keepCanvasViewport } from '../../lib/canvas-viewport-store';
 import { heldDraft } from '../../lib/use-held-draft';
 import { canvasEnvironment, canvasLeftClean, draftHeld } from './canvas-world.testkit';
 import { forgottenEverywhere } from './removal-flow';
@@ -82,6 +83,25 @@ describe('what this side forgets when a gateway is deleted', () => {
     forgottenEverywhere(queryClient, LEAVING);
 
     expect(queryClient.getQueryData(engineLogsQueryOptions(LEAVING).queryKey)).toBeUndefined();
+  });
+});
+
+describe('the canvas view a person set on the gateway that left', () => {
+  test('the viewport they zoomed and panned to goes with it', () => {
+    keepCanvasViewport(LEAVING, { x: 120, y: 240, zoom: 1.5 });
+
+    forgottenEverywhere(new QueryClient(), LEAVING);
+
+    expect(canvasViewport(LEAVING)).toBeUndefined();
+  });
+
+  test('the viewport another gateway holds is left standing', () => {
+    keepCanvasViewport(LEAVING, { x: 120, y: 240, zoom: 1.5 });
+    keepCanvasViewport(STAYING, { x: 8, y: 16, zoom: 0.75 });
+
+    forgottenEverywhere(new QueryClient(), LEAVING);
+
+    expect(canvasViewport(STAYING)).toEqual({ x: 8, y: 16, zoom: 0.75 });
   });
 });
 
