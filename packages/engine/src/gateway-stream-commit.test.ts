@@ -1,19 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
+import type { UpstreamCommit } from './gateway-stream-commit';
+
 import { aHeldStream } from './gateway-app.testkit';
 import { upstreamAtTheCommitLatch } from './gateway-stream-commit';
-
-function anEventStream(body: ReadableStream<Uint8Array>, status = 200): Response {
-  return new Response(body, { status, headers: { 'content-type': 'text/event-stream' } });
-}
-
-function streamOf(text: string): ReadableStream<Uint8Array> {
-  return new Response(text).body ?? new ReadableStream<Uint8Array>();
-}
-
-function textOf(step: { value?: Uint8Array | undefined }): string {
-  return step.value === undefined ? '' : new TextDecoder().decode(step.value);
-}
+import {
+  anEventStream,
+  aCrossing,
+  FIRST_TEXT,
+  MESSAGE_STOP,
+  streamOf,
+  textOf,
+} from './gateway-stream-commit.testkit';
 
 const RATE_LIMITED =
   'event: error\ndata: {"type":"error","error":{"type":"rate_limit_error","message":"slow down"}}\n\n';
@@ -21,7 +19,9 @@ const RATE_LIMITED =
 const MALFORMED =
   'event: error\ndata: {"type":"error","error":{"type":"invalid_request_error","message":"bad tool schema"}}\n\n';
 
-const FIRST_TEXT = 'data: {"type":"message_start","message":{"id":"msg_1"}}\n\n';
+async function latching(text: string): Promise<UpstreamCommit> {
+  return upstreamAtTheCommitLatch(anEventStream(streamOf(text)), aCrossing());
+}
 
 describe('an answer carrying no stream needs no latch at all', () => {
   it('commits a plain JSON answer as it stands', async () => {
@@ -30,7 +30,7 @@ describe('an answer carrying no stream needs no latch at all', () => {
       headers: { 'content-type': 'application/json' },
     });
 
-    const latched = await upstreamAtTheCommitLatch(upstream);
+    const latched = await upstreamAtTheCommitLatch(upstream, aCrossing());
 
     expect(latched.kind).toBe('committed');
     await expect(latched.upstream.text()).resolves.toBe('{"ok":true}');
@@ -39,6 +39,7 @@ describe('an answer carrying no stream needs no latch at all', () => {
   it('commits an event stream that carries no body to read', async () => {
     const latched = await upstreamAtTheCommitLatch(
       new Response(null, { status: 204, headers: { 'content-type': 'text/event-stream' } }),
+      aCrossing(),
     );
 
     expect(latched.kind).toBe('committed');
@@ -47,59 +48,49 @@ describe('an answer carrying no stream needs no latch at all', () => {
 
 describe('the first upstream event decides whether the child keeps the request', () => {
   it('commits a stream that opens with an ordinary event', async () => {
-    const latched = await upstreamAtTheCommitLatch(anEventStream(streamOf(FIRST_TEXT)));
-
-    expect(latched.kind).toBe('committed');
+    expect((await latching(FIRST_TEXT)).kind).toBe('committed');
   });
 
   it('replays the event it held, so the caller loses nothing to the classification', async () => {
-    const latched = await upstreamAtTheCommitLatch(
-      anEventStream(streamOf(`${FIRST_TEXT}data: {"type":"message_stop"}\n\n`)),
-    );
+    const latched = await latching(`${FIRST_TEXT}${MESSAGE_STOP}`);
 
-    await expect(latched.upstream.text()).resolves.toBe(
-      `${FIRST_TEXT}data: {"type":"message_stop"}\n\n`,
-    );
+    await expect(latched.upstream.text()).resolves.toBe(`${FIRST_TEXT}${MESSAGE_STOP}`);
   });
 
   it('reads a rate limit opening the stream as a failure before commit', async () => {
-    const latched = await upstreamAtTheCommitLatch(anEventStream(streamOf(RATE_LIMITED)));
-
-    expect(latched).toMatchObject({ kind: 'error-before-commit', equivalentStatus: 429 });
+    expect(await latching(RATE_LIMITED)).toMatchObject({
+      kind: 'error-before-commit',
+      equivalentStatus: 429,
+    });
   });
 
   it('reads a caller fault opening the stream as a failure before commit too', async () => {
-    const latched = await upstreamAtTheCommitLatch(anEventStream(streamOf(MALFORMED)));
-
-    expect(latched).toMatchObject({ kind: 'error-before-commit', equivalentStatus: 400 });
+    expect(await latching(MALFORMED)).toMatchObject({
+      kind: 'error-before-commit',
+      equivalentStatus: 400,
+    });
   });
 
   it("hands the error back, so an answer built from it stays the provider's own word", async () => {
-    const latched = await upstreamAtTheCommitLatch(anEventStream(streamOf(MALFORMED)));
+    const latched = await latching(MALFORMED);
 
     await expect(latched.upstream.text()).resolves.toContain('bad tool schema');
   });
 
   it('reads a chat-completions error frame, which names no event type of its own', async () => {
-    const latched = await upstreamAtTheCommitLatch(
-      anEventStream(streamOf('data: {"error":{"type":"rate_limit_error","message":"slow"}}\n\n')),
+    const latched = await latching(
+      'data: {"error":{"type":"rate_limit_error","message":"slow"}}\n\n',
     );
 
     expect(latched).toMatchObject({ kind: 'error-before-commit', equivalentStatus: 429 });
   });
 
   it('commits a stream that ends before it ever names an event', async () => {
-    const latched = await upstreamAtTheCommitLatch(anEventStream(streamOf(': keep-alive\n\n')));
-
-    expect(latched.kind).toBe('committed');
+    expect((await latching(': keep-alive\n\n')).kind).toBe('committed');
   });
 
   it('reads only the first event, so a later error belongs to the child that already committed', async () => {
-    const latched = await upstreamAtTheCommitLatch(
-      anEventStream(streamOf(`${FIRST_TEXT}${RATE_LIMITED}`)),
-    );
-
-    expect(latched.kind).toBe('committed');
+    expect((await latching(`${FIRST_TEXT}${RATE_LIMITED}`)).kind).toBe('committed');
   });
 });
 
@@ -122,6 +113,7 @@ describe('a child the walk has decided against lets go of the body it was readin
           released = true;
         }),
       ),
+      aCrossing(),
     );
 
     expect(released).toBe(true);
@@ -136,6 +128,7 @@ describe('a child the walk has decided against lets go of the body it was readin
           released = true;
         }),
       ),
+      aCrossing(),
     );
 
     expect(released).toBe(false);
@@ -148,6 +141,7 @@ describe('a child the walk has decided against lets go of the body it was readin
           throw new Error('the connection was already gone');
         }),
       ),
+      aCrossing(),
     );
 
     expect(latched).toMatchObject({ kind: 'error-before-commit', equivalentStatus: 429 });
@@ -160,7 +154,7 @@ describe('holding relay until the first upstream event classifies is not bufferi
 
     held.send(FIRST_TEXT);
 
-    const latched = await upstreamAtTheCommitLatch(anEventStream(held.stream));
+    const latched = await upstreamAtTheCommitLatch(anEventStream(held.stream), aCrossing());
 
     expect(latched.kind).toBe('committed');
   });
@@ -170,17 +164,17 @@ describe('holding relay until the first upstream event classifies is not bufferi
 
     held.send(FIRST_TEXT);
 
-    const latched = await upstreamAtTheCommitLatch(anEventStream(held.stream));
+    const latched = await upstreamAtTheCommitLatch(anEventStream(held.stream), aCrossing());
     const reader = (latched.upstream.body ?? streamOf('')).getReader();
     const first = await reader.read();
 
-    held.send('data: {"type":"message_stop"}\n\n');
+    held.send(MESSAGE_STOP);
 
     const second = await reader.read();
 
     held.end();
 
     expect(textOf(first)).toBe(FIRST_TEXT);
-    expect(textOf(second)).toBe('data: {"type":"message_stop"}\n\n');
+    expect(textOf(second)).toBe(MESSAGE_STOP);
   });
 });

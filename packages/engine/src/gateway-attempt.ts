@@ -123,7 +123,7 @@ async function reachedUpstream(
   try {
     const upstream = await sentUpstream(deps, crossing, grant, body);
 
-    return { kind: 'reached', committed: await upstreamAtTheCommitLatch(upstream) };
+    return { kind: 'reached', committed: await upstreamAtTheCommitLatch(upstream, crossing) };
   } catch (failure) {
     if (failure instanceof InvalidJsonBodyError) {
       throw failure;

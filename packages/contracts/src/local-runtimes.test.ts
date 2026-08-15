@@ -9,6 +9,7 @@ import {
   loopbackAddressAt,
   loopbackAddressSchema,
   modelListBoundMs,
+  firstEventBoundMs,
   proxyFetchBoundMs,
   RUNTIME_PORT_RANGE,
   runtimeAddressFor,
@@ -189,6 +190,17 @@ describe('the bound a look at a runtime waits under', () => {
 describe('the bound a proxied request waits under', () => {
   test('the proxy gives a provider ten minutes before it counts as silence', () => {
     expect(proxyFetchBoundMs).toBe(600_000);
+  });
+});
+
+describe('the bound a target has to open its answer under', () => {
+  test('a target gets four minutes to open its answer before the child counts as silent', () => {
+    expect(firstEventBoundMs).toBe(240_000);
+  });
+
+  test('the wait for a first event ends well before the wait for the whole turn', () => {
+    expect(firstEventBoundMs).toBeGreaterThan(modelListBoundMs);
+    expect(firstEventBoundMs).toBeLessThan(proxyFetchBoundMs);
   });
 });
 
