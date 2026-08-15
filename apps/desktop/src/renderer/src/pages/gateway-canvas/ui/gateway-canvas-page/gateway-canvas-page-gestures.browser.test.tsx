@@ -173,11 +173,11 @@ test('a dragged draft card keeps the seat the drag left it at', async () => {
 
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 256px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 300px)');
 
   draggedCard(cardWrapper(screen.container, 'draft'), { x: 40, y: 30 });
 
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(360px, 286px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(360px, 330px)');
 });
 
 test('a dragged pending card carries the pick it stands for with it', async () => {
@@ -208,10 +208,10 @@ test('tidying seats a dragged draft card back in its own column', async () => {
 
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 256px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 300px)');
 
   draggedCard(cardWrapper(screen.container, 'draft'), { x: 40, y: 30 });
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(360px, 286px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(360px, 330px)');
 
   pushCommand('tidy');
 

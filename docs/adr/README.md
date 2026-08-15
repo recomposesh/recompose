@@ -131,3 +131,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0123](0123-a-strictness-guard-asks-every-question-its-rebuild-answers.md)      | A strictness guard asks every question its rebuild answers                          | Accepted   | 2026-08-15 |
 | [0124](0124-a-signed-block-replays-only-to-its-own-account.md)                  | A signed thinking block replays only to the account that minted it                  | Accepted   | 2026-08-15 |
 | [0125](0125-a-mutated-module-holds-no-hooks.md)                                 | A mutated module holds no hooks                                                     | Accepted   | 2026-08-15 |
+| [0126](0126-a-card-born-without-a-pointer-takes-the-canvas-next-seat.md)        | A card born without a pointer takes the canvas's own next seat                      | Accepted   | 2026-08-15 |

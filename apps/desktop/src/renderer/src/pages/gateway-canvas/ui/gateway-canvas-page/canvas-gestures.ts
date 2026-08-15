@@ -31,9 +31,20 @@ function revealOn(standings: CanvasStandings, subject: string): void {
   }
 }
 
-function birthedDraftAt(world: CanvasWorld, at: XY): void {
+/**
+ * The seat a card born under a pointer takes, which centers it on the point rather than hanging it.
+ *
+ * @summary A seat names a card's top corner while a pointer names the middle of what the person
+ * aimed at, so half the card comes off the point to turn one into the other. Only a birth a pointer
+ * named reads this: a seat the canvas worked out is already a corner, and lifting one again walks
+ * the card up the column by half a card every time it is asked for.
+ */
+function seatUnder(pointer: XY): XY {
+  return { x: pointer.x, y: pointer.y - CARD_MEASURE.height / 2 };
+}
+
+function birthedDraftAt(world: CanvasWorld, seat: XY): void {
   const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
-  const seat = { x: at.x, y: at.y - CARD_MEASURE.height / 2 };
 
   startDrafting(world.slug, definition, seat);
   revealOn(world.standings, 'draft');
@@ -79,7 +90,7 @@ function asksWhatToBind(from: string): boolean {
 
 function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
   if (from === 'gateway') {
-    birthedDraftAt(world, at);
+    birthedDraftAt(world, seatUnder(at));
 
     return;
   }
@@ -88,7 +99,7 @@ function landedOnOpenCanvas(world: CanvasWorld, from: string, at: XY): void {
     world.standings.setPicker({
       step: 'kind',
       from,
-      at: { x: at.x, y: at.y - CARD_MEASURE.height / 2 },
+      at: seatUnder(at),
       origin: 'drop',
     });
 
@@ -221,13 +232,22 @@ function seatForABoundCard(world: CanvasWorld, from: string): XY {
   return seatForNewNode(columnBeyond(parent), world.seats);
 }
 
+/**
+ * Where the gateway's plus stands a draft, which is the free row under the model column.
+ *
+ * @summary The plus names no point, so the seat comes from the same arrangement rule every other
+ * new card reads rather than from an offset of its own. A draft already standing keeps the seat it
+ * stands at, because a person who dragged that card said where it belongs and a second press asks
+ * to go on editing it rather than to move it.
+ */
+function seatForABornDraft(world: CanvasWorld): XY {
+  return heldDraft(world.slug)?.seat ?? seatForNewNode(MODEL_COLUMN, world.seats);
+}
+
 function cardAsks(world: CanvasWorld) {
   return {
     onAddVirtualModel: () => {
-      birthedDraftAt(
-        world,
-        heldDraft(world.slug)?.seat ?? seatForNewNode(MODEL_COLUMN, world.seats),
-      );
+      birthedDraftAt(world, seatForABornDraft(world));
     },
     onBindFrom: (from: string) => {
       world.standings.setPicker({
