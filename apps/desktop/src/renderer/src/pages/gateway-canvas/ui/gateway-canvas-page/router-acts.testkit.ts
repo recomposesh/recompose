@@ -3,6 +3,7 @@ import type { Account, GatewayConfig, RouteNode, Routing } from '@recompose/cont
 import { vi } from 'vitest';
 
 import type { CanvasNode } from '../../lib/node-graph';
+import type { PickerStanding } from './canvas-standings';
 import type { CanvasRecord } from './canvas-world.testkit';
 
 import { gatewaySeed } from '../../../../shared/testing';
@@ -53,6 +54,14 @@ export function modeIn(
 
   return node?.kind === 'router' ? node.policy.mode : undefined;
 }
+
+/** The ask a cable let go on a stored child opens, which names the child a pick would move. */
+export const askOnTheStoredChild: PickerStanding = {
+  step: 'provider-model',
+  from: 'route:pooled',
+  accountId: 'g1',
+  anchor: 'target:pooled:t1',
+};
 
 /**
  * The frames the canvas asked for so it could look at a card that was just born.

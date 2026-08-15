@@ -6,6 +6,7 @@ import { canvasEnvironment, canvasLeftClean, worldWhereWritesLand } from './canv
 import { completedChildPick, completedChildRebindPick } from './router-acts';
 import {
   accounts,
+  askOnTheStoredChild,
   CANVAS,
   ladderIn,
   looksAtBornCards,
@@ -99,16 +100,22 @@ describe('a child of a ladder aimed at another account', () => {
     ]);
   });
 
-  test('the card it already stands on is not born again, so the canvas looks at nothing', () => {
+  test('a child under a definition that left the gateway is aimed nowhere', () => {
+    const { world, record } = worldWhereWritesLand(gateway, { accounts });
+
+    completedChildRebindPick(world, { modelId: 'absent' }, 't1', 'g1', 'openai/gpt-5');
+
+    expect(record.written).toEqual([]);
+    expect(record.announced).toEqual([]);
+  });
+});
+
+describe('the card a moved child stands on', () => {
+  test('a card already standing is not born again, so the canvas looks at nothing', () => {
     const looks = looksAtBornCards();
     const { world } = worldWhereWritesLand(gateway, {
       accounts,
-      picker: {
-        step: 'provider-model',
-        from: 'route:pooled',
-        accountId: 'g1',
-        anchor: 'target:pooled:t1',
-      },
+      picker: askOnTheStoredChild,
       graph: { nodes: [targetCard('target:pooled:t1')], edges: [] },
     });
 
@@ -117,29 +124,15 @@ describe('a child of a ladder aimed at another account', () => {
     expect(looks).toEqual([]);
   });
 
-  test('a child the canvas does not yet stand is born, so the canvas looks at where it lands', () => {
+  test('a card the canvas does not yet stand is born, so it looks at where that card lands', () => {
     const looks = looksAtBornCards();
     const { world } = worldWhereWritesLand(gateway, {
       accounts,
-      picker: {
-        step: 'provider-model',
-        from: 'route:pooled',
-        accountId: 'g1',
-        anchor: 'target:pooled:t1',
-      },
+      picker: askOnTheStoredChild,
     });
 
     completedChildRebindPick(world, { modelId: 'pooled' }, 't1', 'g1', 'openai/gpt-5');
 
     expect(looks).toHaveLength(1);
-  });
-
-  test('a child under a definition that left the gateway is aimed nowhere', () => {
-    const { world, record } = worldWhereWritesLand(gateway, { accounts });
-
-    completedChildRebindPick(world, { modelId: 'absent' }, 't1', 'g1', 'openai/gpt-5');
-
-    expect(record.written).toEqual([]);
-    expect(record.announced).toEqual([]);
   });
 });
