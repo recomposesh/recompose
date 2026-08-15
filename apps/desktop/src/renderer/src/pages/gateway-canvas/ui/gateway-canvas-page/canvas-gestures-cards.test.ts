@@ -3,6 +3,8 @@ import type { MouseEvent as ReactMouseEvent } from 'react';
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type { NodePositions } from '../../lib/canvas-positions';
+
 import { closeInspector, inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { canvasGraph } from '../../lib/node-graph';
 import { heldDraft } from '../../lib/use-held-draft';
@@ -17,6 +19,10 @@ import {
 
 const STEADY = { displayName: 'Steady', id: 'steady', accountId: '', providerModel: '' };
 const ASKED_AT = { x: 448, y: 348 };
+const MODELS_STANDING = {
+  'model:fast': { x: 320, y: 0 },
+  'model:creative': { x: 320, y: 150 },
+};
 
 class PressedControl extends EventTarget {
   private readonly attributes: readonly string[] | null;
@@ -47,10 +53,10 @@ function press(target: EventTarget): ReactMouseEvent {
   });
 }
 
-function canvasStanding() {
+function canvasStanding(seats: NodePositions = {}) {
   const drawn = canvasGraph(gateway, [], { draft: undefined, pending: undefined });
 
-  return worldWhereWritesHang(gateway, { graph: drawn });
+  return worldWhereWritesHang(gateway, { graph: drawn, seats });
 }
 
 function isAsk(held: unknown): held is () => void {
@@ -140,12 +146,40 @@ describe('what a press on the canvas reveals', () => {
 });
 
 describe('the asks a card hangs off its own port', () => {
-  test("the gateway's plus stands a draft in the virtual model column", () => {
+  test("the gateway's plus stands a draft in the model column's first free seat", () => {
     const { world } = canvasStanding();
 
     askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel')();
 
-    expect(heldDraft(gateway.slug)?.seat.x).toBe(320);
+    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: 0 });
+  });
+
+  test("the gateway's plus stands a draft below the models already standing", () => {
+    const { world } = canvasStanding(MODELS_STANDING);
+
+    askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel')();
+
+    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: 300 });
+  });
+
+  test("pressing the gateway's plus again never walks the draft up the column", () => {
+    const { world } = canvasStanding();
+    const plus = askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel');
+
+    plus();
+    plus();
+    plus();
+
+    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: 0 });
+  });
+
+  test("the gateway's plus reveals the draft it stood beside the canvas", () => {
+    const { world, record } = canvasStanding();
+
+    askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel')();
+
+    expect(record.selected).toEqual(['draft']);
+    expect(inspectorOpen()).toBe(true);
   });
 
   test("the gateway's plus reopens the draft already standing, where it stands", () => {
@@ -155,7 +189,7 @@ describe('the asks a card hangs off its own port', () => {
     askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel')();
 
     expect(heldDraft(gateway.slug)?.definition.id).toBe('steady');
-    expect(heldDraft(gateway.slug)?.seat.x).toBe(700);
+    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 700, y: 150 });
   });
 
   test("a router's plus asks what to bind beyond the router's own column", () => {
