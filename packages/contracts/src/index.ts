@@ -10,6 +10,7 @@ export * from './engine-routing';
 export * from './engine-state';
 export * from './engine-traffic';
 export * from './engine-logs';
+export * from './file-browser';
 export * from './usage';
 export * from './usage-measures';
 export * from './api-keys';

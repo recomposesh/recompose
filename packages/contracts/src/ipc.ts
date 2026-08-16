@@ -10,6 +10,7 @@ import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
+import { fileBrowserSchema } from './file-browser';
 import { gatewayConfigSchema, gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import { ipcResult } from './ipc-result';
 import { subscriptionChannels } from './ipc-subscriptions';
@@ -48,7 +49,7 @@ function namesItsOwnPort(asked: { runtime: string; port?: number | undefined }):
 }
 
 export const systemStateSchema = z.strictObject({
-  fileBrowser: z.enum(['finder', 'explorer', 'file-manager']),
+  fileBrowser: fileBrowserSchema,
   loginItem: z.enum(['available', 'unpackaged', 'unsupported']),
   loginItemEnabled: z.boolean(),
   menuBarVisible: z.boolean(),

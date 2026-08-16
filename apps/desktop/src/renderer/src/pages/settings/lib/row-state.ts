@@ -1,15 +1,5 @@
 import type { SystemState } from '@recompose/contracts';
 
-const revealLabels: Record<SystemState['fileBrowser'], string> = {
-  finder: 'Reveal in Finder',
-  explorer: 'Show in Explorer',
-  'file-manager': 'Open folder',
-};
-
-export function revealLabelFor(fileBrowser: SystemState['fileBrowser']): string {
-  return revealLabels[fileBrowser];
-}
-
 type LaunchAtLoginRow = {
   rendered: boolean;
   inert: boolean;
