@@ -84,7 +84,7 @@ export function CatalogFlow({ kind, open, onOpenChange }: CatalogFlowProps) {
       onOpenChange={onOpenChange}
       open={open}
       title="Add provider"
-      wide={connecting === undefined}
+      width={connecting === undefined ? 'wide' : 'standard'}
     >
       {connecting === undefined ? (
         <div className={arrived === 'back' ? 'step-enter-back' : ''}>

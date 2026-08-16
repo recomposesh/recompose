@@ -47,6 +47,21 @@ export function SheetActionSlot({ children }: { children: ReactNode }): ReactNod
   return foot === null ? children : createPortal(children, foot);
 }
 
+/** The three widths a sheet stands at, named for what the content inside it does. */
+type SheetWidth = 'standard' | 'wide' | 'broad';
+
+const SURFACE_WIDTH: Record<SheetWidth, string> = {
+  standard: '',
+  wide: 'sheet-wide',
+  broad: 'sheet-broad',
+};
+
+const BODY_INSET: Record<SheetWidth, string> = {
+  standard: 'px-4.5 pb-3.75',
+  wide: 'px-4.5 pb-3.75',
+  broad: '',
+};
+
 type SheetProps = {
   /** Whether the sheet stands on screen. */
   open: boolean;
@@ -60,8 +75,14 @@ type SheetProps = {
   initialFocus?: RefObject<HTMLElement | null> | undefined;
   /** Actions that settle the sheet, laid out at its foot. */
   footer: ReactNode;
-  /** Widens the surface for content that reads as a grid rather than a stack of fields. */
-  wide?: boolean;
+  /**
+   * How much room the surface takes, which the content decides rather than the sheet.
+   *
+   * @summary `wide` suits content reading as a grid rather than a stack of fields. `broad` suits
+   * content laying out its own columns, so it also drops the body inset: a column that has to
+   * meet the sheet edge cannot do it from inside a padded box.
+   */
+  width?: SheetWidth;
   /** Steps back to the surface the sheet showed before, standing leading the title. */
   onBack?: (() => void) | undefined;
   /** The body of the sheet, usually a stack of fields. */
@@ -109,7 +130,7 @@ export function Sheet({
   description,
   initialFocus,
   footer,
-  wide = false,
+  width = 'standard',
   onBack,
   children,
 }: SheetProps) {
@@ -121,7 +142,7 @@ export function Sheet({
       <Dialog.Portal>
         <Dialog.Backdrop className="sheet-scrim" />
         <Dialog.Popup
-          className={`sheet-surface ${wide ? 'sheet-wide' : ''}`}
+          className={`sheet-surface ${SURFACE_WIDTH[width]}`}
           initialFocus={initialFocus}
         >
           {sheetHead(title, description, onBack)}
@@ -129,7 +150,7 @@ export function Sheet({
             className="sheet-body-resize"
             style={body.height === undefined ? undefined : { height: body.height }}
           >
-            <div className="px-4.5 pb-3.75" ref={body.inner}>
+            <div className={BODY_INSET[width]} ref={body.inner}>
               <SheetFootContext.Provider value={foot}>{children}</SheetFootContext.Provider>
             </div>
           </div>

@@ -108,7 +108,7 @@ export const EveryControl = meta.story({
     await expect(controls.map((control) => control.getAttribute('aria-label'))).toEqual([
       'Sidebar',
       'Start',
-      'Docs',
+      'Connect a client',
       'Copy address',
       'Tidy the canvas',
       'Request log',
@@ -117,7 +117,7 @@ export const EveryControl = meta.story({
 
     const waiting = controls.filter((control) => control.title.includes('Waits on'));
 
-    await expect(waiting.map((control) => control.title)).toEqual(['Docs. Waits on the guide.']);
+    await expect(waiting).toEqual([]);
   },
 });
 

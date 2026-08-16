@@ -30,6 +30,7 @@ import { PanelSeparator } from '../../../../shared/ui';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { usePanelReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
+import { ConnectInView } from '../connect-in-view/connect-in-view';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
 import { LogsDrawer } from '../logs-drawer/logs-drawer';
@@ -238,6 +239,7 @@ export function GatewayCanvasPage({
         canvas,
       })}
       {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
+      <ConnectInView slug={slug} />
       <RemovalDialog removal={canvas.removal} />
     </div>
   );

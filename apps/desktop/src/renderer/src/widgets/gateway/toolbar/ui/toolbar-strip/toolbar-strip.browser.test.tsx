@@ -3,7 +3,10 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import {
+  closeConnectSheet,
   closeLogsDrawer,
+  connectSheetOpen,
+  openConnectSheet,
   subscribeToCanvasAsks,
   toggleLogsDrawer,
 } from '../../../../../shared/lib';
@@ -11,6 +14,7 @@ import { ToolbarStrip } from './toolbar-strip';
 
 afterEach(() => {
   closeLogsDrawer();
+  closeConnectSheet();
 });
 
 async function renderStrip() {
@@ -68,6 +72,25 @@ test('the keyboard alone opens the drawer', async () => {
 
   control.element().focus();
   await userEvent.keyboard('{Enter}');
+
+  await expect.element(control).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('the guide control brings the connect sheet out, which is the whole of what it does', async () => {
+  const screen = await renderStrip();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Connect a client' }));
+
+  expect(connectSheetOpen()).toBe(true);
+});
+
+test('the guide control says out loud whether the sheet it opens stands over the canvas', async () => {
+  const screen = await renderStrip();
+  const control = screen.getByRole('button', { name: 'Connect a client' });
+
+  await expect.element(control).toHaveAttribute('aria-expanded', 'false');
+
+  openConnectSheet();
 
   await expect.element(control).toHaveAttribute('aria-expanded', 'true');
 });

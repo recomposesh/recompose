@@ -16,6 +16,7 @@ const sprite: IconName[] = [
   'cube',
   'gauge',
   'gear',
+  'terminal',
 ];
 
 const meta = preview.meta({

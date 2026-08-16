@@ -206,6 +206,7 @@ Ollama
 Ollama's
 onetwo
 openclaw
+opencode
 opencodex
 openrouter
 openspec

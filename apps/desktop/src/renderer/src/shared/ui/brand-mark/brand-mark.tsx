@@ -3,6 +3,14 @@ import type { IconType } from '@lobehub/icons/es/types';
 import AnthropicMono from '@lobehub/icons/es/Anthropic/components/Mono';
 import CerebrasColor from '@lobehub/icons/es/Cerebras/components/Color';
 import CerebrasMono from '@lobehub/icons/es/Cerebras/components/Mono';
+import ClaudeColor from '@lobehub/icons/es/Claude/components/Color';
+import ClaudeMono from '@lobehub/icons/es/Claude/components/Mono';
+import ClaudeCodeColor from '@lobehub/icons/es/ClaudeCode/components/Color';
+import ClaudeCodeMono from '@lobehub/icons/es/ClaudeCode/components/Mono';
+import ClineMono from '@lobehub/icons/es/Cline/components/Mono';
+import CodexColor from '@lobehub/icons/es/Codex/components/Color';
+import CodexMono from '@lobehub/icons/es/Codex/components/Mono';
+import CursorMono from '@lobehub/icons/es/Cursor/components/Mono';
 import DeepInfraColor from '@lobehub/icons/es/DeepInfra/components/Color';
 import DeepInfraMono from '@lobehub/icons/es/DeepInfra/components/Mono';
 import DeepSeekColor from '@lobehub/icons/es/DeepSeek/components/Color';
@@ -11,9 +19,12 @@ import FireworksColor from '@lobehub/icons/es/Fireworks/components/Color';
 import FireworksMono from '@lobehub/icons/es/Fireworks/components/Mono';
 import GeminiColor from '@lobehub/icons/es/Gemini/components/Color';
 import GeminiMono from '@lobehub/icons/es/Gemini/components/Mono';
+import GeminiCliColor from '@lobehub/icons/es/GeminiCLI/components/Color';
+import GeminiCliMono from '@lobehub/icons/es/GeminiCLI/components/Mono';
 import GithubCopilotMono from '@lobehub/icons/es/GithubCopilot/components/Mono';
 import GrokMono from '@lobehub/icons/es/Grok/components/Mono';
 import GroqMono from '@lobehub/icons/es/Groq/components/Mono';
+import KiloCodeMono from '@lobehub/icons/es/KiloCode/components/Mono';
 import KimiMono from '@lobehub/icons/es/Kimi/components/Mono';
 import LmStudioMono from '@lobehub/icons/es/LmStudio/components/Mono';
 import MinimaxColor from '@lobehub/icons/es/Minimax/components/Color';
@@ -23,10 +34,12 @@ import MistralMono from '@lobehub/icons/es/Mistral/components/Mono';
 import MoonshotMono from '@lobehub/icons/es/Moonshot/components/Mono';
 import OllamaMono from '@lobehub/icons/es/Ollama/components/Mono';
 import OpenAIMono from '@lobehub/icons/es/OpenAI/components/Mono';
+import OpenCodeMono from '@lobehub/icons/es/OpenCode/components/Mono';
 import OpenRouterColor from '@lobehub/icons/es/OpenRouter/components/Color';
 import OpenRouterMono from '@lobehub/icons/es/OpenRouter/components/Mono';
 import QwenColor from '@lobehub/icons/es/Qwen/components/Color';
 import QwenMono from '@lobehub/icons/es/Qwen/components/Mono';
+import RooCodeMono from '@lobehub/icons/es/RooCode/components/Mono';
 import TogetherColor from '@lobehub/icons/es/Together/components/Color';
 import TogetherMono from '@lobehub/icons/es/Together/components/Mono';
 import VllmColor from '@lobehub/icons/es/Vllm/components/Color';
@@ -62,13 +75,20 @@ function knockedOutInWhite(drawing: IconType): MarkDrawing {
 const marks = {
   anthropic: inOneColorOnly(AnthropicMono),
   cerebras: { color: CerebrasColor, mono: CerebrasMono },
+  claude: { color: ClaudeColor, mono: ClaudeMono },
+  claudeCode: { color: ClaudeCodeColor, mono: ClaudeCodeMono },
+  cline: inOneColorOnly(ClineMono),
+  codex: { color: CodexColor, mono: CodexMono },
+  cursor: inOneColorOnly(CursorMono),
   deepinfra: { color: DeepInfraColor, mono: DeepInfraMono },
   deepseek: { color: DeepSeekColor, mono: DeepSeekMono },
   fireworks: { color: FireworksColor, mono: FireworksMono },
   gemini: { color: GeminiColor, mono: GeminiMono },
+  geminiCli: { color: GeminiCliColor, mono: GeminiCliMono },
   githubCopilot: inOneColorOnly(GithubCopilotMono),
   grok: inOneColorOnly(GrokMono),
   groq: inOneColorOnly(GroqMono),
+  kiloCode: inOneColorOnly(KiloCodeMono),
   kimi: knockedOutInWhite(KimiMono),
   lmstudio: inOneColorOnly(LmStudioMono),
   minimax: { color: MinimaxColor, mono: MinimaxMono },
@@ -76,8 +96,10 @@ const marks = {
   moonshot: inOneColorOnly(MoonshotMono),
   ollama: inOneColorOnly(OllamaMono),
   openai: inOneColorOnly(OpenAIMono),
+  opencode: inOneColorOnly(OpenCodeMono),
   openrouter: { color: OpenRouterColor, mono: OpenRouterMono },
   qwen: { color: QwenColor, mono: QwenMono },
+  rooCode: inOneColorOnly(RooCodeMono),
   together: { color: TogetherColor, mono: TogetherMono },
   vllm: { color: VllmColor, mono: VllmMono },
   zhipu: { color: ZhipuColor, mono: ZhipuMono },

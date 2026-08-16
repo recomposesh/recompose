@@ -137,3 +137,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0129](0129-an-optional-spread-carries-one-mutant-no-test-can-kill.md)          | An optional spread carries one mutant no test can kill                              | Accepted   | 2026-08-15 |
 | [0130](0130-recompose-runs-the-authorization-no-tool-on-the-machine-owns.md)    | recompose runs the authorization no tool on the machine owns                        | Accepted   | 2026-08-16 |
 | [0131](0131-choosing-an-account-moves-the-tool-never-the-traffic.md)            | Choosing an account moves the tool, never the traffic                               | Accepted   | 2026-08-16 |
+| [0132](0132-a-client-setup-comes-from-the-gateway-in-front-of-it.md)            | A client setup comes from the gateway in front of it                                | Accepted   | 2026-08-16 |
