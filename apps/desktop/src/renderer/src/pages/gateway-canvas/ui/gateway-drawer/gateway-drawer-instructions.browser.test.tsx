@@ -16,13 +16,16 @@ test('a virtual model offers the way to reach it before the way to delete it', a
   closeConnectSheet();
 });
 
-test('a gateway subject offers deletion alone, because the toolbar already carries the guide', async () => {
+test('a gateway offers the same way in, standing over its own deletion', async () => {
   closeConnectSheet();
 
   const screen = await renderDrawer({ kind: 'gateway' });
 
-  await expect
-    .element(screen.getByRole('button', { name: 'See instructions' }))
-    .not.toBeInTheDocument();
   await expect.element(screen.getByRole('button', { name: 'Delete gateway' })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'See instructions' }));
+
+  expect(connectSheetOpen()).toBe(true);
+
+  closeConnectSheet();
 });

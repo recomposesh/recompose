@@ -33,6 +33,21 @@ function servesTallyLine(served: readonly ServedModel[]): ReactNode {
   );
 }
 
+/**
+ * The way into the connect guide, offered wherever a person reads what a gateway serves.
+ *
+ * @summary The toolbar carries the same control, and a person standing in the drawer is already
+ * looking at the address and the model ids the guide writes its blocks from, which is where the
+ * question of how to reach them comes up.
+ */
+function instructionsControl(): ReactNode {
+  return (
+    <Button fullWidth glyph="book" onPress={openConnectSheet} variant="secondary">
+      See instructions
+    </Button>
+  );
+}
+
 /** The gateway subject's body: its own facts, the endpoint, and what serves. */
 export function gatewayBody(
   gateway: GatewayConfig,
@@ -57,6 +72,7 @@ export function gatewayBody(
       <ServesBox served={served} />
     </>,
     { label: 'Delete gateway', onPress: onDelete },
+    instructionsControl(),
   );
 }
 
@@ -153,9 +169,7 @@ export function modelBody(
       )}
     </>,
     { label: 'Delete virtual model', onPress: onDelete },
-    <Button fullWidth glyph="book" onPress={openConnectSheet} variant="secondary">
-      See instructions
-    </Button>,
+    instructionsControl(),
   );
 }
 
