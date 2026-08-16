@@ -21,6 +21,14 @@ regexes = ['''8c5f6122-f9ab-45c7-9aa4-417cfc742206''']
 targetRules = ["generic-api-key"]
 regexes = ['''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''']
 
+# Pencil writes a file token into the design it exports. It identifies the drawing rather than
+# granting anything, and the maintainer confirmed it carries no access. Scoped to the design files
+# so a real credential pasted into source is still caught.
+[[allowlists]]
+targetRules = ["generic-api-key"]
+paths = ['''^designs/.*\.pen$''']
+regexes = ['''fileToken''']
+
 [[rules]]
 id = "forbidden-owner-alias"
 description = "Repository owner's private alias must never appear in any artifact"
