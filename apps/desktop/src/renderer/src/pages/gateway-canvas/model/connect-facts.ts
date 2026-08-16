@@ -35,8 +35,13 @@ export type ConnectStep = {
   title: string;
   /** The lines a person copies, kept verbatim so what lands is what the gateway meant. */
   lines: readonly string[];
-  /** One sentence a person needs before or after running the block. */
-  note?: string;
+  /**
+   * One sentence a person needs before or after running the block.
+   *
+   * @summary Every block carries one, because a block a person can paste without understanding it
+   * is the one they paste into the wrong file.
+   */
+  note: string;
 };
 
 /** One tool recompose knows how to point at a gateway. */

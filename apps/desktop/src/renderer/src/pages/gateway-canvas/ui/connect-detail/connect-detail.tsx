@@ -26,9 +26,7 @@ function stepBlock(step: ConnectStep, position: number): ReactElement {
         {step.title}
       </h4>
       <CommandLine command={step.lines.join('\n')} label={`Copy the block for ${step.title}`} />
-      {step.note === undefined ? null : (
-        <p className="text-caption text-ink-secondary">{step.note}</p>
-      )}
+      <p className="text-caption text-ink-secondary">{step.note}</p>
     </li>
   );
 }

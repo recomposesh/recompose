@@ -18,9 +18,9 @@ const models = [
   { id: 'fast', displayName: 'Fast' },
 ];
 
-async function openSheet(facts: ConnectFacts = serving) {
+async function openSheet(facts: ConnectFacts = serving, onOpenChange = () => undefined) {
   await render(
-    <ConnectSheet answered={0} facts={facts} models={models} onOpenChange={() => undefined} open />,
+    <ConnectSheet answered={0} facts={facts} models={models} onOpenChange={onOpenChange} open />,
   );
 
   await expect
@@ -103,6 +103,17 @@ test('a gateway enforcing no key hands over a stand-in and says the gateway chec
 
   await expect.element(page.getByText(/This gateway enforces no key/)).toBeVisible();
   await expect.element(page.getByText(/export ANTHROPIC_AUTH_TOKEN=unused/)).toBeVisible();
+});
+
+test('the settle control asks for the sheet to go away rather than answering itself', async () => {
+  const asked: boolean[] = [];
+
+  await openSheet(serving, () => {
+    asked.push(true);
+  });
+  await press('Close');
+
+  expect(asked).toEqual([true]);
 });
 
 test('narrowing the rail leaves standing only the headings that still hold a client', async () => {

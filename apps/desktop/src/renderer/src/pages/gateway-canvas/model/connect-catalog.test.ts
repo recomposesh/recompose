@@ -15,7 +15,7 @@ const serving: ConnectFacts = {
 function everythingCopied(client: ConnectClient, facts: ConnectFacts = serving): string {
   return client
     .steps(facts)
-    .flatMap((step) => [...step.lines, step.note ?? ''])
+    .flatMap((step) => [...step.lines, step.note])
     .join('\n');
 }
 
@@ -114,6 +114,7 @@ test('every client offers steps, and every step offers lines to copy', () => {
     for (const step of steps) {
       expect(step.lines.length).toBeGreaterThan(0);
       expect(step.title).not.toBe('');
+      expect(step.note).not.toBe('');
     }
   }
 });
