@@ -18,6 +18,7 @@ Feature: Reaching a gateway from a client
     When the person opens the connect guide and picks "Codex CLI"
     Then the address offered ends in the version segment
 
+  @one-clipboard
   Scenario: A copied block lands on the clipboard whole
     When the person copies the Claude Code setup block
     Then the clipboard holds every line of that block
