@@ -9,6 +9,7 @@ import {
   usageLedgerSchema,
   usageRangeSchema,
   usageReportSchema,
+  usageSearchRangeSchema,
 } from './usage';
 
 const hourStart = 1_754_600_400_000;
@@ -106,6 +107,29 @@ describe('the report a window asks for', () => {
 
   test('the range vocabulary is the ladder and nothing else', () => {
     expect(() => usageRangeSchema.parse('90d')).toThrow();
+  });
+});
+
+describe('the search vocabulary the address accepts', () => {
+  test('the vocabulary lists every range in address order, custom last', () => {
+    expect(usageSearchRangeSchema.options).toEqual([
+      '1h',
+      '24h',
+      '7d',
+      '30d',
+      'this-week',
+      'this-month',
+      'custom',
+    ]);
+  });
+
+  test('a range the address never accepts is refused', () => {
+    expect(() => usageSearchRangeSchema.parse('90d')).toThrow();
+  });
+
+  test('the search vocabulary stands beside the report vocabulary rather than replacing it', () => {
+    expect(() => usageRangeSchema.parse('custom')).toThrow();
+    expect(() => usageRangeSchema.parse('this-week')).toThrow();
   });
 });
 

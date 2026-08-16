@@ -11,6 +11,26 @@ export const usageRangeSchema = z.enum(['24h', '7d', '30d']);
 
 export type UsageRange = z.infer<typeof usageRangeSchema>;
 
+/**
+ * The ranges the usage address accepts, in the order every surface lists them.
+ *
+ * @summary The order is contractual: the menu's listing order, the range popover's order, and the
+ * accelerator digit assignment all read it. It stands beside `usageRangeSchema` rather than
+ * replacing it, because how far a report read reaches and what the address accepts are two
+ * decisions that look alike.
+ */
+export const usageSearchRangeSchema = z.enum([
+  '1h',
+  '24h',
+  '7d',
+  '30d',
+  'this-week',
+  'this-month',
+  'custom',
+]);
+
+export type UsageSearchRange = z.infer<typeof usageSearchRangeSchema>;
+
 /** The widths a bucket comes in: hours as stored, days as folded at answer time. */
 export const usageBucketWidthSchema = z.enum(['hour', 'day']);
 

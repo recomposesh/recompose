@@ -6,6 +6,7 @@ import type {
   UsageMeasures,
   UsageRange,
   UsageReport,
+  UsageSearchRange,
   UsageTuple,
 } from './index';
 
@@ -49,6 +50,12 @@ describe('what one bucket counts', () => {
 describe('the report a range read answers', () => {
   test('the ranges are the ladder and nothing else', () => {
     expectTypeOf<UsageRange>().toEqualTypeOf<'24h' | '7d' | '30d'>();
+  });
+
+  test('the search vocabulary is the seven-step ladder the address accepts', () => {
+    expectTypeOf<UsageSearchRange>().toEqualTypeOf<
+      '1h' | '24h' | '7d' | '30d' | 'this-week' | 'this-month' | 'custom'
+    >();
   });
 
   test('the runs a report carries stand frozen for every reader', () => {
