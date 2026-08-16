@@ -26,9 +26,9 @@ so they ask for a password.
 
 The Windows certificate market decided the rest. Azure Artifact Signing is the cheapest path and the
 best integrated, and it asks for three years of verifiable business history. The organization behind
-recompose is six months old. SignPath Foundation signs qualifying open source projects for nothing.
+recompose is six months old. SignPath Foundation signs qualifying open-source projects for nothing.
 recompose already meets its conditions: an Open Source Initiative (OSI) license with no commercial
-dual license, a public repository, and verifiable automated builds from source. The Microsoft Store
+dual-licensing, a public repository, and verifiable automated builds from source. The Microsoft Store
 re-signs a submitted `appx` package with a Microsoft certificate, and it charges nothing to register.
 
 ## Decision
