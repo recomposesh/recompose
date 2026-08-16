@@ -4,7 +4,7 @@
 
 ### Requirement: A route-scoped Usage menu drives the explorer
 
-While the usage surface stands, the application menu MUST carry a Usage menu. The menu holds every range the address accepts, a metric submenu naming the series the chart draws, a checkbox item for the chart's data table, and a Refresh item. The ranges sit under Option-modified number accelerators, so the plain numbers stay on walking the app. A custom-range pick MUST land the explorer with its calendar open. Refresh takes its own accelerator and leaves the renderer reload untouched. Menu picks MUST reach the page over the `usage:command` event and travel the same search the on-screen controls write. The page MUST report the data table's standing back over `system:usage-table`, so the tick reads what the person sees.
+While the usage surface stands, the application menu MUST carry a Usage menu. The menu holds every range the address accepts, a metric submenu naming the series the chart draws, a checkbox item for the chart's data table, and a Refresh item. The ranges sit under Option-modified number accelerators, so the plain numbers stay on walking the app. The range group and the metric submenu MUST tick the standing pick as radio groups. A preset wider than the retention window MUST render as unavailable, the same refusal the on-screen control gives. A custom-range pick MUST land the explorer with its calendar open. Refresh takes its own accelerator, one no reload row claims, and leaves the renderer reload untouched. Menu picks MUST reach the page over the `usage:command` event and travel the same search the on-screen controls write. The page MUST report the data table's standing back over `system:usage-table`, so the tick reads what the person sees.
 
 #### Scenario: a menu pick moves the same address a press would
 
@@ -26,6 +26,12 @@ While the usage surface stands, the application menu MUST carry a Usage menu. Th
 
 - When the person opens the metric submenu
 - Then it names exactly the series the chart offers
+
+#### Scenario: a short retention window stands the wide ranges down
+
+- Given retention holds 7 days
+- When the person opens the Usage menu
+- Then the 30-day row shows as unavailable
 
 #### Scenario: the data table tick reads what the person sees
 

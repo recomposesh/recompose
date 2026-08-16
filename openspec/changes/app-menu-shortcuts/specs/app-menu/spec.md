@@ -4,7 +4,7 @@
 
 ### Requirement: The menu bar keeps the platform's standard shape
 
-The application menu MUST carry the platform's standard set in the standard order: the app menu on macOS, File, Edit, View, the route-scoped menus, Window, and Help. Window and Help MUST stand on every platform and on every route. The onboarding checklist item MUST live under View on every platform, because it shows and hides a surface rather than configuring the app.
+The application menu MUST carry the platform's standard set in the standard order: the app menu on macOS, File, Edit, View, the route-scoped menus, Window, and Help. Window and Help MUST stand on every platform and on every route. The onboarding checklist item MUST live under View on every platform, because it shows and hides a surface rather than configuring the app. Inside View, Enter Full Screen MUST stand last.
 
 #### Scenario: the checklist toggle lives under View on macOS
 
@@ -19,7 +19,7 @@ The application menu MUST carry the platform's standard set in the standard orde
 
 ### Requirement: A Help menu answers from every screen
 
-The Help menu MUST hold recompose Help, the config folder, and an issue report. The help item MUST open the published site in the person's browser. The issue item MUST open the repository's new-issue page in the person's browser. The config folder item MUST reveal the same folder the settings surface reveals, under the same file-manager label. On macOS the menu MUST carry the system `help` role, so the menu search field works.
+The Help menu MUST hold Recompose Help, the config folder, and an issue report. The help item MUST open the published site in the person's browser. The issue item MUST open the repository's new-issue page in the person's browser. The config folder item MUST reveal the same folder the settings surface reveals, conjugating the same file-manager verb the settings surface uses. Off macOS the Help menu MUST end with the About item, because no other menu carries it there. On macOS the menu MUST carry the system `help` role, so the menu search field works.
 
 #### Scenario: a person reports an issue from the menu
 
@@ -33,7 +33,7 @@ The Help menu MUST hold recompose Help, the config folder, and an issue report. 
 
 ### Requirement: The View menu walks the app
 
-The View menu MUST carry one navigation item per top-level surface, gateways, providers, and usage, under the plain number accelerators in that order. A pick MUST land inside the standing main window. It MUST reach its surface even when no window stands open, because the tray keeps the app alive after the last window closes. The gateways pick MUST land where the app's own home landing would: the last-looked-at gateway, or the empty state when none stands.
+The View menu MUST carry one navigation item per top-level surface, gateways, providers, and usage, under the plain number accelerators in that order. A pick MUST land inside the standing main window. It MUST reach its surface even when no window stands open, because the tray keeps the app alive after the last window closes. The gateways pick MUST land where the app's own home landing would: the last-looked-at gateway, or the empty state when none stands. The menu MUST tick the surface the window stands on.
 
 #### Scenario: a person walks to providers by accelerator
 
@@ -47,7 +47,7 @@ The View menu MUST carry one navigation item per top-level surface, gateways, pr
 
 ### Requirement: The View menu toggles the standing surfaces
 
-The View menu MUST toggle the sidebar and the inspector under their own accelerators. Each tick MUST read state the renderer reports back, so the tick reads what the person sees. An item whose surface the standing route lacks MUST render as unavailable rather than disappear.
+The View menu MUST toggle the sidebar and the inspector under their own accelerators. Each tick MUST read state the renderer reports back, and the report MUST ride the surfaces' own visibility stores, so every writer moves the tick. An item whose surface the standing route lacks MUST render as unavailable rather than disappear. With no window open both toggles MUST render as unavailable with cleared ticks.
 
 #### Scenario: the sidebar tick reads what the person sees
 
@@ -62,7 +62,7 @@ The View menu MUST toggle the sidebar and the inspector under their own accelera
 
 ### Requirement: The Gateway menu drives the standing gateway
 
-While a gateway detail stands, the Gateway menu MUST offer start, stop, and restart under accelerators, each enabled by the gateway's state the way the tray submenu already is. The menu MUST offer copying the base URL and deleting. Deleting MUST pass through the same confirmation the canvas offers.
+While a gateway detail stands, the Gateway menu MUST offer start, stop, and restart under accelerators, each enabled by the gateway's state the way the tray submenu already is. The menu MUST offer copying the base URL and deleting, and copying MUST stay available while the gateway detail stands. Deleting MUST pass through the same confirmation the canvas offers. While a modal surface stands in the window, the route-scoped menus and the New Gateway item MUST render as unavailable, so an armed accelerator never acts behind a question.
 
 #### Scenario: a person starts the standing gateway from the menu
 
@@ -75,6 +75,12 @@ While a gateway detail stands, the Gateway menu MUST offer start, stop, and rest
 - When a person picks delete from the Gateway menu
 - Then the same confirmation the canvas offers appears
 - And nothing leaves until the person answers
+
+#### Scenario: a standing confirmation stands the menus down
+
+- Given the removal confirmation stands over the canvas
+- When the person opens the Gateway menu
+- Then every lifecycle item shows as unavailable
 
 ### Requirement: The zoom group separates resetting from fitting
 
@@ -102,7 +108,7 @@ Every accelerator the menu prints MUST fire in a packaged build. The reload row'
 
 ### Requirement: The Dock reaches every gateway
 
-On macOS the Dock menu MUST list every stored gateway, each carrying the same start, stop, and restart submenu the menu bar extra carries. Every entry MUST show whether it's available rather than disappearing. The Dock menu MUST follow gateway state without asking a person to reopen it. A run that stands the app back as an accessory carries no Dock tile, so it MUST skip the Dock menu without erroring.
+On macOS the Dock menu MUST list every stored gateway, each carrying the same start, stop, and restart submenu the menu bar extra carries. With no stored gateway it MUST show the same still row the menu bar extra shows. Below the gateways the menu MUST offer creating a gateway and reaching settings. Every entry MUST show whether it's available rather than disappearing. The Dock menu MUST follow gateway state without asking a person to reopen it. A run that stands the app back as an accessory carries no Dock tile, so it MUST skip the Dock menu without erroring.
 
 #### Scenario: a person stops a gateway from the Dock
 
