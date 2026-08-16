@@ -67,9 +67,9 @@ export const codexInChatgpt: ConnectClient = {
     providerBlock(facts),
     keyExport(facts),
     {
-      title: 'Restart the app so it rereads the file',
-      lines: [addressFor('v1', facts)],
-      note: 'The ChatGPT chat surface itself takes no custom endpoint. Only its Codex side reads config.toml, and it reads the file once, at launch.',
+      title: 'Restart the app so it reads the file again',
+      lines: ['Codex → Quit Codex, then open it again'],
+      note: 'The ChatGPT chat surface takes no custom endpoint of its own. Only the Codex side reads config.toml, and it reads it once, at launch.',
     },
   ],
 };
