@@ -26,9 +26,10 @@ type ConnectInViewProps = {
 function factsOf(gateway: GatewayConfig, bindAddress: string): ConnectFacts {
   return {
     gatewayName: gateway.displayName,
+    slug: gateway.slug,
     baseUrl: `http://${bindAddress}:${String(gateway.port)}`,
     apiKey: enforcedApiKey(gateway),
-    modelId: gateway.virtualModels[0]?.id,
+    models: gateway.virtualModels.map(({ id, displayName }) => ({ id, displayName })),
   };
 }
 
@@ -55,7 +56,6 @@ export function ConnectInView({ slug }: ConnectInViewProps) {
     <ConnectSheet
       answered={rows?.length ?? 0}
       facts={factsOf(gateway, settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS)}
-      models={gateway.virtualModels}
       onOpenChange={closeConnectSheet}
       open={shown}
     />

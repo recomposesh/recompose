@@ -63,6 +63,22 @@ export const Inert = meta.story({
   },
 });
 
+/** A field that heads a column, which takes the whole width rather than its own text measure. */
+export const FullWidth = meta.story({
+  args: { label: 'Search clients', placeholder: 'Search clients', value: '', fullWidth: true },
+  render: (args) => (
+    <div className="w-72">
+      <ControlledTextField {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const control = await canvas.findByRole('textbox', { name: 'Search clients' });
+    const column = control.parentElement?.parentElement;
+
+    await expect(control.getBoundingClientRect().width).toBe(column?.getBoundingClientRect().width);
+  },
+});
+
 /** The same input under the dark scheme. */
 export const DarkScheme = meta.story({
   args: { value: 'anthropic' },

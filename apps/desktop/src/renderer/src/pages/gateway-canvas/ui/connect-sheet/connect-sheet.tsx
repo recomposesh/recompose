@@ -12,10 +12,8 @@ type ConnectSheetProps = {
   open: boolean;
   /** Receives the state the person asked for, including a dismissal. */
   onOpenChange: (open: boolean) => void;
-  /** The gateway facts every block is written from. */
+  /** The gateway facts every block is written from, models included. */
   facts: ConnectFacts;
-  /** Every virtual model this gateway serves, which the pane lists and a client names. */
-  models: readonly { id: string; displayName: string }[];
   /** How many requests this gateway has answered, which the standing line reads. */
   answered: number;
 };
@@ -29,7 +27,7 @@ const FIRST_CLIENT = 'claude-code';
  * tool recompose knows how to point, and the pane beside it writes that tool's own setup from
  * this gateway's address, key and models, so a person copies rather than transcribes.
  */
-export function ConnectSheet({ open, onOpenChange, facts, models, answered }: ConnectSheetProps) {
+export function ConnectSheet({ open, onOpenChange, facts, answered }: ConnectSheetProps) {
   const [selected, setSelected] = useState(FIRST_CLIENT);
   const [asked, setAsked] = useState('');
 
@@ -60,12 +58,7 @@ export function ConnectSheet({ open, onOpenChange, facts, models, answered }: Co
           onSelect={setSelected}
           selected={selected}
         />
-        <ConnectDetail
-          answered={answered}
-          client={clientNamed(selected)}
-          facts={facts}
-          models={models}
-        />
+        <ConnectDetail answered={answered} client={clientNamed(selected)} facts={facts} />
       </div>
     </Sheet>
   );

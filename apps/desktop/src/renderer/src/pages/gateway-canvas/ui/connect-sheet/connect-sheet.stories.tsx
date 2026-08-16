@@ -2,25 +2,15 @@ import { expect, fn, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { servingGateway } from '../../testing/connect-facts.testkit';
 import { ConnectSheet } from './connect-sheet';
-
-const serving = {
-  gatewayName: 'My Gateway',
-  baseUrl: 'http://127.0.0.1:8397',
-  apiKey: 'rc-local-4Xh2p9Fd',
-  modelId: 'creative',
-};
 
 const meta = preview.meta({
   component: ConnectSheet,
   args: {
     open: true,
     onOpenChange: fn(),
-    facts: serving,
-    models: [
-      { id: 'creative', displayName: 'Creative' },
-      { id: 'fast', displayName: 'Fast' },
-    ],
+    facts: servingGateway,
     answered: 0,
   },
 });

@@ -47,9 +47,9 @@ test('the sheet carries the stored gateway address, port and model into every bl
     .element(page.getByRole('dialog', { name: 'Connect a client to My Gateway' }))
     .toBeVisible();
   await expect
-    .element(page.getByText('export ANTHROPIC_BASE_URL=http://127.0.0.1:8397'))
+    .element(page.getByText('export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"'))
     .toBeVisible();
-  await expect.element(page.getByText('export ANTHROPIC_MODEL=creative')).toBeVisible();
+  await expect.element(page.getByText('export ANTHROPIC_MODEL="creative"')).toBeVisible();
 
   closeConnectSheet();
 });

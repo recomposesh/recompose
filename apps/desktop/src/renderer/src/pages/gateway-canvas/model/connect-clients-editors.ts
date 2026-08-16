@@ -1,7 +1,7 @@
 import type { BrandMarkName } from '../../../shared/ui';
 import type { ConnectClient, ConnectFacts, ConnectStep } from './connect-facts';
 
-import { addressFor, presentedKey, presentedModel } from './connect-facts';
+import { addressFor, presentedKey, presentedModel, providerId } from './connect-facts';
 
 /**
  * The three fields the compatible provider form asks for, in the order it asks.
@@ -77,7 +77,7 @@ export const kiloCode: ConnectClient = {
   steps: (facts) => [
     {
       title: 'Settings → Providers → Custom provider',
-      lines: ['recompose', 'OpenAI Compatible'],
+      lines: [providerId(facts), 'OpenAI Compatible'],
       note: 'The form takes a provider id and a display name of your choosing first, then the API it speaks.',
     },
     {

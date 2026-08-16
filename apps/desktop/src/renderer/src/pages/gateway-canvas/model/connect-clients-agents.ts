@@ -1,6 +1,6 @@
 import type { ConnectClient } from './connect-facts';
 
-import { addressFor, presentedKey, presentedModel } from './connect-facts';
+import { addressFor, everyModel, presentedKey, presentedModel, providerId } from './connect-facts';
 
 export const opencode: ConnectClient = {
   id: 'opencode',
@@ -19,15 +19,18 @@ export const opencode: ConnectClient = {
         '{',
         '  "$schema": "https://opencode.ai/config.json",',
         '  "provider": {',
-        '    "recompose": {',
+        `    "${providerId(facts)}": {`,
         '      "npm": "@ai-sdk/openai-compatible",',
-        '      "name": "recompose",',
+        `      "name": "${facts.gatewayName}",`,
         '      "options": {',
         `        "baseURL": "${addressFor('v1', facts)}",`,
         `        "apiKey": "${presentedKey(facts)}"`,
         '      },',
         '      "models": {',
-        `        "${presentedModel(facts)}": { "name": "${presentedModel(facts)}" }`,
+        ...everyModel(facts).map(
+          (model, index, all) =>
+            `        "${model.id}": { "name": "${model.displayName}" }${index === all.length - 1 ? '' : ','}`,
+        ),
         '      }',
         '    }',
         '  }',
@@ -36,8 +39,8 @@ export const opencode: ConnectClient = {
       note: 'The openai-compatible package reaches /v1/chat/completions. Swap it for @ai-sdk/anthropic to reach the Messages dialect, or @ai-sdk/openai for Responses.',
     },
     {
-      title: 'Select it inside a session',
-      lines: [`/models recompose/${presentedModel(facts)}`],
+      title: 'Start it and pick the model',
+      lines: ['opencode', `/models ${providerId(facts)}/${presentedModel(facts)}`],
       note: 'A model key has to match what the gateway accepts in the model field, which is the virtual model id exactly as it stands here.',
     },
   ],
@@ -62,12 +65,15 @@ export const pi: ConnectClient = {
       lines: [
         '{',
         '  "providers": {',
-        '    "recompose": {',
+        `    "${providerId(facts)}": {`,
         `      "baseUrl": "${addressFor('v1', facts)}",`,
         '      "api": "openai-completions",',
         `      "apiKey": "${presentedKey(facts)}",`,
         '      "models": [',
-        `        { "id": "${presentedModel(facts)}" }`,
+        ...everyModel(facts).map(
+          (model, index, all) =>
+            `        { "id": "${model.id}" }${index === all.length - 1 ? '' : ','}`,
+        ),
         '      ]',
         '    }',
         '  }',
@@ -76,9 +82,9 @@ export const pi: ConnectClient = {
       note: 'The api field also takes anthropic-messages, openai-responses and google-generative-ai, which is one name for each dialect this gateway serves. The Messages dialect wants the bare origin rather than /v1.',
     },
     {
-      title: 'Pick it from the model list',
-      lines: [`/model recompose/${presentedModel(facts)}`],
-      note: 'The file is read again each time /model opens, so an edit lands without leaving the session.',
+      title: 'Start it and pick the model',
+      lines: ['pi', `/model ${providerId(facts)}/${presentedModel(facts)}`],
+      note: 'The file is read again each time /model opens, so an edit lands without leaving the session, and Ctrl+L opens the same picker.',
     },
   ],
 };
@@ -101,13 +107,13 @@ export const omp: ConnectClient = {
       title: 'Write ~/.omp/agent/models.yml',
       lines: [
         'providers:',
-        '  recompose:',
+        `  ${providerId(facts)}:`,
         `    baseUrl: ${addressFor('v1', facts)}`,
         '    api: openai-completions',
         `    apiKey: ${presentedKey(facts)}`,
         '    authHeader: true',
         '    models:',
-        `      - id: ${presentedModel(facts)}`,
+        ...everyModel(facts).map((model) => `      - id: ${model.id}`),
       ],
       note: 'apiKey takes an environment variable name or a literal value, and authHeader puts whichever it resolves into Authorization: Bearer.',
     },
@@ -115,6 +121,11 @@ export const omp: ConnectClient = {
       title: 'Or let it read the gateway model list',
       lines: ['    discovery:', '      type: openai-models-list'],
       note: 'Discovery calls the OpenAI-shaped model list this gateway already serves, so every virtual model arrives without being named twice.',
+    },
+    {
+      title: 'Start it on that model',
+      lines: [`omp --model ${providerId(facts)}/${presentedModel(facts)}`],
+      note: 'Naming the model at launch skips the picker. Plain omp opens on whichever model it last used.',
     },
   ],
 };

@@ -46,6 +46,20 @@ would read as a working setup and fail at the first request.
 steps name the consequence: a gateway enforcing a key stays out of reach until that requirement
 comes off, or until the person turns to the command line.
 
+**Every id a client stores carries the gateway it stands for.** A person runs as many gateways as
+they have compositions, and a client holds one configuration for all. A provider called
+`recompose` would let the second gateway overwrite the first, so the provider id and the key
+variable both take the slug that already tells two gateways apart.
+
+**A configuration that takes a list carries every model.** opencode, pi, omp, Kimi Code and the
+harness all accept several. A person who composed two and reads one wonders what happened to the
+other. A field that takes a single id names the first, and its note names the flag that
+reaches the rest.
+
+**A block a person runs ends with the command that runs it.** The shell blocks close with `claude`,
+`codex`, `opencode`, `pi`, `omp`, `kimi` or `gemini --model`, so one copy and one paste is the whole
+of it rather than a setup they then have to know how to start.
+
 **A client leads with its own mark, or with the house terminal glyph.** The marks come from the icon
 package the provider catalog already draws from, so recompose invents no logos. A tool that
 publishes none leads with a glyph rather than with a drawing that pretends to be a logo.

@@ -1,9 +1,15 @@
 import { expect, test, vi } from 'vitest';
 
+/**
+ * A store with nothing remembered, which is what every reading here starts from.
+ *
+ * @summary The module itself rather than the barrel, because re-evaluating the barrel drags the
+ * whole shared library through the loader on every reading and times the file out under load.
+ */
 async function aFreshSheet() {
   vi.resetModules();
 
-  return import('..');
+  return import('./connect-sheet-visibility');
 }
 
 test('the sheet stands away with the app, because a person asks for it after wiring a gateway', async () => {

@@ -7,9 +7,13 @@ import { addressFor } from './connect-facts';
 
 const serving: ConnectFacts = {
   gatewayName: 'My Gateway',
+  slug: 'my-gateway',
   baseUrl: 'http://127.0.0.1:8397',
   apiKey: 'rc-local-4Xh2p9Fd',
-  modelId: 'creative',
+  models: [
+    { id: 'creative', displayName: 'Creative' },
+    { id: 'fast', displayName: 'Fast' },
+  ],
 };
 
 function everythingCopied(client: ConnectClient, facts: ConnectFacts = serving): string {
@@ -72,7 +76,7 @@ test('the virtual model a gateway serves reaches every client, since none can gu
 });
 
 test('a gateway serving no model hands over a stand-in rather than an empty field', () => {
-  const bare = { ...serving, modelId: undefined };
+  const bare = { ...serving, models: [] };
 
   for (const client of connectClients) {
     expect(everythingCopied(client, bare)).toContain('your-model-id');
@@ -119,18 +123,18 @@ test('every client offers steps, and every step offers lines to copy', () => {
   }
 });
 
-test('Claude Code is pointed by the two variables it reads at startup', () => {
+test('Claude Code is pointed by the variables it reads at startup, quoted for the paste', () => {
   const copied = everythingCopied(clientNamed('claude-code'));
 
-  expect(copied).toContain('export ANTHROPIC_BASE_URL=http://127.0.0.1:8397');
-  expect(copied).toContain('export ANTHROPIC_AUTH_TOKEN=rc-local-4Xh2p9Fd');
-  expect(copied).toContain('export ANTHROPIC_MODEL=creative');
+  expect(copied).toContain('export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"');
+  expect(copied).toContain('export ANTHROPIC_AUTH_TOKEN="rc-local-4Xh2p9Fd"');
+  expect(copied).toContain('export ANTHROPIC_MODEL="creative"');
 });
 
 test('Codex is pointed by a user-level provider block that speaks the Responses dialect', () => {
   const copied = everythingCopied(clientNamed('codex-cli'));
 
-  expect(copied).toContain('[model_providers.recompose]');
+  expect(copied).toContain('[model_providers.recompose-my-gateway]');
   expect(copied).toContain('base_url = "http://127.0.0.1:8397/v1"');
   expect(copied).toContain('wire_api = "responses"');
   expect(copied).toContain('model = "creative"');
@@ -139,8 +143,63 @@ test('Codex is pointed by a user-level provider block that speaks the Responses 
 test('Gemini CLI keeps the bare origin, because it appends the version segment itself', () => {
   const copied = everythingCopied(clientNamed('gemini-cli'));
 
-  expect(copied).toContain('export GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:8397');
-  expect(copied).toContain('export GEMINI_API_KEY=rc-local-4Xh2p9Fd');
+  expect(copied).toContain('export GOOGLE_GEMINI_BASE_URL="http://127.0.0.1:8397"');
+  expect(copied).toContain('export GEMINI_API_KEY="rc-local-4Xh2p9Fd"');
+});
+
+const LAUNCHES: Record<string, string> = {
+  'claude-code': 'claude',
+  'codex-cli': 'codex',
+  opencode: 'opencode',
+  pi: 'pi',
+  omp: 'omp --model recompose-my-gateway/creative',
+  'kimi-code': 'kimi',
+  'gemini-cli': 'gemini --model creative',
+  'deepseek-harness': 'npx @deepseek-ai/dsh web',
+};
+
+test('every client run from a terminal shows the command that starts it', () => {
+  const terminals = connectClients.filter((client) => client.kind === 'terminal');
+
+  expect(terminals.map((client) => client.id).sort()).toEqual(Object.keys(LAUNCHES).sort());
+
+  for (const [id, command] of Object.entries(LAUNCHES)) {
+    expect(everythingCopied(clientNamed(id))).toContain(command);
+  }
+});
+
+test('every id a client stores carries the gateway, so a second one never overwrites the first', () => {
+  for (const client of connectClients.filter((held) => held.kind !== 'hand')) {
+    const copied = everythingCopied(client);
+    const named =
+      copied.includes('recompose-my-gateway') || copied.includes('RECOMPOSE_MY_GATEWAY');
+
+    expect(named || !copied.includes('recompose')).toBe(true);
+  }
+
+  expect(everythingCopied(clientNamed('codex-cli'))).toContain(
+    '[model_providers.recompose-my-gateway]',
+  );
+  expect(everythingCopied(clientNamed('codex-cli'))).toContain(
+    'export RECOMPOSE_MY_GATEWAY_API_KEY=',
+  );
+});
+
+test('a configuration that takes a list carries every model the gateway serves', () => {
+  for (const id of ['opencode', 'pi', 'omp', 'kimi-code', 'deepseek-harness']) {
+    const copied = everythingCopied(clientNamed(id));
+
+    expect(copied).toContain('creative');
+    expect(copied).toContain('fast');
+  }
+});
+
+test('a gateway serving two models says how to reach the one a single field left out', () => {
+  expect(everythingCopied(clientNamed('codex-cli'))).toContain('codex --model fast');
+
+  const alone = { ...serving, models: [{ id: 'creative', displayName: 'Creative' }] };
+
+  expect(everythingCopied(clientNamed('codex-cli'), alone)).not.toContain('--model');
 });
 
 test('the search reads a name, and reads the dialect a person remembers instead of the name', () => {

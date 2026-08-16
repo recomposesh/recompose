@@ -1,6 +1,11 @@
 import type { ReactElement } from 'react';
 
-import type { ConnectClient, ConnectFacts, ConnectStep } from '../../model/connect-facts';
+import type {
+  ConnectClient,
+  ConnectFacts,
+  ConnectModel,
+  ConnectStep,
+} from '../../model/connect-facts';
 
 import { CommandLine, CopyButton } from '../../../../shared/ui';
 import { addressFor, keyIsAStandIn } from '../../model/connect-facts';
@@ -10,10 +15,8 @@ import { ConnectStanding } from '../connect-standing/connect-standing';
 type ConnectDetailProps = {
   /** The client this pane is reading, which the rail beside it picked. */
   client: ConnectClient;
-  /** The gateway facts every block is written from. */
+  /** The gateway facts every block is written from, models included. */
   facts: ConnectFacts;
-  /** Every virtual model this gateway serves, in the order the canvas holds them. */
-  models: readonly { id: string; displayName: string }[];
   /** How many requests this gateway has answered, which tells a person the wiring landed. */
   answered: number;
 };
@@ -49,7 +52,7 @@ function addressRow(client: ConnectClient, facts: ConnectFacts): ReactElement {
   );
 }
 
-function modelRow(model: { id: string; displayName: string }): ReactElement {
+function modelRow(model: ConnectModel): ReactElement {
   return (
     <li className="flex items-center gap-2 py-1" key={model.id}>
       <span className="truncate text-detail text-ink">{model.displayName}</span>
@@ -65,7 +68,7 @@ function modelRow(model: { id: string; displayName: string }): ReactElement {
   );
 }
 
-function servedModels(models: ConnectDetailProps['models']): ReactElement {
+function servedModels(models: readonly ConnectModel[]): ReactElement {
   if (models.length === 0) {
     return (
       <p className="text-caption text-ink-secondary">
@@ -89,7 +92,7 @@ function servedModels(models: ConnectDetailProps['models']): ReactElement {
  * gateway standing in front of the person rather than from a template, so what they copy carries
  * this gateway's own port, key and model ids and needs no editing after the paste.
  */
-export function ConnectDetail({ client, facts, models, answered }: ConnectDetailProps) {
+export function ConnectDetail({ client, facts, answered }: ConnectDetailProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3.5">
       <div className="flex items-center gap-2">
@@ -123,7 +126,7 @@ export function ConnectDetail({ client, facts, models, answered }: ConnectDetail
         <h4 className="text-footnote font-bold tracking-wider text-ink-secondary uppercase">
           Virtual models this gateway serves
         </h4>
-        {servedModels(models)}
+        {servedModels(facts.models)}
       </section>
       <ConnectStanding answered={answered} name={client.name} />
     </div>

@@ -13,7 +13,13 @@ type TextFieldProps = {
   onChangeValue: (value: string) => void;
   /** Marks a field whose machinery is missing, keeping it reachable but unmovable. */
   inert?: boolean;
+  /** Stretches the field across whatever holds it, the way a column heading a list does. */
+  fullWidth?: boolean;
 };
+
+function stretchedBy(fullWidth: boolean): string {
+  return fullWidth ? 'w-full' : '';
+}
 
 /**
  * Labeled single-line text entry that reports every keystroke.
@@ -27,13 +33,16 @@ export function TextField({
   type = 'text',
   onChangeValue,
   inert = false,
+  fullWidth = false,
 }: TextFieldProps) {
+  const stretch = stretchedBy(fullWidth);
+
   return (
-    <Field.Root>
+    <Field.Root className={stretch}>
       <Field.Control
         aria-disabled={inert || undefined}
         aria-label={label}
-        className="field-control placeholder:text-ink-tertiary aria-disabled:bg-surface-inert"
+        className={`field-control placeholder:text-ink-tertiary aria-disabled:bg-surface-inert ${stretch}`}
         onChange={(event) => {
           onChangeValue(event.currentTarget.value);
         }}

@@ -1,6 +1,6 @@
 import type { ConnectClient } from './connect-facts';
 
-import { addressFor, presentedKey, presentedModel } from './connect-facts';
+import { addressFor, exportLine, presentedKey, presentedModel } from './connect-facts';
 
 export const claudeCode: ConnectClient = {
   id: 'claude-code',
@@ -17,13 +17,15 @@ export const claudeCode: ConnectClient = {
   },
   steps: (facts) => [
     {
-      title: 'Point it at the gateway',
+      title: 'Point it at the gateway and start it',
       lines: [
-        `export ANTHROPIC_BASE_URL=${addressFor('origin', facts)}`,
-        `export ANTHROPIC_AUTH_TOKEN=${presentedKey(facts)}`,
-        `export ANTHROPIC_MODEL=${presentedModel(facts)}`,
+        exportLine('ANTHROPIC_BASE_URL', addressFor('origin', facts)),
+        exportLine('ANTHROPIC_AUTH_TOKEN', presentedKey(facts)),
+        exportLine('ANTHROPIC_MODEL', presentedModel(facts)),
+        exportLine('CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY', '1'),
+        'claude',
       ],
-      note: 'The token rides in Authorization: Bearer. ANTHROPIC_API_KEY sends the same value as x-api-key instead, and this gateway reads either one.',
+      note: 'The token rides in Authorization: Bearer. ANTHROPIC_API_KEY sends the same value as x-api-key instead, and this gateway reads either one. The last variable puts every model this gateway serves into the /model picker, labelled From gateway.',
     },
     {
       title: 'Or keep it in ~/.claude/settings.json',
@@ -37,11 +39,6 @@ export const claudeCode: ConnectClient = {
         '}',
       ],
       note: 'A settings file reaches background agents as well, which a shell export does not. Run /status in a session to read back the base URL it is using.',
-    },
-    {
-      title: 'See every model of this gateway in the picker',
-      lines: ['export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1'],
-      note: 'Claude Code then asks the gateway for its model list at startup and adds each one to /model, labelled From gateway.',
     },
   ],
 };

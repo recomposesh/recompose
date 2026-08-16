@@ -36,7 +36,7 @@ export const BroughtOut = meta.story({
     const sheet = await screen.findByRole('dialog', { name: 'Connect a client to My Gateway' });
 
     await expect(sheet).toHaveTextContent('http://127.0.0.1:8397');
-    await expect(await screen.findByText(/export ANTHROPIC_MODEL=creative/)).toBeVisible();
+    await expect(await screen.findByText(/export ANTHROPIC_MODEL="creative"/)).toBeVisible();
   },
 });
 

@@ -21,12 +21,28 @@ export type ClientReach = 'origin' | 'v1' | 'whole';
 export type ConnectFacts = {
   /** The gateway's own name, which the sheet speaks of rather than a slug. */
   gatewayName: string;
+  /** The gateway's stored slug, which every id a client stores is derived from. */
+  slug: string;
   /** The bare origin the gateway answers on, with no path of any kind. */
   baseUrl: string;
   /** The key the gateway enforces, or nothing when it asks callers for none. */
   apiKey: string | undefined;
-  /** The virtual model a client should name first, or nothing while the gateway serves none. */
-  modelId: string | undefined;
+  /**
+   * Every virtual model this gateway serves, in the order the canvas holds them.
+   *
+   * @summary A configuration that takes a list carries all of them, because a person who composed
+   * two and reads one has to wonder what happened to the other. A field that takes one id names
+   * the first, and its note says how to reach the rest.
+   */
+  models: readonly ConnectModel[];
+};
+
+/** One virtual model, as a client's configuration needs to name it. */
+export type ConnectModel = {
+  /** The id a client sends as its model, which is what the gateway matches. */
+  id: string;
+  /** The name a person gave it, which a configuration carrying a label shows. */
+  displayName: string;
 };
 
 /** One block of a client's setup: what it is for, the lines to copy, and what to know about them. */
@@ -100,7 +116,63 @@ const NO_MODEL_STAND_IN = 'your-model-id';
  * empty `model` field would paste as a broken request. The sheet says so beside the blocks.
  */
 export function presentedModel(facts: ConnectFacts): string {
-  return facts.modelId ?? NO_MODEL_STAND_IN;
+  return facts.models[0]?.id ?? NO_MODEL_STAND_IN;
+}
+
+/**
+ * Every model a configuration that takes a list should carry.
+ *
+ * @summary A gateway serving none still hands over one entry, because a list written empty is a
+ * configuration that parses and then serves nothing.
+ */
+export function everyModel(facts: ConnectFacts): readonly ConnectModel[] {
+  return facts.models.length === 0
+    ? [{ id: NO_MODEL_STAND_IN, displayName: NO_MODEL_STAND_IN }]
+    : facts.models;
+}
+
+/**
+ * A second model this gateway serves, or nothing when it serves one.
+ *
+ * @summary A client field takes one id, so a person looking at a gateway that serves several needs
+ * the sentence that says how to reach the others. That sentence names a real id rather than a
+ * placeholder, and stays away entirely when there is no second one to name.
+ */
+export function secondModel(facts: ConnectFacts): string | undefined {
+  return facts.models[1]?.id;
+}
+
+/**
+ * The name a client stores this gateway under, which no second gateway can take.
+ *
+ * @summary A person runs as many gateways as they have compositions, and a client holds one
+ * configuration for all of them. A provider called `recompose` would let the second gateway a
+ * person connects overwrite the first, so the slug that already tells two gateways apart tells
+ * their provider entries apart too.
+ */
+export function providerId(facts: ConnectFacts): string {
+  return `recompose-${facts.slug}`;
+}
+
+/**
+ * The environment variable a client's configuration names for this gateway's key.
+ *
+ * @summary Same reason as the provider id: two gateways enforcing two keys need two variables, so
+ * the slug rides in the name rather than every gateway claiming `RECOMPOSE_API_KEY`.
+ */
+export function keyVariable(facts: ConnectFacts): string {
+  return `RECOMPOSE_${facts.slug.replaceAll('-', '_').toUpperCase()}_API_KEY`;
+}
+
+/**
+ * One shell line that hands a value over quoted.
+ *
+ * @summary Every address, key and id here is safe unquoted today, and the quotes are for the paste
+ * rather than for this build: a value carrying a character the shell reads would otherwise land as
+ * two words in whichever shell the person runs.
+ */
+export function exportLine(name: string, value: string): string {
+  return `export ${name}="${value}"`;
 }
 
 /** The address as one client spells it, which is the origin alone or the origin plus `/v1`. */

@@ -13,7 +13,8 @@ import type { ServedModel } from '../../model/served-models';
 import type { StoredRouter } from '../router-inspector/router-inspector';
 
 import { accountKindName, accountMark, accountProductName } from '../../../../entities/account';
-import { BrandMark, CopyButton } from '../../../../shared/ui';
+import { openConnectSheet } from '../../../../shared/lib';
+import { BrandMark, Button, CopyButton } from '../../../../shared/ui';
 import { accountKindTextTint } from '../../lib/account-kind-paint';
 import { servesTally } from '../../model/served-models';
 import { EndpointBox } from '../endpoint-box/endpoint-box';
@@ -152,6 +153,9 @@ export function modelBody(
       )}
     </>,
     { label: 'Delete virtual model', onPress: onDelete },
+    <Button fullWidth glyph="book" onPress={openConnectSheet} variant="secondary">
+      See instructions
+    </Button>,
   );
 }
 

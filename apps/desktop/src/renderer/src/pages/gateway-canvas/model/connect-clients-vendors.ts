@@ -1,6 +1,14 @@
 import type { ConnectClient } from './connect-facts';
 
-import { addressFor, presentedKey, presentedModel } from './connect-facts';
+import {
+  addressFor,
+  everyModel,
+  exportLine,
+  keyVariable,
+  presentedKey,
+  presentedModel,
+  providerId,
+} from './connect-facts';
 
 export const kimiCode: ConnectClient = {
   id: 'kimi-code',
@@ -19,17 +27,24 @@ export const kimiCode: ConnectClient = {
     {
       title: 'Write ~/.kimi/config.toml',
       lines: [
-        '[providers.recompose]',
+        `[providers.${providerId(facts)}]`,
         'type = "anthropic"',
         `base_url = "${addressFor('origin', facts)}"`,
         `api_key = "${presentedKey(facts)}"`,
-        '',
-        `[models.${presentedModel(facts)}]`,
-        'provider = "recompose"',
-        `model = "${presentedModel(facts)}"`,
-        'max_context_size = 262144',
+        ...everyModel(facts).flatMap((model) => [
+          '',
+          `[models.${model.id}]`,
+          `provider = "${providerId(facts)}"`,
+          `model = "${model.id}"`,
+          'max_context_size = 262144',
+        ]),
       ],
       note: 'The type field also takes openai_legacy, openai_responses and gemini, so one gateway can stand behind whichever dialect you want Kimi Code to speak.',
+    },
+    {
+      title: 'Start it',
+      lines: ['kimi'],
+      note: `The model block above is what /model offers, so ${presentedModel(facts)} stands there under the provider it names.`,
     },
   ],
 };
@@ -49,6 +64,11 @@ export const deepseekHarness: ConnectClient = {
   },
   steps: (facts) => [
     {
+      title: 'Start the web interface',
+      lines: ['npx @deepseek-ai/dsh web'],
+      note: 'The harness opens in a browser rather than a terminal, at http://127.0.0.1:3080 by default.',
+    },
+    {
       title: 'Settings → Models → Add a custom provider',
       lines: [addressFor('v1', facts), presentedKey(facts)],
       note: 'The version segment belongs in the base URL there, because the harness appends the operation path itself. Fetch available models then reads the list this gateway serves.',
@@ -58,12 +78,12 @@ export const deepseekHarness: ConnectClient = {
       lines: [
         'llm-pi-ai:',
         '  providers:',
-        '    recompose:',
+        `    ${providerId(facts)}:`,
         '      api: openai-completions',
         `      baseURL: ${addressFor('v1', facts)}`,
-        '      apiKeyEnv: RECOMPOSE_API_KEY',
+        `      apiKeyEnv: ${keyVariable(facts)}`,
         '      models:',
-        `        - id: ${presentedModel(facts)}`,
+        ...everyModel(facts).map((model) => `        - id: ${model.id}`),
       ],
       note: 'A model entered by hand counts as text-only until it says otherwise, so add input: [text, image] to any model whose targets take images.',
     },
@@ -90,17 +110,13 @@ export const geminiCli: ConnectClient = {
   },
   steps: (facts) => [
     {
-      title: 'Point it at the gateway',
+      title: 'Point it at the gateway and start it',
       lines: [
-        `export GOOGLE_GEMINI_BASE_URL=${addressFor('origin', facts)}`,
-        `export GEMINI_API_KEY=${presentedKey(facts)}`,
+        exportLine('GOOGLE_GEMINI_BASE_URL', addressFor('origin', facts)),
+        exportLine('GEMINI_API_KEY', presentedKey(facts)),
+        `gemini --model ${presentedModel(facts)}`,
       ],
-      note: 'The base URL must be https unless it names localhost, 127.0.0.1 or [::1], which is exactly what a gateway on this machine is.',
-    },
-    {
-      title: 'Name a virtual model',
-      lines: [`gemini --model ${presentedModel(facts)}`],
-      note: 'The key travels as x-goog-api-key, one of the four spellings this gateway reads, and the request lands on the generateContent path it already answers.',
+      note: 'The base URL must be https unless it names localhost, 127.0.0.1 or [::1], which is exactly what a gateway on this machine is. The key travels as x-goog-api-key, one of the four spellings this gateway reads.',
     },
   ],
 };

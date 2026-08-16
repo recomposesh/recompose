@@ -8,20 +8,17 @@ import { ConnectSheet } from './connect-sheet';
 
 const serving: ConnectFacts = {
   gatewayName: 'My Gateway',
+  slug: 'my-gateway',
   baseUrl: 'http://127.0.0.1:8397',
   apiKey: 'rc-local-4Xh2p9Fd',
-  modelId: 'creative',
+  models: [
+    { id: 'creative', displayName: 'Creative' },
+    { id: 'fast', displayName: 'Fast' },
+  ],
 };
 
-const models = [
-  { id: 'creative', displayName: 'Creative' },
-  { id: 'fast', displayName: 'Fast' },
-];
-
 async function openSheet(facts: ConnectFacts = serving, onOpenChange = () => undefined) {
-  await render(
-    <ConnectSheet answered={0} facts={facts} models={models} onOpenChange={onOpenChange} open />,
-  );
+  await render(<ConnectSheet answered={0} facts={facts} onOpenChange={onOpenChange} open />);
 
   await expect
     .element(page.getByRole('dialog', { name: 'Connect a client to My Gateway' }))
@@ -70,9 +67,9 @@ test('copying a block puts every line of it on the clipboard at once', async () 
   await vi.waitFor(() => {
     expect(clipboard.written).toHaveLength(1);
   });
-  expect(clipboard.written[0]).toContain('export ANTHROPIC_BASE_URL=http://127.0.0.1:8397');
-  expect(clipboard.written[0]).toContain('export ANTHROPIC_AUTH_TOKEN=rc-local-4Xh2p9Fd');
-  expect(clipboard.written[0]).toContain('export ANTHROPIC_MODEL=creative');
+  expect(clipboard.written[0]).toContain('export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"');
+  expect(clipboard.written[0]).toContain('export ANTHROPIC_AUTH_TOKEN="rc-local-4Xh2p9Fd"');
+  expect(clipboard.written[0]).toContain('export ANTHROPIC_MODEL="creative"');
 });
 
 test('the address a client copies carries the path segment that client joins onto it', async () => {
@@ -102,7 +99,7 @@ test('a gateway enforcing no key hands over a stand-in and says the gateway chec
   await openSheet({ ...serving, apiKey: undefined });
 
   await expect.element(page.getByText(/This gateway enforces no key/)).toBeVisible();
-  await expect.element(page.getByText(/export ANTHROPIC_AUTH_TOKEN=unused/)).toBeVisible();
+  await expect.element(page.getByText(/export ANTHROPIC_AUTH_TOKEN="unused"/)).toBeVisible();
 });
 
 test('the settle control asks for the sheet to go away rather than answering itself', async () => {

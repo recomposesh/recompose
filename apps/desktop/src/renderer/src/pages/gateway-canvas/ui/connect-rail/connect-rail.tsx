@@ -81,6 +81,7 @@ export function ConnectRail({ groups, selected, onSelect, asked, onAsk }: Connec
   return (
     <div className="flex w-connect-rail shrink-0 flex-col gap-1 overflow-y-auto border-e border-line-faint bg-surface-content p-2">
       <TextField
+        fullWidth
         label="Search clients"
         onChangeValue={onAsk}
         placeholder="Search clients"

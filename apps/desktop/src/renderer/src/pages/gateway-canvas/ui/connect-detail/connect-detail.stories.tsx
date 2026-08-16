@@ -3,23 +3,12 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { clientNamed } from '../../model/connect-catalog';
+import { servingGateway } from '../../testing/connect-facts.testkit';
 import { ConnectDetail } from './connect-detail';
-
-const serving = {
-  gatewayName: 'My Gateway',
-  baseUrl: 'http://127.0.0.1:8397',
-  apiKey: 'rc-local-4Xh2p9Fd',
-  modelId: 'creative',
-};
-
-const models = [
-  { id: 'creative', displayName: 'Creative' },
-  { id: 'fast', displayName: 'Fast' },
-];
 
 const meta = preview.meta({
   component: ConnectDetail,
-  args: { client: clientNamed('claude-code'), facts: serving, models, answered: 0 },
+  args: { client: clientNamed('claude-code'), facts: servingGateway, answered: 0 },
 });
 
 /** The pane a person lands on: the two variables Claude Code reads, written from this gateway. */
@@ -27,9 +16,9 @@ export const ClaudeCode = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('heading', { name: 'Claude Code' })).toBeVisible();
     await expect(
-      await canvas.findByText(/export ANTHROPIC_BASE_URL=http:\/\/127.0.0.1:8397/),
+      await canvas.findByText(/export ANTHROPIC_BASE_URL="http:\/\/127.0.0.1:8397"/),
     ).toBeVisible();
-    await expect(await canvas.findByText(/export ANTHROPIC_MODEL=creative/)).toBeVisible();
+    await expect(await canvas.findByText(/export ANTHROPIC_MODEL="creative"/)).toBeVisible();
   },
 });
 
@@ -46,7 +35,7 @@ export const AddressCarriesTheVersionSegment = meta.story({
 
 /** A gateway enforcing no key, where the blocks carry a stand-in and the pane says why. */
 export const NoKeyEnforced = meta.story({
-  args: { facts: { ...serving, apiKey: undefined } },
+  args: { facts: { ...servingGateway, apiKey: undefined } },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText(/This gateway enforces no key/)).toBeVisible();
   },
@@ -54,7 +43,7 @@ export const NoKeyEnforced = meta.story({
 
 /** A gateway with nothing composed yet, which points at the canvas rather than at a blank id. */
 export const NoModelComposed = meta.story({
-  args: { facts: { ...serving, modelId: undefined }, models: [] },
+  args: { facts: { ...servingGateway, models: [] } },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText(/serves no virtual model yet/)).toBeVisible();
   },

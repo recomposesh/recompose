@@ -138,7 +138,26 @@ export function savedNotice(saved: boolean): ReactNode {
 
 type DeleteAction = { label: string; onPress: () => void };
 
-function deleteFooter(action: DeleteAction | undefined): ReactNode {
+/**
+ * The foot of a subject: whatever the subject offers, and the deletion under it.
+ *
+ * @summary The deletion stays last wherever both stand, because a person reaching the foot of a
+ * panel meets the reversible act before the one that takes a card away.
+ */
+function subjectFooter(action: DeleteAction | undefined, offer: ReactNode): ReactNode {
+  if (action === undefined && offer === undefined) {
+    return null;
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col gap-2 p-3.5">
+      {offer}
+      {deleteControl(action)}
+    </div>
+  );
+}
+
+function deleteControl(action: DeleteAction | undefined): ReactNode {
   if (action === undefined) {
     return null;
   }
@@ -146,25 +165,24 @@ function deleteFooter(action: DeleteAction | undefined): ReactNode {
   const { label, onPress } = action;
 
   return (
-    <div className="shrink-0 p-3.5">
-      <Button fullWidth glyph="trash" onPress={onPress} variant="danger-secondary">
-        {label}
-      </Button>
-    </div>
+    <Button fullWidth glyph="trash" onPress={onPress} variant="danger-secondary">
+      {label}
+    </Button>
   );
 }
 
-/** The whole subject layout: head, scrolling body, and the deletion footer when one belongs. */
+/** The whole subject layout: head, scrolling body, and the foot the subject offers. */
 export function subjectShell(
   head: SubjectHead,
   body: ReactNode,
   deleteAction?: DeleteAction,
+  footerOffer?: ReactNode,
 ): ReactNode {
   return (
     <>
       {subjectHead(head)}
       <div className="flex-1 overflow-y-auto px-3.5 pb-4">{body}</div>
-      {deleteFooter(deleteAction)}
+      {subjectFooter(deleteAction, footerOffer)}
     </>
   );
 }
