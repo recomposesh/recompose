@@ -12,20 +12,20 @@ against the tool's own source before the copy ships.
 
 Read off the engine rather than assumed.
 
-| Fact                    | Value                                                                      | Source                         |
-| ----------------------- | -------------------------------------------------------------------------- | ------------------------------ |
-| Base URL                | `http://<bindAddress>:<port>`, a bare origin, no path                      | ADR 0056, `endpoint-box.tsx`   |
-| Anthropic Messages      | `POST /v1/messages`, `POST /messages`                                      | `gateway-route-paths.ts`       |
-| Chat Completions        | `POST /v1/chat/completions`, `POST /chat/completions`                      | same                           |
-| Responses               | `POST /v1/responses`, `POST /responses`                                    | same                           |
-| Interactions            | `/v1/interactions`, `/v1beta/interactions`, `/interactions`                | same                           |
-| Gemini                  | `POST /v1beta/models/<model>:generateContent` and `:streamGenerateContent` | `gateway-app.ts`               |
-| Model listing           | `GET /v1/models`, one entry per virtual model (`id`, `display_name`)       | `gateway-discovery.ts`         |
-| Health                  | `GET /health`, `GET                                                        | HEAD /healthz`, both unguarded | `gateway-app.ts` |
-| Token count             | `/v1/messages/count_tokens`, `/messages/count_tokens`                      | `gateway-route-paths.ts`       |
-| Key spellings accepted  | `Authorization: Bearer`, `x-api-key`, `x-goog-api-key`, `?key=`            | ADR 0106                       |
-| Key shape               | `rc-local-` + 32 random bytes, base64url, unpadded                         | ADR 0106, ADR 0047             |
-| Model id a client sends | the virtual model's `id` (`modelAliasFromName`, keeps dots)                | `gateway-config.ts`            |
+| Fact                    | Value                                                                      | Source                       |
+| ----------------------- | -------------------------------------------------------------------------- | ---------------------------- |
+| Base URL                | `http://<bindAddress>:<port>`, a bare origin, no path                      | ADR 0056, `endpoint-box.tsx` |
+| Anthropic Messages      | `POST /v1/messages`, `POST /messages`                                      | `gateway-route-paths.ts`     |
+| Chat Completions        | `POST /v1/chat/completions`, `POST /chat/completions`                      | same                         |
+| Responses               | `POST /v1/responses`, `POST /responses`                                    | same                         |
+| Interactions            | `/v1/interactions`, `/v1beta/interactions`, `/interactions`                | same                         |
+| Gemini                  | `POST /v1beta/models/<model>:generateContent` and `:streamGenerateContent` | `gateway-app.ts`             |
+| Model listing           | `GET /v1/models`, one entry per virtual model (`id`, `display_name`)       | `gateway-discovery.ts`       |
+| Health                  | `GET /health`, `GET or HEAD /healthz`, both unguarded                      | `gateway-app.ts`             |
+| Token count             | `/v1/messages/count_tokens`, `/messages/count_tokens`                      | `gateway-route-paths.ts`     |
+| Key spellings accepted  | `Authorization: Bearer`, `x-api-key`, `x-goog-api-key`, `?key=`            | ADR 0106                     |
+| Key shape               | `rc-local-` + 32 random bytes, base64url, unpadded                         | ADR 0106, ADR 0047           |
+| Model id a client sends | the virtual model's `id` (`modelAliasFromName`, keeps dots)                | `gateway-config.ts`          |
 
 Two consequences the instructions have to carry:
 
