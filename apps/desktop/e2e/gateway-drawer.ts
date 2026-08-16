@@ -84,8 +84,17 @@ export function inspectorRefusal(page: Page): Locator {
   return draftInspector(page).getByRole('alert');
 }
 
-/** Picks a target in the inspector, and waits for the model field to stop waiting on one. */
+/**
+ * Picks a provider in the inspector, and waits for the model field to stop waiting on one.
+ *
+ * @summary The picker asks which kind the binding meets before it asks which provider, because a
+ * draft may route through a router instead. A step that skipped the first answer would press at a
+ * list the inspector has not opened yet.
+ */
 export async function pickTargetInInspector(page: Page, account: string): Promise<void> {
-  await draftInspector(page).getByRole('button', { name: account }).click();
-  await expect(draftInspector(page).getByText('Pick a provider first.')).toBeHidden();
+  const inspector = draftInspector(page);
+
+  await inspector.getByRole('button', { name: /^Provider/u }).click();
+  await inspector.getByRole('button', { name: account }).click();
+  await expect(inspector.getByText('Pick a provider first.')).toBeHidden();
 }

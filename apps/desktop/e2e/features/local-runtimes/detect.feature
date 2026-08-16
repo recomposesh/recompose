@@ -1,7 +1,7 @@
 Feature: Detection before adding a local runtime
 
   Background:
-    Given the app is on the Local Runtimes screen
+    Given the app is on the Local runtimes screen
 
   Scenario: Picking Ollama looks at once and reports the running server
     Given Ollama version "0.5.1" answers on its documented localhost port

@@ -4,7 +4,7 @@ import type { VirtualModel } from '@recompose/contracts';
 import { expect } from '@playwright/test';
 
 import { takeUpThePortAsk } from '../canvas-gestures';
-import { accountPicker, pickTheTargetKind } from '../canvas-picker';
+import { accountPicker, pickTheProviderKind } from '../canvas-picker';
 import { DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canvas-screen';
 import { Given, Then, When } from '../fixtures';
 import { openGatewayDrawer, servedRow } from '../gateway-drawer';
@@ -99,7 +99,7 @@ When('the person opens the target picker for a new virtual model', async ({ page
   await openGatewayCanvas(page, focusedGateway(page));
   await takeUpThePortAsk(page, GATEWAY_NODE);
   await takeUpThePortAsk(page, DRAFT_NODE);
-  await pickTheTargetKind(page);
+  await pickTheProviderKind(page);
   await expect(accountPicker(page)).toBeVisible();
 });
 
@@ -114,9 +114,9 @@ Then(
     const picker = accountPicker(page);
 
     await expect(picker.getByText('Subscriptions', { exact: true })).toBeVisible();
-    await expect(picker.getByText('API Keys', { exact: true })).toBeVisible();
+    await expect(picker.getByText('API keys', { exact: true })).toBeVisible();
     await expect(picker.getByText('Aggregators', { exact: true })).toBeVisible();
-    await expect(picker.getByText('Local Runtimes', { exact: true })).toBeVisible();
+    await expect(picker.getByText('Local runtimes', { exact: true })).toBeVisible();
     await expect(picker.getByRole('button', { name: plan.label })).toBeVisible();
     await expect(picker.getByRole('button', { name: KEY_ACCOUNT })).toBeVisible();
     await expect(picker.getByRole('button', { name: AGGREGATOR_ACCOUNT })).toBeVisible();

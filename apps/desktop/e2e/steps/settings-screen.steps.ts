@@ -109,7 +109,7 @@ Then('the theme returns to system', async ({ page }) => {
 
 Then('the row states that the change was not saved', async ({ page }) => {
   await expect(section(page, 'Appearance').getByRole('alert')).toHaveText(
-    'The change was not saved.',
+    "Couldn't save the change. Try again.",
   );
 });
 

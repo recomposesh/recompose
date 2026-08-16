@@ -72,7 +72,7 @@ async function keyStandsStoredOn(
  * leaves a bystander standing in any scenario that counts gateways or reads the first one.
  */
 export async function theKeyAccountStandsStored(page: Page): Promise<void> {
-  await keyStandsStoredOn(page, 'API Keys', ANTHROPIC_KEY_ENTRY, KEY_ACCOUNT);
+  await keyStandsStoredOn(page, 'API keys', ANTHROPIC_KEY_ENTRY, KEY_ACCOUNT);
 }
 
 /** The gateway a scenario acts on, put on disk and focused, with nothing else stored. */
@@ -99,6 +99,6 @@ export async function gatewayInFocusOrTargetingAKey(page: Page): Promise<string>
 /** The aggregator and the local runtime, which stand as targets beside the key. */
 export async function everyOfferedKindStandsStored(page: Page): Promise<void> {
   await keyStandsStoredOn(page, 'Aggregators', AGGREGATOR_KEY_ENTRY, AGGREGATOR_ACCOUNT);
-  await openProviderScreen(page, 'Local Runtimes');
+  await openProviderScreen(page, 'Local runtimes');
   await runtimeStandsAdded(page, LOCAL_RUNTIME);
 }

@@ -1,7 +1,7 @@
 Feature: Provider accounts
 
   Background:
-    Given the app is on the API Keys screen
+    Given the app is on the API keys screen
 
   Scenario: A connected key stands as one row under its product and its name
     When the maintainer connects an "Anthropic API" key named "build"

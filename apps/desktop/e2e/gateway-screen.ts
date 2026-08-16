@@ -8,7 +8,7 @@ import { addressOfPort } from './gateway-client';
 
 const COPY_ADDRESS = 'Copy address';
 
-const CREATE_GATEWAY = 'Create Gateway';
+const CREATE_GATEWAY = 'Create gateway';
 
 const CREATION_SHEET = 'Create a gateway';
 
@@ -157,7 +157,7 @@ export async function openCreationSheet(page: Page): Promise<void> {
 
   await ((await invitation.count()) > 0
     ? invitation.click()
-    : page.getByRole('button', { name: 'New Gateway…' }).click());
+    : page.getByRole('button', { name: 'New gateway…' }).click());
 
   await expect(creationSheet(page)).toBeVisible();
 }

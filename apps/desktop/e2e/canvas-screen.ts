@@ -20,8 +20,13 @@ export const DRAFT_CABLE = 'wire:draft';
 /** What the plus on the gateway's port asks for, which is also the name a keyboard reads. */
 const GATEWAY_ASK = 'Add a virtual model';
 
-/** What the plus on a virtual model's port asks for, draft or stored alike. */
-const TARGET_ASK = 'Pick a provider';
+/**
+ * What the plus on a virtual model's port asks for, draft or stored alike.
+ *
+ * @summary It says target rather than provider because the port answers with either a provider or
+ * a router, and naming one of the two would send a person looking for a choice that isn't there.
+ */
+const TARGET_ASK = 'Pick a target';
 
 const PLUS_ASKS = new RegExp(`^(${GATEWAY_ASK}|${TARGET_ASK})$`, 'u');
 

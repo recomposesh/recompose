@@ -1,7 +1,7 @@
 Feature: Connecting a key
 
   Background:
-    Given the app is on the API Keys screen
+    Given the app is on the API keys screen
 
   Scenario: A picked entry asks for a name and a key
     When the maintainer picks "Anthropic API" in the catalog

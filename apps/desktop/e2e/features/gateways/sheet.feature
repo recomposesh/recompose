@@ -21,7 +21,7 @@ Feature: The creation sheet
     Given the creation sheet is open
     When the maintainer tries the name "Con"
     Then the sheet stays open
-    And the name field reads "Windows reserves this name."
+    And the name field reads "Windows reserves this name. Pick another one."
 
   Scenario: A name another gateway holds keeps the sheet open
     Given a gateway named "codex" exists
@@ -34,7 +34,7 @@ Feature: The creation sheet
     Given the creation sheet is open
     When the maintainer tries the port <port>
     Then the sheet stays open
-    And the port field reads "Accepts 1024 through 65535."
+    And the port field reads "Port must be between 1024 and 65535."
 
     Examples:
       | port  |

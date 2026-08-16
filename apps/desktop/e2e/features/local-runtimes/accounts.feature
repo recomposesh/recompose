@@ -1,7 +1,7 @@
 Feature: The local runtime account row
 
   Background:
-    Given the app is on the Local Runtimes screen
+    Given the app is on the Local runtimes screen
 
   Scenario: A stored runtime reads its name over its address
     Given a stored "Ollama" account whose server answers

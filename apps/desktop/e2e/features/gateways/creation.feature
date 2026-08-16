@@ -8,7 +8,7 @@ Feature: Creating a gateway
     And the sidebar lists no gateway
 
   Scenario: The call to action opens the creation sheet
-    When the maintainer chooses "Create Gateway"
+    When the maintainer chooses "Create gateway"
     Then the "Create a gateway" sheet opens
     And the name field holds focus
 

@@ -137,9 +137,15 @@ export function breakdownSection(page: Page): Locator {
   return page.getByRole('region', { name: 'By gateway' });
 }
 
-/** The sentence under the title, naming what the readings below it stand for. */
+/**
+ * The sentence under the title, naming what the readings below it stand for.
+ *
+ * @summary It reads off the heading it sits under rather than off its own words, because the
+ * words are the whole of what a reading about it asserts and a locator spelling them would pass
+ * on its own text.
+ */
 export function scopeSentence(page: Page): Locator {
-  return page.getByText(/local time$/u);
+  return page.getByRole('heading', { level: 1, name: 'Usage' }).locator('..').locator('p');
 }
 
 /** Selects one range on the toolbar control that governs every reading. */
@@ -163,8 +169,8 @@ export async function retentionShortenedTo(page: Page, days: number): Promise<vo
 
   const consequence = page.getByRole('dialog');
 
-  await expect(consequence).toContainText('Drop older usage history?');
-  await consequence.getByRole('button', { name: 'Drop history' }).click();
+  await expect(consequence).toContainText('Delete older usage history?');
+  await consequence.getByRole('button', { name: 'Delete history' }).click();
   await expect(consequence).toBeHidden();
   await expect(control.getByRole('radio', { name: `${String(days)} days` })).toHaveAttribute(
     'aria-checked',

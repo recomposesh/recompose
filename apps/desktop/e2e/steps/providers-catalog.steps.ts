@@ -17,7 +17,7 @@ const WIDEST_TRAILING_INSET_PX = 24;
 
 Then('the catalog opens over the screen, holding nine entries', async ({ page }) => {
   await expect(catalog(page)).toBeVisible();
-  await expect(screenTitle(page)).toHaveText('API Keys');
+  await expect(screenTitle(page)).toHaveText('API keys');
 
   for (const entry of keyCatalogEntries) {
     await expect(catalogEntry(page, entry)).toBeVisible();

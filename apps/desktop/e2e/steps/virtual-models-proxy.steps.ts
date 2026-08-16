@@ -95,7 +95,7 @@ Given(
   'a virtual model {string} whose target account left the registry',
   async ({ page }, name: string) => {
     await gatewayServing(page, [name]);
-    await openProviderScreen(page, 'API Keys');
+    await openProviderScreen(page, 'API keys');
     await accountRows(page)
       .first()
       .getByRole('button', { name: /^Actions for/u })

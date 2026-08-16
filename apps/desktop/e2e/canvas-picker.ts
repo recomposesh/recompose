@@ -8,14 +8,14 @@ export function bindingKindAsk(page: Page): Locator {
 }
 
 /**
- * Answers the binding ask with a target, which is the stage every account pick now opens on.
+ * Answers the binding ask with a provider, which is the stage every account pick now opens on.
  *
  * @summary The press is scoped to the ask itself, because the canvas standing behind it holds
- * target cards whose names read like the options.
+ * provider cards whose names read like the options.
  */
-export async function pickTheTargetKind(page: Page): Promise<void> {
+export async function pickTheProviderKind(page: Page): Promise<void> {
   await bindingKindAsk(page)
-    .getByRole('button', { name: /^Target/u })
+    .getByRole('button', { name: /^Provider/u })
     .click();
 }
 
@@ -66,6 +66,6 @@ export async function completeThePick(
   account: string,
   providerModel: string,
 ): Promise<void> {
-  await pickTheTargetKind(page);
+  await pickTheProviderKind(page);
   await pickTheStoredTarget(page, account, providerModel);
 }

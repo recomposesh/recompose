@@ -9,7 +9,7 @@ import { Given, test, Then, When } from '../fixtures';
 
 const switchLabel = 'Launch at login';
 
-const developmentBuildReason = 'A development build cannot register itself as a login item.';
+const developmentBuildReason = "A development build can't add itself as a login item.";
 
 const platformsCarryingLoginItems: readonly NodeJS.Platform[] = ['darwin', 'win32'];
 

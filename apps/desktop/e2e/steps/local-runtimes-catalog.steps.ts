@@ -7,7 +7,7 @@ const ENTRIES_AND_THE_ONE_DISMISSAL = 6;
 
 Then('the catalog opens over the screen, holding five servers', async ({ page }) => {
   await expect(catalog(page)).toBeVisible();
-  await expect(screenTitle(page)).toHaveText('Local Runtimes');
+  await expect(screenTitle(page)).toHaveText('Local runtimes');
   await expect(catalog(page).getByRole('button')).toHaveCount(ENTRIES_AND_THE_ONE_DISMISSAL);
 });
 

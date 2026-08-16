@@ -21,7 +21,8 @@ import {
 } from './machine-subscriptions';
 
 /** What the catalog says when the operating system would not open the store it looked in. */
-const STORE_REFUSED_READS = 'macOS did not allow access to the login keychain.';
+const STORE_REFUSED_READS =
+  'macOS blocked access to the login keychain. Allow access, then try again.';
 
 /** The word a lapsed account reads as wherever the app reports one. */
 const LAPSED_READS = 'Signed out';

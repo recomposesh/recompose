@@ -1,7 +1,7 @@
 Feature: The API keys screen
 
   Background:
-    Given the app is on the API Keys screen
+    Given the app is on the API keys screen
 
   Scenario: Nothing connected explains what a key is
     Then a sentence names what a key serves

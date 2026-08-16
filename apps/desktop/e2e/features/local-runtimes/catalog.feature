@@ -1,7 +1,7 @@
-Feature: The Local Runtimes catalog
+Feature: The Local runtimes catalog
 
   Background:
-    Given the app is on the Local Runtimes screen
+    Given the app is on the Local runtimes screen
 
   Scenario: Adding a provider opens the catalog over the screen
     When the maintainer asks to add a provider

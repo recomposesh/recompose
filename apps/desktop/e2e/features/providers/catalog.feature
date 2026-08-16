@@ -1,7 +1,7 @@
 Feature: The key catalog
 
   Background:
-    Given the app is on the API Keys screen
+    Given the app is on the API keys screen
 
   Scenario: Adding a provider opens the catalog over the screen
     When the maintainer asks to add a provider
