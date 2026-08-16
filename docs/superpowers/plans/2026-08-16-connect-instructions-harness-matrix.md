@@ -233,18 +233,25 @@ export GEMINI_API_KEY=rc-local-…
 - `GOOGLE_VERTEX_BASE_URL` is the Vertex sibling; `GOOGLE_GENAI_API_VERSION` pins the version
   segment.
 
+## Editors, confirmed against their own docs
+
+| Client    | Way in                                                                           | Fields                                                                                                                     |
+| --------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Cline     | The gear icon → API Provider → **OpenAI Compatible**                             | Base URL, API Key, Model ID                                                                                                |
+| Roo Code  | The settings panel → API Provider → **OpenAI Compatible**                        | Base URL, API Key, Model                                                                                                   |
+| Kilo Code | Settings → Providers → **Custom provider**                                       | Provider ID, display name, Provider API, Base URL, API key, and a model picker it fills from `GET /v1/models`              |
+| Cursor    | Settings → Models → OpenAI API Key, then **Override OpenAI Base URL** and Verify | key, base URL, model name. The override reaches what runs on chat completions, while Cursor-hosted features stay on Cursor |
+
 ## Secondary sources, confirm before shipping
 
-| Client                     | Dialect           | Shape                                                                                                                     | Confirm                            |
-| -------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Cline, Roo Code, Kilo Code | Chat              | Provider → **OpenAI Compatible**, base URL `…/v1`, key, model id typed by hand                                            | each extension's own docs          |
-| Cursor                     | Chat              | Settings → Models → OpenAI key → Override OpenAI Base URL; verify whether a loopback host is reachable for every feature  | Cursor docs                        |
-| Zed                        | Chat              | `language_models.openai_compatible.recompose.{api_url, available_models[]}`, key in the keychain, env `RECOMPOSE_API_KEY` | zed.dev docs                       |
-| Crush                      | Chat              | provider entry `"type": "openai-compat"`, `base_url`, `api_key`, `models`                                                 | charmbracelet/crush                |
-| Aider                      | Chat              | `OPENAI_API_BASE=…/v1`, `OPENAI_API_KEY`, `aider --model openai/creative`                                                 | aider.chat/docs/llms/openai-compat |
-| Goose                      | Chat              | OpenAI provider with `OPENAI_HOST` plus `OPENAI_BASE_PATH`                                                                | block/goose docs                   |
-| Droid (Factory)            | Chat or Anthropic | `~/.factory/settings.json` → `customModels[]` with `model`, `baseUrl`, `apiKey`, `provider`                               | docs.factory.ai                    |
-| Qwen Code                  | Chat              | `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL`                                                                       | QwenLM/qwen-code                   |
+| Client          | Dialect           | Shape                                                                                                                     | Confirm                            |
+| --------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Zed             | Chat              | `language_models.openai_compatible.recompose.{api_url, available_models[]}`, key in the keychain, env `RECOMPOSE_API_KEY` | zed.dev docs                       |
+| Crush           | Chat              | provider entry `"type": "openai-compat"`, `base_url`, `api_key`, `models`                                                 | charmbracelet/crush                |
+| Aider           | Chat              | `OPENAI_API_BASE=…/v1`, `OPENAI_API_KEY`, `aider --model openai/creative`                                                 | aider.chat/docs/llms/openai-compat |
+| Goose           | Chat              | OpenAI provider with `OPENAI_HOST` plus `OPENAI_BASE_PATH`                                                                | block/goose docs                   |
+| Droid (Factory) | Chat or Anthropic | `~/.factory/settings.json` → `customModels[]` with `model`, `baseUrl`, `apiKey`, `provider`                               | docs.factory.ai                    |
+| Qwen Code       | Chat              | `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL`                                                                       | QwenLM/qwen-code                   |
 
 The ChatGPT desktop app's own chat surface takes no custom endpoint; only its Codex side does,
 through `~/.codex/config.toml`.
