@@ -1,4 +1,6 @@
-import { subscriptionProviders, type ToolBackedProviderId } from '@recompose/contracts';
+import type { ToolBackedProviderId } from '@recompose/contracts';
+
+import { subscriptionProviders } from '@recompose/contracts';
 
 export type SignInCommandRequest = {
   provider: ToolBackedProviderId;
@@ -18,19 +20,22 @@ function invocation(provider: ToolBackedProviderId): string {
   return [toolBinary, ...signInArguments].join(' ');
 }
 
-export function signInCommandFor(request: SignInCommandRequest): string {
-  const variable = subscriptionProviders[request.provider].configHomeVariable;
-  const tool = invocation(request.provider);
-
-  return request.platform === 'win32'
-    ? `$env:${variable}="${request.home}"; ${tool}`
-    : `${variable}="${request.home}" ${tool}`;
+function environmentPrefix(variable: string, home: string, platform: NodeJS.Platform): string {
+  return platform === 'win32' ? `$env:${variable}="${home}"; ` : `${variable}="${home}" `;
 }
 
+/** The one line a person runs to sign in, pointed at the home this account owns. */
+export function signInCommandFor(request: SignInCommandRequest): string {
+  const { configHome } = subscriptionProviders[request.provider];
+
+  return `${environmentPrefix(configHome.variable, request.home, request.platform)}${invocation(request.provider)}`;
+}
+
+/** The line a person adds to their own shell so their tool reads the account this app points at. */
 export function shellSetupLineFor(request: ShellSetupLineRequest): string {
-  const variable = subscriptionProviders[request.provider].configHomeVariable;
+  const { configHome } = subscriptionProviders[request.provider];
 
   return request.platform === 'win32'
-    ? `$env:${variable}="${request.pointer}"`
-    : `export ${variable}="$(readlink -f "${request.pointer}")"`;
+    ? `$env:${configHome.variable}="${request.pointer}"`
+    : `export ${configHome.variable}="$(readlink -f "${request.pointer}")"`;
 }

@@ -2,24 +2,23 @@ import type { ReactElement } from 'react';
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { BrandMarkName } from '../../../../shared/ui';
+import type { RowLeadFace } from '../row-lead/row-lead';
 
-import { BrandMark, Icon, placeFocus } from '../../../../shared/ui';
+import { Icon, placeFocus } from '../../../../shared/ui';
+import { RowLead } from '../row-lead/row-lead';
 
-export type OptionRow = {
+export type OptionRow = RowLeadFace & {
   /** The value picking this option settles on. */
   id: string;
   /** What the option reads as, which is what a person searches by name. */
   name: string;
   /**
-   * A quieter fact beside the name, where one tells two options apart.
+   * A quieter fact under the name, where one tells two options apart.
    *
-   * @summary It gives its width up long before the name does, so a row too narrow for both loses
-   * the fact rather than the identity: a person scanning a list reads what a thing is called first.
+   * @summary It rides a second line rather than the name's own, so two options that differ only in
+   * their fact stay one glance apart: every name begins in the same column whatever follows it.
    */
   detail?: string | undefined;
-  /** The vendor mark the option leads with, where recompose draws one. */
-  mark?: BrandMarkName | undefined;
 };
 
 export type OptionGroup = {
@@ -81,29 +80,32 @@ function matching(groups: readonly OptionGroup[], typed: string): readonly Optio
   return narrowed;
 }
 
+/**
+ * One option, read as a name with whatever tells it apart standing under it.
+ *
+ * @summary The fact rides a second line rather than the name's own, because a menu row is scanned
+ * down its start edge: two names that differ only in their fact stay one glance apart when both
+ * names begin in the same column. It leaves the row a line taller, which is what a pointer wants.
+ */
 function optionRow(option: OptionRow, picked: boolean, onPick: (id: string) => void): ReactElement {
   return (
     <li key={option.id}>
       <button
         aria-pressed={picked}
-        className={`flex w-full items-center gap-2 rounded-control focus-ring px-2 py-1.5 text-start text-control row-hover ${picked ? 'bg-accent/10' : ''}`}
+        className={`flex min-h-10 w-full items-center gap-2.25 rounded-control focus-ring px-2.5 py-1 text-start text-control row-hover ${picked ? 'bg-accent/10' : ''}`}
         onClick={() => {
           onPick(option.id);
         }}
         type="button"
       >
-        {option.mark === undefined ? (
-          <Icon className="size-3.5 shrink-0 text-ink-tertiary" name="spark" />
-        ) : (
-          <BrandMark className="size-4.5" name={option.mark} />
-        )}
-        <span className="truncate text-ink">{option.name}</span>
-        {option.detail === undefined ? null : (
-          <span className="min-w-0 flex-1 truncate font-mono text-mono-value text-ink-secondary">
-            {option.detail}
-          </span>
-        )}
-        {picked ? <Icon className="ms-auto size-4 shrink-0 text-accent-ink" name="check" /> : null}
+        <RowLead glyph={option.glyph} glyphTint={option.glyphTint} mark={option.mark} />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-ink">{option.name}</span>{' '}
+          {option.detail === undefined ? null : (
+            <span className="truncate text-footnote text-ink-secondary">{option.detail}</span>
+          )}
+        </span>
+        {picked ? <Icon className="size-4 shrink-0 text-accent-ink" name="check" /> : null}
       </button>
     </li>
   );

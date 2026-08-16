@@ -19,7 +19,7 @@ const meta = preview.meta({
 export const NothingServedYet = meta.story({
   render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('No Requests Yet')).toBeVisible();
+    await expect(await canvas.findByText('No requests yet')).toBeVisible();
     await expect(await canvas.findByRole('region', { name: 'By target' })).toBeVisible();
   },
 });
@@ -70,9 +70,7 @@ export const NarrowedToOneGateway = meta.story({
   parameters: { bridge: { usageReport: servedReport } },
   render: () => <UsagePage onSearchChange={() => {}} search={{ ...at7d, gateways: ['relay'] }} />,
   play: async ({ canvas }) => {
-    await expect(
-      await canvas.findByText('relay · All providers · Last 7 days · local time'),
-    ).toBeVisible();
+    await expect(await canvas.findByText('relay · All providers · Last 7 days')).toBeVisible();
   },
 });
 
@@ -96,6 +94,6 @@ export const ARefusedRead = meta.story({
   render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('The stored usage history cannot be read.')).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Retry' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Try again' })).toBeVisible();
   },
 });

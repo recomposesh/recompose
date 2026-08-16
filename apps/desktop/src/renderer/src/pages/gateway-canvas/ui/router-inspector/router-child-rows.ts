@@ -4,24 +4,42 @@ import { nameOfRouter } from '@recompose/contracts';
 
 import type { RouterChild } from '../router-child-list/router-child-list';
 
-import { accountName } from '../../../../entities/account';
+import { accountMark, accountName } from '../../../../entities/account';
+import { addressWritten } from '../../lib/route-addresses';
 import { childTally } from '../router-node/router-reading';
 
-function childRow(routeNodeId: string, node: RouteNode, accounts: readonly Account[]): RouterChild {
-  if (node.kind === 'router') {
-    return {
-      routeNodeId,
-      name: nameOfRouter(node.policy.mode, node.displayName),
-      detail: childTally(node.children.length),
-    };
-  }
+type ChildPlace = { modelId: string; routeNodeId: string };
 
+function targetChildRow(
+  place: ChildPlace,
+  node: Extract<RouteNode, { kind: 'target' }>,
+  accounts: readonly Account[],
+): RouterChild {
   const account = accounts.find((held) => held.id === node.accountId);
+  const mark = account === undefined ? undefined : accountMark(account);
+  const stands = account === undefined ? 'ghost' : 'target';
 
   return {
-    routeNodeId,
+    routeNodeId: place.routeNodeId,
+    cardId: `${stands}:${addressWritten(place)}`,
     name: account === undefined ? node.accountId : accountName(account),
     detail: node.providerModel,
+    ...(mark === undefined ? {} : { mark }),
+  };
+}
+
+function childRow(place: ChildPlace, node: RouteNode, accounts: readonly Account[]): RouterChild {
+  if (node.kind !== 'router') {
+    return targetChildRow(place, node, accounts);
+  }
+
+  return {
+    routeNodeId: place.routeNodeId,
+    cardId: `route:${addressWritten(place)}`,
+    name: nameOfRouter(node.policy.mode, node.displayName),
+    detail: childTally(node.children.length),
+    glyph: 'branch',
+    glyphTint: 'text-router',
   };
 }
 
@@ -40,6 +58,7 @@ function childRow(routeNodeId: string, node: RouteNode, accounts: readonly Accou
  * where none does.
  */
 export function routerChildRows(
+  modelId: string,
   routing: Routing,
   children: readonly string[],
   accounts: readonly Account[],
@@ -50,7 +69,7 @@ export function routerChildRows(
     const node = routing.nodes[routeNodeId];
 
     if (node !== undefined) {
-      rows.push(childRow(routeNodeId, node, accounts));
+      rows.push(childRow({ modelId, routeNodeId }, node, accounts));
     }
   }
 

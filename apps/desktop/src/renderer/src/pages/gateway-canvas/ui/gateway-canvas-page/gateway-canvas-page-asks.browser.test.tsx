@@ -105,7 +105,7 @@ test('typing an id another model already uses never makes the draft node disappe
 test("a virtual model's ask opens the picker of stored accounts without a drag", async () => {
   const screen = await canvasPageOn();
 
-  screen.getByLabelText('Pick a provider').first().element().focus();
+  screen.getByLabelText('Pick a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
 
@@ -117,7 +117,7 @@ test("a virtual model's ask opens the picker of stored accounts without a drag",
 
 test('the ask and the picker bind with no pointer at all', async () => {
   const screen = await canvasPageOn();
-  const ask = screen.getByLabelText('Pick a provider').first();
+  const ask = screen.getByLabelText('Pick a target').first();
 
   ask.element().focus();
   await userEvent.keyboard('{Enter}');
@@ -152,7 +152,7 @@ test('a named draft completed through the picker graduates into the composition'
   await userEvent.keyboard('{Enter}');
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
 
-  screen.getByLabelText('Pick a provider').last().element().focus();
+  screen.getByLabelText('Pick a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
@@ -167,7 +167,7 @@ test('a named draft completed through the picker graduates into the composition'
 test('a completed binding says so in the live region, politely', async () => {
   const screen = await canvasPageOn();
 
-  screen.getByLabelText('Pick a provider').first().element().focus();
+  screen.getByLabelText('Pick a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
@@ -186,7 +186,7 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
   await expect.element(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus();
-  screen.getByLabelText('Pick a provider').last().element().focus();
+  screen.getByLabelText('Pick a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
@@ -204,7 +204,7 @@ test('a refused write interrupts with the refusal, and the draft holds', async (
 test('stepping back from the models returns the ask to the account choice', async () => {
   const screen = await canvasPageOn();
 
-  screen.getByLabelText('Pick a provider').first().element().focus();
+  screen.getByLabelText('Pick a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
@@ -232,7 +232,7 @@ test('a target born past the pane zooms the view out until it shows', async () =
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
-  screen.getByLabelText('Pick a provider').last().element().focus();
+  screen.getByLabelText('Pick a target').last().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
@@ -278,7 +278,7 @@ test('a draft born past the pane zooms the view out until it shows', async () =>
 test('an account whose models cannot be read says so in the picker instead of nothing', async () => {
   const screen = await canvasPageOn({ providerModels: {} });
 
-  screen.getByLabelText('Pick a provider').first().element().focus();
+  screen.getByLabelText('Pick a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));

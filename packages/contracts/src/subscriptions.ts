@@ -8,23 +8,34 @@ import { nonBlankString } from './non-blank';
  * @summary Each one ships a command-line tool that owns its flow, so recompose runs that tool
  * rather than keeping a second copy of an authorization it would then have to maintain.
  */
-export const toolBackedProviderIdSchema = z.enum(['anthropic', 'openai', 'antigravity', 'kimi']);
+export const toolBackedProviderIdSchema = z.enum(['anthropic', 'openai']);
 
 export type ToolBackedProviderId = z.infer<typeof toolBackedProviderIdSchema>;
 
 /**
  * Every plan a subscription account can stand for.
  *
- * @summary GitHub Copilot stands apart from the rest: nothing on the machine owns its flow, so
- * recompose runs the device authorization itself. Keeping it out of the tool table means the
- * compiler asks every tool-delegating path what it does about the one plan that has no tool.
+ * @summary Three of these stand apart: nothing on the machine owns their flow, so recompose runs
+ * the authorization itself. Keeping them out of the tool table means the compiler asks every
+ * tool-delegating path what it does about the plans that have no tool to delegate to.
  */
 export const subscriptionProviderIdSchema = z.enum([
   ...toolBackedProviderIdSchema.options,
+  'antigravity',
+  'kimi',
   'copilot',
 ]);
 
 export type SubscriptionProviderId = z.infer<typeof subscriptionProviderIdSchema>;
+
+/**
+ * How a tool is told which config home to use.
+ *
+ * @summary Both tools this app delegates to read an environment variable, so pointing one at a home
+ * is one assignment in front of the command. It stays a named shape rather than a bare string
+ * because a tool that reads a config file instead is a shape this app has already met.
+ */
+export type ToolConfigHome = { told: 'environment'; variable: string };
 
 /**
  * The tools each provider delegates to, and the runs those tools answer.
@@ -39,29 +50,15 @@ export const subscriptionProviders = {
   anthropic: {
     toolBinary: 'claude',
     toolName: 'Claude Code',
-    configHomeVariable: 'CLAUDE_CONFIG_DIR',
+    configHome: { told: 'environment', variable: 'CLAUDE_CONFIG_DIR' },
     signInArguments: [],
     renewArguments: ['auth', 'status'],
   },
   openai: {
     toolBinary: 'codex',
     toolName: 'Codex',
-    configHomeVariable: 'CODEX_HOME',
+    configHome: { told: 'environment', variable: 'CODEX_HOME' },
     signInArguments: ['login'],
-    renewArguments: [],
-  },
-  antigravity: {
-    toolBinary: 'cliproxyapi',
-    toolName: 'Gemini (Antigravity)',
-    configHomeVariable: 'CLIPROXYAPI_HOME',
-    signInArguments: ['--antigravity-login'],
-    renewArguments: [],
-  },
-  kimi: {
-    toolBinary: 'cliproxyapi',
-    toolName: 'Kimi Code',
-    configHomeVariable: 'CLIPROXYAPI_HOME',
-    signInArguments: ['--kimi-login'],
     renewArguments: [],
   },
 } as const satisfies Record<
@@ -69,18 +66,18 @@ export const subscriptionProviders = {
   {
     toolBinary: string;
     toolName: string;
-    configHomeVariable: string;
+    configHome: ToolConfigHome;
     signInArguments: readonly string[];
     renewArguments: readonly string[];
   }
 >;
 
-/** The name every plan goes by on screen, including the one no tool signs into. */
+/** The name every plan goes by on screen, including the ones no tool signs into. */
 export const subscriptionPlanNames: Record<SubscriptionProviderId, string> = {
   anthropic: subscriptionProviders.anthropic.toolName,
   openai: subscriptionProviders.openai.toolName,
-  antigravity: subscriptionProviders.antigravity.toolName,
-  kimi: subscriptionProviders.kimi.toolName,
+  antigravity: 'Gemini (Antigravity)',
+  kimi: 'Kimi Code',
   copilot: 'GitHub Copilot',
 };
 
@@ -88,10 +85,44 @@ export const subscriptionPlanNames: Record<SubscriptionProviderId, string> = {
  * Whether a tool on the machine owns this plan's sign-in, which decides who runs it.
  *
  * @summary Reach for it wherever a path is about to run a tool, read a config home, or ask a tool
- * to renew. GitHub Copilot answers no to all three, because recompose owns its flow itself.
+ * to renew. Every plan recompose signs into itself answers no to all three.
  */
 export function toolBacked(provider: SubscriptionProviderId): provider is ToolBackedProviderId {
   return toolBackedProviderIdSchema.safeParse(provider).success;
+}
+
+/**
+ * The plans recompose signs into by showing a code a person types somewhere else.
+ *
+ * @summary They share one channel because RFC 8628 fixes the whole exchange and leaves the vendor
+ * only its addresses. Naming them as a set is what lets the compiler refuse a provider on that
+ * channel that authorizes some other way.
+ */
+export const deviceFlowProviderIdSchema = z.enum(['copilot', 'kimi']);
+
+export type DeviceFlowProviderId = z.infer<typeof deviceFlowProviderIdSchema>;
+
+export function signsInByDeviceCode(
+  provider: SubscriptionProviderId,
+): provider is DeviceFlowProviderId {
+  return deviceFlowProviderIdSchema.safeParse(provider).success;
+}
+
+/**
+ * The plans recompose signs into by handing the account's own browser an address.
+ *
+ * @summary Google redirects rather than answering, so this sign-in is one act with nothing to show
+ * in between. It stays a set rather than a single word because the channel it names is shaped by
+ * the redirect, not by the one vendor that currently uses it.
+ */
+export const browserSignInProviderIdSchema = z.enum(['antigravity']);
+
+export type BrowserSignInProviderId = z.infer<typeof browserSignInProviderIdSchema>;
+
+export function signsInThroughTheBrowser(
+  provider: SubscriptionProviderId,
+): provider is BrowserSignInProviderId {
+  return browserSignInProviderIdSchema.safeParse(provider).success;
 }
 
 export const subscriptionStandingSchema = z.enum(['connected', 'lapsed']);
@@ -142,8 +173,11 @@ export const machineCredentialReadingSchema = z.discriminatedUnion('holds', [
 
 export type MachineCredentialReading = z.infer<typeof machineCredentialReadingSchema>;
 
+/**
+ * One tool this app can hand a sign-in to, and how a person reaches it themselves.
+ */
 export const subscriptionToolSchema = z.strictObject({
-  provider: subscriptionProviderIdSchema,
+  provider: toolBackedProviderIdSchema,
   toolName: nonBlankString,
   present: z.boolean(),
   signInCommand: nonBlankString,

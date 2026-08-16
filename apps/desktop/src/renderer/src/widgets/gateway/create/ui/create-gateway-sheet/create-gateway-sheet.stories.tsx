@@ -91,7 +91,7 @@ export const AddressPreview = meta.story({
 export const NameRefused = meta.story({
   play: async ({ userEvent }) => {
     await userEvent.type(await screen.findByRole('textbox', { name: 'Name' }), 'Con');
-    await userEvent.click(await screen.findByRole('button', { name: 'Create Gateway' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Create gateway' }));
 
     const refusal = await screen.findByRole('alert');
     const name = await screen.findByRole('textbox', { name: 'Name' });
@@ -104,7 +104,7 @@ export const NameRefused = meta.story({
 /** A gateway nobody named, which asks for a name rather than storing one under the fallback. */
 export const NameMissing = meta.story({
   play: async ({ userEvent }) => {
-    await userEvent.click(await screen.findByRole('button', { name: 'Create Gateway' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Create gateway' }));
 
     await expect(await screen.findByRole('alert')).toHaveTextContent('Give the gateway a name.');
   },
@@ -126,7 +126,7 @@ export const SaveRefused = meta.story({
   parameters: refusing('gateways:save', 'EACCES: permission denied, open gateways'),
   play: async ({ userEvent }) => {
     await userEvent.type(await screen.findByRole('textbox', { name: 'Name' }), 'Codex');
-    await userEvent.click(await screen.findByRole('button', { name: 'Create Gateway' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Create gateway' }));
 
     const refusal = await screen.findByRole('alert');
     const preview = await screen.findByText('Serves at');

@@ -72,7 +72,7 @@ test('the mode stands as the two segments a person chooses between', async () =>
 test('the sentence above the list says which end wins under failover', async () => {
   const screen = await renderDrawer(onTheRouter, { gateway: pooledGateway('failover') });
 
-  await expect.element(screen.getByText(/topmost healthy target/)).toBeVisible();
+  await expect.element(screen.getByText(/topmost healthy provider/)).toBeVisible();
 });
 
 test('the sentence names the prompt-cache cost of rotation under round-robin', async () => {

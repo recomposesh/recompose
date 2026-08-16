@@ -49,7 +49,7 @@ test('the virtual model subject separates general info from where it goes', asyn
   await expect.element(screen.getByText('Model id', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Goes to', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Provider type', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('API Key', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('API key', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Provider', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Anthropic', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
@@ -69,10 +69,10 @@ test('the cable subject reads both ends of the binding', async () => {
 test('the target subject reads the account behind it', async () => {
   const screen = await renderDrawer({ kind: 'target', accountId: 'k1', modelId: 'fast' });
 
-  await expect.element(screen.getByText('API Key', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('API key', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('Anthropic', { exact: true }).last()).toBeVisible();
   await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Behind of', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Serves', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Model name', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Model id', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Fast', { exact: true })).toBeVisible();
@@ -123,7 +123,7 @@ test('Delete provider on one child of a pool names that child rather than the de
 test('a child of a pool reads the composition it stands in as what it is behind of', async () => {
   const screen = await renderDrawer(pooledChild, { gateway: pooledGateway });
 
-  await expect.element(screen.getByText('Behind of', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Serves', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('Pooled', { exact: true })).toBeVisible();
 });
 
@@ -154,7 +154,7 @@ test('a subscription target reads the signed-in email', async () => {
 test('a local runtime target reads the address a person pointed it at', async () => {
   const screen = await renderDrawer({ kind: 'target', accountId: 'l1', modelId: 'fast' });
 
-  await expect.element(screen.getByText('Local Runtime', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Local runtime', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('Address', { exact: true })).toBeVisible();
   await expect.element(screen.getByText('http://127.0.0.1:11434', { exact: true })).toBeVisible();
 });
@@ -204,7 +204,7 @@ test('a target whose provider recompose draws no mark for still reads its stored
     { accounts: researchKey },
   );
 
-  await expect.element(screen.getByText('API Key', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('API key', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('perplexity', { exact: true }).first()).toBeVisible();
   await expect.element(screen.getByText('Encrypted key', { exact: true })).toBeVisible();
 });
@@ -278,7 +278,8 @@ test('a settled draft saves through the inspector and hands the definition over'
   );
 
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
-  await userEvent.click(screen.getByRole('button', { name: 'work' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Provider One provider/ }));
+  await userEvent.click(screen.getByRole('button', { name: /work/ }));
   await userEvent.click(screen.getByRole('button', { name: 'claude-opus-5' }));
   await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
 

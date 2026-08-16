@@ -9,6 +9,7 @@ export {
 export { Chip } from './chip/chip';
 export { ConsequenceDialog } from './consequence-dialog/consequence-dialog';
 export { NavGroup } from './nav-group/nav-group';
+export { CommandLine } from './command-line/command-line';
 export { CopyButton } from './copy-button/copy-button';
 export { FieldGroup } from './field-group/field-group';
 export { type IconName, Icon } from './icon/icon';

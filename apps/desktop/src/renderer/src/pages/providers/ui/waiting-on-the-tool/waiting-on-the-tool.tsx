@@ -1,4 +1,4 @@
-import { CopyButton } from '../../../../shared/ui';
+import { CommandLine } from '../../../../shared/ui';
 
 type WaitingOnTheToolProps = {
   /** @summary The tool the person is waiting on, named so the wait says whose it is. */
@@ -27,12 +27,7 @@ export function WaitingOnTheTool({ toolName, command, note }: WaitingOnTheToolPr
           {note}
         </p>
       )}
-      <div className="flex min-w-0 items-start gap-2 rounded-control border border-line-faint bg-surface-card px-2.5 py-2">
-        <code className="min-w-0 flex-1 font-mono text-mono-caption break-all whitespace-pre-wrap text-ink">
-          {command}
-        </code>
-        <CopyButton label={`Copy the ${toolName} sign-in command`} value={command} />
-      </div>
+      <CommandLine command={command} label={`Copy the ${toolName} sign-in command`} />
     </div>
   );
 }

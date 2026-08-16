@@ -102,7 +102,7 @@ export const ScopedToAVirtualModel = meta.story({
   args: { subject: theCreativeModel },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Logs for Creative')).toBeVisible();
-    await expect(await canvas.findByText('Virtual Model', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Virtual model', { exact: true })).toBeVisible();
   },
 });
 
@@ -111,7 +111,7 @@ export const ScopedToATarget = meta.story({
   args: { subject: theAggregator },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Logs for openrouter')).toBeVisible();
-    await expect(await canvas.findByText('Target', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Provider', { exact: true })).toBeVisible();
   },
 });
 
@@ -120,7 +120,7 @@ export const ScopedToARemovedTarget = meta.story({
   args: { subject: theRemovedTarget },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Logs for openrouter')).toBeVisible();
-    await expect(await canvas.findByText('Removed Provider', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Removed provider', { exact: true })).toBeVisible();
   },
 });
 

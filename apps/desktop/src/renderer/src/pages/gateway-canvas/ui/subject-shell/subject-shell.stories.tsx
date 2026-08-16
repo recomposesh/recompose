@@ -95,7 +95,9 @@ export const TheShellCarriesItsSubject = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('heading', { name: 'My Gateway' })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Delete gateway' })).toBeVisible();
-    await expect(await canvas.findByRole('status')).toHaveTextContent(/Restart the harness/);
+    await expect(await canvas.findByRole('status')).toHaveTextContent(
+      /Restart the app that points at this gateway/,
+    );
   },
 });
 

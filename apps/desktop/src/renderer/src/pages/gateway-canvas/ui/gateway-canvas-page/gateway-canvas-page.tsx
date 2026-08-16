@@ -121,6 +121,7 @@ function inspectorBeside({ gateway, reveal, width, canvas }: InspectorBeside): R
         onModelRenamed={(modelId) => {
           selectNode(`model:${modelId}`);
         }}
+        onSelectNode={selectNode}
         refusal={refusal}
         subject={subject}
       />

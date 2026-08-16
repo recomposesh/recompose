@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import type { CopilotSignInPort } from './copilot-sign-in';
+import type { DeviceSignInPort } from './device-sign-in-port';
 
-import {
-  awaitCopilotSignIn,
-  forgetPendingCopilotSignIn,
-  startCopilotSignIn,
-} from './copilot-sign-in';
+import { awaitDeviceSignIn, forgetPendingDeviceSignIns, startDeviceSignIn } from './device-sign-in';
 
 type Answer = { status: number; body: unknown };
 
@@ -18,7 +14,7 @@ function urlOf(input: Parameters<typeof fetch>[0]): string {
   return input instanceof URL ? input.href : input.url;
 }
 
-function portAnswering(answers: readonly Answer[]): CopilotSignInPort & {
+function portAnswering(answers: readonly Answer[]): DeviceSignInPort & {
   sent: string[];
 } {
   const sent: string[] = [];
@@ -28,6 +24,7 @@ function portAnswering(answers: readonly Answer[]): CopilotSignInPort & {
     sent,
     nowMs: () => 0,
     sleep: async () => Promise.resolve(),
+    machine: { name: 'ada-machine', id: 'device-1', model: 'macOS arm64', version: '0.0.0' },
     fetchLike: async (input) => {
       const answer = answers[Math.min(turn, answers.length - 1)];
 
@@ -56,12 +53,12 @@ const aCode = {
 };
 
 beforeEach(() => {
-  forgetPendingCopilotSignIn();
+  forgetPendingDeviceSignIns();
 });
 
 describe('the code the screen shows', () => {
   test('a person is shown what to type and where, and nothing that completes the flow', async () => {
-    const shown = await startCopilotSignIn(portAnswering([aCode]));
+    const shown = await startDeviceSignIn(portAnswering([aCode]), 'copilot');
 
     expect(shown).toEqual({
       verdict: 'shown',
@@ -74,8 +71,8 @@ describe('the code the screen shows', () => {
   test('an ask GitHub refused leaves nothing waiting to be finished', async () => {
     const port = portAnswering([{ status: 404, body: {} }]);
 
-    expect((await startCopilotSignIn(port)).verdict).toBe('refused');
-    expect((await awaitCopilotSignIn(port)).verdict).toBe('refused');
+    expect((await startDeviceSignIn(port, 'copilot')).verdict).toBe('refused');
+    expect((await awaitDeviceSignIn(port, 'copilot')).verdict).toBe('refused');
   });
 });
 
@@ -87,9 +84,9 @@ describe('the wait a person finishes', () => {
       { status: 200, body: { login: 'someone' } },
     ]);
 
-    await startCopilotSignIn(port);
+    await startDeviceSignIn(port, 'copilot');
 
-    expect(await awaitCopilotSignIn(port)).toEqual({
+    expect(await awaitDeviceSignIn(port, 'copilot')).toEqual({
       verdict: 'signed-in',
       credential: 'gho_the-token',
       signedInAs: 'someone',
@@ -99,9 +96,9 @@ describe('the wait a person finishes', () => {
   test('a wait with nothing started refuses rather than polling an address for nobody', async () => {
     const port = portAnswering([aCode]);
 
-    expect(await awaitCopilotSignIn(port)).toEqual({
+    expect(await awaitDeviceSignIn(port, 'copilot')).toEqual({
       verdict: 'refused',
-      reason: 'No Copilot sign-in is waiting to be finished.',
+      reason: 'No GitHub Copilot sign-in is waiting to be finished.',
     });
     expect(port.sent).toEqual([]);
   });
@@ -113,21 +110,21 @@ describe('the wait a person finishes', () => {
       { status: 200, body: { login: 'someone' } },
     ]);
 
-    await startCopilotSignIn(port);
-    await awaitCopilotSignIn(port);
+    await startDeviceSignIn(port, 'copilot');
+    await awaitDeviceSignIn(port, 'copilot');
 
-    expect((await awaitCopilotSignIn(port)).verdict).toBe('refused');
+    expect((await awaitDeviceSignIn(port, 'copilot')).verdict).toBe('refused');
   });
 
   test('a denied sign-in leaves nothing behind either', async () => {
     const port = portAnswering([aCode, { status: 200, body: { error: 'access_denied' } }]);
 
-    await startCopilotSignIn(port);
+    await startDeviceSignIn(port, 'copilot');
 
-    expect(await awaitCopilotSignIn(port)).toEqual({
+    expect(await awaitDeviceSignIn(port, 'copilot')).toEqual({
       verdict: 'refused',
       reason: 'The sign-in was denied on GitHub.',
     });
-    expect((await awaitCopilotSignIn(port)).verdict).toBe('refused');
+    expect((await awaitDeviceSignIn(port, 'copilot')).verdict).toBe('refused');
   });
 });

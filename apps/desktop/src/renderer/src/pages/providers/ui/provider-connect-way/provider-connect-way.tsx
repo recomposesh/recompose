@@ -1,3 +1,5 @@
+import { signsInByDeviceCode, signsInThroughTheBrowser } from '@recompose/contracts';
+
 import type { CatalogEntry, ConnectionWay } from '../../model/provider-catalog';
 
 import {
@@ -6,11 +8,12 @@ import {
   offerFor,
   signInProviderOf,
 } from '../../model/provider-catalog';
+import { BrowserSignIn } from '../browser-sign-in/browser-sign-in';
 import { ConnectKeyForm } from '../connect-key-form/connect-key-form';
 import { ConnectOwnEndpoint } from '../connect-own-endpoint/connect-own-endpoint';
 import { ConnectOwnServer } from '../connect-own-server/connect-own-server';
-import { CopilotSignIn } from '../copilot-sign-in/copilot-sign-in';
 import { DetectRuntimeStep } from '../detect-runtime-step/detect-runtime-step';
+import { DeviceCodeSignIn } from '../device-code-sign-in/device-code-sign-in';
 import { SignInWay } from '../sign-in-way/sign-in-way';
 
 type ProviderConnectWayProps = {
@@ -22,6 +25,11 @@ type ProviderConnectWayProps = {
   onConnected: () => void;
 };
 
+/**
+ * @summary Which surface a plan's sign-in gets follows how the plan authorizes, never which plan
+ * it is. A plan whose own tool owns the flow names the command to run; the rest are run here, by
+ * code or by browser, because nothing on the machine would run them otherwise.
+ */
 function signInArm(entry: CatalogEntry, onConnected: () => void) {
   const provider = signInProviderOf(entry);
 
@@ -29,11 +37,15 @@ function signInArm(entry: CatalogEntry, onConnected: () => void) {
     return null;
   }
 
-  return provider === 'copilot' ? (
-    <CopilotSignIn entry={entry} onConnected={onConnected} />
-  ) : (
-    <SignInWay name={entry.name} onConnected={onConnected} provider={provider} />
-  );
+  if (signsInByDeviceCode(provider)) {
+    return <DeviceCodeSignIn entry={entry} onConnected={onConnected} provider={provider} />;
+  }
+
+  if (signsInThroughTheBrowser(provider)) {
+    return <BrowserSignIn entry={entry} onConnected={onConnected} provider={provider} />;
+  }
+
+  return <SignInWay name={entry.name} onConnected={onConnected} provider={provider} />;
 }
 
 function detectArm(entry: CatalogEntry, onConnected: () => void) {

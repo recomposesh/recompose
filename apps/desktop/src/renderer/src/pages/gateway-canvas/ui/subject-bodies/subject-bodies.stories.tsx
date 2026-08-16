@@ -71,7 +71,10 @@ function RouterSubjectUnderProof() {
 
   return (
     <InspectorFrame>
-      {routerBody(pooledGateway, pooled, 'r1', pooledRouter, storedAccounts.accounts, asked)}
+      {routerBody(pooledGateway, pooled, 'r1', pooledRouter, storedAccounts.accounts, {
+        onDelete: asked,
+        onSelectNode: () => {},
+      })}
     </InspectorFrame>
   );
 }
@@ -107,8 +110,8 @@ export const TheGatewaySubjectCarriesAccess = meta.story({
 export const TheTargetSubject = meta.story({
   render: () => <TargetSubjectUnderProof />,
   play: async ({ canvas }) => {
-    await expect((await canvas.findAllByText('API Key', { exact: true }))[0]).toBeVisible();
-    await expect(await canvas.findByText('Behind of', { exact: true })).toBeVisible();
+    await expect((await canvas.findAllByText('API key', { exact: true }))[0]).toBeVisible();
+    await expect(await canvas.findByText('Serves', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Fast', { exact: true })).toBeVisible();
   },
 });

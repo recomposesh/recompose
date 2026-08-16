@@ -27,7 +27,7 @@ function theQuestion(): HTMLElement {
 
 export const BoundTarget = meta.story({
   play: () => {
-    void expect(theQuestion()).toHaveTextContent('Delete the target "fast"?');
+    void expect(theQuestion()).toHaveTextContent('Delete the provider "fast"?');
     void expect(theQuestion()).toHaveTextContent('returns to the canvas as a draft');
   },
 });
@@ -36,7 +36,7 @@ export const BoundTarget = meta.story({
 export const TargetUnderARouter = meta.story({
   args: { removal: { ...asked, kind: 'child-target' as const, name: 'work' } },
   play: () => {
-    void expect(theQuestion()).toHaveTextContent('Delete the target "work"?');
+    void expect(theQuestion()).toHaveTextContent('Delete the provider "work"?');
     void expect(theQuestion()).toHaveTextContent('everything else that router holds keeps serving');
   },
 });

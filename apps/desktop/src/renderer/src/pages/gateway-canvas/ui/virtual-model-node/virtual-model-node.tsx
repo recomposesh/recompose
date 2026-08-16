@@ -36,7 +36,7 @@ export function VirtualModelNode({ data, selected }: VirtualModelNodeProps) {
       kickerTint="text-virtual-model-ink"
       name={displayName}
       nameInk="text-ink"
-      outgoing={{ bound: true, offersCable: false, ask: 'Pick a provider', onAsk: onPickTarget }}
+      outgoing={{ bound: true, offersCable: false, ask: 'Pick a target', onAsk: onPickTarget }}
       selected={selected}
       subtitle={modelId}
       subtitleInk="text-ink-secondary"

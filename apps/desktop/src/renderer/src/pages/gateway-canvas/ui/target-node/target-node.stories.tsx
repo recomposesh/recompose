@@ -23,6 +23,7 @@ const wired: TargetNodeData = {
   kind: 'target',
   account: workKey,
   modelId: 'fast',
+  providerModel: 'claude-sonnet-5',
   routeNodeId: 't1',
   depth: 0,
 };
@@ -42,6 +43,7 @@ const keyed: TargetNodeData = {
   id: 'target:a5',
   kind: 'target',
   modelId: 'fast',
+  providerModel: 'claude-haiku-4-5',
   routeNodeId: 't1',
   depth: 0,
   account: {
@@ -57,6 +59,7 @@ const subscribed: TargetNodeData = {
   id: 'target:a2',
   kind: 'target',
   modelId: 'fast',
+  providerModel: 'gpt-5.6-sol',
   routeNodeId: 't1',
   depth: 0,
   account: {
@@ -73,6 +76,7 @@ const aggregated: TargetNodeData = {
   id: 'target:a3',
   kind: 'target',
   modelId: 'fast',
+  providerModel: 'openai/gpt-5',
   routeNodeId: 't1',
   depth: 0,
   account: {
@@ -88,6 +92,7 @@ const runtime: TargetNodeData = {
   id: 'target:a4',
   kind: 'target',
   modelId: 'fast',
+  providerModel: 'llama3.1:8b',
   routeNodeId: 't1',
   depth: 0,
   account: { id: 'a4', provider: 'ollama', kind: 'local', address: '127.0.0.1:11434' },
@@ -170,7 +175,7 @@ export const ARuntimeChipWearsItsVendorMark = meta.story({
     await expect(chipInk(card)).toBe(inScheme('rgb(191, 62, 47)', 'rgb(255, 128, 104)'));
     await expect(chipGlyph(card)).not.toBe(keyGlyph);
     await expect(card.querySelector('svg title')?.textContent).toBe('Ollama');
-    await expect(card).toHaveTextContent('Local Runtime');
+    await expect(card).toHaveTextContent('Local runtime');
     await expect(card).toHaveTextContent('Ollama');
     await expect(card).toHaveTextContent('127.0.0.1:11434');
   },
@@ -192,7 +197,7 @@ export const ARemovedTargetDashesAndSaysSo = meta.story({
   play: async ({ canvas }) => {
     const card = await canvas.findByRole('button', { name: /Removed/ });
 
-    await expect(card).toHaveTextContent('not in the registry');
+    await expect(card).toHaveTextContent('no longer connected');
     await expect(paintedStyle(card).borderStyle).toBe('dashed');
     await expect(paintedStyle(card).opacity).toBe('1');
   },
@@ -202,7 +207,7 @@ export const ARemovedTargetDashesAndSaysSo = meta.story({
 export const ACardWaitingOnAPickSaysItIsWaiting = meta.story({
   args: { data: waiting },
   play: async ({ canvas }) => {
-    const card = await canvas.findByRole('button', { name: /Pick a provider/ });
+    const card = await canvas.findByRole('button', { name: /Pick a target/ });
 
     await expect(card).not.toHaveTextContent('waiting on a pick');
     await expect(paintedStyle(card).borderStyle).toBe('dashed');

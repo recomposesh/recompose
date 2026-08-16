@@ -114,6 +114,7 @@ test('a way keeps the providers that connect by it and drops the rest', () => {
     'openai',
     'copilot',
     'kimi',
+    'antigravity',
     'zhipu',
     'qwen-coding',
     'minimax',

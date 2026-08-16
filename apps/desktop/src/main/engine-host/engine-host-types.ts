@@ -49,6 +49,13 @@ export type EngineHost = {
   probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport>;
   probeRuntime: (address: string, provider: LocalProviderId) => Promise<RuntimeReachability>;
   listModels: (origin: string, custody: LookCustody) => Promise<ModelListing>;
+  /**
+   * The address one Claude access token signed in as, or nothing where the far end would not say.
+   *
+   * @summary Claude Code leaves no address in a config home this app pointed it at, so the only
+   * place it exists is behind the token, and the child is the one process that spends a credential.
+   */
+  claudeAddress: (accessToken: string) => Promise<string | undefined>;
   states: () => EngineStates;
   retainedLogRows: () => readonly LogRow[];
   /**

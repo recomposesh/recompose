@@ -118,7 +118,7 @@ test('a connect the schema refuses speaks a sentence, never the issue JSON', asy
 
   await expect
     .element(screen.getByRole('alert'))
-    .toHaveTextContent('recompose cannot store this key as it stands.');
+    .toHaveTextContent("recompose can't store this key. Check the key, then try again.");
   await expect.element(screen.getByRole('alert')).not.toHaveTextContent('too_small');
 });
 
@@ -127,7 +127,7 @@ test('each field hints at what belongs in it, in the shape the provider hands ou
 
   const screen = await renderKeyForm();
 
-  await expect.element(screen.getByLabelText('Name')).toHaveAttribute('placeholder', 'My API Key');
+  await expect.element(screen.getByLabelText('Name')).toHaveAttribute('placeholder', 'My API key');
   await expect.element(screen.getByLabelText('Key')).toHaveAttribute('placeholder', 'sk-ant-…');
 });
 

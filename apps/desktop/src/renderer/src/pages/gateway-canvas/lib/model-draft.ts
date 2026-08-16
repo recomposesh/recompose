@@ -1,25 +1,16 @@
-import type { GatewayConfig, RouteTarget, Routing, VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, RouteTarget, Routing } from '@recompose/contracts';
 
-import { mintRouteNodeId, modelAliasFromName, modelAliasSchema } from '@recompose/contracts';
+import { mintRouteNodeId, modelAliasFromName } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
+import type { BoundKind } from './binding-kinds';
 import type { RouterMode } from './routing-edits';
 
 import { IpcResultError, refusalSentence } from '../../../shared/api';
 import { routedThroughARouter } from './routing-edits';
 
-const MISSING_NAME_REFUSAL = 'Give the virtual model a name.';
-const UNSERVABLE_ID_REFUSAL =
-  "recompose can't serve a virtual model under this id. Pick another one.";
 const MALFORMED_DEFINITION_REFUSAL =
   "recompose can't store this virtual model. Check the name and the id, then try again.";
-const SKIPPED_ID_HINT = 'Claude Code lists only ids starting with claude or anthropic.';
-const DISCOVERED_PREFIXES = ['claude', 'anthropic'];
-
-/** What the name field says back when a name with nothing in it can stand for no model. */
-export function nameRefusal(displayName: string): string | undefined {
-  return displayName.trim() === '' ? MISSING_NAME_REFUSAL : undefined;
-}
 
 /**
  * The id a name derives to, kept in step with the name until a person edits the id by hand.
@@ -34,40 +25,17 @@ export function idFollowingName(previousName: string, nextName: string, currentI
   return following ? modelAliasFromName(nextName) : currentId;
 }
 
-/**
- * What the model id field says back when the id a client would send cannot stand as it is.
- *
- * @summary An id no client could send refuses first, then one this gateway already serves, because
- * a second definition under one id would leave two answers to a single request.
- */
-export function idRefusal(id: string, held: readonly VirtualModel[]): string | undefined {
-  if (!modelAliasSchema.safeParse(id).success) {
-    return UNSERVABLE_ID_REFUSAL;
-  }
-
-  return held.some((model) => model.id === id)
-    ? `This gateway already serves a virtual model named "${id}".`
-    : undefined;
-}
-
-/**
- * The quiet word about which ids a caller's own picker will surface, where one applies.
- *
- * @summary Claude Code lists only the prefixes it recognizes, so an id outside them serves every
- * client that asks for it by name and appears in that one picker for nobody. The name stays free,
- * because the hint belongs beside the derived id rather than as a rule about what a person may type.
- */
-export function discoveryHint(wireId: string): string | undefined {
-  return DISCOVERED_PREFIXES.some((prefix) => wireId.startsWith(prefix))
-    ? undefined
-    : SKIPPED_ID_HINT;
-}
-
 export type SettledDefinition = {
   /** The name a person gave the model, which the id derives from until a person edits it. */
   displayName: string;
   /** The id a client sends as its `model`, saved as a person saw it rather than derived again. */
   id: string;
+  /** Which shape the binding takes, or nothing while the ask that offers the two stands open. */
+  bindsThrough?: BoundKind | undefined;
+  /** How the router spreads, or nothing while the draft has yet to answer with a router at all. */
+  routerMode?: RouterMode | undefined;
+  /** What a person called the router, which is empty while it answers to its mode. */
+  routerName?: string | undefined;
   /** The account the model reaches. */
   accountId: string;
   /** The real model that account serves. */
@@ -78,6 +46,40 @@ export type SettledDefinition = {
 export function emptyDefinition(): SettledDefinition {
   return { displayName: '', id: '', accountId: '', providerModel: '' };
 }
+
+function routingAnswered(definition: SettledDefinition): boolean {
+  return definition.bindsThrough === 'router'
+    ? true
+    : definition.accountId !== '' && definition.providerModel !== '';
+}
+
+/**
+ * Whether every answer a save needs has been given, which is what opens the button that saves.
+ *
+ * @summary Only blanks hold the save shut, never a wrong answer. A person who left a field alone
+ * can see that for themselves, so the button saying nothing costs them nothing. A person who typed
+ * an id this gateway already serves cannot see it, and a button that refuses to press would leave
+ * them guessing, so that refusal waits for the press and speaks under the field it refuses.
+ *
+ * A router counts as a whole answer on its own, because one is born holding no child and fills by
+ * cable afterwards. Its own name never counts, because a router with no name answers to its mode.
+ */
+export function draftFilledIn(definition: SettledDefinition): boolean {
+  return (
+    definition.displayName.trim() !== '' &&
+    definition.id.trim() !== '' &&
+    routingAnswered(definition)
+  );
+}
+
+/**
+ * The mode a router is born in, since neither ask that drops one stops to offer a dialog.
+ *
+ * @summary Failover is the mode a person can reason about without reading anything: the first
+ * child answers and the rest stand in. Round-robin trades the prompt cache for spread, which is a
+ * choice worth making on purpose in the inspector rather than one to inherit from a drop.
+ */
+export const BORN_ROUTER_MODE: RouterMode = 'failover';
 
 function boundThroughOneNode(target: RouteTarget): Routing {
   const entry = mintRouteNodeId();
@@ -118,11 +120,51 @@ export function gatewayDefiningRouted(
   gateway: GatewayConfig,
   named: NamedDefinition,
   mode: RouterMode,
+  routerName?: string,
 ): GatewayConfig {
   return {
     ...gateway,
-    virtualModels: [...gateway.virtualModels, { ...named, routing: routedThroughARouter(mode) }],
+    virtualModels: [
+      ...gateway.virtualModels,
+      { ...named, routing: routedThroughARouter(mode, routerName) },
+    ],
   };
+}
+
+/**
+ * The name to store for a router, which is nothing wherever a person left the field alone.
+ *
+ * @summary A router with no name of its own answers to its mode, and that fallback only speaks
+ * while the stored name is absent. Blanks a person typed and then erased have to reach storage as
+ * absence rather than as an empty string, or the card prints nothing on its name line.
+ */
+function routerNamed(typed: string | undefined): string | undefined {
+  const named = typed?.trim() ?? '';
+
+  return named === '' ? undefined : named;
+}
+
+/**
+ * The gateway as it stands once it carries this draft, whichever shape the draft binds through.
+ *
+ * @summary The cable's ask and the drawer's first step both finish a draft, and a person who
+ * answered with a router in one of them meant the same thing in the other. The two stored shapes
+ * differ, so which one a draft becomes is read once here rather than wherever a draft is saved.
+ */
+export function gatewayDefiningDraft(
+  gateway: GatewayConfig,
+  settled: SettledDefinition,
+): GatewayConfig {
+  if (settled.bindsThrough !== 'router') {
+    return gatewayDefining(gateway, settled);
+  }
+
+  return gatewayDefiningRouted(
+    gateway,
+    { id: settled.id, displayName: settled.displayName },
+    settled.routerMode ?? BORN_ROUTER_MODE,
+    routerNamed(settled.routerName),
+  );
 }
 
 function reboundOnItsEntry(routing: Routing, target: RouteTarget): Routing {

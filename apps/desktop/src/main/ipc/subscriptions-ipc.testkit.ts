@@ -21,6 +21,7 @@ import {
   fakeClock,
   fakeKeychain,
   osUser,
+  quietAppSignIns,
 } from '../subscriptions/subscriptions.testkit';
 import { homeVendorItem } from '../subscriptions/vendor-item';
 
@@ -89,11 +90,7 @@ function contextIn(
       keyringHolds: null,
     },
     searchPath: async () => Promise.resolve(binFolder),
-    copilot: {
-      fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
-      sleep: async () => Promise.resolve(),
-      nowMs: () => 0,
-    },
+    ...quietAppSignIns(),
     writeSubscriptionCredential: async () => Promise.resolve(),
     noteLaunchRefused: () => undefined,
     launch,
@@ -101,6 +98,11 @@ function contextIn(
     signInBoundMs: 300,
     signInEveryMs: 100,
     onCorrupt: () => undefined,
+    claudeAddress: async () => {
+      await Promise.resolve();
+
+      return undefined;
+    },
   });
 }
 

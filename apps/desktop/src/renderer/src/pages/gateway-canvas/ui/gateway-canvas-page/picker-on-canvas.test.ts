@@ -69,8 +69,8 @@ describe('what the picker offers to pick from', () => {
     });
 
     expect(groupsRead(pickerStanding(world, modelsOffered))).toEqual([
-      { heading: 'API Keys', ids: ['k1'] },
-      { heading: 'Local Runtimes', ids: ['l1'] },
+      { heading: 'API keys', ids: ['k1'] },
+      { heading: 'Local runtimes', ids: ['l1'] },
     ]);
   });
 

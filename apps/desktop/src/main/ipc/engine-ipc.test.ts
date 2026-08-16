@@ -59,6 +59,11 @@ function hostAnswering(
     probe: async () => Promise.resolve({ verdict: 'could-not-check' as const }),
     probeRuntime: async () => Promise.resolve({ verdict: 'unreachable' as const }),
     listModels: async () => Promise.resolve({ standing: 'unlisted' as const }),
+    claudeAddress: async () => {
+      await Promise.resolve();
+
+      return undefined;
+    },
     dispose: () => undefined,
   };
 

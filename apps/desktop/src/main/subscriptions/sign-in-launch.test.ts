@@ -9,7 +9,7 @@ type WrittenFile = { path: string; content: string };
 const spawned = vi.hoisted(() => {
   const calls: SpawnCall[] = [];
 
-  return { calls };
+  return { calls, exitCode: 0, said: '' };
 });
 
 const written = vi.hoisted(() => {
@@ -28,9 +28,24 @@ vi.mock('node:child_process', () => ({
 
     return {
       unref: () => undefined,
-      once: (event: string, listener: () => void) => {
+      stderr: {
+        on: (event: string, listener: (chunk: Buffer) => void) => {
+          if (event === 'data' && spawned.said !== '') {
+            setTimeout(() => {
+              listener(Buffer.from(spawned.said));
+            }, 0);
+          }
+        },
+      },
+      once: (event: string, listener: (code?: number) => void) => {
         if (event === 'spawn') {
           setTimeout(listener, 0);
+        }
+
+        if (event === 'close') {
+          setTimeout(() => {
+            listener(spawned.exitCode);
+          }, 1);
         }
       },
     };
@@ -46,10 +61,16 @@ vi.mock('node:fs/promises', () => ({
   chmod: async () => Promise.resolve(),
 }));
 
+function freshLaunch(exitCode = 0, said = ''): void {
+  spawned.calls.length = 0;
+  written.files.length = 0;
+  spawned.exitCode = exitCode;
+  spawned.said = said;
+}
+
 describe('handing the sign-in to a terminal on macOS', () => {
   test('the command runs from a .command file, so the terminal a person chose opens it', async () => {
-    spawned.calls.length = 0;
-    written.files.length = 0;
+    freshLaunch();
 
     await terminalSignInLaunch('darwin', null)('claude /login');
 
@@ -61,8 +82,7 @@ describe('handing the sign-in to a terminal on macOS', () => {
   });
 
   test('the window closes itself once the tool finishes, found by its tty, not its title', async () => {
-    spawned.calls.length = 0;
-    written.files.length = 0;
+    freshLaunch();
 
     await terminalSignInLaunch('darwin', null)('claude /login');
 
@@ -76,13 +96,34 @@ describe('handing the sign-in to a terminal on macOS', () => {
   });
 
   test('an override launcher takes the command whole, so end-to-end runs open no terminal', async () => {
-    spawned.calls.length = 0;
-    written.files.length = 0;
+    freshLaunch();
 
     await terminalSignInLaunch('darwin', '/tmp/fake-launcher')('claude /login');
 
     expect(written.files).toEqual([]);
     expect(spawned.calls).toEqual([{ binary: '/tmp/fake-launcher', argv: ['claude /login'] }]);
+  });
+  test('a refused open carries out, so no dialog waits on a terminal that never opened', async () => {
+    freshLaunch(1, 'Unable to find application named Terminal');
+
+    await expect(terminalSignInLaunch('darwin', null)('claude /login')).rejects.toThrow(
+      'Unable to find application named Terminal',
+    );
+
+    freshLaunch();
+  });
+
+  test('the window stays open on a refusal, so the tool keeps its last words on screen', async () => {
+    freshLaunch();
+
+    await terminalSignInLaunch('darwin', null)('claude /login');
+
+    const script = written.files[0]?.content ?? '';
+
+    expect(script).toContain('SIGNIN_STATUS=$?');
+    expect(script.indexOf('if [ "$SIGNIN_STATUS" -ne 0 ]')).toBeLessThan(
+      script.indexOf('$TERM_PROGRAM'),
+    );
   });
 });
 

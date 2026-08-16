@@ -99,6 +99,10 @@ function reportFor(script: Script, directive: EngineDirective): unknown {
     return modelListFor(script, directive);
   }
 
+  if (directive.kind === 'claude-address') {
+    return { kind: 'claude-address', answers: directive.id };
+  }
+
   return stateFor(script, directive);
 }
 

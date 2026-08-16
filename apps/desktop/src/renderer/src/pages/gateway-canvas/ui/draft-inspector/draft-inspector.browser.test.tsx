@@ -1,3 +1,5 @@
+import type { Locator } from 'vitest/browser';
+
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
@@ -39,23 +41,38 @@ async function draftedInspectorOn(parameters = {}) {
   return { screen, panel: screen.getByRole('complementary') };
 }
 
+/**
+ * Answers the ask the routing box opens on, which every provider step now stands behind.
+ *
+ * @summary The drawer asks which shape a binding takes before it offers any provider, the same
+ * question a released cable asks, so a spec about providers walks through it rather than around it.
+ */
+async function answeredWithAProvider(panel: Locator): Promise<void> {
+  await userEvent.click(panel.getByRole('button', { name: /^Provider One provider/ }));
+}
+
 test("a model-list look the main process refuses reads back in the main process's own words", async () => {
   const { panel } = await draftedInspectorOn({ overrides: refusedModelList });
 
+  await answeredWithAProvider(panel);
   await userEvent.click(panel.getByRole('button', { name: 'work' }));
 
   await expect.element(panel.getByRole('alert')).toHaveTextContent(UNREACHABLE_PROVIDER);
 });
 
-test('adding a virtual model with no name refuses beside the name and stores nothing', async () => {
+test('a whole binding with no name holds the save shut, and naming it opens the save', async () => {
   const { screen, panel } = await draftedInspectorOn();
 
+  await answeredWithAProvider(panel);
   await userEvent.click(panel.getByRole('button', { name: 'work' }));
   await userEvent.click(panel.getByRole('button', { name: 'claude-opus-5' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
 
-  await expect.element(screen.getByText('Give the virtual model a name.')).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: 'Add virtual model' })).toBeDisabled();
   expect((await storedModels()).length).toBe(2);
+
+  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+
+  await expect.element(screen.getByRole('button', { name: 'Add virtual model' })).toBeEnabled();
 });
 
 test('selecting a released virtual model does not move focus into its name', async () => {
@@ -71,6 +88,7 @@ test('selecting a released virtual model does not move focus into its name', asy
 test('stepping back to the target choice lets the picked model go with the target', async () => {
   const { panel } = await draftedInspectorOn();
 
+  await answeredWithAProvider(panel);
   await userEvent.click(panel.getByRole('button', { name: 'work' }));
   await userEvent.click(panel.getByRole('button', { name: 'claude-opus-5' }));
 
@@ -87,6 +105,7 @@ test('a save the store refuses says why in the inspector and holds every word ty
   const { screen, panel } = await draftedInspectorOn({ overrides: refusedWrite });
 
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  await answeredWithAProvider(panel);
   await userEvent.click(panel.getByRole('button', { name: 'work' }));
   await userEvent.click(panel.getByRole('button', { name: 'claude-opus-5' }));
   await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
@@ -100,6 +119,7 @@ test('typing on after a refused save takes the refusal away, since the words cha
   const { screen, panel } = await draftedInspectorOn({ overrides: refusedWrite });
 
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
+  await answeredWithAProvider(panel);
   await userEvent.click(panel.getByRole('button', { name: 'work' }));
   await userEvent.click(panel.getByRole('button', { name: 'claude-opus-5' }));
   await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));

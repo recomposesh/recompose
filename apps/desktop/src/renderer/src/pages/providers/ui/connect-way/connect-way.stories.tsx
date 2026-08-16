@@ -116,14 +116,18 @@ export const StoreRefused = meta.story({
   parameters: { bridge: { machineReading: { holds: 'store-refused' as const } } },
   play: async ({ canvas }) => {
     await expect(
-      await canvas.findByText('macOS did not allow access to the login keychain.'),
+      await canvas.findByText(
+        'macOS blocked access to the login keychain. Allow access, then try again.',
+      ),
     ).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Sign in to Anthropic' })).toBeEnabled();
 
     await userEvent.click(await canvas.findByRole('button', { name: 'Check again' }));
 
     await expect(
-      await canvas.findByText('macOS did not allow access to the login keychain.'),
+      await canvas.findByText(
+        'macOS blocked access to the login keychain. Allow access, then try again.',
+      ),
     ).toBeVisible();
   },
 });

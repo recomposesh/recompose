@@ -1,13 +1,15 @@
+import type { BoundKind } from '../../lib/binding-kinds';
 import type { XY } from '../../lib/canvas-positions';
 import type { ModelListReading } from '../../lib/model-draft';
-import type { BoundKind, PickerStage } from '../drop-picker/drop-picker';
+import type { PickerStage } from '../drop-picker/drop-picker';
 import type { OptionGroup } from '../option-list/option-list';
 import type { CanvasWorld, PickerStanding } from './canvas-standings';
 
 import { targetGroups } from '../../lib/target-groups';
 import { completedDraftPick, completedRebindPick } from './binding-acts';
 import { routerAddressOf } from './canvas-wiring';
-import { boundThroughARouter, completedChildPick, completedChildRebindPick } from './router-acts';
+import { completedChildPick, completedChildRebindPick } from './ladder-acts';
+import { boundThroughARouter } from './router-acts';
 
 /** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
 export type PickerOnCanvas = {

@@ -27,13 +27,46 @@ const meta = preview.meta({
 /**
  * The fields a draft settles through, opening on the name with the save still down.
  *
- * @summary A fresh draft holds nothing, so the save waits for a whole binding and the fields say
- * what each one needs rather than refusing anything a person has not typed yet.
+ * @summary A fresh draft holds nothing, so the save waits for every blank to be filled and the
+ * fields say what each one needs rather than refusing anything a person has not typed yet.
  */
 export const AFreshDraft = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('textbox', { name: 'Name' })).toHaveFocus();
+    await expect(await canvas.findByText('Bind this model to')).toBeVisible();
     await expect(await canvas.findByRole('button', { name: 'Add virtual model' })).toBeDisabled();
+  },
+});
+
+/** A whole binding with no name is still a blank, so the save stays down until the name lands. */
+export const TheSaveWaitsForTheName = meta.story({
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: /^Provider One provider/ }));
+    await userEvent.click(await canvas.findByRole('button', { name: /work/ }));
+    await userEvent.click(await canvas.findByRole('button', { name: 'claude-sonnet-5' }));
+
+    await expect(await canvas.findByRole('button', { name: 'Add virtual model' })).toBeDisabled();
+
+    await userEvent.type(await canvas.findByRole('textbox', { name: 'Name' }), 'Fast');
+
+    await expect(await canvas.findByRole('button', { name: 'Add virtual model' })).toBeEnabled();
+  },
+});
+
+/**
+ * A router answers the routing on its own, so a named draft can save with no provider picked.
+ *
+ * @summary The router is born holding no child and fills by cable afterwards, which is what the
+ * step says under the fields rather than leaving a person to wonder what the save will leave.
+ */
+export const ARouterNeedsNoProvider = meta.story({
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.type(await canvas.findByRole('textbox', { name: 'Name' }), 'Spread');
+    await userEvent.click(await canvas.findByRole('button', { name: /^Router Picks among/ }));
+
+    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
+    await expect(await canvas.findByPlaceholderText('Failover')).toHaveValue('');
+    await expect(await canvas.findByRole('button', { name: 'Add virtual model' })).toBeEnabled();
   },
 });
 
@@ -49,10 +82,11 @@ export const TheIdFollowsTheName = meta.story({
   },
 });
 
-/** Picking a target reveals its live model list, which is where the binding settles. */
+/** Answering the ask with a provider reveals its live model list, where the binding settles. */
 export const APickedTargetOffersItsModels = meta.story({
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'work' }));
+    await userEvent.click(await canvas.findByRole('button', { name: /^Provider One provider/ }));
+    await userEvent.click(await canvas.findByRole('button', { name: /work/ }));
 
     await expect(await canvas.findByRole('button', { name: 'claude-sonnet-5' })).toBeVisible();
   },

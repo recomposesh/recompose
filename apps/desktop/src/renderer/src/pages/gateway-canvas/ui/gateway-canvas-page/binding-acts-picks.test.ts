@@ -36,6 +36,7 @@ const boundAccountAlreadyOnTheCanvas: CanvasGraph = {
       kind: 'target',
       account: workKey,
       modelId: 'fast',
+      providerModel: 'claude-sonnet-5',
       routeNodeId: 'node-fast',
       depth: 0,
     },

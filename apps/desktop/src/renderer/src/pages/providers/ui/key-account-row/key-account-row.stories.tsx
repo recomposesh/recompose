@@ -79,7 +79,7 @@ export const Checked = meta.story({
     await userEvent.click(await canvas.findByRole('button', { name: 'Actions for build' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Verify' }));
 
-    await expect(await canvas.findByRole('status')).toHaveTextContent('as of this check');
+    await expect(await canvas.findByRole('status')).toHaveTextContent('at the last check');
   },
 });
 

@@ -1,6 +1,7 @@
 import type { SubscriptionProviderId } from '@recompose/contracts';
 
-import { app } from 'electron';
+import { app, shell } from 'electron';
+import { randomUUID } from 'node:crypto';
 import { realpath } from 'node:fs/promises';
 import { userInfo } from 'node:os';
 import { join } from 'node:path';
@@ -18,9 +19,11 @@ import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-mach
 import { loadAccountsFile } from '../storage/accounts-store';
 import { oneAtATime } from '../storage/one-at-a-time';
 import { adoptedCredentialReader } from './adopted-credential';
+import { antigravityVendor } from './antigravity-sign-in';
 import { credentialCustody } from './credential-custody';
 import { keychainCarriedOnce, repairCustody } from './custody-repair';
 import { loginShellPath } from './login-shell-path';
+import { thisMachine } from './machine-identity';
 import { securityKeychain } from './macos-keychain';
 import { runCommand } from './run-command';
 import { terminalSignInLaunch } from './sign-in-launch';
@@ -50,6 +53,8 @@ export type SubscriptionsWiring = {
   homeFolder: string;
   custody: CredentialCustody | null;
   onCorrupt: (quarantinedPath: string) => void;
+  /** Asks the far end which address a Claude access token signed in as. */
+  claudeAddress: (accessToken: string) => Promise<string | undefined>;
 };
 
 function machineSeam(): KeychainSeam {
@@ -146,7 +151,21 @@ function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcCont
     searchPath: toolSearchPath,
     launch: terminalSignInLaunch(process.platform, substituteFor('RECOMPOSE_SIGN_IN_LAUNCHER')),
     clock: wallClock,
-    copilot: { fetchLike: fetch, sleep: sleepFor, nowMs: () => Date.now() },
+    claudeAddress: wiring.claudeAddress,
+    deviceSignIn: {
+      fetchLike: fetch,
+      sleep: sleepFor,
+      nowMs: () => Date.now(),
+      machine: thisMachine(app.getVersion()),
+    },
+    browserSignIn: {
+      fetchLike: fetch,
+      sleep: sleepFor,
+      callbackPort: antigravityVendor.callbackPort,
+      openInBrowser: async (url) => shell.openExternal(url),
+      boundMs: SIGN_IN_BOUND_MS,
+      mintState: () => randomUUID(),
+    },
     writeSubscriptionCredential: subscriptionCredentialStore(
       wiring.userDataPath,
       process.platform,

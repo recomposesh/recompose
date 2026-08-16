@@ -12,7 +12,9 @@
   --color-surface-content: light-dark(var(--gray-50), var(--gray-950));
   --color-surface-card: light-dark(var(--white), var(--gray-900));
   --color-surface-raised: light-dark(var(--white), var(--gray-850));
+  --color-surface-raised-pressed: light-dark(var(--gray-200), var(--gray-800));
   --color-surface-inert: light-dark(var(--gray-100), var(--gray-850));
+  --color-surface-tint: light-dark(var(--black-a06), var(--white-a08));
   --color-surface-hover: light-dark(var(--black-a06), var(--white-a08));
   --color-surface-pressed: light-dark(var(--black-a09), var(--white-a13));
   --color-surface-thumb: var(--white);
@@ -74,6 +76,7 @@
   --color-virtual-model-ink: light-dark(var(--pink-800), var(--pink-300));
   --color-router: light-dark(var(--indigo-600), var(--indigo-500));
   --color-router-ink: light-dark(var(--indigo-700), var(--indigo-400));
+  --color-provider: light-dark(var(--yellow-700), var(--yellow-500));
   --color-cable-resting: light-dark(var(--black-a45), var(--white-a45));
   --color-cable-live: light-dark(var(--green-600), var(--green-500));
   --color-cable-served: light-dark(var(--green-700), var(--green-500));
@@ -271,7 +274,7 @@
   color: var(--color-ink);
 
   &:active {
-    background-color: var(--color-surface-inert);
+    background-color: var(--color-surface-raised-pressed);
   }
 }
 
@@ -531,8 +534,13 @@
   font-weight: 500;
   color: var(--white);
 
-  &:active {
+  &:not(:disabled):active {
     background-color: color-mix(in oklab, var(--color-accent-fill), black 14%);
+  }
+
+  &:disabled {
+    background-color: var(--color-surface-tint);
+    color: var(--color-ink-secondary);
   }
 }
 
@@ -648,6 +656,7 @@
   --node-card-line: var(--node-card-border);
   --node-card-fill: var(--color-surface-card);
   --node-card-glow: transparent;
+  --node-card-bloom: transparent;
   --node-card-dash: none;
 
   border: var(--spacing-node-border) solid var(--node-card-line);
@@ -681,11 +690,17 @@
       var(--node-card-emphasis) var(--glow-ring-strength),
       transparent
     );
+    --node-card-bloom: color-mix(
+      in srgb,
+      var(--node-card-emphasis) var(--glow-bloom-strength),
+      transparent
+    );
+  }
 
+  &[aria-pressed='true']:not([data-shape='chamfered']) {
     box-shadow:
       0 0 0 var(--glow-ring-spread) var(--node-card-glow),
-      0 0 var(--glow-bloom-blur)
-        color-mix(in srgb, var(--node-card-emphasis) var(--glow-bloom-strength), transparent),
+      0 0 var(--glow-bloom-blur) var(--node-card-bloom),
       var(--shadow-raised);
   }
 
@@ -706,9 +721,17 @@
   box-shadow: none;
 }
 
+/**
+ * @summary A drop shadow follows the path it is cast from, which is the only way a selection ring
+ * can wear the chamfer: a box shadow would ring the card's rectangle and read as a second, squarer
+ * card behind it. It takes two passes because a drop shadow has no spread, so the tight one stands
+ * for the ring and the wide one for the bloom that a rounded card gets from one box shadow.
+ */
 @utility node-chamfer-frame {
   overflow: visible;
-  filter: drop-shadow(0 0 var(--glow-ring-spread) var(--node-card-glow)) var(--shadow-raised-drawn);
+  filter: drop-shadow(0 0 var(--glow-ring-spread) var(--node-card-glow))
+    drop-shadow(0 0 var(--glow-ring-spread) var(--node-card-glow))
+    drop-shadow(0 0 var(--glow-bloom-blur) var(--node-card-bloom)) var(--shadow-raised-drawn);
 }
 
 @utility node-chamfer-fill {

@@ -23,5 +23,5 @@ export const Standing = meta.story({
   },
 });
 
-/** The note in the dark scheme, where its box has to hold against the surface behind it. */
+/** The note in the dark scheme, where its ink has to hold against the surface behind it. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

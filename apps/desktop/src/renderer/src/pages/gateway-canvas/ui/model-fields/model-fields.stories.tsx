@@ -1,58 +1,71 @@
-import { createRef } from 'react';
+import { useRef } from 'react';
 import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import type { ModelFieldsProps } from './model-fields';
+
+import { inTheDrawersColumn, pickerArgs } from '../../testing/routing-picker-args';
 import { ModelFields } from './model-fields';
 
-const targets = [
-  {
-    heading: 'API Keys',
-    options: [
-      { id: 'k1', name: 'work', mark: 'anthropic' as const },
-      { id: 'k2', name: 'personal', mark: 'openai' as const },
-    ],
-  },
-  {
-    heading: 'Local Runtimes',
-    options: [{ id: 'l1', name: 'Ollama', mark: 'ollama' as const, detail: '127.0.0.1:11434' }],
-  },
-];
+/**
+ * @summary The ref is made inside the render rather than carried in the args, because a ref in the
+ * args is one object shared by every story and React fills it with a live element: anything that
+ * later walks the args, as the docs inference does, then walks the whole document from it.
+ */
+function FieldsWithAFreshRef(props: Omit<ModelFieldsProps, 'nameField'>) {
+  const nameField = useRef<HTMLInputElement>(null);
+
+  return <ModelFields {...props} nameField={nameField} />;
+}
 
 const meta = preview.meta({
-  component: ModelFields,
+  component: FieldsWithAFreshRef,
   args: {
-    nameField: createRef<HTMLInputElement>(),
     name: '',
     onNameChange: () => {},
     id: '',
     onIdChange: () => {},
-    targets,
-    onPickTarget: () => {},
-    onSelectDifferentProvider: () => {},
-    models: [],
-    providerModel: '',
-    onPickModel: () => {},
+    ...pickerArgs,
   },
-  decorators: [
-    (Story) => (
-      <div className="mx-auto my-4 w-76 px-3.5">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [inTheDrawersColumn],
 });
 
 /**
- * The fields as the flow opens: nothing settled, and the model list waiting on a target.
+ * The fields as the flow opens: nothing settled, and the binding ask standing unanswered.
  *
- * @summary The model field says what it waits on rather than standing empty, so a person learns
- * that a model belongs to an account rather than wondering whether the list failed.
+ * @summary The second box opens on the same question a released cable opens, so a person who means
+ * to build a router first never has to walk through a provider they did not want.
  */
 export const Empty = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('textbox', { name: 'Name' })).toHaveValue('');
+    await expect(await canvas.findByText('Bind this model to', { exact: true })).toBeVisible();
+  },
+});
+
+/** The providers on offer, once the ask was answered with one rather than with a router. */
+export const PickingAProvider = meta.story({
+  args: { bindsThrough: 'target' },
+  play: async ({ canvas }) => {
     await expect(await canvas.findByText('Pick a provider', { exact: true })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: /work/ })).toBeVisible();
+  },
+});
+
+/**
+ * A draft answered with a router, which keeps its name and id while the picker rests on the router.
+ *
+ * @summary The picker's own reading covers what that step says. What only this one can show is
+ * that answering the ask never takes the fields away, so a person naming a model and then routing
+ * it through a router does not lose the name they typed.
+ */
+export const RoutingThroughARouter = meta.story({
+  args: { bindsThrough: 'router', name: 'Fast', id: 'fast' },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Routes through a router')).toBeVisible();
+    await expect(await canvas.findByRole('textbox', { name: 'Name' })).toHaveValue('Fast');
+    await expect(await canvas.findByRole('textbox', { name: 'Model id' })).toHaveValue('fast');
   },
 });
 
@@ -76,7 +89,7 @@ export const Settled = meta.story({
     await expect(await canvas.findByRole('textbox', { name: 'Model id' })).toHaveValue(
       'fast-sonnet',
     );
-    await expect(await canvas.findByText('Pick a model', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Models work serves', { exact: true })).toBeVisible();
     await expect(
       await canvas.findByRole('button', { name: 'Select a different provider' }),
     ).toBeVisible();

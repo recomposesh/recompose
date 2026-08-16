@@ -6,20 +6,13 @@ import { join } from 'node:path';
 import type { CredentialCustody } from './credential-custody';
 
 import { oneAtATime } from '../storage/one-at-a-time';
+import { credentialFileNameFor } from './credential-home-file';
 import { subscriptionHomes } from './subscription-homes';
 
 export type SubscriptionCredentialStore = {
   read: (provider: SubscriptionProviderId, accountId: string) => Promise<string | null>;
   write: (provider: SubscriptionProviderId, accountId: string, blob: string) => Promise<void>;
 };
-
-function fileNameFor(provider: SubscriptionProviderId): string {
-  if (provider === 'anthropic') {
-    return '.credentials.json';
-  }
-
-  return provider === 'antigravity' ? 'antigravity.json' : 'auth.json';
-}
 
 async function readCredentialFile(path: string): Promise<string | null> {
   return readFile(path, 'utf8').catch((cause: unknown) => {
@@ -42,7 +35,7 @@ export function subscriptionCredentialStore(
     platform === 'darwin' && provider === 'anthropic';
 
   const fileFor = (provider: SubscriptionProviderId, accountId: string): string =>
-    join(homes.homeFor(provider, accountId), fileNameFor(provider));
+    join(homes.homeFor(provider, accountId), credentialFileNameFor(provider));
 
   return {
     read: async (provider, accountId) =>

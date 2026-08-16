@@ -112,19 +112,28 @@ async function askTheChild<Answer>(engineOf: () => LookPort, ask: Ask<Answer>): 
  * separate desks so a key check can never be handed a model list, and they travel as one value so
  * the host holds a single field for all of them.
  */
+export type ClaudeAddress = { address?: string };
+
 export type EngineLooks = {
   keyChecks: LookDesk<KeyCheckReport>;
   runtimeReadings: LookDesk<RuntimeReachability>;
   modelLists: LookDesk<ModelListing>;
+  claudeAddresses: LookDesk<ClaudeAddress>;
 };
 
 export function openEngineLooks(): EngineLooks {
-  return { keyChecks: openDesk(), runtimeReadings: openDesk(), modelLists: openDesk() };
+  return {
+    keyChecks: openDesk(),
+    runtimeReadings: openDesk(),
+    modelLists: openDesk(),
+    claudeAddresses: openDesk(),
+  };
 }
 
 const couldNotCheck: KeyCheckReport = { verdict: 'could-not-check' };
 const unreachable: RuntimeReachability = { verdict: 'unreachable' };
 const nothingListed: ModelListing = { standing: 'unlisted' };
+const unnamed: ClaudeAddress = {};
 
 function keyCheckOf(report: Extract<EngineReport, { kind: 'key-check' }>): KeyCheckReport {
   return {
@@ -136,7 +145,7 @@ function keyCheckOf(report: Extract<EngineReport, { kind: 'key-check' }>): KeyCh
 /** Every report that answers a look rather than a gateway's own lifecycle. */
 export type LookReport = Extract<
   EngineReport,
-  { kind: 'key-check' | 'runtime-check' | 'model-list' }
+  { kind: 'key-check' | 'runtime-check' | 'model-list' | 'claude-address' }
 >;
 
 /**
@@ -168,6 +177,17 @@ export function answerLook(looks: EngineLooks, report: LookReport): void {
     return;
   }
 
+  if (report.kind === 'claude-address') {
+    answerWaiting(
+      looks.claudeAddresses,
+      report.answers,
+      report.address === undefined ? unnamed : { address: report.address },
+      'recompose dropped an account address, because the look it answers had been given up on.',
+    );
+
+    return;
+  }
+
   answerWaiting(
     looks.modelLists,
     report.answers,
@@ -194,6 +214,12 @@ export function foldEveryLook(looks: EngineLooks): void {
     nothingListed,
     (origin) =>
       `recompose could not read the model list at ${origin}, because the engine stopped before it answered.`,
+  );
+  foldEveryWaiter(
+    looks.claudeAddresses,
+    unnamed,
+    () =>
+      'recompose could not read the account address, because the engine stopped before it answered.',
   );
 }
 
@@ -242,5 +268,20 @@ export async function listModelsThroughTheChild(
     fold: nothingListed,
     unanswered: `recompose could not read the model list at ${origin} within ${String(PROBE_TIMEOUT_MS)}ms.`,
     unspawned: `recompose could not read the model list at ${origin}, because the engine would not spawn.`,
+  });
+}
+
+export async function claudeAddressThroughTheChild(
+  looks: EngineLooks,
+  engineOf: () => LookPort,
+  accessToken: string,
+): Promise<ClaudeAddress> {
+  return askTheChild(engineOf, {
+    desk: looks.claudeAddresses,
+    directive: { kind: 'claude-address', id: randomUUID(), accessToken },
+    subject: 'the signed-in account',
+    fold: unnamed,
+    unanswered: `recompose could not read the account address within ${String(PROBE_TIMEOUT_MS)}ms.`,
+    unspawned: 'recompose could not read the account address, because the engine would not spawn.',
   });
 }

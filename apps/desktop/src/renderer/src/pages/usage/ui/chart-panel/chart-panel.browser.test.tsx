@@ -88,7 +88,7 @@ test('an averaging measure leaves the stack control unmovable rather than lying 
     .toHaveAttribute('aria-disabled', 'true');
   await expect
     .element(screen.getByRole('button', { name: 'Stacked by Gateway' }))
-    .toHaveAccessibleDescription('Latency averages, so it never stacks');
+    .toHaveAccessibleDescription('Latency is averaged, so it never stacks');
 });
 
 test('the table twin prints every bucket of every series as text', async () => {

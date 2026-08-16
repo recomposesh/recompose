@@ -7,7 +7,7 @@ import type { CredentialCustody } from './credential-custody';
 import type { MachineStore } from './machine-credential';
 
 import { custodyOver } from './credential-custody';
-import { credentialFactsFor, documentIn } from './credential-records';
+import { credentialFactsFor } from './credential-records';
 
 /**
  * Everything the machine's own stores are reached through.
@@ -31,7 +31,7 @@ async function fileAt(path: string): Promise<string | null> {
 }
 
 function expiryOf(provider: SubscriptionProviderId, blob: string): number {
-  const { expiresAt } = credentialFactsFor(provider, documentIn(blob), null);
+  const { expiresAt } = credentialFactsFor(provider, blob, null);
 
   return expiresAt ?? 0;
 }

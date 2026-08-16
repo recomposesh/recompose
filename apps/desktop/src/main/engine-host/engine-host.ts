@@ -21,6 +21,7 @@ import { persistRefreshedCredential } from './engine-host-credential-update';
 import {
   answerLook,
   foldEveryLook,
+  claudeAddressThroughTheChild,
   listModelsThroughTheChild,
   lookAtTheRuntimeThroughTheChild,
   openEngineLooks,
@@ -262,6 +263,9 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
       lookAtTheRuntimeThroughTheChild(resident.looks, child, address, provider),
     listModels: async (origin, custody) =>
       listModelsThroughTheChild(resident.looks, child, origin, custody),
+
+    claudeAddress: async (accessToken) =>
+      (await claudeAddressThroughTheChild(resident.looks, child, accessToken)).address,
     states: () => resident.states,
     retainedLogRows: () => resident.logs.retainedRows(),
     replayLogs: () => {

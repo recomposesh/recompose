@@ -19,6 +19,7 @@ import { loopbackOverrideOrNull } from './loopback-override';
 import { firstPartyProbeOrigins, probeKey } from './provider/key-probe';
 import { listProviderModels } from './provider/model-list';
 import { probeRuntime } from './provider/runtime-probe';
+import { claudeAddressBehind } from './subscription/claude-oauth-profile';
 
 function probeOriginFor(provider: KeyProviderId): string {
   return (
@@ -47,7 +48,10 @@ function sanitizedRefusal(issues: readonly RefusalIssue[]): { path: string; code
   }));
 }
 
-type LookDirective = Extract<EngineDirective, { kind: 'probe' | 'probe-runtime' | 'list-models' }>;
+type LookDirective = Extract<
+  EngineDirective,
+  { kind: 'probe' | 'probe-runtime' | 'list-models' | 'claude-address' }
+>;
 
 async function lookAnswerFor(fetchLike: typeof fetch, directive: LookDirective): Promise<unknown> {
   switch (directive.kind) {
@@ -77,6 +81,12 @@ async function lookAnswerFor(fetchLike: typeof fetch, directive: LookDirective):
         kind: 'model-list',
         answers: directive.id,
         listing: await listProviderModels(fetchLike, directive.origin, directive.custody),
+      };
+    case 'claude-address':
+      return {
+        kind: 'claude-address',
+        answers: directive.id,
+        ...(await claudeAddressBehind(directive.accessToken)),
       };
 
     default: {

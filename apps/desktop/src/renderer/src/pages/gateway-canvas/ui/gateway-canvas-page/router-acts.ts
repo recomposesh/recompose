@@ -1,46 +1,56 @@
-import type { GatewayConfig, VirtualModel } from '@recompose/contracts';
-
 import { mintRouteNodeId, nameOfRouter } from '@recompose/contracts';
 
+import type { SettledDefinition } from '../../lib/model-draft';
 import type { RouteAddress } from '../../lib/route-addresses';
-import type { RouterMode } from '../../lib/routing-edits';
 import type { CanvasWorld } from './canvas-standings';
 
-import { closeInspector } from '../../../../shared/lib';
-import { emptyDefinition, gatewayDefiningRouted } from '../../lib/model-draft';
+import { closeInspector, openInspector } from '../../../../shared/lib';
+import {
+  BORN_ROUTER_MODE,
+  draftFilledIn,
+  emptyDefinition,
+  gatewayDefiningRouted,
+} from '../../lib/model-draft';
+import { DRAFT_NODE_ID } from '../../lib/node-graph';
 import { addressWritten } from '../../lib/route-addresses';
 import {
   gatewayBindingChild,
   gatewayDroppingNode,
-  gatewayRebindingNode,
   gatewayRoutingThrough,
 } from '../../lib/routing-edits';
-import { heldDraft } from '../../lib/use-held-draft';
-import {
-  committedPick,
-  graduatedDraft,
-  releasedWithNothingSelected,
-  targetNameIn,
-} from './binding-acts';
+import { editDraft, heldDraft } from '../../lib/use-held-draft';
+import { committedPick, graduatedDraft, releasedWithNothingSelected } from './binding-acts';
 import { cardAddressOf, modelIdOf, routerAddressOf } from './canvas-wiring';
-
-/**
- * The mode a router is born in, since the binding ask drops one without a dialog.
- *
- * @summary Failover is the mode a person can reason about without reading anything: the first
- * child answers and the rest stand in. Round-robin trades the prompt cache for spread, which is a
- * choice worth making on purpose in the inspector rather than one to inherit from a drop.
- */
-const BORN_ROUTER_MODE: RouterMode = 'failover';
+import { modelHolding, parentRouterAt } from './route-parents';
 
 const BORN_ROUTER_NAME = nameOfRouter(BORN_ROUTER_MODE);
 
-function modelHolding(world: CanvasWorld, modelId: string | undefined): VirtualModel | undefined {
-  return world.gateway.virtualModels.find((held) => held.id === modelId);
+/**
+ * Answers the ask with a router on a draft nobody has named yet.
+ *
+ * @summary The stored shape refuses a virtual model with no name and no id, so writing one here
+ * would be refused and leave a person watching the picker close on nothing they can act on. The
+ * answer lands on the draft instead and the drawer arrives already holding the router step, which
+ * is where the name it still needs gets typed. The choice survives, so nobody answers twice.
+ */
+function routerHeldUntilTheDraftIsNamed(world: CanvasWorld, routed: SettledDefinition): void {
+  editDraft(world.slug, routed);
+  world.standings.setPicker(undefined);
+  world.standings.select(DRAFT_NODE_ID);
+  openInspector();
 }
 
 function definedThroughARouter(world: CanvasWorld): void {
-  const definition = heldDraft(world.slug)?.definition ?? emptyDefinition();
+  const held = heldDraft(world.slug);
+  const definition = held?.definition ?? emptyDefinition();
+  const routed: SettledDefinition = { ...definition, bindsThrough: 'router' };
+
+  if (held !== undefined && !draftFilledIn(routed)) {
+    routerHeldUntilTheDraftIsNamed(world, routed);
+
+    return;
+  }
+
   const named = { id: definition.id, displayName: definition.displayName };
 
   committedPick(
@@ -72,14 +82,6 @@ function routedThroughANewRouter(world: CanvasWorld, modelId: string): void {
       });
     },
   );
-}
-
-function parentRouterAt(world: CanvasWorld, address: RouteAddress) {
-  const model = modelHolding(world, address.modelId);
-
-  return model === undefined
-    ? undefined
-    : { model, routeNodeId: address.routeNodeId ?? model.routing.entry };
 }
 
 function nestedUnderARouter(world: CanvasWorld, address: RouteAddress): void {
@@ -138,127 +140,6 @@ export function boundThroughARouter(world: CanvasWorld, from: string): void {
   if (from === 'draft') {
     definedThroughARouter(world);
   }
-}
-
-/** The ladder a binding ask left from, or nothing where the definition holding it has left. */
-function ladderAsking(world: CanvasWorld, address: RouteAddress) {
-  const parent = parentRouterAt(world, address);
-
-  return parent === undefined ? undefined : { address, parent };
-}
-
-type LadderAsking = NonNullable<ReturnType<typeof ladderAsking>>;
-
-type LandedChild = {
-  routeNodeId: string;
-  rewritten: GatewayConfig;
-  outcome: 'bound' | 'rebound';
-};
-
-/**
- * Writes one target into a route node of a ladder and says out loud what became of it.
- *
- * @summary Joining a ladder and moving a binding along it write different documents and read as
- * different words, but both stand one target card under one router, so the card's name and the
- * sentence a person hears are decided in one place rather than twice.
- */
-function committedChild(
-  world: CanvasWorld,
-  asking: LadderAsking,
-  landed: LandedChild,
-  accountId: string,
-): void {
-  const { modelId } = asking.address;
-
-  committedPick(
-    world,
-    `target:${addressWritten({ modelId, routeNodeId: landed.routeNodeId })}`,
-    landed.rewritten,
-    () => {
-      world.standings.announce({
-        kind: landed.outcome,
-        virtualModel: asking.parent.model.displayName,
-        target: targetNameIn(world.accounts, accountId),
-      });
-    },
-  );
-}
-
-/**
- * Binds a picked account and real model as one more child of the router the ask came from.
- *
- * @summary A child joins the end of the ladder rather than the front, because failover walks its
- * children in declared order and a new binding jumping ahead would reroute live traffic nobody
- * asked to reroute. The card is named here rather than by the write, so the target a person let a
- * cable go for stands exactly where they let it go.
- */
-export function completedChildPick(
-  world: CanvasWorld,
-  address: RouteAddress,
-  accountId: string,
-  providerModel: string,
-): void {
-  const asking = ladderAsking(world, address);
-
-  if (asking === undefined) {
-    return;
-  }
-
-  const born = mintRouteNodeId();
-  const { modelId } = asking.address;
-
-  committedChild(
-    world,
-    asking,
-    {
-      routeNodeId: born,
-      outcome: 'bound',
-      rewritten: gatewayBindingChild(world.gateway, modelId, asking.parent.routeNodeId, born, {
-        kind: 'target',
-        accountId,
-        providerModel,
-      }),
-    },
-    accountId,
-  );
-}
-
-/**
- * Aims one child of a ladder at the picked target, in the place that child already stands.
- *
- * @summary Letting a child's cable go on another stored target moves that binding, so the write
- * lands on the route node the cable already ended at rather than on a fresh one: appending would
- * leave the child a person was rearranging still standing and lengthen the ladder they meant to
- * aim. The rank survives because the id does, which is what keeps failover trying the pool in the
- * order a person put it in.
- */
-export function completedChildRebindPick(
-  world: CanvasWorld,
-  address: RouteAddress,
-  replacing: string,
-  accountId: string,
-  providerModel: string,
-): void {
-  const asking = ladderAsking(world, address);
-
-  if (asking === undefined) {
-    return;
-  }
-
-  committedChild(
-    world,
-    asking,
-    {
-      routeNodeId: replacing,
-      outcome: 'rebound',
-      rewritten: gatewayRebindingNode(world.gateway, asking.address.modelId, replacing, {
-        kind: 'target',
-        accountId,
-        providerModel,
-      }),
-    },
-    accountId,
-  );
 }
 
 /**

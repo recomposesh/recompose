@@ -66,6 +66,23 @@ describe('choosing which account the provider tool answers to', () => {
     expect(refusalIn(answered).message).toContain('acc-nowhere');
   });
 
+  test('given a plan this app signs in itself, activating refuses rather than moving a pointer nothing reads', async () => {
+    await world.alreadyHolding([
+      {
+        id: 'acc-copilot',
+        provider: 'copilot',
+        kind: 'subscription',
+        provenance: 'sign-in',
+        label: 'someone',
+      },
+    ]);
+
+    const answered = await handlersOn()['subscriptions:activate']({ id: 'acc-copilot' });
+
+    expect(refusalIn(answered).code).toBe('tool-missing');
+    expect(refusalIn(answered).message).toContain('GitHub Copilot');
+  });
+
   test('given a pasted-key account, activating refuses rather than treating it as a subscription', async () => {
     await world.alreadyHolding([
       {

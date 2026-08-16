@@ -39,6 +39,7 @@ const nodeOfKind: Record<CanvasNodeKind, (id: string) => CanvasNode> = {
     kind: 'target',
     account: work,
     modelId: 'fast',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: id,
     depth: 0,
   }),
@@ -113,6 +114,7 @@ function oneRouterDeep(id: string, depth: number): CanvasNode {
     kind: 'target',
     account: work,
     modelId: 'fast',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: id,
     depth,
   };

@@ -7,7 +7,7 @@ test('a screen with nothing connected names what a subscription account is', asy
   const screen = await render(<SubscriptionsEmptyState />);
 
   await expect
-    .element(screen.getByText(/A subscription account is/))
+    .element(screen.getByText(/A subscription is/))
     .toHaveTextContent('a plan you already pay for');
 });
 
@@ -15,8 +15,8 @@ test('the explanation leads with the plan this machine already signs into', asyn
   const screen = await render(<SubscriptionsEmptyState />);
 
   await expect
-    .element(screen.getByText(/A subscription account is/))
-    .toHaveTextContent('Connect the one this machine already signs into');
+    .element(screen.getByText(/A subscription is/))
+    .toHaveTextContent('Connect the one this machine signs into');
 });
 
 test('the state itself offers no act, because the window strip already carries the one act', async () => {

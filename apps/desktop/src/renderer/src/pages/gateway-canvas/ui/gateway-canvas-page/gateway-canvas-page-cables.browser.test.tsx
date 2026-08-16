@@ -141,7 +141,7 @@ test('a cable dropped on empty canvas births the pending card and opens the pick
   await draftPulledTo(screen, { x: 620, y: 320 });
 
   await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Pick a provider', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Pick a target', { exact: true }).first()).toBeVisible();
 });
 
 test('Esc dismisses the picker and the pending card together, changing nothing', async () => {

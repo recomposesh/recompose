@@ -74,7 +74,7 @@ export function ConnectStep({
       </form>
       <SheetActionSlot>
         <button
-          className="push-button-primary focus-ring-wide disabled:bg-surface-inert disabled:text-ink-secondary"
+          className="push-button-primary focus-ring-wide"
           disabled={pending || !ready}
           form={formId}
           type="submit"

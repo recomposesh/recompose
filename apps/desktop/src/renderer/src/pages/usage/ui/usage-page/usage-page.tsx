@@ -9,7 +9,7 @@ import type { UsagePanels, UsageQuiet, UsageView } from './use-usage-view';
 
 import { Button } from '../../../../shared/ui';
 import { quietRecovery, quietSentence } from '../../lib/quiet-recovery';
-import { chartSubCaption, panelsCaption, scopeSentence } from '../../lib/usage-caption';
+import { chartSubCaption, scopeSentence } from '../../lib/usage-caption';
 import { filteredMembers, spendSnappedRange } from '../../lib/usage-search';
 import { windowWording } from '../../lib/usage-window';
 import { BreakdownPanel } from '../breakdown-panel/breakdown-panel';
@@ -146,7 +146,6 @@ function readingsBody(props: ReadingsProps) {
         tableOpen={props.tableOpen}
       />
       {panelRow(view.panels, props.units, props.onUnitChange)}
-      <p className="text-caption text-ink-secondary">{panelsCaption(view.widthWord)}</p>
     </>
   );
 }

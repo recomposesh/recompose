@@ -33,11 +33,15 @@ describe('the sentence a refusal reaches the screen as', () => {
   });
 
   test('a failure that explains nothing still says something', () => {
-    expect(refusalSentence(new Error(''))).toBe('recompose gave no reason for refusing.');
+    expect(refusalSentence(new Error(''))).toBe(
+      'recompose refused this without a reason. Try again.',
+    );
   });
 
   test('a failure that is not an error at all says the same thing', () => {
-    expect(refusalSentence('a thrown string')).toBe('recompose gave no reason for refusing.');
+    expect(refusalSentence('a thrown string')).toBe(
+      'recompose refused this without a reason. Try again.',
+    );
   });
 });
 

@@ -47,6 +47,7 @@ const meta = preview.meta({
     accounts: storedAccounts.accounts,
     gateway,
     model: pooled(failover),
+    onSelectNode: () => {},
     routeNodeId: 'r1',
     router: failover,
   },
@@ -82,7 +83,7 @@ export const TheTwoSegmentsSplitTheRowEvenly = meta.story({
 /** Under failover the sentence says which end wins, above a ladder of printed ranks. */
 export const FailoverSaysWhichEndWins = meta.story({
   play: async ({ canvas, canvasElement }) => {
-    await expect(await canvas.findByText(/topmost healthy target/)).toBeVisible();
+    await expect(await canvas.findByText(/topmost healthy provider/)).toBeVisible();
     await expect(
       [...canvasElement.querySelectorAll('[data-rank]')].map((cell) => cell.textContent),
     ).toEqual(['1', '2']);

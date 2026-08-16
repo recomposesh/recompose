@@ -169,8 +169,10 @@ export function routerBody(
   routeNodeId: string,
   router: StoredRouter,
   accounts: readonly Account[],
-  onDelete: () => void,
+  acts: { onDelete: () => void; onSelectNode: (nodeId: string) => void },
 ): ReactNode {
+  const { onSelectNode } = acts;
+
   return subjectShell(
     {
       lead: glyph('branch'),
@@ -182,10 +184,11 @@ export function routerBody(
       accounts={accounts}
       gateway={gateway}
       model={model}
+      onSelectNode={onSelectNode}
       routeNodeId={routeNodeId}
       router={router}
     />,
-    { label: 'Delete router', onPress: onDelete },
+    { label: 'Delete router', onPress: acts.onDelete },
   );
 }
 

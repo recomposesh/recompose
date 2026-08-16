@@ -39,8 +39,9 @@ type SubscriptionChannels = Pick<
   | 'subscriptions:list'
   | 'subscriptions:tools'
   | 'subscriptions:sign-in'
-  | 'subscriptions:copilot-code'
-  | 'subscriptions:copilot-await'
+  | 'subscriptions:device-code'
+  | 'subscriptions:device-await'
+  | 'subscriptions:browser-sign-in'
   | 'subscriptions:restore'
   | 'subscriptions:activate'
   | 'subscriptions:detect'
@@ -53,12 +54,13 @@ function succeedingSubscriptions(): SubscriptionChannels {
     'subscriptions:list': nothingHeld,
     'subscriptions:tools': nothingHeld,
     'subscriptions:sign-in': nothingHeld,
-    'subscriptions:copilot-code': async () =>
+    'subscriptions:device-code': async () =>
       Promise.resolve({
         ok: true as const,
         value: { userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device' },
       }),
-    'subscriptions:copilot-await': nothingHeld,
+    'subscriptions:device-await': nothingHeld,
+    'subscriptions:browser-sign-in': nothingHeld,
     'subscriptions:restore': nothingHeld,
     'subscriptions:activate': nothingHeld,
     'subscriptions:detect': async () =>
@@ -102,8 +104,9 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'subscriptions:list': refuses,
     'subscriptions:tools': refuses,
     'subscriptions:sign-in': refuses,
-    'subscriptions:copilot-code': refuses,
-    'subscriptions:copilot-await': refuses,
+    'subscriptions:device-code': refuses,
+    'subscriptions:device-await': refuses,
+    'subscriptions:browser-sign-in': refuses,
     'subscriptions:restore': refuses,
     'subscriptions:activate': refuses,
     'subscriptions:detect': refuses,

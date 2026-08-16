@@ -9,9 +9,9 @@ import type { RouterChild } from './router-child-list';
 import { RouterChildList } from './router-child-list';
 
 const three: readonly RouterChild[] = [
-  { routeNodeId: 'n1', name: 'Work key', detail: 'gpt-5' },
-  { routeNodeId: 'n2', name: 'Claude Max', detail: 'claude-opus-5' },
-  { routeNodeId: 'n3', name: 'Ollama', detail: 'qwen3' },
+  { routeNodeId: 'n1', cardId: 'target:fast@n1', name: 'Work key', detail: 'gpt-5' },
+  { routeNodeId: 'n2', cardId: 'target:fast@n2', name: 'Claude Max', detail: 'claude-opus-5' },
+  { routeNodeId: 'n3', cardId: 'target:fast@n3', name: 'Ollama', detail: 'qwen3' },
 ];
 
 function moved(rows: readonly RouterChild[], from: number, to: number): RouterChild[] {
@@ -35,6 +35,7 @@ function Ladder({ mode = 'failover' }: { mode?: RouterMode }) {
       onMove={(from, to) => {
         setRows(moved(rows, from, to));
       }}
+      onOpen={() => {}}
       rows={rows}
     />
   );

@@ -20,7 +20,9 @@ export type { CableFailure, CableStanding } from './cable-traffic';
 export type { CanvasNode, CanvasNodeKind } from './canvas-cards';
 
 const GATEWAY_NODE_ID = 'gateway';
-const DRAFT_NODE_ID = 'draft';
+
+export const DRAFT_NODE_ID = 'draft';
+
 const PENDING_NODE_ID = 'pending';
 
 /** A cable drawn between two cards standing on the canvas. */

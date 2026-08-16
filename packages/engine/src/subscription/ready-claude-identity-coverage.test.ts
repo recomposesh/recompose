@@ -2,7 +2,7 @@ import type { AccountTransportPolicy, SubscriptionProviderId } from '@recompose/
 
 import { describe, expect, it } from 'vitest';
 
-import type { ClaudeProfile } from './provider-transport';
+import type { ClaudeProfile } from './claude-oauth-profile';
 
 import { parseSubscriptionCredential } from './credentials';
 import { readyClaudeIdentity } from './ready-claude-identity';

@@ -73,7 +73,13 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
   const { engineHost, custody, userDataPath, homeFolder, onCorrupt, appMenu } = wiring;
 
   return {
-    ...subscriptionIpcHandlers({ userDataPath, homeFolder, custody, onCorrupt }),
+    ...subscriptionIpcHandlers({
+      userDataPath,
+      homeFolder,
+      custody,
+      onCorrupt,
+      claudeAddress: engineHost.claudeAddress,
+    }),
     ...createEngineIpcHandlers({
       host: engineHost,
       userDataPath,

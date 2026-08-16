@@ -2,15 +2,14 @@ import type { KeyboardEvent, ReactNode } from 'react';
 
 import { useEffect, useId, useRef } from 'react';
 
+import type { BoundKind } from '../../lib/binding-kinds';
 import type { OptionGroup } from '../option-list/option-list';
 
 import { useStepTransition } from '../../../../shared/lib';
 import { Button, placeFocus } from '../../../../shared/ui';
-import { NoProviderNote } from '../no-provider-note/no-provider-note';
+import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
+import { NoProviderRows } from '../no-provider-rows/no-provider-rows';
 import { OptionList } from '../option-list/option-list';
-
-/** Which of the two kinds a released cable may bind. */
-export type BoundKind = 'router' | 'target';
 
 /** Which part of the binding the ask is asking for, and what the parts before it settled on. */
 export type PickerStage =
@@ -46,14 +45,7 @@ const wording: Record<PickerStage['step'], StageWording> = {
   },
 };
 
-const KIND_OPTIONS: readonly OptionGroup[] = [
-  {
-    options: [
-      { id: 'router', name: 'Router', detail: 'Picks among several providers' },
-      { id: 'target', name: 'Provider', detail: 'One provider and one model' },
-    ],
-  },
-];
+const KIND_OPTIONS: readonly OptionGroup[] = [{ options: BINDING_KINDS }];
 
 function stageBody(
   stage: PickerStage,
@@ -72,7 +64,7 @@ function stageBody(
   }
 
   if (stage.step === 'account' && groups.length === 0) {
-    return <NoProviderNote />;
+    return <NoProviderRows />;
   }
 
   return (
@@ -96,7 +88,7 @@ type PickActs = {
 function pickedAt(stage: PickerStage, acts: PickActs): (picked: string) => void {
   if (stage.step === 'kind') {
     return (picked) => {
-      acts.onPickKind(picked === 'router' ? 'router' : 'target');
+      acts.onPickKind(boundKindOf(picked));
     };
   }
 

@@ -19,7 +19,7 @@ const meta = preview.meta({
 export const Default = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Nothing connected yet')).toBeVisible();
-    await expect(await canvas.findByText(/no credential to store/)).toBeVisible();
+    await expect(await canvas.findByText(/stores only the address it answers at/)).toBeVisible();
   },
 });
 

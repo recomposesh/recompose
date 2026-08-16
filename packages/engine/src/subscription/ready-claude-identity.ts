@@ -1,6 +1,6 @@
 import type { AccountTransportPolicy, SubscriptionProviderId } from '@recompose/contracts';
 
-import type { ClaudeProfile } from './provider-transport';
+import type { ClaudeProfile } from './claude-oauth-profile';
 
 import { parseSubscriptionCredential, withClaudeCredentialIdentity } from './credentials';
 

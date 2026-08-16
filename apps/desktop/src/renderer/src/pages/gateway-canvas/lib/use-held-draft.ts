@@ -27,11 +27,25 @@ function isWord(value: unknown): value is string {
 
 const DEFINITION_WORDS = ['displayName', 'id', 'accountId', 'providerModel'] as const;
 
+/**
+ * @summary A draft written before the drawer asked which shape a binding takes carries no answer,
+ * so an absent one reads as a draft still standing at the ask rather than as a draft to discard.
+ */
+function isBinding(value: unknown): boolean {
+  return value === undefined || value === 'router' || value === 'target';
+}
+
+function isRouterMode(value: unknown): boolean {
+  return value === undefined || value === 'failover' || value === 'round-robin';
+}
+
 function isDefinition(value: unknown): value is SettledDefinition {
   return (
     typeof value === 'object' &&
     value !== null &&
-    DEFINITION_WORDS.every((word) => isWord(Reflect.get(value, word)))
+    DEFINITION_WORDS.every((word) => isWord(Reflect.get(value, word))) &&
+    isBinding(Reflect.get(value, 'bindsThrough')) &&
+    isRouterMode(Reflect.get(value, 'routerMode'))
   );
 }
 

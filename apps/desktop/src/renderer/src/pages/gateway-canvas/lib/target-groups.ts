@@ -3,20 +3,30 @@ import type { Account, AccountsDocument } from '@recompose/contracts';
 import type { OptionGroup, OptionRow } from '../ui/option-list/option-list';
 
 import {
+  accountDetail,
   accountKindTitle,
   accountKinds,
   accountMark,
-  accountName,
+  accountProductName,
   accountsOfKind,
   accountsStandingAsTarget,
 } from '../../../entities/account';
 
+/**
+ * One account as the picker offers it, read the way its card on the canvas reads.
+ *
+ * @summary The product leads and the identity stands under it, exactly as the target card names
+ * the same account, so a row and the card it becomes are recognizably one thing. It has to be this
+ * way round: two subscriptions signed in as one address are one string as far as the address goes,
+ * and a picker that led with the address would offer two rows nobody could tell apart.
+ */
 function optionFor(account: Account): OptionRow {
   const mark = accountMark(account);
 
   return {
     id: account.id,
-    name: accountName(account),
+    name: accountProductName(account),
+    detail: accountDetail(account),
     ...(mark === undefined ? {} : { mark }),
   };
 }

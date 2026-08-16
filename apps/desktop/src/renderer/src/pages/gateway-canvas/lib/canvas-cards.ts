@@ -24,6 +24,7 @@ export type CanvasNode =
       kind: 'target';
       account: Account;
       modelId: string;
+      providerModel: string;
       routeNodeId: string;
       depth: number;
       detail?: string;
@@ -88,6 +89,7 @@ function targetCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Regis
     kind: 'target',
     account,
     modelId: placed.modelId,
+    providerModel: bound.providerModel,
     routeNodeId: placed.walked.routeNodeId,
     depth: placed.walked.depth,
     detail: accountDetail(account, signedInAs),

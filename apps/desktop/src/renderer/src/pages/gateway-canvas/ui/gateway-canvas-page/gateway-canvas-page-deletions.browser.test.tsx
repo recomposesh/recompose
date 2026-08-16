@@ -78,7 +78,7 @@ test('Delete on a selected target asks, and confirming releases the binding into
   await userEvent.click(screen.getByRole('button', { name: /work/ }));
   await userEvent.keyboard('{Delete}');
 
-  await expect.element(screen.getByText(/Delete the target "work"/)).toBeVisible();
+  await expect.element(screen.getByText(/Delete the provider "work"/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
 
@@ -111,7 +111,7 @@ test('the drawer delete on a target asks, and confirming releases the binding', 
   await userEvent.click(screen.getByRole('button', { name: /work/ }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete provider' }));
 
-  await expect.element(screen.getByText(/Delete the target "work"/)).toBeVisible();
+  await expect.element(screen.getByText(/Delete the provider "work"/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
 

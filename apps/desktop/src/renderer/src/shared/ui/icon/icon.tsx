@@ -23,9 +23,26 @@ const glyphs = {
       <path d="m15.5 15.5 4.2 4.2" />
     </>
   ),
+  target: (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      <circle cx="12" cy="12" r="3.4" />
+      <circle cx="12" cy="12" fill="currentColor" r="1" stroke="none" />
+    </>
+  ),
+  leave: <path d="M7.6 16.4 16.4 7.6M9.4 7.6h7v7" />,
   close: <path d="M6.6 6.6 17.4 17.4M17.4 6.6 6.6 17.4" />,
   chevron: <path d="M6 9.5 12 15.5l6-6" />,
-  grip: <path d="M8 9h8M8 15h8" />,
+  grip: (
+    <>
+      <circle cx="9.5" cy="7" fill="currentColor" r="1.35" stroke="none" />
+      <circle cx="14.5" cy="7" fill="currentColor" r="1.35" stroke="none" />
+      <circle cx="9.5" cy="12" fill="currentColor" r="1.35" stroke="none" />
+      <circle cx="14.5" cy="12" fill="currentColor" r="1.35" stroke="none" />
+      <circle cx="9.5" cy="17" fill="currentColor" r="1.35" stroke="none" />
+      <circle cx="14.5" cy="17" fill="currentColor" r="1.35" stroke="none" />
+    </>
+  ),
   network: (
     <>
       <circle cx="5.2" cy="12" r="2.1" />

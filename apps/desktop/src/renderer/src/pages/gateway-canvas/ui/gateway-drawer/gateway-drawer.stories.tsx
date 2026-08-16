@@ -24,6 +24,7 @@ const meta = preview.meta({
     onAskRemoval: () => {},
     onDraftDefined: () => {},
     onModelRenamed: () => {},
+    onSelectNode: () => {},
   },
   decorators: [
     (Story) => (
@@ -57,7 +58,7 @@ export const VirtualModelSubject = meta.story({
     await expect(await canvas.findByText('General info', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Model name', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Goes to', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('API Key', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('API key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('claude-haiku-4-5', { exact: true })).toBeVisible();
   },
@@ -78,10 +79,10 @@ export const CableSubject = meta.story({
 export const TargetSubject = meta.story({
   args: { subject: subject({ kind: 'target', accountId: 'k1', modelId: 'fast' }) },
   play: async ({ canvas }) => {
-    await expect((await canvas.findAllByText('API Key', { exact: true }))[0]).toBeVisible();
+    await expect((await canvas.findAllByText('API key', { exact: true }))[0]).toBeVisible();
     await expect((await canvas.findAllByText('Anthropic', { exact: true }))[0]).toBeVisible();
     await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('Behind of', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Serves', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Model name', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Model id', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Fast', { exact: true })).toBeVisible();

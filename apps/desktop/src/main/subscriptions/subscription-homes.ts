@@ -45,6 +45,23 @@ async function seedConfigHome(provider: SubscriptionProviderId, home: string): P
   }
 }
 
+async function freshPending(folder: string, provider: SubscriptionProviderId): Promise<string> {
+  const pending = join(folder, PENDING);
+
+  await rm(pending, { recursive: true, force: true });
+  await mkdir(pending, { recursive: true });
+  await seedConfigHome(provider, pending);
+
+  return pending;
+}
+
+async function adoptPending(folder: string, home: string): Promise<string> {
+  await rm(home, { recursive: true, force: true });
+  await rename(join(folder, PENDING), home);
+
+  return home;
+}
+
 function healer(
   readActive: SubscriptionHomes['readActive'],
   pointActiveAt: SubscriptionHomes['pointActiveAt'],
@@ -109,24 +126,10 @@ export function subscriptionHomes(
 
     pendingHomeFor: (provider) => join(providerFolder(provider), PENDING),
 
-    resetPending: async (provider) => {
-      const pending = join(providerFolder(provider), PENDING);
+    resetPending: async (provider) => freshPending(providerFolder(provider), provider),
 
-      await rm(pending, { recursive: true, force: true });
-      await mkdir(pending, { recursive: true });
-      await seedConfigHome(provider, pending);
-
-      return pending;
-    },
-
-    promotePending: async (provider, id) => {
-      const home = homeFor(provider, id);
-
-      await rm(home, { recursive: true, force: true });
-      await rename(join(providerFolder(provider), PENDING), home);
-
-      return home;
-    },
+    promotePending: async (provider, id) =>
+      adoptPending(providerFolder(provider), homeFor(provider, id)),
 
     removeHome: async (provider, id) => {
       await rm(homeFor(provider, id), { recursive: true, force: true });

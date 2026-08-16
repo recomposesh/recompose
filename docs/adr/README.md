@@ -135,3 +135,5 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0127](0127-a-plus-brings-the-card-it-stands-into-view.md)                      | A plus brings the card it stands into view                                          | Accepted   | 2026-08-15 |
 | [0128](0128-a-gate-reads-the-text-that-lands.md)                                | A gate reads the text that lands                                                    | Accepted   | 2026-08-15 |
 | [0129](0129-an-optional-spread-carries-one-mutant-no-test-can-kill.md)          | An optional spread carries one mutant no test can kill                              | Accepted   | 2026-08-15 |
+| [0130](0130-recompose-runs-the-authorization-no-tool-on-the-machine-owns.md)    | recompose runs the authorization no tool on the machine owns                        | Accepted   | 2026-08-16 |
+| [0131](0131-choosing-an-account-moves-the-tool-never-the-traffic.md)            | Choosing an account moves the tool, never the traffic                               | Accepted   | 2026-08-16 |

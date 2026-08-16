@@ -33,6 +33,7 @@ test('a runtime that names itself reads as the server it is rather than as nothi
     kind: 'target',
     account: ollama,
     modelId: 'fast',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: 't1',
     depth: 0,
   });
@@ -48,6 +49,7 @@ test('a target leads with its provider product and connection kind rather than t
     kind: 'target',
     account: claude,
     modelId: 'fast',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: 't1',
     depth: 0,
     detail: 'ada@example.com',
@@ -73,13 +75,13 @@ test('an account that left the registry keeps its card and says what became of i
   const card = screen.getByRole('button', { name: /Removed/ });
 
   await expect.element(card).toHaveTextContent('a9');
-  await expect.element(card).toHaveTextContent('not in the registry');
+  await expect.element(card).toHaveTextContent('no longer connected');
 });
 
 test('the spot a cable was let go at offers the pick without a redundant waiting line', async () => {
   const screen = await renderTarget({ id: 'pending', kind: 'pending-target' });
 
-  await expect.element(screen.getByRole('button', { name: /Pick a provider/ })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /Pick a target/ })).toBeVisible();
   await expect.element(screen.getByText('waiting on a pick')).not.toBeInTheDocument();
 });
 
