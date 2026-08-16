@@ -24,16 +24,15 @@ export function RetentionConfirmation({ days, onCancel, onConfirm }: RetentionCo
 
   return (
     <ConsequenceDialog
-      confirmLabel="Drop history"
-      heading="Drop older usage history?"
+      confirmLabel="Delete history"
+      heading="Delete older usage history?"
       onCancel={onCancel}
       onConfirm={() => {
         onConfirm(days);
       }}
       open
     >
-      Shortening retention to {String(days)} days drops usage older than {String(days)} days for
-      good.
+      Usage older than {String(days)} days is deleted permanently and cannot be recovered.
     </ConsequenceDialog>
   );
 }

@@ -10,6 +10,14 @@ export const aClaudeLogin = JSON.stringify({
   claudeAiOauth: { accessToken: 'opaque-token', subscriptionType: 'max' },
 });
 
+/**
+ * @summary A login whose record names no plan, so a reading has nothing but the identity file's
+ * rate tier to derive one from. It is what pins the derivation apart from the credential's answer.
+ */
+export const aClaudeLoginNamingNoPlan = JSON.stringify({
+  claudeAiOauth: { accessToken: 'opaque-token' },
+});
+
 export const anMcpRecordAlone = JSON.stringify({
   mcpOAuth: { 'a-server': { accessToken: 'opaque-mcp-token' } },
 });
@@ -117,6 +125,31 @@ export function fakeClock(): Clock {
       elapsed += ms;
 
       return Promise.resolve();
+    },
+  };
+}
+
+/**
+ * Ports for the sign-ins this app runs itself, wired so none of them reaches anywhere.
+ *
+ * @summary Every spec about tool-run sign-ins still has to hand a whole context over, and a port
+ * that answered would let one of those specs quietly depend on a network it never meant to touch.
+ */
+export function quietAppSignIns() {
+  return {
+    deviceSignIn: {
+      fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
+      sleep: async () => Promise.resolve(),
+      nowMs: () => 0,
+      machine: { name: 'ada-machine', id: 'device-1', model: 'macOS arm64', version: '0.0.0' },
+    },
+    browserSignIn: {
+      fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
+      sleep: async () => Promise.resolve(),
+      openInBrowser: async () => Promise.resolve(),
+      boundMs: 0,
+      callbackPort: 0,
+      mintState: () => 'state-1',
     },
   };
 }

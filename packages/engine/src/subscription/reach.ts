@@ -7,6 +7,7 @@ import type {
 import type { JsonObject, ProxyDialect } from '../gateway-wire';
 import type { AntigravityReasoningReplay } from './antigravity-replay';
 import type { ClaudeDeviceProfile } from './claude-device-profile';
+import type { ClaudeProfile } from './claude-oauth-profile';
 import type { ClaudePayloadPolicy } from './claude-payload-policy';
 import type { ProviderRequest } from './claude-request';
 import type { ClaudeSystemPolicy } from './claude-system-policy';
@@ -14,7 +15,6 @@ import type { CodexReasoningReplay } from './codex-replay';
 import type { CredentialRuntimePolicy } from './credential-runtime-policy';
 import type { ParsedSubscriptionCredential } from './credentials';
 import type { SubscriptionAttempt, SubscriptionPluginContext } from './intercepted-send';
-import type { ClaudeProfile } from './provider-transport';
 import type { RefreshFetch } from './refresh';
 
 import { normalizeAntigravityError } from './antigravity-errors';

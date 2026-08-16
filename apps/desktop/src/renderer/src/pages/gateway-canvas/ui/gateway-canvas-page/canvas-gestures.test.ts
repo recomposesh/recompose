@@ -16,7 +16,7 @@ type CableLetGo = Extract<Parameters<OnConnectEnd>[1], { to: XY }>;
 const RELEASED_AT = { x: 448, y: 348 };
 const UNDER_THE_POINTER = { x: 400, y: 256 };
 const REFUSED_LANDING =
-  'A cable binds a virtual model or a router to a stored target it does not already hold, and nothing else connects.';
+  'A cable binds a virtual model or a router to a provider it does not already hold.';
 
 function port(nodeId: string): Handle {
   return { nodeId, type: 'source', position: Position.Right, x: 0, y: 0, width: 8, height: 8 };

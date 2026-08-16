@@ -68,7 +68,9 @@ test('a name Windows keeps for a device keeps the sheet open and says so', async
   await nameField().fill('Con');
   await press('Create Gateway');
 
-  await expect.element(page.getByText('Windows reserves this name.')).toBeVisible();
+  await expect
+    .element(page.getByText('Windows reserves this name. Pick another one.'))
+    .toBeVisible();
   await expect.element(sheet()).toBeVisible();
   expect(await storedGateways()).toEqual([]);
 });
@@ -81,7 +83,7 @@ test('a refusal announces itself and stands under the field it concerns', async 
 
   const refusal = page.getByRole('alert');
 
-  await expect.element(refusal).toHaveTextContent('Windows reserves this name.');
+  await expect.element(refusal).toHaveTextContent('Windows reserves this name. Pick another one.');
 
   const name = nameField().element();
 
@@ -133,7 +135,9 @@ test('a refusal written in the schema words reads as a sentence instead', async 
 
   await expect
     .element(page.getByRole('alert'))
-    .toHaveTextContent('recompose cannot store this gateway as it stands.');
+    .toHaveTextContent(
+      "recompose can't store this gateway. Check the name and the port, then try again.",
+    );
   await expect.element(sheet()).toBeVisible();
 });
 
@@ -144,7 +148,7 @@ test('a port outside the accepted range keeps the sheet open and states the rang
   await page.getByRole('textbox', { name: 'Port' }).fill('80');
   await press('Create Gateway');
 
-  await expect.element(page.getByText('Accepts 1024 through 65535.')).toBeVisible();
+  await expect.element(page.getByText('Port must be between 1024 and 65535.')).toBeVisible();
   await expect.element(sheet()).toBeVisible();
   expect(await storedGateways()).toEqual([]);
 });
@@ -193,11 +197,15 @@ test('a refusal clears once the person changes the field it concerns', async () 
   await nameField().fill('Con');
   await press('Create Gateway');
 
-  await expect.element(page.getByText('Windows reserves this name.')).toBeVisible();
+  await expect
+    .element(page.getByText('Windows reserves this name. Pick another one.'))
+    .toBeVisible();
 
   await nameField().fill('Console');
 
-  await expect.element(page.getByText('Windows reserves this name.')).not.toBeInTheDocument();
+  await expect
+    .element(page.getByText('Windows reserves this name. Pick another one.'))
+    .not.toBeInTheDocument();
 });
 
 test('a probe that cannot find a free port leaves the field empty and says whose fault it was', async () => {
@@ -230,5 +238,5 @@ test('a port the person types after a failed offer draws the range refusal, not 
   await page.getByRole('textbox', { name: 'Port' }).fill('80');
   await press('Create Gateway');
 
-  await expect.element(page.getByText('Accepts 1024 through 65535.')).toBeVisible();
+  await expect.element(page.getByText('Port must be between 1024 and 65535.')).toBeVisible();
 });

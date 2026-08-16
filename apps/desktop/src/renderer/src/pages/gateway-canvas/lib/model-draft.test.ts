@@ -4,16 +4,14 @@ import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import { IpcResultError } from '../../../shared/api';
+import { discoveryHint, idRefusal, nameRefusal } from './draft-refusals';
 import {
-  discoveryHint,
   emptyDefinition,
   gatewayDefining,
   gatewayRebinding,
   gatewayReleasing,
   idFollowingName,
-  idRefusal,
   modelListReading,
-  nameRefusal,
   refusalFromMain,
   servesPreview,
 } from './model-draft';
@@ -85,7 +83,7 @@ test('clearing a hand-edited id lets the name drive it again', () => {
 
 test('an id no client could send refuses before anything is stored', () => {
   expect(idRefusal('Fast Model', noneHeld)).toBe(
-    'recompose cannot serve a virtual model under this id.',
+    "recompose can't serve a virtual model under this id. Pick another one.",
   );
 });
 
@@ -206,7 +204,9 @@ test('a gateway the rewrite could not find refuses in the words main wrote', () 
 test('a schema refusal trades its developer words for a sentence', () => {
   const refused = new IpcResultError({ code: 'validation-failed', message: 'invalid_type at [0]' });
 
-  expect(refusalFromMain(refused)).toBe('recompose cannot store this virtual model as it stands.');
+  expect(refusalFromMain(refused)).toBe(
+    "recompose can't store this virtual model. Check the name and the id, then try again.",
+  );
 });
 
 test('every other refusal reads in the words main wrote', () => {
@@ -220,8 +220,12 @@ test('every other refusal reads in the words main wrote', () => {
 });
 
 test('a refusal arriving with no words at all still says something a person can read', () => {
-  expect(refusalFromMain(new Error(''))).toBe('recompose gave no reason for refusing.');
-  expect(refusalFromMain('the engine went away')).toBe('recompose gave no reason for refusing.');
+  expect(refusalFromMain(new Error(''))).toBe(
+    'recompose refused this without a reason. Try again.',
+  );
+  expect(refusalFromMain('the engine went away')).toBe(
+    'recompose refused this without a reason. Try again.',
+  );
 });
 
 test('a look that answered a list offers those ids and refuses nothing', () => {

@@ -42,9 +42,9 @@ const meta = preview.meta({
 
 const rows = [
   'Subscriptions, 0 connected',
-  'API Keys, 0 connected',
+  'API keys, 0 connected',
   'Aggregators, 0 connected',
-  'Local Runtimes, 0 connected',
+  'Local runtimes, 0 connected',
 ];
 
 /** The four kinds before any account is connected, where every count reads zero honestly. */
@@ -60,7 +60,7 @@ export const NothingConnected = meta.story({
 export const CountsPerKind = meta.story({
   parameters: { bridge: { accounts: stored(['api-key', 'api-key', 'subscription']) } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('link', { name: 'API Keys, 2 connected' })).toBeVisible();
+    await expect(await canvas.findByRole('link', { name: 'API keys, 2 connected' })).toBeVisible();
     await expect(
       await canvas.findByRole('link', { name: 'Subscriptions, 1 connected' }),
     ).toBeVisible();
@@ -79,10 +79,10 @@ export const CountsPerKind = meta.story({
 export const CountsHoldTheTrailingLine = meta.story({
   parameters: { bridge: { accounts: stored(['api-key', 'api-key', 'subscription']) } },
   play: async ({ canvas, canvasElement }) => {
-    const row = await canvas.findByRole('link', { name: 'API Keys, 2 connected' });
+    const row = await canvas.findByRole('link', { name: 'API keys, 2 connected' });
     const surface = canvasElement.querySelector('aside');
 
-    for (const kind of ['Subscriptions, 1 connected', 'Local Runtimes, 0 connected']) {
+    for (const kind of ['Subscriptions, 1 connected', 'Local runtimes, 0 connected']) {
       const other = await canvas.findByRole('link', { name: kind });
 
       await expect(paintedBox(other.lastElementChild).right).toBe(

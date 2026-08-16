@@ -3,6 +3,8 @@ import { expect, vi } from 'vitest';
 import type { OpenListeners } from './engine-runtime';
 import type { ParentPort } from './parent-port';
 
+import { urlOf } from './asked-url.testkit';
+
 export type Parent = {
   reports: unknown[];
   send: (directive: unknown) => void;
@@ -46,14 +48,6 @@ export async function reportsReach(parent: Parent, count: number): Promise<void>
   await vi.waitFor(() => {
     expect(parent.reports).toHaveLength(count);
   });
-}
-
-function urlOf(input: Parameters<typeof fetch>[0]): string {
-  if (typeof input === 'string') {
-    return input;
-  }
-
-  return input instanceof URL ? input.href : input.url;
 }
 
 export function fetchAnswering(

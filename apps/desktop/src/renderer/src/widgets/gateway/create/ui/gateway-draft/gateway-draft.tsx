@@ -42,7 +42,7 @@ function draftFooter(draft: Draft, onOpenChange: (open: boolean) => void): React
         }}
         type="button"
       >
-        Create Gateway
+        Create gateway
       </button>
     </>
   );

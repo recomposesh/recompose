@@ -46,10 +46,10 @@ export const MixedStates = meta.story({
 export const NewGatewayRowUnderTheList = meta.story({
   parameters: { bridge: { gateways: [codex] } },
   play: async ({ canvas }) => {
-    const next = await canvas.findByRole('button', { name: 'New Gateway…' });
+    const next = await canvas.findByRole('button', { name: 'New gateway…' });
     const stored = await canvas.findByRole('link', { name: 'Codex Stopped' });
 
-    await expect(next).toHaveTextContent('New Gateway…');
+    await expect(next).toHaveTextContent('New gateway…');
     await expect(paintedBox(next).top).toBeGreaterThan(paintedBox(stored).top);
   },
 });
@@ -63,12 +63,12 @@ export const NewGatewayRowUnderTheList = meta.story({
 export const NoGatewayYet = meta.story({
   parameters: { bridge: { gateways: [] } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('heading', { name: 'Local Gateways' })).toBeVisible();
+    await expect(await canvas.findByRole('heading', { name: 'Local gateways' })).toBeVisible();
 
-    const next = await canvas.findByRole('button', { name: 'New Gateway…' });
+    const next = await canvas.findByRole('button', { name: 'New gateway…' });
 
     await expect(canvas.queryAllByRole('link')).toHaveLength(0);
-    await expect(next).toHaveTextContent('New Gateway…');
+    await expect(next).toHaveTextContent('New gateway…');
     await expect(paintedStyle(next).fontWeight).toBe('500');
     await expect(paintedBox(next.querySelector('svg')).width).toBe(14);
   },
@@ -78,7 +78,7 @@ export const NoGatewayYet = meta.story({
 export const RowRhythm = meta.story({
   parameters: { bridge: { gateways: [codex] } },
   play: async ({ canvas }) => {
-    const heading = await canvas.findByRole('heading', { name: 'Local Gateways' });
+    const heading = await canvas.findByRole('heading', { name: 'Local gateways' });
     const row = await canvas.findByRole('link', { name: 'Codex Stopped' });
     const mark = await canvas.findByRole('img', { name: 'Stopped' });
 

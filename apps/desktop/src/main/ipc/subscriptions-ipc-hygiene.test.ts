@@ -6,20 +6,11 @@ import { describe, expect, test } from 'vitest';
 import type { SubscriptionsIpcContext } from './subscriptions-ipc';
 
 import { subscriptionHomes } from '../subscriptions/subscription-homes';
+import { quietAppSignIns } from '../subscriptions/subscriptions.testkit';
 import { carriesAnyWindowOf } from './secret-windows.testkit';
 import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 
 const tokenMaterial = 'sk-ant-oat01-verysecret-subscription-token';
-
-const quietCopilot = {
-  copilot: {
-    fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),
-    sleep: async () => Promise.resolve(),
-    nowMs: () => 0,
-  },
-  writeSubscriptionCredential: async () => Promise.resolve(),
-  noteLaunchRefused: () => undefined,
-};
 
 function contextOver(userDataPath: string): SubscriptionsIpcContext {
   return {
@@ -39,7 +30,14 @@ function contextOver(userDataPath: string): SubscriptionsIpcContext {
     signInBoundMs: 0,
     signInEveryMs: 0,
     onCorrupt: () => undefined,
-    ...quietCopilot,
+    claudeAddress: async () => {
+      await Promise.resolve();
+
+      return undefined;
+    },
+    ...quietAppSignIns(),
+    writeSubscriptionCredential: async () => Promise.resolve(),
+    noteLaunchRefused: () => undefined,
   };
 }
 

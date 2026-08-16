@@ -31,7 +31,11 @@ const connected: SubscriptionAccountView = {
   active: true,
 };
 
-async function renderRow(view: SubscriptionAccountView, parameters: BridgeParameters = {}) {
+async function renderRow(
+  view: SubscriptionAccountView,
+  parameters: BridgeParameters = {},
+  shellSetupLine: string | undefined = claudeCode.shellSetupLine,
+) {
   installFakeBridge({ tools: [claudeCode], subscriptions: [view], ...parameters });
 
   const queryClient = new QueryClient({
@@ -42,7 +46,7 @@ async function renderRow(view: SubscriptionAccountView, parameters: BridgeParame
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<p>Loading…</p>}>
         <ul>
-          <SubscriptionAccountRow view={view} />
+          <SubscriptionAccountRow shellSetupLine={shellSetupLine} view={view} />
         </ul>
       </Suspense>
     </QueryClientProvider>,
@@ -207,4 +211,40 @@ test('removing an account takes it out of the registry it was held in', async ()
       return registry.ok ? registry.value.accounts : [];
     })
     .toEqual([]);
+});
+
+test('the chosen account says what choosing it did, in a line a person can copy', async () => {
+  const screen = await renderRow({ ...connected, active: true });
+
+  await expect.element(screen.getByText('Your terminal reaches this account.')).toBeVisible();
+  await expect
+    .element(screen.getByText('export CLAUDE_CONFIG_DIR="/tmp/anthropic/active"'))
+    .toBeVisible();
+});
+
+test('an account nobody chose keeps the line off its row, so one row alone carries it', async () => {
+  const screen = await renderRow({ ...connected, active: false });
+
+  await expect
+    .poll(() => screen.getByText('Your terminal reaches this account.').elements().length)
+    .toBe(0);
+});
+
+test('a plan with no tool to point offers no taking over, because nothing would move', async () => {
+  const copilot: SubscriptionAccountView = {
+    id: 's9',
+    provider: 'copilot',
+    label: 'someone',
+    standing: 'connected',
+    provenance: 'sign-in',
+    active: false,
+  };
+
+  await renderRow(copilot, { subscriptions: [copilot] }, undefined);
+
+  await press('Actions for someone');
+
+  await expect
+    .poll(() => page.getByRole('menuitem', { name: 'Use this account' }).elements().length)
+    .toBe(0);
 });

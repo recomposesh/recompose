@@ -47,6 +47,23 @@ export type NodeCardProps = {
   subtitle?: string | undefined;
   /** The ink class that line takes. */
   subtitleInk: string;
+  /**
+   * Whether that line reads as a machine string or as prose, which decides its typeface.
+   *
+   * @summary A port, a model id and an address are strings a person copies into a client, so they
+   * set in mono. An account identity is not: a card carrying both would print two mono lines a
+   * reader cannot tell apart, and the typeface is what says which of the two they can send.
+   */
+  subtitleFace?: 'mono' | 'prose';
+  /**
+   * A second mono line under the subtitle, where one fact still tells two cards apart.
+   *
+   * @summary A card naming an account says who answers; it takes this to say what it answers with.
+   * Two bindings on one account differ only here, so without it the canvas draws them identically.
+   * It reads in the same ink as the subtitle and a different typeface, because quietening it
+   * further is what drops a line of eleven-pixel text under the contrast a person can read.
+   */
+  footnote?: string | undefined;
   /** Whether the card stands selected, which is what rings it in its own tint. */
   selected: boolean;
   /** Whether a cable arrives at this card, which only the gateway says no to. */
@@ -55,7 +72,12 @@ export type NodeCardProps = {
   outgoing: OutgoingPort | undefined;
 };
 
-const portBox = 'top-1/2 flex size-hit-target items-center justify-center bg-transparent';
+const subtitleFaces = {
+  mono: 'font-mono text-mono-caption',
+  prose: 'text-footnote',
+} as const;
+
+const portBox = 'top-1/2 z-1 flex size-hit-target items-center justify-center bg-transparent';
 
 const keyboardAsk =
   'nodrag pointer-events-none absolute top-1/2 -inset-e-9 flex size-hit-target -translate-y-1/2 items-center justify-center rounded-pill border border-line-strong bg-surface-card text-ink opacity-0 focus-ring focus-visible:opacity-100';
@@ -142,7 +164,7 @@ function incomingSide(): ReactNode {
 
 function cardFace(props: NodeCardProps): ReactNode {
   const { chipTint, kickerTint, chipGlyph, chipMark, kicker, name, nameInk } = props;
-  const { subtitle, subtitleInk } = props;
+  const { subtitle, subtitleInk, subtitleFace = 'mono', footnote } = props;
 
   return (
     <>
@@ -159,8 +181,16 @@ function cardFace(props: NodeCardProps): ReactNode {
         {name}
       </span>
       {subtitle === undefined ? null : (
-        <span className={`relative truncate font-mono text-mono-caption ${subtitleInk}`}>
+        <span className={`relative truncate ${subtitleFaces[subtitleFace]} ${subtitleInk}`}>
           {subtitle}
+        </span>
+      )}
+      {footnote === undefined ? null : (
+        <span
+          className="relative truncate font-mono text-mono-caption text-ink-secondary"
+          title={footnote}
+        >
+          {footnote}
         </span>
       )}
     </>
@@ -187,6 +217,7 @@ export function NodeCard(props: NodeCardProps) {
       <button
         aria-pressed={selected}
         className={`${cardFrame} ${outlines[shape]} ${frame}`}
+        data-shape={shape}
         type="button"
       >
         {drawnFrame(shape)}

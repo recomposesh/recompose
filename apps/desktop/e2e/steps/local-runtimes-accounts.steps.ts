@@ -47,8 +47,8 @@ Given(
 );
 
 When('the surface lists it', async ({ page }) => {
-  await openProviderScreen(page, 'API Keys');
-  await openProviderScreen(page, 'Local Runtimes');
+  await openProviderScreen(page, 'API keys');
+  await openProviderScreen(page, 'Local runtimes');
 });
 
 When('the maintainer moves it to port {int}', async ({ page }, port: number) => {

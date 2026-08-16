@@ -16,37 +16,41 @@ const everyKind: StoredAccounts = [
 test('the offered accounts stand under the kinds the registry holds them as', () => {
   expect(targetGroups(everyKind).map((group) => group.heading)).toEqual([
     'Subscriptions',
-    'API Keys',
+    'API keys',
     'Aggregators',
-    'Local Runtimes',
+    'Local runtimes',
   ]);
 });
 
-test('a subscription account stands under the subscription heading', () => {
+test('a subscription account reads by its product, with the identity under it', () => {
   const [subscriptions] = targetGroups(everyKind);
 
   expect(subscriptions).toEqual({
     heading: 'Subscriptions',
-    options: [{ id: 's1', name: 'Claude', mark: 'anthropic' }],
+    options: [{ id: 's1', name: 'Claude', detail: 'Claude', mark: 'anthropic' }],
   });
 });
 
 test('a kind holding nothing that can be a target stands as no group at all', () => {
   const keysOnly = everyKind.filter((account) => account.kind === 'api-key');
 
-  expect(targetGroups(keysOnly).map((group) => group.heading)).toEqual(['API Keys']);
+  expect(targetGroups(keysOnly).map((group) => group.heading)).toEqual(['API keys']);
 });
 
-test('a stored key offers the name a person filed it under, and its vendor mark', () => {
+test('a stored key reads by its vendor product, with the name a person filed it under below', () => {
   const keys = targetGroups(everyKind)[1];
 
-  expect(keys?.options).toEqual([{ id: 'k1', name: 'Work key', mark: 'anthropic' }]);
+  expect(keys?.options).toEqual([
+    { id: 'k1', name: 'Anthropic', detail: 'Work key', mark: 'anthropic' },
+  ]);
 });
 
 test('a stored runtime offers only the server name and its mark', () => {
   const runtimes = targetGroups(everyKind).at(-1);
 
-  expect(runtimes?.options).toEqual([{ id: 'l1', name: 'Ollama', mark: 'ollama' }]);
+  expect(runtimes?.options).toEqual([
+    { id: 'l1', name: 'Ollama', detail: 'http://127.0.0.1:11434', mark: 'ollama' },
+  ]);
 });
 
 test('a registry holding nothing offers no group for anyone to search', () => {
@@ -58,5 +62,7 @@ test('a key held under a vendor recompose draws no mark for offers the name alon
     { id: 'k2', provider: 'in-house', kind: 'api-key', label: 'House key', credentialRef: 'c3' },
   ];
 
-  expect(targetGroups(unmarked)[0]?.options).toEqual([{ id: 'k2', name: 'House key' }]);
+  expect(targetGroups(unmarked)[0]?.options).toEqual([
+    { id: 'k2', name: 'in-house', detail: 'House key' },
+  ]);
 });

@@ -13,10 +13,14 @@ const CARRIED_IN = 'Clients send it as Authorization, x-api-key, x-goog-api-key,
 const REACHED_WITHOUT = 'Clients reach this gateway without a key.';
 
 const WHAT_REGENERATING_COSTS =
-  'Clients carrying the current key stop reaching this gateway until you paste the new one.';
+  'Clients using the current key stop reaching this gateway until you paste the new one.';
 
 function noticeLine(sentence: string): ReactNode {
   return <p className="mt-2 px-1 text-caption text-ink-secondary">{sentence}</p>;
+}
+
+function noticeBox(sentence: string): ReactNode {
+  return <p className="field-box px-3 py-2.5 text-detail text-ink-secondary">{sentence}</p>;
 }
 
 function requiredKeyBox(held: GatewayApiKey, onRegenerate: () => void): ReactNode {
@@ -30,7 +34,7 @@ function requiredKeyBox(held: GatewayApiKey, onRegenerate: () => void): ReactNod
         )}
         <div className="flex min-h-sheet-row items-center border-t border-line-faint px-3 py-1.5">
           <button
-            className="rounded-control focus-ring px-1 text-control font-medium text-accent-ink"
+            className="-ms-1 rounded-control focus-ring px-1 text-control font-medium text-accent-ink"
             onClick={onRegenerate}
             type="button"
           >
@@ -85,7 +89,7 @@ export function GatewayAccess({ gateway }: GatewayAccessProps) {
         </span>,
       )}
       {required === undefined
-        ? noticeLine(REACHED_WITHOUT)
+        ? noticeBox(REACHED_WITHOUT)
         : requiredKeyBox(required, () => {
             setAsking(true);
           })}

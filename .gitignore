@@ -22,3 +22,5 @@ reports/
 **/.claude/agent-memory/
 .claude/worktrees/
 .playwright-mcp/
+
+*.tsbuildinfo

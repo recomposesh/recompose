@@ -48,7 +48,7 @@ export function GatewayGeneralInfo({ gateway }: GatewayGeneralInfoProps) {
     const next = name.trim();
 
     if (next === '') {
-      setRefused('A gateway needs a name to stand under.');
+      setRefused('Give the gateway a name.');
 
       return;
     }
@@ -79,7 +79,7 @@ export function GatewayGeneralInfo({ gateway }: GatewayGeneralInfoProps) {
 
   return (
     <>
-      {editableSectionHeading('General Info', editing, beginEditing)}
+      {editableSectionHeading('General info', editing, beginEditing)}
       <div className="field-box">
         {editing ? gatewayNameRow(name, setName) : factRow('Name', gateway.displayName)}
       </div>

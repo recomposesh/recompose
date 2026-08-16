@@ -125,8 +125,7 @@ export function editFooter(
   );
 }
 
-const HARNESS_NOTICE =
-  'Saved. Restart the harness you point at this gateway so it picks the change up.';
+const HARNESS_NOTICE = 'Saved. Restart the app that points at this gateway to pick up the change.';
 
 /** The restart notice a saved definition leaves behind, standing only after a save landed. */
 export function savedNotice(saved: boolean): ReactNode {

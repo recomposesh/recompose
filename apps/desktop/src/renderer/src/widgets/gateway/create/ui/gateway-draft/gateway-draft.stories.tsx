@@ -29,7 +29,7 @@ export const Standing = meta.story({
       await expect(await screen.findByRole('textbox', { name: 'Port' })).not.toHaveValue('');
     });
     await expect(await screen.findByText('Serves at')).toBeVisible();
-    await expect(await screen.findByRole('button', { name: 'Create Gateway' })).toBeVisible();
+    await expect(await screen.findByRole('button', { name: 'Create gateway' })).toBeVisible();
   },
 });
 

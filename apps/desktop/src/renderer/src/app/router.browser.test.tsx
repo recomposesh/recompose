@@ -80,7 +80,9 @@ test('the keyboard path opens the sheet over any surface and hands that surface 
 test('an unknown path shows the not-found state inside the shell', async () => {
   const screen = await renderAt('/no-such-page');
 
-  await expect.element(screen.getByText('Not found')).toBeVisible();
+  await expect
+    .element(screen.getByText('That page does not exist. Pick one from the sidebar.'))
+    .toBeVisible();
   await expect.element(screen.getByRole('link', { name: 'Settings' })).toBeVisible();
 });
 
@@ -198,13 +200,17 @@ test('a valid gateway slug opens the stage with the inspector away', async () =>
 test('a gateway slug nothing is stored under lands on the not-found state', async () => {
   const screen = await renderAt('/gateways/codex', { gateways: [] });
 
-  await expect.element(screen.getByText('Not found')).toBeVisible();
+  await expect
+    .element(screen.getByText('That page does not exist. Pick one from the sidebar.'))
+    .toBeVisible();
 });
 
 test('an invalid gateway slug lands on the not-found state', async () => {
   const screen = await renderAt('/gateways/Not%20A%20Slug');
 
-  await expect.element(screen.getByText('Not found')).toBeVisible();
+  await expect
+    .element(screen.getByText('That page does not exist. Pick one from the sidebar.'))
+    .toBeVisible();
 });
 
 test('the sidebar offers no way home, because home is no longer a place', async () => {

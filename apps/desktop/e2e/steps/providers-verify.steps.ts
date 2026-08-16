@@ -42,11 +42,11 @@ When('the maintainer verifies the key', async ({ page }) => {
 When('the maintainer leaves the screen and returns', async ({ page }) => {
   await page.getByRole('link', { name: 'Usage' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Usage' })).toBeVisible();
-  await openProviderScreen(page, 'API Keys');
+  await openProviderScreen(page, 'API keys');
 });
 
 Then('the surface reports that the key authenticates as of the check', async ({ page }) => {
-  await expect(keyVerdict(page)).toHaveText('This key authenticated as of this check.', {
+  await expect(keyVerdict(page)).toHaveText('This key worked at the last check.', {
     timeout: CHECK_WAIT_MS,
   });
 });
@@ -56,10 +56,9 @@ Then('nothing claims the account can spend', async ({ page }) => {
 });
 
 Then("the surface reports that the provider didn't accept the key", async ({ page }) => {
-  await expect(keyVerdict(page)).toHaveText(
-    "The provider didn't accept this key as of this check.",
-    { timeout: CHECK_WAIT_MS },
-  );
+  await expect(keyVerdict(page)).toHaveText('The provider rejected this key at the last check.', {
+    timeout: CHECK_WAIT_MS,
+  });
 });
 
 Then('the answer never guesses between a typo, a revocation, and an expiry', async ({ page }) => {
@@ -68,7 +67,7 @@ Then('the answer never guesses between a typo, a revocation, and an expiry', asy
 
 Then("the surface reports that the check couldn't run", async ({ page }) => {
   await expect(keyVerdict(page)).toHaveText(
-    "This check couldn't reach the provider, so the key stands unverified.",
+    "Couldn't reach the provider, so this key is unverified.",
     { timeout: CHECK_WAIT_MS },
   );
 });

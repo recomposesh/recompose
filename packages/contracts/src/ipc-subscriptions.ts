@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { ipcResult } from './ipc-result';
 import { nonBlankString } from './non-blank';
 import {
+  browserSignInProviderIdSchema,
+  deviceFlowProviderIdSchema,
   machineCredentialReadingSchema,
   subscriptionAccountViewSchema,
   subscriptionProviderIdSchema,
@@ -28,18 +30,29 @@ export const subscriptionChannels = {
     response: subscriptionViewsResponse,
   },
   /**
-   * Asks GitHub for the code a person enters, and answers what to show them.
+   * Asks a provider for the code a person enters, and answers what to show them.
    *
    * @summary The handle that completes the flow never crosses, so the renderer holds nothing that
-   * could finish a sign-in it did not start.
+   * could finish a sign-in it did not start. One channel serves every plan that authorizes this
+   * way, because RFC 8628 fixes the exchange and leaves only the address to the vendor.
    */
-  'subscriptions:copilot-code': {
-    request: z.void(),
+  'subscriptions:device-code': {
+    request: z.strictObject({ provider: deviceFlowProviderIdSchema }),
     response: ipcResult(z.strictObject({ userCode: nonBlankString, verificationUri: z.url() })),
   },
   /** Waits on the code a person was shown, answering the accounts once it settles. */
-  'subscriptions:copilot-await': {
-    request: z.void(),
+  'subscriptions:device-await': {
+    request: z.strictObject({ provider: deviceFlowProviderIdSchema }),
+    response: subscriptionViewsResponse,
+  },
+  /**
+   * Signs in through the browser a person already trusts with the account, and waits it out.
+   *
+   * @summary Google redirects a browser rather than answering a request, so there is no code to
+   * show and nothing to poll: the one act opens the page and settles when the redirect lands.
+   */
+  'subscriptions:browser-sign-in': {
+    request: z.strictObject({ provider: browserSignInProviderIdSchema }),
     response: subscriptionViewsResponse,
   },
   'subscriptions:restore': {

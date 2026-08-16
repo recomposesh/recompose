@@ -45,7 +45,7 @@ function routerNameRow(
   onDraft: (held: NameDraft) => void,
 ): ReactNode {
   return editRow(
-    'Router Name',
+    'Router name',
     <input
       aria-label="Router name"
       className="field-control w-full"
@@ -75,7 +75,7 @@ function clearingHint(mode: RouterMode): ReactNode {
 }
 
 function restingName(mode: RouterMode, displayName: string | undefined): ReactNode {
-  return <div className="field-box">{factRow('Router Name', nameOfRouter(mode, displayName))}</div>;
+  return <div className="field-box">{factRow('Router name', nameOfRouter(mode, displayName))}</div>;
 }
 
 function editingName(draft: NameDraft, mode: RouterMode, acts: NameActs): ReactNode {
@@ -125,7 +125,7 @@ export function RouterGeneralInfo({
 
   return (
     <>
-      {editableSectionHeading('General Info', draft !== undefined, () => {
+      {editableSectionHeading('General info', draft !== undefined, () => {
         setDraft({ name: displayName ?? '', refused: undefined });
       })}
       {draft === undefined

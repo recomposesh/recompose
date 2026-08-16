@@ -1,11 +1,10 @@
 import type { Account, GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
 
-import { nameOfRouterMode } from '@recompose/contracts';
-
 import type { RouterMode } from '../../lib/routing-edits';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
 import { SegmentedControl } from '../../../../shared/ui';
+import { modeOptions, modeSentences } from '../../lib/router-modes';
 import { gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
 import { RouterChildList } from '../router-child-list/router-child-list';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
@@ -26,19 +25,9 @@ type RouterInspectorProps = {
   router: StoredRouter;
   /** The registry the children read their names against. */
   accounts: readonly Account[];
+  /** Receives the card a person opened from the ladder, which turns the drawer to that child. */
+  onSelectNode: (nodeId: string) => void;
 };
-
-const modeSentences: Record<RouterMode, string> = {
-  failover:
-    'The topmost healthy target answers. Each child below it stands in only when everything above it cannot.',
-  'round-robin':
-    'Requests alternate across the children, which spreads the load and costs the prompt cache a hit every time a turn lands on a different account.',
-};
-
-const modeOptions = [
-  { value: 'failover', label: nameOfRouterMode('failover') },
-  { value: 'round-robin', label: nameOfRouterMode('round-robin') },
-] as const satisfies readonly { value: RouterMode; label: string }[];
 
 /**
  * The whole of what a person decides about a router: what it is called, how it spreads, over what.
@@ -57,6 +46,7 @@ export function RouterInspector({
   routeNodeId,
   router,
   accounts,
+  onSelectNode,
 }: RouterInspectorProps) {
   const rewrite = useDefineVirtualModel();
   const mode = router.policy.mode;
@@ -87,7 +77,10 @@ export function RouterInspector({
         onMove={(from, to) => {
           rewrite.mutate(gatewayReordering(gateway, model.id, routeNodeId, from, to));
         }}
-        rows={routerChildRows(model.routing, router.children, accounts)}
+        onOpen={(child) => {
+          onSelectNode(child.cardId);
+        }}
+        rows={routerChildRows(model.id, model.routing, router.children, accounts)}
       />
     </>
   );

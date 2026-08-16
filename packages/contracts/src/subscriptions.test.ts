@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  browserSignInProviderIdSchema,
+  deviceFlowProviderIdSchema,
+  signsInByDeviceCode,
+  signsInThroughTheBrowser,
   subscriptionAccountViewSchema,
   subscriptionProvenanceSchema,
   subscriptionProviderIdSchema,
@@ -43,22 +47,40 @@ describe('the providers a subscription can name', () => {
   });
 
   test('every plan whose own tool signs a person in', () => {
-    expect(toolBackedProviderIdSchema.options).toEqual([
-      'anthropic',
-      'openai',
-      'antigravity',
-      'kimi',
-    ]);
+    expect(toolBackedProviderIdSchema.options).toEqual(['anthropic', 'openai']);
   });
 
-  test('Kimi Code delegates to the tool that already owns its device flow', () => {
-    expect(subscriptionProviders.kimi).toEqual({
-      toolBinary: 'cliproxyapi',
-      toolName: 'Kimi Code',
-      configHomeVariable: 'CLIPROXYAPI_HOME',
-      signInArguments: ['--kimi-login'],
-      renewArguments: [],
-    });
+  test('the plans this app signs in itself name no tool to delegate to', () => {
+    for (const provider of ['antigravity', 'kimi', 'copilot'] as const) {
+      expect(toolBacked(provider)).toBe(false);
+    }
+  });
+
+  test('the plans that show a person a code are the ones the device channel takes', () => {
+    expect(deviceFlowProviderIdSchema.options).toEqual(['copilot', 'kimi']);
+
+    for (const provider of ['copilot', 'kimi'] as const) {
+      expect(signsInByDeviceCode(provider), provider).toBe(true);
+      expect(signsInThroughTheBrowser(provider), provider).toBe(false);
+    }
+  });
+
+  test('the plan that redirects a browser is the one the browser channel takes', () => {
+    expect(browserSignInProviderIdSchema.options).toEqual(['antigravity']);
+    expect(signsInThroughTheBrowser('antigravity')).toBe(true);
+    expect(signsInByDeviceCode('antigravity')).toBe(false);
+  });
+
+  test('a plan whose own tool signs it in answers to neither channel', () => {
+    for (const provider of ['anthropic', 'openai'] as const) {
+      expect(signsInByDeviceCode(provider), provider).toBe(false);
+      expect(signsInThroughTheBrowser(provider), provider).toBe(false);
+    }
+  });
+
+  test('a plan this app signs in itself still goes by a name on screen', () => {
+    expect(subscriptionPlanNames.kimi).toBe('Kimi Code');
+    expect(subscriptionPlanNames.antigravity).toBe('Gemini (Antigravity)');
   });
 
   test('a provider no tool signs in is refused', () => {
@@ -71,7 +93,7 @@ describe('the tool that performs each sign-in', () => {
     expect(subscriptionProviders.anthropic).toEqual({
       toolBinary: 'claude',
       toolName: 'Claude Code',
-      configHomeVariable: 'CLAUDE_CONFIG_DIR',
+      configHome: { told: 'environment', variable: 'CLAUDE_CONFIG_DIR' },
       signInArguments: [],
       renewArguments: ['auth', 'status'],
     });
@@ -81,7 +103,7 @@ describe('the tool that performs each sign-in', () => {
     expect(subscriptionProviders.openai).toEqual({
       toolBinary: 'codex',
       toolName: 'Codex',
-      configHomeVariable: 'CODEX_HOME',
+      configHome: { told: 'environment', variable: 'CODEX_HOME' },
       signInArguments: ['login'],
       renewArguments: [],
     });
@@ -90,7 +112,7 @@ describe('the tool that performs each sign-in', () => {
   test('every provider the vocabulary names has a tool to delegate to', () => {
     for (const provider of toolBackedProviderIdSchema.options) {
       expect(subscriptionProviders[provider].toolBinary).not.toBe('');
-      expect(subscriptionProviders[provider].configHomeVariable).not.toBe('');
+      expect(subscriptionProviders[provider].configHome.told).not.toBe('');
     }
   });
 });

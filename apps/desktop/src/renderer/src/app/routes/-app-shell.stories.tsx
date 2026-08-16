@@ -159,7 +159,7 @@ export const SidebarClearsTheWindowControls = meta.story({
     </RouterContextProvider>
   ),
   play: async ({ canvas, canvasElement }) => {
-    await canvas.findByRole('heading', { name: 'Local Gateways' });
+    await canvas.findByRole('heading', { name: 'Local gateways' });
 
     const sidebar = canvasElement.firstElementChild?.firstElementChild;
     const heading = sidebar?.querySelector('h2');

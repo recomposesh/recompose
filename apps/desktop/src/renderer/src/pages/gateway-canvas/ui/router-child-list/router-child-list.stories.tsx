@@ -8,16 +8,16 @@ import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { RouterChildList } from './router-child-list';
 
 const rows: readonly RouterChild[] = [
-  { routeNodeId: 'n1', name: 'Work key', detail: 'gpt-5' },
-  { routeNodeId: 'n2', name: 'Claude Max', detail: 'claude-opus-5' },
-  { routeNodeId: 'n3', name: 'Ollama', detail: 'qwen3' },
+  { routeNodeId: 'n1', cardId: 'target:fast@n1', name: 'Work key', detail: 'gpt-5' },
+  { routeNodeId: 'n2', cardId: 'target:fast@n2', name: 'Claude Max', detail: 'claude-opus-5' },
+  { routeNodeId: 'n3', cardId: 'target:fast@n3', name: 'Ollama', detail: 'qwen3' },
 ];
 
 const HIT_TARGET = 24;
 
 const meta = preview.meta({
   component: RouterChildList,
-  args: { mode: 'failover' as const, rows, onMove: () => {} },
+  args: { mode: 'failover' as const, rows, onMove: () => {}, onOpen: () => {} },
   decorators: [
     (Story) => (
       <div className="w-80 bg-surface-toolbar p-3.5">
@@ -69,13 +69,19 @@ export const EveryControlKeepsItsHitTarget = meta.story({
   },
 });
 
-/** The move buttons rest out of sight and reveal the moment keyboard focus reaches one. */
+/**
+ * The move buttons rest out of sight and reveal the moment keyboard focus reaches one.
+ *
+ * @summary The row's own name takes the first tab stop, because opening the child it names is what
+ * a person reaches for most, so the move controls answer the tab after it.
+ */
 export const TheMoveButtonsRevealUnderFocus = meta.story({
   play: async ({ canvas }) => {
     const moveUp = await canvas.findByRole('button', { name: 'Move Work key up' });
 
     await expect(paintedStyle(moveUp).opacity).toBe('0');
 
+    await userEvent.tab();
     await userEvent.tab();
 
     await expect(document.activeElement).toBe(moveUp);

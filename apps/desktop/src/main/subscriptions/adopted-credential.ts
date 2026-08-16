@@ -3,7 +3,7 @@ import type { SubscriptionProviderId } from '@recompose/contracts';
 import type { RenewalRun } from './delegated-renewal';
 import type { MachineReach } from './machine-store';
 
-import { credentialFactsFor, documentIn } from './credential-records';
+import { credentialFactsFor } from './credential-records';
 import { delegatedRenewal } from './delegated-renewal';
 import { machineCredentialMaterial } from './machine-credential';
 import { machineStoreFor } from './machine-store';
@@ -35,7 +35,7 @@ function nearsExpiry(
     return false;
   }
 
-  const { expiresAt } = credentialFactsFor(provider, documentIn(blob), null);
+  const { expiresAt } = credentialFactsFor(provider, blob, null);
 
   return expiresAt !== undefined && expiresAt <= now() + RENEWAL_MARGIN_MS;
 }

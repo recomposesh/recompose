@@ -23,7 +23,7 @@ export function SignInAction({ name, disabled = false, onSignIn, reasonId }: Sig
     <SheetActionSlot>
       <button
         aria-describedby={reasonId}
-        className="push-button-primary focus-ring disabled:bg-surface-inert disabled:text-ink-secondary"
+        className="push-button-primary focus-ring"
         disabled={disabled}
         onClick={onSignIn}
         type="button"

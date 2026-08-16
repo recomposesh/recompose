@@ -131,6 +131,16 @@ export const engineDirectiveSchema = z.discriminatedUnion('kind', [
     origin: nonBlankString,
     custody: lookCustodySchema,
   }),
+  /**
+   * @summary The address a Claude account signed in as lives only at the far end, so learning it
+   * is a request like any other and travels the lane every request travels: the credential reaches
+   * the child and nothing else, the way a model list already does.
+   */
+  z.strictObject({
+    kind: z.literal('claude-address'),
+    id: directiveIdSchema,
+    accessToken: nonBlankString,
+  }),
 ]);
 
 export type EngineDirective = z.infer<typeof engineDirectiveSchema>;
@@ -157,6 +167,11 @@ export const engineReportSchema = z.discriminatedUnion('kind', [
     kind: z.literal('model-list'),
     answers: directiveIdSchema,
     listing: modelListingSchema,
+  }),
+  z.strictObject({
+    kind: z.literal('claude-address'),
+    answers: directiveIdSchema,
+    address: nonBlankString.optional(),
   }),
 ]);
 

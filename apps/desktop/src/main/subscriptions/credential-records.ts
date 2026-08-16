@@ -17,7 +17,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function recordAt(value: unknown, key: string): Record<string, unknown> | null {
+export function recordAt(value: unknown, key: string): Record<string, unknown> | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -27,7 +27,7 @@ function recordAt(value: unknown, key: string): Record<string, unknown> | null {
   return isRecord(found) ? found : null;
 }
 
-function spokenAt(value: unknown, key: string): string | undefined {
+export function spokenAt(value: unknown, key: string): string | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
@@ -118,10 +118,64 @@ function codexFactsIn(credential: unknown): CredentialFacts {
   };
 }
 
+/**
+ * What a record CLIProxyAPI wrote says about the account behind it.
+ *
+ * @summary The tool flattens whatever it learned at sign-in into the top level of the file it
+ * writes, so the address rides beside the tokens rather than inside a nested account record
+ * (`sdk/auth/antigravity.go`). Kimi's record carries no address at all, which is why an account
+ * signed in that way reads by its plan name and not by an address this app never received.
+ */
+function cliProxyFactsIn(credential: unknown): CredentialFacts {
+  const record = isRecord(credential) ? credential : null;
+
+  return {
+    holdsAccount: spokenAt(record, 'access_token') !== undefined,
+    holdsKey: false,
+    signedInAs: spokenAt(record, 'email'),
+    plan: undefined,
+    expiresAt: undefined,
+  };
+}
+
+/**
+ * @summary GitHub issues a bare credential rather than a record, so the file this app writes holds
+ * the token and nothing else. There is no shape to read fields out of: the token standing there at
+ * all is the whole of what the file says.
+ */
+function copilotFactsIn(blob: string | null): CredentialFacts {
+  return {
+    holdsAccount: blob !== null && blob.trim() !== '',
+    holdsKey: false,
+    signedInAs: undefined,
+    plan: undefined,
+    expiresAt: undefined,
+  };
+}
+
+/**
+ * What one plan's stored credential says about the account behind it.
+ *
+ * @summary The blob arrives unparsed because not every plan stores a record: one stores a bare
+ * token. Parsing here rather than at each caller is what keeps a reader from having to know which
+ * plans store which shape.
+ */
 export function credentialFactsFor(
   provider: SubscriptionProviderId,
-  credential: unknown,
-  identity: unknown,
+  credential: string | null,
+  identity: string | null,
 ): CredentialFacts {
-  return provider === 'openai' ? codexFactsIn(credential) : claudeFactsIn(credential, identity);
+  if (provider === 'copilot') {
+    return copilotFactsIn(credential);
+  }
+
+  const document = documentIn(credential);
+
+  if (provider === 'antigravity' || provider === 'kimi') {
+    return cliProxyFactsIn(document);
+  }
+
+  return provider === 'openai'
+    ? codexFactsIn(document)
+    : claudeFactsIn(document, documentIn(identity));
 }

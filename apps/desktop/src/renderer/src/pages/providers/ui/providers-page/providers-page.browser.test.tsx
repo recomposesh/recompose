@@ -94,7 +94,7 @@ test('the subscriptions screen names the kind it holds and what that kind is', a
 test('a subscriptions screen with nothing connected explains the kind and lists nothing', async () => {
   const screen = await renderProviders('subscription');
 
-  await expect.element(screen.getByText(/A subscription account is/)).toBeVisible();
+  await expect.element(screen.getByText(/A subscription is/)).toBeVisible();
   await expect.element(screen.getByRole('list')).not.toBeInTheDocument();
 });
 
@@ -116,7 +116,7 @@ test("a screen holding rows offers only each row's own acts", async () => {
 test('a screen with nothing connected offers nothing to press', async () => {
   const screen = await renderProviders('subscription');
 
-  await expect.element(screen.getByText(/A subscription account is/)).toBeVisible();
+  await expect.element(screen.getByText(/A subscription is/)).toBeVisible();
   await expect.poll(() => screen.getByRole('button').elements()).toEqual([]);
 });
 
@@ -168,7 +168,7 @@ test('a key the provider accepts says so as of the check and claims nothing abou
 
   await expect
     .element(screen.getByRole('status'))
-    .toHaveTextContent('This key authenticated as of this check.');
+    .toHaveTextContent('This key worked at the last check.');
   await expect.element(screen.getByText(/spend/)).not.toBeInTheDocument();
 });
 
@@ -179,7 +179,7 @@ test('a turned-away key reads as not accepted, guessing at no reason for it', as
 
   await expect
     .element(screen.getByRole('status'))
-    .toHaveTextContent("The provider didn't accept this key as of this check.");
+    .toHaveTextContent('The provider rejected this key at the last check.');
   await expect.element(screen.getByText(/revoked|expired|mistyped/)).not.toBeInTheDocument();
 });
 
@@ -190,7 +190,7 @@ test('a check that never reached the provider leaves the key unverified rather t
 
   await expect
     .element(screen.getByRole('status'))
-    .toHaveTextContent("This check couldn't reach the provider, so the key stands unverified.");
+    .toHaveTextContent("Couldn't reach the provider, so this key is unverified.");
 });
 
 test('no answer outlives the screen it was answered on', async () => {

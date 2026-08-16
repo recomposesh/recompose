@@ -5,8 +5,9 @@ import type {
   SubscriptionProviderId,
 } from '@recompose/contracts';
 
-import type { CopilotSignInPort } from '../subscriptions/copilot-sign-in';
+import type { AntigravitySignInPort } from '../subscriptions/antigravity-sign-in';
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
+import type { DeviceSignInPort } from '../subscriptions/device-sign-in-port';
 import type { MachineReach } from '../subscriptions/machine-store';
 import type { SignInLaunch } from '../subscriptions/sign-in-launch';
 import type { SubscriptionHomes } from '../subscriptions/subscription-homes';
@@ -32,8 +33,18 @@ export type SubscriptionsIpcContext = {
   signInBoundMs: number;
   signInEveryMs: number;
   onCorrupt: (quarantinedPath: string) => void;
-  /** How the one plan with no tool of its own reaches GitHub, its clock, and its own pace. */
-  copilot: CopilotSignInPort;
+  /** How every plan that shows a person a code reaches its provider, its clock, and its own pace. */
+  deviceSignIn: DeviceSignInPort;
+  /** How the one plan that redirects a browser opens the page and hears the redirect back. */
+  browserSignIn: AntigravitySignInPort;
+  /**
+   * Asks the far end which address one Claude access token signed in as.
+   *
+   * @summary A tool the app pointed at its own config home writes no address anywhere on this
+   * machine, so the only way to name that account is to ask. It answers with nothing where the
+   * ask could not be made, which leaves the account named by its plan instead.
+   */
+  claudeAddress: (accessToken: string) => Promise<string | undefined>;
   /**
    * @summary A launch that never opened a terminal leaves the wait running, because the command
    * stays on screen for a person to run by hand. This is how they learn nothing opened.

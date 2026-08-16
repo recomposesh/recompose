@@ -19,11 +19,18 @@ export type RouterMode = RouterPolicy['mode'];
  * The id is minted rather than spelled here, but the mint is not the only writer of one: the
  * version 4 migration derives its own without coming through it, so a table can hold both shapes
  * at once and no reader may assume the one this writes.
+ *
+ * The name is absent wherever nobody wrote one, never empty, because a router falls back to its
+ * mode only while it holds no name at all.
  */
-export function routedThroughARouter(mode: RouterMode): Routing {
+export function routedThroughARouter(mode: RouterMode, displayName?: string): Routing {
   const entry = mintRouteNodeId();
+  const router: RouteNode = { kind: 'router', policy: { mode }, children: [] };
 
-  return { entry, nodes: { [entry]: { kind: 'router', policy: { mode }, children: [] } } };
+  return {
+    entry,
+    nodes: { [entry]: displayName === undefined ? router : { ...router, displayName } },
+  };
 }
 
 function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) => Routing) {

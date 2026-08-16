@@ -19,7 +19,7 @@ test('a clipboard that refuses the write says so, rather than reading as a dead 
 
   await userEvent.click(screen.getByRole('button', { name: 'Copy address' }));
 
-  await expect.element(screen.getByRole('status')).toHaveTextContent('Copying failed.');
+  await expect.element(screen.getByRole('status')).toHaveTextContent("Couldn't copy. Try again.");
 });
 
 test('the confirmation clears, so copying a second time announces itself again', async () => {

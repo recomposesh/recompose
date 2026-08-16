@@ -17,7 +17,7 @@ import {
 import { draftNameField } from './gateway-drawer';
 import { focusedGateway } from './scenario-memory';
 
-/** The card a name stands as: the stored definition, or the draft while it holds no target yet. */
+/** The card a name stands as: the stored definition, or the draft while it holds no provider yet. */
 export async function cardNamed(page: Page, name: string): Promise<string> {
   const standing = await standingNodes(page);
   const stored = modelNodeId(modelAliasFromName(name));

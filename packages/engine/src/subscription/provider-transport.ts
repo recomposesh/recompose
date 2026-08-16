@@ -6,8 +6,6 @@ import { fetch as wreqFetch } from 'node-wreq';
 import type { ProviderRequest } from './claude-request';
 import type { RefreshFetch } from './refresh';
 
-import { isJsonObject } from '../gateway-wire';
-import { controlPlaneUrl } from '../loopback-override';
 import { unwrapAntigravityResponse } from './antigravity-response';
 import { decodeClaudeResponse } from './claude-compression';
 import { restoreClaudeToolResponse } from './claude-tool-response';
@@ -22,7 +20,6 @@ import { subscriptionBounds } from './transport-bounds';
 export { CLAUDE_OAUTH_TLS_FINGERPRINT, CLAUDE_TLS_FINGERPRINT };
 
 const CLAUDE_OAUTH_HANDSHAKE_TIMEOUT_MS = 10_000;
-const CLAUDE_PROFILE_URL = 'https://api.anthropic.com/api/oauth/profile';
 
 function proxyOptions(policy: AccountTransportPolicy | undefined): Pick<WreqInit, 'proxy'> {
   if (policy?.mode === 'direct') return { proxy: false };
@@ -71,7 +68,7 @@ export function subscriptionTransportOptions(
   };
 }
 
-type WireResponse = {
+export type WireResponse = {
   status: number;
   statusText?: string;
   headers: Headers | Iterable<[string, string]>;
@@ -79,10 +76,6 @@ type WireResponse = {
 };
 
 export type SubscriptionWireFetch = (url: string, init: WreqInit) => Promise<WireResponse>;
-
-export type ClaudeProfile = {
-  account: { uuid: string };
-};
 
 async function decodedProviderResponse(
   provider: SubscriptionProviderId,
@@ -105,7 +98,7 @@ async function restoredProviderResponse(
     : response;
 }
 
-function webResponseFrom(upstream: WireResponse): Response {
+export function webResponseFrom(upstream: WireResponse): Response {
   const headers = new Headers();
 
   for (const [name, value] of upstream.headers) {
@@ -244,44 +237,3 @@ export const subscriptionRefreshFetch: RefreshFetch = async (url, init, policy) 
 
   return isClaudeOAuthUrl(url) ? decodeClaudeResponse(webResponse) : webResponse;
 };
-
-export async function fetchClaudeProfile(
-  accessToken: string,
-  fetchLike: SubscriptionWireFetch = wreqFetch,
-  policy?: AccountTransportPolicy,
-): Promise<ClaudeProfile> {
-  const profileUrl = controlPlaneUrl(CLAUDE_PROFILE_URL);
-  const upstream = await fetchLike(profileUrl, {
-    ...subscriptionRefreshTransportOptions(CLAUDE_PROFILE_URL, policy),
-    method: 'GET',
-    headers: [
-      ['Accept', 'application/json, text/plain, */*'],
-      ['Authorization', `Bearer ${accessToken}`],
-      ['Content-Type', 'application/json'],
-      ['Cache-Control', 'no-cache'],
-      ['User-Agent', 'axios/1.15.2'],
-      ['Accept-Encoding', 'gzip, compress, deflate, br'],
-      ['Connection', 'close'],
-    ],
-    retry: 0,
-    throwHttpErrors: false,
-  });
-  const response = await decodeClaudeResponse(webResponseFrom(upstream));
-
-  if (!response.ok) {
-    throw new Error(`fetch Claude OAuth profile failed with status ${response.status}`);
-  }
-
-  return claudeProfileFrom(await response.json());
-}
-
-function claudeProfileFrom(value: unknown): ClaudeProfile {
-  const account = isJsonObject(value) ? value['account'] : undefined;
-  const uuid = isJsonObject(account) ? account['uuid'] : undefined;
-
-  if (typeof uuid !== 'string' || uuid.trim() === '') {
-    throw new Error('fetch Claude OAuth profile: response account UUID is empty');
-  }
-
-  return { account: { uuid } };
-}

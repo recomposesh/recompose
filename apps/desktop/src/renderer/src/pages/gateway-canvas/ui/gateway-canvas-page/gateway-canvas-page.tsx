@@ -51,6 +51,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
   const {
     groups,
     refusal,
+    pickedName,
     stage,
     anchorSeat,
     onDismiss,
@@ -68,6 +69,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
       onPickKind={onPickKind}
       onPickProviderModel={onPickProviderModel}
       onStepBack={onStepBack}
+      pickedName={pickedName}
       refusal={refusal}
       seat={anchorSeat}
       stage={stage}
@@ -119,6 +121,7 @@ function inspectorBeside({ gateway, reveal, width, canvas }: InspectorBeside): R
         onModelRenamed={(modelId) => {
           selectNode(`model:${modelId}`);
         }}
+        onSelectNode={selectNode}
         refusal={refusal}
         subject={subject}
       />

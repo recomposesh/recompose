@@ -59,9 +59,7 @@ test('a bound virtual model offers no new cable out of its port', async () => {
     new MouseEvent('mouseup', { bubbles: true, clientX: grip.x + 120, clientY: grip.y + 90 }),
   );
 
-  await expect
-    .element(screen.getByText('Pick a provider model', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
 
@@ -93,11 +91,11 @@ test('stepping back mid-rebind reopens the accounts, and the fresh pick still la
     await targetPortOf(screen.container, 'target:fast'),
   );
 
-  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).toBeVisible();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Select different provider' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Select a different provider' }));
 
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
   await userEvent.click(
@@ -142,8 +140,8 @@ test('a cable dropped on empty canvas births the pending card and opens the pick
 
   await draftPulledTo(screen, { x: 620, y: 320 });
 
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
-  await expect.element(screen.getByText('Choose a target', { exact: true }).first()).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Pick a target', { exact: true }).first()).toBeVisible();
 });
 
 test('Esc dismisses the picker and the pending card together, changing nothing', async () => {
@@ -151,12 +149,12 @@ test('Esc dismisses the picker and the pending card together, changing nothing',
   const before = await storedModels();
 
   await draftPulledTo(screen, { x: 620, y: 320 });
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
   await userEvent.keyboard('{Escape}');
 
   await expect
-    .element(screen.getByText('Pick an account', { exact: true }))
+    .element(screen.getByText('Connected providers', { exact: true }))
     .not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
@@ -178,7 +176,7 @@ test('a completed pick on a pending card writes the binding it stands for', asyn
     .poll(async () => storedBindingOf('steady'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-opus-5' });
   await expect
-    .element(screen.getByText('Pick an account', { exact: true }))
+    .element(screen.getByText('Connected providers', { exact: true }))
     .not.toBeInTheDocument();
 });
 
@@ -193,7 +191,7 @@ test('Esc cancels a drag in flight and the composition stands unchanged', async 
 
   await expect.poll(() => document.querySelector('.react-flow__connectionline')).toBeNull();
   await expect
-    .element(screen.getByText('Pick an account', { exact: true }))
+    .element(screen.getByText('Connected providers', { exact: true }))
     .not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
@@ -232,9 +230,7 @@ test('Esc over a valid target port cancels the drag instead of opening the picke
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
   await expect.poll(() => document.querySelector('.react-flow__connectionline')).toBeNull();
-  await expect
-    .element(screen.getByText('Pick a provider model', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
   expect(await storedModels()).toEqual(before);
 });
 

@@ -2,31 +2,32 @@ import type { GatewayConfig } from '@recompose/contracts';
 import type { ReactNode, RefObject } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
+import type { BoundKind } from '../../lib/binding-kinds';
 import type { SettledDefinition } from '../../lib/model-draft';
+import type { RouterMode } from '../../lib/routing-edits';
 import type { OptionGroup } from '../option-list/option-list';
 
 import {
   accountsQueryOptions,
   providerModelsQueryOptions,
   refusalSentence,
-  useDefineVirtualModel,
 } from '../../../../shared/api';
 import { placeFocus } from '../../../../shared/ui';
+import { idRefusal, nameRefusal } from '../../lib/draft-refusals';
 import {
+  BORN_ROUTER_MODE,
+  draftFilledIn,
   emptyDefinition,
-  gatewayDefining,
   idFollowingName,
-  idRefusal,
   modelListReading,
-  nameRefusal,
-  refusalFromMain,
   servesPreview,
 } from '../../lib/model-draft';
 import { targetGroups } from '../../lib/target-groups';
 import { editDraft, useHeldDraft } from '../../lib/use-held-draft';
 import { ModelFields } from '../model-fields/model-fields';
+import { useDraftSaving } from './use-draft-saving';
 
 type DraftInspectorProps = {
   /** The gateway the definition joins once it settles, whose stored shape the save carries whole. */
@@ -45,44 +46,6 @@ function useOfferedModels(accountId: string) {
   return {
     offered: reading.offered,
     refusal: look.error === null ? reading.refusal : refusalSentence(look.error),
-  };
-}
-
-function useDraftSaving(
-  gateway: GatewayConfig,
-  definition: SettledDefinition,
-  onDefined: (definition: SettledDefinition) => void,
-) {
-  const define = useDefineVirtualModel();
-  const [attempted, setAttempted] = useState(false);
-  const [refusal, setRefusal] = useState<string | undefined>(undefined);
-
-  return {
-    attempted,
-    refusal,
-    saving: define.isPending,
-    clearRefusal: () => {
-      setRefusal(undefined);
-    },
-    save: () => {
-      setAttempted(true);
-
-      const refused =
-        nameRefusal(definition.displayName) ?? idRefusal(definition.id, gateway.virtualModels);
-
-      if (refused !== undefined) {
-        return;
-      }
-
-      define.mutate(gatewayDefining(gateway, definition), {
-        onSuccess: () => {
-          onDefined(definition);
-        },
-        onError: (failure) => {
-          setRefusal(refusalFromMain(failure));
-        },
-      });
-    },
   };
 }
 
@@ -108,7 +71,7 @@ function nameOfPicked(
 
 function servesLine(preview: string | undefined): ReactNode {
   return preview === undefined ? null : (
-    <p className="border-t border-line-faint bg-surface-inert px-3.5 py-2 font-mono text-mono-value text-ink-secondary">
+    <p className="border-t border-line-faint bg-surface-tint px-3.5 py-2 font-mono text-mono-value text-ink-secondary">
       {preview}
     </p>
   );
@@ -158,7 +121,7 @@ function draftTargetsOf(
     targets: offered,
     target,
     targetName: nameOfPicked(offered ?? [], target),
-    settled: definition.accountId !== '' && definition.providerModel !== '',
+    settled: draftFilledIn(definition),
   };
 }
 
@@ -172,11 +135,66 @@ type DraftFieldsView = {
   edited: (next: SettledDefinition) => void;
 };
 
+/**
+ * Every edit the fields can make, each one written back to the held draft as a whole definition.
+ *
+ * @summary Answering the binding ask again clears the account and the model, because a person who
+ * walked back to that question is choosing a different shape and a target left standing under a
+ * router would reach storage as a binding nobody asked for.
+ */
+function draftEdits(definition: SettledDefinition, edited: (next: SettledDefinition) => void) {
+  return {
+    onIdChange: (typed: string) => {
+      edited({ ...definition, id: typed });
+    },
+    onNameChange: (typed: string) => {
+      edited({
+        ...definition,
+        displayName: typed,
+        id: idFollowingName(definition.displayName, typed, definition.id),
+      });
+    },
+    onPickKind: (kind: BoundKind) => {
+      edited({ ...definition, bindsThrough: kind, accountId: '', providerModel: '' });
+    },
+    onPickModel: (picked: string) => {
+      edited({ ...definition, providerModel: picked });
+    },
+    onPickTarget: (picked: string) => {
+      edited({ ...definition, accountId: picked, providerModel: '' });
+    },
+    onReopenKind: () => {
+      edited({ ...definition, bindsThrough: undefined, accountId: '', providerModel: '' });
+    },
+    onRouterModeChange: (mode: RouterMode) => {
+      edited({ ...definition, routerMode: mode });
+    },
+    onRouterNameChange: (typed: string) => {
+      edited({ ...definition, routerName: typed });
+    },
+    onSelectDifferentProvider: () => {
+      edited({ ...definition, accountId: '', providerModel: '' });
+    },
+  };
+}
+
 function draftFields(view: DraftFieldsView): ReactNode {
-  const { definition, edited } = view;
+  const { definition } = view;
+  const {
+    onIdChange,
+    onNameChange,
+    onPickKind,
+    onPickModel,
+    onPickTarget,
+    onReopenKind,
+    onRouterModeChange,
+    onRouterNameChange,
+    onSelectDifferentProvider,
+  } = draftEdits(definition, view.edited);
 
   return (
     <ModelFields
+      bindsThrough={definition.bindsThrough}
       id={definition.id}
       idRefusal={spokenAfterAsking(
         view.attempted,
@@ -187,26 +205,18 @@ function draftFields(view: DraftFieldsView): ReactNode {
       name={definition.displayName}
       nameField={view.nameField}
       nameRefusal={spokenAfterAsking(view.attempted, nameRefusal(definition.displayName))}
-      onIdChange={(typed) => {
-        edited({ ...definition, id: typed });
-      }}
-      onNameChange={(typed) => {
-        edited({
-          ...definition,
-          displayName: typed,
-          id: idFollowingName(definition.displayName, typed, definition.id),
-        });
-      }}
-      onPickModel={(picked) => {
-        edited({ ...definition, providerModel: picked });
-      }}
-      onPickTarget={(picked) => {
-        edited({ ...definition, accountId: picked, providerModel: '' });
-      }}
-      onSelectDifferentProvider={() => {
-        edited({ ...definition, accountId: '', providerModel: '' });
-      }}
+      onIdChange={onIdChange}
+      onNameChange={onNameChange}
+      onPickKind={onPickKind}
+      onPickModel={onPickModel}
+      onPickTarget={onPickTarget}
+      onReopenKind={onReopenKind}
+      onRouterModeChange={onRouterModeChange}
+      onRouterNameChange={onRouterNameChange}
+      onSelectDifferentProvider={onSelectDifferentProvider}
       providerModel={definition.providerModel}
+      routerMode={definition.routerMode ?? BORN_ROUTER_MODE}
+      routerName={definition.routerName ?? ''}
       target={view.picked.target}
       targetName={view.picked.targetName}
       targets={view.picked.targets}
@@ -248,7 +258,7 @@ export function DraftInspector({ gateway, onDefined }: DraftInspectorProps) {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto px-3.5 pt-2 pb-4">
+      <div className="flex min-h-0 flex-1 flex-col px-3.5 pt-2 pb-4">
         {draftFields({
           gateway,
           definition,

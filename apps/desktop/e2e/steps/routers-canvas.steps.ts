@@ -7,7 +7,7 @@ import { modelAliasFromName } from '@recompose/contracts';
 import { draftNamed, letGoOnEmptyCanvas } from '../canvas-composition';
 import { fitCanvasToView } from '../canvas-gestures';
 import { standsAt, theDropPoint } from '../canvas-memory';
-import { bindingKindAsk, pickTheTargetKind } from '../canvas-picker';
+import { bindingKindAsk, pickTheProviderKind } from '../canvas-picker';
 import {
   cableBetween,
   canvasCable,
@@ -167,7 +167,7 @@ Given(
 );
 
 When('the person picks the target', async ({ page }) => {
-  await pickTheTargetKind(page);
+  await pickTheProviderKind(page);
 });
 
 When('the person picks the router', async ({ page }) => {

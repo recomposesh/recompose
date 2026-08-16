@@ -59,6 +59,7 @@
     "!scripts/**/*.testkit.mts"
   ],
   "coverageAnalysis": "perTest",
+  "ignorePatterns": ["dist"],
   "dryRunTimeoutMinutes": 30,
   "ignoreStatic": true,
   "incremental": true,

@@ -13,10 +13,12 @@ export const AShorteningAwaitsItsAnswer = meta.story({
   render: () => <RetentionConfirmation days={7} onCancel={() => {}} onConfirm={() => {}} />,
   play: async ({ canvas }) => {
     await expect(
-      await canvas.findByRole('heading', { name: 'Drop older usage history?' }),
+      await canvas.findByRole('heading', { name: 'Delete older usage history?' }),
     ).toBeVisible();
-    await expect(await canvas.findByText(/drops usage older than 7 days for good/)).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Drop history' })).toBeVisible();
+    await expect(
+      await canvas.findByText(/Usage older than 7 days is deleted permanently/),
+    ).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Delete history' })).toBeVisible();
   },
 });
 

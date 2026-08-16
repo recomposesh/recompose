@@ -43,6 +43,7 @@ const targetCard: CanvasNode = {
   kind: 'target',
   account: { id: 'k1', provider: 'anthropic', kind: 'api-key', label: 'work', credentialRef: 'c1' },
   modelId: 'pooled',
+  providerModel: 'claude-sonnet-5',
   routeNodeId: 't1',
   depth: 2,
 };
@@ -118,6 +119,7 @@ describe('what a card carrying no ask stands on', () => {
       'id',
       'kind',
       'modelId',
+      'providerModel',
       'routeNodeId',
     ]);
   });

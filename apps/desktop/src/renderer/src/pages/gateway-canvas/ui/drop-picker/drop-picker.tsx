@@ -2,14 +2,14 @@ import type { KeyboardEvent, ReactNode } from 'react';
 
 import { useEffect, useId, useRef } from 'react';
 
+import type { BoundKind } from '../../lib/binding-kinds';
 import type { OptionGroup } from '../option-list/option-list';
 
 import { useStepTransition } from '../../../../shared/lib';
 import { Button, placeFocus } from '../../../../shared/ui';
+import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
+import { NoProviderRows } from '../no-provider-rows/no-provider-rows';
 import { OptionList } from '../option-list/option-list';
-
-/** Which of the two kinds a released cable may bind. */
-export type BoundKind = 'router' | 'target';
 
 /** Which part of the binding the ask is asking for, and what the parts before it settled on. */
 export type PickerStage =
@@ -26,35 +26,29 @@ type StageWording = {
 
 const wording: Record<PickerStage['step'], StageWording> = {
   kind: {
-    heading: 'Bind a router or a target',
+    heading: 'Bind this model to',
     searchLabel: 'Search kinds',
     nothingMatched: 'Nothing binds here.',
     stepBack: '',
   },
   account: {
-    heading: 'Pick an account',
-    searchLabel: 'Search accounts',
-    nothingMatched: 'No account matches that.',
-    stepBack: 'Select router or target',
+    heading: 'Connected providers',
+    searchLabel: 'Search providers',
+    nothingMatched: 'No provider matches that.',
+    stepBack: 'Select router or provider',
   },
   'provider-model': {
-    heading: 'Pick a provider model',
+    heading: 'Pick a model',
     searchLabel: 'Search models',
     nothingMatched: 'No model matches that.',
-    stepBack: 'Select different provider',
+    stepBack: 'Select a different provider',
   },
 };
 
-const KIND_OPTIONS: readonly OptionGroup[] = [
-  {
-    options: [
-      { id: 'router', name: 'Router', detail: 'spreads over children' },
-      { id: 'target', name: 'Target', detail: 'account, real model' },
-    ],
-  },
-];
+const KIND_OPTIONS: readonly OptionGroup[] = [{ options: BINDING_KINDS }];
 
 function stageBody(
+  stage: PickerStage,
   refusal: string | undefined,
   said: StageWording,
   groups: readonly OptionGroup[],
@@ -67,6 +61,10 @@ function stageBody(
         {refusal}
       </p>
     );
+  }
+
+  if (stage.step === 'account' && groups.length === 0) {
+    return <NoProviderRows />;
   }
 
   return (
@@ -90,15 +88,24 @@ type PickActs = {
 function pickedAt(stage: PickerStage, acts: PickActs): (picked: string) => void {
   if (stage.step === 'kind') {
     return (picked) => {
-      acts.onPickKind(picked === 'router' ? 'router' : 'target');
+      acts.onPickKind(boundKindOf(picked));
     };
   }
 
   return stage.step === 'account' ? acts.onPickAccount : acts.onPickProviderModel;
 }
 
+function headingWords(stage: PickerStage, said: StageWording, pickedName: string | undefined) {
+  if (stage.step !== 'provider-model' || pickedName === undefined) {
+    return said.heading;
+  }
+
+  return `Models ${pickedName} serves`;
+}
+
 function stageHeading(
   headingId: string,
+  heading: string,
   said: StageWording,
   onStepBack: (() => void) | undefined,
 ): ReactNode {
@@ -114,7 +121,7 @@ function stageHeading(
         />
       )}
       <p className="picker-heading" id={headingId}>
-        {said.heading}
+        {heading}
       </p>
     </div>
   );
@@ -127,6 +134,8 @@ export type DropPickerProps = {
   groups: readonly OptionGroup[];
   /** Why the stage offers nothing, when the picked account's models could not be read. */
   refusal: string | undefined;
+  /** What the picked provider reads as, which names whose model list the last stage offers. */
+  pickedName: string | undefined;
   /** Receives which of the two kinds a person chose to bind here. */
   onPickKind: (kind: BoundKind) => void;
   /** Receives the account a person settled the first stage on. */
@@ -153,6 +162,7 @@ export function DropPicker({
   stage,
   groups,
   refusal,
+  pickedName,
   onPickKind,
   onPickAccount,
   onPickProviderModel,
@@ -186,9 +196,10 @@ export function DropPicker({
       tabIndex={-1}
     >
       <div className={transition} key={stage.step}>
-        {stageHeading(headingId, said, onStepBack)}
+        {stageHeading(headingId, headingWords(stage, said, pickedName), said, onStepBack)}
         <div className="max-h-64 overflow-y-auto px-1.5 pb-1" data-picker-body="">
           {stageBody(
+            stage,
             refusal,
             said,
             stage.step === 'kind' ? KIND_OPTIONS : groups,

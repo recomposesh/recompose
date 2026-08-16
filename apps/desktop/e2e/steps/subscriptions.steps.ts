@@ -167,7 +167,7 @@ Then('the screen offers one call to action', async ({ page }) => {
 
 Then('a sentence names what a subscription account is', async ({ page }) => {
   await expect(page.getByRole('main')).toContainText(
-    'A subscription account is a plan you already pay for',
+    'A subscription is a plan you already pay for',
   );
 });
 

@@ -58,7 +58,7 @@ type FoundArm = Arm & {
 
 function whatTheMachineSays(reading: MachineCredentialReading, toolName: string): string {
   if (reading.holds === 'store-refused') {
-    return 'macOS did not allow access to the login keychain.';
+    return 'macOS blocked access to the login keychain. Allow access, then try again.';
   }
 
   return reading.holds === 'no-account-credential'

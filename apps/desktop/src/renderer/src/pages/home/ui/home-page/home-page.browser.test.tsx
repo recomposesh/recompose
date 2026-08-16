@@ -14,7 +14,7 @@ const codex = gatewaySeed({ slug: 'codex', displayName: 'Codex', port: 51234 });
 const noop = () => {};
 
 const bodyCopy =
-  'A gateway is one local address that routes requests across your AI accounts. Everything stays on this machine.';
+  'A gateway is one local address that routes requests across your AI providers. Everything stays on this machine.';
 
 async function renderHome(parameters: BridgeParameters, onCreateGateway: () => void = noop) {
   installFakeBridge(parameters);

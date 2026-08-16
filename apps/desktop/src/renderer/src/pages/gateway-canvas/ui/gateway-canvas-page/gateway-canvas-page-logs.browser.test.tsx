@@ -113,7 +113,7 @@ test('a request the gateway served while the drawer stood open lands as a row', 
   emitEngineLogs({ kind: 'append', rows: [servedRequest()] });
 
   await expect.element(screen.getByText('14:22:09')).toBeVisible();
-  await expect.element(screen.getByText('claude-haiku-4-5', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('claude-haiku-4-5', { exact: true }).first()).toBeVisible();
 });
 
 test('requests served before the drawer opened are already standing when it does', async () => {

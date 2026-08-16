@@ -102,11 +102,11 @@ When('the maintainer switches the theme to dark', async ({ electronApp, page }) 
 });
 
 Given('the app is on the gateways screen', async ({ page }) => {
-  await expect(page.getByRole('group', { name: 'Local Gateways' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Local gateways' })).toBeVisible();
 });
 
-Given('the app is on the API Keys screen', async ({ page }) => {
-  await openProviderScreen(page, 'API Keys');
+Given('the app is on the API keys screen', async ({ page }) => {
+  await openProviderScreen(page, 'API keys');
 });
 
 Given('the app is on the subscriptions screen', async ({ page }) => {
@@ -117,8 +117,8 @@ Given('the app is on the Aggregators screen', async ({ page }) => {
   await openProviderScreen(page, 'Aggregators');
 });
 
-Given('the app is on the Local Runtimes screen', async ({ page }) => {
-  await openProviderScreen(page, 'Local Runtimes');
+Given('the app is on the Local runtimes screen', async ({ page }) => {
+  await openProviderScreen(page, 'Local runtimes');
 });
 
 Given('the app is on the settings screen', async ({ page }) => {

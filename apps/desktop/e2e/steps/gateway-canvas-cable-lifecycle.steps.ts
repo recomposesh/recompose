@@ -209,7 +209,7 @@ Then(
   async ({ page }, providerModel: string) => {
     const inspector = inspectorOn(page, virtualModelInFocus(page));
 
-    await expect(inspector).toContainText('API Key');
+    await expect(inspector).toContainText('API key');
     await expect(inspector).toContainText('Anthropic');
     await expect(inspector).toContainText(providerModel);
   },

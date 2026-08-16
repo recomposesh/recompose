@@ -35,7 +35,7 @@ export function GhostGraph() {
           Gateway
         </text>
         <text x="353" y="72">
-          Virtual Model
+          Virtual model
         </text>
       </g>
     </svg>

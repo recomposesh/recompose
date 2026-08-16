@@ -4,11 +4,11 @@ import { expect, test, vi } from 'vitest';
 import type { ProviderRequest } from './claude-request';
 
 import { providerSilenceBoundMs } from '../provider-bounds';
+import { fetchClaudeProfile } from './claude-oauth-profile';
 import { CLAUDE_CIPHERS, CLAUDE_SIGNATURES } from './claude-transport-fingerprint';
 import {
   CLAUDE_OAUTH_TLS_FINGERPRINT,
   CLAUDE_TLS_FINGERPRINT,
-  fetchClaudeProfile,
   sendSubscriptionRequest,
   subscriptionRefreshTransportOptions,
   subscriptionTransportOptions,

@@ -10,11 +10,12 @@ type BadgeProps = {
  *
  * @summary Reach for it when one word qualifies the name it follows and a person reads the name
  * first. It carries no state and no action, so it stays part of the name it rides with rather than
- * becoming something to press.
+ * becoming something to press. Its fill is a tint rather than a color, because the rows it rides
+ * repaint under hover and an opaque fill would hold still while the row moved out from under it.
  */
 export function Badge({ children }: BadgeProps) {
   return (
-    <span className="inline-flex h-4 items-center rounded-chip bg-surface-inert px-1.25 text-caption font-medium text-ink-secondary capitalize">
+    <span className="inline-flex h-4 items-center rounded-chip bg-surface-tint px-1.25 text-caption font-medium text-ink capitalize">
       {children}
     </span>
   );

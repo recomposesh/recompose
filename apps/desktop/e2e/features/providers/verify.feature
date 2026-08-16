@@ -1,7 +1,7 @@
 Feature: Verifying a stored key
 
   Background:
-    Given the app is on the API Keys screen
+    Given the app is on the API keys screen
     And a connected "Anthropic API" key named "build"
 
   Scenario: A key that authenticates says so as of the check

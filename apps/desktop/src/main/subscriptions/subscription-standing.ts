@@ -3,7 +3,8 @@ import type { SubscriptionProviderId } from '@recompose/contracts';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { claudeOauthIn, credentialFactsFor, documentIn } from './credential-records';
+import { credentialInHome } from './credential-home-file';
+import { credentialFactsFor, documentIn, recordAt } from './credential-records';
 
 export type SubscriptionObservation = {
   standing: 'connected' | 'lapsed';
@@ -32,13 +33,12 @@ async function blobIn(home: string, file: string): Promise<string | null> {
   );
 }
 
-async function readFromHome(provider: SubscriptionProviderId, home: string): Promise<Reading> {
-  const credentialFile = provider === 'openai' ? 'auth.json' : '.credentials.json';
-  const [credential, identity] = await Promise.all([
-    blobIn(home, credentialFile),
-    blobIn(home, '.claude.json'),
-  ]);
-  const facts = credentialFactsFor(provider, documentIn(credential), documentIn(identity));
+function readingOf(
+  provider: SubscriptionProviderId,
+  credential: string | null,
+  identity: string | null,
+): Reading {
+  const facts = credentialFactsFor(provider, credential, identity);
 
   return {
     evidence: facts.holdsAccount || facts.holdsKey,
@@ -47,14 +47,35 @@ async function readFromHome(provider: SubscriptionProviderId, home: string): Pro
   };
 }
 
-async function keptOutsideTheHome(ask: OutsideCredential): Promise<boolean> {
+async function blobsIn(
+  provider: SubscriptionProviderId,
+  home: string,
+): Promise<{ credential: string | null; identity: string | null }> {
+  const [credential, nested, beside] = await Promise.all([
+    credentialInHome(provider, home),
+    blobIn(join(home, '.claude'), '.claude.json'),
+    blobIn(home, '.claude.json'),
+  ]);
+
+  return { credential, identity: identityHolding(nested) ?? beside };
+}
+
+/**
+ * @summary Claude Code writes its config to either place, so the one holding an account outranks
+ * the one that only holds settings. CC Switch resolves the same pair the same way, in `config.rs`.
+ */
+function identityHolding(nested: string | null): string | null {
+  const account = nested === null ? null : recordAt(documentIn(nested), 'oauthAccount');
+
+  return account === null ? null : nested;
+}
+
+async function keptOutsideTheHome(ask: OutsideCredential): Promise<string | null> {
   if (ask === null) {
-    return false;
+    return null;
   }
 
-  const blob = await ask().catch(() => null);
-
-  return blob !== null && claudeOauthIn(documentIn(blob)) !== null;
+  return ask().catch(() => null);
 }
 
 function onlyWhatTheRecordsSay(reading: Reading): Omit<SubscriptionObservation, 'standing'> {
@@ -64,11 +85,33 @@ function onlyWhatTheRecordsSay(reading: Reading): Omit<SubscriptionObservation, 
   };
 }
 
+/**
+ * How one account stands, and whatever its own records say about who holds it.
+ *
+ * @summary The credential is read from the config home first and from custody second, because a
+ * tool that wrote a file is the plainest evidence and custody is where this app parked what a tool
+ * wrote to the login keychain instead. Both are folded through the same facts, so the plan a
+ * keychain credential names reaches the screen exactly as a file's would: reading custody only for
+ * a yes or a no is what left a signed-in account with no plan beside its name.
+ */
 export async function observeSubscription(
   request: StandingRequest,
 ): Promise<SubscriptionObservation> {
-  const reading = await readFromHome(request.provider, request.home);
-  const held = reading.evidence || (await keptOutsideTheHome(request.outsideCredential));
+  const { credential, identity } = await blobsIn(request.provider, request.home);
+  const inHome = readingOf(request.provider, credential, identity);
 
-  return { standing: held ? 'connected' : 'lapsed', ...onlyWhatTheRecordsSay(reading) };
+  if (inHome.evidence) {
+    return { standing: 'connected', ...onlyWhatTheRecordsSay(inHome) };
+  }
+
+  const outside = readingOf(
+    request.provider,
+    await keptOutsideTheHome(request.outsideCredential),
+    identity,
+  );
+
+  return {
+    standing: outside.evidence ? 'connected' : 'lapsed',
+    ...onlyWhatTheRecordsSay(outside),
+  };
 }

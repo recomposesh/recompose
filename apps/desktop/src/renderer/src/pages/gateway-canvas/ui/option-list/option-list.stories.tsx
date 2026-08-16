@@ -38,8 +38,8 @@ const meta = preview.meta({
     groups: accounts,
     picked: undefined,
     onPick: () => {},
-    searchLabel: 'Search accounts',
-    nothingMatched: 'No account matches that.',
+    searchLabel: 'Search providers',
+    nothingMatched: 'No provider matches that.',
   },
   decorators: [
     (Story) => (

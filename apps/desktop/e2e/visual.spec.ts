@@ -58,7 +58,7 @@ test('the providers screen matches its baseline before any account exists', asyn
   page,
 }) => {
   await pinLightScheme(electronApp);
-  await openProviderScreen(page, 'API Keys');
+  await openProviderScreen(page, 'API keys');
   await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(0);
   await settleFonts(electronApp, page);
   await expect(page).toHaveScreenshot('providers-empty.png', capture);
@@ -69,7 +69,7 @@ test('the providers screen matches its baseline with a connected account', async
   page,
 }) => {
   await pinLightScheme(electronApp);
-  await openProviderScreen(page, 'API Keys');
+  await openProviderScreen(page, 'API keys');
   await keyStandsConnected(page, {
     entry: 'Anthropic API',
     name: 'build',

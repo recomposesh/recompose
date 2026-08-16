@@ -89,7 +89,7 @@ test('a target born where the view already reaches leaves the view where it stan
 
   const resting = viewportTransform(screen.container);
 
-  screen.getByLabelText('Choose a target').first().element().focus();
+  screen.getByLabelText('Pick a target').first().element().focus();
   await userEvent.keyboard('{Enter}');
   await pickedTheTarget(screen);
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Claude' }));
@@ -115,7 +115,9 @@ test('a draft finished in the inspector graduates into the composition and says 
 
   const panel = screen.getByRole('complementary');
 
-  await userEvent.click(panel.getByRole('button', { name: 'work' }));
+  await userEvent.click(panel.getByRole('button', { name: /^Provider One provider/ }));
+
+  await userEvent.click(panel.getByRole('button', { name: /work/ }));
   await userEvent.click(panel.getByRole('button', { name: 'claude-opus-5' }));
   await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
 

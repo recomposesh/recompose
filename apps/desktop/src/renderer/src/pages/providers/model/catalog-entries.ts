@@ -83,6 +83,12 @@ const subscriptionEntries: readonly CatalogEntry[] = [
     offers: [signsIn('Kimi Code', 'Moonshot plan, K2 in your tools')],
   },
   {
+    id: 'antigravity',
+    name: 'Antigravity',
+    lead: { mark: 'gemini' },
+    offers: [signsIn('Gemini (Antigravity)', 'Sign in with your Google account')],
+  },
+  {
     id: 'zhipu',
     name: 'Z.ai',
     lead: { mark: 'zhipu' },

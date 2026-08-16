@@ -8,6 +8,7 @@ export function pickerMetaArgs(accounts: readonly OptionGroup[]) {
     stage: { step: 'account' as const },
     groups: accounts,
     refusal: undefined,
+    pickedName: undefined,
     onDismiss: fn(),
     onPickAccount: fn(),
     onPickKind: fn(),

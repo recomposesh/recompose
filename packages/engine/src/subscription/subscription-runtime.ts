@@ -2,18 +2,15 @@ import type { AccountTransportPolicy, SubscriptionProviderId } from '@recompose/
 
 import { randomUUID } from 'node:crypto';
 
+import type { ClaudeProfile } from './claude-oauth-profile';
 import type { ProviderRequest } from './claude-request';
-import type { ClaudeProfile } from './provider-transport';
 
 import { AntigravityReasoningReplay } from './antigravity-replay';
 import { ClaudeDiagnostics } from './claude-diagnostics';
 import { newClaudeDeviceId } from './claude-identity';
+import { fetchClaudeProfile } from './claude-oauth-profile';
 import { CodexReasoningReplay } from './codex-replay';
-import {
-  fetchClaudeProfile,
-  sendSubscriptionRequest,
-  subscriptionRefreshFetch,
-} from './provider-transport';
+import { sendSubscriptionRequest, subscriptionRefreshFetch } from './provider-transport';
 
 type PersistCredential = (
   provider: SubscriptionProviderId,

@@ -139,7 +139,7 @@ type AskedOption = {
 export async function pickedTheTarget(screen: BindingAsk): Promise<void> {
   await screen
     .getByRole('dialog')
-    .getByRole('button', { name: /Target/ })
+    .getByRole('button', { name: /Provider/ })
     .click();
 }
 

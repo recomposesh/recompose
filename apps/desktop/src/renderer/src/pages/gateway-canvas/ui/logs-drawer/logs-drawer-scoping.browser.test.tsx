@@ -49,7 +49,7 @@ test('a selected virtual model names and types the header and leaves only its re
   const screen = await drawerOn({ subject: { kind: 'virtual-model', modelId: 'creative' } });
 
   await expect.element(screen.getByText('Logs for Creative')).toBeVisible();
-  await expect.element(screen.getByText('Virtual Model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Virtual model', { exact: true })).toBeVisible();
   expect(listed(screen.container)).toHaveLength(2);
   expect(listed(screen.container).join(' ')).not.toContain('fast');
 });
@@ -75,7 +75,7 @@ test('a selected target reads the account name and target type', async () => {
   });
 
   await expect.element(screen.getByText('Logs for openrouter')).toBeVisible();
-  await expect.element(screen.getByText('Target', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Provider', { exact: true })).toBeVisible();
   expect(listed(screen.container)).toHaveLength(2);
   expect(listed(screen.container).join(' ')).not.toContain('anthropic');
 });
@@ -95,7 +95,7 @@ test('a target since removed keeps its available name and reads as a removed tar
   });
 
   await expect.element(screen.getByText('Logs for openrouter')).toBeVisible();
-  await expect.element(screen.getByText('Removed Target', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Removed provider', { exact: true })).toBeVisible();
 });
 
 test('a draft names the new virtual model and narrows nothing', async () => {
@@ -175,7 +175,7 @@ test('a removed target with no requests behind it says so in its own words', asy
   });
 
   await expect
-    .element(screen.getByText('No requests reached the removed target yet.'))
+    .element(screen.getByText('No requests reached the removed provider yet.'))
     .toBeVisible();
 });
 

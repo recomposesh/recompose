@@ -3,11 +3,13 @@ import {
   nonBlankString,
   type LookCustody,
   type ModelListing,
+  type SubscriptionProviderId,
 } from '@recompose/contracts';
 
 import { isJsonObject, parsedJson } from '../gateway-wire';
 import { antigravitySubscriptionModels } from '../subscription/antigravity-models';
 import { claudeSubscriptionModels } from '../subscription/claude-models';
+import { kimiSubscriptionModels } from '../subscription/kimi-models';
 import { authHeadersFor } from './key-probe';
 
 const modelsPath = '/v1/models';
@@ -63,15 +65,32 @@ function planInToken(token: string): string | null {
   return typeof plan === 'string' ? plan : null;
 }
 
-function subscriptionListing(
+/**
+ * The models a subscription serves that recompose already knows without asking, or nothing.
+ *
+ * @summary Three providers publish no list a caller can read, so recompose carries theirs: two are
+ * fixed and Codex's depends on the plan its own credential declares. Every other subscription is
+ * left to answer for itself over the wire. It has to be named rather than defaulted, because a
+ * provider falling through to another's list would offer models it cannot serve under a name a
+ * person picked on purpose, and the request would only fail once a client sent it.
+ */
+const carriedSubscriptionModels = new Map<SubscriptionProviderId, readonly string[]>([
+  ['anthropic', claudeSubscriptionModels],
+  ['antigravity', antigravitySubscriptionModels],
+  ['kimi', kimiSubscriptionModels],
+]);
+
+function knownSubscriptionListing(
   custody: Extract<LookCustody, { custody: 'subscription' }>,
-): ModelListing {
-  if (custody.provider === 'anthropic') {
-    return { standing: 'listed', modelIds: claudeSubscriptionModels };
+): ModelListing | null {
+  const carried = carriedSubscriptionModels.get(custody.provider);
+
+  if (carried !== undefined) {
+    return { standing: 'listed', modelIds: [...carried] };
   }
 
-  if (custody.provider === 'antigravity') {
-    return { standing: 'listed', modelIds: [...antigravitySubscriptionModels] };
+  if (custody.provider !== 'openai') {
+    return null;
   }
 
   const models = codexPlanIn(custody.credential) === 'free' ? codexFreeModels : codexPaidModels;
@@ -168,13 +187,19 @@ function listedIdsIn(body: unknown): string[] | null {
  * screen owns the sentence a person reads, so nothing here invents words for silence. A partial
  * catalog folds too, because a list quietly missing a model would let a person bind nothing to it.
  */
+function listingCarriedFor(custody: LookCustody): ModelListing | null {
+  return custody.custody === 'subscription' ? knownSubscriptionListing(custody) : null;
+}
+
 export async function listProviderModels(
   fetchLike: typeof fetch,
   origin: string,
   custody: LookCustody,
 ): Promise<ModelListing> {
-  if (custody.custody === 'subscription') {
-    return subscriptionListing(custody);
+  const carried = listingCarriedFor(custody);
+
+  if (carried !== null) {
+    return carried;
   }
 
   const response = await answerOrSilence(fetchLike, origin, custody);

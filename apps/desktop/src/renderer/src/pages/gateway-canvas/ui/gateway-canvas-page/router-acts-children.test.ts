@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { canvasPositions } from '../../lib/canvas-position-store';
 import { gateway } from './canvas-wiring.testkit';
 import { canvasEnvironment, canvasLeftClean, worldWhereWritesLand } from './canvas-world.testkit';
-import { completedChildPick, completedChildRebindPick } from './router-acts';
+import { completedChildPick, completedChildRebindPick } from './ladder-acts';
 import {
   accounts,
   askOnTheStoredChild,

@@ -45,7 +45,7 @@ const meta = preview.meta({
  */
 export const NothingConnected = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText(/A subscription account is/)).toBeVisible();
+    await expect(await canvas.findByText(/A subscription is/)).toBeVisible();
   },
 });
 

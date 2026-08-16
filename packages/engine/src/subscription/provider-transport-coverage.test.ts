@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import type { SubscriptionWireFetch } from './provider-transport';
 
-import { fetchClaudeProfile, sendSubscriptionRequest } from './provider-transport';
+import { fetchClaudeProfile } from './claude-oauth-profile';
+import { sendSubscriptionRequest } from './provider-transport';
 import { requestTo, streamOf } from './provider-transport.testkit';
 
 function profileFetch(status: number, payload: string): SubscriptionWireFetch {

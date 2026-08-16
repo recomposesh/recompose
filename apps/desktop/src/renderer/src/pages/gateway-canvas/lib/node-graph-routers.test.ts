@@ -112,6 +112,7 @@ test('a child carries the account it reaches and the route node the ladder holds
     kind: 'target',
     account: work,
     modelId: 'fast',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: 'first',
     depth: 1,
     detail: 'Work',

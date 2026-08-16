@@ -78,7 +78,7 @@ test('Delete on a selected target asks, and confirming releases the binding into
   await userEvent.click(screen.getByRole('button', { name: /work/ }));
   await userEvent.keyboard('{Delete}');
 
-  await expect.element(screen.getByText(/Delete the target "work"/)).toBeVisible();
+  await expect.element(screen.getByText(/Delete the provider "work"/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
 
@@ -95,7 +95,7 @@ test('the drawer delete link asks the same question before a virtual model leave
   const screen = await canvasPageOn();
 
   await userEvent.click(screen.getByRole('button', { name: /Fast/ }));
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Virtual Model' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete virtual model' }));
 
   await expect.element(screen.getByText(/Delete the virtual model "Fast"/)).toBeVisible();
 
@@ -109,9 +109,9 @@ test('the drawer delete on a target asks, and confirming releases the binding', 
   const screen = await canvasPageOn();
 
   await userEvent.click(screen.getByRole('button', { name: /work/ }));
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Target' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete provider' }));
 
-  await expect.element(screen.getByText(/Delete the target "work"/)).toBeVisible();
+  await expect.element(screen.getByText(/Delete the provider "work"/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
 
@@ -142,7 +142,7 @@ test('a gateway nobody named asks its removal by the slug it stores under', asyn
 
   toggleInspector();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Gateway' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete gateway' }));
 
   await expect.element(screen.getByText(/Delete the gateway "my-gateway"/)).toBeVisible();
 

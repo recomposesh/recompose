@@ -5,14 +5,18 @@ import { ContextMenu } from '@base-ui/react/context-menu';
 import { useRef, useState } from 'react';
 
 import type { RouterMode } from '../../lib/routing-edits';
+import type { RowLeadFace } from '../row-lead/row-lead';
 
 import { Icon } from '../../../../shared/ui';
+import { RowLead } from '../row-lead/row-lead';
 import { spokenRank } from './spoken-rank';
 
 /** One child of a router, read as the row a person orders it by. */
-export type RouterChild = {
+export type RouterChild = RowLeadFace & {
   /** The id the stored table holds this child under, which is what a move names. */
   routeNodeId: string;
+  /** The card this child stands as on the canvas, which is what opening the row reaches. */
+  cardId: string;
   /** What the child answers to, which is the account behind it or the router it is. */
   name: string;
   /** A quieter fact under the name, which is the real model a target serves. */
@@ -29,6 +33,8 @@ type RouterChildListProps = {
   rows: readonly RouterChild[];
   /** Receives the rank a row moved from and the rank it moved to. */
   onMove: (from: number, to: number) => void;
+  /** Receives the child a person opened, which selects its card and turns the drawer to it. */
+  onOpen: OpenChild;
 };
 
 type LadderActs = {
@@ -39,27 +45,42 @@ type LadderActs = {
 
 type LadderRow = { child: RouterChild; rank: number; total: number } & LadderActs;
 
-const rowShell = 'group flex items-center gap-1.5 border-t border-line-faint first:border-t-0';
+type OpenChild = (child: RouterChild) => void;
 
-const ladderRowFrame = `${rowShell} px-1 row-hover`;
-
-const plainRowFrame = `${rowShell} px-3 row-hover`;
+const rowShell =
+  'group flex items-center gap-2.5 border-t border-line-faint px-3 py-1.5 first:border-t-0 row-hover';
 
 const moveButtonFace =
   'flex size-hit-target shrink-0 items-center justify-center rounded-control opacity-0 focus-ring text-ink-secondary group-hover:opacity-100 focus-visible:opacity-100 aria-disabled:text-ink-tertiary';
 
-function childFace(child: RouterChild): ReactElement {
+/**
+ * What one child answers to, with the binding it stands for under it.
+ *
+ * @summary The two read as two lines rather than one, because the account and the real model it
+ * serves are both long and side by side each one truncates the other away. Stacked, the name a
+ * person scans down the ladder starts in one column and the binding they check reads whole.
+ */
+function childFace(child: RouterChild, onOpen: (child: RouterChild) => void): ReactElement {
   return (
-    <>
-      <span className="min-w-0 truncate text-control text-ink" data-child-name="">
-        {child.name}
+    <button
+      className="flex min-h-hit-target min-w-0 flex-1 items-center gap-2.5 rounded-control focus-ring text-start"
+      onClick={() => {
+        onOpen(child);
+      }}
+      type="button"
+    >
+      <RowLead glyph={child.glyph} glyphTint={child.glyphTint} mark={child.mark} />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-control font-medium text-ink" data-child-name="">
+          {child.name}
+        </span>{' '}
+        {child.detail === undefined ? null : (
+          <span className="truncate font-mono text-mono-value text-ink-secondary">
+            {child.detail}
+          </span>
+        )}
       </span>
-      {child.detail === undefined ? null : (
-        <span className="min-w-0 flex-1 truncate font-mono text-mono-caption text-ink-secondary">
-          {child.detail}
-        </span>
-      )}
-    </>
+    </button>
   );
 }
 
@@ -115,13 +136,13 @@ function rowMenu(row: LadderRow): ReactElement {
   );
 }
 
-function ladderRow(row: LadderRow): ReactElement {
+function ladderRow(row: LadderRow, onOpen: OpenChild): ReactElement {
   const { child, rank, onDrop, onDragStart } = row;
 
   return (
     <ContextMenu.Root key={child.routeNodeId}>
       <ContextMenu.Trigger
-        className={ladderRowFrame}
+        className={rowShell}
         onDragOver={(event) => {
           event.preventDefault();
         }}
@@ -129,35 +150,35 @@ function ladderRow(row: LadderRow): ReactElement {
         render={<li />}
       >
         <span
-          className="w-4 shrink-0 text-end font-mono text-mono-caption text-ink-secondary"
+          className="w-4 shrink-0 text-center text-control font-medium text-ink-secondary"
           data-rank=""
         >
           {rank}
         </span>
+        {childFace(child, onOpen)}
+        {moveButton(row, 'up')}
+        {moveButton(row, 'down')}
         <span
           aria-hidden
-          className="flex size-hit-target shrink-0 cursor-grab items-center justify-center text-ink-tertiary"
+          className="flex size-hit-target shrink-0 cursor-grab items-center justify-center text-ink-tertiary group-hover:text-ink-secondary"
           data-drag-handle=""
           draggable
           onDragStart={onDragStart}
         >
-          <Icon className="size-3.5" name="grip" />
+          <Icon className="size-4" name="grip" />
         </span>
-        {childFace(child)}
-        {moveButton(row, 'up')}
-        {moveButton(row, 'down')}
       </ContextMenu.Trigger>
       {rowMenu(row)}
     </ContextMenu.Root>
   );
 }
 
-function unorderedList(rows: readonly RouterChild[]): ReactElement {
+function unorderedList(rows: readonly RouterChild[], onOpen: OpenChild): ReactElement {
   return (
-    <ul aria-label="Children" className="field-box py-0.5">
+    <ul aria-label="Children" className="field-box p-px">
       {rows.map((child) => (
-        <li className={plainRowFrame} key={child.routeNodeId}>
-          {childFace(child)}
+        <li className={rowShell} key={child.routeNodeId}>
+          {childFace(child, onOpen)}
         </li>
       ))}
     </ul>
@@ -200,7 +221,7 @@ function ladderActs(
  * person pressed keeps the focus it had. Under round-robin no end of the list wins, so it carries
  * no rank and no way to order it, because an affordance for an order nothing reads would be a lie.
  */
-export function RouterChildList({ mode, rows, onMove }: RouterChildListProps) {
+export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListProps) {
   const grabbed = useRef<number | undefined>(undefined);
   const [said, setSaid] = useState<string | undefined>(undefined);
 
@@ -224,19 +245,22 @@ export function RouterChildList({ mode, rows, onMove }: RouterChildListProps) {
   }
 
   if (mode === 'round-robin') {
-    return unorderedList(rows);
+    return unorderedList(rows, onOpen);
   }
 
   return (
     <>
-      <ol aria-label="Children" className="field-box py-0.5">
+      <ol aria-label="Children" className="field-box p-px">
         {rows.map((child, index) =>
-          ladderRow({
-            child,
-            rank: index + 1,
-            total: rows.length,
-            ...ladderActs(index, grabbed, carried),
-          }),
+          ladderRow(
+            {
+              child,
+              rank: index + 1,
+              total: rows.length,
+              ...ladderActs(index, grabbed, carried),
+            },
+            onOpen,
+          ),
         )}
       </ol>
       <p className="sr-only" role="status">

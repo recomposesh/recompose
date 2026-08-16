@@ -32,7 +32,7 @@ export const Basic = meta.story({
     await expect(
       await canvas.findByRole('heading', { name: 'Create your first gateway', level: 1 }),
     ).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Create Gateway' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Create gateway' })).toBeVisible();
     await expect(await canvas.findByRole('link', { name: 'Read the guide' })).toBeVisible();
   },
 });
@@ -68,7 +68,7 @@ export const Rhythm = meta.story({
 /** The two controls the reference sets side by side, at the size it draws them. */
 export const CallToAction = meta.story({
   play: async ({ canvas }) => {
-    const create = await canvas.findByRole('button', { name: 'Create Gateway' });
+    const create = await canvas.findByRole('button', { name: 'Create gateway' });
     const guide = await canvas.findByRole('link', { name: 'Read the guide' });
 
     await expect(paintedStyle(create.parentElement).columnGap).toBe('10px');

@@ -27,6 +27,19 @@ export function inspectorOpen(): boolean {
   return open;
 }
 
+/**
+ * Brings the inspector out, which is what a gesture that leaves work unfinished asks for.
+ *
+ * @summary Reach for it where a person answered something on the canvas that the drawer has to
+ * finish, so the panel arrives already holding the question rather than waiting to be found.
+ */
+export function openInspector(): void {
+  if (!open) {
+    open = true;
+    tellReaders();
+  }
+}
+
 /** Puts the inspector away, which is what leaving a gateway's detail asks for. */
 export function closeInspector(): void {
   if (open) {

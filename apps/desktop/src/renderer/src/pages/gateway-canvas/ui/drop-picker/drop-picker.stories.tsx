@@ -68,7 +68,7 @@ const meta = preview.meta({
   ],
 });
 
-const asked = { name: 'Pick an account' };
+const asked = { name: 'Connected providers' };
 
 function scrollRegion(canvasElement: HTMLElement): HTMLElement | null {
   return canvasElement.querySelector('[data-picker-body]');
@@ -104,7 +104,7 @@ export const TheKindAskPrintsBothKindsWhole = meta.story({
 /** Reached from the kind ask, the account stage offers the chevron back to it. */
 export const TheAccountStageOffersTheWayBackToTheKindAsk = meta.story({
   play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'Select router or target' }));
+    await userEvent.click(await canvas.findByRole('button', { name: 'Select router or provider' }));
 
     await expect(args.onStepBack).toHaveBeenCalled();
   },
@@ -115,7 +115,7 @@ export const AStageNothingStandsBehindWearsNoChevron = meta.story({
   render: (args) => <DropPicker {...args} onStepBack={undefined} />,
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: 'work key' })).toBeVisible();
-    await expect(canvas.queryByRole('button', { name: 'Select router or target' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Select router or provider' })).toBeNull();
   },
 });
 

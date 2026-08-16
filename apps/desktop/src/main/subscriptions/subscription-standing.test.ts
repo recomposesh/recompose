@@ -9,7 +9,7 @@ import { beforeEach, describe, expect } from 'vitest';
 import type { OutsideCredential, SubscriptionObservation } from './subscription-standing';
 
 import { observeSubscription } from './subscription-standing';
-import { aClaudeLogin, anMcpRecordAlone } from './subscriptions.testkit';
+import { aClaudeLogin, aClaudeLoginNamingNoPlan, anMcpRecordAlone } from './subscriptions.testkit';
 
 let home: string;
 
@@ -18,6 +18,7 @@ async function recorded(file: string, contents: string | Uint8Array): Promise<vo
 }
 
 const credentialInTheKeychain = async () => Promise.resolve(aClaudeLogin);
+const aPlanlessCredentialInTheKeychain = async () => Promise.resolve(aClaudeLoginNamingNoPlan);
 const nothingInTheKeychain = async () => Promise.resolve(null);
 const onlyAnMcpRecordInTheKeychain = async () => Promise.resolve(anMcpRecordAlone);
 
@@ -85,7 +86,7 @@ describe('reading a Claude Code account whose credential lives outside the home'
 
     const observed = await reading('anthropic', credentialInTheKeychain);
 
-    expect(observed).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com' });
+    expect(observed).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com', plan: 'max' });
   });
 
   test('given the keychain holds an MCP record where the login goes, the account reads as lapsed', async () => {
@@ -133,7 +134,7 @@ describe('deriving the Claude Code plan when the credential lives outside the ho
         }),
       );
 
-      const observed = await reading('anthropic', credentialInTheKeychain, scratch);
+      const observed = await reading('anthropic', aPlanlessCredentialInTheKeychain, scratch);
 
       expect(observed).toEqual({ standing: 'connected', signedInAs: 'ada@ex.com', plan });
     },
@@ -145,7 +146,7 @@ describe('deriving the Claude Code plan when the credential lives outside the ho
       JSON.stringify({ oauthAccount: { userRateLimitTier: 'default_raven' } }),
     );
 
-    const observed = await reading('anthropic', credentialInTheKeychain);
+    const observed = await reading('anthropic', aPlanlessCredentialInTheKeychain);
 
     expect(observed).toEqual({ standing: 'connected' });
   });

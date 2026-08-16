@@ -50,7 +50,7 @@ export function FoundAccountRow({
       disabled={inert}
       label={`Connect ${who}`}
       lead={
-        <span className="flex size-6 items-center justify-center rounded-pill border border-line-subtle bg-surface-inert text-detail font-semibold text-ink-secondary">
+        <span className="flex size-6 items-center justify-center rounded-pill border border-line-subtle bg-surface-tint text-detail font-semibold text-ink-secondary">
           {initialOf(who)}
         </span>
       }

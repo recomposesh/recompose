@@ -23,7 +23,7 @@ import {
   accountPicker,
   pickProviderModel,
   pickTheStoredTarget,
-  pickTheTargetKind,
+  pickTheProviderKind,
 } from '../canvas-picker';
 import { emptyCanvasSpot } from '../canvas-room';
 import {
@@ -127,7 +127,7 @@ Given(
     await gatewayTargetingAKey(page);
     await draftNamed(page, name);
     await letGoOnEmptyCanvas(page, DRAFT_NODE);
-    await pickTheTargetKind(page);
+    await pickTheProviderKind(page);
 
     await expect(accountPicker(page)).toBeVisible();
     await expect.poll(async () => standingNodes(page)).toContain(PENDING_NODE);
@@ -173,7 +173,7 @@ When(
   'the person drops a cable from the port of {string} on empty canvas and picks the target',
   async ({ page }, name: string) => {
     await letGoOnEmptyCanvas(page, await cardNamed(page, name));
-    await pickTheTargetKind(page);
+    await pickTheProviderKind(page);
   },
 );
 

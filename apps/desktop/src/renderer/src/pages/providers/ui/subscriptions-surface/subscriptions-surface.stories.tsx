@@ -46,7 +46,7 @@ export const Connected = meta.story({
 export const Empty = meta.story({
   parameters: { bridge: { subscriptions: [] } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText(/A subscription account is/)).toBeVisible();
+    await expect(await canvas.findByText(/A subscription is/)).toBeVisible();
   },
 });
 

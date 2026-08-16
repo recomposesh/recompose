@@ -36,6 +36,7 @@ type CardReading = {
   name: string;
   nameInk: string;
   subtitle: string | undefined;
+  footnote: string | undefined;
   frame: string;
   tint: string;
 };
@@ -66,6 +67,7 @@ function readingOf(data: TargetNodeData): CardReading {
       name: accountProductName(data.account),
       nameInk: 'text-ink',
       subtitle: data.detail ?? accountDetail(data.account),
+      footnote: data.providerModel,
       frame: '',
       tint: accountKindNodeTint[data.account.kind],
     };
@@ -80,7 +82,8 @@ function readingOf(data: TargetNodeData): CardReading {
       chipMark: undefined,
       name: data.accountId,
       nameInk: 'text-ink',
-      subtitle: 'not in the registry',
+      subtitle: 'no longer connected',
+      footnote: undefined,
       frame: 'border-dashed',
       tint: 'node-tint-danger',
     };
@@ -92,9 +95,10 @@ function readingOf(data: TargetNodeData): CardReading {
     kickerTint: 'text-ink-secondary',
     chipGlyph: 'plus',
     chipMark: undefined,
-    name: 'Choose a target',
+    name: 'Pick a target',
     nameInk: 'text-ink-secondary',
     subtitle: undefined,
+    footnote: undefined,
     frame: 'border-dashed',
     tint: 'node-tint-ink-tertiary',
   };
@@ -118,6 +122,7 @@ export function TargetNode({ data, selected }: TargetNodeProps) {
       chipGlyph={reading.chipGlyph}
       chipMark={reading.chipMark}
       chipTint={reading.chipTint}
+      footnote={reading.footnote}
       frame={reading.frame}
       incoming
       kicker={reading.kicker}
@@ -127,6 +132,7 @@ export function TargetNode({ data, selected }: TargetNodeProps) {
       outgoing={undefined}
       selected={selected}
       subtitle={reading.subtitle}
+      subtitleFace="prose"
       subtitleInk="text-ink-secondary"
       tint={reading.tint}
     />

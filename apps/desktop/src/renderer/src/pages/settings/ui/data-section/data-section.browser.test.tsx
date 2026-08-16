@@ -72,7 +72,9 @@ test('a shortening states its cost and holds until answered', async () => {
 
   await screen.getByRole('radio', { name: '7 days' }).click();
 
-  await expect.element(screen.getByText(/drops usage older than 7 days for good/)).toBeVisible();
+  await expect
+    .element(screen.getByText(/Usage older than 7 days is deleted permanently/))
+    .toBeVisible();
   await expect.element(screen.getByRole('radio', { name: '30 days' })).toBeChecked();
 });
 
@@ -90,7 +92,7 @@ test('accepting saves the shorter window', async () => {
   const screen = await renderAgainstBridge(<SettingsPage />);
 
   await screen.getByRole('radio', { name: '7 days' }).click();
-  await screen.getByRole('button', { name: 'Drop history' }).click();
+  await screen.getByRole('button', { name: 'Delete history' }).click();
 
   await expect.element(screen.getByRole('radio', { name: '7 days' })).toBeChecked();
 });

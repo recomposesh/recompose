@@ -72,7 +72,7 @@ test('the mode stands as the two segments a person chooses between', async () =>
 test('the sentence above the list says which end wins under failover', async () => {
   const screen = await renderDrawer(onTheRouter, { gateway: pooledGateway('failover') });
 
-  await expect.element(screen.getByText(/topmost healthy target/)).toBeVisible();
+  await expect.element(screen.getByText(/topmost healthy provider/)).toBeVisible();
 });
 
 test('the sentence names the prompt-cache cost of rotation under round-robin', async () => {
@@ -131,7 +131,7 @@ test('the router subject offers the drawer link into removal that every other su
     },
   });
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete router' }));
 
   expect(asked).toEqual(['route:pooled']);
 });
@@ -148,7 +148,7 @@ test('the drawer link on a nested router names that router rather than the one a
     },
   );
 
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete router' }));
 
   expect(asked).toEqual(['route:pooled:r2']);
 });

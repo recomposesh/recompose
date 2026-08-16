@@ -104,13 +104,6 @@ test('served history lands in the tiles, the chart, and all three panels togethe
   await expect.element(screen.getByRole('region', { name: 'By gateway' })).toBeVisible();
   await expect.element(screen.getByRole('region', { name: 'By virtual model' })).toBeVisible();
   await expect.element(screen.getByRole('region', { name: 'By target' })).toBeVisible();
-  await expect
-    .element(
-      screen.getByText(
-        'Every panel folds the same buckets · hour buckets · days break at your local midnight',
-      ),
-    )
-    .toBeVisible();
 });
 
 test('the header names the window and what the readings stand for', async () => {
@@ -120,7 +113,7 @@ test('the header names the window and what the readings stand for', async () => 
 
   await expect.element(screen.getByRole('heading', { level: 1, name: 'Usage' })).toBeVisible();
   await expect
-    .element(screen.getByText('All gateways · All providers · Last 7 days · local time'))
+    .element(screen.getByText('All gateways · All providers · Last 7 days'))
     .toBeVisible();
 });
 
@@ -134,9 +127,7 @@ test('a standing filter narrows every reading and the sentence says so', async (
   const readings = screen.getByRole('region', { name: 'Window readings' });
 
   await expect.element(readings.getByText('3', { exact: true })).toBeVisible();
-  await expect
-    .element(screen.getByText('backup · All providers · Last 7 days · local time'))
-    .toBeVisible();
+  await expect.element(screen.getByText('backup · All providers · Last 7 days')).toBeVisible();
 });
 
 test('the chart marks where retained history begins when the window cut it', async () => {
@@ -213,7 +204,7 @@ test('a refused history read names itself and offers the read again', async () =
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
   await expect.element(screen.getByText('The stored usage history cannot be read.')).toBeVisible();
-  await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
 });
 
 test('a panel reprints in the unit its control names', async () => {
@@ -278,11 +269,11 @@ test('the retry beside a refused read asks for the window again', async () => {
 
   const screen = await mounted(<UsagePage onSearchChange={() => {}} search={at7d} />);
 
-  await expect.element(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
 
   const before = asks.length;
 
-  await screen.getByRole('button', { name: 'Retry' }).click();
+  await screen.getByRole('button', { name: 'Try again' }).click();
 
   await vi.waitFor(() => {
     expect(asks.length).toBeGreaterThan(before);

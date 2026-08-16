@@ -146,7 +146,7 @@ test('a check answers as of the moment it ran rather than as a standing the row 
 
   await choose('Verify');
 
-  await expect.element(screen.getByRole('status')).toHaveTextContent('as of this check');
+  await expect.element(screen.getByRole('status')).toHaveTextContent('at the last check');
 });
 
 test('a check still out keeps Verify out of reach, so one press asks one probe', async () => {

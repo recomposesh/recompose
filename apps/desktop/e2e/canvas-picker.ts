@@ -4,29 +4,29 @@ import { expect } from '@playwright/test';
 
 /** The stage a released cable opens on, which names the two kinds a binding may meet. */
 export function bindingKindAsk(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Bind a router or a target' });
+  return page.getByRole('dialog', { name: 'Bind this model to' });
 }
 
 /**
- * Answers the binding ask with a target, which is the stage every account pick now opens on.
+ * Answers the binding ask with a provider, which is the stage every account pick now opens on.
  *
  * @summary The press is scoped to the ask itself, because the canvas standing behind it holds
- * target cards whose names read like the options.
+ * provider cards whose names read like the options.
  */
-export async function pickTheTargetKind(page: Page): Promise<void> {
+export async function pickTheProviderKind(page: Page): Promise<void> {
   await bindingKindAsk(page)
-    .getByRole('button', { name: /^Target/u })
+    .getByRole('button', { name: /^Provider/u })
     .click();
 }
 
 /** The stage of the picker that asks which stored account a binding lands on. */
 export function accountPicker(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Pick an account' });
+  return page.getByRole('dialog', { name: 'Connected providers' });
 }
 
 /** The stage of the picker that asks which model the chosen account serves. */
 export function providerModelPicker(page: Page): Locator {
-  return page.getByRole('dialog', { name: 'Pick a provider model' });
+  return page.getByRole('dialog', { name: /^Models .+ serves$/ });
 }
 
 async function pickAccount(page: Page, account: string): Promise<void> {
@@ -66,6 +66,6 @@ export async function completeThePick(
   account: string,
   providerModel: string,
 ): Promise<void> {
-  await pickTheTargetKind(page);
+  await pickTheProviderKind(page);
   await pickTheStoredTarget(page, account, providerModel);
 }

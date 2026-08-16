@@ -30,6 +30,7 @@ export function AnchoredPicker({
   onPickProviderModel,
   onStepBack,
   onDismiss,
+  pickedName,
 }: AnchoredPickerProps) {
   const { x, y, zoom } = useViewport();
   const stood = `translate(${String(x + seat.x * zoom)}px, ${String(y + seat.y * zoom)}px)`;
@@ -46,6 +47,7 @@ export function AnchoredPicker({
         onPickKind={onPickKind}
         onPickProviderModel={onPickProviderModel}
         onStepBack={onStepBack}
+        pickedName={pickedName}
         refusal={refusal}
         stage={stage}
       />

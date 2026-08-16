@@ -81,7 +81,7 @@ test('an id outside the model alphabet refuses with the spelling rule', async ()
 
   await expect
     .element(screen.getByRole('alert'))
-    .toHaveTextContent('A model id is lowercase letters, digits, dots and dashes.');
+    .toHaveTextContent('Model ids use lowercase letters, digits, dots, and dashes.');
   expect(await storedDefinitions()).toContainEqual({ id: 'fast', displayName: 'Fast' });
 });
 
@@ -100,7 +100,9 @@ test('saving a new name keeps the id and leaves the restart notice standing', as
   await screen.getByRole('textbox', { name: 'Model name' }).fill('Rapid');
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-  await expect.element(screen.getByText(/Restart the harness/)).toBeVisible();
+  await expect
+    .element(screen.getByText(/Restart the app that points at this gateway/))
+    .toBeVisible();
   expect(await storedDefinitions()).toContainEqual({ id: 'fast', displayName: 'Rapid' });
   expect(renamed).toEqual([]);
 });
@@ -173,9 +175,7 @@ test('an emptied gateway name refuses, because a gateway needs a name to stand u
   await screen.getByRole('textbox', { name: 'Gateway name' }).fill('   ');
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-  await expect
-    .element(screen.getByRole('alert'))
-    .toHaveTextContent('A gateway needs a name to stand under.');
+  await expect.element(screen.getByRole('alert')).toHaveTextContent('Give the gateway a name.');
   await expect.element(screen.getByRole('textbox', { name: 'Gateway name' })).toBeVisible();
   expect(await storedGatewayName()).toBe('My Gateway');
 });

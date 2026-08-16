@@ -16,7 +16,7 @@ When('the maintainer adds {string} anyway', async ({ page }, runtime: string) =>
   await runtimeStandsAddedAnyway(page, runtime);
 });
 
-Then('the account lists under the Local Runtimes surface', async ({ page }) => {
-  await expect(screenTitle(page)).toHaveText('Local Runtimes');
+Then('the account lists under the Local runtimes surface', async ({ page }) => {
+  await expect(screenTitle(page)).toHaveText('Local runtimes');
   await expect(accountRows(page)).toHaveCount(1);
 });

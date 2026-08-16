@@ -6,12 +6,14 @@ import { useRouter } from '@tanstack/react-router';
  * @summary Hand it to a route's errorComponent so the failure stays inside the outlet and the
  * navigation around it survives, which is the only way back to the page that repairs the file.
  */
+const COULD_NOT_LOAD = "Couldn't load this page";
+
 export function PageError({ error }: { error: Error }) {
   const router = useRouter();
 
   return (
     <div className="flex flex-col items-start gap-3" role="alert">
-      <h1 className="text-title text-ink">This page could not be read</h1>
+      <h1 className="text-title text-ink">{COULD_NOT_LOAD}</h1>
       <p className="text-body text-ink-secondary">{error.message}</p>
       <button
         className="push-button"

@@ -22,8 +22,8 @@ describe('the name a person types', () => {
   });
 
   test('a name Windows keeps for a device says so in its own words', () => {
-    expect(nameRefusal('Con')).toBe('Windows reserves this name.');
-    expect(nameRefusal('lpt1')).toBe('Windows reserves this name.');
+    expect(nameRefusal('Con')).toBe('Windows reserves this name. Pick another one.');
+    expect(nameRefusal('lpt1')).toBe('Windows reserves this name. Pick another one.');
   });
 
   test('no name at all asks for one, rather than storing a gateway nobody named', () => {
@@ -42,12 +42,12 @@ describe('the port a person types', () => {
   });
 
   test('a port under the range states the range', () => {
-    expect(portRefusal('80')).toBe('Accepts 1024 through 65535.');
-    expect(portRefusal('1023')).toBe('Accepts 1024 through 65535.');
+    expect(portRefusal('80')).toBe('Port must be between 1024 and 65535.');
+    expect(portRefusal('1023')).toBe('Port must be between 1024 and 65535.');
   });
 
   test('a port over the range states the same range', () => {
-    expect(portRefusal('65536')).toBe('Accepts 1024 through 65535.');
+    expect(portRefusal('65536')).toBe('Port must be between 1024 and 65535.');
   });
 
   test('the ends of the range are inside it', () => {
@@ -56,9 +56,9 @@ describe('the port a person types', () => {
   });
 
   test('a port field holding no number states the range rather than staying silent', () => {
-    expect(portRefusal('')).toBe('Accepts 1024 through 65535.');
-    expect(portRefusal('eight thousand')).toBe('Accepts 1024 through 65535.');
-    expect(portRefusal('8000.5')).toBe('Accepts 1024 through 65535.');
+    expect(portRefusal('')).toBe('Port must be between 1024 and 65535.');
+    expect(portRefusal('eight thousand')).toBe('Port must be between 1024 and 65535.');
+    expect(portRefusal('8000.5')).toBe('Port must be between 1024 and 65535.');
   });
 
   propertyTest.prop([fc.integer({ min: 1024, max: 65535 })])(
@@ -109,7 +109,9 @@ describe('where a refusal the main process sent lands on the sheet', () => {
       refusalFromMain(
         new IpcResultError({ code: 'validation-failed', message: '[{"code":"too_small"}]' }),
       ),
-    ).toEqual({ sheet: 'recompose cannot store this gateway as it stands.' });
+    ).toEqual({
+      sheet: "recompose can't store this gateway. Check the name and the port, then try again.",
+    });
   });
 
   test('a failure that never reached the main process still stands in the sheet', () => {

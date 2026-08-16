@@ -94,6 +94,7 @@ export function targetCard(id: string): CanvasNode {
       credentialRef: 'c1',
     },
     modelId: 'pooled',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: 't1',
     depth: 1,
   };

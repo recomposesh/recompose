@@ -26,7 +26,7 @@ function renameRefusal(
   nextId: string,
 ): string | undefined {
   if (!modelAliasSchema.safeParse(nextId).success) {
-    return 'A model id is lowercase letters, digits, dots and dashes.';
+    return 'Model ids use lowercase letters, digits, dots, and dashes.';
   }
 
   if (nextId !== model.id && gateway.virtualModels.some((held) => held.id === nextId)) {
@@ -89,7 +89,7 @@ function saveRename(
 
 function modelNameRow(name: string, onName: (name: string) => void): ReactNode {
   return editRow(
-    'Model Name',
+    'Model name',
     <input
       aria-label="Model name"
       className="field-control w-full"
@@ -134,7 +134,7 @@ function renameRows(draft: RenameDraft, onDraft: (draft: RenameDraft) => void): 
 function modelFactRows(model: VirtualModel): ReactNode {
   return (
     <>
-      {factRow('Model Name', model.displayName)}
+      {factRow('Model name', model.displayName)}
       {factRow('Model id', model.id, <CopyButton label="Copy model id" value={model.id} />)}
     </>
   );
@@ -180,7 +180,7 @@ export function ModelGeneralInfo({ gateway, model, onRenamed }: ModelGeneralInfo
 
   return (
     <>
-      {editableSectionHeading('General Info', draft !== undefined, beginEditing)}
+      {editableSectionHeading('General info', draft !== undefined, beginEditing)}
       <div className="field-box">
         {draft === undefined ? modelFactRows(model) : renameRows(draft, setDraft)}
       </div>

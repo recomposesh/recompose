@@ -30,6 +30,7 @@ export type DrawerWorld = {
   onDraftDefined?: (definition: SettledDefinition) => void;
   onAskRemoval?: (nodeId: string) => void;
   onModelRenamed?: (modelId: string) => void;
+  onSelectNode?: (nodeId: string) => void;
 };
 
 const servingDrawerWorld = {
@@ -40,12 +41,13 @@ const servingDrawerWorld = {
   onDraftDefined: () => {},
   onAskRemoval: () => {},
   onModelRenamed: () => {},
+  onSelectNode: () => {},
 } satisfies DrawerWorld;
 
 /** Renders the drawer over a seeded bridge, defaulting every seat to the serving world. */
 export async function renderDrawer(subject: InspectorSubject, world: DrawerWorld = {}) {
   const settled = { ...servingDrawerWorld, ...world };
-  const { onAskRemoval, onDraftDefined, onModelRenamed } = settled;
+  const { onAskRemoval, onDraftDefined, onModelRenamed, onSelectNode } = settled;
 
   installFakeBridge({
     accounts: settled.accounts,
@@ -67,6 +69,7 @@ export async function renderDrawer(subject: InspectorSubject, world: DrawerWorld
           onAskRemoval={onAskRemoval}
           onDraftDefined={onDraftDefined}
           onModelRenamed={onModelRenamed}
+          onSelectNode={onSelectNode}
           refusal={settled.refusal}
           subject={subject}
         />

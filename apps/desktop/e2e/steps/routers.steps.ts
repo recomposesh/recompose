@@ -43,6 +43,6 @@ Then('an ask offers a router or a target before anything else', async ({ page })
   const asked = bindingKindAsk(page);
 
   await expect(asked.getByRole('button', { name: /^Router/u })).toBeVisible();
-  await expect(asked.getByRole('button', { name: /^Target/u })).toBeVisible();
+  await expect(asked.getByRole('button', { name: /^Provider/u })).toBeVisible();
   await expect(asked.getByRole('button', { name: /^work$/u })).toBeHidden();
 });

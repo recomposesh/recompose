@@ -63,7 +63,7 @@ const STACK_DIMENSIONS: readonly StackDimension[] = [
   'account',
 ];
 
-const AVERAGES_NEVER_STACK = 'Latency averages, so it never stacks';
+const AVERAGES_NEVER_STACK = 'Latency is averaged, so it never stacks';
 
 const PLOT_HEIGHT = 150;
 const BUCKET_LABEL_HEIGHT = 21;

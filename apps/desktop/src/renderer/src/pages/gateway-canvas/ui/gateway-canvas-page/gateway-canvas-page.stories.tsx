@@ -74,7 +74,9 @@ export const ReadingACable = meta.story({
       ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     await expect(await canvas.findByText('Binding', { exact: true })).toBeVisible();
-    await expect(await canvas.findByText('claude-haiku-4-5', { exact: true })).toBeVisible();
+    await expect(
+      (await canvas.findAllByText('claude-haiku-4-5', { exact: true })).length,
+    ).toBeGreaterThan(0);
   },
 });
 

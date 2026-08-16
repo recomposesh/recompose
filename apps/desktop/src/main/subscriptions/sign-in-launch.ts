@@ -30,6 +30,13 @@ async function detached(
   });
 }
 
+/**
+ * The script a terminal runs, which tidies itself away only once the tool left cleanly.
+ *
+ * @operation Closing the window whatever happened takes the tool's own last words with it, and a
+ * tool that refused in its first second reads to a person as a terminal that never opened. A
+ * refusal keeps the window and says to close it by hand, so whatever the tool printed can be read.
+ */
 function signInScript(command: string): string {
   return [
     '#!/bin/zsh',
@@ -37,7 +44,12 @@ function signInScript(command: string): string {
     'SIGNIN_TTY="$(tty)"',
     'clear',
     command,
+    'SIGNIN_STATUS=$?',
     'rm -f "$0"',
+    'if [ "$SIGNIN_STATUS" -ne 0 ]; then',
+    `  printf '\\n${WINDOW_MARK}: the tool exited with %s. Close this window when you have read the message above.\\n' "$SIGNIN_STATUS"`,
+    '  exit "$SIGNIN_STATUS"',
+    'fi',
     'if [ "$TERM_PROGRAM" = "Apple_Terminal" ]; then',
     '  nohup osascript -e "tell application \\"Terminal\\"',
     'repeat with w in windows',
@@ -52,6 +64,35 @@ function signInScript(command: string): string {
 }
 
 /**
+ * Runs `open` to the end and carries out on anything but a clean exit.
+ *
+ * @operation Every other launcher on this file is the terminal itself and stays alive, so starting
+ * it is the whole of the news. `open` is a dispatcher that exits the moment it has handed the file
+ * to LaunchServices, and it reports a refusal there rather than by failing to start. Waiting for
+ * that exit is the only way a person hears that no terminal opened, instead of watching a dialog
+ * wait forever on a sign-in nothing was ever asked to run.
+ */
+async function openThroughLaunchServices(script: string): Promise<void> {
+  const complaint = await new Promise<string | null>((resolve, reject) => {
+    const child = spawn('open', [script], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let said = '';
+
+    child.stderr.on('data', (chunk: Buffer) => {
+      said += chunk.toString();
+    });
+
+    child.once('error', reject);
+    child.once('close', (code) => {
+      resolve(code === 0 ? null : said.trim() || `open exited with ${String(code)}`);
+    });
+  });
+
+  if (complaint !== null) {
+    throw new Error(`no terminal opened for the sign-in: ${complaint}`);
+  }
+}
+
+/**
  * LaunchServices decides which terminal opens a .command file, which is the one place macOS
  * lets a person choose their terminal, and `open` brings that terminal to the front.
  */
@@ -60,7 +101,7 @@ async function openTheMacTerminal(command: string): Promise<void> {
 
   await writeFile(script, signInScript(command), { mode: 0o700 });
   await chmod(script, 0o700);
-  await detached('open', [script]);
+  await openThroughLaunchServices(script);
 }
 
 async function openALinuxTerminal(command: string): Promise<void> {

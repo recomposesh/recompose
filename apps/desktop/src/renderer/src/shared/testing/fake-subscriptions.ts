@@ -27,17 +27,25 @@ export const connectedSubscription: SubscriptionAccountView = {
   active: true,
 };
 
-/** The two channels the one plan with no tool of its own travels, answered as a shown code. */
-function copilotChannels(
-  landCopilot: SubscriptionHandlers['subscriptions:copilot-await'],
-): Pick<SubscriptionHandlers, 'subscriptions:copilot-code' | 'subscriptions:copilot-await'> {
+type AppSignInChannels = Pick<
+  SubscriptionHandlers,
+  'subscriptions:device-code' | 'subscriptions:device-await' | 'subscriptions:browser-sign-in'
+>;
+
+/** The channels the plans with no tool of their own travel, answered as a code and a landing. */
+function appSignInChannels(
+  land: (
+    provider: SubscriptionAccountView['provider'],
+  ) => ReturnType<SubscriptionHandlers['subscriptions:device-await']>,
+): AppSignInChannels {
   return {
-    'subscriptions:copilot-code': async () =>
+    'subscriptions:device-code': async () =>
       Promise.resolve({
         ok: true as const,
         value: { userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device' },
       }),
-    'subscriptions:copilot-await': landCopilot,
+    'subscriptions:device-await': async ({ provider }) => land(provider),
+    'subscriptions:browser-sign-in': async ({ provider }) => land(provider),
   };
 }
 
@@ -86,7 +94,7 @@ export function subscriptionHandlers(
     'subscriptions:list': asHeld,
     'subscriptions:tools': async () => Promise.resolve({ ok: true, value: [...seededTools] }),
     'subscriptions:sign-in': async ({ provider }) => land(provider, 'sign-in'),
-    ...copilotChannels(async () => land('copilot', 'sign-in')),
+    ...appSignInChannels(async (provider) => land(provider, 'sign-in')),
     'subscriptions:restore': async ({ id }) => {
       held = held.map((view) => (view.id === id ? { ...view, standing: 'connected' } : view));
 

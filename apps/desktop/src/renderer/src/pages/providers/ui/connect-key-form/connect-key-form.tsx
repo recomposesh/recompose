@@ -56,7 +56,10 @@ function spokenRefusal(error: Error | null, refusal: string | undefined): string
     return refusal;
   }
 
-  return authoredRefusalIn(error.message) ?? 'recompose cannot store this key as it stands.';
+  return (
+    authoredRefusalIn(error.message) ??
+    "recompose can't store this key. Check the key, then try again."
+  );
 }
 
 function useKeyDraftForm(
@@ -83,7 +86,7 @@ function keyFields(form: KeyDraftForm, provider: string): ReactNode {
           <SheetField
             label="Name"
             onChangeValue={field.handleChange}
-            placeholder="My API Key"
+            placeholder="My API key"
             value={field.state.value}
           />
         )}

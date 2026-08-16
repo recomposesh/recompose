@@ -52,6 +52,8 @@ type GatewayDrawerProps = {
   onDraftDefined: (definition: SettledDefinition) => void;
   /** Hears the model id a rename settled on, so the selection can follow the definition. */
   onModelRenamed: (modelId: string) => void;
+  /** Selects a card the drawer pointed at, so the canvas and the drawer name one thing at a time. */
+  onSelectNode: (nodeId: string) => void;
 };
 
 type DrawerWorld = {
@@ -61,6 +63,7 @@ type DrawerWorld = {
   onAskRemoval: (nodeId: string) => void;
   onDraftDefined: (definition: SettledDefinition) => void;
   onModelRenamed: (modelId: string) => void;
+  onSelectNode: (nodeId: string) => void;
 };
 
 function modelHeldBy(world: DrawerWorld, modelId: string): VirtualModel | undefined {
@@ -154,8 +157,11 @@ function routerSubjectBody(
 
   return held === undefined
     ? undefined
-    : routerBody(world.gateway, model, held.named, held.node, world.accounts, () => {
-        world.onAskRemoval(card);
+    : routerBody(world.gateway, model, held.named, held.node, world.accounts, {
+        onDelete: () => {
+          world.onAskRemoval(card);
+        },
+        onSelectNode: world.onSelectNode,
       });
 }
 
@@ -245,6 +251,7 @@ export function GatewayDrawer({
   onAskRemoval,
   onDraftDefined,
   onModelRenamed,
+  onSelectNode,
 }: GatewayDrawerProps) {
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
   const { data: states } = useSuspenseQuery(engineStatesQueryOptions);
@@ -258,6 +265,7 @@ export function GatewayDrawer({
     onAskRemoval,
     onDraftDefined,
     onModelRenamed,
+    onSelectNode,
   };
 
   const body = subjectBody(subject, world, {

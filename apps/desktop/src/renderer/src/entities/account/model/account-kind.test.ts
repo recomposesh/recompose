@@ -31,18 +31,18 @@ test('the kinds a person can browse are every kind the contract names', () => {
 test('every kind reads as a name rather than as its stored token', () => {
   expect(accountKinds.map(accountKindTitle)).toEqual([
     'Subscriptions',
-    'API Keys',
+    'API keys',
     'Aggregators',
-    'Local Runtimes',
+    'Local runtimes',
   ]);
 });
 
 test('one account reads its kind in the singular', () => {
   expect(accountKinds.map(accountKindName)).toEqual([
     'Subscription',
-    'API Key',
+    'API key',
     'Aggregator',
-    'Local Runtime',
+    'Local runtime',
   ]);
 });
 

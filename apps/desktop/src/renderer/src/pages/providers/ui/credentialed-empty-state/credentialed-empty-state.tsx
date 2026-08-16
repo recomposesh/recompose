@@ -2,9 +2,9 @@ import { KindEmptyState } from '../kind-empty-state/kind-empty-state';
 
 const emptyExplanation: Record<'api-key' | 'aggregator', string> = {
   'api-key':
-    "An API key is a secret one provider gives you, and a gateway spends it request by request against that provider's own endpoint.",
+    'An API key is a secret one provider gives you. A gateway spends it request by request.',
   aggregator:
-    'An aggregator key is a single secret that reaches many providers through one endpoint, so a gateway can route across them all.',
+    'An aggregator key is one secret that reaches many providers. A gateway can route across all of them.',
 };
 
 type CredentialedEmptyStateProps = {

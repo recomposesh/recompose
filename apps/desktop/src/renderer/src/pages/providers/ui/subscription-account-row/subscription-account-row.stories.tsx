@@ -12,9 +12,11 @@ async function controlNames(canvas: { findAllByRole: (role: string) => Promise<H
   );
 }
 
+const setupLine = 'export CLAUDE_CONFIG_DIR="/Users/ada/.recompose/subscriptions/anthropic/active"';
+
 const meta = preview.meta({
   component: SubscriptionAccountRow,
-  args: { view: connectedSubscription },
+  args: { view: connectedSubscription, shellSetupLine: setupLine },
   parameters: { bridge: { subscriptions: [connectedSubscription] } },
   decorators: [
     (Story) => (
@@ -53,7 +55,11 @@ export const Lapsed = meta.story({
   play: async ({ canvas }) => {
     const names = await controlNames(canvas);
 
-    await expect(names).toEqual(['Sign in again', 'Actions for Anthropic']);
+    await expect(names).toEqual([
+      'Sign in again',
+      'Actions for Anthropic',
+      'Copy the Claude setup line',
+    ]);
     await expect(await canvas.findByText('Signed out')).toBeVisible();
   },
 });
@@ -86,7 +92,7 @@ export const AdoptedAndLapsed = meta.story({
   play: async ({ canvas }) => {
     const names = await controlNames(canvas);
 
-    await expect(names).toEqual(['Actions for Anthropic']);
+    await expect(names).toEqual(['Actions for Anthropic', 'Copy the Claude setup line']);
     await expect(await canvas.findByText('Open Claude to sign in again')).toBeVisible();
   },
 });
@@ -114,29 +120,49 @@ export const QuieterActions = meta.story({
 });
 
 /**
- * The account the provider is spending right now, said on the row rather than left to be guessed.
+ * The plan's chosen account, saying what choosing it did rather than leaving it to be guessed.
  *
- * @summary A person holding two accounts for one plan has no way to tell which one serves without
- * this. It is a word rather than an act, because the account already spending is not something to
- * press.
+ * @summary Choosing moves no gateway traffic, because a canvas names the account it spends. What
+ * it moves is the config home the plan's own tool runs against, and the line is the only place a
+ * person can see that happened. Only the chosen row carries it, so which one it is reads at a
+ * glance rather than from a badge that says nothing about what it means.
  */
-export const TheOneBeingSpent = meta.story({
+export const ThePlansChosenAccount = meta.story({
   args: { view: { ...connectedSubscription, active: true } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('In use')).toBeVisible();
+    await expect(await canvas.findByText('Your terminal reaches this account.')).toBeVisible();
+    await expect(await canvas.findByText(setupLine)).toBeVisible();
+  },
+});
+
+/** A plan whose tool this app never points carries no line, because nothing would be pointed. */
+export const APlanWithNoToolToPoint = meta.story({
+  args: {
+    view: { ...connectedSubscription, provider: 'copilot' as const, plan: undefined, active: true },
+    shellSetupLine: undefined,
+  },
+  parameters: {
+    bridge: {
+      subscriptions: [
+        { ...connectedSubscription, provider: 'copilot' as const, plan: undefined, active: true },
+      ],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText('Your terminal reaches this account.')).toBeNull();
   },
 });
 
 /**
- * Another account for the same plan, which can be asked to take over.
+ * Another account for the same plan, which can be asked to take the plan's tool over.
  *
- * @summary The act sits behind the overflow, because choosing which account spends is not part of
- * reading the row.
+ * @summary The act sits behind the overflow, because choosing which account a tool reaches is not
+ * part of reading the row.
  */
 export const AnotherAccountCanTakeOver = meta.story({
   args: { view: { ...connectedSubscription, active: false } },
   play: async ({ canvas }) => {
-    await expect(canvas.queryByText('In use')).toBeNull();
+    await expect(canvas.queryByText('Your terminal reaches this account.')).toBeNull();
 
     await userEvent.click(await canvas.findByRole('button', { name: /Actions for/u }));
 
@@ -153,8 +179,8 @@ async function takeoverIsOffered(canvas: {
   return screen.queryByRole('menuitem', { name: 'Use this account' }) !== null;
 }
 
-/** The account already spending offers no way to start spending it again. */
-export const TheOneBeingSpentOffersNoTakeover = meta.story({
+/** The account already chosen offers no way to choose it again. */
+export const TheChosenAccountOffersNoTakeover = meta.story({
   args: { view: { ...connectedSubscription, active: true } },
   play: async ({ canvas }) => {
     await expect(await takeoverIsOffered(canvas)).toBe(false);

@@ -112,7 +112,7 @@ test('dropping a cable from the draft closes its inspector and leaves the picker
   releasedAt(targetSpot);
   await pickedTheTarget(screen);
 
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
   await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
 });
 
@@ -167,7 +167,7 @@ test('a picker standing over the canvas map takes the press a person aims at it'
   releasedAt(spot);
   await pickedTheTarget(screen);
 
-  await expect.element(screen.getByText('Pick an account', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
   const offered = optionUnderTheMap(screen.container);
   const aimed = centreOf(offered.getBoundingClientRect());
@@ -176,5 +176,5 @@ test('a picker standing over the canvas map takes the press a person aims at it'
 
   await userEvent.click(offered);
 
-  await expect.element(screen.getByText('Pick a provider model', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText(/^Models .+ serves$/)).toBeVisible();
 });

@@ -3,7 +3,7 @@ import type { MachineCredentialReading, SubscriptionProviderId } from '@recompos
 import type { CredentialFacts } from './credential-records';
 
 import { KeychainDenied } from './credential-custody';
-import { credentialFactsFor, documentIn } from './credential-records';
+import { credentialFactsFor } from './credential-records';
 
 export type MachineStore = {
   readBlob: () => Promise<string | null>;
@@ -19,9 +19,7 @@ export type MachineMaterial = {
 async function factsFrom(provider: SubscriptionProviderId, store: MachineStore) {
   const [blob, identity] = await Promise.all([store.readBlob(), store.readIdentity()]);
 
-  return blob === null
-    ? null
-    : { blob, facts: credentialFactsFor(provider, documentIn(blob), documentIn(identity)) };
+  return blob === null ? null : { blob, facts: credentialFactsFor(provider, blob, identity) };
 }
 
 function named(facts: { signedInAs: string | undefined; plan: string | undefined }) {

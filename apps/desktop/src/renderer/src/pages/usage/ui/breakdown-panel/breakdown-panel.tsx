@@ -68,7 +68,7 @@ export function BreakdownPanel({ title, rows, unit, onUnitChange }: BreakdownPan
         />
       </div>
       {rows.length === 0 ? (
-        <p className="py-2 text-center text-detail text-ink-secondary">No Data</p>
+        <p className="py-2 text-center text-detail text-ink-secondary">No data</p>
       ) : (
         <ul className="flex flex-col gap-2.5">{rows.map((row) => panelRow(row, unit))}</ul>
       )}

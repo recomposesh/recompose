@@ -41,7 +41,7 @@ test('Delete on one child of a pool drops that child alone and leaves the pool s
   await selectedCard(screen.container, 'target:pooled:t1');
   await userEvent.keyboard('{Delete}');
 
-  await expect.element(screen.getByText('Delete the target "work"?')).toBeVisible();
+  await expect.element(screen.getByText('Delete the provider "work"?')).toBeVisible();
   await expect
     .element(screen.getByText(/everything else that router holds keeps serving/))
     .toBeVisible();
@@ -75,7 +75,7 @@ test("Delete on a child's cable drops that child alone and leaves the pool servi
   await clickedCable(screen.container, 'cable:pooled:t1');
   await userEvent.keyboard('{Delete}');
 
-  await expect.element(screen.getByText('Delete the target "work"?')).toBeVisible();
+  await expect.element(screen.getByText('Delete the provider "work"?')).toBeVisible();
 
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'Delete' }));
 
@@ -101,7 +101,7 @@ test('the drawer link removes a router too, asking the same question the Delete 
   const screen = await canvasPageOn(nestedWorld);
 
   await selectedCard(screen.container, 'route:pooled:r2');
-  await userEvent.click(screen.getByRole('button', { name: 'Delete Router' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete router' }));
 
   await expect.element(screen.getByText('Delete the router "Round-robin"?')).toBeVisible();
 

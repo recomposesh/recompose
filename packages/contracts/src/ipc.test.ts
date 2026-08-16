@@ -43,8 +43,9 @@ const channelNames: IpcChannel[] = [
   'system:usage-table',
   'subscriptions:detect',
   'subscriptions:adopt',
-  'subscriptions:copilot-code',
-  'subscriptions:copilot-await',
+  'subscriptions:device-code',
+  'subscriptions:device-await',
+  'subscriptions:browser-sign-in',
 ];
 
 describe('ipc channel registry', () => {

@@ -120,6 +120,7 @@ test('a target node carries the account and the identity it reads under the prov
     kind: 'target',
     account: work,
     modelId: 'fast',
+    providerModel: 'claude-sonnet-5',
     routeNodeId: 'node-fast',
     depth: 0,
     detail: 'Work',

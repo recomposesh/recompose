@@ -35,8 +35,7 @@ import { accountHeldAs, KEY_ACCOUNT } from '../stored-target-accounts';
 const SERVED_MODEL = 'claude-sonnet-5';
 
 /** The words the canvas refuses a landing with, which the live region carries whole. */
-const REFUSAL =
-  'A cable binds a virtual model or a router to a stored target it does not already hold, and nothing else connects.';
+const REFUSAL = 'A cable binds a virtual model or a router to a provider it does not already hold.';
 
 /** The card a name stands as, which is its stored definition or the draft still holding its seat. */
 async function cardStandingFor(page: Page, name: string): Promise<string> {
@@ -111,7 +110,7 @@ When(
 
     await pickWithTheKeyboard(
       page,
-      bindingKindAsk(page).getByRole('button', { name: /^Target/u }),
+      bindingKindAsk(page).getByRole('button', { name: /^Provider/u }),
       'the target kind',
     );
     await pickWithTheKeyboard(
