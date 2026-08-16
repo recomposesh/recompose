@@ -64,6 +64,7 @@ const glyphs = {
       <path d="M9.4 20.2h5.2M12 16.5v3.7" />
     </>
   ),
+  terminal: <path d="M6.4 8.4 10 12l-3.6 3.6M12.6 15.6h5" />,
   moon: <path d="M19.6 14.2A8 8 0 1 1 9.8 4.4a6.5 6.5 0 0 0 9.8 9.8Z" />,
   github: (
     <path

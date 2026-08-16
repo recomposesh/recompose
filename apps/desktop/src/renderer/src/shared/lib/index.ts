@@ -2,6 +2,12 @@ export { focusDrivenByArrow } from './arrow-walk/arrow-drive';
 export { useArrowWalk, walkedWithArrow } from './arrow-walk/arrow-walk';
 export { askTheCanvas, subscribeToCanvasAsks } from './canvas-asks';
 export {
+  closeConnectSheet,
+  connectSheetOpen,
+  openConnectSheet,
+  subscribeToConnectSheetVisibility,
+} from './visibility/connect-sheet-visibility';
+export {
   closeInspector,
   inspectorOpen,
   openInspector,

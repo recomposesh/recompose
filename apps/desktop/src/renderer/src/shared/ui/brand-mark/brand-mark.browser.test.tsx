@@ -34,6 +34,24 @@ test('every vendor the catalog can name is drawn by a mark of its own', async ()
   expect(shapes.size).toBe(brandMarkNames.length);
 });
 
+test('every tool a gateway can be connected from leads its row with that tool own mark', () => {
+  const tools = [
+    'claude',
+    'claudeCode',
+    'cline',
+    'codex',
+    'cursor',
+    'geminiCli',
+    'kiloCode',
+    'opencode',
+    'rooCode',
+  ] as const;
+
+  for (const tool of tools) {
+    expect(brandMarkNames).toContain(tool);
+  }
+});
+
 test('the vendors this release connects to and the ones it awaits are all in the inventory', () => {
   expect(brandMarkNames).toContain('ollama');
   expect(brandMarkNames).toContain('together');

@@ -144,6 +144,9 @@
   --spacing-zoom-tools: 3px;
   --spacing-sheet: 404px;
   --spacing-sheet-wide: 640px;
+  --spacing-sheet-broad: 940px;
+  --spacing-connect-rail: 286px;
+  --spacing-connect-body: 512px;
   --spacing-sheet-row: 38px;
   --spacing-sheet-field: 170px;
   --spacing-sheet-port: 74px;
@@ -360,6 +363,10 @@
 
 @utility sheet-wide {
   --sheet-surface-width: var(--spacing-sheet-wide);
+}
+
+@utility sheet-broad {
+  --sheet-surface-width: var(--spacing-sheet-broad);
 }
 
 @utility step-enter-forward {

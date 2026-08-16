@@ -4,8 +4,11 @@ import { useSyncExternalStore } from 'react';
 
 import {
   askTheCanvas,
+  connectSheetOpen,
   logsDrawerOpen,
+  openConnectSheet,
   sidebarHidden,
+  subscribeToConnectSheetVisibility,
   subscribeToLogsDrawerVisibility,
   subscribeToSidebarVisibility,
   toggleLogsDrawer,
@@ -37,6 +40,7 @@ type ToolbarStripProps = {
 export function ToolbarStrip({ address, name, onRun, port, running, status }: ToolbarStripProps) {
   const away = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
   const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
+  const connectShown = useSyncExternalStore(subscribeToConnectSheetVisibility, connectSheetOpen);
 
   return (
     <div
@@ -52,7 +56,13 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
         tone={running ? 'text-stopped' : 'text-running'}
         where="standing"
       />
-      <ToolbarButton glyph="book" label="Docs" waitsFor="the guide" where="standing" />
+      <ToolbarButton
+        expanded={connectShown}
+        glyph="book"
+        label="Connect a client"
+        onPress={openConnectSheet}
+        where="standing"
+      />
       <AddressPill address={address} port={port} status={status} />
       <ToolbarButton
         glyph="tidy"

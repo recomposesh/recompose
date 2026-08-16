@@ -61,6 +61,7 @@ export const VirtualModelSubject = meta.story({
     await expect(await canvas.findByText('API key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Encrypted key', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('claude-haiku-4-5', { exact: true })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'See instructions' })).toBeVisible();
   },
 });
 

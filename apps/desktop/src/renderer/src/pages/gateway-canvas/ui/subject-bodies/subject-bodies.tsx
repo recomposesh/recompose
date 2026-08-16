@@ -13,7 +13,8 @@ import type { ServedModel } from '../../model/served-models';
 import type { StoredRouter } from '../router-inspector/router-inspector';
 
 import { accountKindName, accountMark, accountProductName } from '../../../../entities/account';
-import { BrandMark, CopyButton } from '../../../../shared/ui';
+import { openConnectSheet } from '../../../../shared/lib';
+import { BrandMark, Button, CopyButton } from '../../../../shared/ui';
 import { accountKindTextTint } from '../../lib/account-kind-paint';
 import { servesTally } from '../../model/served-models';
 import { EndpointBox } from '../endpoint-box/endpoint-box';
@@ -29,6 +30,21 @@ function servesTallyLine(served: readonly ServedModel[]): ReactNode {
     <span className="min-w-0 truncate font-medium text-ink-secondary">
       · {servesTally(served.length)}
     </span>
+  );
+}
+
+/**
+ * The way into the connect guide, offered wherever a person reads what a gateway serves.
+ *
+ * @summary The toolbar carries the same control, and a person standing in the drawer is already
+ * looking at the address and the model ids the guide writes its blocks from, which is where the
+ * question of how to reach them comes up.
+ */
+function instructionsControl(): ReactNode {
+  return (
+    <Button fullWidth glyph="book" onPress={openConnectSheet} variant="secondary">
+      See instructions
+    </Button>
   );
 }
 
@@ -56,6 +72,7 @@ export function gatewayBody(
       <ServesBox served={served} />
     </>,
     { label: 'Delete gateway', onPress: onDelete },
+    instructionsControl(),
   );
 }
 
@@ -152,6 +169,7 @@ export function modelBody(
       )}
     </>,
     { label: 'Delete virtual model', onPress: onDelete },
+    instructionsControl(),
   );
 }
 
