@@ -273,3 +273,23 @@ describe('the sign-in that happens in a browser', () => {
     expect(held.ok && held.value).toEqual([]);
   });
 });
+
+describe('a code ask that threw rather than answering', () => {
+  test('the throw crosses as a typed refusal, naming no path from this machine', async () => {
+    const world = await aFreshWorld();
+    const handlers = createSubscriptionsIpcHandlers({
+      ...world.contextOn('linux', world.nothingHappens),
+      deviceSignIn: {
+        ...quietAppSignIns().deviceSignIn,
+        fetchLike: async () => Promise.reject(new Error('the network is down')),
+      },
+      writeSubscriptionCredential: async () => Promise.reject(new Error('the vault is shut')),
+    });
+
+    await handlers['subscriptions:device-code']({ provider: 'kimi' });
+
+    const answered = await handlers['subscriptions:device-code']({ provider: 'kimi' });
+
+    expect(answered.ok).toBe(false);
+  });
+});

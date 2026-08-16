@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { describe, expect, test } from 'vitest';
 
 import type { AntigravitySignInPort } from './antigravity-sign-in';
@@ -186,5 +187,93 @@ describe('a browser that never came back', () => {
     const second = portAnswering(signedIn, async () => comeBackWith('code=abc&state=state-1'));
 
     expect(await signInToAntigravity(second)).toMatchObject({ verdict: 'signed-in' });
+  });
+});
+
+describe('a loopback nothing could hold', () => {
+  /**
+   * @summary A port another program already listens on is the one case where the app cannot even
+   * begin, and a person who reads "denied" for it would go looking in the browser for a refusal
+   * that never happened.
+   */
+  test('a port already held names the port rather than blaming the browser', async () => {
+    const held = createServer();
+
+    await new Promise<void>((ready) => {
+      held.listen(readingPort, '127.0.0.1', ready);
+    });
+
+    try {
+      const port = portAnswering(signedIn, async () => Promise.resolve());
+
+      expect(await signInToAntigravity(port)).toEqual({
+        verdict: 'refused',
+        reason: `Nothing could listen on port ${String(readingPort)}.`,
+      });
+    } finally {
+      await new Promise<void>((shut) => {
+        held.close(() => {
+          shut();
+        });
+      });
+    }
+  });
+
+  test('a second callback after the first settles nothing twice', async () => {
+    const port = portAnswering(signedIn, async () => {
+      await comeBackWith('code=abc&state=state-1');
+      await comeBackWith('code=second&state=state-1');
+    });
+
+    const settled = await signInToAntigravity(port);
+
+    expect(settled.verdict === 'signed-in' && settled.credential).toContain('goog-token');
+    expect(port.sent.filter((ask) => ask.url === antigravityVendor.token)).toHaveLength(1);
+  });
+});
+
+describe('an address lookup that answers nothing readable', () => {
+  test('a lookup that threw leaves the account unnamed rather than refusing the sign-in', async () => {
+    const port = {
+      ...portAnswering(signedIn, async () => comeBackWith('code=abc&state=state-1')),
+      fetchLike: async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+        const url = urlOf(input);
+
+        if (url.includes('userinfo')) {
+          return Promise.reject(new Error('the network is down'));
+        }
+
+        return portAnswering(signedIn, async () => Promise.resolve()).fetchLike(input, init);
+      },
+    };
+
+    const settled = await signInToAntigravity(port);
+
+    expect(settled).toMatchObject({ verdict: 'signed-in' });
+    expect(settled.verdict === 'signed-in' && settled.signedInAs).toBeUndefined();
+  });
+
+  test('a token answer that is no record at all refuses rather than reading fields off it', async () => {
+    const port = portAnswering(
+      { ...signedIn, 'oauth2.googleapis.com/token': { status: 200, body: 'a sentence' } },
+      async () => comeBackWith('code=abc&state=state-1'),
+    );
+
+    expect(await signInToAntigravity(port)).toEqual({
+      verdict: 'refused',
+      reason: 'Google did not answer the sign-in this app started.',
+    });
+  });
+
+  test('an account Google names no project for refuses rather than storing a dead credential', async () => {
+    const port = portAnswering(
+      { ...signedIn, loadCodeAssist: { status: 500, body: {} } },
+      async () => comeBackWith('code=abc&state=state-1'),
+    );
+
+    expect(await signInToAntigravity(port)).toEqual({
+      verdict: 'refused',
+      reason: 'Google named no Antigravity project for this account.',
+    });
   });
 });

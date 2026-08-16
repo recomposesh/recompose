@@ -27,6 +27,16 @@ if (ollama === undefined) {
   throw new Error('the catalog offers no ollama entry');
 }
 
+function entryNamed(id: string) {
+  const found = catalogEntries.find((entry) => entry.id === id);
+
+  if (found === undefined) {
+    throw new Error(`the catalog offers no ${id} entry`);
+  }
+
+  return found;
+}
+
 const meta = preview.meta({
   component: ProviderConnectWay,
   args: { entry: anthropic, way: 'subscription' as const, onConnected: () => undefined },
@@ -85,3 +95,29 @@ export const Local = meta.story({
 
 /** The sign-in way in the dark scheme, where the card lifts off the sheet behind it. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/**
+ * A plan that authorizes by device code, which recompose runs rather than a tool.
+ *
+ * @summary Which surface a pick reaches follows how the plan authorizes, never which plan it is.
+ * The reading pins that a plan on the device-code channel meets the code step and never the
+ * command a tool-run sign-in would name.
+ */
+export const SignsInByDeviceCode = meta.story({
+  args: { entry: entryNamed('kimi') },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Enter this code to finish signing in')).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: /Sign in to/ })).toBeNull();
+  },
+});
+
+/** A plan that redirects a browser, which meets the one press rather than a code. */
+export const SignsInThroughTheBrowser = meta.story({
+  args: { entry: entryNamed('antigravity') },
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByRole('button', { name: 'Open the sign-in page' }),
+    ).toBeVisible();
+    await expect(canvas.queryByText('Enter this code to finish signing in')).toBeNull();
+  },
+});

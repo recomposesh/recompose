@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  browserSignInProviderIdSchema,
+  deviceFlowProviderIdSchema,
+  signsInByDeviceCode,
+  signsInThroughTheBrowser,
   subscriptionAccountViewSchema,
   subscriptionProvenanceSchema,
   subscriptionProviderIdSchema,
@@ -49,6 +53,28 @@ describe('the providers a subscription can name', () => {
   test('the plans this app signs in itself name no tool to delegate to', () => {
     for (const provider of ['antigravity', 'kimi', 'copilot'] as const) {
       expect(toolBacked(provider)).toBe(false);
+    }
+  });
+
+  test('the plans that show a person a code are the ones the device channel takes', () => {
+    expect(deviceFlowProviderIdSchema.options).toEqual(['copilot', 'kimi']);
+
+    for (const provider of ['copilot', 'kimi'] as const) {
+      expect(signsInByDeviceCode(provider), provider).toBe(true);
+      expect(signsInThroughTheBrowser(provider), provider).toBe(false);
+    }
+  });
+
+  test('the plan that redirects a browser is the one the browser channel takes', () => {
+    expect(browserSignInProviderIdSchema.options).toEqual(['antigravity']);
+    expect(signsInThroughTheBrowser('antigravity')).toBe(true);
+    expect(signsInByDeviceCode('antigravity')).toBe(false);
+  });
+
+  test('a plan whose own tool signs it in answers to neither channel', () => {
+    for (const provider of ['anthropic', 'openai'] as const) {
+      expect(signsInByDeviceCode(provider), provider).toBe(false);
+      expect(signsInThroughTheBrowser(provider), provider).toBe(false);
     }
   });
 
