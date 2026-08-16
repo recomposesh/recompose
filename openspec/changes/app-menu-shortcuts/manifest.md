@@ -1,6 +1,7 @@
 ---
 tier: full
-phase: discovery
-approvals: []
+phase: planning
+approvals:
+  - design-document
 branch: worktree-app-menu-shortcuts
 ---

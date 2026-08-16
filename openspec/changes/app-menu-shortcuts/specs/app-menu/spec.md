@@ -19,7 +19,7 @@ The application menu MUST carry the platform's standard set in the standard orde
 
 ### Requirement: A Help menu answers from every screen
 
-The Help menu MUST hold recompose Help, a keyboard shortcut reference, the config folder, and an issue report. The help item and the shortcut reference MUST open the published guide in the person's browser. The issue item MUST open the repository's new-issue page in the person's browser. The config folder item MUST reveal the same folder the settings surface reveals, under the same file-manager label. On macOS the menu MUST carry the system `help` role, so the menu search field works.
+The Help menu MUST hold recompose Help, the config folder, and an issue report. The help item MUST open the published site in the person's browser. The issue item MUST open the repository's new-issue page in the person's browser. The config folder item MUST reveal the same folder the settings surface reveals, under the same file-manager label. On macOS the menu MUST carry the system `help` role, so the menu search field works.
 
 #### Scenario: a person reports an issue from the menu
 
@@ -62,7 +62,7 @@ The View menu MUST toggle the sidebar and the inspector under their own accelera
 
 ### Requirement: The Gateway menu drives the standing gateway
 
-While a gateway detail stands, the Gateway menu MUST offer start, stop, and restart under accelerators, each enabled by the gateway's state the way the tray submenu already is. The menu MUST offer copying the base URL, renaming, and deleting. Deleting MUST pass through the same confirmation the canvas offers, and renaming MUST land the person in the same rename affordance the canvas offers.
+While a gateway detail stands, the Gateway menu MUST offer start, stop, and restart under accelerators, each enabled by the gateway's state the way the tray submenu already is. The menu MUST offer copying the base URL and deleting. Deleting MUST pass through the same confirmation the canvas offers.
 
 #### Scenario: a person starts the standing gateway from the menu
 
@@ -102,7 +102,7 @@ Every accelerator the menu prints MUST fire in a packaged build. The reload row'
 
 ### Requirement: The Dock reaches every gateway
 
-On macOS the Dock menu MUST list every stored gateway, each carrying the same start, stop, and restart submenu the menu bar extra carries. Every entry MUST show whether it's available rather than disappearing. The Dock menu MUST follow gateway state without asking a person to reopen it.
+On macOS the Dock menu MUST list every stored gateway, each carrying the same start, stop, and restart submenu the menu bar extra carries. Every entry MUST show whether it's available rather than disappearing. The Dock menu MUST follow gateway state without asking a person to reopen it. A run that stands the app back as an accessory carries no Dock tile, so it MUST skip the Dock menu without erroring.
 
 #### Scenario: a person stops a gateway from the Dock
 
