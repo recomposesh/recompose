@@ -138,3 +138,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0130](0130-recompose-runs-the-authorization-no-tool-on-the-machine-owns.md)    | recompose runs the authorization no tool on the machine owns                        | Accepted   | 2026-08-16 |
 | [0131](0131-choosing-an-account-moves-the-tool-never-the-traffic.md)            | Choosing an account moves the tool, never the traffic                               | Accepted   | 2026-08-16 |
 | [0132](0132-a-client-setup-comes-from-the-gateway-in-front-of-it.md)            | A client setup comes from the gateway in front of it                                | Accepted   | 2026-08-16 |
+| [0133](0133-an-update-arrives-through-the-channel-that-installed-it.md)         | An update arrives through the channel that installed it                             | Accepted   | 2026-08-16 |
