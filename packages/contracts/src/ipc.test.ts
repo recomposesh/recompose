@@ -42,6 +42,8 @@ const channelNames: IpcChannel[] = [
   'usage:quota-windows',
   'usage:balances',
   'system:usage-table',
+  'updates:get',
+  'updates:restart',
   'subscriptions:detect',
   'subscriptions:adopt',
   'subscriptions:device-code',
@@ -189,6 +191,7 @@ describe('the system state crossing the bridge', () => {
     loginItemEnabled: true,
     menuBarVisible: false,
     configFolder: '/Users/someone/Library/Application Support/recompose',
+    version: '0.3.0',
   };
 
   test('a full reading round-trips', () => {
@@ -202,6 +205,10 @@ describe('the system state crossing the bridge', () => {
       systemStateSchema.parse({ ...observedSystemState, fileBrowser: 'nautilus' }),
     ).toThrow();
     expect(() => systemStateSchema.parse({ ...observedSystemState, loginItem: 'maybe' })).toThrow();
+  });
+
+  test('the reading always names the running version', () => {
+    expect(() => systemStateSchema.parse({ ...observedSystemState, version: '' })).toThrow();
   });
 
   test('every platform reads its own file browser and login-item standing', () => {
@@ -241,6 +248,7 @@ describe('ipc error codes', () => {
     'sign-in-timed-out',
     'keychain-denied',
     'nothing-to-adopt',
+    'no-update-waiting',
   ];
 
   test('error codes are the closed set', () => {

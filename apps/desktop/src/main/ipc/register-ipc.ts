@@ -1,5 +1,5 @@
 import { is } from '@electron-toolkit/utils';
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
 
 import type { EngineHost } from '../engine-host/engine-host';
 import type { SpendGrantContext } from '../engine-host/spend-grant';
@@ -23,6 +23,7 @@ import { createLocalRuntimesIpcHandlers } from './local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './provider-models-ipc';
 import { createStorageIpcHandlers } from './storage-ipc';
 import { createSystemIpcHandlers } from './system-ipc';
+import { createUpdatesIpcHandlers, type UpdatesIpcWiring } from './updates-ipc';
 import { createUsageIpcHandlers } from './usage-ipc';
 
 function senderFromEvent(event: IpcMainInvokeEvent): TrustedSender {
@@ -66,6 +67,7 @@ export type HandlerWiring = {
   appMenu: AppMenuConduct;
   openFolder: (path: string) => Promise<string>;
   platform: NodeJS.Platform;
+  updates: UpdatesIpcWiring;
 };
 
 /** Which channels this app answers, and what each group of them reaches. */
@@ -103,6 +105,7 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
       loginItem: wiring.loginItemAvailability,
       configFolder: userDataPath,
       homeFolder,
+      appVersion: app.getVersion(),
       readLoginItem: () => wiring.loginItem.isEnabled(),
       isMenuBarVisible: () => isMenuBarTrayVisible(),
       openFolder: wiring.openFolder,
@@ -116,5 +119,6 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
       noteSurfaceToggles: appMenu.reflectSurfaceToggles,
     }),
     ...createUsageIpcHandlers(wiring.usage),
+    ...createUpdatesIpcHandlers(wiring.updates),
   };
 }

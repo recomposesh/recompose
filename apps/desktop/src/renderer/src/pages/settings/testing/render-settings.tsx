@@ -15,6 +15,7 @@ const observed: SystemState = {
   loginItemEnabled: false,
   menuBarVisible: false,
   configFolder: '~/Library/Application Support/recompose',
+  version: '0.3.0',
 };
 
 /**

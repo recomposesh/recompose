@@ -44,6 +44,8 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'usage:quota-windows',
   'usage:balances',
   'system:usage-table',
+  'updates:get',
+  'updates:restart',
   'subscriptions:list',
   'subscriptions:tools',
   'subscriptions:sign-in',

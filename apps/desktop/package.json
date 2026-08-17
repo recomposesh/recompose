@@ -27,12 +27,12 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "pnpm run typecheck && pnpm run build && electron-builder --dir",
     "build:win": "pnpm run typecheck && pnpm run build && electron-builder --win --publish never",
-    "build:mac": "pnpm run typecheck && pnpm run build && electron-builder --mac --publish never",
+    "build:mac": "pnpm run typecheck && pnpm run build && electron-builder --mac --x64 --arm64 --publish never",
     "build:linux": "pnpm run typecheck && pnpm run build && electron-builder --linux --publish never",
     "generate:icons": "node scripts/generate-icons.mts",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "test:e2e": "bddgen -c e2e/playwright.config.ts && playwright test -c e2e/playwright.config.ts --project acceptance --project proofs --grep-invert @quarantine",
+    "test:e2e": "bddgen -c e2e/playwright.config.ts && playwright test -c e2e/playwright.config.ts --project acceptance --project proofs --grep-invert \"@quarantine|@packaged\"",
     "test:e2e:leak": "playwright test -c e2e/playwright.config.ts --project leak --grep-invert @quarantine",
     "test:e2e:packaged": "playwright test -c e2e/playwright.config.ts --project packaged --grep-invert @quarantine",
     "test:e2e:visual": "playwright test -c e2e/playwright.config.ts --project visual --grep-invert @quarantine",
@@ -50,6 +50,7 @@
     "@tanstack/react-virtual": "3.14.9",
     "@xyflow/react": "12.11.2",
     "electron-liquid-glass": "^1.1.1",
+    "electron-updater": "6.8.9",
     "electron-window-state": "^5.0.3",
     "koffi": "3.1.4",
     "node-wreq": "3.1.0"
@@ -101,7 +102,9 @@
     "typescript": "7.0.2",
     "vite": "8.1.5",
     "vitest": "4.1.10",
-    "vitest-browser-react": "2.2.0"
+    "vitest-browser-react": "2.2.0",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
   },
   "optionalDependencies": {
     "@node-wreq/darwin-arm64": "3.1.0",

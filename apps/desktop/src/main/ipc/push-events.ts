@@ -4,6 +4,7 @@ import type {
   IpcEventPayload,
   LogBatch,
   Settings,
+  UpdateState,
 } from '@recompose/contracts';
 
 import { BrowserWindow } from 'electron';
@@ -59,6 +60,12 @@ function theOnlyWindow(): BrowserWindow | undefined {
 export function pushSettingsChanged(settings: Settings): void {
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send('settings:changed', settings);
+  }
+}
+
+export function pushUpdatesChanged(state: UpdateState): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('updates:changed', state);
   }
 }
 

@@ -24,9 +24,11 @@ import {
   bindEngineStatesToCache,
   bindEngineTrafficToCache,
   bindSettingsToCache,
+  bindUpdateStateToCache,
   engineStatesQueryOptions,
   gatewaysQueryOptions,
   settingsQueryOptions,
+  updatesQueryOptions,
 } from '../../shared/api';
 import { sidebarHidden, subscribeToSidebarVisibility, useArrowWalk } from '../../shared/lib';
 import { SidebarEdge, SidebarToggle } from '../../shared/ui';
@@ -59,6 +61,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       context.queryClient.ensureQueryData(engineStatesQueryOptions),
       context.queryClient.ensureQueryData(accountsQueryOptions),
       context.queryClient.ensureQueryData(settingsQueryOptions),
+      context.queryClient.ensureQueryData(updatesQueryOptions),
     ]);
   },
   component: RootLayout,
@@ -110,6 +113,7 @@ function usePushedCaches(queryClient: QueryClient): void {
   useEffect(() => bindEngineLogsToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
   useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
+  useEffect(() => bindUpdateStateToCache(queryClient), [queryClient]);
 }
 
 function useDevtoolsAsked(): boolean {

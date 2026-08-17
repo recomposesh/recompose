@@ -13,6 +13,7 @@ describe('the lifecycle push', () => {
     'canvas:command',
     'usage:command',
     'view:command',
+    'updates:changed',
     'settings:changed',
     'devtools:toggle',
     'subscriptions:launch-refused',

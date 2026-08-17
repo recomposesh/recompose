@@ -21,6 +21,7 @@ const observedSystem: SystemState = {
   loginItemEnabled: false,
   menuBarVisible: false,
   configFolder: '/tmp/recompose',
+  version: '0.3.0',
 };
 
 export const darkSettings: Settings = { ...defaultSettings(), theme: 'dark' };
@@ -102,6 +103,8 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'usage:quota-windows': refuses,
     'usage:balances': refuses,
     'system:usage-table': refuses,
+    'updates:get': refuses,
+    'updates:restart': refuses,
     'subscriptions:list': refuses,
     'subscriptions:tools': refuses,
     'subscriptions:sign-in': refuses,
@@ -160,6 +163,8 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
     'usage:quota-windows': noGateways,
     'usage:balances': noGateways,
     'system:usage-table': nothing,
+    'updates:get': async () => Promise.resolve({ ok: true, value: { standing: 'quiet' as const } }),
+    'updates:restart': nothing,
     ...succeedingSubscriptions(),
     'subscriptions:adopt': noGateways,
   };

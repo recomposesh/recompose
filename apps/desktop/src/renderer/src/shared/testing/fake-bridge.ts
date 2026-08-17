@@ -32,6 +32,7 @@ import { forgetLaunchRefusedListeners, listenForLaunchRefusals } from './fake-la
 import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-model-lists';
 import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
+import { forgetUpdateStateListeners, listenForUpdateStates } from './fake-update-pushes';
 import { forgetUsageCommandListeners, listenForUsageCommands } from './fake-usage-pushes';
 import {
   forgetReportedSurfaceToggles,
@@ -48,6 +49,7 @@ const observedSystem: SystemState = {
   loginItemEnabled: false,
   menuBarVisible: false,
   configFolder: '~/Library/Application Support/recompose',
+  version: '0.3.0',
 };
 
 export type BridgeParameters = {
@@ -123,9 +125,24 @@ function eventBridge(): RecomposeIpcEvents {
     'canvas:command': () => () => undefined,
     'usage:command': (listener) => listenForUsageCommands(listener),
     'view:command': (listener) => listenForViewCommands(listener),
+    'updates:changed': (listener) => listenForUpdateStates(listener),
     'settings:changed': (listener) => listenForSettingsChanges(listener),
     'devtools:toggle': () => () => undefined,
     'subscriptions:launch-refused': (listener) => listenForLaunchRefusals(listener),
+  };
+}
+
+function updatesHandlers(): Pick<RecomposeIpc, 'updates:get' | 'updates:restart'> {
+  return {
+    'updates:get': async () => Promise.resolve({ ok: true, value: { standing: 'quiet' } }),
+    'updates:restart': async () =>
+      Promise.resolve({
+        ok: false,
+        error: {
+          code: 'no-update-waiting',
+          message: 'no downloaded update stands ready to install',
+        },
+      }),
   };
 }
 
@@ -192,6 +209,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   forgetViewCommandListeners();
   forgetReportedSurfaceToggles();
   forgetLaunchRefusedListeners();
+  forgetUpdateStateListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(
     seeds.accounts,
@@ -212,6 +230,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
       parameters.machineReading,
     ),
     ...usageHandlers(seeds.usageReport, seeds.quotaWindows, seeds.balances),
+    ...updatesHandlers(),
     ...parameters.overrides,
   };
   window.recomposeEvents = eventBridge();

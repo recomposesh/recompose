@@ -32,6 +32,9 @@
   --color-ink-secondary: light-dark(var(--black-a56), var(--white-a58));
   --color-ink-tertiary: light-dark(var(--black-a28), var(--white-a28));
 
+  --color-surface-paper: var(--white);
+  --color-line-paper: var(--black-a09);
+
   --color-line-subtle: light-dark(var(--black-a09), var(--white-a08));
   --color-line-faint: light-dark(var(--black-a06), var(--white-a06));
   --color-line-strong: light-dark(var(--black-a28), var(--white-a13));

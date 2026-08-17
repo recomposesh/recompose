@@ -16,6 +16,7 @@ export const ipcErrorSchema = z.strictObject({
     'sign-in-timed-out',
     'keychain-denied',
     'nothing-to-adopt',
+    'no-update-waiting',
   ]),
   message: z.string().min(1),
 });

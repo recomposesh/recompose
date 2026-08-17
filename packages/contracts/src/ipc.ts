@@ -49,12 +49,27 @@ function namesItsOwnPort(asked: { runtime: string; port?: number | undefined }):
   return asked.runtime !== 'custom' || asked.port !== undefined;
 }
 
+/**
+ * Where the running app stands against the release feed.
+ *
+ * @summary A failed check never appears here. The spec keeps failures log-only, so a state the
+ * renderer must never render stays out of the contract.
+ */
+export const updateStateSchema = z.discriminatedUnion('standing', [
+  z.strictObject({ standing: z.literal('quiet') }),
+  z.strictObject({ standing: z.literal('downloading'), version: nonBlankString }),
+  z.strictObject({ standing: z.literal('ready'), version: nonBlankString }),
+]);
+
+export type UpdateState = z.infer<typeof updateStateSchema>;
+
 export const systemStateSchema = z.strictObject({
   fileBrowser: fileBrowserSchema,
   loginItem: z.enum(['available', 'unpackaged', 'unsupported']),
   loginItemEnabled: z.boolean(),
   menuBarVisible: z.boolean(),
   configFolder: nonBlankString,
+  version: nonBlankString,
 });
 
 export type SystemState = z.infer<typeof systemStateSchema>;
@@ -207,6 +222,8 @@ export const ipcChannels = {
     request: z.strictObject({ open: z.boolean() }),
     response: ipcResult(z.void()),
   },
+  'updates:get': { request: z.void(), response: ipcResult(updateStateSchema) },
+  'updates:restart': { request: z.void(), response: ipcResult(z.void()) },
   ...subscriptionChannels,
 } as const;
 
@@ -257,6 +274,7 @@ export const ipcEvents = {
     ]),
   },
   'view:command': { payload: z.enum(['toggle-sidebar', 'toggle-inspector']) },
+  'updates:changed': { payload: updateStateSchema },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
   'subscriptions:launch-refused': {

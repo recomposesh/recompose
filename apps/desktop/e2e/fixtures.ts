@@ -12,23 +12,24 @@ import type { ScriptedProvider } from './scripted-provider';
 import type { SubscriptionTools } from './subscription-tools';
 
 import { fakeKeyProbe } from './key-probe-stub';
+import { scenarioEnv } from './launch-environment';
+import { readLoginItem, restoreLoginItem } from './login-item-guard';
 import { dropServer, holdPort, LOOPBACK_HOSTS } from './loopback-ports';
 import { theClipboardIsHeld } from './one-clipboard';
 import { fakeLocalRuntime } from './runtime-stub';
 import { scenarioUserDataDir } from './scenario-user-data';
 import { fakeScriptedProvider } from './scripted-provider';
 import { fakeSubscriptionTools } from './subscription-tools';
+import {
+  updatesArrangementFor,
+  type UpdateFeed,
+  type UpdatesArrangement,
+} from './update-feed-stub';
 import { seededUsageHistoryWritten } from './usage-screen';
 
 const appRoot = join(__dirname, '..');
 
-export function inheritedEnv(): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(process.env).filter(
-      (entry): entry is [string, string] => entry[1] !== undefined,
-    ),
-  );
-}
+export { inheritedEnv } from './launch-environment';
 
 /** Holds loopback ports away from recompose, the way a rival process on the machine would. */
 export type PortSquatter = {
@@ -56,9 +57,20 @@ type ElectronFixtures = {
   electronApp: ElectronApplication;
   keyProbe: KeyProbeStub;
   localRuntime: RuntimeStub;
+  /** Everything the main process printed, for the scenarios that read the log back. */
+  mainLog: string[];
   page: Page;
   portSquatter: PortSquatter;
   subscriptionTools: SubscriptionTools;
+  updateFeed: UpdateFeed;
+  /**
+   * The release feed and environment an updates scenario arranged before its app launched.
+   *
+   * @summary The generated specs open every fixture ahead of the first step, so a Given can never
+   * run before the launch. Tags carry the arrangement instead, the way seeded usage history
+   * already arrives.
+   */
+  updatesArrangement: UpdatesArrangement | null;
 };
 
 /**
@@ -80,6 +92,29 @@ type WorkerStandIns = {
  * so the tree a scenario stands in is what decides. Deciding it by tag instead would mean writing
  * a tag into every approved scenario, and graduation copies those unchanged.
  */
+async function scenarioDataDirPrepared(testInfo: TestInfo, tags: string[]): Promise<string> {
+  const userDataDir = scenarioUserDataDir(appRoot, testInfo.parallelIndex);
+
+  await rm(userDataDir, { force: true, recursive: true });
+  await mkdir(userDataDir, { recursive: true });
+
+  if (tags.includes('@seeded-usage-history')) {
+    await seededUsageHistoryWritten(userDataDir);
+  }
+
+  return userDataDir;
+}
+
+function heardMainProcess(app: ElectronApplication, mainLog: string[]): void {
+  app.process().stderr?.on('data', (chunk: Buffer) => {
+    mainLog.push(chunk.toString());
+    process.stderr.write(chunk);
+  });
+  app.process().stdout?.on('data', (chunk: Buffer) => {
+    mainLog.push(chunk.toString());
+  });
+}
+
 function servingOriginFor(
   testInfo: TestInfo,
   keyProbe: KeyProbeStub,
@@ -107,40 +142,6 @@ async function releasePort(held: Map<number, Server[]>, port: number): Promise<v
   held.delete(port);
 
   await Promise.all(bound.map(dropServer));
-}
-
-function platformHoldsLoginItem(): boolean {
-  return process.platform === 'darwin' || process.platform === 'win32';
-}
-
-async function readLoginItem(app: ElectronApplication): Promise<boolean | null> {
-  if (!platformHoldsLoginItem()) {
-    return null;
-  }
-
-  return app.evaluate(
-    ({ app: runningApp }) =>
-      runningApp.getLoginItemSettings({ path: process.execPath, args: [] }).openAtLogin,
-  );
-}
-
-async function restoreLoginItem(
-  app: ElectronApplication,
-  openAtLogin: boolean | null,
-): Promise<void> {
-  if (openAtLogin === null) {
-    return;
-  }
-
-  await app.evaluate(({ app: runningApp }, enabled) => {
-    const target = { path: process.execPath, args: [] };
-
-    if (runningApp.getLoginItemSettings(target).openAtLogin === enabled) {
-      return;
-    }
-
-    runningApp.setLoginItemSettings({ ...target, openAtLogin: enabled });
-  }, openAtLogin);
 }
 
 export const test = base.extend<ElectronFixtures, WorkerStandIns>({
@@ -203,40 +204,55 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
       await runtime.dispose();
     }
   },
+  mainLog: async ({}, use) => {
+    await use([]);
+  },
+  updatesArrangement: async ({ $tags }, use, testInfo) => {
+    const arrangement = await updatesArrangementFor(testInfo.file, $tags);
+
+    try {
+      await use(arrangement);
+    } finally {
+      await arrangement?.feed.dispose();
+    }
+  },
+  updateFeed: async ({ updatesArrangement }, use) => {
+    if (updatesArrangement === null) {
+      throw new Error('this scenario carries no @update-feed tag, so no feed stands for it');
+    }
+
+    await use(updatesArrangement.feed);
+  },
   electronApp: async (
-    { $tags, keyProbe, localRuntime, scriptedProvider, subscriptionTools },
+    {
+      $tags,
+      keyProbe,
+      localRuntime,
+      mainLog,
+      scriptedProvider,
+      subscriptionTools,
+      updatesArrangement,
+    },
     use,
     testInfo,
   ) => {
-    const userDataDir = scenarioUserDataDir(appRoot, testInfo.parallelIndex);
-
-    await rm(userDataDir, { force: true, recursive: true });
-    await mkdir(userDataDir, { recursive: true });
-
-    if ($tags.includes('@seeded-usage-history')) {
-      await seededUsageHistoryWritten(userDataDir);
-    }
+    const userDataDir = await scenarioDataDirPrepared(testInfo, $tags);
 
     const app = await electron.launch({
       args: [appRoot],
-      env: subscriptionTools.env({
-        ...inheritedEnv(),
-        NODE_ENV: 'production',
-        ELECTRON_RENDERER_URL: '',
-        RECOMPOSE_USER_DATA_DIR: userDataDir,
-        RECOMPOSE_PROBE_ORIGIN: keyProbe.origin,
-        RECOMPOSE_SERVING_ORIGIN: servingOriginFor(testInfo, keyProbe, scriptedProvider),
-        RECOMPOSE_CONTROL_ORIGIN: keyProbe.origin,
-        ...($tags.includes('@probes-the-minted-address')
-          ? {}
-          : { RECOMPOSE_RUNTIME_ORIGIN: localRuntime.origin }),
-        ...(process.env['CI'] === undefined ? { RECOMPOSE_WINDOW_STAYS_BACK: '1' } : {}),
-      }),
+      env: subscriptionTools.env(
+        scenarioEnv({
+          tags: $tags,
+          userDataDir,
+          probeOrigin: keyProbe.origin,
+          servingOrigin: servingOriginFor(testInfo, keyProbe, scriptedProvider),
+          runtimeOrigin: localRuntime.origin,
+          launchEnv: updatesArrangement?.env ?? {},
+        }),
+      ),
     });
 
-    app.process().stderr?.on('data', (chunk: Buffer) => {
-      process.stderr.write(chunk);
-    });
+    heardMainProcess(app, mainLog);
 
     try {
       const priorLoginItem = await readLoginItem(app);
