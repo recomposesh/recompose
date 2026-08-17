@@ -4,7 +4,7 @@ import { AppleMark } from '../../components/apple-mark';
 
 export function MenuBar() {
   return (
-    <div className="absolute inset-x-0 top-0 flex h-8 items-center justify-between bg-menubar px-4 text-control leading-none text-black/85 backdrop-blur-2xl dark:text-white/90">
+    <div className="absolute inset-x-0 top-0 flex h-9.5 items-center justify-between bg-menubar px-4.5 text-control leading-none text-black/85 backdrop-blur-2xl dark:text-white/90">
       <span className="flex items-center gap-4">
         <AppleMark className="size-3.5" />
         <span className="font-semibold">Recompose</span>
