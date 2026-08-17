@@ -23,6 +23,8 @@ const GATEWAY_MENU_PICKS = [
   'Restart Gateway',
   'Copy Base URL',
   'Delete Gateway',
+  'Actual Size',
+  'Zoom to Fit',
 ] as const;
 
 for (const item of GATEWAY_MENU_PICKS) {
