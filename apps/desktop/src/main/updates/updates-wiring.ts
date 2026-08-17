@@ -59,6 +59,12 @@ export function wireUpdatesFor(deps: {
     updater: deps.openPort(),
     log,
     push: deps.push,
-    intervalMs: UPDATE_CHECK_INTERVAL_MS,
+    intervalMs: checkIntervalFrom(deps.env),
   });
+}
+
+function checkIntervalFrom(env: NodeJS.ProcessEnv): number {
+  const marker = Number(env['RECOMPOSE_DEV_UPDATE_FEED']);
+
+  return Number.isFinite(marker) && marker > 1 ? marker : UPDATE_CHECK_INTERVAL_MS;
 }

@@ -32,7 +32,7 @@
     "generate:icons": "node scripts/generate-icons.mts",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "test:e2e": "bddgen -c e2e/playwright.config.ts && playwright test -c e2e/playwright.config.ts --project acceptance --project proofs --grep-invert @quarantine",
+    "test:e2e": "bddgen -c e2e/playwright.config.ts && playwright test -c e2e/playwright.config.ts --project acceptance --project proofs --grep-invert \"@quarantine|@packaged\"",
     "test:e2e:leak": "playwright test -c e2e/playwright.config.ts --project leak --grep-invert @quarantine",
     "test:e2e:packaged": "playwright test -c e2e/playwright.config.ts --project packaged --grep-invert @quarantine",
     "test:e2e:visual": "playwright test -c e2e/playwright.config.ts --project visual --grep-invert @quarantine",

@@ -114,4 +114,22 @@ describe('the development feed marker', () => {
 
     wiring.dispose();
   });
+
+  test('a marker carrying milliseconds shortens the interval to them', () => {
+    vi.useFakeTimers();
+
+    const { port, wiring } = wiredOn({
+      platform: 'darwin',
+      env: { RECOMPOSE_DEV_UPDATE_FEED: '500' },
+      isPackaged: false,
+      inApplicationsFolder: false,
+    });
+
+    vi.advanceTimersByTime(1_500);
+
+    expect(port.checks).toBe(4);
+
+    wiring.dispose();
+    vi.useRealTimers();
+  });
 });
