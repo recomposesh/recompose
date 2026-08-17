@@ -44,6 +44,9 @@ export const atHome: AppMenuView = {
   logsDrawerOpen: false,
   onUsage: false,
   usageTableOpen: false,
+  sidebarShown: true,
+  inspectorOpen: false,
+  modalStanding: false,
 };
 
 export const atGatewayDetail: AppMenuView = {
@@ -52,6 +55,9 @@ export const atGatewayDetail: AppMenuView = {
   logsDrawerOpen: false,
   onUsage: false,
   usageTableOpen: false,
+  sidebarShown: true,
+  inspectorOpen: false,
+  modalStanding: false,
 };
 
 export const atUsage: AppMenuView = {
@@ -60,6 +66,9 @@ export const atUsage: AppMenuView = {
   logsDrawerOpen: false,
   onUsage: true,
   usageTableOpen: false,
+  sidebarShown: true,
+  inspectorOpen: false,
+  modalStanding: false,
 };
 
 export const everyPlatform: NodeJS.Platform[] = ['darwin', 'win32', 'linux'];

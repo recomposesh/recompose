@@ -166,6 +166,23 @@ export const ipcChannels = {
     response: ipcResult(z.void()),
   },
   /**
+   * Reports which renderer surfaces stand, so the menu ticks read the screen rather than the
+   * menu's own last push.
+   *
+   * @summary One snapshot carries all three standings because two reports could interleave around
+   * a repaint and let the menu paint a moment that never existed. `true` means the surface shows,
+   * and `modal` says a question stands, which is what disarms the route-scoped accelerators
+   * behind it.
+   */
+  'system:surface-toggles': {
+    request: z.strictObject({
+      sidebar: z.boolean(),
+      inspector: z.boolean(),
+      modal: z.boolean(),
+    }),
+    response: ipcResult(z.void()),
+  },
+  /**
    * Asks main for one range of closed usage buckets, priced at day width.
    *
    * @summary The answer carries tuple-keyed buckets whole and the renderer folds its own
@@ -239,6 +256,7 @@ export const ipcEvents = {
       ]),
     ]),
   },
+  'view:command': { payload: z.enum(['toggle-sidebar', 'toggle-inspector']) },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
   'subscriptions:launch-refused': {

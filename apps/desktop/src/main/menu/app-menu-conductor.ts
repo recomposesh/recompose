@@ -1,4 +1,4 @@
-import type { IpcEventPayload, Settings } from '@recompose/contracts';
+import type { IpcEventPayload, IpcRequest, Settings } from '@recompose/contracts';
 
 import type { AppMenuHandlers, AppMenuView } from './app-menu-template';
 
@@ -17,6 +17,8 @@ export type AppMenuConduct = {
   reflectLogsDrawer: (open: boolean) => void;
   /** Carries the renderer's data-table twin standing into the Show Data Table tick. */
   reflectUsageTable: (open: boolean) => void;
+  /** Carries the renderer's one surface snapshot into the View ticks and the modal disarming. */
+  reflectSurfaceToggles: (toggles: IpcRequest<'system:surface-toggles'>) => void;
 };
 
 type AppMenuSeams = {
@@ -44,6 +46,36 @@ function storedChecklistChoice(
   };
 }
 
+/** Writes the reported toggles into the view, answering whether anything the menu reads moved. */
+function surfaceTogglesInto(
+  view: AppMenuView,
+  toggles: IpcRequest<'system:surface-toggles'>,
+): boolean {
+  const changed =
+    view.sidebarShown !== toggles.sidebar ||
+    view.inspectorOpen !== toggles.inspector ||
+    view.modalStanding !== toggles.modal;
+
+  view.sidebarShown = toggles.sidebar;
+  view.inspectorOpen = toggles.inspector;
+  view.modalStanding = toggles.modal;
+
+  return changed;
+}
+
+function freshAppMenuView(): AppMenuView {
+  return {
+    checklistShown: true,
+    onGatewayDetail: false,
+    logsDrawerOpen: false,
+    onUsage: false,
+    usageTableOpen: false,
+    sidebarShown: true,
+    inspectorOpen: false,
+    modalStanding: false,
+  };
+}
+
 /**
  * Holds the application menu's view of the world and repaints it on every change.
  *
@@ -52,13 +84,7 @@ function storedChecklistChoice(
  * than mutating one, so every change lands as a fresh install from the same view value.
  */
 export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
-  const view: AppMenuView = {
-    checklistShown: true,
-    onGatewayDetail: false,
-    logsDrawerOpen: false,
-    onUsage: false,
-    usageTableOpen: false,
-  };
+  const view = freshAppMenuView();
 
   const handlers: AppMenuHandlers = {
     onOpenSettings: seams.onOpenSettings,
@@ -101,5 +127,18 @@ export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
     repaint();
   }
 
-  return { repaint, reflectSettings, standOnUrl, reflectLogsDrawer, reflectUsageTable };
+  function reflectSurfaceToggles(toggles: IpcRequest<'system:surface-toggles'>): void {
+    if (surfaceTogglesInto(view, toggles)) {
+      repaint();
+    }
+  }
+
+  return {
+    repaint,
+    reflectSettings,
+    standOnUrl,
+    reflectLogsDrawer,
+    reflectUsageTable,
+    reflectSurfaceToggles,
+  };
 }

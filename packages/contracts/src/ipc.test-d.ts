@@ -220,6 +220,20 @@ describe('push surface totality', () => {
     >();
   });
 
+  test('a view command names one of the two toggles the View menu offers', () => {
+    expectTypeOf<IpcEventPayload<'view:command'>>().toEqualTypeOf<
+      'toggle-sidebar' | 'toggle-inspector'
+    >();
+  });
+
+  test('the surface report carries all three standings at one moment', () => {
+    expectTypeOf<IpcRequest<'system:surface-toggles'>>().toEqualTypeOf<{
+      sidebar: boolean;
+      inspector: boolean;
+      modal: boolean;
+    }>();
+  });
+
   test('the range commands and the search vocabulary stay a bijection under the range- prefix', () => {
     expectTypeOf<
       Extract<IpcEventPayload<'usage:command'>, `range-${string}`>

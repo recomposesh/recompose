@@ -219,6 +219,36 @@ describe('following the surface a window stands on', () => {
   });
 });
 
+describe('reflecting the surface report into the view', () => {
+  test('a report carrying the standing values repaints nothing', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.repaint();
+
+    const painted = desktop.installed.length;
+
+    conducted.menu.reflectSurfaceToggles({ sidebar: true, inspector: false, modal: false });
+
+    expect(desktop.installed.length).toBe(painted);
+  });
+
+  test('a changed report repaints the menu exactly once', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.repaint();
+
+    const painted = desktop.installed.length;
+
+    conducted.menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false });
+
+    expect(desktop.installed.length).toBe(painted + 1);
+
+    conducted.menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false });
+
+    expect(desktop.installed.length).toBe(painted + 1);
+  });
+});
+
 describe('toggling the onboarding checklist from the menu', () => {
   test('the choice takes the tick off the menu, lands on disk, and reaches every window', async () => {
     const conducted = conductOver(await freshSettingsFile());

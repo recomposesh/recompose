@@ -3,7 +3,7 @@ import { describe, expectTypeOf, test } from 'vitest';
 import type { IpcChannel, IpcEvent } from './index';
 
 describe('the channel vocabulary', () => {
-  test('the surface is exactly these thirty-nine channels, so a fortieth arrives red', () => {
+  test('the surface is exactly these channels, so an unlisted one arrives red', () => {
     expectTypeOf<IpcChannel>().toEqualTypeOf<
       | 'gateways:list'
       | 'gateways:save'
@@ -32,6 +32,7 @@ describe('the channel vocabulary', () => {
       | 'engine:states'
       | 'engine:replay-logs'
       | 'system:logs-drawer'
+      | 'system:surface-toggles'
       | 'usage:report'
       | 'usage:quota-windows'
       | 'usage:balances'
@@ -59,6 +60,7 @@ describe('the push vocabulary', () => {
       | 'accounts:changed'
       | 'canvas:command'
       | 'usage:command'
+      | 'view:command'
       | 'settings:changed'
       | 'devtools:toggle'
       | 'subscriptions:launch-refused'

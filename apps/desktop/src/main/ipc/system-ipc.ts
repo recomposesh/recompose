@@ -1,4 +1,4 @@
-import type { SystemState } from '@recompose/contracts';
+import type { IpcRequest, SystemState } from '@recompose/contracts';
 
 import type { FileBrowser } from '../system/file-browser';
 import type { LoginItemAvailability } from '../system/login-item';
@@ -22,6 +22,8 @@ export type SystemIpcContext = {
   answerTitleBarDoubleClick: () => void;
   /** Carries whether the logs drawer stands open, which only the renderer knows, to the menu tick. */
   noteLogsDrawer: (open: boolean) => void;
+  /** Carries the one surface snapshot, sidebar, inspector, and modal, to the menu ticks. */
+  noteSurfaceToggles: (toggles: IpcRequest<'system:surface-toggles'>) => void;
 };
 
 export type SystemIpcHandlers = Pick<
@@ -31,6 +33,7 @@ export type SystemIpcHandlers = Pick<
   | 'system:window-band'
   | 'system:title-bar-double-click'
   | 'system:logs-drawer'
+  | 'system:surface-toggles'
 >;
 
 function observeSystem(ctx: SystemIpcContext): SystemState {
@@ -71,6 +74,11 @@ export function createSystemIpcHandlers(ctx: SystemIpcContext): SystemIpcHandler
     },
     'system:logs-drawer': async ({ open }) => {
       ctx.noteLogsDrawer(open);
+
+      return Promise.resolve({ ok: true as const, value: undefined });
+    },
+    'system:surface-toggles': async (toggles) => {
+      ctx.noteSurfaceToggles(toggles);
 
       return Promise.resolve({ ok: true as const, value: undefined });
     },

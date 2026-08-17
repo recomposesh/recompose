@@ -18,9 +18,33 @@ function systemContext(overrides: Partial<SystemIpcContext> = {}): SystemIpcCont
     placeWindowButtons: () => undefined,
     answerTitleBarDoubleClick: () => undefined,
     noteLogsDrawer: () => undefined,
+    noteSurfaceToggles: () => undefined,
     ...overrides,
   };
 }
+
+describe('what the renderer tells main about the standing surfaces', () => {
+  test('one snapshot carries all three standings to the menu ticks', async () => {
+    const snapshots: { sidebar: boolean; inspector: boolean; modal: boolean }[] = [];
+    const handlers = createSystemIpcHandlers(
+      systemContext({
+        noteSurfaceToggles: (toggles) => {
+          snapshots.push(toggles);
+        },
+      }),
+    );
+
+    await expect(
+      handlers['system:surface-toggles']({ sidebar: true, inspector: false, modal: false }),
+    ).resolves.toEqual({ ok: true, value: undefined });
+    await handlers['system:surface-toggles']({ sidebar: false, inspector: true, modal: true });
+
+    expect(snapshots).toEqual([
+      { sidebar: true, inspector: false, modal: false },
+      { sidebar: false, inspector: true, modal: true },
+    ]);
+  });
+});
 
 describe('what the renderer tells main about the logs drawer', () => {
   test('the standing reaches the menu either way, so the tick follows the drawer', async () => {

@@ -38,6 +38,7 @@ import { NotFound } from './-not-found';
 import { surfaceRequest, withSheet, withoutSheet } from './-surface-request';
 import { UsageFiltersAct } from './-usage-filters-act';
 import { UsageRangeAct } from './-usage-range-act';
+import { ViewCommandEar } from './-view-command-ear';
 
 const noDevtools = () => null;
 
@@ -163,6 +164,7 @@ function RootLayout() {
 
   return (
     <div className="flex h-full overflow-hidden">
+      <ViewCommandEar />
       <AppSidebar
         away={sidebarAway}
         band={bandFor(slug)}

@@ -12,6 +12,7 @@ describe('the lifecycle push', () => {
     'accounts:changed',
     'canvas:command',
     'usage:command',
+    'view:command',
     'settings:changed',
     'devtools:toggle',
     'subscriptions:launch-refused',
@@ -51,6 +52,20 @@ describe('the lifecycle push', () => {
     expect(() => {
       ipcEvents['accounts:changed'].payload.parse({ accounts: [] });
     }).toThrow();
+  });
+});
+
+describe('the view command push', () => {
+  test('a view push carries one of the two surface toggles', () => {
+    const toggles = ['toggle-sidebar', 'toggle-inspector'];
+
+    expect(toggles.map((toggle) => ipcEvents['view:command'].payload.parse(toggle))).toEqual(
+      toggles,
+    );
+  });
+
+  test('a view push refuses a toggle no View item names', () => {
+    expect(() => ipcEvents['view:command'].payload.parse('toggle-logs')).toThrow();
   });
 });
 

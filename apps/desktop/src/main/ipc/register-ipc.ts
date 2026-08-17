@@ -113,6 +113,7 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
         answerTitleBarDoubleClick(wiring.platform);
       },
       noteLogsDrawer: appMenu.reflectLogsDrawer,
+      noteSurfaceToggles: appMenu.reflectSurfaceToggles,
     }),
     ...createUsageIpcHandlers(wiring.usage),
   };

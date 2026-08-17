@@ -25,6 +25,9 @@ export type AppMenuView = {
   logsDrawerOpen: boolean;
   onUsage: boolean;
   usageTableOpen: boolean;
+  sidebarShown: boolean;
+  inspectorOpen: boolean;
+  modalStanding: boolean;
 };
 
 function settingsItem(handlers: AppMenuHandlers): AppMenuItem {
