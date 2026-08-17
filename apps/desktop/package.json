@@ -27,7 +27,7 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "pnpm run typecheck && pnpm run build && electron-builder --dir",
     "build:win": "pnpm run typecheck && pnpm run build && electron-builder --win --publish never",
-    "build:mac": "pnpm run typecheck && pnpm run build && electron-builder --mac --publish never",
+    "build:mac": "pnpm run typecheck && pnpm run build && electron-builder --mac --x64 --arm64 --publish never",
     "build:linux": "pnpm run typecheck && pnpm run build && electron-builder --linux --publish never",
     "generate:icons": "node scripts/generate-icons.mts",
     "storybook": "storybook dev -p 6006",
@@ -102,7 +102,9 @@
     "typescript": "7.0.2",
     "vite": "8.1.5",
     "vitest": "4.1.10",
-    "vitest-browser-react": "2.2.0"
+    "vitest-browser-react": "2.2.0",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
   },
   "optionalDependencies": {
     "@node-wreq/darwin-arm64": "3.1.0",

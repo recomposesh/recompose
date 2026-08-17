@@ -39,7 +39,26 @@ jobs:
       - run: pnpm --filter @recompose/desktop exec node node_modules/electron/install.js
       - run: pnpm run lint:licenses
       - if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          for name in APPLE_API_KEY APPLE_API_KEY_ID APPLE_API_ISSUER CSC_LINK CSC_KEY_PASSWORD; do
+            [ -n "${!name}" ] || { echo "mac release halted: secret $name is empty"; exit 1; }
+          done
+          printf '%s' "$APPLE_API_KEY" > "$RUNNER_TEMP/apple-api-key.p8"
+          echo "APPLE_API_KEY=$RUNNER_TEMP/apple-api-key.p8" >> "$GITHUB_ENV"
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      - if: runner.os == 'macOS'
         run: pnpm --filter @recompose/desktop run build:mac
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
       - if: runner.os == 'Windows'
         run: pnpm --filter @recompose/desktop run build:win
       - if: runner.os == 'Linux'
@@ -52,6 +71,15 @@ jobs:
                -o -name '*.blockmap' -o -name 'latest*.yml' \) \
             -exec cp {} release-out/ \;
           ls -la release-out
+      - shell: bash
+        run: |
+          shopt -s nullglob
+          for manifest in release-out/latest*.yml; do
+            for name in $(grep -E 'url:' "$manifest" | awk '{print $NF}'); do
+              hash=$(openssl dgst -sha512 -binary "release-out/$name" | base64 | tr -d '\n')
+              grep -qF "$hash" "$manifest" || { echo "sha512 mismatch: $name against $manifest"; exit 1; }
+            done
+          done
       - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           path: apps/desktop/dist
@@ -67,6 +95,8 @@ jobs:
             release-out/*.exe
             release-out/*.AppImage
             release-out/*.deb
+            release-out/*.blockmap
+            release-out/latest*.yml
       - uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-path: |
@@ -75,6 +105,8 @@ jobs:
             release-out/*.exe
             release-out/*.AppImage
             release-out/*.deb
+            release-out/*.blockmap
+            release-out/latest*.yml
           sbom-path: release-out/sbom-${{ runner.os }}.cdx.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

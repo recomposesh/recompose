@@ -24,10 +24,13 @@ nsis:
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
-  notarize: false
+  notarize: true
   icon: build/icon.icon
+  target:
+    - dmg
+    - zip
 dmg:
-  artifactName: ${productName}-${version}.${ext}
+  artifactName: ${productName}-${version}-${arch}.${ext}
   icon: build/volume.icns
 linux:
   executableName: recompose

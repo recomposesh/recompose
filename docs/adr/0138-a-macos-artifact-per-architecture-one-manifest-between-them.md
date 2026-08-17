@@ -21,9 +21,9 @@ with `--x64 --arm64` produces a `dmg` and a `zip` per architecture and writes a 
 `latest-mac.yml` naming both zips. electron-updater picks the file matching its own architecture,
 a selection its changelog pins to 4.5.2 (electron-builder#6212), well below the pinned 6.x.
 
-**A spike proves the cross-architecture native-module story first.** `koffi` and `@node-wreq` ship
-native binaries, and the single `macos-26` runner is Apple Silicon, so the spike must install and
-update an x64 artifact on Intel hardware before the workflow change lands.
+**The x64 leg ships ahead of an Intel proof.** `koffi` and `@node-wreq` ship native binaries, and
+the single `macos-26` runner is Apple Silicon. The plan held the workflow change behind a spike on
+Intel hardware, and on 2026-08-17 the maintainer chose to land it without that spike.
 
 ## Alternatives
 
@@ -42,5 +42,5 @@ the release run, so nothing merges and nothing overwrites.
 
 **Bad, and accepted**: a person picks their architecture on the release page. A wrong pick hides
 behind Rosetta until the next update moves them to native arm64, a correction that self-heals but
-surprises. The workflow change waits on the native-module spike, and an x64 build from an arm64
-runner stays untrusted until that spike passes on Intel hardware.
+surprises. An x64 build from an arm64 runner stays unproven until the first Intel installation
+reports back, a risk the maintainer accepted rather than hold the release lane.

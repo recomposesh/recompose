@@ -15,26 +15,31 @@ const feedLockDir = join(appRoot, '.dev-update-feed.lock');
 
 const LOCK_STEAL_MS = 120_000;
 
-function artifactNameFor(version: string): string {
+type ArtifactNames = readonly [string, ...string[]];
+
+function artifactNamesFor(version: string): ArtifactNames {
   if (process.platform === 'darwin') {
-    return `Recompose-${version}-mac.zip`;
+    return [`Recompose-${version}-mac.zip`, `Recompose-${version}-arm64-mac.zip`];
   }
 
   return process.platform === 'win32'
-    ? `Recompose-${version}-setup.exe`
-    : `Recompose-${version}.AppImage`;
+    ? [`Recompose-${version}-setup.exe`]
+    : [`Recompose-${version}.AppImage`];
 }
 
-function manifestFor(version: string, artifact: string, bytes: Buffer): string {
+function manifestFor(version: string, artifacts: ArtifactNames, bytes: Buffer): string {
   const sha512 = createHash('sha512').update(bytes).digest('base64');
+  const fileEntries = artifacts.flatMap((artifact) => [
+    `  - url: ${artifact}`,
+    `    sha512: ${sha512}`,
+    `    size: ${String(bytes.length)}`,
+  ]);
 
   return [
     `version: ${version}`,
     'files:',
-    `  - url: ${artifact}`,
-    `    sha512: ${sha512}`,
-    `    size: ${String(bytes.length)}`,
-    `path: ${artifact}`,
+    ...fileEntries,
+    `path: ${artifacts[0]}`,
     `sha512: ${sha512}`,
     "releaseDate: '2026-08-17T00:00:00.000Z'",
   ].join('\n');
@@ -61,7 +66,7 @@ async function feedLockTaken(): Promise<void> {
 type FeedStanding = {
   refusing: boolean;
   manifest: string | null;
-  artifact: { name: string; bytes: Buffer } | null;
+  artifact: { names: ArtifactNames; bytes: Buffer } | null;
   holdingArtifact: boolean;
   checks: number;
   artifactDownloads: number;
@@ -113,7 +118,9 @@ function answerFeed(standing: FeedStanding, url: string, response: ServerRespons
     return;
   }
 
-  if (standing.artifact !== null && decodeURIComponent(asked).endsWith(standing.artifact.name)) {
+  const names = standing.artifact?.names ?? [];
+
+  if (names.some((name) => decodeURIComponent(asked).endsWith(name))) {
     answerArtifact(standing, response);
 
     return;
@@ -206,11 +213,11 @@ async function fakeUpdateFeed(): Promise<UpdateFeed> {
     artifactDownloads: () => standing.artifactDownloads,
     refusingChecks: () => standing.refusing,
     serveVersion: (version) => {
-      const name = artifactNameFor(version);
+      const names = artifactNamesFor(version);
       const bytes = Buffer.from(`recompose ${version} stand-in artifact`);
 
-      standing.artifact = { name, bytes };
-      standing.manifest = manifestFor(version, name, bytes);
+      standing.artifact = { names, bytes };
+      standing.manifest = manifestFor(version, names, bytes);
       standing.refusing = false;
     },
     refuseChecks: () => {
