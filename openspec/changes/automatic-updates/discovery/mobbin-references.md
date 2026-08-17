@@ -79,7 +79,24 @@ for a slim persistent bar with one action, one for a sidebar-bottom standing chi
 - [n8n](https://mobbin.com/screens/022472df-146d-4420-8982-73040a6f36b8) (already cited above)
   names the installed and waiting versions together, which the strip alternative borrows.
 
-The three frames on the canvas: `Home · Update strip` (Patreon and Ditto shape, sentence plus both
-versions plus one solid restart button), `Home · Update sidebar chip` (Plane and incident.io shape,
-a card above the sidebar's bottom edge), `Home · Update toolbar pill` (a StatusChip-weight pill in
-the window strip's trailing corner).
+A first round drew a toolbar strip, a quiet sidebar chip and a toolbar pill from these references.
+The maintainer rejected all three as too quiet and asked for a livelier card under the Get started
+panel, which sent a third search after colorful sidebar-bottom cards.
+
+## Third pass, for the card under Get started (2026-08-17)
+
+- [Mercor](https://mobbin.com/screens/6611a860-409f-4439-a0b7-446671bff304) shows the violet
+  gradient hero card whose weight the rejected gradient alternative borrowed.
+- [Portrait](https://mobbin.com/screens/e1c84d34-9b06-4511-8d8a-f8a4a913e0b7) accents a white
+  surface with a gradient tile and a gradient-outlined action, the shape the chosen card follows.
+- [Langdock](https://mobbin.com/screens/fe015a4f-7142-45d9-a899-4a724d011d0e) parks its standing
+  offer at the sidebar's bottom edge under the Get started block, the placement the maintainer
+  chose.
+
+Three cards ran on the canvas, each with and without the Get started panel above it: a full
+gradient card, a white card with a gradient icon tile, and a dark card with a gradient border. The
+maintainer picked the white card ("halo"), asked its icon tile onto the brand blue, and asked for a
+dark-scheme pair. What stands in `designs/recompose.pen`: `Update card halo · with Get started`,
+`Update card halo · alone`, `Update card halo · Dark · with Get started`, and
+`Update card halo · Dark · alone`. The card reads: blue gradient icon tile with an up arrow,
+"Update ready" over "0.3.0 → 0.4.0", and one full-width "Restart to update" button.
