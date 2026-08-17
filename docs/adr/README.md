@@ -142,3 +142,5 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0134](0134-actual-size-takes-the-plain-reset-chord.md)                         | The plain reset chord lands on 100%                                                 | Accepted   | 2026-08-17 |
 | [0135](0135-gateway-lifecycle-stays-main-side.md)                               | Gateway lifecycle stays main-side                                                   | Accepted   | 2026-08-17 |
 | [0136](0136-a-packaged-run-attaches-no-window-input-guard.md)                   | A packaged run attaches no window input guard                                       | Accepted   | 2026-08-17 |
+| [0137](0137-the-store-hands-out-the-installer-recompose-already-signs.md)       | The Store hands out the installer recompose already signs                           | Accepted   | 2026-08-17 |
+| [0138](0138-a-macos-artifact-per-architecture-one-manifest-between-them.md)     | A macOS artifact per architecture, one manifest between them                        | Accepted   | 2026-08-17 |

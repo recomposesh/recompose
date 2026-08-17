@@ -2,20 +2,11 @@
 
 ### Requirement: An update arrives through the channel that installed the app
 
-The app MUST take an update only from the channel that installed it. A copy the Microsoft Store
-installed MUST leave updating to the Store, and the app MUST run no updater of its own there. On
-Linux the app MUST update itself for an AppImage alone, and it MUST leave a deb install to the
-system package tool.
+The app MUST take an update only from the channel that installed it. On Linux the app MUST update
+itself for an AppImage alone, and it MUST leave a deb install to the system package tool.
 
-Neither condition counts as a failure. The app MUST report no error for it, and it MUST offer no
-control that promises an update it never performs.
-
-#### Scenario: the Store owns a Windows install
-
-- Given the Microsoft Store installed this copy
-- When the app starts
-- Then the app runs no update check of its own
-- And the interface offers no update control
+A channel another tool owns counts as no failure. The app MUST report no error for it, and it MUST
+offer no control that promises an update it never performs.
 
 #### Scenario: a package tool owns a Linux install
 
