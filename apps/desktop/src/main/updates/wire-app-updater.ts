@@ -52,8 +52,8 @@ function heardSignals(
 /**
  * The one place the updater meets the app.
  *
- * @summary The error listener attaches before the first check, unconditionally: an unlistened
- * error event would take the main process down, so the spec's "a failed check leaves the app
+ * @summary The error listener attaches before the first check, unconditionally: an error event
+ * with no listener would take the main process down, so the spec's "a failed check leaves the app
  * running" is decided by this ordering rather than by any interface.
  */
 export function wireAppUpdater(deps: {

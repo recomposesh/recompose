@@ -32,6 +32,7 @@ BGRA
 Binvalid
 birpc
 blockmap
+blockmaps
 boxshadow
 Braintrust
 buildrequest
@@ -57,9 +58,9 @@ Commvault
 componentwise
 connectingto
 connectionline
-copilotkit
 conv
 cooldown
+copilotkit
 covguard
 crashpad
 credentialweight
@@ -168,6 +169,7 @@ llms
 lmstudio
 lobehub
 localai
+LOCALAPPDATA
 lockfiles
 logit
 logprobs
@@ -322,6 +324,7 @@ topsecret
 tosorted
 Toulu
 trackpad
+translocated
 triaging
 tsgolint
 ttft
