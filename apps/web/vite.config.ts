@@ -10,4 +10,7 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  ssr: {
+    noExternal: ['@lobehub/icons'],
+  },
 });

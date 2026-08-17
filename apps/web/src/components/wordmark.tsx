@@ -1,3 +1,5 @@
+import { NOTE_PATH } from './note-path';
+
 export function Wordmark({ height = 25 }: { height?: number }) {
   return (
     <svg
@@ -13,7 +15,7 @@ export function Wordmark({ height = 25 }: { height?: number }) {
         fill="currentColor"
         fillOpacity=".8"
         fillRule="evenodd"
-        d="M8.83 32.342c2.387-.295 4.718.235 6.483 1.562V5.698c0-.718.49-1.345 1.19-1.532v-.002l15.48-4.11C33.015-.218 34 .575 34 1.588v7.317c0 .718-.492 1.345-1.19 1.533v.002l-14.824 3.936v24.806c0 6.902-9.682 11.42-15.32 7.165C-2.946 42.11.869 33.325 8.83 32.342"
+        d={NOTE_PATH}
         clipRule="evenodd"
       />
       <g fill="currentColor" clipPath="url(#recompose-wordmark-clip)">
