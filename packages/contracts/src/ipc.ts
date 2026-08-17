@@ -27,6 +27,7 @@ import {
   quotaWindowSchema,
   usageReportAskSchema,
   usageReportSchema,
+  usageSearchRangeSchema,
 } from './usage';
 
 export const connectAccountRequestSchema = z.strictObject({
@@ -221,17 +222,21 @@ export const ipcEvents = {
       'remove-gateway',
     ]),
   },
+  /**
+   * @summary The range members derive from the search vocabulary under the `range-` prefix, so a
+   * range added to the address reaches the menu as a red build rather than a silent gap.
+   */
   'usage:command': {
-    payload: z.enum([
-      'range-24h',
-      'range-7d',
-      'range-30d',
-      'metric-requests',
-      'metric-tokens',
-      'metric-spend',
-      'metric-latency',
-      'toggle-table-twin',
-      'refresh',
+    payload: z.union([
+      z.templateLiteral(['range-', usageSearchRangeSchema]),
+      z.enum([
+        'metric-requests',
+        'metric-tokens',
+        'metric-spend',
+        'metric-latency',
+        'toggle-table-twin',
+        'refresh',
+      ]),
     ]),
   },
   'settings:changed': { payload: settingsSchema },

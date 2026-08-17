@@ -24,6 +24,7 @@ import type {
   SubscriptionProviderId,
   SubscriptionTool,
   SystemState,
+  UsageSearchRange,
 } from './index';
 
 describe('ipc request contracts', () => {
@@ -217,6 +218,13 @@ describe('push surface totality', () => {
       | 'copy-base-url'
       | 'remove-gateway'
     >();
+  });
+
+  test('the range commands and the search vocabulary stay a bijection under the range- prefix', () => {
+    expectTypeOf<
+      Extract<IpcEventPayload<'usage:command'>, `range-${string}`>
+    >().toEqualTypeOf<`range-${UsageSearchRange}`>();
+    expectTypeOf<`range-${UsageSearchRange}`>().toExtend<IpcEventPayload<'usage:command'>>();
   });
 
   test('the push carries the whole snapshot rather than one gateway', () => {

@@ -7,9 +7,12 @@ import { spendSnappedRange, withRange } from '../../lib/usage-search';
 type UsageCommand = IpcEventPayload<'usage:command'>;
 
 const RANGE_BY_COMMAND: Readonly<Partial<Record<UsageCommand, PresetRange>>> = {
+  'range-1h': '1h',
   'range-24h': '24h',
   'range-7d': '7d',
   'range-30d': '30d',
+  'range-this-week': 'this-week',
+  'range-this-month': 'this-month',
 };
 
 const MEASURE_BY_COMMAND: Readonly<Partial<Record<UsageCommand, ChartMeasure>>> = {

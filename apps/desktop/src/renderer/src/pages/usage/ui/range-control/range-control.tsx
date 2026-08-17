@@ -1,5 +1,5 @@
 import { Popover } from '@base-ui/react/popover';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { PresetRange, UsageSearch, UsageSearchRange } from '../../lib/usage-search';
 import type { UsageWindow } from '../../lib/usage-window';
@@ -104,6 +104,17 @@ function draftedOver(search: UsageSearch, now: number) {
 function useDraftedWindow(search: UsageSearch, now: number) {
   const [drafted, setDrafted] = useState(() => draftedOver(search, now));
   const [open, setOpen] = useState(false);
+
+  useEffect(
+    () =>
+      window.recomposeEvents['usage:command']((command) => {
+        if (command === 'range-custom') {
+          setDrafted(draftedOver(search, now));
+          setOpen(true);
+        }
+      }),
+    [search, now],
+  );
 
   return {
     picked: drafted.range,
