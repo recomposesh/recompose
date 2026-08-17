@@ -69,6 +69,7 @@ export const systemStateSchema = z.strictObject({
   loginItemEnabled: z.boolean(),
   menuBarVisible: z.boolean(),
   configFolder: nonBlankString,
+  version: nonBlankString,
 });
 
 export type SystemState = z.infer<typeof systemStateSchema>;

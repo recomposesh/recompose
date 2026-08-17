@@ -1,5 +1,5 @@
 import { is } from '@electron-toolkit/utils';
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
 
 import type { EngineHost } from '../engine-host/engine-host';
 import type { SpendGrantContext } from '../engine-host/spend-grant';
@@ -105,6 +105,7 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
       loginItem: wiring.loginItemAvailability,
       configFolder: userDataPath,
       homeFolder,
+      appVersion: app.getVersion(),
       readLoginItem: () => wiring.loginItem.isEnabled(),
       isMenuBarVisible: () => isMenuBarTrayVisible(),
       openFolder: wiring.openFolder,

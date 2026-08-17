@@ -12,6 +12,7 @@ function systemContext(overrides: Partial<SystemIpcContext> = {}): SystemIpcCont
     loginItem: 'available',
     configFolder,
     homeFolder: '/home/someone',
+    appVersion: '0.3.0',
     readLoginItem: () => false,
     isMenuBarVisible: () => false,
     openFolder: async () => Promise.resolve(''),
@@ -86,8 +87,17 @@ describe('the system state behind the settings screen', () => {
         loginItemEnabled: true,
         menuBarVisible: true,
         configFolder: '~/.config/recompose',
+        version: '0.3.0',
       },
     });
+  });
+
+  test('names the running version the packaging stamped', async () => {
+    const handlers = createSystemIpcHandlers(systemContext({ appVersion: '0.4.0' }));
+
+    const reading = await handlers['system:get'](undefined);
+
+    expect(reading).toMatchObject({ ok: true, value: { version: '0.4.0' } });
   });
 
   test('reports the operating system login item as it stands on each fetch', async () => {

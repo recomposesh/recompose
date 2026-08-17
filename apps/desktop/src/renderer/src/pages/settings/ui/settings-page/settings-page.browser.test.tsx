@@ -41,6 +41,7 @@ function runningOn(loginItem: SystemState['loginItem']): BridgeParameters {
     loginItemEnabled: false,
     menuBarVisible: false,
     configFolder: '~/Library/Application Support/recompose',
+    version: '0.3.0',
   };
 
   return {

@@ -5,6 +5,7 @@ import { Suspense, useId, useSyncExternalStore } from 'react';
 
 import { focusDrivenByArrow, panelWidth, subscribeToPanelWidths } from '../../shared/lib';
 import { Icon } from '../../shared/ui';
+import { UpdateReadyCard } from '../../widgets/app-update';
 import { GatewaySidebar } from '../../widgets/gateway/sidebar';
 import { GetStartedPanel } from '../../widgets/get-started';
 import { ProviderSidebar } from '../../widgets/provider/sidebar';
@@ -96,9 +97,12 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
           </Suspense>
           {systemGroup(systemId, matchRoute, navigate)}
         </nav>
-        <div className="app-no-drag pt-2.5">
+        <div className="app-no-drag flex flex-col gap-2.5 pt-2.5">
           <Suspense fallback={null}>
             <GetStartedPanel />
+          </Suspense>
+          <Suspense fallback={null}>
+            <UpdateReadyCard />
           </Suspense>
         </div>
       </div>

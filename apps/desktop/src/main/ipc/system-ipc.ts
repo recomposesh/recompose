@@ -13,6 +13,7 @@ export type SystemIpcContext = {
   loginItem: LoginItemAvailability;
   configFolder: string;
   homeFolder: string;
+  appVersion: string;
   readLoginItem: () => boolean;
   isMenuBarVisible: () => boolean;
   openFolder: (path: string) => Promise<string>;
@@ -43,6 +44,7 @@ function observeSystem(ctx: SystemIpcContext): SystemState {
     loginItemEnabled: ctx.readLoginItem(),
     menuBarVisible: ctx.isMenuBarVisible(),
     configFolder: homeRelative(ctx.configFolder, ctx.homeFolder),
+    version: ctx.appVersion,
   };
 }
 

@@ -21,6 +21,7 @@ const observedSystem: SystemState = {
   loginItemEnabled: false,
   menuBarVisible: false,
   configFolder: '/tmp/recompose',
+  version: '0.3.0',
 };
 
 export const darkSettings: Settings = { ...defaultSettings(), theme: 'dark' };
