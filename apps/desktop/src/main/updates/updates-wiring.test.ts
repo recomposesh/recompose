@@ -115,6 +115,24 @@ describe('the development feed marker', () => {
     wiring.dispose();
   });
 
+  test('a bare marker keeps the hourly interval', () => {
+    vi.useFakeTimers();
+
+    const { port, wiring } = wiredOn({
+      platform: 'darwin',
+      env: { RECOMPOSE_DEV_UPDATE_FEED: '1' },
+      isPackaged: false,
+      inApplicationsFolder: false,
+    });
+
+    vi.advanceTimersByTime(1_500);
+
+    expect(port.checks).toBe(1);
+
+    wiring.dispose();
+    vi.useRealTimers();
+  });
+
   test('a marker carrying milliseconds shortens the interval to them', () => {
     vi.useFakeTimers();
 

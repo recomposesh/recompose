@@ -7,9 +7,7 @@ import { nextUpdateState, type UpdaterSignal } from './update-standing';
 type VersionInfo = { version: string };
 
 type HeardUpdaterEvent = ((event: 'error', listener: (error: Error) => void) => unknown) &
-  ((event: 'checking-for-update', listener: () => void) => unknown) &
   ((event: 'update-available', listener: (info: VersionInfo) => void) => unknown) &
-  ((event: 'update-not-available', listener: (info: VersionInfo) => void) => unknown) &
   ((event: 'update-downloaded', listener: (info: VersionInfo) => void) => unknown) &
   ((event: 'update-cancelled', listener: (info: VersionInfo) => void) => unknown);
 
@@ -27,14 +25,6 @@ export type WiredUpdater = {
   dispose: () => void;
 };
 
-function sameStanding(one: UpdateState, other: UpdateState): boolean {
-  if (one.standing === 'quiet' || other.standing === 'quiet') {
-    return one.standing === other.standing;
-  }
-
-  return one.standing === other.standing && one.version === other.version;
-}
-
 function reasonOf(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
 }
@@ -48,14 +38,8 @@ function heardSignals(
     log.failed('check', error.message);
     folded({ kind: 'failed', reason: error.message });
   });
-  updater.on('checking-for-update', () => {
-    folded({ kind: 'checking' });
-  });
   updater.on('update-available', (info) => {
     folded({ kind: 'available', version: info.version });
-  });
-  updater.on('update-not-available', () => {
-    folded({ kind: 'not-available' });
   });
   updater.on('update-downloaded', (info) => {
     folded({ kind: 'downloaded', version: info.version });
@@ -84,7 +68,7 @@ export function wireAppUpdater(deps: {
   const folded = (signal: UpdaterSignal): void => {
     const next = nextUpdateState(held, signal);
 
-    if (sameStanding(held, next)) {
+    if (next === held) {
       return;
     }
 

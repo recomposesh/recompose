@@ -207,6 +207,7 @@ The reserved release tail sits outside these tasks, and each piece reaches the m
 - [Risk] The packaged restart proof costs a second build on the Linux runner → Mitigation: the twin build reuses the compiled output and only re-runs electron-builder with a bumped version; if the cost still breaks the suite budget, that becomes a maintainer ask.
 - [Risk] The ready-absorbing fold hides a newer release for long-running sessions → Mitigation: accepted at gate 1; the next launch checks again.
 - [Risk] `mise exec vale` and cspell blind spots inside worktrees mask prose defects in authored artifacts → Mitigation: Vale runs explicitly on every authored file before commit.
+- [Risk] Six equivalent mutants survive on the fold and the adapter at a 95.86 score → Mitigation: recorded here as the exception the mutation rule allows; each one changes a value the settle path already normalizes, so no observable behavior can distinguish it.
 
 ## Migration and rollout
 

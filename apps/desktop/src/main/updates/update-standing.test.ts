@@ -10,8 +10,6 @@ const downloading: UpdateState = { standing: 'downloading', version: '0.4.0' };
 const ready: UpdateState = { standing: 'ready', version: '0.4.0' };
 
 const anySignal: fc.Arbitrary<UpdaterSignal> = fc.oneof(
-  fc.constant<UpdaterSignal>({ kind: 'checking' }),
-  fc.constant<UpdaterSignal>({ kind: 'not-available' }),
   fc.constant<UpdaterSignal>({ kind: 'cancelled' }),
   fc.constant<UpdaterSignal>({ kind: 'failed', reason: 'feed refused' }),
   fc
@@ -31,10 +29,9 @@ describe('a quiet channel', () => {
     expect(nextUpdateState(quiet, { kind: 'available', version: '0.4.0' })).toEqual(downloading);
   });
 
-  test('stays quiet through a check, an empty answer, and a failure', () => {
-    expect(nextUpdateState(quiet, { kind: 'checking' })).toEqual(quiet);
-    expect(nextUpdateState(quiet, { kind: 'not-available' })).toEqual(quiet);
+  test('stays quiet through a failure and a cancellation', () => {
     expect(nextUpdateState(quiet, { kind: 'failed', reason: 'offline' })).toEqual(quiet);
+    expect(nextUpdateState(quiet, { kind: 'cancelled' })).toEqual(quiet);
   });
 });
 
@@ -48,9 +45,7 @@ describe('a downloading channel', () => {
     expect(nextUpdateState(downloading, { kind: 'cancelled' })).toEqual(quiet);
   });
 
-  test('keeps downloading through a repeated check, following the newest announced version', () => {
-    expect(nextUpdateState(downloading, { kind: 'checking' })).toEqual(downloading);
-    expect(nextUpdateState(downloading, { kind: 'not-available' })).toEqual(downloading);
+  test('follows the newest announced version', () => {
     expect(nextUpdateState(downloading, { kind: 'available', version: '0.5.0' })).toEqual({
       standing: 'downloading',
       version: '0.5.0',
@@ -58,11 +53,17 @@ describe('a downloading channel', () => {
   });
 });
 
+describe('a move that changes nothing hands back the very state it holds', () => {
+  test('a failure on a quiet channel and a re-announced version keep their object', () => {
+    expect(nextUpdateState(quiet, { kind: 'failed', reason: 'offline' })).toBe(quiet);
+    expect(nextUpdateState(downloading, { kind: 'available', version: '0.4.0' })).toBe(downloading);
+    expect(nextUpdateState(ready, { kind: 'downloaded', version: '0.5.0' })).toBe(ready);
+  });
+});
+
 describe('a ready channel absorbs everything', () => {
   test('no signal moves it, pinned value by value', () => {
-    expect(nextUpdateState(ready, { kind: 'checking' })).toEqual(ready);
     expect(nextUpdateState(ready, { kind: 'available', version: '0.5.0' })).toEqual(ready);
-    expect(nextUpdateState(ready, { kind: 'not-available' })).toEqual(ready);
     expect(nextUpdateState(ready, { kind: 'downloaded', version: '0.5.0' })).toEqual(ready);
     expect(nextUpdateState(ready, { kind: 'cancelled' })).toEqual(ready);
     expect(nextUpdateState(ready, { kind: 'failed', reason: 'late' })).toEqual(ready);
@@ -74,7 +75,7 @@ describe('a ready channel absorbs everything', () => {
       { kind: 'downloaded', version: '0.4.0' },
       { kind: 'available', version: '0.5.0' },
       { kind: 'failed', reason: 'late' },
-      { kind: 'checking' },
+      { kind: 'cancelled' },
     ];
 
     expect(folded(history)).toEqual(ready);

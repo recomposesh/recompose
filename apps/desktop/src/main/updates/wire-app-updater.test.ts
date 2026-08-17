@@ -104,16 +104,83 @@ describe('the held state follows the fold and pushes on movement alone', () => {
   test('an announced then landed version pushes downloading then ready', () => {
     const { updater, pushed, wiring } = wired();
 
-    updater.emit('checking-for-update');
     updater.emit('update-available', { version: '0.4.0' });
     updater.emit('update-downloaded', { version: '0.4.0' });
-    updater.emit('checking-for-update');
+    updater.emit('update-available', { version: '0.5.0' });
 
     expect(pushed).toEqual([
       { standing: 'downloading', version: '0.4.0' },
       { standing: 'ready', version: '0.4.0' },
     ]);
     expect(wiring.state()).toEqual({ standing: 'ready', version: '0.4.0' });
+  });
+});
+
+describe('what pushes and what stays quiet', () => {
+  test('a re-announced version pushes nothing, and a newer one pushes again', () => {
+    const { updater, pushed } = wired();
+
+    updater.emit('update-available', { version: '0.4.0' });
+    updater.emit('update-available', { version: '0.4.0' });
+    updater.emit('update-available', { version: '0.5.0' });
+
+    expect(pushed).toEqual([
+      { standing: 'downloading', version: '0.4.0' },
+      { standing: 'downloading', version: '0.5.0' },
+    ]);
+  });
+
+  test('a failure mid-download settles the card back to quiet', () => {
+    const { updater, pushed } = wired();
+
+    updater.emit('update-available', { version: '0.4.0' });
+    updater.emit('error', new Error('the feed went away'));
+
+    expect(pushed).toEqual([{ standing: 'downloading', version: '0.4.0' }, { standing: 'quiet' }]);
+  });
+
+  test('a cancelled download settles back, and a later find downloads again', () => {
+    const { updater, pushed } = wired();
+
+    updater.emit('update-available', { version: '0.4.0' });
+    updater.emit('update-cancelled', { version: '0.4.0' });
+    updater.emit('update-available', { version: '0.4.0' });
+
+    expect(pushed).toEqual([
+      { standing: 'downloading', version: '0.4.0' },
+      { standing: 'quiet' },
+      { standing: 'downloading', version: '0.4.0' },
+    ]);
+  });
+});
+
+describe('a check the boundary refuses without an Error', () => {
+  test('still reaches the log whole', async () => {
+    const lines: string[] = [];
+
+    vi.spyOn(console, 'warn').mockImplementation((line: unknown) => {
+      lines.push(String(line));
+    });
+
+    const updater = new FakeUpdater();
+    const boundaryReason: unknown = 'the socket fell over';
+
+    updater.answerCheck = () => {
+      throw boundaryReason;
+    };
+
+    wireAppUpdater({
+      updater,
+      log: updateLogFor('https://releases.example'),
+      push: () => undefined,
+      intervalMs: 60_000,
+    });
+
+    await vi.waitFor(() => {
+      expect(lines).toEqual([
+        'update check failed: the socket fell over (feed: https://releases.example)',
+      ]);
+    });
   });
 });
 

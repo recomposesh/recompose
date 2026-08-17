@@ -1,15 +1,19 @@
 import type { UpdateState } from '@recompose/contracts';
 
 export type UpdaterSignal =
-  | { kind: 'checking' }
   | { kind: 'available'; version: string }
-  | { kind: 'not-available' }
   | { kind: 'downloaded'; version: string }
   | { kind: 'cancelled' }
   | { kind: 'failed'; reason: string };
 
-function settledBack(state: UpdateState, signal: UpdaterSignal): UpdateState {
-  return signal.kind === 'failed' || signal.kind === 'cancelled' ? { standing: 'quiet' } : state;
+function startedDownloading(state: UpdateState, version: string): UpdateState {
+  return state.standing === 'downloading' && state.version === version
+    ? state
+    : { standing: 'downloading', version };
+}
+
+function settledBack(state: UpdateState): UpdateState {
+  return state.standing === 'quiet' ? state : { standing: 'quiet' };
 }
 
 /**
@@ -29,8 +33,8 @@ export function nextUpdateState(state: UpdateState, signal: UpdaterSignal): Upda
   }
 
   if (signal.kind === 'available') {
-    return { standing: 'downloading', version: signal.version };
+    return startedDownloading(state, signal.version);
   }
 
-  return settledBack(state, signal);
+  return settledBack(state);
 }
