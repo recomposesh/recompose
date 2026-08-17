@@ -47,6 +47,23 @@ const vaultsBeforeARefusal = new WeakMap<Page, string>();
 
 const warningsTheSurfaceShowed = new WeakMap<Page, string>();
 
+const toggledMenuItems = new WeakMap<Page, string>();
+
+/** Remembers which ticking menu item the last pick toggled, so a tick step knows what to read. */
+export function rememberToggledMenuItem(page: Page, label: string): void {
+  toggledMenuItems.set(page, label);
+}
+
+export function toggledMenuItem(page: Page): string {
+  const item = toggledMenuItems.get(page);
+
+  if (item === undefined) {
+    throw new Error('no step picked a ticking menu item, so no tick names an item to read');
+  }
+
+  return item;
+}
+
 export function rememberKeyEntry(page: Page, entry: string): void {
   entriesInFocus.set(page, entry);
 }
