@@ -62,3 +62,24 @@ person did not ask to make.
   ignoring the strip already defers it.
 - Settings can hold a fuller "Updates" pane later. Nothing in the spec requires one now, so it stays
   a rider rather than scope.
+
+## Second pass, for the three canvas alternatives (2026-08-17)
+
+Two more searches ran while the affordance alternatives were drawn in `designs/recompose.pen`: one
+for a slim persistent bar with one action, one for a sidebar-bottom standing chip.
+
+- [Ditto](https://mobbin.com/screens/5aafba83-ed0f-45d7-b603-f448fbbfd7c7) runs a slim full-width
+  top banner with the sentence left and the action right, the working-area strip shape at its
+  thinnest.
+- [Plane](https://mobbin.com/screens/acb49906-5e78-45fc-b820-75354c74c2e0) parks a quiet standing
+  pill at the sidebar's bottom edge ("Business trial ends in 13d"), state that persists without
+  asking for attention.
+- [incident.io](https://mobbin.com/screens/9618b478-1dc4-428c-b34d-5f4115112f4d) does the same with
+  a small bottom-left sidebar card, one step louder than Plane's pill.
+- [n8n](https://mobbin.com/screens/022472df-146d-4420-8982-73040a6f36b8) (already cited above)
+  names the installed and waiting versions together, which the strip alternative borrows.
+
+The three frames on the canvas: `Home · Update strip` (Patreon and Ditto shape, sentence plus both
+versions plus one solid restart button), `Home · Update sidebar chip` (Plane and incident.io shape,
+a card above the sidebar's bottom edge), `Home · Update toolbar pill` (a StatusChip-weight pill in
+the window strip's trailing corner).
