@@ -3,12 +3,103 @@ import { describe, expect, test } from 'vitest';
 
 import {
   SETTINGS_SHORTCUT_ROUTE,
+  gatewayDetailSlugFrom,
+  gatewaysRouteFor,
   newGatewayRouteFor,
   onGatewayDetailUrl,
+  onProvidersUrl,
+  providersRouteFor,
   rendererBaseFor,
   rendererUrlFor,
   settingsShortcutRouteFor,
+  usageRouteFor,
+  usageSearchWordsFrom,
 } from './renderer-url';
+
+describe('the navigation routes the View menu opens', () => {
+  test('the gateways pick lands where the home landing lands', () => {
+    expect(gatewaysRouteFor(3)).toBe('/?at=3');
+  });
+
+  test('the providers pick lands the providers surface', () => {
+    expect(providersRouteFor(4)).toBe('/providers?at=4');
+  });
+
+  test('the usage pick lands the explorer', () => {
+    expect(usageRouteFor(5)).toBe('/usage?at=5');
+  });
+
+  test('every press stamps the route, so a repeat pick reads as a fresh request', () => {
+    expect(gatewaysRouteFor(1)).not.toBe(gatewaysRouteFor(2));
+  });
+});
+
+describe('which gateway detail an address stands on', () => {
+  test('a gateway detail names its slug', () => {
+    expect(gatewayDetailSlugFrom('app://renderer/index.html#/gateways/personal')).toBe('personal');
+  });
+
+  test('a detail address with a query or a deeper path keeps only the slug', () => {
+    expect(gatewayDetailSlugFrom('app://renderer/index.html#/gateways/relay?x=1')).toBe('relay');
+    expect(gatewayDetailSlugFrom('app://renderer/index.html#/gateways/relay/logs')).toBe('relay');
+  });
+
+  test('any other surface names no gateway', () => {
+    expect(gatewayDetailSlugFrom('app://renderer/index.html#/usage')).toBeNull();
+    expect(gatewayDetailSlugFrom('app://renderer/index.html#/gateways/')).toBeNull();
+    expect(gatewayDetailSlugFrom('not a url')).toBeNull();
+  });
+});
+
+describe('the usage words an address carries', () => {
+  test('a usage address names its range and metric', () => {
+    expect(
+      usageSearchWordsFrom('app://renderer/index.html#/usage?range=this-week&metric=spend'),
+    ).toEqual({ range: 'this-week', metric: 'spend' });
+  });
+
+  test('a bare usage address lands the default view, mirroring the renderer', () => {
+    expect(usageSearchWordsFrom('app://renderer/index.html#/usage')).toEqual({
+      range: '24h',
+      metric: 'requests',
+    });
+  });
+
+  test('words the vocabulary never accepted fall back rather than ride', () => {
+    expect(
+      usageSearchWordsFrom('app://renderer/index.html#/usage?range=90d&metric=errors'),
+    ).toEqual({ range: '24h', metric: 'requests' });
+  });
+
+  test('a custom range without both edges falls back the way the renderer folds it', () => {
+    expect(usageSearchWordsFrom('app://renderer/index.html#/usage?range=custom')).toEqual({
+      range: '24h',
+      metric: 'requests',
+    });
+    expect(
+      usageSearchWordsFrom('app://renderer/index.html#/usage?range=custom&from=1&to=2'),
+    ).toEqual({ range: 'custom', metric: 'requests' });
+  });
+
+  test('an address off the explorer carries the defaults', () => {
+    expect(usageSearchWordsFrom('app://renderer/index.html#/')).toEqual({
+      range: '24h',
+      metric: 'requests',
+    });
+  });
+});
+
+describe('whether an address stands on the providers surface', () => {
+  test('the providers route answers wherever its search points', () => {
+    expect(onProvidersUrl('app://renderer/index.html#/providers')).toBe(true);
+    expect(onProvidersUrl('app://renderer/index.html#/providers?kind=api-key')).toBe(true);
+  });
+
+  test('another surface does not answer, and junk answers nothing', () => {
+    expect(onProvidersUrl('app://renderer/index.html#/')).toBe(false);
+    expect(onProvidersUrl('junk')).toBe(false);
+  });
+});
 
 const packagedBase = 'app://renderer/index.html';
 const devBase = 'http://localhost:5173';

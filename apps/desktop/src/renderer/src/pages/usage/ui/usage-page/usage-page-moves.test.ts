@@ -12,12 +12,23 @@ const standing: UsageSearch = {
 };
 
 describe('a menu command moves the same address the controls write', () => {
-  it('moves the range for every range command', () => {
-    const moved = (['range-24h', 'range-7d', 'range-30d'] as const).map(
-      (command) => movedSearch(command, { ...standing, range: '7d' })?.range,
-    );
+  it('moves the range for every preset command in the vocabulary order', () => {
+    const moved = (
+      [
+        'range-1h',
+        'range-24h',
+        'range-7d',
+        'range-30d',
+        'range-this-week',
+        'range-this-month',
+      ] as const
+    ).map((command) => movedSearch(command, { ...standing, range: '7d' })?.range);
 
-    expect(moved).toEqual(['24h', '7d', '30d']);
+    expect(moved).toEqual(['1h', '24h', '7d', '30d', 'this-week', 'this-month']);
+  });
+
+  it('moves no view for the custom command, because the calendar owns that landing', () => {
+    expect(movedSearch('range-custom', standing)).toBeUndefined();
   });
 
   it('selects the measure for every measure command, keeping the filters', () => {

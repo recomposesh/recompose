@@ -44,6 +44,12 @@ export function pushUsageCommand(command: IpcEventPayload<'usage:command'>): voi
   standing?.webContents.send('usage:command', command);
 }
 
+export function pushViewCommand(command: IpcEventPayload<'view:command'>): void {
+  const standing = BrowserWindow.getFocusedWindow() ?? theOnlyWindow();
+
+  standing?.webContents.send('view:command', command);
+}
+
 function theOnlyWindow(): BrowserWindow | undefined {
   const open = BrowserWindow.getAllWindows();
 

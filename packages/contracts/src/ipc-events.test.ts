@@ -12,6 +12,7 @@ describe('the lifecycle push', () => {
     'accounts:changed',
     'canvas:command',
     'usage:command',
+    'view:command',
     'settings:changed',
     'devtools:toggle',
     'subscriptions:launch-refused',
@@ -41,16 +42,6 @@ describe('the lifecycle push', () => {
     expect(Object.keys(ipcChannels)).not.toContain('engine:state');
   });
 
-  test('a canvas push carries one of the five acts the Gateway menu offers', () => {
-    const acts = ['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs'];
-
-    expect(acts.map((act) => ipcEvents['canvas:command'].payload.parse(act))).toEqual(acts);
-  });
-
-  test('a canvas push refuses an act no menu item names', () => {
-    expect(() => ipcEvents['canvas:command'].payload.parse('zoom')).toThrow();
-  });
-
   test('the devtools push carries the one word it exists for', () => {
     expect(ipcEvents['devtools:toggle'].payload.parse('asked')).toBe('asked');
     expect(() => ipcEvents['devtools:toggle'].payload.parse('open')).toThrow();
@@ -61,6 +52,42 @@ describe('the lifecycle push', () => {
     expect(() => {
       ipcEvents['accounts:changed'].payload.parse({ accounts: [] });
     }).toThrow();
+  });
+});
+
+describe('the view command push', () => {
+  test('a view push carries one of the two surface toggles', () => {
+    const toggles = ['toggle-sidebar', 'toggle-inspector'];
+
+    expect(toggles.map((toggle) => ipcEvents['view:command'].payload.parse(toggle))).toEqual(
+      toggles,
+    );
+  });
+
+  test('a view push refuses a toggle no View item names', () => {
+    expect(() => ipcEvents['view:command'].payload.parse('toggle-logs')).toThrow();
+  });
+});
+
+describe('the canvas command push', () => {
+  test('a canvas push carries one of the eight acts the Gateway menu offers', () => {
+    const acts = [
+      'zoom-in',
+      'zoom-out',
+      'zoom-to-100',
+      'zoom-to-fit',
+      'tidy',
+      'toggle-logs',
+      'copy-base-url',
+      'remove-gateway',
+    ];
+
+    expect(acts.map((act) => ipcEvents['canvas:command'].payload.parse(act))).toEqual(acts);
+  });
+
+  test('a canvas push refuses an act no menu item names', () => {
+    expect(() => ipcEvents['canvas:command'].payload.parse('zoom')).toThrow();
+    expect(() => ipcEvents['canvas:command'].payload.parse('rename-gateway')).toThrow();
   });
 });
 

@@ -32,6 +32,7 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'system:window-band',
   'system:title-bar-double-click',
   'system:logs-drawer',
+  'system:surface-toggles',
   'gateways:offer-port',
   'gateways:move-port',
   'gateways:set-port',

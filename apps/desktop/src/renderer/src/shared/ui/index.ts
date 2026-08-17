@@ -11,6 +11,7 @@ export { ConsequenceDialog } from './consequence-dialog/consequence-dialog';
 export { NavGroup } from './nav-group/nav-group';
 export { CommandLine } from './command-line/command-line';
 export { CopyButton } from './copy-button/copy-button';
+export { COPY_OUTCOME_WORDING } from './copy-button/copy-outcome-wording';
 export { FieldGroup } from './field-group/field-group';
 export { type IconName, Icon } from './icon/icon';
 export { InspectorToggle } from './inspector-toggle/inspector-toggle';

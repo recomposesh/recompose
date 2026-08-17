@@ -1,10 +1,15 @@
-import { expect, test, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
+import { emitUsageCommand, installFakeBridge } from '../../../../shared/testing';
 import { RangeControl } from './range-control';
+
+beforeEach(() => {
+  installFakeBridge();
+});
 
 const NOW = new Date(2026, 7, 12, 12, 0, 0).getTime();
 const DAY = 86_400_000;
@@ -74,6 +79,15 @@ test('a range wider than retention stays reachable but unmovable, with the reaso
     .element(screen.getByRole('radio', { name: '30d' }))
     .toHaveAttribute('aria-disabled', 'true');
   await expect.element(screen.getByText('Usage retention holds 7 days')).toBeInTheDocument();
+});
+
+test('the menu Custom Range command lands the explorer with its calendar open', async () => {
+  const screen = await render(control());
+
+  emitUsageCommand('range-custom');
+
+  await expect.element(screen.getByLabelText('Custom window')).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: 'Apply' })).toBeVisible();
 });
 
 test('the custom window is drawn on a calendar and lands only once applied', async () => {

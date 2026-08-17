@@ -39,10 +39,21 @@ async function conducted(): Promise<Conducted> {
   const menu = conductAppMenu({
     onOpenSettings: () => undefined,
     onNewGateway: () => undefined,
+    onOpenGateways: () => undefined,
+    onOpenProviders: () => undefined,
+    onOpenUsage: () => undefined,
     onCanvasCommand: () => undefined,
     onUsageCommand: (command) => {
       usageCommanded.push(command);
     },
+    onViewCommand: () => undefined,
+    onStartGateway: () => undefined,
+    onStopGateway: () => undefined,
+    onRestartGateway: () => undefined,
+    onOpenHelpSite: () => undefined,
+    onOpenConfigFolder: () => undefined,
+    onReportIssue: () => undefined,
+    development: true,
     settingsFile: () => settingsFile,
     onCorrupt: () => undefined,
     pushSettings: () => undefined,
@@ -91,11 +102,11 @@ describe('following the usage surface', () => {
 
     stood.menu.standOnUrl(USAGE);
 
-    expect(findItem(installedMenu(), 'Usage')).toBeDefined();
+    expect(installedMenu().find((menu) => menu.label === 'Usage')).toBeDefined();
 
     stood.menu.standOnUrl(CANVAS);
 
-    expect(findItem(installedMenu(), 'Usage')).toBeUndefined();
+    expect(installedMenu().find((menu) => menu.label === 'Usage')).toBeUndefined();
   });
 
   test('a Usage menu command reaches the page', async () => {

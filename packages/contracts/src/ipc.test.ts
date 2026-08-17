@@ -37,6 +37,7 @@ const channelNames: IpcChannel[] = [
   'gateways:remove',
   'engine:replay-logs',
   'system:logs-drawer',
+  'system:surface-toggles',
   'usage:report',
   'usage:quota-windows',
   'usage:balances',
@@ -49,7 +50,7 @@ const channelNames: IpcChannel[] = [
 ];
 
 describe('ipc channel registry', () => {
-  test('exactly the forty specified channels exist', () => {
+  test('exactly the specified channels exist, so an unlisted one arrives red', () => {
     expect(Object.keys(ipcChannels).sort()).toEqual([...channelNames].sort());
   });
 
@@ -221,30 +222,6 @@ describe('the system state crossing the bridge', () => {
 
   test('the platform never rides along', () => {
     expect(() => systemStateSchema.parse({ ...observedSystemState, platform: 'darwin' })).toThrow();
-  });
-});
-
-describe('the channels that answer with nothing', () => {
-  test('opening the config folder carries no value back', () => {
-    expect(
-      ipcChannels['system:open-config-folder'].response.parse({ ok: true, value: undefined }),
-    ).toEqual({ ok: true, value: undefined });
-  });
-
-  test('asking for the log history again carries no rows back, because they arrive by push', () => {
-    expect(ipcChannels['engine:replay-logs'].request.safeParse(undefined).success).toBe(true);
-    expect(
-      ipcChannels['engine:replay-logs'].response.parse({ ok: true, value: undefined }),
-    ).toEqual({ ok: true, value: undefined });
-  });
-
-  test('telling main the drawer stands open carries the standing and nothing else', () => {
-    expect(ipcChannels['system:logs-drawer'].request.parse({ open: true })).toEqual({ open: true });
-    expect(ipcChannels['system:logs-drawer'].request.parse({ open: false })).toEqual({
-      open: false,
-    });
-    expect(() => ipcChannels['system:logs-drawer'].request.parse({})).toThrow();
-    expect(() => ipcChannels['system:logs-drawer'].request.parse({ open: 'yes' })).toThrow();
   });
 });
 

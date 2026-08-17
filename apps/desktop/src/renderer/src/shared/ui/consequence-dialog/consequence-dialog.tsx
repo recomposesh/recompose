@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 
 import { useId } from 'react';
 
+import { shownAsAskModal } from '../../lib';
+
 type ConsequenceDialogProps = {
   /** Whether a change waits on the person's word. */
   open: boolean;
@@ -42,11 +44,7 @@ export function ConsequenceDialog({
       aria-labelledby={headingId}
       className="m-auto w-96 menu-surface p-4"
       onCancel={onCancel}
-      ref={(dialog) => {
-        if (dialog !== null && !dialog.open) {
-          dialog.showModal();
-        }
-      }}
+      ref={shownAsAskModal}
     >
       <h3 className="text-heading text-ink" id={headingId}>
         {heading}

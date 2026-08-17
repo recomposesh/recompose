@@ -1,14 +1,8 @@
-const USAGE_SEARCH_RANGES = [
-  '1h',
-  '24h',
-  '7d',
-  '30d',
-  'this-week',
-  'this-month',
-  'custom',
-] as const;
+import { usageSearchRangeSchema, type UsageSearchRange } from '@recompose/contracts';
 
-export type UsageSearchRange = (typeof USAGE_SEARCH_RANGES)[number];
+const USAGE_SEARCH_RANGES = usageSearchRangeSchema.options;
+
+export type { UsageSearchRange } from '@recompose/contracts';
 
 export type PresetRange = Exclude<UsageSearchRange, 'custom'>;
 

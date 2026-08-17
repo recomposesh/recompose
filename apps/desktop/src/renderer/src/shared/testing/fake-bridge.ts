@@ -33,6 +33,12 @@ import { modelListHandlers, noModelLists, type SeededModelLists } from './fake-m
 import { emitSettingsChanged, listenForSettingsChanges } from './fake-settings';
 import { noSubscriptions, noTools, subscriptionHandlers } from './fake-subscriptions';
 import { forgetUsageCommandListeners, listenForUsageCommands } from './fake-usage-pushes';
+import {
+  forgetReportedSurfaceToggles,
+  forgetViewCommandListeners,
+  listenForViewCommands,
+  noteReportedSurfaceToggles,
+} from './fake-view-pushes';
 
 const emptyDocument: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accounts: [] };
 
@@ -76,6 +82,7 @@ type SystemHandlers = Pick<
   | 'system:window-band'
   | 'system:title-bar-double-click'
   | 'system:logs-drawer'
+  | 'system:surface-toggles'
 >;
 
 function settingsHandlers(seed: Settings): SettingsHandlers {
@@ -99,6 +106,11 @@ function systemHandlers(): SystemHandlers {
     'system:window-band': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:title-bar-double-click': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:logs-drawer': async () => Promise.resolve({ ok: true, value: undefined }),
+    'system:surface-toggles': async (toggles) => {
+      noteReportedSurfaceToggles(toggles);
+
+      return Promise.resolve({ ok: true, value: undefined });
+    },
   };
 }
 
@@ -110,6 +122,7 @@ function eventBridge(): RecomposeIpcEvents {
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
     'usage:command': (listener) => listenForUsageCommands(listener),
+    'view:command': (listener) => listenForViewCommands(listener),
     'settings:changed': (listener) => listenForSettingsChanges(listener),
     'devtools:toggle': () => () => undefined,
     'subscriptions:launch-refused': (listener) => listenForLaunchRefusals(listener),
@@ -176,6 +189,8 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   forgetEngineTrafficListeners();
   forgetEngineLogsListeners();
   forgetUsageCommandListeners();
+  forgetViewCommandListeners();
+  forgetReportedSurfaceToggles();
   forgetLaunchRefusedListeners();
 
   const { landSubscription, ...accounts } = accountHandlers(

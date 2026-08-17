@@ -1,5 +1,7 @@
 import type { UsageRange, UsageReportAsk } from '@recompose/contracts';
 
+import { usageSearchRangeSchema } from '@recompose/contracts';
+
 import type { PresetRange, UsageSearch, UsageSearchRange } from './usage-search';
 
 import { startOfMonth } from './calendar-grid';
@@ -52,13 +54,10 @@ const PREVIOUS_WORD: Record<UsageSearchRange, string> = {
 
 export type PresetWindow = { range: PresetRange; label: string };
 
-const PRESET_ORDER: readonly PresetRange[] = ['1h', '24h', '7d', '30d', 'this-week', 'this-month'];
-
-/** The windows the range popover offers, in the order it lists them. */
-export const presetWindows: readonly PresetWindow[] = PRESET_ORDER.map((range) => ({
-  range,
-  label: RANGE_WORDING[range],
-}));
+/** The windows the range popover offers, in the contract's own listing order. */
+export const presetWindows: readonly PresetWindow[] = usageSearchRangeSchema.options
+  .filter((range): range is PresetRange => range !== 'custom')
+  .map((range) => ({ range, label: RANGE_WORDING[range] }));
 
 /**
  * The window one view stands over, which a custom range names outright.

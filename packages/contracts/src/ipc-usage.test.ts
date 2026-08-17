@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { ipcChannels, ipcEvents } from './ipc';
 import { ipcErrorSchema } from './ipc-result';
+import { usageSearchRangeSchema } from './usage';
 
 describe('what the usage channels ask for', () => {
   test('a report read names its range', () => {
@@ -56,9 +57,13 @@ describe('what the usage channels ask for', () => {
 
 describe('the usage menu command event', () => {
   const vocabulary = [
+    'range-1h',
     'range-24h',
     'range-7d',
     'range-30d',
+    'range-this-week',
+    'range-this-month',
+    'range-custom',
     'metric-requests',
     'metric-tokens',
     'metric-spend',
@@ -71,6 +76,14 @@ describe('the usage menu command event', () => {
     for (const command of vocabulary) {
       expect(ipcEvents['usage:command'].payload.parse(command)).toBe(command);
     }
+  });
+
+  test('the range commands derive from the search vocabulary, one per member', () => {
+    const derived = usageSearchRangeSchema.options.map((range) => `range-${range}`);
+
+    expect(derived.map((command) => ipcEvents['usage:command'].payload.parse(command))).toEqual(
+      derived,
+    );
   });
 
   test('a command outside the vocabulary is refused', () => {

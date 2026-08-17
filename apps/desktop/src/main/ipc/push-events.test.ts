@@ -13,6 +13,7 @@ import {
   pushLaunchRefused,
   pushSettingsChanged,
   pushUsageCommand,
+  pushViewCommand,
 } from './push-events';
 
 type Delivery = { channel: string; payload: unknown };
@@ -192,6 +193,24 @@ describe('driving the canvas from the menu bar', () => {
 
     expect(first).toEqual([]);
     expect(second).toEqual([]);
+  });
+
+  test('a view command reaches the window in front, because the menu acts on it', () => {
+    const background = openWindow();
+    const inFront = focusWindow();
+
+    pushViewCommand('toggle-sidebar');
+
+    expect(inFront).toEqual([{ channel: 'view:command', payload: 'toggle-sidebar' }]);
+    expect(background).toEqual([]);
+  });
+
+  test('a view command with no window in front reaches the one window standing', () => {
+    const only = openWindow();
+
+    pushViewCommand('toggle-inspector');
+
+    expect(only).toEqual([{ channel: 'view:command', payload: 'toggle-inspector' }]);
   });
 });
 

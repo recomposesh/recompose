@@ -16,6 +16,7 @@ type CanvasEffects = {
   fitView: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
+  zoomTo100: () => void;
   onTidy: () => void;
 };
 
@@ -24,15 +25,19 @@ type CanvasEffects = {
  *
  * @summary Naming every command as a key rather than a case makes the set exhaustive at the type
  * level, so a command added to the contract fails the build here until this surface says what it
- * does with it, rather than falling through a switch unanswered.
+ * does with it, rather than falling through a switch unanswered. The drawer toggle, the copy, and
+ * the removal pass through untouched, because the page owns those surfaces rather than the flow.
  */
 function actsOn(canvas: CanvasEffects): Record<CanvasCommand, () => void> {
   return {
     'zoom-in': canvas.zoomIn,
     'zoom-out': canvas.zoomOut,
+    'zoom-to-100': canvas.zoomTo100,
     'zoom-to-fit': canvas.fitView,
     tidy: canvas.onTidy,
     'toggle-logs': () => undefined,
+    'copy-base-url': () => undefined,
+    'remove-gateway': () => undefined,
   };
 }
 
@@ -49,7 +54,7 @@ function actsOn(canvas: CanvasEffects): Record<CanvasCommand, () => void> {
  * it, so the surface that owns the drawer answers that command instead.
  */
 export function CanvasCommands({ onTidy }: CanvasCommandsProps): null {
-  const { fitView, zoomIn, zoomOut } = useReactFlow();
+  const { fitView, zoomIn, zoomOut, zoomTo } = useReactFlow();
 
   useEffect(() => {
     const acts = actsOn({
@@ -62,13 +67,16 @@ export function CanvasCommands({ onTidy }: CanvasCommandsProps): null {
       zoomOut: () => {
         void zoomOut();
       },
+      zoomTo100: () => {
+        void zoomTo(1);
+      },
       onTidy,
     });
 
     return window.recomposeEvents['canvas:command']((command) => {
       acts[command]();
     });
-  }, [fitView, zoomIn, zoomOut, onTidy]);
+  }, [fitView, zoomIn, zoomOut, zoomTo, onTidy]);
 
   useEffect(
     () =>

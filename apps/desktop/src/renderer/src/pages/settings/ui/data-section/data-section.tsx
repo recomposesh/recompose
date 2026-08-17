@@ -1,5 +1,6 @@
 import type { UsageRetentionDays } from '@recompose/contracts';
 
+import { revealLabelFor } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -10,7 +11,6 @@ import {
   useSettingsWriter,
 } from '../../../../shared/api';
 import { FieldGroup, FieldRow, SegmentedControl } from '../../../../shared/ui';
-import { revealLabelFor } from '../../lib/row-state';
 import { RetentionConfirmation } from '../retention-confirmation/retention-confirmation';
 import { RowAction } from '../row-action/row-action';
 

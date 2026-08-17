@@ -11,10 +11,13 @@ import {
   type NavigationPolicy,
 } from './navigation-policy';
 import {
+  gatewaysRouteFor,
   newGatewayRouteFor,
+  providersRouteFor,
   rendererBaseFor,
   rendererUrlFor,
   settingsShortcutRouteFor,
+  usageRouteFor,
 } from './renderer-url';
 import { staysBack } from './stays-back';
 import { windowOptionsFor } from './window-options';
@@ -148,4 +151,16 @@ export function openSettingsSurface(): void {
 
 export function openNewGatewaySurface(): void {
   openSurface(newGatewayRouteFor);
+}
+
+export function openGatewaysSurface(): void {
+  openSurface(gatewaysRouteFor);
+}
+
+export function openProvidersSurface(): void {
+  openSurface(providersRouteFor);
+}
+
+export function openUsageSurface(): void {
+  openSurface(usageRouteFor);
 }

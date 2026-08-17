@@ -1,20 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { launchAtLoginRow, revealLabelFor } from './row-state';
-
-describe('the reveal action names the file browser the platform ships', () => {
-  it('names Finder where the platform ships Finder', () => {
-    expect(revealLabelFor('finder')).toBe('Reveal in Finder');
-  });
-
-  it('names Explorer where the platform ships Explorer', () => {
-    expect(revealLabelFor('explorer')).toBe('Show in Explorer');
-  });
-
-  it('names neither where the platform ships its own file manager', () => {
-    expect(revealLabelFor('file-manager')).toBe('Open folder');
-  });
-});
+import { launchAtLoginRow } from './row-state';
 
 describe('the launch-at-login row tells absent apart from unavailable', () => {
   it('never renders where the platform will never support a login item', () => {

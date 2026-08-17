@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { useSetGatewayPort } from '../../../../shared/api';
 import { ConsequenceDialog, CopyButton, stateMark, stateWord } from '../../../../shared/ui';
+import { gatewayBaseUrl } from '../../lib/gateway-base-url';
 import { PortField } from '../port-field/port-field';
 import { factRow } from '../subject-shell/subject-shell';
 
@@ -85,7 +86,7 @@ export function EndpointBox({ gateway, status, bindAddress }: EndpointBoxProps) 
   const setPort = useSetGatewayPort();
   const [asked, setAsked] = useState<number | undefined>(undefined);
   const [fieldRun, setFieldRun] = useState(0);
-  const baseUrl = `http://${bindAddress}:${String(gateway.port)}`;
+  const baseUrl = gatewayBaseUrl(gateway, bindAddress);
 
   const putTheAskAway = () => {
     setAsked(undefined);

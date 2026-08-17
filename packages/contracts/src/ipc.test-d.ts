@@ -24,6 +24,7 @@ import type {
   SubscriptionProviderId,
   SubscriptionTool,
   SystemState,
+  UsageSearchRange,
 } from './index';
 
 describe('ipc request contracts', () => {
@@ -206,10 +207,38 @@ describe('push surface totality', () => {
     expectTypeOf<keyof RecomposeIpcEvents>().toEqualTypeOf<IpcEvent>();
   });
 
-  test('a canvas command names one of the five acts the Gateway menu offers', () => {
+  test('a canvas command names one of the eight acts the Gateway menu offers', () => {
     expectTypeOf<IpcEventPayload<'canvas:command'>>().toEqualTypeOf<
-      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy' | 'toggle-logs'
+      | 'zoom-in'
+      | 'zoom-out'
+      | 'zoom-to-100'
+      | 'zoom-to-fit'
+      | 'tidy'
+      | 'toggle-logs'
+      | 'copy-base-url'
+      | 'remove-gateway'
     >();
+  });
+
+  test('a view command names one of the two toggles the View menu offers', () => {
+    expectTypeOf<IpcEventPayload<'view:command'>>().toEqualTypeOf<
+      'toggle-sidebar' | 'toggle-inspector'
+    >();
+  });
+
+  test('the surface report carries all three standings at one moment', () => {
+    expectTypeOf<IpcRequest<'system:surface-toggles'>>().toEqualTypeOf<{
+      sidebar: boolean;
+      inspector: boolean;
+      modal: boolean;
+    }>();
+  });
+
+  test('the range commands and the search vocabulary stay a bijection under the range- prefix', () => {
+    expectTypeOf<
+      Extract<IpcEventPayload<'usage:command'>, `range-${string}`>
+    >().toEqualTypeOf<`range-${UsageSearchRange}`>();
+    expectTypeOf<`range-${UsageSearchRange}`>().toExtend<IpcEventPayload<'usage:command'>>();
   });
 
   test('the push carries the whole snapshot rather than one gateway', () => {

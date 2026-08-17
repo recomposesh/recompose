@@ -10,6 +10,7 @@ import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
+import { fileBrowserSchema } from './file-browser';
 import { gatewayConfigSchema, gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
 import { ipcResult } from './ipc-result';
 import { subscriptionChannels } from './ipc-subscriptions';
@@ -26,6 +27,7 @@ import {
   quotaWindowSchema,
   usageReportAskSchema,
   usageReportSchema,
+  usageSearchRangeSchema,
 } from './usage';
 
 export const connectAccountRequestSchema = z.strictObject({
@@ -48,7 +50,7 @@ function namesItsOwnPort(asked: { runtime: string; port?: number | undefined }):
 }
 
 export const systemStateSchema = z.strictObject({
-  fileBrowser: z.enum(['finder', 'explorer', 'file-manager']),
+  fileBrowser: fileBrowserSchema,
   loginItem: z.enum(['available', 'unpackaged', 'unsupported']),
   loginItemEnabled: z.boolean(),
   menuBarVisible: z.boolean(),
@@ -164,6 +166,23 @@ export const ipcChannels = {
     response: ipcResult(z.void()),
   },
   /**
+   * Reports which renderer surfaces stand, so the menu ticks read the screen rather than the
+   * menu's own last push.
+   *
+   * @summary One snapshot carries all three standings because two reports could interleave around
+   * a repaint and let the menu paint a moment that never existed. `true` means the surface shows,
+   * and `modal` says a question stands, which is what disarms the route-scoped accelerators
+   * behind it.
+   */
+  'system:surface-toggles': {
+    request: z.strictObject({
+      sidebar: z.boolean(),
+      inspector: z.boolean(),
+      modal: z.boolean(),
+    }),
+    response: ipcResult(z.void()),
+  },
+  /**
    * Asks main for one range of closed usage buckets, priced at day width.
    *
    * @summary The answer carries tuple-keyed buckets whole and the renderer folds its own
@@ -209,21 +228,35 @@ export const ipcEvents = {
   'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': {
-    payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs']),
-  },
-  'usage:command': {
     payload: z.enum([
-      'range-24h',
-      'range-7d',
-      'range-30d',
-      'metric-requests',
-      'metric-tokens',
-      'metric-spend',
-      'metric-latency',
-      'toggle-table-twin',
-      'refresh',
+      'zoom-in',
+      'zoom-out',
+      'zoom-to-100',
+      'zoom-to-fit',
+      'tidy',
+      'toggle-logs',
+      'copy-base-url',
+      'remove-gateway',
     ]),
   },
+  /**
+   * @summary The range members derive from the search vocabulary under the `range-` prefix, so a
+   * range added to the address reaches the menu as a red build rather than a silent gap.
+   */
+  'usage:command': {
+    payload: z.union([
+      z.templateLiteral(['range-', usageSearchRangeSchema]),
+      z.enum([
+        'metric-requests',
+        'metric-tokens',
+        'metric-spend',
+        'metric-latency',
+        'toggle-table-twin',
+        'refresh',
+      ]),
+    ]),
+  },
+  'view:command': { payload: z.enum(['toggle-sidebar', 'toggle-inspector']) },
   'settings:changed': { payload: settingsSchema },
   'devtools:toggle': { payload: z.literal('asked') },
   'subscriptions:launch-refused': {

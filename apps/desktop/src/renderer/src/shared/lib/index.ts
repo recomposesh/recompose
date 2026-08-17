@@ -15,6 +15,7 @@ export {
   toggleInspector,
 } from './visibility/inspector-visibility';
 export { shownAsAskModal } from './asked-modal';
+export { modalStanding, subscribeToModalStanding } from './visibility/modal-standing';
 export { forgetLookedAtGateway, lookedAtGateway, rememberedGateway } from './last-gateway';
 export {
   closeLogsDrawer,

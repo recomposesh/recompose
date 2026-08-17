@@ -1,9 +1,16 @@
-import type { IpcEventPayload, Settings } from '@recompose/contracts';
+import type { EngineStates, IpcRequest, Settings } from '@recompose/contracts';
 
 import type { AppMenuHandlers, AppMenuView } from './app-menu-template';
 
 import { amendStoredSettings } from '../storage/settings-amend';
-import { onGatewayDetailUrl, onUsageUrl } from '../windows/renderer-url';
+import { gatewayServingIn } from '../tray/gateway-lifecycle-submenu';
+import {
+  gatewayDetailSlugFrom,
+  onGatewayDetailUrl,
+  onProvidersUrl,
+  onUsageUrl,
+  usageSearchWordsFrom,
+} from '../windows/renderer-url';
 import { installAppMenu } from './app-menu';
 
 export type AppMenuConduct = {
@@ -17,13 +24,16 @@ export type AppMenuConduct = {
   reflectLogsDrawer: (open: boolean) => void;
   /** Carries the renderer's data-table twin standing into the Show Data Table tick. */
   reflectUsageTable: (open: boolean) => void;
+  /** Carries the renderer's one surface snapshot into the View ticks and the modal disarming. */
+  reflectSurfaceToggles: (toggles: IpcRequest<'system:surface-toggles'>) => void;
+  /** Clears the route-scoped view once the last window goes, so no menu pushes into the void. */
+  standNowhere: () => void;
+  /** Carries the engine snapshot into the lifecycle group's enablement. */
+  reflectEngineStates: (states: EngineStates) => void;
 };
 
-type AppMenuSeams = {
-  onOpenSettings: () => void;
-  onNewGateway: () => void;
-  onCanvasCommand: (command: IpcEventPayload<'canvas:command'>) => void;
-  onUsageCommand: (command: IpcEventPayload<'usage:command'>) => void;
+type AppMenuSeams = Omit<AppMenuHandlers, 'onToggleChecklist'> & {
+  development: boolean;
   settingsFile: () => string;
   onCorrupt: (quarantinedPath: string) => void;
   pushSettings: (settings: Settings) => void;
@@ -44,6 +54,138 @@ function storedChecklistChoice(
   };
 }
 
+/** Writes the reported toggles into the view, answering whether anything the menu reads moved. */
+function surfaceTogglesInto(
+  view: AppMenuView,
+  toggles: IpcRequest<'system:surface-toggles'>,
+): boolean {
+  const changed =
+    view.sidebarShown !== toggles.sidebar ||
+    view.inspectorOpen !== toggles.inspector ||
+    view.modalStanding !== toggles.modal;
+
+  view.sidebarShown = toggles.sidebar;
+  view.inspectorOpen = toggles.inspector;
+  view.modalStanding = toggles.modal;
+
+  return changed;
+}
+
+function freshAppMenuView(development: boolean): AppMenuView {
+  return {
+    checklistShown: true,
+    onGatewayDetail: false,
+    onProviders: false,
+    onUsage: false,
+    logsDrawerOpen: false,
+    usageTableOpen: false,
+    sidebarShown: true,
+    inspectorOpen: false,
+    modalStanding: false,
+    windowStanding: false,
+    standingGatewaySlug: null,
+    gatewayServing: false,
+    usageRange: '24h',
+    usageMetric: 'requests',
+    usageRetentionDays: 30,
+    development,
+  };
+}
+
+type SurfaceStand = Pick<
+  AppMenuView,
+  | 'onGatewayDetail'
+  | 'onProviders'
+  | 'onUsage'
+  | 'windowStanding'
+  | 'standingGatewaySlug'
+  | 'usageRange'
+  | 'usageMetric'
+  | 'gatewayServing'
+>;
+
+function standFromUrl(url: string, serving: (slug: string | null) => boolean): SurfaceStand {
+  const slug = gatewayDetailSlugFrom(url);
+  const words = usageSearchWordsFrom(url);
+
+  return {
+    onGatewayDetail: onGatewayDetailUrl(url),
+    onProviders: onProvidersUrl(url),
+    onUsage: onUsageUrl(url),
+    windowStanding: true,
+    standingGatewaySlug: slug,
+    usageRange: words.range,
+    usageMetric: words.metric,
+    gatewayServing: serving(slug),
+  };
+}
+
+function clearedStand(): SurfaceStand {
+  return {
+    onGatewayDetail: false,
+    onProviders: false,
+    onUsage: false,
+    windowStanding: false,
+    standingGatewaySlug: null,
+    usageRange: '24h',
+    usageMetric: 'requests',
+    gatewayServing: false,
+  };
+}
+
+const STAND_FIELDS = [
+  'onGatewayDetail',
+  'onProviders',
+  'onUsage',
+  'windowStanding',
+  'standingGatewaySlug',
+  'usageRange',
+  'usageMetric',
+  'gatewayServing',
+] as const;
+
+/** Writes a surface stand into the view, answering whether anything the menu reads moved. */
+function standInto(view: AppMenuView, stand: SurfaceStand): boolean {
+  const changed = STAND_FIELDS.some((field) => view[field] !== stand[field]);
+
+  Object.assign(view, stand);
+
+  return changed;
+}
+
+function simpleReflectors(view: AppMenuView, repaint: () => void) {
+  return {
+    reflectLogsDrawer: (open: boolean): void => {
+      view.logsDrawerOpen = open;
+      repaint();
+    },
+    reflectUsageTable: (open: boolean): void => {
+      view.usageTableOpen = open;
+      repaint();
+    },
+    reflectSurfaceToggles: (toggles: IpcRequest<'system:surface-toggles'>): void => {
+      if (surfaceTogglesInto(view, toggles)) {
+        repaint();
+      }
+    },
+  };
+}
+
+function boundHandlers(
+  seams: AppMenuSeams,
+  onToggleChecklist: (shown: boolean) => void,
+): AppMenuHandlers {
+  const {
+    development: _run,
+    settingsFile: _file,
+    onCorrupt: _corrupt,
+    pushSettings: _push,
+    ...handlers
+  } = seams;
+
+  return { ...handlers, onToggleChecklist };
+}
+
 /**
  * Holds the application menu's view of the world and repaints it on every change.
  *
@@ -52,54 +194,58 @@ function storedChecklistChoice(
  * than mutating one, so every change lands as a fresh install from the same view value.
  */
 export function conductAppMenu(seams: AppMenuSeams): AppMenuConduct {
-  const view: AppMenuView = {
-    checklistShown: true,
-    onGatewayDetail: false,
-    logsDrawerOpen: false,
-    onUsage: false,
-    usageTableOpen: false,
-  };
+  const view = freshAppMenuView(seams.development);
 
-  const handlers: AppMenuHandlers = {
-    onOpenSettings: seams.onOpenSettings,
-    onNewGateway: seams.onNewGateway,
-    onCanvasCommand: seams.onCanvasCommand,
-    onUsageCommand: seams.onUsageCommand,
-    onToggleChecklist: (shown) => {
-      storedChecklistChoice(seams, reflectSettings)(shown);
-    },
-  };
+  let engineStates: EngineStates = {};
+
+  const handlers: AppMenuHandlers = boundHandlers(seams, (shown) => {
+    storedChecklistChoice(seams, reflectSettings)(shown);
+  });
 
   function repaint(): void {
     installAppMenu(handlers, view);
   }
 
+  function servingFor(slug: string | null): boolean {
+    return slug !== null && gatewayServingIn(engineStates, slug);
+  }
+
   function reflectSettings(settings: Settings): void {
     view.checklistShown = settings.showOnboardingChecklist;
+    view.usageRetentionDays = settings.usageRetentionDays;
     repaint();
     seams.pushSettings(settings);
   }
 
   function standOnUrl(url: string): void {
-    const onGatewayDetail = onGatewayDetailUrl(url);
-    const onUsage = onUsageUrl(url);
-
-    if (view.onGatewayDetail !== onGatewayDetail || view.onUsage !== onUsage) {
-      view.onGatewayDetail = onGatewayDetail;
-      view.onUsage = onUsage;
+    if (standInto(view, standFromUrl(url, servingFor))) {
       repaint();
     }
   }
 
-  function reflectLogsDrawer(open: boolean): void {
-    view.logsDrawerOpen = open;
-    repaint();
+  function standNowhere(): void {
+    if (standInto(view, clearedStand())) {
+      repaint();
+    }
   }
 
-  function reflectUsageTable(open: boolean): void {
-    view.usageTableOpen = open;
-    repaint();
+  function reflectEngineStates(states: EngineStates): void {
+    engineStates = states;
+
+    const serving = servingFor(view.standingGatewaySlug);
+
+    if (view.gatewayServing !== serving) {
+      view.gatewayServing = serving;
+      repaint();
+    }
   }
 
-  return { repaint, reflectSettings, standOnUrl, reflectLogsDrawer, reflectUsageTable };
+  return {
+    repaint,
+    reflectSettings,
+    standOnUrl,
+    standNowhere,
+    ...simpleReflectors(view, repaint),
+    reflectEngineStates,
+  };
 }

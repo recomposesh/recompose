@@ -12,6 +12,7 @@ export { emitLaunchRefused } from './fake-launch-refusals';
 export { emitSettingsChanged } from './fake-settings';
 export { connectedSubscription } from './fake-subscriptions';
 export { emitUsageCommand } from './fake-usage-pushes';
+export { emitViewCommand, reportedSurfaceToggles } from './fake-view-pushes';
 export { servedReport } from './fake-usage-report';
 export { edgeRuleDrawn, tokenChartSeries } from './chart-fixtures';
 export { paintedBox, paintedStyle } from './measuring';

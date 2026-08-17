@@ -1,4 +1,4 @@
-import { electronApp, optimizer } from '@electron-toolkit/utils';
+import { electronApp } from '@electron-toolkit/utils';
 import { app, safeStorage, shell } from 'electron';
 import { join } from 'path';
 
@@ -9,7 +9,9 @@ import type { CredentialCustody } from './subscriptions/credential-custody';
 
 import bundledPrices from '../../resources/model-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
+import { surfaceStateRepaints } from './boot/state-repaints';
 import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
+import { dockMenuWiring } from './dock/dock-wiring';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { storageReachFor } from './engine-host/storage-reach';
 import {
@@ -42,12 +44,16 @@ import { resolveUserDataOverride } from './user-data-override';
 import {
   createMainWindow,
   HOME_ROUTE,
+  openGatewaysSurface,
   openNewGatewaySurface,
+  openProvidersSurface,
   openSettingsSurface,
+  openUsageSurface,
   showMainWindow,
 } from './windows/main-window';
 import { registerPermissionHandlers } from './windows/permission-wiring';
 import { activationPolicyFor } from './windows/stays-back';
+import { wireWindowIntoMenu } from './windows/window-menu-wiring';
 
 app.setName('Recompose');
 app.setAboutPanelOptions({ applicationName: 'Recompose' });
@@ -56,7 +62,7 @@ let booted: StoredBoot | null = null;
 
 const gatewayLifecycle = createGatewayLifecycleRequests({
   host: () => booted?.engineHost ?? null,
-  userDataPath: () => recomposeHome(),
+  userDataPath: recomposeHome,
   onCorrupt: onStorageCorrupt,
 });
 
@@ -83,6 +89,12 @@ const loginItem = createLoginItem(app, loginItemAvailability, process.execPath);
 const appMenu = bootAppMenu({
   onOpenSettings: openSettingsSurface,
   onNewGateway: openNewGatewaySurface,
+  onOpenGateways: openGatewaysSurface,
+  onOpenProviders: openProvidersSurface,
+  onOpenUsage: openUsageSurface,
+  lifecycle: gatewayLifecycle,
+  configFolder: recomposeHome,
+  development: !app.isPackaged,
   settingsFile: () => storagePathsFor(recomposeHome()).settingsFile,
   onCorrupt: onStorageCorrupt,
   pushSettings: (settings) => {
@@ -162,10 +174,9 @@ function storageContext(
   };
 }
 
-const repaintTray = trayRepainter(
-  () => storagePathsFor(recomposeHome()).gatewaysDir,
-  onStorageCorrupt,
-);
+const storedGatewaysDir = (): string => storagePathsFor(recomposeHome()).gatewaysDir;
+
+const repaintTray = trayRepainter(storedGatewaysDir, onStorageCorrupt);
 
 const userDataOverride = resolveUserDataOverride(process.env);
 
@@ -184,6 +195,16 @@ const activationPolicy = activationPolicyFor(process.platform, process.env);
 if (activationPolicy !== null) {
   app.setActivationPolicy(activationPolicy);
 }
+
+const repaintDock = dockMenuWiring({
+  platform: process.platform,
+  activationPolicy,
+  gatewaysDir: storedGatewaysDir,
+  onCorrupt: onStorageCorrupt,
+  lifecycle: trayMenuHandlers,
+  onNewGateway: openNewGatewaySurface,
+  onOpenSettings: openSettingsSurface,
+});
 
 registerAppScheme();
 
@@ -230,7 +251,11 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
     onCorrupt: onStorageCorrupt,
     spendGrantContext: storageReach,
     reflectSettings: appMenu.reflectSettings,
-    repaintStates: repaintTray,
+    repaintStates: surfaceStateRepaints({
+      repaintTray,
+      repaintDock,
+      reflectMenu: appMenu.reflectEngineStates,
+    }),
     lifecycle: gatewayLifecycle,
   });
 
@@ -251,10 +276,7 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
   electronApp.setAppUserModelId('sh.recompose.app');
 
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window, { zoom: true });
-    window.webContents.on('did-navigate-in-page', (_navigation, url) => {
-      appMenu.standOnUrl(url);
-    });
+    wireWindowIntoMenu(window, appMenu, app.isPackaged ? 'packaged' : 'development');
   });
 
   registerPermissionHandlers();

@@ -16,6 +16,18 @@ export function shapeOf(items: AppMenuItem[]): (string | undefined)[] {
   return items.map((item) => item.role ?? item.label ?? item.type);
 }
 
+/** Whether the named item renders available, or nothing where no item carries the label. */
+export function itemEnabled(template: AppMenuItem[], label: string): boolean | undefined {
+  const item = itemLabelled(template, label);
+
+  return item === undefined ? undefined : (item.enabled ?? true);
+}
+
+/** The chord the named item prints, or nothing where it prints none. */
+export function itemAccelerator(template: AppMenuItem[], label: string): string | undefined {
+  return itemLabelled(template, label)?.accelerator;
+}
+
 export function recordingHandlers(taken: string[]): AppMenuHandlers {
   return {
     onOpenSettings: () => {
@@ -33,6 +45,36 @@ export function recordingHandlers(taken: string[]): AppMenuHandlers {
     onUsageCommand: (command) => {
       taken.push(command);
     },
+    onViewCommand: (command) => {
+      taken.push(command);
+    },
+    onOpenGateways: () => {
+      taken.push('open-gateways');
+    },
+    onOpenProviders: () => {
+      taken.push('open-providers');
+    },
+    onOpenUsage: () => {
+      taken.push('open-usage');
+    },
+    onStartGateway: (slug) => {
+      taken.push(`start ${slug}`);
+    },
+    onStopGateway: (slug) => {
+      taken.push(`stop ${slug}`);
+    },
+    onRestartGateway: (slug) => {
+      taken.push(`restart ${slug}`);
+    },
+    onOpenHelpSite: () => {
+      taken.push('help-site');
+    },
+    onOpenConfigFolder: () => {
+      taken.push('config-folder');
+    },
+    onReportIssue: () => {
+      taken.push('report-issue');
+    },
   };
 }
 
@@ -41,25 +83,36 @@ export const idleHandlers = recordingHandlers([]);
 export const atHome: AppMenuView = {
   checklistShown: true,
   onGatewayDetail: false,
-  logsDrawerOpen: false,
+  onProviders: false,
   onUsage: false,
+  logsDrawerOpen: false,
   usageTableOpen: false,
+  sidebarShown: true,
+  inspectorOpen: false,
+  modalStanding: false,
+  windowStanding: true,
+  standingGatewaySlug: null,
+  gatewayServing: false,
+  usageRange: '24h',
+  usageMetric: 'requests',
+  usageRetentionDays: 30,
+  development: true,
 };
 
 export const atGatewayDetail: AppMenuView = {
-  checklistShown: true,
+  ...atHome,
   onGatewayDetail: true,
-  logsDrawerOpen: false,
-  onUsage: false,
-  usageTableOpen: false,
+  standingGatewaySlug: 'personal',
 };
 
 export const atUsage: AppMenuView = {
-  checklistShown: true,
-  onGatewayDetail: false,
-  logsDrawerOpen: false,
+  ...atHome,
   onUsage: true,
-  usageTableOpen: false,
+};
+
+export const atProviders: AppMenuView = {
+  ...atHome,
+  onProviders: true,
 };
 
 export const everyPlatform: NodeJS.Platform[] = ['darwin', 'win32', 'linux'];
