@@ -23,8 +23,8 @@ export function UpdateReadyCard() {
     >
       <div className="relative flex justify-center bg-accent/8 pt-3.5 pb-3">
         <Icon className="absolute inset-s-6 top-2.5 size-2.5 text-accent/70" name="spark" />
-        <span className="flex size-6.5 items-center justify-center rounded-control border border-line-subtle bg-surface-card">
-          <Icon className="size-3.5 text-accent-ink" name="arrow-up" />
+        <span className="flex size-6.5 items-center justify-center rounded-control border border-line-paper bg-surface-paper">
+          <Icon className="size-3.5 text-accent-fill" name="arrow-up" />
         </span>
         <Icon className="absolute inset-e-7 bottom-2 size-2 text-accent/50" name="spark" />
       </div>
