@@ -177,13 +177,13 @@ The card's strings pass the `ux-writing` review at implementation. The versions 
 
 ## Test matrix
 
-| Layer          | What this layer proves (or why none)                                                                                                                                           | Check command                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| Unit           | Every `updateChannelFor` row including `undefined` inputs; every fold transition including ready absorbing; the log line carries operation, reason, and feed                   | `pnpm --filter @recompose/desktop run test:node` |
-| Integration    | The adapter against an emitter double: listener attaches before the first check, transitions push, restart only in ready, dispose clears the interval, a bare `error` survives | `pnpm --filter @recompose/desktop run test:node` |
-| End-to-end     | The three graduated features against the local feed; the packaged restart proof on Linux                                                                                       | `pnpm --filter @recompose/desktop run test:e2e`  |
-| Property       | `updateChannelFor` over platform, env, and flag permutations, with a deterministic twin carrying mutation duty                                                                 | `pnpm --filter @recompose/desktop run test:node` |
-| Mutation scope | `update-channel.ts`, `update-standing.ts`, `update-log.ts` survive the diff-scoped Stryker gate                                                                                | push-time lefthook gate                          |
+| Layer          | What this layer proves (or why none)                                                                                                                                           | Check command                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Unit           | Every `updateChannelFor` row including `undefined` inputs; every fold transition including ready absorbing; the log line carries operation, reason, and feed                   | `pnpm --filter @recompose/desktop exec vitest run --project unit` |
+| Integration    | The adapter against an emitter double: listener attaches before the first check, transitions push, restart only in ready, dispose clears the interval, a bare `error` survives | `pnpm --filter @recompose/desktop exec vitest run --project unit` |
+| End-to-end     | The three graduated features against the local feed; the packaged restart proof on Linux                                                                                       | `pnpm --filter @recompose/desktop run test:e2e`                   |
+| Property       | `updateChannelFor` over platform, env, and flag permutations, with a deterministic twin carrying mutation duty                                                                 | `pnpm --filter @recompose/desktop exec vitest run --project unit` |
+| Mutation scope | `update-channel.ts`, `update-standing.ts`, `update-log.ts` survive the diff-scoped Stryker gate                                                                                | push-time lefthook gate                                           |
 
 ## Task decomposition hooks
 

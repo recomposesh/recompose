@@ -123,9 +123,17 @@ function eventBridge(): RecomposeIpcEvents {
     'canvas:command': () => () => undefined,
     'usage:command': (listener) => listenForUsageCommands(listener),
     'view:command': (listener) => listenForViewCommands(listener),
+    'updates:changed': () => () => undefined,
     'settings:changed': (listener) => listenForSettingsChanges(listener),
     'devtools:toggle': () => () => undefined,
     'subscriptions:launch-refused': (listener) => listenForLaunchRefusals(listener),
+  };
+}
+
+function updatesHandlers(): Pick<RecomposeIpc, 'updates:get' | 'updates:restart'> {
+  return {
+    'updates:get': async () => Promise.resolve({ ok: true, value: { standing: 'quiet' } }),
+    'updates:restart': async () => Promise.resolve({ ok: true, value: undefined }),
   };
 }
 
@@ -212,6 +220,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
       parameters.machineReading,
     ),
     ...usageHandlers(seeds.usageReport, seeds.quotaWindows, seeds.balances),
+    ...updatesHandlers(),
     ...parameters.overrides,
   };
   window.recomposeEvents = eventBridge();

@@ -241,6 +241,7 @@ describe('ipc error codes', () => {
     'sign-in-timed-out',
     'keychain-denied',
     'nothing-to-adopt',
+    'no-update-waiting',
   ];
 
   test('error codes are the closed set', () => {

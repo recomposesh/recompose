@@ -9,6 +9,7 @@ import type { CredentialCustody } from './subscriptions/credential-custody';
 
 import bundledPrices from '../../resources/model-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
+import { applyProcessOverrides } from './boot/process-overrides';
 import { surfaceStateRepaints } from './boot/state-repaints';
 import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
 import { dockMenuWiring } from './dock/dock-wiring';
@@ -24,7 +25,6 @@ import { pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
 import { assembleIpcHandlers, registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { bootAppMenu } from './menu/app-menu-boot';
-import { resolvePasswordStoreOverride } from './password-store-override';
 import { registerAppScheme, serveRenderer } from './protocol/app-protocol';
 import {
   applyBootSettingsOrComplain,
@@ -40,7 +40,6 @@ import { hideMenuBarTray, showMenuBarTray } from './tray/menu-bar-tray';
 import { trayRepainter } from './tray/tray-repaint';
 import { trayMenuWiring } from './tray/tray-wiring';
 import { openUsageIpcDeps } from './usage/usage-wiring';
-import { resolveUserDataOverride } from './user-data-override';
 import {
   createMainWindow,
   HOME_ROUTE,
@@ -52,7 +51,6 @@ import {
   showMainWindow,
 } from './windows/main-window';
 import { registerPermissionHandlers } from './windows/permission-wiring';
-import { activationPolicyFor } from './windows/stays-back';
 import { wireWindowIntoMenu } from './windows/window-menu-wiring';
 
 app.setName('Recompose');
@@ -178,23 +176,7 @@ const storedGatewaysDir = (): string => storagePathsFor(recomposeHome()).gateway
 
 const repaintTray = trayRepainter(storedGatewaysDir, onStorageCorrupt);
 
-const userDataOverride = resolveUserDataOverride(process.env);
-
-if (userDataOverride !== null) {
-  app.setPath('userData', userDataOverride);
-}
-
-const passwordStoreOverride = resolvePasswordStoreOverride(process.env);
-
-if (passwordStoreOverride !== null) {
-  app.commandLine.appendSwitch('password-store', passwordStoreOverride);
-}
-
-const activationPolicy = activationPolicyFor(process.platform, process.env);
-
-if (activationPolicy !== null) {
-  app.setActivationPolicy(activationPolicy);
-}
+const activationPolicy = applyProcessOverrides(app, process.platform, process.env);
 
 const repaintDock = dockMenuWiring({
   platform: process.platform,
@@ -237,6 +219,7 @@ async function answerEveryChannel(profile: StoredBoot): Promise<void> {
       appMenu,
       openFolder: async (path) => shell.openPath(path),
       platform: process.platform,
+      updates: { state: () => ({ standing: 'quiet' as const }), restart: () => false },
     }),
   );
 }

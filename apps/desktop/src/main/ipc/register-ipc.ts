@@ -23,6 +23,7 @@ import { createLocalRuntimesIpcHandlers } from './local-runtimes-ipc';
 import { createProviderModelsIpcHandlers, providerModelsReach } from './provider-models-ipc';
 import { createStorageIpcHandlers } from './storage-ipc';
 import { createSystemIpcHandlers } from './system-ipc';
+import { createUpdatesIpcHandlers, type UpdatesIpcWiring } from './updates-ipc';
 import { createUsageIpcHandlers } from './usage-ipc';
 
 function senderFromEvent(event: IpcMainInvokeEvent): TrustedSender {
@@ -66,6 +67,7 @@ export type HandlerWiring = {
   appMenu: AppMenuConduct;
   openFolder: (path: string) => Promise<string>;
   platform: NodeJS.Platform;
+  updates: UpdatesIpcWiring;
 };
 
 /** Which channels this app answers, and what each group of them reaches. */
@@ -116,5 +118,6 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
       noteSurfaceToggles: appMenu.reflectSurfaceToggles,
     }),
     ...createUsageIpcHandlers(wiring.usage),
+    ...createUpdatesIpcHandlers(wiring.updates),
   };
 }

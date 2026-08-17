@@ -89,6 +89,7 @@ describe('ipc response contracts', () => {
       | 'keychain-denied'
       | 'usage-newer-schema'
       | 'nothing-to-adopt'
+      | 'no-update-waiting'
     >();
   });
 
