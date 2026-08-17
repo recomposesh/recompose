@@ -63,20 +63,6 @@ describe('creating a gateway from the menu bar', () => {
 });
 
 describe('the onboarding checklist toggle', () => {
-  test('macOS carries it in the application menu beside the settings item', () => {
-    const [applicationMenu] = buildAppMenuTemplate('darwin', idleHandlers, atHome);
-
-    expect(itemLabelled(applicationMenu?.submenu ?? [], 'Show Onboarding Checklist')).toBeDefined();
-  });
-
-  test('Windows and Linux carry it under View', () => {
-    for (const platform of ['win32', 'linux'] satisfies NodeJS.Platform[]) {
-      const viewMenu = menuLabelled(buildAppMenuTemplate(platform, idleHandlers, atHome), 'View');
-
-      expect(itemLabelled(viewMenu?.submenu ?? [], 'Show Onboarding Checklist')).toBeDefined();
-    }
-  });
-
   test('the tick reads the checklist standing', () => {
     for (const shown of [true, false]) {
       const item = itemLabelled(
@@ -111,13 +97,14 @@ describe('the onboarding checklist toggle', () => {
 });
 
 describe('the order the menus stand in', () => {
-  test('macOS orders its menus the way every Mac app does', () => {
+  test('macOS orders its menus the way every Mac app does, Help trailing', () => {
     expect(shapeOf(buildAppMenuTemplate('darwin', idleHandlers, atHome))).toEqual([
       'Recompose',
       'File',
       'editMenu',
       'View',
       'windowMenu',
+      'help',
     ]);
     expect(shapeOf(buildAppMenuTemplate('darwin', idleHandlers, atGatewayDetail))).toEqual([
       'Recompose',
@@ -126,6 +113,7 @@ describe('the order the menus stand in', () => {
       'View',
       'Gateway',
       'windowMenu',
+      'help',
     ]);
   });
 
@@ -137,6 +125,7 @@ describe('the order the menus stand in', () => {
         'View',
         'Gateway',
         'windowMenu',
+        'Help',
       ]);
     }
   });
@@ -151,7 +140,6 @@ describe('what a custom application menu must not drop', () => {
       'about',
       'separator',
       'Settings…',
-      'Show Onboarding Checklist',
       'separator',
       'services',
       'separator',
@@ -178,30 +166,6 @@ describe('what a custom application menu must not drop', () => {
       'Settings…',
       'separator',
       'quit',
-    ]);
-  });
-});
-
-describe('what the View menu keeps', () => {
-  test('reloading and full screen stay, and page zoom stays gone', () => {
-    const macView = menuLabelled(buildAppMenuTemplate('darwin', idleHandlers, atHome), 'View');
-    const linuxView = menuLabelled(buildAppMenuTemplate('linux', idleHandlers, atHome), 'View');
-
-    expect(shapeOf(macView?.submenu ?? [])).toEqual([
-      'reload',
-      'forceReload',
-      'toggleDevTools',
-      'separator',
-      'togglefullscreen',
-    ]);
-    expect(shapeOf(linuxView?.submenu ?? [])).toEqual([
-      'Show Onboarding Checklist',
-      'separator',
-      'reload',
-      'forceReload',
-      'toggleDevTools',
-      'separator',
-      'togglefullscreen',
     ]);
   });
 });

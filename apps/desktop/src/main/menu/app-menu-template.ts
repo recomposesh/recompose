@@ -1,8 +1,9 @@
 import type { AppMenuHandlers, AppMenuItem, AppMenuView } from './app-menu-item';
 
 import { gatewayMenu } from './gateway-menu';
+import { helpMenu } from './help-menu';
 import { usageMenu } from './usage-menu';
-import { checklistToggleItem, viewMenu } from './view-menu';
+import { viewMenu } from './view-menu';
 
 export type { AppMenuHandlers, AppMenuItem, AppMenuView } from './app-menu-item';
 
@@ -10,18 +11,22 @@ function settingsItem(handlers: AppMenuHandlers): AppMenuItem {
   return { label: 'Settings…', accelerator: 'CmdOrCtrl+,', click: handlers.onOpenSettings };
 }
 
-function newGatewayItem(handlers: AppMenuHandlers): AppMenuItem {
-  return { label: 'New Gateway…', accelerator: 'CmdOrCtrl+N', click: handlers.onNewGateway };
+function newGatewayItem(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
+  return {
+    label: 'New Gateway…',
+    accelerator: 'CmdOrCtrl+N',
+    enabled: !view.modalStanding,
+    click: handlers.onNewGateway,
+  };
 }
 
-function macApplicationMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
+function macApplicationMenu(handlers: AppMenuHandlers): AppMenuItem {
   return {
     label: 'Recompose',
     submenu: [
       { role: 'about' },
       { type: 'separator' },
       settingsItem(handlers),
-      checklistToggleItem(handlers, view),
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
@@ -34,18 +39,18 @@ function macApplicationMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMe
   };
 }
 
-function macFileMenu(handlers: AppMenuHandlers): AppMenuItem {
+function macFileMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
   return {
     label: 'File',
-    submenu: [newGatewayItem(handlers), { type: 'separator' }, { role: 'close' }],
+    submenu: [newGatewayItem(handlers, view), { type: 'separator' }, { role: 'close' }],
   };
 }
 
-function fileMenu(handlers: AppMenuHandlers): AppMenuItem {
+function fileMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
   return {
     label: 'File',
     submenu: [
-      newGatewayItem(handlers),
+      newGatewayItem(handlers, view),
       { type: 'separator' },
       settingsItem(handlers),
       { type: 'separator' },
@@ -60,10 +65,10 @@ function leadingMenus(
   view: AppMenuView,
 ): AppMenuItem[] {
   if (platform === 'darwin') {
-    return [macApplicationMenu(handlers, view), macFileMenu(handlers)];
+    return [macApplicationMenu(handlers), macFileMenu(handlers, view)];
   }
 
-  return [fileMenu(handlers)];
+  return [fileMenu(handlers, view)];
 }
 
 export function buildAppMenuTemplate(
@@ -78,5 +83,6 @@ export function buildAppMenuTemplate(
     ...(view.onGatewayDetail ? [gatewayMenu(handlers, view)] : []),
     ...(view.onUsage ? [usageMenu(handlers, view)] : []),
     { role: 'windowMenu' },
+    helpMenu(platform, handlers),
   ];
 }

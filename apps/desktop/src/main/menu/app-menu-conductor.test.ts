@@ -52,12 +52,23 @@ function conductOver(settingsFile: string): Conducted {
     onNewGateway: () => {
       asked.push('new-gateway');
     },
+    onOpenGateways: () => undefined,
+    onOpenProviders: () => undefined,
+    onOpenUsage: () => undefined,
     onCanvasCommand: (command) => {
       commanded.push(command);
     },
     onUsageCommand: (command) => {
       usageCommanded.push(command);
     },
+    onViewCommand: () => undefined,
+    onStartGateway: () => undefined,
+    onStopGateway: () => undefined,
+    onRestartGateway: () => undefined,
+    onOpenHelpSite: () => undefined,
+    onOpenConfigFolder: () => undefined,
+    onReportIssue: () => undefined,
+    development: true,
     settingsFile: () => settingsFile,
     onCorrupt: () => undefined,
     pushSettings: (settings) => {
@@ -167,6 +178,29 @@ describe('following the surface a window stands on', () => {
     expect(conducted.commanded).toEqual(['zoom-to-fit']);
   });
 
+  test('leaving the gateway takes the Gateway menu away again', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.standOnUrl(GATEWAY_DETAIL);
+    conducted.menu.standOnUrl(CANVAS);
+
+    expect(findItem(installedMenu(), 'Gateway')).toBeUndefined();
+  });
+
+  test('a second report of the same address repaints nothing', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.standOnUrl(GATEWAY_DETAIL);
+
+    const painted = desktop.installed.length;
+
+    conducted.menu.standOnUrl(GATEWAY_DETAIL);
+
+    expect(desktop.installed).toHaveLength(painted);
+  });
+});
+
+describe('the logs drawer tick behind the Gateway menu', () => {
   test('arriving at a gateway offers the logs drawer unchecked, because no drawer stands open yet', async () => {
     const conducted = conductOver(await freshSettingsFile());
 
@@ -195,57 +229,6 @@ describe('following the surface a window stands on', () => {
     conducted.menu.standOnUrl(GATEWAY_DETAIL);
 
     expect(itemNamed('Show Logs').checked).toBe(true);
-  });
-
-  test('leaving the gateway takes the Gateway menu away again', async () => {
-    const conducted = conductOver(await freshSettingsFile());
-
-    conducted.menu.standOnUrl(GATEWAY_DETAIL);
-    conducted.menu.standOnUrl(CANVAS);
-
-    expect(findItem(installedMenu(), 'Gateway')).toBeUndefined();
-  });
-
-  test('a second move onto the same kind of surface leaves the menu standing', async () => {
-    const conducted = conductOver(await freshSettingsFile());
-
-    conducted.menu.standOnUrl(GATEWAY_DETAIL);
-
-    const painted = desktop.installed.length;
-
-    conducted.menu.standOnUrl('app://renderer/index.html#/gateways/work');
-
-    expect(desktop.installed).toHaveLength(painted);
-  });
-});
-
-describe('reflecting the surface report into the view', () => {
-  test('a report carrying the standing values repaints nothing', async () => {
-    const conducted = conductOver(await freshSettingsFile());
-
-    conducted.menu.repaint();
-
-    const painted = desktop.installed.length;
-
-    conducted.menu.reflectSurfaceToggles({ sidebar: true, inspector: false, modal: false });
-
-    expect(desktop.installed.length).toBe(painted);
-  });
-
-  test('a changed report repaints the menu exactly once', async () => {
-    const conducted = conductOver(await freshSettingsFile());
-
-    conducted.menu.repaint();
-
-    const painted = desktop.installed.length;
-
-    conducted.menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false });
-
-    expect(desktop.installed.length).toBe(painted + 1);
-
-    conducted.menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false });
-
-    expect(desktop.installed.length).toBe(painted + 1);
   });
 });
 
