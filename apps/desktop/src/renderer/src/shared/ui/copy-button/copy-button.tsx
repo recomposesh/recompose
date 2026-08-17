@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const ADDRESS_COPIED = 'Address copied.';
-const COPYING_REFUSED = "Couldn't copy. Try again.";
+import { COPY_OUTCOME_WORDING } from './copy-outcome-wording';
 
 type CopyButtonProps = {
   /** Accessible name of the button, naming the value it copies. */
@@ -49,9 +48,13 @@ const checkGlyph = (
  * A clipboard that refuses the write announces that instead, because a button that answers
  * nothing reads as a broken one.
  */
-export function CopyButton({ label, value, announcement = ADDRESS_COPIED }: CopyButtonProps) {
+export function CopyButton({
+  label,
+  value,
+  announcement = COPY_OUTCOME_WORDING.copied,
+}: CopyButtonProps) {
   const [outcome, setOutcome] = useState<CopyOutcome | undefined>(undefined);
-  const spoken = outcome === 'copied' ? announcement : COPYING_REFUSED;
+  const spoken = outcome === 'copied' ? announcement : COPY_OUTCOME_WORDING.refused;
 
   useEffect(() => {
     if (outcome === undefined) {

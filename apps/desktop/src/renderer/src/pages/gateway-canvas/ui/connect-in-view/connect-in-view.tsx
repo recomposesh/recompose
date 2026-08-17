@@ -16,6 +16,7 @@ import {
   connectSheetOpen,
   subscribeToConnectSheetVisibility,
 } from '../../../../shared/lib';
+import { gatewayBaseUrl } from '../../lib/gateway-base-url';
 import { ConnectSheet } from '../connect-sheet/connect-sheet';
 
 type ConnectInViewProps = {
@@ -27,7 +28,7 @@ function factsOf(gateway: GatewayConfig, bindAddress: string): ConnectFacts {
   return {
     gatewayName: gateway.displayName,
     slug: gateway.slug,
-    baseUrl: `http://${bindAddress}:${String(gateway.port)}`,
+    baseUrl: gatewayBaseUrl(gateway, bindAddress),
     apiKey: enforcedApiKey(gateway),
     models: gateway.virtualModels.map(({ id, displayName }) => ({ id, displayName })),
   };

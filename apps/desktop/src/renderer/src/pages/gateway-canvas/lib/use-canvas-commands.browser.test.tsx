@@ -92,6 +92,29 @@ test('the zoom-to-fit command moves the view onto the cards that stand', async (
   await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
 });
 
+test('the zoom-to-100 command lands the viewport back at actual size', async () => {
+  const screen = await renderCommandedFlow();
+
+  pushCommand('zoom-in');
+
+  await expect.poll(() => viewportTransform(screen.container)).not.toMatch(/scale\(1\)$/);
+
+  pushCommand('zoom-to-100');
+
+  await expect.poll(() => viewportTransform(screen.container)).toMatch(/scale\(1\)$/);
+});
+
+test('the page-owned commands pass through here and move no viewport', async () => {
+  const screen = await renderCommandedFlow();
+  const resting = viewportTransform(screen.container);
+
+  pushCommand('copy-base-url');
+  pushCommand('remove-gateway');
+  pushCommand('toggle-logs');
+
+  expect(viewportTransform(screen.container)).toBe(resting);
+});
+
 test('the tidy command reaches the arrangement rather than the viewport', async () => {
   const asked: string[] = [];
 

@@ -1,6 +1,7 @@
-import type { Account, GatewayConfig, LogRow } from '@recompose/contracts';
+import type { Account, GatewayConfig, LogRow, Settings } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
+import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { notFound } from '@tanstack/react-router';
 import { useRef, useSyncExternalStore } from 'react';
@@ -14,6 +15,7 @@ import {
   engineStatesQueryOptions,
   gatewayStateIn,
   gatewaysQueryOptions,
+  settingsQueryOptions,
 } from '../../../../shared/api';
 import {
   inspectorOpen,
@@ -27,6 +29,7 @@ import {
   toggleInspector,
 } from '../../../../shared/lib';
 import { PanelSeparator } from '../../../../shared/ui';
+import { gatewayBaseUrl } from '../../lib/gateway-base-url';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { usePanelReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
@@ -39,6 +42,8 @@ import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import {
   useInspectorPutAwayOnLeave,
   useLogsCommand,
+  useMenuAsksGatewayRemoval,
+  useMenuCopiesBaseUrl,
   useMenuReadsTheDrawer,
   useSelectionPutAwayWithInspector,
 } from './canvas-page-hooks';
@@ -195,6 +200,19 @@ type GatewayCanvasPageProps = {
 
 const stayAfterRemoval = (): undefined => undefined;
 
+function printedBaseUrl(
+  gateway: GatewayConfig | undefined,
+  settings: Settings,
+): string | undefined {
+  return gateway === undefined
+    ? undefined
+    : gatewayBaseUrl(gateway, settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS);
+}
+
+function askRemovalOf(canvas: ComposedCanvas | undefined): ((nodeId: string) => void) | undefined {
+  return canvas?.askRemoval;
+}
+
 export function GatewayCanvasPage({
   slug,
   onGatewayRemoved = stayAfterRemoval,
@@ -202,6 +220,7 @@ export function GatewayCanvasPage({
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
   const { data: engines } = useSuspenseQuery(engineStatesQueryOptions);
+  const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const { data: served } = useQuery(engineLogsQueryOptions(slug));
   const shown = useSyncExternalStore(subscribeToInspectorVisibility, inspectorOpen);
   const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
@@ -216,6 +235,9 @@ export function GatewayCanvasPage({
   useInspectorPutAwayOnLeave();
   useSelectionPutAwayWithInspector(shown, inspector.rendered, canvas);
   useMenuReadsTheDrawer(logsShown);
+  useMenuAsksGatewayRemoval(askRemovalOf(canvas));
+
+  const copySpoken = useMenuCopiesBaseUrl(printedBaseUrl(gateway, settings));
 
   if (gateway === undefined || canvas === undefined) {
     if (gatewayOnceStood.current) {
@@ -241,6 +263,9 @@ export function GatewayCanvasPage({
       {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
       <ConnectInView slug={slug} />
       <RemovalDialog removal={canvas.removal} />
+      <p aria-live="polite" className="sr-only">
+        {copySpoken}
+      </p>
     </div>
   );
 }

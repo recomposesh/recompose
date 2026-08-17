@@ -206,9 +206,16 @@ describe('push surface totality', () => {
     expectTypeOf<keyof RecomposeIpcEvents>().toEqualTypeOf<IpcEvent>();
   });
 
-  test('a canvas command names one of the five acts the Gateway menu offers', () => {
+  test('a canvas command names one of the eight acts the Gateway menu offers', () => {
     expectTypeOf<IpcEventPayload<'canvas:command'>>().toEqualTypeOf<
-      'zoom-in' | 'zoom-out' | 'zoom-to-fit' | 'tidy' | 'toggle-logs'
+      | 'zoom-in'
+      | 'zoom-out'
+      | 'zoom-to-100'
+      | 'zoom-to-fit'
+      | 'tidy'
+      | 'toggle-logs'
+      | 'copy-base-url'
+      | 'remove-gateway'
     >();
   });
 

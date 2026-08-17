@@ -210,7 +210,16 @@ export const ipcEvents = {
   'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': {
-    payload: z.enum(['zoom-in', 'zoom-out', 'zoom-to-fit', 'tidy', 'toggle-logs']),
+    payload: z.enum([
+      'zoom-in',
+      'zoom-out',
+      'zoom-to-100',
+      'zoom-to-fit',
+      'tidy',
+      'toggle-logs',
+      'copy-base-url',
+      'remove-gateway',
+    ]),
   },
   'usage:command': {
     payload: z.enum([
