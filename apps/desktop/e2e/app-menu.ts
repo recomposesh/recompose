@@ -1,5 +1,7 @@
 import type { ElectronApplication } from '@playwright/test';
 
+import { expect } from '@playwright/test';
+
 /**
  * Runs an application-menu item by its label.
  *
@@ -154,13 +156,20 @@ export async function menuItemAccelerator(
   return facts === null ? null : facts.accelerator;
 }
 
-/** Runs the item a menu path names, throwing where the path leads nowhere. */
+/**
+ * Runs the item a menu path names, waiting for a menu that is still building.
+ *
+ * @summary A scenario's first step can reach the bar before boot installs it, and a menu that
+ * rebuilds behind a state change is worth waiting on, so the pick polls the path before running.
+ */
 export async function chooseMenuItemAt(app: ElectronApplication, path: MenuPath): Promise<void> {
-  const facts = await menuItemAt(app, path, true);
+  await expect
+    .poll(async () => menuItemAt(app, path, false), {
+      message: `the application menu carries no ${path.join(' > ')} item`,
+    })
+    .not.toBeNull();
 
-  if (facts === null) {
-    throw new Error(`the application menu carries no ${path.join(' > ')} item`);
-  }
+  await menuItemAt(app, path, true);
 }
 
 /** The top-level labels the menu bar stands, in their standing order. */

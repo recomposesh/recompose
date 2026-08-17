@@ -32,7 +32,9 @@ Then('the main window lands on the providers screen', async ({ page }) => {
 Then(
   'Gateways, Providers, and Usage print 1, 2, and 3 under the command modifier',
   async ({ electronApp }) => {
-    expect(await menuItemAccelerator(electronApp, ['View', 'Gateways'])).toBe('CmdOrCtrl+1');
+    await expect
+      .poll(async () => menuItemAccelerator(electronApp, ['View', 'Gateways']))
+      .toBe('CmdOrCtrl+1');
     expect(await menuItemAccelerator(electronApp, ['View', 'Providers'])).toBe('CmdOrCtrl+2');
     expect(await menuItemAccelerator(electronApp, ['View', 'Usage'])).toBe('CmdOrCtrl+3');
   },

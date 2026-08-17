@@ -30,7 +30,9 @@ When('the person hides the sidebar from its on-screen toggle', async ({ page }) 
 });
 
 Then('the sidebar leaves the screen', async ({ page }) => {
-  await expect(page.getByRole('group', { name: 'Local gateways' })).toBeHidden();
+  const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
+
+  await expect.poll(async () => (await sidebar.boundingBox())?.width ?? 0).toBeLessThan(2);
 });
 
 Then('the menu tick reads off', async ({ electronApp, page }) => {
