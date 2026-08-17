@@ -68,10 +68,10 @@
   font-size: 17px;
   font-weight: 500;
   color: var(--color-stage-ink);
-  transition: color 0.15s ease;
 
   &:hover {
-    color: var(--color-stage-dim);
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
 }
 

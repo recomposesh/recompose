@@ -28,11 +28,8 @@ export function DioramaSection() {
           <div
             ref={frameRef}
             data-diorama-stage
-            className="relative mx-auto w-full"
-            style={{
-              aspectRatio: `${DESKTOP_WIDTH} / ${DESKTOP_HEIGHT}`,
-              maxWidth: 'calc((100svh - 3rem) * 1.6)',
-            }}
+            className="relative w-full"
+            style={{ aspectRatio: `${DESKTOP_WIDTH} / ${DESKTOP_HEIGHT}` }}
           >
             <div
               className="absolute inset-s-0 top-0 origin-top-left"

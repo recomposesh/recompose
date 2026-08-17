@@ -8,20 +8,25 @@ function animateStageEntry(
   section: HTMLElement | null,
   frameRef: RefObject<HTMLDivElement | null>,
 ) {
+  const fullBleedScale = () => {
+    const frame = frameRef.current;
+
+    return frame ? window.innerWidth / frame.clientWidth : 1;
+  };
+  const dockKeepingShift = () => {
+    const frame = frameRef.current;
+
+    if (!frame) return 0;
+
+    return Math.min(0, (window.innerHeight - frame.clientHeight * fullBleedScale()) / 2);
+  };
+
   gsap.fromTo(
     '[data-diorama-stage]',
-    { scale: 1, transformOrigin: 'center center' },
+    { scale: 1, y: 0, transformOrigin: 'center center' },
     {
-      scale: () => {
-        const frame = frameRef.current;
-
-        if (!frame) return 1;
-
-        return Math.min(
-          window.innerWidth / frame.clientWidth,
-          window.innerHeight / frame.clientHeight,
-        );
-      },
+      scale: fullBleedScale,
+      y: dockKeepingShift,
       ease: 'none',
       scrollTrigger: {
         trigger: section,
@@ -49,7 +54,7 @@ function animateNarration(section: HTMLElement | null) {
   timeline
     .to('[data-diorama-scrim]', { opacity: 1, duration: 0.12 }, 0.2)
     .to('[data-narration-char]', { opacity: 1, duration: 0.001, stagger: 0.005, ease: 'none' }, 0.3)
-    .to('[data-diorama-stage]', { scale: 1, ease: 'none', duration: 0.14 }, 0.86);
+    .to('[data-diorama-stage]', { scale: 1, y: 0, ease: 'none', duration: 0.14 }, 0.86);
 }
 
 export function useDioramaAnimation(
