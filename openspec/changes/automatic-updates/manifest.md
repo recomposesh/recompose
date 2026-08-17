@@ -1,6 +1,6 @@
 ---
 tier: full
 phase: planning
-approvals: []
+approvals: [gate-1]
 branch: worktree-automatic-updates
 ---
