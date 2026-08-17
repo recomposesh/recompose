@@ -95,8 +95,27 @@ panel, which sent a third search after colorful sidebar-bottom cards.
 
 Three cards ran on the canvas, each with and without the Get started panel above it: a full
 gradient card, a white card with a gradient icon tile, and a dark card with a gradient border. The
-maintainer picked the white card ("halo"), asked its icon tile onto the brand blue, and asked for a
-dark-scheme pair. What stands in `designs/recompose.pen`: `Update card halo · with Get started`,
-`Update card halo · alone`, `Update card halo · Dark · with Get started`, and
-`Update card halo · Dark · alone`. The card reads: blue gradient icon tile with an up arrow,
-"Update ready" over "0.3.0 → 0.4.0", and one full-width "Restart to update" button.
+maintainer picked the white card ("halo") first, then walked its tile through the brand blue and
+the app icon's own indigo, and rejected both readings: identical blues on the tile and the button
+read monotone, and the icon's indigo read foreign, since nothing else in the product carries it.
+Three token-only treatments (blue tile with a quiet button, a status dot, a mono tile) read too
+plain, which sent a fourth search after livelier shapes.
+
+## Fourth pass, the treatment that won (2026-08-17)
+
+- [Whop](https://mobbin.com/screens/e0427b3e-f282-4261-b13a-bf0dcdd0c52e) floats a bold number pill
+  on a soft diagonal color beam, the rejected "version beam" alternative.
+- [Emergent](https://mobbin.com/screens/13d06728-b1a4-49ff-846d-4f02d878b1ad) frames its panel in a
+  soft aurora glow, and [Semrush](https://mobbin.com/screens/e6e8c8d0-cf78-4303-beb5-3552e09d77b2)
+  tops a white body with a decorated header zone and sparkles. Together they shaped the winner.
+- A third alternative spoke the product's own canvas language, a cable from a `0.3.0` node to a
+  `0.4.0` node; the maintainer passed on it in favor of the aurora.
+
+The maintainer chose the **aurora header** card, then flattened it into the product's own idiom:
+the radial glow became a flat wash, and the shadows on the card and its tile became the hairline
+borders the rest of the app draws (`#00000017` on light, `#ffffff16` on dark). What stands in
+`designs/recompose.pen`, on the four `Update card halo · …` frames (light and dark, with the Get
+started panel and alone): a header zone washed flat in the scheme's own blue (`#0064d2` on light,
+`#3d9bff` on dark) with two small sparkles, a hairline-bordered white tile with a blue up arrow,
+then a centered "Update ready" over "0.3.0 → 0.4.0", and one full-width "Restart to update" button
+in the primary blue. Every color is a value the product already uses, stepped only in alpha.
