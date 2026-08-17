@@ -351,14 +351,20 @@ list and the command list then fails the build rather than a test.
 'view:command': { payload: z.enum(['toggle-sidebar', 'toggle-inspector']) },
 
 'system:surface-toggles': {
-  request: z.strictObject({ sidebar: z.boolean(), inspector: z.boolean() }),
+  request: z.strictObject({
+    sidebar: z.boolean(),
+    inspector: z.boolean(),
+    modal: z.boolean(),
+  }),
   response: ipcResult(z.void()),
 },
 ```
 
 One event carries both toggles out because one menu group owns them, and one channel carries one
-snapshot back because the ticks read one truth at one moment. `true` means the surface shows.
-The channel copies the `system:logs-drawer` shape, and the dispatch allowlist in
+snapshot back because the ticks read one truth at one moment. `true` means the surface shows, and
+`modal` says a question stands, which locked decision 4 spends on disarming the route-scoped
+menus and New Gateway. The modal count writes through `shownAsAskModal`, the one seam every ask
+dialog passes. The channel copies the `system:logs-drawer` shape, and the dispatch allowlist in
 `apps/desktop/src/main/ipc/dispatch.ts` grows the one name.
 
 ### The reveal-label table
@@ -378,9 +384,11 @@ omissions.
 
 ### The menu item type
 
-`AppMenuItem` gains `enabled?: boolean`. `AppMenuView` gains `sidebarShown: boolean`,
-`inspectorOpen: boolean`, `standingGatewaySlug: string | null`, and `gatewayServing: boolean`.
-Neither type crosses the wire, so both stay in the template module.
+`AppMenuItem` gains `enabled?: boolean` and the `radio` type. `AppMenuView` gains
+`sidebarShown`, `inspectorOpen`, `modalStanding`, `windowStanding`, `onProviders`,
+`standingGatewaySlug`, `gatewayServing`, `usageRange`, `usageMetric`, `usageRetentionDays`, and
+`development`, which is everything the rebuilt bar reads. Neither type crosses the wire, so both
+stay in the menu's own module.
 
 ## Error handling
 
