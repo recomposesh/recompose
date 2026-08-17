@@ -11,9 +11,9 @@ const desktop = vi.hoisted(
   (): {
     open: unknown[];
     watched: unknown[];
-    navigations: Map<string, Listener>;
+    navigationListeners: Map<string, Listener>;
     closings: (() => void)[];
-  } => ({ open: [], watched: [], navigations: new Map(), closings: [] }),
+  } => ({ open: [], watched: [], navigationListeners: new Map(), closings: [] }),
 );
 
 vi.mock('@electron-toolkit/utils', () => ({
@@ -32,7 +32,7 @@ vi.mock('electron', () => ({
 
     webContents = {
       on: (event: string, listener: Listener): void => {
-        desktop.navigations.set(event, listener);
+        desktop.navigationListeners.set(event, listener);
       },
     };
 
@@ -68,7 +68,7 @@ function everyClosing(): void {
 beforeEach(() => {
   desktop.open = [];
   desktop.watched = [];
-  desktop.navigations = new Map();
+  desktop.navigationListeners = new Map();
   desktop.closings = [];
 });
 
@@ -78,8 +78,8 @@ describe('wiring a created window into the menu', () => {
 
     wireWindowIntoMenu(new BrowserWindow(), conductRecording(stood), 'packaged');
 
-    desktop.navigations.get('did-navigate')?.(undefined, 'app://renderer/index.html#/');
-    desktop.navigations.get('did-navigate-in-page')?.(
+    desktop.navigationListeners.get('did-navigate')?.(undefined, 'app://renderer/index.html#/');
+    desktop.navigationListeners.get('did-navigate-in-page')?.(
       undefined,
       'app://renderer/index.html#/usage',
     );
