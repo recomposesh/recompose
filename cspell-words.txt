@@ -23,6 +23,7 @@ apikey
 APPIMAGE
 asar
 Attio
+autobump
 Aydin
 backticked
 bddgen
@@ -164,6 +165,7 @@ libvips
 lifecycles
 lintable
 litellm
+livecheck
 llamacpp
 llms
 lmstudio

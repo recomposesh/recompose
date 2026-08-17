@@ -17,18 +17,18 @@ jobs:
       - shell: bash
         run: |
           version="${TAG#v}"
-          dmg_url=$(gh api "repos/${REPO}/releases/tags/${TAG}" \
-            --jq '.assets[] | select(.name | endswith(".dmg")) | .browser_download_url' | head -1)
-          if [ -z "$dmg_url" ]; then
-            echo "no dmg asset on release ${TAG}"
-            exit 1
-          fi
-          curl -fsSL "$dmg_url" -o app.dmg
-          if [ ! -s app.dmg ]; then
-            echo "dmg download empty for ${TAG}"
-            exit 1
-          fi
-          sha=$(sha256sum app.dmg | cut -d' ' -f1)
+          arm_url=$(gh api "repos/${REPO}/releases/tags/${TAG}" \
+            --jq '.assets[] | select(.name | endswith("-arm64.dmg")) | .browser_download_url')
+          intel_url=$(gh api "repos/${REPO}/releases/tags/${TAG}" \
+            --jq '.assets[] | select(.name | endswith("-x64.dmg")) | .browser_download_url')
+          [ -n "$arm_url" ] || { echo "no arm64 dmg on release ${TAG}"; exit 1; }
+          [ -n "$intel_url" ] || { echo "no x64 dmg on release ${TAG}"; exit 1; }
+          curl -fsSL "$arm_url" -o arm.dmg
+          curl -fsSL "$intel_url" -o intel.dmg
+          [ -s arm.dmg ] || { echo "arm64 dmg download empty for ${TAG}"; exit 1; }
+          [ -s intel.dmg ] || { echo "x64 dmg download empty for ${TAG}"; exit 1; }
+          arm_sha=$(sha256sum arm.dmg | cut -d' ' -f1)
+          intel_sha=$(sha256sum intel.dmg | cut -d' ' -f1)
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/tap_key
           chmod 600 ~/.ssh/tap_key
@@ -38,15 +38,19 @@ jobs:
           cd tap
           cat > Casks/recompose.rb <<CASK
           cask "recompose" do
-            version "${version}"
-            sha256 "${sha}"
+            arch arm: "arm64", intel: "x64"
 
-            url "${dmg_url}"
+            version "${version}"
+            sha256 arm:   "${arm_sha}",
+                   intel: "${intel_sha}"
+
+            url "https://github.com/${REPO}/releases/download/v#{version}/Recompose-#{version}-#{arch}.dmg"
             name "Recompose"
             desc "Local-first AI gateway composer"
             homepage "https://github.com/recomposesh/recompose"
 
-            depends_on arch: :arm64
+            auto_updates true
+            depends_on :macos
 
             app "Recompose.app"
           end
