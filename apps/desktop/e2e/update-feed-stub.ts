@@ -3,7 +3,7 @@ import type { ServerResponse } from 'node:http';
 import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as wait } from 'node:timers/promises';
 
@@ -12,6 +12,12 @@ const appRoot = join(__dirname, '..');
 const devFeedFile = join(appRoot, 'dev-app-update.yml');
 
 const feedLockDir = join(appRoot, '.dev-update-feed.lock');
+
+/**
+ * @summary AppImageUpdater refuses to download without APPIMAGE, reads the named file for its
+ * embedded blockmap, and replaces it at quit, so the path must name a real file this run owns.
+ */
+const installedAppImageFile = join(tmpdir(), `recompose-e2e-${String(process.pid)}.AppImage`);
 
 const LOCK_STEAL_MS = 120_000;
 
@@ -176,6 +182,7 @@ async function feedDropped(
     });
   });
   await rm(devFeedFile, { force: true });
+  await rm(installedAppImageFile, { force: true });
   await rm(updaterCacheDir(cacheName), { force: true, recursive: true });
   await rm(feedLockDir, { force: true, recursive: true });
 }
@@ -201,6 +208,10 @@ async function fakeUpdateFeed(): Promise<UpdateFeed> {
 
   const { server, origin } = await feedServerStarted(standing);
   const cacheName = `recompose-e2e-updater-${String(process.pid)}`;
+
+  if (process.platform === 'linux') {
+    await writeFile(installedAppImageFile, 'recompose installed AppImage stand-in');
+  }
 
   await writeFile(
     devFeedFile,
@@ -257,7 +268,7 @@ function arrangedByTags(feed: UpdateFeed, tags: string[]): void {
 function feedEnvFor(tags: string[]): Record<string, string> {
   return {
     RECOMPOSE_DEV_UPDATE_FEED: tags.includes('@update-checks-fast') ? '500' : '30000',
-    ...(tags.includes('@appimage-install') ? { APPIMAGE: '/tmp/Recompose.AppImage' } : {}),
+    ...(process.platform === 'linux' ? { APPIMAGE: installedAppImageFile } : {}),
   };
 }
 
