@@ -10,6 +10,7 @@ import type { CredentialCustody } from './subscriptions/credential-custody';
 import bundledPrices from '../../resources/model-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
 import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
+import { dockMenuWiring } from './dock/dock-wiring';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { storageReachFor } from './engine-host/storage-reach';
 import {
@@ -185,6 +186,16 @@ if (activationPolicy !== null) {
   app.setActivationPolicy(activationPolicy);
 }
 
+const repaintDock = dockMenuWiring({
+  platform: process.platform,
+  activationPolicy,
+  gatewaysDir: () => storagePathsFor(recomposeHome()).gatewaysDir,
+  onCorrupt: onStorageCorrupt,
+  lifecycle: trayMenuHandlers,
+  onNewGateway: openNewGatewaySurface,
+  onOpenSettings: openSettingsSurface,
+});
+
 registerAppScheme();
 
 /**
@@ -230,7 +241,10 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
     onCorrupt: onStorageCorrupt,
     spendGrantContext: storageReach,
     reflectSettings: appMenu.reflectSettings,
-    repaintStates: repaintTray,
+    repaintStates: (states) => {
+      repaintTray(states);
+      repaintDock?.(states);
+    },
     lifecycle: gatewayLifecycle,
   });
 
