@@ -26,18 +26,23 @@ export function DioramaSection() {
         <div
           ref={frameRef}
           data-diorama-stage
-          className="absolute overflow-hidden shadow-2xl"
+          className="absolute overflow-hidden"
           style={{
             insetInlineStart: '50%',
             top: '50%',
             translate: '-50% -50%',
             width: 'min(100vw - 8rem, 1312px)',
             aspectRatio: '1312 / 820',
-            borderRadius: 16,
+            borderRadius: 24,
+            boxShadow: '0 32px 80px rgb(0 0 0 / 0.22)',
           }}
         >
           <Desktop windowLayerRef={windowLayerRef} />
-          <div className="absolute font-sans" style={{ insetInlineStart: '5%', bottom: '16%' }}>
+          <div
+            data-narration
+            className="absolute font-sans"
+            style={{ insetInlineStart: '5%', bottom: '16%' }}
+          >
             <p
               className="font-medium"
               style={{ fontSize: 'clamp(24px, 3.2vw, 46px)', lineHeight: 1.05 }}

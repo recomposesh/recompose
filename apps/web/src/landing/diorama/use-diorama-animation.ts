@@ -18,7 +18,7 @@ function animateStageEntry(section: HTMLElement | null) {
     {
       width: restWidth,
       height: () => restWidth() * REST_RATIO,
-      borderRadius: 16,
+      borderRadius: 24,
     },
     {
       width: () => window.innerWidth,
@@ -56,12 +56,14 @@ function animateNarration(section: HTMLElement | null) {
       {
         width: restWidth,
         height: () => restWidth() * REST_RATIO,
-        borderRadius: 16,
+        borderRadius: 24,
         ease: 'none',
         duration: 0.14,
       },
       0.86,
-    );
+    )
+    .to('[data-diorama-scrim]', { opacity: 0, ease: 'none', duration: 0.14 }, 0.86)
+    .to('[data-narration]', { opacity: 0, ease: 'none', duration: 0.1 }, 0.86);
 }
 
 export function useDioramaAnimation(sectionRef: RefObject<HTMLElement | null>) {
