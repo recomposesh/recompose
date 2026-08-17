@@ -2,7 +2,7 @@ export const RELEASE_FEED = 'https://github.com/recomposesh/recompose/releases';
 
 type UpdateOperation = 'check' | 'download' | 'install';
 
-type UpdaterLogger = {
+export type UpdaterLogger = {
   info: (message?: unknown) => void;
   warn: (message?: unknown) => void;
   error: (message?: unknown) => void;
