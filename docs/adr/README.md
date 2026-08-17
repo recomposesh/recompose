@@ -139,3 +139,6 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0131](0131-choosing-an-account-moves-the-tool-never-the-traffic.md)            | Choosing an account moves the tool, never the traffic                               | Accepted   | 2026-08-16 |
 | [0132](0132-a-client-setup-comes-from-the-gateway-in-front-of-it.md)            | A client setup comes from the gateway in front of it                                | Accepted   | 2026-08-16 |
 | [0133](0133-an-update-arrives-through-the-channel-that-installed-it.md)         | An update arrives through the channel that installed it                             | Accepted   | 2026-08-16 |
+| [0134](0134-actual-size-takes-the-plain-reset-chord.md)                         | The plain reset chord lands on 100%                                                 | Accepted   | 2026-08-17 |
+| [0135](0135-gateway-lifecycle-stays-main-side.md)                               | Gateway lifecycle stays main-side                                                   | Accepted   | 2026-08-17 |
+| [0136](0136-a-packaged-run-attaches-no-window-input-guard.md)                   | A packaged run attaches no window input guard                                       | Accepted   | 2026-08-17 |
