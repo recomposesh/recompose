@@ -75,6 +75,29 @@ describe('a channel another tool owns', () => {
   });
 });
 
+describe('a marker-armed run', () => {
+  test('logs failures against the development feed, not the release feed', () => {
+    const lines: string[] = [];
+
+    vi.spyOn(console, 'warn').mockImplementation((line: unknown) => {
+      lines.push(String(line));
+    });
+
+    const { port, wiring } = wiredOn({
+      platform: 'darwin',
+      env: { RECOMPOSE_DEV_UPDATE_FEED: '1' },
+      isPackaged: false,
+      inApplicationsFolder: false,
+    });
+
+    port.emit('error', new Error('the feed refused'));
+
+    expect(lines).toEqual(['update check failed: the feed refused (feed: dev-app-update.yml)']);
+
+    wiring.dispose();
+  });
+});
+
 describe('a channel the app owns', () => {
   test('opens the updater once and checks at launch', () => {
     const { opened, port, wiring } = wiredOn({

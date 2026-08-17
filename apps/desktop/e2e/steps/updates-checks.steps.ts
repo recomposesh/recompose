@@ -2,8 +2,6 @@ import { expect } from '@playwright/test';
 
 import { Given, Then, When } from '../fixtures';
 
-const RELEASE_FEED = 'https://github.com/recomposesh/recompose/releases';
-
 Given('the app runs on a channel it updates itself', ({ updateFeed }) => {
   expect(updateFeed.origin).toContain('127.0.0.1');
 });
@@ -26,9 +24,10 @@ Then('the app keeps running and raises no dialog', async ({ electronApp, page })
   expect(electronApp.windows()).toHaveLength(1);
 });
 
-Then('the log carries the reason and the feed address', async ({ mainLog }) => {
+Then('the log carries the reason and the feed address', async ({ mainLog, updateFeed }) => {
   await expect.poll(() => mainLog.join('')).toContain('update check failed:');
-  expect(mainLog.join('')).toContain(`(feed: ${RELEASE_FEED})`);
+  expect(mainLog.join('')).toContain('(feed: dev-app-update.yml)');
+  expect(mainLog.join('')).toContain(updateFeed.origin);
 });
 
 Then('it checks the release feed once', async ({ updateFeed }) => {

@@ -277,9 +277,9 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
 
   profile.serveStoredGateways();
 
-  createMainWindow(HOME_ROUTE);
-
   wiredUpdates = wireDesktopUpdates(pushUpdatesChanged);
+
+  createMainWindow(HOME_ROUTE);
 }
 
 registerAppLifecycle({

@@ -42,7 +42,8 @@ export function wireUpdatesFor(deps: {
   openPort: () => UpdaterPort;
   push: (state: UpdateState) => void;
 }): UpdatesWiring {
-  const log = updateLogFor(RELEASE_FEED);
+  const markerArmed = deps.env['RECOMPOSE_DEV_UPDATE_FEED'] !== undefined;
+  const log = updateLogFor(markerArmed ? 'dev-app-update.yml' : RELEASE_FEED);
   const channel = ownedChannel(deps);
 
   if (channel !== 'self') {

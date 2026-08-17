@@ -39,4 +39,13 @@ export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
  * @summary No play function runs here, because the story shows an absence and an absence assertion
  * would need a settle point this component never provides.
  */
-export const NothingWaiting = meta.story({ parameters: { bridge: {} } });
+export const NothingWaiting = meta.story({
+  parameters: {
+    bridge: {
+      overrides: {
+        'updates:get': async () =>
+          Promise.resolve({ ok: true as const, value: { standing: 'quiet' as const } }),
+      },
+    },
+  },
+});

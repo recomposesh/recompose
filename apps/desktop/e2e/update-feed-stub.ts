@@ -3,6 +3,7 @@ import type { ServerResponse } from 'node:http';
 import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as wait } from 'node:timers/promises';
 
@@ -141,7 +142,23 @@ async function feedServerStarted(
   return { server, origin: `http://127.0.0.1:${String(address.port)}` };
 }
 
-async function feedDropped(standing: FeedStanding, server: Server): Promise<void> {
+function updaterCacheDir(cacheName: string): string {
+  if (process.platform === 'darwin') {
+    return join(homedir(), 'Library', 'Caches', cacheName);
+  }
+
+  if (process.platform === 'win32') {
+    return join(process.env['LOCALAPPDATA'] ?? join(homedir(), 'AppData', 'Local'), cacheName);
+  }
+
+  return join(process.env['XDG_CACHE_HOME'] ?? join(homedir(), '.cache'), cacheName);
+}
+
+async function feedDropped(
+  standing: FeedStanding,
+  server: Server,
+  cacheName: string,
+): Promise<void> {
   for (const response of standing.parked) {
     response.destroy();
   }
@@ -152,6 +169,7 @@ async function feedDropped(standing: FeedStanding, server: Server): Promise<void
     });
   });
   await rm(devFeedFile, { force: true });
+  await rm(updaterCacheDir(cacheName), { force: true, recursive: true });
   await rm(feedLockDir, { force: true, recursive: true });
 }
 
@@ -175,10 +193,11 @@ async function fakeUpdateFeed(): Promise<UpdateFeed> {
   };
 
   const { server, origin } = await feedServerStarted(standing);
+  const cacheName = `recompose-e2e-updater-${String(process.pid)}`;
 
   await writeFile(
     devFeedFile,
-    `provider: generic\nurl: ${origin}\nupdaterCacheDirName: recompose-e2e-updater\n`,
+    `provider: generic\nurl: ${origin}\nupdaterCacheDirName: ${cacheName}\n`,
   );
 
   return {
@@ -200,7 +219,7 @@ async function fakeUpdateFeed(): Promise<UpdateFeed> {
     holdArtifact: () => {
       standing.holdingArtifact = true;
     },
-    dispose: async () => feedDropped(standing, server),
+    dispose: async () => feedDropped(standing, server, cacheName),
   };
 }
 

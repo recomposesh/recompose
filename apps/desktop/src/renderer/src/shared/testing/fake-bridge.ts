@@ -135,7 +135,14 @@ function eventBridge(): RecomposeIpcEvents {
 function updatesHandlers(): Pick<RecomposeIpc, 'updates:get' | 'updates:restart'> {
   return {
     'updates:get': async () => Promise.resolve({ ok: true, value: { standing: 'quiet' } }),
-    'updates:restart': async () => Promise.resolve({ ok: true, value: undefined }),
+    'updates:restart': async () =>
+      Promise.resolve({
+        ok: false,
+        error: {
+          code: 'no-update-waiting',
+          message: 'no downloaded update stands ready to install',
+        },
+      }),
   };
 }
 
