@@ -6,7 +6,7 @@ export type UpdaterLogger = {
   info: (message?: unknown) => void;
   warn: (message?: unknown) => void;
   error: (message?: unknown) => void;
-  debug: (message: string) => void;
+  debug?: (message: string) => void;
 };
 
 export type UpdateLog = {

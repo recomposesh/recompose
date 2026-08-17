@@ -21,7 +21,7 @@ import {
   startStoredGateway,
   stopRemovedGateway,
 } from './engine-host/stored-gateway-serving';
-import { pushDevtoolsToggle, pushSettingsChanged } from './ipc/push-events';
+import { pushDevtoolsToggle, pushSettingsChanged, pushUpdatesChanged } from './ipc/push-events';
 import { assembleIpcHandlers, registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { bootAppMenu } from './menu/app-menu-boot';
@@ -39,6 +39,8 @@ import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, showMenuBarTray } from './tray/menu-bar-tray';
 import { trayRepainter } from './tray/tray-repaint';
 import { trayMenuWiring } from './tray/tray-wiring';
+import { wireDesktopUpdates } from './updates/updater-port';
+import { type UpdatesWiring } from './updates/updates-wiring';
 import { openUsageIpcDeps } from './usage/usage-wiring';
 import {
   createMainWindow,
@@ -57,6 +59,8 @@ app.setName('Recompose');
 app.setAboutPanelOptions({ applicationName: 'Recompose' });
 
 let booted: StoredBoot | null = null;
+
+let wiredUpdates: UpdatesWiring | null = null;
 
 const gatewayLifecycle = createGatewayLifecycleRequests({
   host: () => booted?.engineHost ?? null,
@@ -219,7 +223,10 @@ async function answerEveryChannel(profile: StoredBoot): Promise<void> {
       appMenu,
       openFolder: async (path) => shell.openPath(path),
       platform: process.platform,
-      updates: { state: () => ({ standing: 'quiet' as const }), restart: () => false },
+      updates: {
+        state: () => wiredUpdates?.state() ?? { standing: 'quiet' as const },
+        restart: () => wiredUpdates?.restart() ?? false,
+      },
     }),
   );
 }
@@ -271,12 +278,16 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
   profile.serveStoredGateways();
 
   createMainWindow(HOME_ROUTE);
+
+  wiredUpdates = wireDesktopUpdates(pushUpdatesChanged);
 }
 
 registerAppLifecycle({
   start: startRecompose,
   activate: showMainWindow,
   dispose: () => {
+    wiredUpdates?.dispose();
+    wiredUpdates = null;
     booted?.close();
     booted = null;
   },

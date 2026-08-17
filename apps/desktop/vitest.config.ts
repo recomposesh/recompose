@@ -69,6 +69,7 @@ export default defineConfig({
         'src/main/subscriptions/sign-in-launch.ts',
         'src/main/subscriptions/subscriptions-wiring.ts',
         'src/main/tray/menu-bar-tray.ts',
+        'src/main/updates/updater-port.ts',
         'src/main/windows/main-window.ts',
         'src/preload/index.ts',
         'src/renderer/src/app/main.tsx',

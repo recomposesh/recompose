@@ -6,22 +6,17 @@ import { nextUpdateState, type UpdaterSignal } from './update-standing';
 
 type VersionInfo = { version: string };
 
-type UpdaterPortEvents = {
-  error: (error: Error) => void;
-  'checking-for-update': () => void;
-  'update-available': (info: VersionInfo) => void;
-  'update-not-available': (info: VersionInfo) => void;
-  'update-downloaded': (info: VersionInfo) => void;
-  'update-cancelled': (info: VersionInfo) => void;
-};
+type HeardUpdaterEvent = ((event: 'error', listener: (error: Error) => void) => unknown) &
+  ((event: 'checking-for-update', listener: () => void) => unknown) &
+  ((event: 'update-available', listener: (info: VersionInfo) => void) => unknown) &
+  ((event: 'update-not-available', listener: (info: VersionInfo) => void) => unknown) &
+  ((event: 'update-downloaded', listener: (info: VersionInfo) => void) => unknown) &
+  ((event: 'update-cancelled', listener: (info: VersionInfo) => void) => unknown);
 
 export type UpdaterPort = {
   autoInstallOnAppQuit: boolean;
   logger: UpdaterLogger | null;
-  on: <Event extends keyof UpdaterPortEvents>(
-    event: Event,
-    listener: UpdaterPortEvents[Event],
-  ) => unknown;
+  on: HeardUpdaterEvent;
   checkForUpdates: () => Promise<unknown>;
   quitAndInstall: () => void;
 };

@@ -12,6 +12,7 @@ import {
   pushEngineTraffic,
   pushLaunchRefused,
   pushSettingsChanged,
+  pushUpdatesChanged,
   pushUsageCommand,
   pushViewCommand,
 } from './push-events';
@@ -231,5 +232,19 @@ describe('driving the usage explorer from the menu bar', () => {
     pushUsageCommand('refresh');
 
     expect(only).toEqual([{ channel: 'usage:command', payload: 'refresh' }]);
+  });
+});
+
+describe('telling every window where the update stands', () => {
+  test('the pushed state reaches each open window whole', () => {
+    const first = openWindow();
+    const second = openWindow();
+
+    pushUpdatesChanged({ standing: 'ready', version: '0.4.0' });
+
+    expect(first).toEqual([
+      { channel: 'updates:changed', payload: { standing: 'ready', version: '0.4.0' } },
+    ]);
+    expect(second).toEqual(first);
   });
 });
