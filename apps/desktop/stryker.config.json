@@ -31,6 +31,7 @@
     "src/renderer/src/pages/gateway-canvas/lib/traffic-aggregates.ts",
     "src/renderer/src/pages/gateway-canvas/lib/log-scope.ts",
     "src/renderer/src/pages/gateway-canvas/lib/route-addresses.ts",
+    "src/renderer/src/pages/gateway-canvas/lib/gateway-base-url.ts",
     "src/renderer/src/pages/gateway-canvas/ui/gateway-canvas-page/canvas-subjects.ts",
     "src/renderer/src/pages/gateway-canvas/ui/gateway-canvas-page/canvas-wiring.ts",
     "src/renderer/src/pages/gateway-canvas/ui/gateway-canvas-page/deletion-gestures.ts",
