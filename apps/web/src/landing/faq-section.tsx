@@ -32,13 +32,15 @@ export function FaqSection() {
           {QUESTIONS.map(({ q, a }) => (
             <Accordion.Item key={q} value={q} className="border-t border-stage-line">
               <Accordion.Header>
-                <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-5 text-start">
-                  <span className="text-xl font-medium text-stage-ink">{q}</span>
+                <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-6 py-5 text-start">
+                  <span className="text-xl font-medium text-stage-ink underline-offset-4 group-hover:underline">
+                    {q}
+                  </span>
                   <Plus className="size-4 shrink-0 text-stage-faint transition-transform duration-200 group-data-[panel-open]:rotate-45" />
                 </Accordion.Trigger>
               </Accordion.Header>
-              <Accordion.Panel className="max-w-xl pb-6 text-body leading-relaxed text-stage-dim">
-                {a}
+              <Accordion.Panel className="faq-panel">
+                <div className="max-w-xl pb-6 text-body leading-relaxed text-stage-dim">{a}</div>
               </Accordion.Panel>
             </Accordion.Item>
           ))}

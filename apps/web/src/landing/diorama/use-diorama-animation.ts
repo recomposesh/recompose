@@ -4,9 +4,13 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
+import { hideStoryProps, playExitFade, playStory } from './diorama-story';
+
 const CONTAINER_GUTTER = 128;
 const REST_WIDTH = 1312;
 const REST_RATIO = 820 / 1312;
+
+export const HERO_OVERLAP_SVH = 32;
 
 function restWidth() {
   return Math.min(window.innerWidth - CONTAINER_GUTTER, REST_WIDTH);
@@ -21,13 +25,13 @@ function animateStageEntry(section: HTMLElement | null) {
       borderRadius: 24,
     },
     {
-      width: () => window.innerWidth,
-      height: () => window.innerHeight,
+      width: '100%',
+      height: '100%',
       borderRadius: 0,
       ease: 'none',
       scrollTrigger: {
         trigger: section,
-        start: 'top bottom',
+        start: `top ${100 - HERO_OVERLAP_SVH}%`,
         end: 'top top',
         scrub: true,
         invalidateOnRefresh: true,
@@ -36,7 +40,7 @@ function animateStageEntry(section: HTMLElement | null) {
   );
 }
 
-function animateNarration(section: HTMLElement | null) {
+function animatePinnedStory(section: HTMLElement | null) {
   const timeline = gsap.timeline({
     scrollTrigger: {
       trigger: section,
@@ -48,22 +52,19 @@ function animateNarration(section: HTMLElement | null) {
     },
   });
 
-  timeline
-    .to('[data-diorama-scrim]', { opacity: 1, duration: 0.12 }, 0.2)
-    .to('[data-narration-char]', { opacity: 1, duration: 0.001, stagger: 0.005, ease: 'none' }, 0.3)
-    .to(
-      '[data-diorama-stage]',
-      {
-        width: restWidth,
-        height: () => restWidth() * REST_RATIO,
-        borderRadius: 24,
-        ease: 'none',
-        duration: 0.14,
-      },
-      0.86,
-    )
-    .to('[data-diorama-scrim]', { opacity: 0, ease: 'none', duration: 0.14 }, 0.86)
-    .to('[data-narration]', { opacity: 0, ease: 'none', duration: 0.1 }, 0.86);
+  playStory(timeline);
+  playExitFade(timeline);
+  timeline.to(
+    '[data-diorama-stage]',
+    {
+      width: restWidth,
+      height: () => restWidth() * REST_RATIO,
+      borderRadius: 24,
+      ease: 'none',
+      duration: 0.14,
+    },
+    0.86,
+  );
 }
 
 export function useDioramaAnimation(sectionRef: RefObject<HTMLElement | null>) {
@@ -72,9 +73,9 @@ export function useDioramaAnimation(sectionRef: RefObject<HTMLElement | null>) {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       gsap.registerPlugin(ScrollTrigger);
 
-      gsap.set('[data-narration-char]', { opacity: 0 });
+      hideStoryProps();
       animateStageEntry(sectionRef.current);
-      animateNarration(sectionRef.current);
+      animatePinnedStory(sectionRef.current);
     },
     { scope: sectionRef },
   );

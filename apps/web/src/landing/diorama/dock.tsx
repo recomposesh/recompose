@@ -1,9 +1,9 @@
 import { BrandTile } from '../brand-tile';
 
-const DOCK_APPS = [
+const DOCK_APPS: { name: string; running: boolean; storyProp?: string }[] = [
   { name: 'recompose', running: true },
   { name: 'claude code', running: true },
-  { name: 'codex', running: false },
+  { name: 'codex', running: true, storyProp: 'dock-codex' },
   { name: 'cursor', running: false },
   { name: 'zed', running: false },
 ];
@@ -16,6 +16,7 @@ export function Dock() {
           <span key={app.name} className="flex flex-col items-center gap-1">
             <BrandTile name={app.name} className="size-10" />
             <span
+              data-story-prop={app.storyProp}
               className={`size-0.75 rounded-full ${app.running ? 'bg-black/60 dark:bg-white/60' : 'bg-transparent'}`}
             />
           </span>
