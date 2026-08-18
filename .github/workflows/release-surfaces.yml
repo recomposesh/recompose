@@ -32,7 +32,14 @@ jobs:
             grep -qxF "${targets[$slug]}" <<<"$assets" \
               || { echo "download redirects halted: release ${TAG} carries no asset named ${targets[$slug]}"; exit 1; }
           done
-          rules='[]'
+          rules=$(jq -n '[{
+            ref: "www-to-apex",
+            expression: "http.host eq \"www.recompose.sh\"",
+            description: "301 to the apex host",
+            action: "redirect",
+            action_parameters: {from_value: {status_code: 301, preserve_query_string: true,
+              target_url: {expression: "concat(\"https://recompose.sh\", http.request.uri.path)"}}}
+          }]')
           for slug in "${slugs[@]}"; do
             rules=$(jq -c \
               --arg path "/download/${slug}" \
@@ -63,6 +70,11 @@ jobs:
             [ "$location" = "$expected" ] || { echo "verification failed: ${url} points at ${location}, not ${expected}"; exit 1; }
             echo "verified: ${url} -> ${expected}"
           done
+          www_status=$(curl -s -o /dev/null -w '%{http_code}' "https://www.recompose.sh/")
+          www_location=$(curl -sI "https://www.recompose.sh/" | tr -d '\r' | awk 'tolower($1) == "location:" {print $2}')
+          [ "$www_status" = "301" ] || { echo "verification failed: www.recompose.sh answered ${www_status}, not 301"; exit 1; }
+          [ "$www_location" = "https://recompose.sh/" ] || { echo "verification failed: www.recompose.sh points at ${www_location}, not the apex"; exit 1; }
+          echo "verified: www.recompose.sh -> recompose.sh"
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}

@@ -147,3 +147,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0139](0139-the-cask-follows-the-per-architecture-signed-release.md)            | The cask follows the per-architecture signed release                                | Accepted   | 2026-08-17 |
 | [0140](0140-a-download-lands-from-the-products-own-address.md)                  | A download lands from the product's own address                                     | Accepted   | 2026-08-18 |
 | [0141](0141-the-changelog-lives-in-the-repository.md)                           | The changelog lives in the repository                                               | Accepted   | 2026-08-18 |
+| [0142](0142-the-site-answers-at-one-address.md)                                 | The site answers at one address                                                     | Accepted   | 2026-08-18 |
