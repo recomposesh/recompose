@@ -1,7 +1,7 @@
 import type { UsageReportAsk } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { unwrapIpcResult } from './ipc-result';
 
@@ -79,4 +79,18 @@ export async function refreshedBalances(queryClient: QueryClient): Promise<void>
   const fresh = unwrapIpcResult(await window.recompose['usage:balances']({ refresh: true }));
 
   queryClient.setQueryData(balancesQueryOptions.queryKey, fresh);
+}
+
+/**
+ * The credits card's own refresh, as a request that can be pending and can be refused.
+ *
+ * @summary An upstream that answered but could not reach the vendor rides back inside the payload
+ * as a per-account failure, so only a refusal from the app itself lands here. It stays a mutation
+ * rather than an invalidation because a re-read of the standing query would ask without the refresh
+ * flag and be answered from the minute the desk already holds.
+ */
+export function useRefreshBalances() {
+  const queryClient = useQueryClient();
+
+  return useMutation({ mutationFn: async () => refreshedBalances(queryClient) });
 }
