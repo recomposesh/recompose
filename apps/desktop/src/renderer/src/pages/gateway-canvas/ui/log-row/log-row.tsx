@@ -70,6 +70,24 @@ function targetInk(account: Account | undefined): string {
   return account === undefined ? 'text-ink-secondary' : '';
 }
 
+/**
+ * The sentence saying what a request came to, which only a failed one carries.
+ *
+ * @summary The cell stands on every row rather than only the failed ones, because it is the last
+ * column and a cell that came and went would move the whole trailing group between one row and the
+ * next. It takes a share of the room left over rather than a width of its own, so the model journey
+ * beside it keeps a readable share at every drawer width instead of being squeezed to nothing by a
+ * column sized for prose. The sentence reads in the quiet ink and hands the whole of itself over on
+ * hover, the way the account cell does, because no column the grid can spare fits a sentence.
+ */
+function failureCell(failure: string | undefined): ReactNode {
+  return (
+    <span className="min-w-0 flex-1 truncate text-ink-secondary" title={failure}>
+      {failure}
+    </span>
+  );
+}
+
 type ModelJourney = { asked: string; resolved: string };
 
 function modelJourneyOf(logged: LoggedRequest): ModelJourney {
@@ -152,6 +170,7 @@ export function LogRow({ logged, account, id, underCursor = false, place, wholeR
       <span className="w-10 shrink-0 text-end text-ink-secondary tabular-nums">
         {durationCell(took)}
       </span>
+      {failureCell(logged.failure)}
     </div>
   );
 }

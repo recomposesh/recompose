@@ -84,5 +84,22 @@ export const ForeignShapeWarns = meta.story({
   },
 });
 
+/**
+ * A coding plan, which points at the vendor page issuing the key the plan is spent with.
+ *
+ * @summary A plan bought outside the app offers no sign-in, so the key is the only way in and a form
+ * that never says where to get one leaves a person searching. The reading asks for the link by its
+ * own words, because those words are all a screen reader has to go on.
+ */
+export const PlanPointsAtItsKeyPage = meta.story({
+  args: { entry: entryNamed('zhipu') },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('link', { name: 'Get a key from Z.ai' })).toHaveAttribute(
+      'href',
+      'https://z.ai/manage-apikey/apikey-list',
+    );
+  },
+});
+
 /** The same form in the dark scheme, where the field ink sits on the raised surface instead. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

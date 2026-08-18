@@ -28,6 +28,16 @@ const storedBeforeTheMask: CredentialedAccount = {
   credentialRef: 'c1',
 };
 
+const addressedByHand: CredentialedAccount = {
+  id: 'a4',
+  provider: 'models-example',
+  kind: 'aggregator',
+  label: 'house pool',
+  credentialRef: 'c4',
+  keyTail: '4d1a',
+  endpoint: { origin: 'https://models.example.com', dialect: 'chat-completions' },
+};
+
 async function renderRow(account: CredentialedAccount, parameters: BridgeParameters = {}) {
   installFakeBridge({
     accounts: { schemaVersion: ACCOUNTS_VERSION, accounts: [account] },
@@ -121,6 +131,26 @@ test('an aggregator key takes the same row and offers no check, because no probe
 
   await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
   await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(1);
+});
+
+test('a custom aggregator row names the address a person gave it, and still offers no check', async () => {
+  const screen = await renderRow(addressedByHand);
+
+  await expect
+    .element(screen.getByText('https://models.example.com', { exact: true }))
+    .toBeVisible();
+
+  await press('Actions for house pool');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
+  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(1);
+});
+
+test('an aggregator row the app addresses itself claims no address of its own', async () => {
+  const screen = await renderRow({ ...stored, provider: 'openrouter', kind: 'aggregator' });
+
+  await expect.element(screen.getByRole('listitem')).toBeVisible();
+  expect(screen.container.textContent).not.toContain('https://');
 });
 
 test('the overflow holds the two quieter acts and nothing else', async () => {

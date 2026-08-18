@@ -6,7 +6,7 @@ const QUESTIONS = [
   { q: 'where do my keys live?', a: 'in ~/.recompose on your machine. nothing leaves it.' },
   {
     q: 'which clients work?',
-    a: 'any client that speaks the Anthropic or OpenAI dialect: Claude Code, Codex, Cursor, Zed and friends.',
+    a: 'any client that speaks the Anthropic or OpenAI dialect: Claude Code, Codex CLI, Cursor, Cline and friends.',
   },
   {
     q: 'how do subscriptions work?',

@@ -26,7 +26,7 @@ export function CtaSection() {
             style={{ boxShadow: PILL_GLOW }}
           >
             <span className="size-2.5 rounded-full bg-live" />
-            <span className="font-mono text-xl text-stage-ink">http://localhost:8397/coding</span>
+            <span className="font-mono text-xl text-stage-ink">http://127.0.0.1:8397</span>
           </div>
         </div>
 

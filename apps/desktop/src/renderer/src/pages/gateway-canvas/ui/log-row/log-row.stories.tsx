@@ -86,7 +86,12 @@ export const EveryStanding = meta.story({
   },
 });
 
-/** A request the provider refused, which keeps the duration the failure took to arrive. */
+/**
+ * A request the provider refused, reading the sentence beside the duration the failure took.
+ *
+ * @summary The sentence is written from the status and never from the answer's body, so the row can
+ * say what a request came to without a prompt or a completion ever reaching the drawer.
+ */
 export const Failed = meta.story({
   args: {
     logged: servedRequest({
@@ -97,6 +102,7 @@ export const Failed = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('500')).toBeVisible();
     await expect(await canvas.findByText('0.9s')).toBeVisible();
+    await expect(await canvas.findByText('The provider answered 500.')).toBeVisible();
   },
 });
 

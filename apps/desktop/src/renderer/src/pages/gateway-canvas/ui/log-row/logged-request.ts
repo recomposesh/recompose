@@ -73,6 +73,7 @@ export function copiedRow(logged: LoggedRequest, account: Account | undefined): 
       servedBy(logged, account),
       requestInFlight(logged) ? 'live' : String(logged.status),
       tookFor(logged.durationMs),
+      logged.failure ?? '',
     ],
     ' ',
   );

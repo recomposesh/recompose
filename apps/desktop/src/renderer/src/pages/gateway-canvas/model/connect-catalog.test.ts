@@ -185,6 +185,12 @@ test('every id a client stores carries the gateway, so a second one never overwr
   );
 });
 
+test('no client is handed a key variable a second gateway would overwrite', () => {
+  for (const client of connectClients) {
+    expect(everythingCopied(client)).not.toContain('RECOMPOSE_API_KEY');
+  }
+});
+
 test('a configuration that takes a list carries every model the gateway serves', () => {
   for (const id of ['opencode', 'pi', 'omp', 'kimi-code', 'deepseek-harness']) {
     const copied = everythingCopied(clientNamed(id));

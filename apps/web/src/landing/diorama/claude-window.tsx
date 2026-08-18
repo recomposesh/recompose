@@ -22,7 +22,7 @@ export function ClaudeWindow() {
           <span className="flex flex-col gap-0.5">
             <span className="text-term-ink">Claude Code v2.1</span>
             <span className="text-annotation text-term-dim">welcome back!</span>
-            <span className="text-annotation text-term-dim">fast · localhost:8397/coding</span>
+            <span className="text-annotation text-term-dim">fast · 127.0.0.1:8397</span>
           </span>
         </div>
 

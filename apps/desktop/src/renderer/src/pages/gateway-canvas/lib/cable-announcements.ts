@@ -4,6 +4,7 @@ export type BindingOutcome =
   | { kind: 'rebound'; virtualModel: string; target: string }
   | { kind: 'released'; virtualModel: string }
   | { kind: 'repaired'; virtualModel: string; target: string }
+  | { kind: 'nested'; virtualModel: string; parentRouter: string; target: string }
   | { kind: 'refused'; refusal: string };
 
 type TiedOutcome = Extract<BindingOutcome, { kind: 'bound' | 'rebound' | 'repaired' }>;
@@ -24,7 +25,9 @@ function tiedSentence(outcome: TiedOutcome): string {
  * @summary Every gesture that binds, rebinds, unbinds, or repairs lands here, so a person who
  * cannot see the cable move hears the same fact a sighted person reads off the canvas. Each
  * sentence leads with what happened and then names both ends of the binding, and a refusal carries
- * the refusing words rather than a summary of them.
+ * the refusing words rather than a summary of them. A nesting names three parties rather than two,
+ * because a definition can hold many routers and naming only the definition would leave a person
+ * unable to tell which of them just took the child.
  */
 export function announcedOutcome(outcome: BindingOutcome): string {
   if (outcome.kind === 'refused') {
@@ -33,6 +36,10 @@ export function announcedOutcome(outcome: BindingOutcome): string {
 
   if (outcome.kind === 'released') {
     return `Unbound the virtual model "${outcome.virtualModel}", which now holds no target.`;
+  }
+
+  if (outcome.kind === 'nested') {
+    return `Added "${outcome.target}" under the router "${outcome.parentRouter}" in the virtual model "${outcome.virtualModel}".`;
   }
 
   return tiedSentence(outcome);

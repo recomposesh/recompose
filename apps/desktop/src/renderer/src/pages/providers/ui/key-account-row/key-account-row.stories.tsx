@@ -33,6 +33,30 @@ const storedUnderAnUnknownProvider: CredentialedAccount = {
   keyTail: '19be',
 };
 
+const addressedByHand: CredentialedAccount = {
+  id: 'a4',
+  provider: 'models-example',
+  kind: 'aggregator',
+  label: 'house pool',
+  credentialRef: 'c4',
+  keyTail: '4d1a',
+  endpoint: { origin: 'https://models.example.com', dialect: 'chat-completions' },
+};
+
+/**
+ * Reads the overflow of a row no probe can check, which offers removal and nothing beside it.
+ *
+ * @summary Two rows reach this state for different reasons, an unknown vendor and an address a
+ * person chose, and both prove it the same way, so the reading lives once rather than per story.
+ */
+async function offersRemovalAlone(overflow: HTMLElement): Promise<void> {
+  await userEvent.click(overflow);
+
+  const actions = await screen.findAllByRole('menuitem');
+
+  await expect(actions.map((action) => action.textContent)).toEqual(['Remove']);
+}
+
 const meta = preview.meta({
   component: KeyAccountRow,
   args: { account: stored },
@@ -117,12 +141,26 @@ export const UnknownProvider = meta.story({
   },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('a-plugin-vendor')).toBeVisible();
+    await offersRemovalAlone(await canvas.findByRole('button', { name: 'Actions for scratch' }));
+  },
+});
 
-    await userEvent.click(await canvas.findByRole('button', { name: 'Actions for scratch' }));
-
-    const actions = await screen.findAllByRole('menuitem');
-
-    await expect(actions.map((action) => action.textContent)).toEqual(['Remove']);
+/**
+ * A Custom aggregator, whose second line names the address the person entered.
+ *
+ * @summary Reach for this story when changing the second line, because it is the only row that
+ * carries three readings there. Naming the address claims nothing about what the key reaches, since
+ * the person chose it, which is why the row shows one and still offers removal alone.
+ */
+export const AddressedByHand = meta.story({
+  args: { account: addressedByHand },
+  parameters: {
+    bridge: { accounts: { schemaVersion: ACCOUNTS_VERSION, accounts: [addressedByHand] } },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('https://models.example.com')).toBeVisible();
+    await expect(await canvas.findByText('••••4d1a')).toBeVisible();
+    await offersRemovalAlone(await canvas.findByRole('button', { name: 'Actions for house pool' }));
   },
 });
 

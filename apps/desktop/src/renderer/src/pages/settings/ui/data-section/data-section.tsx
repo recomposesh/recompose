@@ -55,7 +55,7 @@ function retentionControl({ standing, hold, save }: RetentionMoves) {
   );
 }
 
-/** Where recompose keeps its data, and how long the usage ledger keeps its history. */
+/** Where recompose keeps its data, and how long it keeps served history. */
 export function DataSection() {
   const { data: system } = useSuspenseQuery(systemQueryOptions);
   const { data: settings } = useSuspenseQuery(settingsQueryOptions);
@@ -87,7 +87,7 @@ export function DataSection() {
             save({ usageRetentionDays: days });
           },
         })}
-        description="How long the usage ledger keeps served history. Shortening drops older history for good."
+        description="How long recompose keeps served history. Shortening drops older history for good."
         label="Usage retention"
       />
       <RetentionConfirmation

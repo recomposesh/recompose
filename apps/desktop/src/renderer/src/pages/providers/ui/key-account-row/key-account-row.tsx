@@ -40,6 +40,19 @@ function keyMask(keyTail: string | undefined): ReactNode {
   );
 }
 
+/**
+ * The address a person handed a row, which only a row they addressed themselves carries.
+ *
+ * @summary Naming it claims nothing about what the key reaches, because the person chose the address
+ * rather than the app: that is why an aggregator row may show one at all while it still offers no
+ * check. Every other row reads its host from the provider directory and has none of its own to name.
+ */
+function addressedHost(account: CredentialedAccount): ReactNode {
+  return account.endpoint === undefined ? null : (
+    <span className="truncate font-mono text-mono-value">{account.endpoint.origin}</span>
+  );
+}
+
 function keyIdentity(
   account: CredentialedAccount,
   refusal: string | undefined,
@@ -51,6 +64,7 @@ function keyIdentity(
       <span className="flex min-w-0 items-center gap-2 text-detail text-ink-secondary">
         <span className="truncate">{account.label}</span>
         {keyMask(account.keyTail)}
+        {addressedHost(account)}
       </span>
       {refusal === undefined ? null : (
         <span className="text-detail text-danger-ink" role="alert">

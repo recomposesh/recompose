@@ -1,3 +1,5 @@
+import type { VirtualModel } from '@recompose/contracts';
+
 import { mintRouteNodeId, nameOfRouter } from '@recompose/contracts';
 
 import type { SettledDefinition } from '../../lib/model-draft';
@@ -84,10 +86,29 @@ function routedThroughANewRouter(world: CanvasWorld, modelId: string): void {
   );
 }
 
+/**
+ * What the router taking a child is called, in the words the canvas already showed for it.
+ *
+ * @summary The card, the inspector, and the refusal all read this name, so the live region reads it
+ * too rather than naming the definition: one definition can hold many routers, and a person hearing
+ * only the definition could not tell which of them just took the child.
+ */
+function nameOfParentRouter(model: VirtualModel, routeNodeId: string): string | undefined {
+  const node = model.routing.nodes[routeNodeId];
+
+  return node?.kind === 'router' ? nameOfRouter(node.policy.mode, node.displayName) : undefined;
+}
+
 function nestedUnderARouter(world: CanvasWorld, address: RouteAddress): void {
   const parent = parentRouterAt(world, address);
 
   if (parent === undefined) {
+    return;
+  }
+
+  const parentName = nameOfParentRouter(parent.model, parent.routeNodeId);
+
+  if (parentName === undefined) {
     return;
   }
 
@@ -103,8 +124,9 @@ function nestedUnderARouter(world: CanvasWorld, address: RouteAddress): void {
     }),
     () => {
       world.standings.announce({
-        kind: 'bound',
+        kind: 'nested',
         virtualModel: parent.model.displayName,
+        parentRouter: parentName,
         target: BORN_ROUTER_NAME,
       });
     },

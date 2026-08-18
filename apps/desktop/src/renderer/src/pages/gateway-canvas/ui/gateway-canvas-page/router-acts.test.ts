@@ -87,14 +87,23 @@ describe("a router answering the binding ask from another router's port", () => 
     });
   });
 
-  test('the nesting is announced as a binding, naming the definition and the router', () => {
+  test('the nesting names the router that took the child, not the definition holding it', () => {
     const { world, record } = worldWhereWritesLand(gateway, { accounts });
 
     boundThroughARouter(world, 'route:pooled');
 
     expect(record.announced).toEqual([
-      { kind: 'bound', virtualModel: 'Pooled', target: 'Failover' },
+      { kind: 'nested', virtualModel: 'Pooled', parentRouter: 'Failover', target: 'Failover' },
     ]);
+  });
+
+  test('an ask aimed at a target rather than a router nests nothing and says nothing', () => {
+    const { world, record } = worldWhereWritesLand(gateway, { accounts });
+
+    boundThroughARouter(world, 'route:pooled:t1');
+
+    expect(record.written).toEqual([]);
+    expect(record.announced).toEqual([]);
   });
 
   test('a router below the entry takes the child itself, rather than the entry taking it', () => {

@@ -47,6 +47,24 @@ test('a request that failed reads its status alongside the time the failure took
   await expect.element(screen.getByText('0.9s', { exact: true })).toBeVisible();
 });
 
+test('a failed request reads the sentence saying what it came to, whole on hover', async () => {
+  const screen = await renderRow(
+    servedRequest({ status: 500, failure: 'The provider answered 500.' }),
+    workKey,
+  );
+
+  await expect
+    .element(screen.getByText('The provider answered 500.', { exact: true }))
+    .toHaveAttribute('title', 'The provider answered 500.');
+});
+
+test('a request that was served carries no failure sentence beside it', async () => {
+  const screen = await renderRow(servedRequest(), workKey);
+
+  await expect.element(screen.getByRole('option')).toBeVisible();
+  expect(screen.container.textContent).not.toContain('answered');
+});
+
 test('an in-flight response reads live rather than claiming its header status is final', async () => {
   const screen = await renderRow(servedRequest({ durationMs: undefined }), workKey);
 
@@ -97,6 +115,14 @@ test('the row cursor marks the row a copy would take, without taking focus off t
 test('one row copies as the line a person reads, so a paste says what the row said', () => {
   expect(copiedRow(servedRequest(), workKey)).toBe(
     '14:22:09 POST fast → claude-haiku-4-5 anthropic · work 200 0.9s',
+  );
+});
+
+test('copying a failed row carries the sentence saying what the request came to', () => {
+  const failed = servedRequest({ status: 500, failure: 'The provider answered 500.' });
+
+  expect(copiedRow(failed, workKey)).toBe(
+    '14:22:09 POST fast → claude-haiku-4-5 anthropic · work 500 0.9s The provider answered 500.',
   );
 });
 
