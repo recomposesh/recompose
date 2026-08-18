@@ -79,13 +79,11 @@ export function NodeCard({ node }: { node: CanvasNode }) {
         <span className={`flex size-4.25 items-center justify-center rounded ${styles.chip}`}>
           <Glyph className={`size-2.75 ${styles.text}`} />
         </span>
-        <span className={`text-caption font-bold tracking-wider uppercase ${styles.text}`}>
+        <span className={`text-caption font-medium tracking-wider uppercase ${styles.text}`}>
           {kicker}
         </span>
       </span>
-      <span className="truncate text-control leading-tight font-semibold text-win-ink">
-        {title}
-      </span>
+      <span className="truncate text-control leading-tight font-medium text-win-ink">{title}</span>
       {detailRows(prose, mono).map((row) => (
         <span key={row.key} className={row.className}>
           {row.text}

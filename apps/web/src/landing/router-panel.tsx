@@ -25,11 +25,11 @@ export function RouterPanel() {
           <span className="flex size-4.25 items-center justify-center rounded bg-router/15">
             <GitFork className="size-2.75 text-router" />
           </span>
-          <span className="text-caption font-bold tracking-wider text-router uppercase">
+          <span className="text-caption font-medium tracking-wider text-router uppercase">
             router
           </span>
         </span>
-        <span className="text-control font-semibold text-stage-ink">failover</span>
+        <span className="text-control font-medium text-stage-ink">failover</span>
         <span className="font-mono text-annotation text-stage-dim">failover</span>
       </div>
 

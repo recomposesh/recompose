@@ -15,11 +15,11 @@ export function RouterCard({ x, y }: { x: number; y: number }) {
           <span className="flex size-4.25 items-center justify-center rounded bg-router/12">
             <GitFork className="size-2.75 text-router" />
           </span>
-          <span className="text-caption font-bold tracking-wider text-router uppercase">
+          <span className="text-caption font-medium tracking-wider text-router uppercase">
             Router
           </span>
         </span>
-        <span className="text-control leading-tight font-semibold text-win-ink">round-robin</span>
+        <span className="text-control leading-tight font-medium text-win-ink">round-robin</span>
         <span className="font-mono text-annotation leading-tight text-win-ink2">round-robin</span>
       </div>
       <Port tone="bg-router" side="left" />

@@ -4,7 +4,7 @@ export function TerminalChrome({ title }: { title: string }) {
       <span className="size-2.5 rounded-full bg-traffic-close" />
       <span className="size-2.5 rounded-full bg-traffic-hold" />
       <span className="size-2.5 rounded-full bg-traffic-go" />
-      <span className="absolute inset-s-1/2 -translate-x-1/2 text-xs font-semibold text-term-faint">
+      <span className="absolute inset-s-1/2 -translate-x-1/2 text-xs font-medium text-term-faint">
         {title}
       </span>
     </div>

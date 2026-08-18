@@ -7,7 +7,7 @@ export function MenuBar() {
     <div className="absolute inset-x-0 top-0 flex h-9.5 items-center justify-between bg-menubar px-4.5 pt-0.5 text-control leading-none text-black/85 backdrop-blur-2xl dark:text-white/90">
       <span className="flex items-center gap-4">
         <AppleMark className="size-3.5" />
-        <span className="font-semibold">Recompose</span>
+        <span className="font-medium">Recompose</span>
         <span className="flex gap-3.5 opacity-80">
           <span>File</span>
           <span>Edit</span>

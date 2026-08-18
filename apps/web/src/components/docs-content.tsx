@@ -29,7 +29,7 @@ export function DocsContent({ path, url, tree }: { path: string; url: string; tr
   return (
     <DocsPage toc={toc} className="relative isolate">
       <DocsBackdrop />
-      <DocsTitle>{page.title}</DocsTitle>
+      <DocsTitle className="font-medium">{page.title}</DocsTitle>
       <DocsDescription>{page.description}</DocsDescription>
       <PageActions path={path} url={url} />
       <DocsBody>
