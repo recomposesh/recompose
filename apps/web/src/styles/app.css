@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import 'fumadocs-ui/css/generated/glass.css';
+@import 'fumadocs-ui/css/generated/docs.css';
 @import 'fumadocs-ui/css/black.css';
 @import 'fumadocs-ui/css/preset.css';
 @import '@fontsource-variable/jetbrains-mono';
@@ -26,6 +26,8 @@
   --color-stage-faint: light-dark(#98989d, #6e6e73);
   --color-stage-line: light-dark(rgb(0 0 0 / 10%), rgb(255 255 255 / 12%));
   --color-stage-hairline: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 8%));
+  --color-staff: light-dark(rgb(0 0 0 / 10%), rgb(255 255 255 / 22%));
+  --color-staff-note: light-dark(rgb(152 152 157 / 35%), rgb(255 255 255 / 45%));
   --color-stage-panel: light-dark(#f4f4f6, #0c0c0f);
   --color-stage-card: light-dark(#ffffff, #101114);
   --color-wire: light-dark(rgb(0 0 0 / 24%), rgb(255 255 255 / 24%));
@@ -64,8 +66,24 @@
   grid-template-columns: 360px 1fr;
 }
 
-#nd-sidebar > div:first-child {
-  padding-block-end: calc(var(--spacing) * 2);
+@utility docs-backdrop {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: -1;
+  height: 240px;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--color-staff);
+  mask-image:
+    linear-gradient(to right, transparent 8%, white 70%),
+    linear-gradient(to bottom, white 30%, transparent);
+  mask-composite: intersect;
+}
+
+#nd-sidebar p {
+  font-weight: 500;
+  color: var(--color-fd-foreground);
 }
 
 @utility footer-link {

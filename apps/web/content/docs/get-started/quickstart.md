@@ -1,5 +1,6 @@
 ---
 title: 'Quickstart'
+icon: Rocket
 description: 'Create a gateway, wire one provider, and send the first request.'
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: 'FAQ'
+icon: CircleHelp
 description: 'Short answers to common questions about recompose.'
 ---
 

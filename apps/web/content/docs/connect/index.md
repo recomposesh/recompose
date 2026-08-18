@@ -1,5 +1,6 @@
 ---
 title: 'Overview'
+icon: Cable
 description: 'How any client reaches a gateway.'
 ---
 

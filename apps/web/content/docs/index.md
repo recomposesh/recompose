@@ -1,5 +1,6 @@
 ---
 title: 'Introduction'
+icon: BookOpen
 description: 'What recompose is and what it does for you.'
 ---
 

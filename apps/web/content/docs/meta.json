@@ -1,12 +1,19 @@
 {
   "pages": [
     "index",
-    "get-started",
-    "connect",
-    "compose",
-    "providers",
-    "operate",
-    "reference",
-    "troubleshooting"
+    "---Get started---",
+    "...get-started",
+    "---Connect a client---",
+    "...connect",
+    "---Compose---",
+    "...compose",
+    "---Providers---",
+    "...providers",
+    "---Operate---",
+    "...operate",
+    "---Reference---",
+    "...reference",
+    "---Troubleshooting---",
+    "...troubleshooting"
   ]
 }

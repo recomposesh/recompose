@@ -55,6 +55,7 @@
 [Dd]isambiguates
 [Dd]ocblocks
 [Dd]raggable
+[Dd]ebian
 [Ee]lectrobun
 [Ee]num
 [Ee]nv
@@ -189,6 +190,7 @@
 [Uu]pserts
 [Uu]pstream
 [Uu]tilityProcess
+[Uu]buntu
 [Vv]api
 [Vv]endored
 [Vv]ercel

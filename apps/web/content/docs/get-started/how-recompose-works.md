@@ -1,5 +1,6 @@
 ---
 title: 'How recompose works'
+icon: Workflow
 description: 'The mental model behind gateways, virtual models, routers, and targets.'
 ---
 
