@@ -26,7 +26,13 @@ export {
 export type { PanelBounds } from './panel-resize';
 export { draggedPanel, panelBounds, restoredPanel, steppedPanel } from './panel-resize';
 export { keepPanelWidth, panelWidth, setPanelWidth, subscribeToPanelWidths } from './panel-width';
-export { compactCount, exactCount, pluralized, readDuration } from './readings/readings';
+export {
+  agedWording,
+  compactCount,
+  exactCount,
+  pluralized,
+  readDuration,
+} from './readings/readings';
 export {
   hideSidebar,
   showSidebar,
