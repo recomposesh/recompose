@@ -21,3 +21,9 @@ test('an account the registry never held reads by its id, which is all a bucket 
 test('a registry that has not answered yet still names every account it is asked about', () => {
   expect(accountLabelOf(undefined, 'build')).toBe('build');
 });
+
+test('a name that is not text reads by the id rather than by a malformed record', () => {
+  const malformedRegistry = { accounts: [{ id: 'build', label: 7 }] };
+
+  expect(accountLabelOf(malformedRegistry, 'build')).toBe('build');
+});
