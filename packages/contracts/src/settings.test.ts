@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   defaultSettings,
   loadSettings,
+  routableGatewayOrigin,
   SETTINGS_VERSION,
   settingsPatchSchema,
   withSettingsPatch,
@@ -65,6 +66,24 @@ describe('app settings', () => {
 
     expect(showInMenuBar).toBe(false);
     expect(() => loadSettings(withoutTheSwitch)).toThrow();
+  });
+});
+
+describe('the origin a client reaches a gateway through', () => {
+  test('a loopback bind is printed as the loopback origin', () => {
+    expect(routableGatewayOrigin('127.0.0.1', 8397)).toBe('http://127.0.0.1:8397');
+  });
+
+  test('a wildcard bind is printed as the loopback origin, because nothing routes to it', () => {
+    expect(routableGatewayOrigin('0.0.0.0', 8397)).toBe('http://127.0.0.1:8397');
+  });
+
+  test('a host a person named is printed as the host they named', () => {
+    expect(routableGatewayOrigin('gateway.local', 8397)).toBe('http://gateway.local:8397');
+  });
+
+  test('an address on the network is printed as itself, because a client can reach it', () => {
+    expect(routableGatewayOrigin('192.168.1.24', 8397)).toBe('http://192.168.1.24:8397');
   });
 });
 

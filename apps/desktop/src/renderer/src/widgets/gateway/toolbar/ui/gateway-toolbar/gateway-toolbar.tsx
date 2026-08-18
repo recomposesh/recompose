@@ -1,4 +1,8 @@
-import { DEFAULT_GATEWAY_BIND_ADDRESS, type GatewayEngineState } from '@recompose/contracts';
+import {
+  DEFAULT_GATEWAY_BIND_ADDRESS,
+  type GatewayEngineState,
+  routableGatewayOrigin,
+} from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import {
@@ -45,7 +49,7 @@ export function GatewayToolbar({ slug }: GatewayToolbarProps) {
   return (
     <div className="flex flex-col gap-2">
       <ToolbarStrip
-        address={`http://${bindAddress}:${String(gateway.port)}`}
+        address={routableGatewayOrigin(bindAddress, gateway.port)}
         name={gateway.displayName}
         onRun={running ? lifecycle.stop : lifecycle.start}
         port={gateway.port}
