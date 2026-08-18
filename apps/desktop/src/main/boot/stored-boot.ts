@@ -158,7 +158,7 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
     onLogs: pushEngineLogs,
     onSettledRow: usageStore.accrue,
   });
-  const rememberedServing = await rememberedServingSlugs(deps.recomposeHome());
+  const rememberedServing = await rememberedServingSlugs(deps.recomposeHome(), deps.onCorrupt);
   const servingMemory = servingMemoryKeeper(deps.recomposeHome());
 
   watchEngineStates(engineHost, deps, servingMemory, usageStore);
