@@ -155,6 +155,20 @@ describe('a child that annotated a cable without answering', () => {
     });
   });
 
+  test('a child a provider refused keeps one row, because its attempt already raised it', async () => {
+    const scene = serving(aLadder(), answeringInTurn(coolingRefusal, served));
+    const collected = collectingRows();
+
+    await (await scene.ask()).text();
+    collected.forget();
+
+    const rows = collected.standing();
+
+    expect(Object.keys(scene.traffic['codex']?.['fast'] ?? {})).toHaveLength(2);
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.origin === 'provider')).toBe(true);
+  });
+
   test('the child that answered still keeps the row its provider earned', async () => {
     const scene = serving(aLadder(), answeringInTurn(droppedConnection, served));
     const collected = collectingRows();

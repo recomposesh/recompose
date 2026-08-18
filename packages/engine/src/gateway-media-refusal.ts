@@ -2,7 +2,7 @@ import type { OpenAiCode } from './refusal-wire';
 
 import { jsonResponse } from './gateway-wire';
 import { gatewayRefusedWith } from './provider/serving-turn';
-import { bodyInDialect } from './refusal-bodies';
+import { chatCompletionsBody } from './refusal-bodies';
 
 type MediaStatus = 400 | 404;
 
@@ -21,13 +21,5 @@ export function mediaRefusal(
 ): Response {
   gatewayRefusedWith(message);
 
-  return jsonResponse(
-    bodyInDialect('chat-completions', {
-      status,
-      message,
-      code,
-      anthropicType: 'invalid_request_error',
-    }),
-    status,
-  );
+  return jsonResponse(chatCompletionsBody({ message, code }), status);
 }

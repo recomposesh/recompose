@@ -149,3 +149,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0141](0141-a-download-lands-from-the-products-own-address.md)                  | A download lands from the product's own address                                     | Accepted   | 2026-08-18 |
 | [0142](0142-the-changelog-lives-in-the-repository.md)                           | The changelog lives in the repository                                               | Accepted   | 2026-08-18 |
 | [0143](0143-the-site-answers-at-one-address.md)                                 | The site answers at one address                                                     | Accepted   | 2026-08-18 |
+| [0144](0144-the-row-and-the-caller-read-one-sentence.md)                        | The row and the caller read one sentence                                            | Accepted   | 2026-08-18 |

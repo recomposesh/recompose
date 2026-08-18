@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import type { GeminiRefusal } from './gemini-refusal';
 import type { AnthropicRefusal } from './refusals';
 
-import { noteTurnedAway } from './gateway-traffic';
+import { noteGatewayRow } from './gateway-traffic';
 
 type EdgeStatus = 401 | 403 | 404;
 
@@ -25,7 +25,7 @@ export function turnedAway(
   status: EdgeStatus,
   headers: Record<string, string> = {},
 ): Response {
-  noteTurnedAway(status, refusal.error.message);
+  noteGatewayRow(status, refusal.error.message);
 
   return c.json(refusal, status, headers);
 }

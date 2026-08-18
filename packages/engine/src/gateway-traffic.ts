@@ -179,29 +179,17 @@ export function noteUnreadableRequest(at: number = Date.now()): void {
 }
 
 /**
- * Leaves the row for a request the gateway turned away before any virtual model stood for it.
+ * Leaves a row the gateway raised beside the turn rather than for the turn's own outcome.
  *
- * @summary The serving turn opens ahead of every guard so that a refused caller is keyed and named
- * like any other, which is what lets a person see the rejection at all. It still reaches no virtual
- * model and paints no cable, so the row carries no provider cells and names no model.
- */
-export function noteTurnedAway(status: number, failure: string, at: number = Date.now()): void {
-  const turn = servingTurn();
-
-  if (turn === undefined || turn.rowPublished) return;
-
-  publishRow(raisedRow(turn, status, at, failure));
-}
-
-/**
- * Leaves the row standing for one child the gateway could never place the request with.
+ * @summary Two callers reach here, and both speak for a moment no provider ever answered: a request
+ * the edge turned away, and one child a walk could not place the request with. So the sentence is the
+ * one the caller was given and the provider cells stay empty.
  *
- * @summary A child a provider refused already stands as the row that attempt raised, so only a child
- * nothing answered for is raised here. It deliberately leaves `rowPublished` alone: a ladder that
- * tried three children owes a person three rows, and the turn's own outcome is still owed its row on
- * top of them.
+ * It leaves `rowPublished` alone on purpose, because neither caller stands for how the turn ended. A
+ * guard answers before any route is chosen, so no row can be standing yet. A ladder that tried three
+ * children owes a person three rows, with the turn's own outcome still owed one on top.
  */
-export function noteUnreachedChild(status: number, failure: string, at: number = Date.now()): void {
+export function noteGatewayRow(status: number, failure: string, at: number = Date.now()): void {
   const turn = servingTurn();
 
   if (turn === undefined) return;

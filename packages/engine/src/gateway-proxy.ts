@@ -22,7 +22,7 @@ import { readingAtNode } from './gateway-attempt';
 import { turnResumesServerState } from './gateway-chained-turn';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
-import { noteUnreachedChild } from './gateway-traffic';
+import { noteGatewayRow } from './gateway-traffic';
 import { answerTheWalkGives } from './gateway-walk-answer';
 import { failedOutcome, notesThatCarriedARequest, nothingAnsweredFor } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
@@ -141,7 +141,7 @@ async function walkedAnswer(
 
     serving.noteAttempt(note.routeNode, outcome);
 
-    if (nothingAnsweredFor(note)) noteUnreachedChild(outcome.status, outcome.detail);
+    if (nothingAnsweredFor(note)) noteGatewayRow(outcome.status, outcome.detail);
   }
 
   return answerTheWalkGives(scene, result, answerable);
