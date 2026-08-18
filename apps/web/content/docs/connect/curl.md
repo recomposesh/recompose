@@ -3,9 +3,9 @@ title: 'curl'
 description: 'Send raw requests to a gateway by hand.'
 ---
 
-One port, four dialects. Every path below answers on the same address, and this page doubles as the wire truth for any client the catalog doesn't name.
+One port, five dialects. Every path below answers on the same address, and this page doubles as the wire truth for any client the catalog doesn't name.
 
-- Dialect: all four
+- Dialect: all five
 - Address shape: you write every path yourself
 - Credential: any of the four spellings: the gateway's key, or the stand-in `unused` when it checks none
 
