@@ -124,7 +124,7 @@ function attemptRow(attempt: ProviderAttempt): LogRow {
   };
 }
 
-function raisedRow(turn: ServingTurn, status: number, at: number): LogRow {
+function raisedRow(turn: ServingTurn, status: number, at: number, failure: string): LogRow {
   return {
     id: crypto.randomUUID(),
     at,
@@ -134,7 +134,7 @@ function raisedRow(turn: ServingTurn, status: number, at: number): LogRow {
     method: turn.method,
     status,
     clientKey: turn.clientKey,
-    failure: detailFor(status),
+    failure,
   };
 }
 
@@ -163,18 +163,44 @@ function publishRow(row: LogRow): void {
   tellingReaders(rowListeners, () => row, 'log row');
 }
 
+/**
+ * Leaves the row for a request too broken to read, in the words the status alone earns.
+ *
+ * @summary The sentence stays the status reading rather than the refusal the caller was handed,
+ * because that refusal names the JSON key the request itself repeated and a row carries nothing the
+ * request said.
+ */
 export function noteUnreadableRequest(at: number = Date.now()): void {
   const turn = servingTurn();
 
   if (turn === undefined || turn.rowPublished) return;
 
-  publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS, at));
+  publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS, at, detailFor(UNREADABLE_REQUEST_STATUS)));
+}
+
+/**
+ * Leaves a row the gateway raised beside the turn rather than for the turn's own outcome.
+ *
+ * @summary Two callers reach here, and both speak for a moment no provider ever answered: a request
+ * the edge turned away, and one child a walk could not place the request with. So the sentence is the
+ * one the caller was given and the provider cells stay empty.
+ *
+ * It leaves `rowPublished` alone on purpose, because neither caller stands for how the turn ended. A
+ * guard answers before any route is chosen, so no row can be standing yet. A ladder that tried three
+ * children owes a person three rows, with the turn's own outcome still owed one on top.
+ */
+export function noteGatewayRow(status: number, failure: string, at: number = Date.now()): void {
+  const turn = servingTurn();
+
+  if (turn === undefined) return;
+
+  publishRow(raisedRow(turn, status, at, failure));
 }
 
 function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: number): void {
   if (turn === undefined || turn.rowPublished || !failed(status)) return;
 
-  publishRow(raisedRow(turn, status, at));
+  publishRow(raisedRow(turn, status, at, turn.refusedWith ?? detailFor(status)));
 }
 
 /**

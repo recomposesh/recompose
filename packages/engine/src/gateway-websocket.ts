@@ -36,6 +36,11 @@ function xaiWebSocketEvents(
   };
 }
 
+/**
+ * @summary These registrations must mount before the model routes: upgradeWebSocket claims only a
+ * request carrying the Upgrade header and hands everything else to the next handler, so the same
+ * /v1/responses path serves xAI sockets and plain HTTP model turns in this order alone.
+ */
 export function registerGatewayWebSockets(
   app: Hono,
   gateway: EngineGateway,

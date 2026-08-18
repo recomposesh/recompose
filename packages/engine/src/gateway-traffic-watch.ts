@@ -4,7 +4,7 @@ import type { SpendGrantFor } from './gateway-spend';
 import type { ServingTurn } from './provider/serving-turn';
 import type { RouteNodeAddress } from './routing/route-node-key';
 
-import { afterResponseBody, FIRST_FAILING_STATUS, outcomeOf } from './answered-outcome';
+import { afterResponseBody, outcomeOf } from './answered-outcome';
 import { onServingTurnAbort, servingTurn } from './provider/serving-turn';
 
 export type NoteTraffic = (
@@ -84,25 +84,46 @@ function watchedAttempts(watching: Watching): NoteAttempt {
   };
 }
 
+function settleTheTurn(
+  watching: Watching,
+  spent: RouteNodeAddress | undefined,
+  settled: RequestOutcome,
+  status: number,
+): void {
+  watching.stopListening();
+
+  if (watching.interrupted) return;
+
+  const at = watching.now();
+
+  if (spent !== undefined) {
+    watching.note(spent.slug, spent.virtualModel, spent.routeNode, { ...settled, at });
+  }
+
+  watching.raiseFailure(watching.turn, status, at);
+}
+
+/**
+ * Settles one finished answer against the child that carried it and against the turn as a whole.
+ *
+ * @summary A turn that spent no child paints no cable, because a cable says what the last request
+ * through one child came to and no child carried this one. It still settles when the turn reached a
+ * route table, so a request refused before any child could take it leaves the row a person needs.
+ * A turn that never named a virtual model reached no table and settles nowhere.
+ *
+ * The answer is read before the body is handed on, and read unconditionally, because `outcomeOf`
+ * already knows which statuses are worth reading and asking the question twice put the failing line
+ * in two places.
+ */
 async function noteWhenTheBodyEnds(watching: Watching, answer: Response): Promise<Response> {
   const spent = watching.asked.at(-1);
 
-  if (spent === undefined) return answer;
+  if (spent === undefined && watching.turn?.virtualModel === undefined) return answer;
 
-  const preparedFailure =
-    answer.status < FIRST_FAILING_STATUS ? undefined : await outcomeOf(answer, 0);
+  const settled = await outcomeOf(answer, 0);
 
   return afterResponseBody(answer, () => {
-    watching.stopListening();
-
-    if (watching.interrupted) return;
-
-    const at = watching.now();
-    const outcome: RequestOutcome =
-      preparedFailure === undefined ? { outcome: 'served', at } : { ...preparedFailure, at };
-
-    watching.note(spent.slug, spent.virtualModel, spent.routeNode, outcome);
-    watching.raiseFailure(watching.turn, answer.status, at);
+    settleTheTurn(watching, spent, settled, answer.status);
   });
 }
 

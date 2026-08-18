@@ -1,3 +1,4 @@
+import type { GeminiRefusal } from './gemini-refusal';
 import type {
   AnthropicRefusal,
   Dialect,
@@ -7,6 +8,7 @@ import type {
   TranslationRefusal,
 } from './refusal-wire';
 
+import { geminiRefusal } from './gemini-refusal';
 import { bodyInDialect } from './refusal-bodies';
 import { factsOf } from './refusal-facts';
 
@@ -72,14 +74,26 @@ export function requestCarriesOrigin(): AnthropicRefusal {
   };
 }
 
+function unservedPathMessage(displayName: string, path: string): string {
+  return `The gateway "${displayName}" serves no path "${path}".`;
+}
+
 export function unservedPath(displayName: string, path: string): AnthropicRefusal {
   return {
     type: 'error',
-    error: {
-      type: 'not_found_error',
-      message: `The gateway "${displayName}" serves no path "${path}".`,
-    },
+    error: { type: 'not_found_error', message: unservedPathMessage(displayName, path) },
   };
+}
+
+/**
+ * The same unserved path, in the envelope a Gemini client parses.
+ *
+ * @summary A caller that reached a Gemini path named its dialect by arriving there, so its refusal is
+ * spelled the way Google spells one. A path nobody serves at all names no dialect, which is why only
+ * this one route can shape its own.
+ */
+export function unservedPathInGeminiDialect(displayName: string, path: string): GeminiRefusal {
+  return geminiRefusal(404, unservedPathMessage(displayName, path));
 }
 
 export function unknownModel(model: string): TranslationRefusal {
@@ -168,7 +182,11 @@ export function unstreamableAnswer(
  */
 export function renderRefusal(dialect: Dialect, refusal: TranslationRefusal): RenderedRefusal {
   const facts = factsOf(refusal);
-  const rendered = { status: facts.status, body: bodyInDialect(dialect, facts) };
+  const rendered = {
+    status: facts.status,
+    message: facts.message,
+    body: bodyInDialect(dialect, facts),
+  };
 
   return facts.retryAfterSeconds === undefined
     ? rendered

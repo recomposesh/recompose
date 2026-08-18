@@ -16,6 +16,7 @@ import { GEMINI_MODEL_ROUTE, MODEL_ROUTES } from './gateway-route-paths';
 import { routingMemory } from './gateway-routing-memory';
 import { registerSideRoutes } from './gateway-side-routes';
 import { noteUnreadableRequest, openServingTurn, watchingTraffic } from './gateway-traffic';
+import { turnedAway } from './gateway-turned-away';
 import { registerGatewayWebSockets } from './gateway-websocket';
 import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
 import { guardLoopback } from './loopback-guard';
@@ -26,7 +27,7 @@ import {
   configuredProviderLogStore,
   persistProviderObservations,
 } from './provider/provider-log-runtime';
-import { invalidJson, unservedPath } from './refusals';
+import { invalidJson, unservedPath, unservedPathInGeminiDialect } from './refusals';
 
 export type { SpendGrantFor } from './gateway-proxy';
 
@@ -133,7 +134,9 @@ async function proxyGeminiAction(
 ): Promise<Response> {
   const parsed = parsedGeminiAction(action);
 
-  if (parsed === null) return c.json(unservedPath(model.gateway.displayName, c.req.path), 404);
+  if (parsed === null) {
+    return turnedAway(c, unservedPathInGeminiDialect(model.gateway.displayName, c.req.path), 404);
+  }
 
   return proxyModelRequest(
     c,
@@ -150,14 +153,20 @@ async function proxyGeminiAction(
   );
 }
 
+/**
+ * The edge every request crosses before a route is chosen: the turn, the guards, the plain answers.
+ *
+ * @summary The serving turn opens ahead of both guards so that a rejection they raise is keyed and
+ * logged like any other answer. It costs a guarded request nothing else, because a turn only becomes
+ * traffic once a virtual model asks for a grant, and neither guard ever gets that far.
+ */
 function guardAndReport(app: Hono, gateway: EngineGateway): void {
+  app.use(openServingTurn(gateway.slug));
   app.use(guardLoopback(gateway.port, gateway.bindAddress));
 
   if (gateway.apiKey !== undefined) {
     app.use(guardApiKey(gateway.displayName, gateway.apiKey));
   }
-
-  app.use(openServingTurn(gateway.slug));
 
   app.onError((error, c) => {
     if (error instanceof InvalidJsonBodyError) {
@@ -213,7 +222,7 @@ export function createGatewayApp(
     plugins,
   });
 
-  app.notFound((c) => c.json(unservedPath(gateway.displayName, c.req.path), 404));
+  app.notFound((c) => turnedAway(c, unservedPath(gateway.displayName, c.req.path), 404));
 
   return app;
 }

@@ -110,6 +110,22 @@ describe('a target the gateway could not reach at all', () => {
     expect(rows().at(0)?.provider).toBeUndefined();
     expect(rows().at(0)?.providerModel).toBeUndefined();
   });
+
+  test('the row reads the sentence the caller was handed, naming gateway and model', async () => {
+    const app = gatewayAnswering(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:4242');
+    });
+    const { rows, forget } = collecting();
+    const answer = await ask(app, 'fast', 'curl/8.7.1');
+    const told: unknown = await answer.json();
+
+    forget();
+
+    const sentence = 'The gateway "Codex" could not reach the target for the virtual model "fast".';
+
+    expect(told).toMatchObject({ error: { message: sentence } });
+    expect(rows().at(0)?.failure).toBe(sentence);
+  });
 });
 
 describe('an answer whose body nobody read', () => {

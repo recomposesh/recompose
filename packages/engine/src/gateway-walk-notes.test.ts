@@ -4,7 +4,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { WalkNote } from './gateway-walk-notes';
 
-import { attemptsRecorded, failedOutcome, notesThatCarriedARequest } from './gateway-walk-notes';
+import {
+  attemptsRecorded,
+  failedOutcome,
+  notesThatCarriedARequest,
+  nothingAnsweredFor,
+} from './gateway-walk-notes';
 
 const LADDER: EngineRouting = {
   entry: 'ladder',
@@ -146,5 +151,27 @@ describe('what one failed attempt paints on its own cable', () => {
     expect(failedOutcome(noteOf({ because: 'refused', status: 500 }), 99)).toMatchObject({
       at: 99,
     });
+  });
+});
+
+describe('which children the gateway still owes a row for', () => {
+  it('owes nothing for a child a provider refused, because that attempt raised its own row', () => {
+    expect(nothingAnsweredFor(noteOf({ because: 'refused', status: 429 }))).toBe(false);
+  });
+
+  it('owes nothing for a child that failed mid-stream, because a provider answered it', () => {
+    expect(nothingAnsweredFor(noteOf({ because: 'stream-error', status: 503 }))).toBe(false);
+  });
+
+  it('owes a row for a child nothing could be reached at', () => {
+    expect(nothingAnsweredFor(noteOf({ because: 'transport-failure' }))).toBe(true);
+  });
+
+  it('owes a row for a child holding no credential, because no provider was asked', () => {
+    expect(nothingAnsweredFor(noteOf({ because: 'missing-credential' }))).toBe(true);
+  });
+
+  it('owes a row for a child whose account left the registry', () => {
+    expect(nothingAnsweredFor(noteOf({ because: 'missing-target' }))).toBe(true);
   });
 });

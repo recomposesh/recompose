@@ -11,9 +11,17 @@ const answeredStatusSchema = z.number().int().min(100).max(599);
 /**
  * What the last request through one virtual model came to.
  *
- * @summary A failure carries the status the gateway answered and a sentence written from that
- * status alone, so no prompt and no provider answer can ride along. A served request carries
- * neither, because there is nothing to explain when a request flowed and answered well.
+ * @summary A failure carries the status the gateway answered and one sentence explaining it. Where
+ * the target explained itself, that sentence is the target's own words, read from its error body and
+ * cut to 280 characters, because a person pressing a red cable wants the reason the target gave
+ * rather than a paraphrase of its status. Where the target answered without a readable word, the
+ * gateway writes the sentence from the status instead. Nothing the request itself carried ever rides
+ * along either way, and a served request carries no sentence at all, because there is nothing to
+ * explain when a request flowed and answered well.
+ *
+ * A row is stricter than a cable here: `logRowSchema` never carries a target's words. The two part
+ * ways on purpose, because a cable is pressed by the person who owns the gateway while a row is
+ * counted, exported, and read in bulk.
  */
 export const requestOutcomeSchema = z.discriminatedUnion('outcome', [
   z.strictObject({ outcome: z.literal('live'), at: answeredAtSchema }),

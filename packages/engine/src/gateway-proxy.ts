@@ -22,8 +22,9 @@ import { readingAtNode } from './gateway-attempt';
 import { turnResumesServerState } from './gateway-chained-turn';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
+import { noteGatewayRow } from './gateway-traffic';
 import { answerTheWalkGives } from './gateway-walk-answer';
-import { failedOutcome, notesThatCarriedARequest } from './gateway-walk-notes';
+import { failedOutcome, notesThatCarriedARequest, nothingAnsweredFor } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
 import { missingCredential, missingTarget } from './refusals';
 import { walkAttempts } from './routing/attempt-walk';
@@ -136,7 +137,11 @@ async function walkedAnswer(
   });
 
   for (const note of notesOwedACable(result.notes, lastTried)) {
-    serving.noteAttempt(note.routeNode, failedOutcome(note, serving.memory.now()));
+    const outcome = failedOutcome(note, serving.memory.now());
+
+    serving.noteAttempt(note.routeNode, outcome);
+
+    if (nothingAnsweredFor(note)) noteGatewayRow(outcome.status, outcome.detail);
   }
 
   return answerTheWalkGives(scene, result, answerable);

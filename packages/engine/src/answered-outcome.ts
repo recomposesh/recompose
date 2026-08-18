@@ -1,6 +1,6 @@
 import type { RequestOutcome } from '@recompose/contracts';
 
-export const FIRST_FAILING_STATUS = 400;
+const FIRST_FAILING_STATUS = 400;
 
 const DETAIL_SPAN = 280;
 

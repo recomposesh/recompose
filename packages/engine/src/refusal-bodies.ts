@@ -13,7 +13,14 @@ function anthropicBody(facts: RefusalFacts): AnthropicRefusal {
   return { type: 'error', error: { type: facts.anthropicType, message: facts.message } };
 }
 
-function chatCompletionsBody(facts: RefusalFacts): OpenAiRefusal {
+/**
+ * The OpenAI envelope, written from the only two facts it reads.
+ *
+ * @summary It takes the pair rather than the whole refusal so that a caller holding no dialect to
+ * choose from, such as a drawing or filming route, cannot be made to invent facts this envelope would
+ * ignore anyway.
+ */
+export function chatCompletionsBody(facts: Pick<RefusalFacts, 'code' | 'message'>): OpenAiRefusal {
   return {
     error: { message: facts.message, type: 'invalid_request_error', param: null, code: facts.code },
   };

@@ -15,7 +15,7 @@ export type AnthropicRefusal = {
   };
 };
 
-type OpenAiCode =
+export type OpenAiCode =
   | 'model_not_found'
   | 'unmappable_stop_reason'
   | 'unrepairable_tool_call'
@@ -85,10 +85,14 @@ export type ResponsesRefusal = {
  *
  * @summary The retry time is a fact of the refusal rather than of the dialect a caller speaks, so it
  * rides here and becomes a header once, at the single seam that turns a rendered refusal into a
- * response. Every dialect therefore reports the same wait without any of them knowing how to.
+ * response. Every dialect therefore reports the same wait without any of them knowing how to. The
+ * sentence rides beside the body for the same reason the status does: four envelope shapes bury it in
+ * four different places, and the log has to read the words the caller was given without learning any
+ * of them.
  */
 export type RenderedRefusal = {
   status: number;
+  message: string;
   retryAfterSeconds?: number;
   body: AnthropicRefusal | OpenAiRefusal | ResponsesRefusal | GeminiRefusal;
 };
