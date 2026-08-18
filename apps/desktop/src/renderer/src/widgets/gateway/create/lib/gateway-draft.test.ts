@@ -133,4 +133,16 @@ describe('the address the sheet previews', () => {
   test('the preview names no path, because the gateway serves at its root', () => {
     expect(new URL(previewAddressFor('51234')).pathname).toBe('/');
   });
+
+  test('a wildcard bind previews the loopback host, because 0.0.0.0 routes nowhere', () => {
+    expect(previewAddressFor('9000', '0.0.0.0')).toBe('http://127.0.0.1:9000');
+  });
+
+  test('a wildcard bind with an empty port still previews a reachable host', () => {
+    expect(previewAddressFor('', '0.0.0.0')).toBe('http://127.0.0.1');
+  });
+
+  test('a chosen address previews as written', () => {
+    expect(previewAddressFor('9000', '192.168.1.24')).toBe('http://192.168.1.24:9000');
+  });
 });

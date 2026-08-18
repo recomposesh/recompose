@@ -1,7 +1,8 @@
 import { fc, test } from '@fast-check/vitest';
+import { GATEWAY_PORT_BAND } from '@recompose/contracts';
 import { describe, expect } from 'vitest';
 
-import { GATEWAY_PORT_BAND, offerFreePort } from './free-port';
+import { offerFreePort } from './free-port';
 
 const HOME = '/Users/ada/Library/Application Support/recompose';
 

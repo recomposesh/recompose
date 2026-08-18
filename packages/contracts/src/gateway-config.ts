@@ -9,6 +9,16 @@ export const GATEWAY_CONFIG_VERSION = 4;
 
 export const GATEWAY_PORT_RANGE = { min: 1024, max: 65535 } as const;
 
+/**
+ * The ports recompose draws a first offer from.
+ *
+ * @summary The band belongs to recompose and sits below every ephemeral pool, so an address a
+ * client copied still answers after a reboot (ADR-0063). It is published beside the range because
+ * the offer in the main process and the range the stored document accepts have to agree, and one
+ * of them holding its own copy of the numbers is how they stop agreeing.
+ */
+export const GATEWAY_PORT_BAND = { first: 8389, count: 48 } as const;
+
 export const gatewayPortSchema = z.int().min(GATEWAY_PORT_RANGE.min).max(GATEWAY_PORT_RANGE.max);
 
 const WINDOWS_DEVICE_NAMES = new Set([

@@ -1,8 +1,7 @@
-import { GATEWAY_PORT_RANGE } from '@recompose/contracts';
+import { GATEWAY_PORT_BAND, GATEWAY_PORT_RANGE } from '@recompose/contracts';
 import { createServer, type Server } from 'node:net';
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { GATEWAY_PORT_BAND } from './free-port';
 import { aGatewayCouldTake, probeFreePort } from './probe-free-port';
 
 const HOME = '/Users/ada/Library/Application Support/recompose';
