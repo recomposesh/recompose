@@ -8,7 +8,6 @@ import type { CableFailure } from '../../lib/node-graph';
 import {
   CABLE_GRAB_SPAN,
   failureIn,
-  marchForStanding,
   pulseForStanding,
   strokeForStanding,
   tintForStanding,
@@ -45,7 +44,7 @@ function grabEnds(cable: EdgeProps, tint: string): ReactNode {
 function cableClasses(carried: unknown, chosen: boolean): string {
   const width = chosen ? 'binding-cable-selected' : 'binding-cable';
 
-  return `${width} ${strokeForStanding(carried)} ${marchForStanding(carried)}`;
+  return `${width} ${strokeForStanding(carried)}`;
 }
 
 function halo(drawn: string, stroke: string): ReactNode {
@@ -87,15 +86,15 @@ function lastError(failure: CableFailure | undefined, x: number, y: number): Rea
 /**
  * A binding drawn between two cards, painting the standing it carries.
  *
- * @summary Register it as the canvas edge type, so every binding reads at a glance: at rest,
- * serving, failed, broken where its account left, or one of the two the overlay draws. A serving
- * binding sends a pulse down a line that stays whole, and a failed one breaks into a march and
- * stands its last error on the path, for the person who wants the reason rather than the color;
- * either way the canvas reads as traffic moving rather than as a diagram tinted after the fact. A
- * selected cable widens and takes the halo the selected node card wears, a crisp ring inside a soft
- * bloom, so selection reads the same whichever a person pressed, and the halo neither marches nor
- * pulses, because a bloom in motion says nothing the cable inside it has not said already. Both
- * ends then offer a handle in the cable's own tint, wide enough to take the drag that rebinds it.
+ * @summary Register it as the canvas edge type, so every binding reads at a glance: at rest, live,
+ * served, failed, broken where its account left, or one of the two the overlay draws. A live
+ * binding sends a pulse down its line, and a failed one stands its last error on the path, for the
+ * person who wants the reason rather than the color. Every line stays whole either way, because a
+ * break in the drawing would claim a break in the wire, so the pulse is the only thing that moves.
+ * A selected cable widens and takes the halo the selected node card wears, a crisp ring inside a
+ * soft bloom, so selection reads the same whichever a person pressed, and the halo never pulses,
+ * because a bloom in motion says nothing the cable inside it has not said already. Both ends then
+ * offer a handle in the cable's own tint, wide enough to take the drag that rebinds it.
  */
 export function BindingCable(cable: EdgeProps): ReactElement {
   const held = cable.data ?? {};

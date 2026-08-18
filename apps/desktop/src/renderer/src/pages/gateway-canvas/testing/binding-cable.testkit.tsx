@@ -114,7 +114,7 @@ export function drawnCables(canvasElement: HTMLElement): SVGPathElement[] {
   return [...canvasElement.querySelectorAll<SVGPathElement>('.react-flow__edge > path')];
 }
 
-/** The pulse traveling over a served cable, which rides above the line rather than breaking it. */
+/** The pulse traveling over a live cable, which rides above the line rather than breaking it. */
 export function pulseIn(canvasElement: HTMLElement): SVGPathElement {
   const traveling = canvasElement.querySelector<SVGPathElement>('.cable-pulse');
 

@@ -5,7 +5,6 @@ import type { CableStanding } from './node-graph';
 import {
   CABLE_GRAB_SPAN,
   failureIn,
-  marchForStanding,
   pulseForStanding,
   strokeForRelease,
   strokeForStanding,
@@ -47,14 +46,9 @@ describe('what a cable paints for its standing', () => {
     ]);
   });
 
-  it('keeps every line whole, because a break in the drawing would claim a break in the wire', () => {
-    expect(everyStanding.filter((standing) => marchForStanding(standing) !== '')).toEqual([]);
-  });
-
   it('travels a pulse along the live cable alone, which is the request still in flight', () => {
     expect(everyStanding.filter((standing) => pulseForStanding(standing) !== '')).toEqual(['live']);
     expect(pulseForStanding('live')).toBe('cable-pulse');
-    expect(marchForStanding('live')).toBe('');
   });
 
   it('mutes a structural wire down to the resting treatment, so the frame never outshines a binding', () => {
@@ -83,8 +77,6 @@ describe('what a cable paints for a standing this canvas never named', () => {
   });
 
   it('leaves a cable carrying no standing still, so nothing unexplained moves on the canvas', () => {
-    expect(marchForStanding(undefined)).toBe('');
-    expect(marchForStanding('flowing')).toBe('');
     expect(pulseForStanding(undefined)).toBe('');
     expect(pulseForStanding('flowing')).toBe('');
   });
