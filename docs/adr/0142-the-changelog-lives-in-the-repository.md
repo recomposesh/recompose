@@ -1,4 +1,4 @@
-# 0141: The changelog lives in the repository
+# 0142: The changelog lives in the repository
 
 **Status**: Accepted
 **Date**: 2026-08-18
@@ -7,7 +7,7 @@
 
 The release pipeline drafts every release with `--generate-notes`, so the only changelog anywhere
 is a raw pull-request title dump with renovate noise. The site's changelog links point at the
-GitHub releases listing. The download surface (record 0140) puts a release pill on `/download`
+GitHub releases listing. The download surface (record 0141) puts a release pill on `/download`
 whose changelog link needs a destination the project actually writes.
 
 ## Decision
@@ -20,7 +20,7 @@ The files pass Vale like any authored markdown.
 **The release wears the curated text.** On `release: published`, a workflow requires the entry
 for the published version and fails loud without it. With it, the workflow replaces the release
 body with the curated text plus a single "Full commit log" compare link. Generated notes stop
-being the release's face. The job shares one workflow with record 0140's redirect-rules update,
+being the release's face. The job shares one workflow with record 0141's redirect-rules update,
 and the two fail on their own.
 
 **The site renders the same files.** `/changelog` shows the latest entry and

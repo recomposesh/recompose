@@ -31,3 +31,4 @@ Feature: A cable meets a router on the canvas
     When a request under "fast" fails over from the first target to the second
     Then the first target's cable paints as failed
     And the second target's cable paints as served
+    And the cable into the router paints as served
