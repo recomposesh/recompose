@@ -92,6 +92,7 @@
 [Ll]ockfile
 [Ll]ossily
 [Mm]inimap
+MIT
 [Mm]obbin
 [Mm]ockup
 [Mm]ockups
