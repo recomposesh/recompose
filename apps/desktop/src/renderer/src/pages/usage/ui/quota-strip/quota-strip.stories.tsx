@@ -82,7 +82,7 @@ export const CountingDownToTheClose = meta.story({
   },
 });
 
-/** A window that outburned every earlier one says so, and its bar still stops short of the end. */
+/** A window that burned past every earlier one says so, and its bar still stops short of the end. */
 export const TheBusiestOnRecord = meta.story({
   parameters: {
     bridge: {
