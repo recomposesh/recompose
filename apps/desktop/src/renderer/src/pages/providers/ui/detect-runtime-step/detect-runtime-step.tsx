@@ -42,6 +42,18 @@ function readingOf(look: ReturnType<typeof useQuery<RuntimeReachability>>): Read
   return { face: 'refused', reason: refusalSentence(look.error) };
 }
 
+/**
+ * The version a runtime published, and nothing at all where it published none.
+ *
+ * @summary A runtime such as LM Studio names no version field anywhere in its surface, so the word
+ * alone would stand over an empty space and claim the look came back short.
+ */
+function versionLine(version: string | undefined): ReactNode {
+  return version === undefined ? null : (
+    <p className="text-detail text-ink-secondary">Version {version}</p>
+  );
+}
+
 function reportedFace(name: string, host: string, reachability: RuntimeReachability): ReactNode {
   if (reachability.verdict === 'answers') {
     return (
@@ -49,7 +61,7 @@ function reportedFace(name: string, host: string, reachability: RuntimeReachabil
         <p className="text-body text-ink">
           {name} is running at {host}.
         </p>
-        <p className="text-detail text-ink-secondary">Version {reachability.version}</p>
+        {versionLine(reachability.version)}
       </>
     );
   }

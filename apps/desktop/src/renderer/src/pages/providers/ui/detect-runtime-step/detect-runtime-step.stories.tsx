@@ -36,6 +36,21 @@ export const Answering = meta.story({
   },
 });
 
+/**
+ * A runtime that publishes no version, which reports it answers and prints no version line.
+ *
+ * @summary LM Studio names no version field anywhere in its surface, so the word on its own would
+ * stand over an empty space and read as a look that came back short. The reading asks that the line
+ * be absent rather than blank.
+ */
+export const AnsweringWithoutAVersion = meta.story({
+  parameters: { bridge: { reachability: { verdict: 'answers' } } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Ollama is running at 127.0.0.1:11434.')).toBeVisible();
+    await expect(canvas.queryByText(/^Version/u)).toBeNull();
+  },
+});
+
 /** The face silence earns: the remedy sentence, Check again leading, Add anyway beside it. */
 export const Silent = meta.story({
   play: async ({ canvas }) => {

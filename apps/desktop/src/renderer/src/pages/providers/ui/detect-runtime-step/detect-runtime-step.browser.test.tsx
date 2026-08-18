@@ -17,6 +17,13 @@ test('picking the runtime looks at once and reports the running server', async (
   await expect.element(screen.getByText('Version 0.5.1')).toBeVisible();
 });
 
+test('a runtime that publishes no version reports it answers and prints no version line', async () => {
+  const screen = await renderStep({ reachability: { verdict: 'answers' } });
+
+  await expect.element(screen.getByText('Ollama is running at 127.0.0.1:11434.')).toBeVisible();
+  expect(screen.container.textContent).not.toContain('Version');
+});
+
 test('the look asks no permission, offering no act while it is out', async () => {
   const screen = await renderStep({
     overrides: { 'accounts:detect-runtime': async () => new Promise(() => undefined) },
