@@ -1,8 +1,6 @@
 import { Terminal } from 'lucide-react';
 
-import { AppleMark } from '../components/apple-mark';
-import { TuxMark } from '../components/tux-mark';
-import { WindowsMark } from '../components/windows-mark';
+import { AppleMark, TuxMark, UbuntuMark, WindowsMark } from '../components/platform-marks';
 import { brewInstallCommand, releaseAssetUrl } from '../lib/download-targets';
 
 const rows = [
@@ -34,7 +32,7 @@ const rows = [
     target: 'linux-deb',
     label: 'linux · deb',
     asset: 'deb ↓',
-    mark: <TuxMark className="size-3.75" />,
+    mark: <UbuntuMark className="size-3.75" />,
   },
 ] as const;
 

@@ -2,10 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { DownloadTarget } from '../lib/download-targets';
 
-import { AppleMark } from '../components/apple-mark';
-import { TuxMark } from '../components/tux-mark';
-import { UbuntuMark } from '../components/ubuntu-mark';
-import { WindowsMark } from '../components/windows-mark';
+import { AppleMark, TuxMark, UbuntuMark, WindowsMark } from '../components/platform-marks';
 
 const tiles: Record<DownloadTarget, { tone: string; mark: ReactNode }> = {
   'mac-arm64': {
