@@ -3,7 +3,7 @@ import { Popover } from '@base-ui/react/popover';
 type CableFailureChipProps = {
   /** The status the gateway answered the last request through this binding with. */
   status: number;
-  /** The sentence saying what the request came to, written from the status and nothing else. */
+  /** The sentence saying what the request came to, which may quote the target's own words. */
   detail: string;
 };
 

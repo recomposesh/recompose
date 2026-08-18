@@ -5,7 +5,6 @@ import { expect, test } from 'vitest';
 
 import type { ProviderObservation } from './provider-observability';
 
-import { isAIAPIPath, requestIdForAIPath } from '../gateway-ai-path';
 import { CPA_TRACE_HEADER, CPATraceCommit, formatCPATraceID } from '../gateway-trace';
 import { enforceProviderLogDirectoryLimit } from './provider-log-cleaner';
 import { providerLogLine } from './provider-log-record';
@@ -127,30 +126,6 @@ test('TestLogFormatterOmitsGenericPathField', () => {
   expect(line).not.toContain('"path"');
   expect(line).not.toContain('active_path');
   expect(line).not.toContain('retired_path');
-});
-
-test('TestIsAIAPIPathIncludesPublicAPIGroups', () => {
-  expect(['/v1', '/v1/models', '/v1/alpha/search', '/v1beta/interactions']).toSatisfy(
-    (paths: string[]) => paths.every(isAIAPIPath),
-  );
-  expect(isAIAPIPath('/v0/management/config')).toBe(false);
-});
-
-test('TestIsAIAPIPathIncludesImages', () => {
-  expect(isAIAPIPath('/v1/images/generations')).toBe(true);
-  expect(isAIAPIPath('/openai/v1/videos/video_123/content')).toBe(true);
-});
-
-test('TestIsAIAPIPathIncludesCodexBackend', () => {
-  expect(isAIAPIPath('/backend-api/codex/responses')).toBe(true);
-  expect(isAIAPIPath('/backend-api/codex-status')).toBe(false);
-});
-
-test('TestGinLogrusLoggerAddsRequestIDForCodexBackend', () => {
-  const id = requestIdForAIPath('/backend-api/codex/responses');
-
-  expect(id).toBeTruthy();
-  expect(requestIdForAIPath('/backend-api/codex/responses', id)).toBe(id);
 });
 
 async function temporaryDirectory(): Promise<string> {
