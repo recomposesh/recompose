@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The dialect-translation library makes the engine a two-way translator between the Anthropic Messages dialect and the OpenAI dialects, Chat Completions and Responses. It folds every dialect through a shared Anthropic-Messages hub, so a request, a response, and an event stream each cross whole. Every field meets one of three fates: carried, mapped, or refused typed. No field drops without a trace. The library holds no network or process work, so a later gateway consumes it to serve one dialect from a target that speaks another.
+The dialect-translation library makes the engine a two-way translator between five dialects: Anthropic Messages, OpenAI Chat Completions, OpenAI Responses, Gemini, and Interactions. It folds every dialect through a neutral hub with a shape of its own, so a request, a response, and an event stream each cross whole between any pair. Every field meets one of three fates: carried, mapped, or refused typed. No field drops without a trace. The library holds no network or process work, so a later gateway consumes it to serve one dialect from a target that speaks another.
 
 ## Requirements
 
@@ -53,7 +53,7 @@ The library MUST translate a streaming answer between the dialects as it arrives
 
 ### Requirement: The Responses dialect joins the set
 
-The library MUST translate the OpenAI Responses dialect the same three ways: requests, responses, and the event stream, against each dialect the library holds. Codex speaks only this dialect, so a gateway serving Codex depends on it. The same fates discipline holds: carried, mapped, or refused typed, and never a silent drop. A reasoning item MUST cross to the Anthropic shape: a compatible signature becomes a thinking block, redacted content becomes a redacted thinking block, and a foreign-provider signature drops. Only the `previous_response_id` conversation handle refuses typed, because the stateless hub can't model server-held state.
+The library MUST translate the OpenAI Responses dialect the same three ways: requests, responses, and the event stream, against each dialect the library holds. Codex speaks only this dialect, so a gateway serving Codex depends on it. The same fates discipline holds: carried, mapped, or refused typed, and never a silent drop. A reasoning item MUST cross to the Anthropic shape: a compatible signature becomes a thinking block, redacted content becomes a redacted thinking block, and a foreign-provider signature drops. The `previous_response_id` conversation handle crosses carried. What a turn resuming server-held state means for routing is the router's question rather than this library's. The engine's `chained_turn` refusal answers it at the router that would spread the turn.
 
 #### Scenario: a Codex request crosses to an Anthropic target
 
@@ -75,3 +75,21 @@ The library MUST translate the OpenAI Responses dialect the same three ways: req
 - When the library translates it to the Anthropic shape
 - Then the unanswered call leaves the history
 - And the translation names the repair as that call's fate
+
+### Requirement: The Gemini and Interactions dialects join the set
+
+The library MUST translate the Gemini dialect and the Interactions dialect the same three ways: requests, responses, and the event stream, against each dialect the library holds. A native Gemini client asks in the Gemini shape, and Antigravity traffic rides the Interactions shape, so a gateway serving either depends on them. The same fates discipline holds: carried, mapped, or refused typed, and never a silent drop.
+
+#### Scenario: a Gemini request crosses to an Anthropic target
+
+- Given a Gemini-dialect request carrying a system instruction and function declarations
+- When the library translates it to the Anthropic shape
+- Then the instruction, the tools, and the contents stand in the Anthropic shape
+- And nothing the source carried has vanished without a named fate
+
+#### Scenario: an Interactions stream crosses event for event
+
+- Given a source stream in another dialect answering an Interactions-dialect request
+- When the library translates the stream to Interactions events
+- Then the content and the tool calls stand as Interactions events
+- And the events end the way the source stream ended

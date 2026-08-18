@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The behavioral contract of the settings a person can change from inside recompose. It covers what the screen presents, what a change reaches outside the window, and how a setting whose machinery the app lacks still names itself. Every setting the app stores belongs here, so nobody edits a document by hand to change one.
+The behavioral contract of the settings a person can change from inside recompose. It covers what the screen presents and what a change reaches outside the window. Every setting the app stores belongs here, so nobody edits a document by hand to change one.
 
 ## Requirements
 
@@ -118,21 +118,37 @@ The app MUST present every stored setting on a single screen inside the main win
 - When a person opens the Appearance group
 - Then the group offers the theme and nothing beside it
 
-### Requirement: Controls that wait, controls that decided, and controls that never arrive
+### Requirement: The bind address is a control that guards its restart
 
-The app MUST NOT offer a working control for a setting nothing reads. A setting whose machinery the repository lacks MUST render as unavailable and MUST name what it waits for. A reason MUST name a surface a person can picture rather than a subsystem, so it stays true as the machinery arrives. A setting the app has decided rather than deferred MUST state its value instead of rendering as an unavailable control. An inert control implies a choice that nobody will offer. A setting the project has decided never to build MUST be absent rather than waiting, because a row that names what will never arrive promises work nobody plans to do. The usage retention row left this list when the usage ledger arrived: it now stands as a live control under its own requirement.
+The Server group MUST carry a bind address field backed by the `bindAddress` field, standing at loopback (`127.0.0.1`) by default. The row MUST state that the default serves this machine and that another host serves other devices. A change settled while gateways run MUST hold behind a consequence dialog naming how many running gateways the change restarts, and declining MUST keep the stored address. A change settled while nothing runs MUST apply without a dialog.
 
-#### Scenario: a person meets a setting that waits on launch-time start
+#### Scenario: a person changes the bind address while gateways run
 
-- When a person reaches the gateway autostart row
-- Then the control renders as unavailable and names launch-time start as what it waits for
-- And the settings document holds no field for it
+- Given two running gateways
+- When a person settles a new bind address
+- Then a confirmation names the two gateways the change restarts
+- And confirming applies the address while declining keeps the stored one
 
-#### Scenario: a person looks for the bind address
+#### Scenario: a person changes the bind address while nothing runs
 
-- When a person reaches the bind address row
-- Then the row states both loopback addresses as a value rather than offering a control
-- And the row states that recompose never serves the network
+- When a person settles a new bind address with no gateway running
+- Then the change applies without a confirmation
+
+### Requirement: Launch-time start is a switch
+
+The Server group MUST carry a start-gateways-on-launch switch backed by the `startGatewaysOnLaunch` field, standing off by default. While the switch stands on, the app MUST start every stored gateway when it opens. While it stands off, gateways MUST return as the person left them.
+
+#### Scenario: the switch stands on across a launch
+
+- Given the switch stands on
+- When the app opens
+- Then every stored gateway starts serving
+
+#### Scenario: the switch stands off across a launch
+
+- Given the switch stands off and one of two gateways served at quit
+- When the app opens
+- Then the gateway that served returns serving and the other stays stopped
 
 ### Requirement: The retention window guards its own cost
 

@@ -74,13 +74,19 @@ Every source port MUST carry a keyboard-reachable ask that paints only under key
 
 ### Requirement: A cable paints the traffic it carried
 
-A cable with no recorded traffic MUST stand still in the resting tone. A cable whose last request served MUST paint green with a traveling pulse on an unbroken line. A cable whose last request failed MUST paint red with a marching dash and MUST stand a pressable last-error trigger on the path. Pressing the trigger MUST reveal the status and the failure's reason. A newer outcome MUST replace the older one. Motion yields where the person asked for reduced motion, and the colors stand either way.
+A cable with no recorded traffic MUST stand still in the resting tone. A cable whose request is still in flight MUST paint live with a traveling pulse on an unbroken line, and the pulse belongs to that live standing alone. A cable whose last request served MUST paint steady green on an unbroken line, with no motion. A cable whose last request failed MUST paint steady red and MUST stand a pressable last-error trigger on the path. Pressing the trigger MUST reveal the status and the failure's reason. A newer outcome MUST replace the older one. The pulse yields where the person asked for reduced motion, and the colors stand either way.
+
+#### Scenario: a request in flight pulses the cable
+
+- Given a virtual model bound to a stored target
+- When a request through that virtual model is still in flight
+- Then its wire and its cable paint live with a traveling pulse
 
 #### Scenario: a served request turns the cables green
 
 - Given a virtual model bound to a stored target
 - When a request through that virtual model comes back served
-- Then its wire and its cable paint green with a traveling pulse
+- Then its wire and its cable paint steady green on an unbroken line
 
 #### Scenario: a failed request offers its reason on the cable
 
