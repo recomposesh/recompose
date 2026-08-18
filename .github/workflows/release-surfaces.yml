@@ -53,7 +53,7 @@ jobs:
               }]' <<<"$rules")
           done
           payload=$(jq -n --argjson rules "$rules" \
-            '{name: "download redirects", kind: "zone", phase: "http_request_dynamic_redirect", rules: $rules}')
+            '{description: "download redirects", rules: $rules}')
           response=$(curl -sS -X PUT \
             "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/rulesets/phases/http_request_dynamic_redirect/entrypoint" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
