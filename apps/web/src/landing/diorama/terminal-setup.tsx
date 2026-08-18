@@ -16,7 +16,7 @@ export function TerminalSetup({
         <TypedText text={`export ${envVar}=`} />
       </span>
       <span className="ps-4 text-accent-ink" data-typed-line={`${agent}-url`}>
-        <TypedText text="http://localhost:8397/coding" />
+        <TypedText text="http://127.0.0.1:8397" />
       </span>
       <span
         className="text-term-ink"

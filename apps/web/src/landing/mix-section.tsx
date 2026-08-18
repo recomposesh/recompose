@@ -34,9 +34,7 @@ export function MixSection() {
             style={{ left: leftPercent(656), top: `${(250 / DIAGRAM_HEIGHT) * 100}%` }}
           >
             <span className="size-1.75 rounded-full bg-live" />
-            <span className="font-mono text-control text-stage-ink">
-              http://localhost:8397/coding
-            </span>
+            <span className="font-mono text-control text-stage-ink">http://127.0.0.1:8397</span>
           </div>
 
           {MODELS.map((m) => (

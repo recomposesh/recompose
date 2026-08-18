@@ -20,7 +20,7 @@ export function CodexWindow() {
           <span className="font-mono text-base leading-none text-term-ink">&gt;_</span>
           <span className="flex flex-col gap-0.5">
             <span className="text-term-ink">Codex CLI v2.4</span>
-            <span className="text-annotation text-term-dim">smart · localhost:8397/coding</span>
+            <span className="text-annotation text-term-dim">smart · 127.0.0.1:8397</span>
           </span>
         </div>
 
