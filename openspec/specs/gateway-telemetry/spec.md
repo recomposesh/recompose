@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A running gateway serves invisible traffic without this surface: a person starts it, points a client at it, and reads nothing back. The gateway detail therefore carries two live-traffic surfaces fed by one row stream. A status footer under the canvas answers whether the gateway is alive and how hard it works, over one rolling sixty-second window. A logs drawer opening from the footer answers what it just did, request by request, scoped by the canvas selection. No prompt or completion body ever rides a row, and no cost figure appears anywhere.
+A running gateway serves invisible traffic without this surface: a person starts it, points a client at it, and reads nothing back. The gateway detail therefore carries two live-traffic surfaces fed by one row stream. A status footer under the canvas answers whether the gateway is alive and how hard it works, over one rolling sixty-second window. A logs drawer opening from the toolbar answers what it just did, request by request, scoped by the canvas selection. No prompt or completion body ever rides a row, and no cost figure appears anywhere.
 
 ## Requirements
 
@@ -36,14 +36,14 @@ The gateway detail screen MUST render a status footer under the canvas, spanning
 - Then no cost figure appears on either surface
 - And the gateway's usage summary links into the usage screen for the spend reading
 
-### Requirement: A disclosure control on the footer opens the logs drawer
+### Requirement: The toolbar's Request log control opens the logs drawer
 
-A discrete disclosure control at the footer's trailing end MUST act as the one on-screen entry point to the logs drawer. The Gateway menu MUST carry a Show Logs item as the control's command twin, driving the same open state. Opening MUST stand the drawer under the stage in the canvas column, and the stage MUST stay visible and usable above it. The open drawer MUST offer a keyboard-reachable close affordance that returns the footer to its resting state.
+The toolbar's Request log control MUST act as the one on-screen entry point to the logs drawer, and it MUST read as expanded while the drawer stands open. The Gateway menu MUST carry a Show Logs item as the control's command twin, driving the same open state. The footer MUST offer nothing to press: it reads as selectable text, so a person can take a reading into a bug report. The way to the drawer stays on the toolbar. Opening MUST stand the drawer under the stage in the canvas column, and the stage MUST stay visible and usable above it. The open drawer MUST offer a keyboard-reachable close affordance.
 
-#### Scenario: the disclosure control opens the drawer
+#### Scenario: the toolbar control opens the drawer
 
 - Given a gateway detail with the logs drawer closed
-- When a person takes the disclosure control on the footer
+- When a person takes the Request log control on the toolbar
 - Then the logs drawer opens under the stage
 
 #### Scenario: the menu twin opens the drawer
@@ -52,12 +52,17 @@ A discrete disclosure control at the footer's trailing end MUST act as the one o
 - When a person picks Show Logs from the Gateway menu
 - Then the logs drawer opens
 
-#### Scenario: the drawer closes back to the footer
+#### Scenario: the footer offers nothing to press
+
+- When a person reads the status footer
+- Then nothing on it acts as a control
+- And the toolbar's Request log control stays the way to the drawer
+
+#### Scenario: the drawer closes
 
 - Given an open logs drawer
 - When a person takes the close affordance
 - Then the drawer leaves
-- And the footer stands as before
 
 ### Requirement: The logs drawer streams request rows
 
@@ -81,26 +86,26 @@ The logs drawer MUST list the gateway's request log rows, newest at the top, and
 - When the gateway fails the request
 - Then a row lands carrying the failure status with empty provider cells
 
-### Requirement: Scope selectors narrow the rows
+### Requirement: The outcome segments narrow the scoped rows
 
-The drawer MUST offer scope selectors: one for the whole gateway, one per virtual model, and a transient selector for a selected target. Exactly one scope stands active at a time. An independent errors filter MUST compose with the active scope, narrowing it to failures. Pressing a virtual model's selector MUST select its canvas node, and selecting the node MUST light its selector.
+The drawer MUST carry no scope pickers of its own: the canvas selection is the one scope, and the drawer header MUST name the selected subject. A segmented outcome control MUST offer All, Success, and Errors, and the picked segment MUST compose with the standing scope. Success MUST keep only the served rows and Errors only the failed ones. A request still in flight MUST show under All alone, because its outcome isn't a fact yet.
 
-#### Scenario: the errors filter narrows to failures
+#### Scenario: the Errors segment narrows to failures
 
 - Given an open logs drawer holding served and failed rows
-- When a person turns on the errors filter
+- When a person picks the Errors segment
 - Then only the failed rows remain listed
 
-#### Scenario: a virtual model's selector narrows to its traffic
+#### Scenario: the Success segment narrows to served rows
 
-- Given a gateway serving two virtual models
-- When a person takes one virtual model's selector
-- Then only the rows that passed through that virtual model remain listed
+- Given an open logs drawer holding served and failed rows
+- When a person picks the Success segment
+- Then only the served rows remain listed
 
-#### Scenario: the errors filter composes with a scope
+#### Scenario: a segment composes with the canvas selection
 
-- Given a scope standing on one virtual model and failures through both
-- When a person turns on the errors filter
+- Given a canvas selection standing on one virtual model and failures through two
+- When a person picks the Errors segment
 - Then only that virtual model's failed rows remain listed
 
 ### Requirement: The canvas selection scopes the drawer

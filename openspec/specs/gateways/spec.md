@@ -211,6 +211,9 @@ whose clients already carry that key MUST NOT have to reach every one of them ag
 A change to a stored gateway document MUST reach a gateway that serves, and MUST NOT start one that
 stands stopped. A person who stopped a gateway MUST find it stopped after any edit to its document,
 including an edit made outside the app. Nothing about editing a document is a request to serve.
+Moving a gateway to a free port after a failed start isn't an edit in this sense: it MUST serve
+the gateway on the port it moved to. A person reaches that move only from the offer the failed
+start put on screen.
 
 #### Scenario: a serving gateway's document changes
 
@@ -222,6 +225,11 @@ including an edit made outside the app. Nothing about editing a document is a re
 - When a gateway stands stopped and its stored document changes
 - Then the gateway stays stopped
 - And nothing starts a listener on its port
+
+#### Scenario: a person accepts the offer to move a failed start to a free port
+
+- When a person starts a gateway whose port another process holds and accepts the offer to move it
+- Then the gateway serves on the port it moved to
 
 ### Requirement: The app mints the key rather than asking for one
 

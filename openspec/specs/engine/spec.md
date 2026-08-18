@@ -8,13 +8,22 @@ The behavioral contract of the process that answers for a gateway. It covers whe
 
 ### Requirement: A gateway owns its listener and its port
 
-Each gateway MUST answer on its own port rather than sharing one with its siblings. It MUST answer at `http://localhost:<port>`, the origin a person pastes into a client without adding a path. Every listener MUST bind the loopback interface and MUST NOT bind any other interface, because recompose fronts paid accounts and a wider bind exposes them. Two gateways MUST NOT hold the same port.
+Each gateway MUST answer on its own port rather than sharing one with its siblings. It MUST answer at `http://<bind address>:<port>`, the origin a person pastes into a client without adding a path. Under the default bind the app prints `http://127.0.0.1:<port>`. A wildcard bind of `0.0.0.0` accepts on every interface but routes nowhere, so the app MUST still print the loopback origin. Any other stored address prints as written. A stored bind address never carries a colon, so an IPv6 literal never stands as one.
+
+Every listener MUST bind the one bind address the settings document holds, and that address MUST default to loopback (`127.0.0.1`). recompose fronts paid accounts, so serving the network is a choice a person makes rather than a default. While the bind address stands at its loopback default, the listener MUST refuse a request whose Host header names anything but a loopback address. A request carrying an `Origin` header MUST refuse with a 403 whatever the bind address. No web page reaches a gateway that way, even after a person widens the bind to the network. Two gateways MUST NOT hold the same port.
 
 #### Scenario: a person starts one gateway
 
 - When a person starts a gateway
-- Then a listener answers on that gateway's port on the loopback interface
+- Then a listener answers on that gateway's port on the stored bind address
 - And no other gateway's state changes
+
+#### Scenario: a browser page calls a gateway on a widened bind
+
+- Given a gateway serving on a bind address that reaches the network
+- When a request arrives carrying an `Origin` header
+- Then the listener answers 403 with a typed refusal
+- And the request reaches no virtual model and no provider
 
 #### Scenario: two gateways run at once
 

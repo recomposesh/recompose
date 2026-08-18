@@ -2,13 +2,13 @@
 
 ## Purpose
 
-The behavioral contract of a virtual model in recompose. It covers how a person defines one by a free name, bound to one stored account and one real model that account serves. It covers how the gateway lists the defined models on both dialects. It covers how a request under the virtual name reaches its target, or receives a typed refusal that names what's missing. Every stored account kind stands as a target, one definition binds one target, and no refusal falls back to another.
+The behavioral contract of a virtual model in recompose. It covers how a person defines one by a free name, bound to one stored account and one real model that account serves. It covers how the gateway lists the defined models to every client. It covers how a request under the virtual name reaches its target, or receives a typed refusal that names what's missing. Every stored account kind stands as a target. A definition binds one target or one router, whose contract the routers specification carries, and a definition bound straight to a target never falls back to another.
 
 ## Requirements
 
 ### Requirement: A virtual model maps to one target
 
-A gateway MUST let a person define a virtual model by name and bind it to exactly one target: a stored account and one real model name that account serves. The gateway screen MUST list the defined models in the shipped row language, and adding one MUST take the gateway drawer over rather than opening a sheet. No definition holds a second target, a router, or a fallback in this contract.
+A gateway MUST let a person define a virtual model by name and bind it to exactly one target: a stored account and one real model name that account serves. The gateway screen MUST list the defined models in the shipped row language, and adding one MUST take the gateway drawer over rather than opening a sheet. A definition MAY bind a router in place of the target, and that contract lives in the routers specification. A definition bound straight to a target holds exactly one, with no second target and no fallback beside it.
 
 #### Scenario: a person defines a virtual model
 
@@ -18,14 +18,14 @@ A gateway MUST let a person define a virtual model by name and bind it to exactl
 
 ### Requirement: The gateway lists its defined models
 
-`GET /v1/models` MUST answer unauthenticated on loopback with the defined virtual models, serving both dialects. The Anthropic list shape and the OpenAI list shape each carry every model's id and display name. A defined model's `count_tokens` path MUST answer rather than a blanket 404.
+`GET /v1/models` MUST answer with the defined virtual models, serving every client from one merged list shape. That shape carries the OpenAI markers and the Anthropic markers side by side, with every model's id and display name. While the gateway requires an API key, the listing MUST sit behind that key like every path but health. A defined model's `count_tokens` path MUST answer rather than a blanket 404.
 
-#### Scenario: the listing names every defined model on both dialects
+#### Scenario: the listing names every defined model for both dialects
 
 - Given a gateway holding two defined virtual models
 - When a client asks the gateway for its model listing
 - Then the listing names both models
-- And it answers the same set in the Anthropic and the OpenAI shape
+- And one answer carries the OpenAI and the Anthropic markers side by side
 
 ### Requirement: Every stored account stands as a target
 
@@ -45,7 +45,7 @@ The target picker MUST offer the subscription, key, aggregator, and local kinds 
 
 ### Requirement: The gateway proxies the virtual name to its target
 
-A request arriving under a defined virtual model's name MUST forward to the target account's provider, carrying the target's real model name and the account's credential. The credential MUST NOT ride a command line, an environment variable, or a disk file on the way. A request under an undefined name, a missing target, or a missing credential MUST answer a typed refusal that names what's missing. The gateway MUST NOT fall back to another target on any refusal.
+A request arriving under a defined virtual model's name MUST forward to the target account's provider, carrying the target's real model name and the account's credential. The credential MUST NOT ride a command line, an environment variable, or a disk file on the way. A request under an undefined name, a missing target, or a missing credential MUST answer a typed refusal that names what's missing. A virtual model bound straight to a target MUST NOT fall back to another target on any refusal: failover belongs to a router alone, per the routers specification.
 
 #### Scenario: a request under the virtual name reaches the target
 
