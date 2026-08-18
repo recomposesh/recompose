@@ -144,3 +144,6 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0136](0136-a-packaged-run-attaches-no-window-input-guard.md)                   | A packaged run attaches no window input guard                                       | Accepted   | 2026-08-17 |
 | [0137](0137-the-store-hands-out-the-installer-recompose-already-signs.md)       | The Store hands out the installer recompose already signs                           | Accepted   | 2026-08-17 |
 | [0138](0138-a-macos-artifact-per-architecture-one-manifest-between-them.md)     | A macOS artifact per architecture, one manifest between them                        | Accepted   | 2026-08-17 |
+| [0139](0139-the-cask-follows-the-per-architecture-signed-release.md)            | The cask follows the per-architecture signed release                                | Accepted   | 2026-08-17 |
+| [0140](0140-a-download-lands-from-the-products-own-address.md)                  | A download lands from the product's own address                                     | Accepted   | 2026-08-18 |
+| [0141](0141-the-changelog-lives-in-the-repository.md)                           | The changelog lives in the repository                                               | Accepted   | 2026-08-18 |
