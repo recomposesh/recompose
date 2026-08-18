@@ -99,11 +99,21 @@ export const virtualModelSchema = z.strictObject({
 
 export type VirtualModel = z.infer<typeof virtualModelSchema>;
 
+/**
+ * The card one seat in a stored layout belongs to.
+ *
+ * @summary Not a gateway slug, which is what this validated before: a card id is minted by the
+ * canvas as a prefix and the address it stands at, so `model:fast` and `route:fast:seat:fast` are
+ * both ordinary ids and both carry the colon a slug may never hold. The tail cannot be pinned any
+ * tighter here, because a route node id is any non-blank string a mint or a migration produced, and
+ * restating the canvas's prefixes in this package would put the shape in two places and let them
+ * drift. So the seat key is held to being named at all, and the canvas stays the one authority on
+ * what it names its cards.
+ */
+const canvasCardIdSchema = nonBlankString;
+
 const layoutSchema = z.strictObject({
-  nodes: z.record(gatewaySlugSchema, z.strictObject({ x: z.number(), y: z.number() })),
-  viewport: z
-    .strictObject({ x: z.number(), y: z.number(), zoom: z.number().positive() })
-    .optional(),
+  nodes: z.record(canvasCardIdSchema, z.strictObject({ x: z.number(), y: z.number() })),
 });
 
 export const gatewayConfigSchema = z.strictObject({

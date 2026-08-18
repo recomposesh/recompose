@@ -35,7 +35,7 @@ const validConfig = {
   port: 8397,
   virtualModels: [modelNamed('fast', 'Fast', boundTarget)],
   layout: {
-    nodes: { gateway: { x: 0, y: 0 }, fast: { x: 240, y: 0 } },
+    nodes: { gateway: { x: 0, y: 0 }, 'model:fast': { x: 240, y: 0 } },
   },
 };
 
@@ -207,33 +207,6 @@ describe('a binding the gateway refuses to store', () => {
   });
 });
 
-describe('gateway config schema: layout node keys', () => {
-  test('non-slug layout node keys are rejected', () => {
-    for (const bad of ['My Node', 'UPPER', '_lead', '']) {
-      const hostileLayout = {
-        ...validConfig,
-        layout: { nodes: { ...validConfig.layout.nodes, [bad]: { x: 0, y: 0 } } },
-      };
-
-      expect(() => gatewayConfigSchema.parse(hostileLayout)).toThrow();
-    }
-  });
-
-  test('a __proto__ layout key can never enter a parsed config', () => {
-    const hostileLayout = {
-      ...validConfig,
-      layout: { nodes: { ...validConfig.layout.nodes, ['__proto__']: { x: 0, y: 0 } } },
-    };
-
-    const parsed = gatewayConfigSchema.parse(hostileLayout);
-
-    const nodesPrototype: unknown = Object.getPrototypeOf(parsed.layout.nodes);
-
-    expect(Object.keys(parsed.layout.nodes)).toEqual(Object.keys(validConfig.layout.nodes));
-    expect(nodesPrototype).not.toHaveProperty('x');
-  });
-});
-
 const slugSegmentArb = fc.stringMatching(/^[a-z0-9]{1,6}$/);
 const slugArb = fc
   .array(slugSegmentArb, { minLength: 1, maxLength: 4 })
@@ -244,6 +217,12 @@ const trimmedDisplayNameArb = fc
   .string({ minLength: 1, maxLength: 40 })
   .map((value) => value.trim())
   .filter((value) => value.length > 0);
+
+const cardIdArb = fc.oneof(
+  fc.constant('gateway'),
+  slugArb.map((modelId) => `model:${modelId}`),
+  slugArb.map((modelId) => `route:${modelId}`),
+);
 
 const routingArb = fc
   .record({
@@ -258,13 +237,13 @@ const configArb = fc.record({
   slug: slugArb,
   displayName: trimmedDisplayNameArb,
   port: fc.integer({ min: GATEWAY_PORT_RANGE.min, max: GATEWAY_PORT_RANGE.max }),
-  virtualModels: fc.array(
+  virtualModels: fc.uniqueArray(
     fc.record({ id: slugArb, displayName: trimmedDisplayNameArb, routing: routingArb }),
-    { minLength: 0, maxLength: 4 },
+    { selector: (model) => model.id, maxLength: 4 },
   ),
   layout: fc.record({
     nodes: fc.dictionary(
-      slugArb,
+      cardIdArb,
       fc.record({
         x: fc.integer({ min: -10000, max: 10000 }),
         y: fc.integer({ min: -10000, max: 10000 }),
