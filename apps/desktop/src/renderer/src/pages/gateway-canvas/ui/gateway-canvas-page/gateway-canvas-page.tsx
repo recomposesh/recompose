@@ -250,7 +250,7 @@ export function GatewayCanvasPage({
   gatewayOnceStood.current = true;
 
   return (
-    <div className="flex h-full min-h-0" data-canvas-workspace="">
+    <div className="@container flex h-full min-h-0" data-canvas-workspace="">
       {canvasColumn({
         slug,
         gateway,

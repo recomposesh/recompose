@@ -32,6 +32,10 @@ const logFilters = [
   { value: 'errors', label: 'Errors', tone: 'danger' },
 ] as const;
 
+const AWAY_WITH_THE_SUBJECT_TYPE = '@max-[26rem]:hidden';
+
+const AWAY_WITH_THE_FILTERS = '@max-[22rem]:hidden';
+
 function filteredScope(
   subject: InspectorSubject,
   filter: LogFilter,
@@ -76,11 +80,15 @@ function drawerHeader({ heading, serving, controls }: DrawerHead): ReactNode {
     <header className="flex h-status-bar shrink-0 items-center gap-2.5 border-b border-line-faint px-3">
       <div className="flex min-w-0 items-baseline gap-2">
         <h2 className="truncate text-detail font-semibold text-ink">Logs for {heading.name}</h2>
-        <span className="shrink-0 text-caption font-medium text-ink-secondary">{heading.type}</span>
+        <span
+          className={`shrink-0 text-caption font-medium text-ink-secondary ${AWAY_WITH_THE_SUBJECT_TYPE}`}
+        >
+          {heading.type}
+        </span>
       </div>
       <StatusChip tone={stream.tone} word={stream.word} />
-      <div className="ms-auto flex min-w-0 items-center gap-2">
-        {logControls(controls)}
+      <div className="ms-auto flex shrink-0 items-center gap-2">
+        <span className={`flex ${AWAY_WITH_THE_FILTERS}`}>{logControls(controls)}</span>
         <button
           aria-label="Close logs"
           className="flex size-6 shrink-0 items-center justify-center rounded-control focus-ring text-ink-secondary hover:bg-surface-hover active:bg-surface-pressed"
@@ -139,7 +147,10 @@ type LogsDrawerProps = {
  * outcomes stay in that scope. The stream state holds its place in the header instead of vanishing,
  * because a gateway that stopped is a thing a person needs to read rather than to guess from an
  * absence. Dragging the top edge sizes the drawer and dragging it well down puts it away, which is
- * the same gesture every other panel in the app answers.
+ * the same gesture every other panel in the app answers. The drawer never paints taller than most
+ * of the window, so a window shrunk under a height a person once dragged to still shows the stage
+ * and the traffic strip. As the pane narrows, the subject type and then the filters leave the
+ * header, because a clipped control reads as broken while a missing one reads as put away.
  */
 export function LogsDrawer({
   gateway,
@@ -158,7 +169,7 @@ export function LogsDrawer({
     <>
       {resizeEdge(height)}
       <section
-        className={`flex shrink-0 flex-col overflow-hidden border-t border-line-subtle bg-surface-card ${leaving ? 'logs-drawer-leaving' : 'logs-drawer'}`}
+        className={`@container flex max-h-logs-reach shrink-0 flex-col overflow-hidden border-t border-line-subtle bg-surface-card ${leaving ? 'logs-drawer-leaving' : 'logs-drawer'}`}
         data-logs-drawer=""
         style={{ height: `${String(height)}px` }}
       >

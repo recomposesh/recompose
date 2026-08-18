@@ -16,5 +16,5 @@ export { emitUsageCommand } from './fake-usage-pushes';
 export { emitViewCommand, reportedSurfaceToggles } from './fake-view-pushes';
 export { servedReport } from './fake-usage-report';
 export { edgeRuleDrawn, tokenChartSeries } from './chart-fixtures';
-export { paintedBox, paintedStyle } from './measuring';
+export { fitsItsPane, narrowed, paintedBox, paintedStyle } from './measuring';
 export { pressedByKeyboard } from './pressing';

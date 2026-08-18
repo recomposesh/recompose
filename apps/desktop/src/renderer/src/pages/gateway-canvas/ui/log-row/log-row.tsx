@@ -8,6 +8,14 @@ import { servedAt, servedByAccount, servedByProvider, tookFor } from './logged-r
 
 const TOO_MANY_REQUESTS = 429;
 
+const AWAY_WITH_THE_ACCOUNT = '@max-[32rem]:hidden';
+
+const AWAY_WITH_THE_PROVIDER = '@max-[24rem]:hidden';
+
+const AWAY_WITH_THE_METHOD = '@max-[19rem]:hidden';
+
+const AWAY_WITH_THE_DURATION = '@max-[13rem]:hidden';
+
 function statusInk(logged: LoggedRequest, ongoing: boolean): string {
   if (ongoing) {
     return 'text-accent-ink';
@@ -78,7 +86,7 @@ function modelJourneyOf(logged: LoggedRequest): ModelJourney {
 
 function modelJourneyCell({ asked, resolved }: ModelJourney): ReactNode {
   return (
-    <span className="flex min-w-0 flex-1 items-center gap-1">
+    <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
       <span className="max-w-1/2 shrink-0 truncate" title={asked}>
         {asked}
       </span>
@@ -112,11 +120,14 @@ type LogRowProps = {
  *
  * @summary Reach for it inside the logs drawer's list and nowhere else. The columns hold their
  * places down the run, so a person scanning for a status or a duration reads down one column rather
- * than hunting across each line. The fixed cells never give way: what gives way first is the
+ * than hunting across each line. The fixed cells never squeeze: what gives way first is the
  * provider model, then the account, because a truncated account is still readable next to its
- * provider while a truncated time says nothing at all. The status digits carry the standing and the
- * ink only reinforces it, so a screen painting no color loses nothing. A request the gateway never
- * served shows no duration, since a number there would claim something answered when nothing did.
+ * provider while a truncated time says nothing at all. Against a drawer too narrow to hold them,
+ * whole cells leave instead, account first, then provider, method, and duration, so the time, the
+ * models, and the status stay readable rather than every cell clipping at once. The status digits
+ * carry the standing and the ink only reinforces it, so a screen painting no color loses nothing.
+ * A request the gateway never served shows no duration, since a number there would claim something
+ * answered when nothing did.
  */
 export function LogRow({ logged, account, id, underCursor = false, place, wholeRun }: LogRowProps) {
   const journey = modelJourneyOf(logged);
@@ -135,13 +146,17 @@ export function LogRow({ logged, account, id, underCursor = false, place, wholeR
       role="option"
     >
       <span className="w-16 shrink-0 text-ink-secondary tabular-nums">{servedAt(logged.at)}</span>
-      <span className="w-10 shrink-0 text-ink-secondary">{logged.method}</span>
+      <span className={`w-10 shrink-0 text-ink-secondary ${AWAY_WITH_THE_METHOD}`}>
+        {logged.method}
+      </span>
       {modelJourneyCell(journey)}
-      <span className={`w-20 shrink-0 truncate text-end ${targetInk(account)}`}>
+      <span
+        className={`w-20 shrink-0 truncate text-end ${AWAY_WITH_THE_PROVIDER} ${targetInk(account)}`}
+      >
         {servedByProvider(logged)}
       </span>
       <span
-        className={`w-36 shrink-0 truncate ${targetInk(account)}`}
+        className={`w-36 shrink-0 truncate ${AWAY_WITH_THE_ACCOUNT} ${targetInk(account)}`}
         title={servedByAccount(logged, account)}
       >
         {servedByAccount(logged, account)}
@@ -149,7 +164,9 @@ export function LogRow({ logged, account, id, underCursor = false, place, wholeR
       <span className={`w-8 shrink-0 text-end tabular-nums ${statusInk(logged, ongoing)}`}>
         {statusCell(logged, ongoing)}
       </span>
-      <span className="w-10 shrink-0 text-end text-ink-secondary tabular-nums">
+      <span
+        className={`min-w-10 shrink-0 text-end text-ink-secondary tabular-nums ${AWAY_WITH_THE_DURATION}`}
+      >
         {durationCell(took)}
       </span>
     </div>

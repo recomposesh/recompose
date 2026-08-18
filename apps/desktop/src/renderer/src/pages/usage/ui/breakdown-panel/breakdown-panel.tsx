@@ -50,13 +50,15 @@ function panelRow(row: PanelRow, unit: PanelUnit) {
  *
  * @summary Every panel folds the same buckets the tiles and the chart read, so no two panels of
  * one window can disagree. The share meter is decoration over a printed figure, and the unit
- * control reprints the same fold rather than fetching another one.
+ * control reprints the same fold rather than fetching another one. The panel holds the width its
+ * own heading and unit control read at, so a row too narrow for every panel wraps to fewer per
+ * line rather than clipping each heading.
  */
 export function BreakdownPanel({ title, rows, unit, onUnitChange }: BreakdownPanelProps) {
   return (
     <section
       aria-label={title}
-      className="flex min-w-0 flex-1 flex-col gap-3 rounded-card border border-line-subtle bg-surface-card p-3.5"
+      className="flex min-w-52 flex-1 flex-col gap-3 rounded-card border border-line-subtle bg-surface-card p-3.5"
     >
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-card-title text-ink">{title}</h2>

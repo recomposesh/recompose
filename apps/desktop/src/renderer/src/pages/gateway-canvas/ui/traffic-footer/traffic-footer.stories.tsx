@@ -8,7 +8,13 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { bindEngineLogsToCache } from '../../../../shared/api';
-import { emitEngineLogs, paintedBox, paintedStyle } from '../../../../shared/testing';
+import {
+  emitEngineLogs,
+  fitsItsPane,
+  narrowed,
+  paintedBox,
+  paintedStyle,
+} from '../../../../shared/testing';
 import { TrafficFooter } from './traffic-footer';
 
 const SLUG = 'relay';
@@ -38,6 +44,8 @@ const TALLY_GONE_PX = 700;
 const TOKENS_GONE_PX = 560;
 
 const WINDOW_MINIMUM_PX = 479;
+
+const INSPECTOR_BESIDE_PX = 176;
 
 function hashedKey(mark: string): string {
   return `sha256:${mark.repeat(64)}`;
@@ -143,22 +151,6 @@ async function cellsOf(canvas: StripCanvas) {
   };
 }
 
-function narrowed(pane: Element | null, width: number): void {
-  if (!(pane instanceof HTMLElement)) {
-    throw new Error('the story rendered no pane to narrow');
-  }
-
-  pane.style.width = `${String(width)}px`;
-}
-
-function fitsItsPane(strip: Element | null): boolean {
-  if (strip === null) {
-    throw new Error('the story rendered no strip to measure');
-  }
-
-  return strip.scrollWidth <= strip.clientWidth;
-}
-
 const meta = preview.meta({
   component: TrafficFooter,
   args: { slug: SLUG, nodes: 5, wires: 4 },
@@ -244,14 +236,15 @@ export const UnderLoad = meta.story({
 /**
  * The loaded strip against a narrowing pane, shedding cells in its fixed order.
  *
- * @summary The tally leaves first, then the token rate, then the latency, and the request rate and
- * the error count are the last two standing. The narrowest pane here is the one a 720 pixel window
- * leaves beside the sidebar, which is the width the layout has to survive.
+ * @summary The tally leaves first, then the token rate, then the latency, then the client count,
+ * and the request rate and the error count are the last two standing. The narrowest pane here is
+ * the one a 720 pixel window leaves beside the sidebar and a standing inspector, which is the
+ * width the layout has to survive.
  */
 export const DropOrder = meta.story({
   decorators: [busy],
   play: async ({ canvas, canvasElement }) => {
-    const { requests, latency, tokens, errors, tally } = await cellsOf(canvas);
+    const { requests, latency, clients, tokens, errors, tally } = await cellsOf(canvas);
     const pane = canvasElement.querySelector('[data-pane]');
     const strip = requests.closest('footer');
 
@@ -270,6 +263,11 @@ export const DropOrder = meta.story({
 
     narrowed(pane, WINDOW_MINIMUM_PX);
     await expect(latency).not.toBeVisible();
+    await expect(clients).toBeVisible();
+    await expect(fitsItsPane(strip)).toBe(true);
+
+    narrowed(pane, INSPECTOR_BESIDE_PX);
+    await expect(clients).not.toBeVisible();
     await expect(requests).toBeVisible();
     await expect(errors).toBeVisible();
     await expect(fitsItsPane(strip)).toBe(true);

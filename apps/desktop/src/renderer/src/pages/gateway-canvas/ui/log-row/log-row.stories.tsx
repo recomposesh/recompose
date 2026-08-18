@@ -4,7 +4,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { paintedBox } from '../../../../shared/testing';
+import { fitsItsPane, narrowed, paintedBox } from '../../../../shared/testing';
 import { servedRequest, workKey } from '../../testing/gateway-canvas.testkit';
 import { LogRow } from './log-row';
 import { LOG_ROW_HEIGHT } from './logged-request';
@@ -97,6 +97,68 @@ export const Failed = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('500')).toBeVisible();
     await expect(await canvas.findByText('0.9s')).toBeVisible();
+  },
+});
+
+const ROOMY_PX = 560;
+
+const ACCOUNT_GONE_PX = 480;
+
+const PROVIDER_GONE_PX = 360;
+
+const METHOD_GONE_PX = 288;
+
+const DURATION_GONE_PX = 200;
+
+/**
+ * The row against a narrowing drawer, shedding whole cells in its fixed order.
+ *
+ * @summary The account leaves first, then the provider, the method, and the duration, so the time,
+ * the models, and the status stay readable in the pane a small window leaves the drawer instead of
+ * every cell clipping at once. The narrowest pane here is the one a 720 pixel window leaves beside
+ * the sidebar and a standing inspector.
+ */
+export const CellsLeaveAsTheDrawerNarrows = meta.story({
+  decorators: [
+    (Story) => (
+      <div className="@container" data-pane="" style={{ width: ROOMY_PX }}>
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas, canvasElement }) => {
+    const pane = canvasElement.querySelector('[data-pane]');
+    const row = await canvas.findByRole('option');
+    const time = await canvas.findByText('14:22:09');
+    const method = await canvas.findByText('POST');
+    const provider = await canvas.findByText('anthropic');
+    const account = await canvas.findByText('work');
+    const status = await canvas.findByText('200');
+    const duration = await canvas.findByText('0.9s');
+
+    await expect(account).toBeVisible();
+    await expect(fitsItsPane(row)).toBe(true);
+
+    narrowed(pane, ACCOUNT_GONE_PX);
+    await expect(account).not.toBeVisible();
+    await expect(provider).toBeVisible();
+    await expect(fitsItsPane(row)).toBe(true);
+
+    narrowed(pane, PROVIDER_GONE_PX);
+    await expect(provider).not.toBeVisible();
+    await expect(method).toBeVisible();
+    await expect(fitsItsPane(row)).toBe(true);
+
+    narrowed(pane, METHOD_GONE_PX);
+    await expect(method).not.toBeVisible();
+    await expect(duration).toBeVisible();
+    await expect(fitsItsPane(row)).toBe(true);
+
+    narrowed(pane, DURATION_GONE_PX);
+    await expect(duration).not.toBeVisible();
+    await expect(time).toBeVisible();
+    await expect(status).toBeVisible();
+    await expect(fitsItsPane(row)).toBe(true);
   },
 });
 

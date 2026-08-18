@@ -86,3 +86,33 @@ export const PickingTheStack = meta.story({
     await userEvent.click(await canvas.findByRole('button', { name: 'Stacked by Gateway' }));
   },
 });
+
+/**
+ * The panel against the column a small window leaves it, whose header wraps instead of clipping.
+ *
+ * @summary The stack menu and the measure control step under the title once the row cannot hold
+ * them beside it, so every control stays whole and pressable at the narrowest column the window
+ * minimum leaves the page.
+ */
+export const HeaderWrapsWhenNarrow = meta.story({
+  decorators: [
+    (Story) => (
+      <div className="w-84">
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const section = await canvas.findByRole('region', { name: 'Requests over time' });
+    const measure = await canvas.findByRole('radiogroup', { name: 'Chart measure' });
+    const title = await canvas.findByText('Requests over time');
+
+    await expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth);
+    await expect(measure.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      title.getBoundingClientRect().bottom,
+    );
+    await expect(measure.getBoundingClientRect().right).toBeLessThanOrEqual(
+      section.getBoundingClientRect().right,
+    );
+  },
+});

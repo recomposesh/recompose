@@ -48,3 +48,35 @@ export const WithAnAbsence = meta.story({
     ],
   },
 });
+
+/**
+ * Three panels against the column a small window leaves them, wrapping instead of crushing.
+ *
+ * @summary Each panel holds the width its own heading and unit control read at, so a row too
+ * narrow for three wraps to fewer per line rather than clipping every heading at once.
+ */
+export const WrapsInsteadOfCrushing = meta.story({
+  render: (args) => (
+    <div className="flex w-full flex-wrap gap-4">
+      <BreakdownPanel {...args} title="By gateway" />
+      <BreakdownPanel {...args} title="By virtual model" />
+      <BreakdownPanel {...args} title="By target" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const first = (await canvas.findByText('By gateway')).closest('section');
+    const third = (await canvas.findByText('By target')).closest('section');
+
+    if (first === null || third === null) {
+      throw new Error('the story rendered no panels to measure');
+    }
+
+    await expect(third.getBoundingClientRect().top).toBeGreaterThan(
+      first.getBoundingClientRect().bottom,
+    );
+
+    for (const section of [first, third]) {
+      await expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth);
+    }
+  },
+});
