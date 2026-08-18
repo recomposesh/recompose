@@ -402,6 +402,7 @@ vnoise
 vtsls
 WCAG
 Weavy
+webglcontextlost
 webui
 WHATWG
 winstaller
