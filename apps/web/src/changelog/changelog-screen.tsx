@@ -17,7 +17,7 @@ export function ChangelogScreen({ entry }: { entry: ChangelogEntry }) {
         <div className="mx-auto max-w-360 px-16 pt-14 pb-10">
           <h1 className="text-5xl leading-display font-medium text-fd-foreground">changelog</h1>
           <p className="mt-3.5 max-w-2xl text-reading text-stage-dim">
-            every release of recompose, newest first. what shipped, what got fixed, what broke.
+            keep up with the latest recompose releases.
           </p>
         </div>
 
