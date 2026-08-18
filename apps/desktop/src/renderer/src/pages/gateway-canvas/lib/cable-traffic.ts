@@ -1,5 +1,7 @@
 import type { GatewayConfig, GatewayTraffic, RequestOutcome } from '@recompose/contracts';
 
+import type { WalkedRouteNode } from './route-graph';
+
 /** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
 export type CableStanding =
   | 'resting'
@@ -76,6 +78,32 @@ export function latestAcrossNodes(
   return Object.values(nodes ?? {}).reduce<RequestOutcome | undefined>(
     (latest, carried) => (latest === undefined || carried.at >= latest.at ? carried : latest),
     undefined,
+  );
+}
+
+/**
+ * The newest reading below each router, keyed by the router whose cable borrows it.
+ *
+ * @summary A router is attempted by nothing, so the cable into one borrows the newest reading among
+ * the nodes below it, and the path a request walked lights whole from the gateway to the child that
+ * answered instead of resting across the middle. Only the standing travels up: the failure stays on
+ * the failing child's own cable, so one failed request still stands one error to press.
+ */
+export function outcomesThroughRouters(
+  walked: readonly WalkedRouteNode[],
+  painted: Readonly<Record<string, RequestOutcome>>,
+): Readonly<Record<string, RequestOutcome | undefined>> {
+  const parentOf = new Map(walked.map((held) => [held.routeNodeId, held.parent]));
+  const below: Record<string, Record<string, RequestOutcome>> = {};
+
+  for (const [routeNodeId, carried] of Object.entries(painted)) {
+    for (let above = parentOf.get(routeNodeId); above !== undefined; above = parentOf.get(above)) {
+      (below[above] ??= {})[routeNodeId] = carried;
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(below).map(([routerId, nodes]) => [routerId, latestAcrossNodes(nodes)]),
   );
 }
 
