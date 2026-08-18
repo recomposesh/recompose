@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 
 import { DocsContent } from '../../components/docs-content';
 import { baseOptions } from '../../lib/layout.shared';
+import { pageMeta } from '../../lib/seo';
 import { docs, source } from '../../lib/source';
 
 const serverLoader = createServerFn({
@@ -20,6 +21,8 @@ const serverLoader = createServerFn({
     return {
       path: page.path,
       url: page.url,
+      title: page.data.title,
+      description: page.data.description ?? 'the recompose documentation.',
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
@@ -34,6 +37,16 @@ export const Route = createFileRoute('/docs/$')({
 
     return data;
   },
+  head: ({ loaderData }) =>
+    loaderData === undefined
+      ? {}
+      : {
+          meta: pageMeta({
+            title: `${loaderData.title} · recompose docs`,
+            description: loaderData.description,
+            path: loaderData.url,
+          }),
+        },
 });
 
 function Page() {

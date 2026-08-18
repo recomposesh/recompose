@@ -8,8 +8,17 @@ import { LocalSection } from '../landing/local-section';
 import { MixSection } from '../landing/mix-section';
 import { RouterSection } from '../landing/router-section';
 import { SiteFooter } from '../landing/site-footer';
+import { pageMeta } from '../lib/seo';
 
 export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: pageMeta({
+      title: 'recompose',
+      description:
+        'compose every model you can reach into every harness you run. free and open source.',
+      path: '/',
+    }),
+  }),
   component: Home,
 });
 
