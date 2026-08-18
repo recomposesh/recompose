@@ -1,0 +1,12 @@
+{
+  "title": "Troubleshooting",
+  "pages": [
+    "client-cannot-reach",
+    "authentication-errors",
+    "model-refused",
+    "rate-limits-and-cooldowns",
+    "port-in-use",
+    "lapsed-accounts",
+    "collect-logs"
+  ]
+}

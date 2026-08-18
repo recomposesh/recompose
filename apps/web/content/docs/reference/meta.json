@@ -1,0 +1,13 @@
+{
+  "title": "Reference",
+  "pages": [
+    "endpoints",
+    "dialect-translation",
+    "routing-semantics",
+    "environment-variables",
+    "configuration-files",
+    "ports",
+    "shortcuts",
+    "glossary"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "title": "Connect a client",
+  "pages": [
+    "index",
+    "---Terminal agents---",
+    "claude-code",
+    "codex-cli",
+    "opencode",
+    "pi",
+    "omp",
+    "kimi-code",
+    "gemini-cli",
+    "deepseek-harness",
+    "---Desktop apps---",
+    "claude-desktop",
+    "codex-in-chatgpt",
+    "---Editors---",
+    "cursor",
+    "cline",
+    "roo-code",
+    "kilo-code",
+    "---By hand---",
+    "curl",
+    "verify"
+  ]
+}

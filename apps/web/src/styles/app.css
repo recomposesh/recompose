@@ -1,10 +1,210 @@
 @import 'tailwindcss';
-@import 'fumadocs-ui/css/generated/glass.css';
+@import 'fumadocs-ui/css/generated/docs.css';
 @import 'fumadocs-ui/css/black.css';
 @import 'fumadocs-ui/css/preset.css';
+@import '@fontsource-variable/jetbrains-mono';
 
 @theme {
   --font-sans: 'neue-haas-grotesk-text', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-serif: 'questa-grande', 'Questa Grande', Georgia, serif;
+  --font-system: -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --color-gateway: light-dark(#17869b, #40c8e0);
+  --color-virtual-model: light-dark(#ad2d75, #ff72c4);
+  --color-router: light-dark(#5e5ce6, #7d7aff);
+  --color-subscription: light-dark(#007aff, #0a84ff);
+  --color-api-key: light-dark(#7a5600, #ffd60a);
+  --color-aggregator: light-dark(#af52de, #bf5af2);
+  --color-local-runtime: light-dark(#bf3e2f, #ff8068);
+  --color-live: light-dark(#1a9e33, #32d74b);
+  --color-down: light-dark(#d70015, #ff453a);
+  --color-pending: light-dark(#ff9500, #ff9f0a);
+  --color-stage: light-dark(#fafafa, #050505);
+  --color-stage-ink: light-dark(#111113, #f2f2f4);
+  --color-stage-bright: light-dark(#0a0a0a, #f5f5f7);
+  --color-stage-dim: light-dark(#737373, #9a9a9f);
+  --color-stage-faint: light-dark(#98989d, #6e6e73);
+  --color-stage-line: light-dark(rgb(0 0 0 / 10%), rgb(255 255 255 / 12%));
+  --color-stage-hairline: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 8%));
+  --color-staff: light-dark(rgb(0 0 0 / 10%), rgb(255 255 255 / 22%));
+  --color-staff-note: light-dark(rgb(152 152 157 / 35%), rgb(255 255 255 / 45%));
+  --color-stage-panel: light-dark(#f4f4f6, #0c0c0f);
+  --color-stage-card: light-dark(#ffffff, #101114);
+  --color-wire: light-dark(rgb(0 0 0 / 24%), rgb(255 255 255 / 24%));
+  --color-wire-dim: light-dark(rgb(0 0 0 / 15%), rgb(255 255 255 / 18%));
+  --color-win-canvas: light-dark(#f9f9fb, #1c1c1e);
+  --color-win-chrome: light-dark(#f4f4f6, #28282c);
+  --color-win-raised: light-dark(#ffffff, #2e2e33);
+  --color-win-card: light-dark(#ffffff, #28282c);
+  --color-win-sidebar: light-dark(rgb(246 246 250 / 85%), rgb(30 30 34 / 86%));
+  --color-win-ink: light-dark(rgb(0 0 0 / 88%), rgb(255 255 255 / 90%));
+  --color-win-ink2: light-dark(rgb(0 0 0 / 56%), rgb(255 255 255 / 58%));
+  --color-win-line: light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 8.5%));
+  --color-cable: light-dark(rgb(0 0 0 / 45%), rgb(255 255 255 / 45%));
+  --color-accent-ink: light-dark(#0064d2, #3d9bff);
+  --color-term-bg: light-dark(rgb(255 255 255 / 96%), rgb(16 16 20 / 95%));
+  --color-term-ink: light-dark(#1d1d1f, #dddddd);
+  --color-term-dim: light-dark(#6e6e73, #8f8f8f);
+  --color-term-faint: light-dark(#98989d, #5c5c5c);
+  --color-claude: #d97757;
+  --color-traffic-close: #ff5f57;
+  --color-traffic-hold: #febc2e;
+  --color-traffic-go: #28c840;
+  --color-tile: #111111;
+  --color-note-tile-start: #4b9eff;
+  --color-note-tile-end: #2f6ae0;
+  --color-menubar: light-dark(rgb(255 255 255 / 42%), rgb(30 30 34 / 28%));
+  --color-windows: #0078d4;
+  --color-tux: #fcc624;
+  --color-ubuntu: #e95420;
+  --color-stage-soft: light-dark(#999999, #9a9a9f);
+  --color-stage-prose: light-dark(#3f3f46, #c9c9ce);
+  --color-stage-mist: light-dark(#909095, #71717a);
+  --color-stage-hush: light-dark(#a3a3a8, #5b5b60);
+  --color-stage-ghost: light-dark(#ababb0, #52525b);
+  --color-stage-chip: light-dark(#e9e9eb, #18181b);
+  --color-stage-ring: light-dark(rgb(23 23 23 / 15%), rgb(242 242 244 / 15%));
+  --color-terminal-card: light-dark(#f4f4f6, #1c1c1e);
+  --color-breaking: light-dark(#b08430, #d8b26e);
+  --color-cable-ink: light-dark(rgb(23 23 23 / 8%), rgb(242 242 244 / 8%));
+  --color-cable-ink-dim: light-dark(rgb(23 23 23 / 6%), rgb(242 242 244 / 6%));
+  --color-cable-gateway: light-dark(rgb(23 134 155 / 18%), rgb(64 200 224 / 40%));
+  --color-cable-virtual: light-dark(rgb(173 45 117 / 13%), rgb(255 114 196 / 33%));
+  --color-port-gateway: light-dark(rgb(23 134 155 / 33%), rgb(64 200 224 / 67%));
+  --color-port-virtual: light-dark(rgb(173 45 117 / 33%), rgb(255 114 196 / 67%));
+  --color-port-ink: light-dark(rgb(23 23 23 / 33%), rgb(242 242 244 / 33%));
+  --text-caption: 10px;
+  --text-terminal: 10.5px;
+  --text-annotation: 11px;
+  --text-control: 13px;
+  --text-body: 15px;
+  --text-reading: 17px;
+  --text-headline: 40px;
+  --text-hero: 84px;
+  --tracking-caps: 1.4px;
+  --tracking-mono-label: 1px;
+  --leading-prose: 1.6;
+  --leading-display: 1.05;
+  --radius-node: 10px;
+  --radius-chip: 5px;
+  --radius-tile: 9px;
+  --radius-card: 14px;
+}
+
+@utility download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 50px;
+  padding-inline: 26px;
+  border-radius: var(--radius-node);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+@utility grid-cols-faq {
+  grid-template-columns: 360px 1fr;
+}
+
+@utility docs-backdrop {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: -1;
+  height: 240px;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--color-staff);
+  mask-image:
+    linear-gradient(to right, transparent 8%, white 70%),
+    linear-gradient(to bottom, white 30%, transparent);
+  mask-composite: intersect;
+}
+
+#nd-sidebar p {
+  font-weight: 500;
+  color: var(--color-fd-foreground);
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 500;
+}
+
+@utility footer-link {
+  font-size: 17px;
+  color: var(--color-stage-ink);
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+@utility faq-panel {
+  height: var(--accordion-panel-height);
+  overflow: hidden;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: height 200ms ease-out;
+  }
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    height: 0;
+  }
+}
+
+@utility cable-pulse {
+  fill: none;
+  stroke-width: 5.4px;
+  stroke-linecap: round;
+  stroke-dasharray: 0.05 1;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: cable-pulse-travel 1500ms linear infinite;
+  }
+}
+
+@keyframes cable-pulse-travel {
+  from {
+    stroke-dashoffset: 0.05;
+  }
+
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+@utility win-dots {
+  background-image: radial-gradient(
+    circle,
+    light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 6%)) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
+@utility dot-field {
+  background-image:
+    linear-gradient(
+      to bottom,
+      var(--color-stage),
+      transparent 10rem,
+      transparent calc(100% - 10rem),
+      var(--color-stage)
+    ),
+    radial-gradient(circle, light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 9%)) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    22px 22px;
 }
 .note-run {
   display: inline-flex;

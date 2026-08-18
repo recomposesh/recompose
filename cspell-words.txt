@@ -21,9 +21,11 @@ andrej
 aoede
 apikey
 APPIMAGE
+argjson
 asar
 Attio
 autobump
+autostarts
 Aydin
 backticked
 bddgen
@@ -61,6 +63,7 @@ connectingto
 connectionline
 conv
 cooldown
+cooldowns
 copilotkit
 covguard
 crashpad
@@ -79,6 +82,7 @@ DeepSeek
 depcruise
 destructures
 değiştir
+dialable
 diffable
 DINIT
 dllexport
@@ -105,6 +109,7 @@ esac
 esbenp
 Excalidraw
 exfiltration
+failovers
 fflate
 Fibery
 Firecrawl
@@ -131,6 +136,7 @@ GOCSPX
 googleusercontent
 Grok
 Groq
+gsap
 healthz
 highp
 highspeed
@@ -174,8 +180,10 @@ localai
 LOCALAPPDATA
 lockfiles
 logit
+logomark
 logprobs
 lossily
+ltrimstr
 managementasset
 markerless
 McCabe
@@ -249,6 +257,7 @@ providera
 providerb
 providerc
 pypi
+questa
 QUFB
 QUJD
 rasterizes
@@ -321,6 +330,7 @@ Toggl
 toggleable
 togglefullscreen
 tokenless
+tolower
 toolu
 topsecret
 tosorted

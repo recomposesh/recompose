@@ -1,3 +1,3 @@
-export const gitHubUrl = 'https://github.com/recomposesh/recompose';
+export const siteUrl = 'https://recompose.sh';
 
-export const releasesUrl = `${gitHubUrl}/releases`;
+export const gitHubUrl = 'https://github.com/recomposesh/recompose';

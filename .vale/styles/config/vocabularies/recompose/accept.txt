@@ -55,6 +55,7 @@
 [Dd]isambiguates
 [Dd]ocblocks
 [Dd]raggable
+[Dd]ebian
 [Ee]lectrobun
 [Ee]num
 [Ee]nv
@@ -66,6 +67,7 @@
 [Ff]rontmost
 [Ff]s
 [Ff]ullscreen
+GLM
 [Gg]herkinized
 [Gg]itignored
 [Gg]itleaks
@@ -91,6 +93,7 @@
 [Ll]ockfile
 [Ll]ossily
 [Mm]inimap
+MIT
 [Mm]obbin
 [Mm]ockup
 [Mm]ockups
@@ -189,6 +192,7 @@
 [Uu]pserts
 [Uu]pstream
 [Uu]tilityProcess
+[Uu]buntu
 [Vv]api
 [Vv]endored
 [Vv]ercel

@@ -1,11 +1,12 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useFumadocsLoader } from 'fumadocs-core/source/client';
-import { GlassLayout } from 'fumadocs-ui/layouts/glass';
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { Suspense } from 'react';
 
 import { DocsContent } from '../../components/docs-content';
 import { baseOptions } from '../../lib/layout.shared';
+import { pageMeta } from '../../lib/seo';
 import { docs, source } from '../../lib/source';
 
 const serverLoader = createServerFn({
@@ -19,6 +20,9 @@ const serverLoader = createServerFn({
 
     return {
       path: page.path,
+      url: page.url,
+      title: page.data.title,
+      description: page.data.description ?? 'the recompose documentation.',
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
@@ -33,16 +37,27 @@ export const Route = createFileRoute('/docs/$')({
 
     return data;
   },
+  head: ({ loaderData }) =>
+    loaderData === undefined
+      ? {}
+      : {
+          meta: pageMeta({
+            title: `${loaderData.title} · recompose docs`,
+            description: loaderData.description,
+            path: loaderData.url,
+          }),
+        },
 });
 
 function Page() {
   const data = useFumadocsLoader(Route.useLoaderData());
+  const { nav, githubUrl } = baseOptions();
 
   return (
-    <GlassLayout nav={baseOptions().nav} tree={data.pageTree}>
+    <DocsLayout nav={nav} githubUrl={githubUrl} tree={data.pageTree}>
       <Suspense>
-        <DocsContent path={data.path} />
+        <DocsContent path={data.path} url={data.url} tree={data.pageTree} />
       </Suspense>
-    </GlassLayout>
+    </DocsLayout>
   );
 }

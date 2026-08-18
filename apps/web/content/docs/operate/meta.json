@@ -1,0 +1,13 @@
+{
+  "title": "Operate",
+  "pages": [
+    "securing-a-gateway",
+    "serving-other-devices",
+    "request-log",
+    "live-traffic",
+    "usage-and-spend",
+    "settings",
+    "menu-bar-and-dock",
+    "data-on-disk"
+  ]
+}
