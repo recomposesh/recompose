@@ -68,7 +68,9 @@ describe('the band a first offer is drawn from', () => {
   test('the band sits below every ephemeral floor, so a reboot cannot hand a port away', () => {
     const LOWEST_EPHEMERAL_FLOOR = 32768;
 
-    expect(GATEWAY_PORT_BAND.first + GATEWAY_PORT_BAND.count).toBeLessThan(LOWEST_EPHEMERAL_FLOOR);
+    expect(GATEWAY_PORT_BAND.first + GATEWAY_PORT_BAND.count - 1).toBeLessThan(
+      LOWEST_EPHEMERAL_FLOOR,
+    );
   });
 });
 

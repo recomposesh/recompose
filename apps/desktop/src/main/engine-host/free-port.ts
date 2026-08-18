@@ -22,8 +22,9 @@ function bandFrom(installFolder: string): number[] {
  * The port a new gateway is offered.
  *
  * @summary Where an install enters the published band follows from its own folder, so two
- * installs on one machine never race for the same port. The walk wraps rather than running past
- * the top, and exhausting the band fails rather than wandering into the ephemeral pool.
+ * installs on one machine start apart and rarely reach for the same port; the free-port probe at
+ * offer time is the actual arbiter. The walk wraps rather than running past the top, and
+ * exhausting the band fails rather than wandering into the ephemeral pool.
  */
 export async function offerFreePort(
   taken: ReadonlySet<number>,
