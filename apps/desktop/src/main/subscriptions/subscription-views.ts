@@ -55,8 +55,9 @@ function credentialEvidenceFor(
 
 /**
  * @summary An adopted account owns no home, so reading one would report every such row lapsed.
- * Its standing is whatever the provider's own tool holds this moment, which is the same live
- * reading every serving turn takes.
+ * Its standing is whatever the provider's own tool holds this moment, read without renewing, so
+ * a row past its moment reads lapsed while the next serving turn renews through that tool and
+ * serves.
  */
 function observationFrom(reading: MachineCredentialReading): SubscriptionObservation {
   if (reading.holds !== 'account') {
