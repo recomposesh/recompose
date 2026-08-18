@@ -4,7 +4,7 @@ icon: Download
 description: 'Get recompose onto your machine.'
 ---
 
-recompose is a free, open-source desktop app for macOS, Windows, and Linux. Every build ships on [GitHub releases](https://github.com/recomposesh/recompose/releases/latest).
+recompose is a free, open-source desktop app for macOS, Windows, and Linux. Every download starts at [recompose.sh/download](/download).
 
 ## macOS
 
@@ -12,8 +12,8 @@ recompose runs on macOS 12 Monterey or later, on Apple Silicon and Intel.
 
 ### Download
 
-1. Grab the dmg that matches your Mac from the [latest release](https://github.com/recomposesh/recompose/releases/latest): `arm64` for Apple Silicon, `x64` for Intel.
-2. Open it and drag Recompose into Applications.
+1. Download the build for your Mac: [Apple Silicon](/download/mac-arm64) or [Intel](/download/mac-x64).
+2. Open the dmg and drag Recompose into Applications.
 3. Open Recompose. macOS asks once about an app downloaded from the internet: click **Open**.
 
 Every build carries a Developer ID signature and Apple's notary ticket, so that stays the only prompt.
@@ -28,7 +28,7 @@ The app updates itself, so a plain `brew upgrade` leaves it alone. Pass `--greed
 
 ## Windows
 
-recompose runs on 64-bit Windows 10 or later. Download the setup executable from the [latest release](https://github.com/recomposesh/recompose/releases/latest) and run it.
+recompose runs on 64-bit Windows 10 or later. Download the [installer](/download/windows) and run it.
 
 ### If Windows warns you
 
@@ -36,7 +36,7 @@ Windows shows "Windows protected your PC" the first time you run the installer. 
 
 The warning is about reputation, not about a problem Windows found. SmartScreen trusts an installer once enough people have run it, and a fresh release from a small project starts with no history. A signed installer through the SignPath Foundation is on the way and removes the warning for everyone.
 
-Rather than taking anyone's word for it, verify that your download came from the public build of a tagged commit:
+Rather than taking anyone's word for it, verify that your download came from the public build of a tagged commit on [GitHub](https://github.com/recomposesh/recompose):
 
 ```sh
 gh attestation verify Recompose-*-setup.exe --repo recomposesh/recompose
@@ -48,12 +48,16 @@ recompose ships as an AppImage for any modern 64-bit distribution and as a deb f
 
 ### AppImage
 
+Download the [AppImage](/download/linux-appimage), then make it runnable:
+
 ```sh
 chmod +x Recompose-*.AppImage
 ./Recompose-*.AppImage
 ```
 
 ### Debian and Ubuntu
+
+Download the [deb package](/download/linux-deb), then install it:
 
 ```sh
 sudo apt install ./Recompose_*.deb
