@@ -144,13 +144,13 @@ jobs:
           restore-keys: mutation-incremental-
       - shell: bash
         run: |
-          contracts=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)packages/contracts/src/**/*.ts' | grep -vE '\.(test(-d)?|d)\.ts$' | sed 's|^packages/contracts/||' | paste -sd, -) || true
-          engine=$(git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)packages/engine/src/**/*.ts' | grep -vE '\.(test|testkit|d)\.ts$' | sed 's|^packages/engine/||' | paste -sd, -) || true
+          contracts=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- ':(glob)packages/contracts/src/**/*.ts' | grep -vE '\.(test(-d)?|d)\.ts$' | sed 's|^packages/contracts/||' | paste -sd, -) || true
+          engine=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- ':(glob)packages/engine/src/**/*.ts' | grep -vE '\.(test|testkit|d)\.ts$' | sed 's|^packages/engine/||' | paste -sd, -) || true
           desktop_globs=()
           while IFS= read -r glob; do
             desktop_globs+=("$glob")
           done < <(jq -r '[.mutate[] | select(startswith("!") | not)] | .[] | ":(glob)apps/desktop/" + .' apps/desktop/stryker.config.json)
-          desktop=$(git diff --name-only "$BASE_SHA"...HEAD -- "${desktop_globs[@]}" | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
+          desktop=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- "${desktop_globs[@]}" | grep -vE '\.(test|testkit|d)\.m?ts$' | sed 's|^apps/desktop/||' | paste -sd, -) || true
           if [ -z "$contracts" ] && [ -z "$engine" ] && [ -z "$desktop" ]; then
             echo "mutation scope untouched, skipping"
             exit 0
