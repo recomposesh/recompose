@@ -7,7 +7,7 @@ Kimi Code takes a provider block and a model block that names the provider back.
 
 - Dialect: Anthropic Messages, at the bare origin
 - Address shape: the bare origin, no `/v1`
-- Credential: `api_key` in the file, with `unused` when the gateway checks no key
+- Credential: `api_key` in the file: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

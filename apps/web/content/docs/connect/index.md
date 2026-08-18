@@ -16,9 +16,9 @@ Each gateway listens on its own port and serves at the root of its address: no p
 
 Some clients append `v1/chat/completions` to whatever address you hand them, so they want the bare origin. Others append `chat/completions` and want the origin plus `/v1`. Each client page names the shape it takes, and the connect sheet picks it for you. A wrong guess lands requests on `/v1/v1`, the most common broken paste. The segment doesn't follow the dialect either: Kimi Code speaks Anthropic Messages at the bare origin.
 
-## A keyless gateway still hands over a key
+## The key value depends on the gateway
 
-Clients refuse to start with an empty credential field, so the block carries the stand-in `unused` when your gateway checks nothing. It satisfies the client and nothing else. A client whose form takes only an address, such as Claude Desktop, stays out of reach of a gateway that does [require a key](/docs/operate/securing-a-gateway): its page says so.
+Two cases, and the connect sheet handles both. A gateway that [requires a key](/docs/operate/securing-a-gateway) prints its real key into the block, and clients must send it. A gateway that checks nothing still hands over a key, because clients refuse an empty credential field. The block then carries the stand-in `unused`, which satisfies the client and nothing else. A client whose form takes only an address, such as Claude Desktop, stays out of reach of a key-enforcing gateway: its page says so.
 
 ## Two gateways never collide
 

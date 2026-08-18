@@ -7,7 +7,7 @@ Roo Code takes its OpenAI compatible provider, pointed at the gateway's address 
 
 - Dialect: OpenAI Chat Completions
 - Address shape: the origin plus `/v1`
-- Credential: the key field, with `unused` when the gateway checks no key
+- Credential: the key field: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the values
 

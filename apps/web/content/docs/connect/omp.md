@@ -7,7 +7,7 @@ omp takes a provider entry in `models.yml`, with the key carried as a bearer tok
 
 - Dialect: any of the four, named per provider
 - Address shape: the origin plus `/v1` for the OpenAI dialects
-- Credential: `apiKey` in the file, with `unused` when the gateway checks no key
+- Credential: `apiKey` in the file: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 
@@ -32,11 +32,13 @@ providers:
 
 ## Or let it read the gateway model list
 
-Swap the `models` list for discovery:
+Swap the `models` list for discovery, at the same depth under the provider:
 
 ```yaml
-discovery:
-  type: openai-models-list
+providers:
+  recompose-my-gateway:
+    discovery:
+      type: openai-models-list
 ```
 
 Discovery calls the OpenAI-shaped model list the gateway already serves, so every virtual model arrives and none needs naming twice.

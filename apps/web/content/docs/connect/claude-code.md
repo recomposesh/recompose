@@ -7,7 +7,7 @@ Claude Code reads its endpoint once, at startup, and a running session keeps the
 
 - Dialect: Anthropic Messages
 - Address shape: the bare origin, no `/v1`
-- Credential: `ANTHROPIC_AUTH_TOKEN`, with the stand-in `unused` when the gateway checks no key
+- Credential: `ANTHROPIC_AUTH_TOKEN`: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

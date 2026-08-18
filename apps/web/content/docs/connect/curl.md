@@ -7,7 +7,7 @@ One port, four dialects. Every path below answers on the same address, and this 
 
 - Dialect: all four
 - Address shape: you write every path yourself
-- Credential: any of the four spellings, with `unused` when the gateway checks no key
+- Credential: any of the four spellings: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Ask in the Anthropic dialect
 

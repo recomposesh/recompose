@@ -7,7 +7,7 @@ DeepSeek Harness takes a custom provider added in its browser interface, or the 
 
 - Dialect: OpenAI Chat Completions
 - Address shape: the origin plus `/v1`
-- Credential: a named environment variable, with `unused` when the gateway checks no key
+- Credential: a named environment variable: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

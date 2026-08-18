@@ -7,7 +7,7 @@ The desktop app and the editor extension read the same file the command line doe
 
 - Dialect: OpenAI Responses
 - Address shape: the origin plus `/v1`
-- Credential: an environment variable the config names, with `unused` when the gateway checks no key
+- Credential: an environment variable the config names: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Write the same config
 

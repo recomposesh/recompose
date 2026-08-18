@@ -32,7 +32,7 @@ No, and no recompose server exists. Requests travel from your machine straight t
 
 ### Does recompose collect telemetry or need an account? [#telemetry]
 
-No telemetry leaves the machine, and no account exists to create. recompose does write local records: a request log and a usage ledger under `~/.recompose`. [Data on disk](/docs/operate/data-on-disk) lists every file.
+No telemetry leaves the machine, and no account exists to create. recompose does write local records: a request log and a usage history under `~/.recompose`. [Data on disk](/docs/operate/data-on-disk) lists every file.
 
 ### Where do credentials live? [#credentials]
 

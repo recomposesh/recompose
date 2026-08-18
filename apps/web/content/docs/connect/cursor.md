@@ -7,7 +7,7 @@ Cursor takes an OpenAI key and an overridden base URL, both under the model sett
 
 - Dialect: OpenAI Chat Completions
 - Address shape: the origin plus `/v1`
-- Credential: the OpenAI key field, with `unused` when the gateway checks no key
+- Credential: the OpenAI key field: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the values
 

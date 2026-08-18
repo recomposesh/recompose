@@ -7,7 +7,7 @@ opencode takes one provider in `opencode.json`, drawn by the `openai-compatible`
 
 - Dialect: OpenAI Chat Completions
 - Address shape: the origin plus `/v1`
-- Credential: `apiKey` in the config, with `unused` when the gateway checks no key
+- Credential: `apiKey` in the config: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

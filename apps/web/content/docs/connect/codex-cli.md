@@ -7,7 +7,7 @@ Codex takes one provider block at user level. Responses is the only wire the cur
 
 - Dialect: OpenAI Responses
 - Address shape: the origin plus `/v1`
-- Credential: an environment variable the config names, with `unused` when the gateway checks no key
+- Credential: an environment variable the config names: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

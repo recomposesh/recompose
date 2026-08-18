@@ -7,7 +7,7 @@ pi takes one JSON file, reread every time the model picker opens. No restart.
 
 - Dialect: any of the four, named per provider
 - Address shape: the origin plus `/v1` for the OpenAI dialects, the bare origin for Messages
-- Credential: `apiKey` in the file, with `unused` when the gateway checks no key
+- Credential: `apiKey` in the file: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

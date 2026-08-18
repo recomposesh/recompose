@@ -7,7 +7,7 @@ Two variables and a launch flag. Plain `http` passes here because the address is
 
 - Dialect: Gemini
 - Address shape: the bare origin, no `/v1`
-- Credential: `GEMINI_API_KEY`, with `unused` when the gateway checks no key
+- Credential: `GEMINI_API_KEY`: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the block
 

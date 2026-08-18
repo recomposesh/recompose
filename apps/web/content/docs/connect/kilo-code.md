@@ -7,7 +7,7 @@ Kilo Code takes a custom provider of its own, and it reads the model list off th
 
 - Dialect: OpenAI Chat Completions
 - Address shape: the origin plus `/v1`
-- Credential: the key field, with `unused` when the gateway checks no key
+- Credential: the key field: the gateway's key, or the stand-in `unused` when it checks none
 
 ## Get the values
 
