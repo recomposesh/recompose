@@ -41,6 +41,26 @@ async function storedAccounts() {
   return answer.ok ? answer.value.accounts : [];
 }
 
+test('a coding plan form offers the vendor page the key comes from, opened outside the app', async () => {
+  installFakeBridge();
+
+  const screen = await renderKeyForm('zhipu');
+  const link = screen.getByRole('link', { name: 'Get a key from Z.ai' });
+
+  await expect.element(link).toHaveAttribute('href', 'https://z.ai/manage-apikey/apikey-list');
+  await expect.element(link).toHaveAttribute('target', '_blank');
+  await expect.element(link).toHaveAttribute('rel', 'noreferrer');
+});
+
+test('a provider that documents no key page leaves the form without a link to nowhere', async () => {
+  installFakeBridge();
+
+  const screen = await renderKeyForm('anthropic');
+
+  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toBeVisible();
+  await expect.element(screen.getByRole('link')).not.toBeInTheDocument();
+});
+
 test('a key form asks for a name and a key, and nothing the picked entry already settled', async () => {
   installFakeBridge();
 

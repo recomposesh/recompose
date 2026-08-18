@@ -37,6 +37,14 @@ export type CatalogEntry = {
   lead: CatalogLead;
   /** Every way this provider can be connected, in the order they are offered. */
   offers: readonly CatalogOffer[];
+  /**
+   * The vendor's own page where the key this entry takes is issued.
+   *
+   * @summary Only an entry whose vendor publishes such a page carries one, because a link the app
+   * guessed at is worse than none: a person who lands on the wrong page concludes the key is
+   * somewhere else. The app never restates the steps behind it either, since the vendor moves them.
+   */
+  keyPage?: { label: string; href: string };
 };
 
 function hostOf(vendor: string): string {
@@ -93,18 +101,27 @@ const subscriptionEntries: readonly CatalogEntry[] = [
     name: 'Z.ai',
     lead: { mark: 'zhipu' },
     offers: [planToken('GLM Coding Plan', 'Z.ai plan, GLM models')],
+    keyPage: { label: 'Get a key from Z.ai', href: 'https://z.ai/manage-apikey/apikey-list' },
   },
   {
     id: 'qwen-coding',
     name: 'Qwen',
     lead: { mark: 'qwen' },
     offers: [planToken('Qwen Coding Plan', 'Alibaba Model Studio, multi-model')],
+    keyPage: {
+      label: 'Get a key from Alibaba Model Studio',
+      href: 'https://www.alibabacloud.com/help/en/model-studio/get-api-key',
+    },
   },
   {
     id: 'minimax',
     name: 'MiniMax',
     lead: { mark: 'minimax' },
     offers: [planToken('MiniMax Coding Plan', 'M2 on a flat monthly quota')],
+    keyPage: {
+      label: 'Get a key from MiniMax',
+      href: 'https://platform.minimax.io/user-center/basic-information/interface-key',
+    },
   },
 ];
 

@@ -10,6 +10,7 @@ import type { CatalogEntry } from '../../model/provider-catalog';
 import { IpcResultError, useConnectAccount, withRefusal } from '../../../../shared/api';
 import {
   keyHostFor,
+  keyPageFor,
   keyShapeHintFor,
   keyTitleFor,
   providerName,
@@ -33,6 +34,37 @@ function reachedHost(entry: CatalogEntry): ReactNode {
     <p className="text-detail text-ink-secondary">
       This key reaches <span className="font-mono text-mono-value">{host}</span>
     </p>
+  );
+}
+
+/**
+ * The vendor's own page for issuing this key, offered rather than restated.
+ *
+ * @summary A person who bought a coding plan has no sign-in to fall back on, so a form that never
+ * says where the key comes from leaves them searching. The link names the vendor doing the issuing,
+ * because the label is what a screen reader reads out with no surrounding sentence to lean on.
+ */
+function whereTheKeyComesFrom(entry: CatalogEntry): ReactNode {
+  const page = keyPageFor(entry.id);
+
+  return page === undefined ? null : (
+    <a
+      className="focus-ring text-caption text-accent-ink"
+      href={page.href}
+      rel="noreferrer"
+      target="_blank"
+    >
+      {page.label}
+    </a>
+  );
+}
+
+function keyProvenance(entry: CatalogEntry): ReactNode {
+  return (
+    <>
+      {reachedHost(entry)}
+      {whereTheKeyComesFrom(entry)}
+    </>
   );
 }
 
@@ -131,7 +163,7 @@ export function ConnectKeyForm({ entry, kind, onConnected }: ConnectKeyFormProps
 
   return (
     <ConnectStep
-      caption={reachedHost(entry)}
+      caption={keyProvenance(entry)}
       formId={formId}
       lead={entry.lead}
       note={shapeWarning(provider, pasted)}

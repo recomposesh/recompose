@@ -128,6 +128,17 @@ export function keyHostFor(provider: string): string | undefined {
   return origin === undefined ? undefined : new URL(origin).host;
 }
 
+/**
+ * The vendor page a provider's key is issued on, or nothing where the catalog documents none.
+ *
+ * @summary Reach for it where a person is asked for a key they may not have yet, so the surface
+ * points at the page that issues one instead of leaving them to search for it. A plan bought outside
+ * the app is the case that needs it most: no sign-in exists to offer, so the key is the only way in.
+ */
+export function keyPageFor(provider: string): { label: string; href: string } | undefined {
+  return entryFor(provider)?.keyPage;
+}
+
 /** The mark a stored provider is drawn with, or nothing where the catalog draws a glyph. */
 export function markFor(provider: string): BrandMarkName | undefined {
   const lead = entryFor(provider)?.lead;
