@@ -75,7 +75,7 @@ While the sheet stands open, it MUST show the address the gateway would answer o
 #### Scenario: a person changes the port
 
 - When a person types a different port
-- Then the preview shows the loopback address carrying that port
+- Then the preview shows the stored bind address carrying that port
 
 ### Requirement: A new gateway serves the moment it saves
 
