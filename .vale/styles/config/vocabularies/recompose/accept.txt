@@ -67,6 +67,7 @@
 [Ff]rontmost
 [Ff]s
 [Ff]ullscreen
+GLM
 [Gg]herkinized
 [Gg]itignored
 [Gg]itleaks
