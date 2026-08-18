@@ -56,6 +56,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -66,15 +67,24 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
+      - if: needs.changes.outputs.desktop == 'true'
+        run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
-      - run: pnpm exec turbo run lint typecheck build test --concurrency=1
+      - if: github.event_name == 'pull_request'
+        run: pnpm exec turbo run lint typecheck build test --concurrency=1 --affected
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+      - if: github.event_name != 'pull_request'
+        run: pnpm exec turbo run lint typecheck build test --concurrency=1
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
       - if: needs.changes.outputs.desktop == 'true'
         run: pnpm --filter @recompose/desktop run storybook:build
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-reports
           path: |
@@ -305,7 +315,8 @@ jobs:
           retention-days: 3
 
   coverage-upload:
-    needs: check
+    needs: [changes, check]
+    if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
