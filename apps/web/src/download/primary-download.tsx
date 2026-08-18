@@ -13,7 +13,7 @@ const buttons: Record<Platform, ComponentType> = {
 };
 
 const requirements: Record<Platform, string> = {
-  mac: 'macOS 12 Monterey or later · signed and notarized',
+  mac: 'macOS 12 Monterey or later',
   windows: 'Windows 10 or later, 64-bit · unsigned for now — SmartScreen may warn',
   linux: 'any modern 64-bit distro · the AppImage updates itself',
 };
