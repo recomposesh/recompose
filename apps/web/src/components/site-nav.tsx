@@ -7,7 +7,7 @@ import { Wordmark } from './wordmark';
 
 export function SiteNav() {
   return (
-    <nav className="relative z-10 mx-auto flex w-full max-w-360 items-center justify-between px-16 py-6 text-base font-medium">
+    <nav className="relative z-10 mx-auto flex w-full max-w-360 items-center justify-between px-16 py-6 text-base">
       <Link to="/" aria-label="recompose" className="relative inline-flex text-fd-foreground">
         <Wordmark height={22} />
         <span aria-hidden="true" data-spot="mask" className="spot-mask absolute inset-0">

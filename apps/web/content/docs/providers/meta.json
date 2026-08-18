@@ -1,0 +1,4 @@
+{
+  "title": "Providers",
+  "pages": ["index", "subscriptions", "api-keys", "aggregators", "local-runtimes"]
+}

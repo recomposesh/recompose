@@ -1,0 +1,12 @@
+{
+  "title": "Compose",
+  "pages": [
+    "canvas",
+    "gateways",
+    "virtual-models",
+    "failover",
+    "round-robin",
+    "chaining-routers",
+    "recipes"
+  ]
+}

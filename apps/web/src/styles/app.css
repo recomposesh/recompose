@@ -64,6 +64,10 @@
   grid-template-columns: 360px 1fr;
 }
 
+#nd-sidebar > div:first-child {
+  padding-block-end: calc(var(--spacing) * 2);
+}
+
 @utility footer-link {
   font-size: 17px;
   font-weight: 500;

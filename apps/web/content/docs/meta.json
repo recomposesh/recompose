@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "index",
+    "get-started",
+    "connect",
+    "compose",
+    "providers",
+    "operate",
+    "reference",
+    "troubleshooting"
+  ]
+}
