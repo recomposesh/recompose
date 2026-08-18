@@ -8,6 +8,8 @@ import { isRecord, readJsonWithQuarantine, writeJsonAtomic } from '../storage/js
 
 const REFRESH_EVERY_MS = 24 * 3_600_000;
 
+const PRICE_CACHE_VERSION = 1;
+
 export type PriceMapDeps = {
   cacheFile: string;
   bundledFile: string;
@@ -101,10 +103,26 @@ function cachedAt(raw: unknown): number | undefined {
   return typeof fetchedAt === 'number' && Number.isInteger(fetchedAt) ? fetchedAt : undefined;
 }
 
+/**
+ * Whether this build knows the era one cached document was written at.
+ *
+ * @summary A document from before this cache carried a version names none, and every one of those on
+ * disk holds prices a past run really did fetch, so it is read rather than thrown away for a
+ * refetch that a first boot offline cannot make. A document naming any other version belongs to a
+ * build that is not this one, and it reads as no cache so the bundle serves instead. Nothing here
+ * moves a file aside: a cache from a newer build is a good file, and quarantining it would cost that
+ * build its own prices the next time a person goes back to it.
+ */
+function cacheEraKnown(cached: Record<string, unknown>): boolean {
+  const named = cached['schemaVersion'];
+
+  return named === undefined || named === PRICE_CACHE_VERSION;
+}
+
 function syncedFromCache(cached: unknown): StandingPrices | undefined {
   const fetchedAt = cachedAt(cached);
 
-  if (!isRecord(cached) || fetchedAt === undefined) {
+  if (!isRecord(cached) || fetchedAt === undefined || !cacheEraKnown(cached)) {
     return undefined;
   }
 
@@ -162,7 +180,11 @@ export async function openPriceMap(deps: PriceMapDeps): Promise<PriceMapDesk> {
     const fetchedAt = Date.now();
 
     standing = { prices, provenance: { source: 'synced', fetchedAt } };
-    await writeJsonAtomic(deps.cacheFile, { fetchedAt, payload });
+    await writeJsonAtomic(deps.cacheFile, {
+      schemaVersion: PRICE_CACHE_VERSION,
+      fetchedAt,
+      payload,
+    });
   };
 
   const beat = setInterval(() => {

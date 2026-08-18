@@ -40,6 +40,26 @@ describe('the id charset a stored virtual model accepts', () => {
       expect(modelAliasSchema.safeParse(id).success).toBe(false);
     }
   });
+
+  test('an id carrying the underscore real model names use is accepted', () => {
+    for (const id of ['gpt_5', 'gpt_5.6-sol', 'llama_3.2']) {
+      expect(modelAliasSchema.safeParse(id).success).toBe(true);
+    }
+  });
+
+  test('an underscore on either end is refused, like every other separator', () => {
+    for (const id of ['_fast', 'fast_']) {
+      expect(modelAliasSchema.safeParse(id).success).toBe(false);
+    }
+  });
+
+  test('the refusal names every character the charset admits, so a person can fix the id', () => {
+    const refused = modelAliasSchema.safeParse('Fast Sonnet');
+
+    expect(refused.error?.issues.map((issue) => issue.message)).toContain(
+      'lowercase id of letters, digits, dots, underscores and dashes',
+    );
+  });
 });
 
 const anyName = fc.oneof(

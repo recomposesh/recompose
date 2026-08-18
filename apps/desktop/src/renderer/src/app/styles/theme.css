@@ -139,8 +139,6 @@
   --spacing-cable-stroke-selected: 3.6px;
   /* React Flow elevates a selected node to z-index 1000; an open error reading must clear it. */
   --z-cable-reading: 1001;
-  --spacing-cable-dash: 7px;
-  --spacing-cable-dash-gap: 5px;
   --spacing-cable-pulse-stroke: 5.4px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
@@ -599,20 +597,6 @@
 @utility binding-cable-selected {
   fill: none;
   stroke-width: var(--spacing-cable-stroke-selected);
-}
-
-@utility cable-march {
-  stroke-dasharray: var(--spacing-cable-dash) var(--spacing-cable-dash-gap);
-
-  @media (prefers-reduced-motion: no-preference) {
-    animation: cable-flow 620ms linear infinite;
-  }
-}
-
-@keyframes cable-flow {
-  to {
-    stroke-dashoffset: calc((var(--spacing-cable-dash) + var(--spacing-cable-dash-gap)) * -1);
-  }
 }
 
 @utility cable-pulse {

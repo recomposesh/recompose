@@ -8,10 +8,11 @@ export type RouteAddress = { modelId: string; routeNodeId?: string | undefined }
  *
  * @summary A card standing for the entry keeps the bare definition id it stood under before
  * routers existed, and every card below the entry adds the id its ladder holds it by. Only the
- * first half is colon-free: `modelAliasSchema` admits lowercase letters, digits, dots and dashes,
- * while a route node id carries whatever minted it, and the version 4 migration mints `seat:` plus
- * the model's own id. So the first colon is the only boundary that can be trusted, and reading
- * from the last one would tear a migrated id in half once a router displaced it below the entry.
+ * first half is colon-free: `modelAliasSchema` admits lowercase letters, digits, dots, underscores
+ * and dashes, while a route node id carries whatever minted it, and the version 4 migration mints
+ * `seat:` plus the model's own id. So the first colon is the only boundary that can be trusted, and
+ * reading from the last one would tear a migrated id in half once a router displaced it below the
+ * entry.
  */
 function addressRead(name: string): RouteAddress {
   const split = name.indexOf(':');
