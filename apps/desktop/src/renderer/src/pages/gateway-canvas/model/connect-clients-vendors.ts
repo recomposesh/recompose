@@ -89,7 +89,7 @@ export const deepseekHarness: ConnectClient = {
     },
     {
       title: 'Hand it the key that block names',
-      lines: [`export RECOMPOSE_API_KEY=${presentedKey(facts)}`],
+      lines: [exportLine(keyVariable(facts), presentedKey(facts))],
       note: 'The settings file names the variable rather than holding the key, and the harness answers MISSING_CREDENTIAL while nothing sets it. A key entered through the Models page needs no variable at all.',
     },
   ],

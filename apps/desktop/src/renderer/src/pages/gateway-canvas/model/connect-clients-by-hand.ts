@@ -6,11 +6,11 @@ export const byHand: ConnectClient = {
   id: 'curl',
   name: 'curl',
   lead: { glyph: 'terminal' },
-  dialect: 'All four dialects',
+  dialect: 'All five dialects',
   kind: 'hand',
   reach: 'whole',
   takesKey: true,
-  intro: 'One port, four dialects. Every path below answers on the same address.',
+  intro: 'One port, five dialects. Every path below answers on the same address.',
   guide: {
     label: 'The Anthropic Messages reference',
     href: 'https://docs.claude.com/en/api/messages',
@@ -35,7 +35,7 @@ export const byHand: ConnectClient = {
         '  -H "content-type: application/json" \\',
         `  -d '{"model":"${presentedModel(facts)}","messages":[{"role":"user","content":"ping"}]}'`,
       ],
-      note: 'The same gateway answers /v1/responses for the Responses dialect and /v1beta/models/<model>:generateContent for the Gemini one.',
+      note: 'The same gateway answers /v1/responses for the Responses dialect, /v1/interactions for the Interactions one, and /v1beta/models/<model>:generateContent for the Gemini one.',
     },
     {
       title: 'Read back what this gateway serves',
