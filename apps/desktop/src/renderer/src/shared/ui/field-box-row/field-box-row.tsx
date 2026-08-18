@@ -47,7 +47,23 @@ function layoutOf(stacked: boolean, controlClasses: string) {
   };
 }
 
-/** One labelled row of a field box, carrying its own refusal under the field it refuses. */
+function refusalLine(refusal: string | undefined) {
+  return refusal === undefined ? null : (
+    <Field.Error className="w-full text-caption text-danger-ink" match role="alert">
+      {refusal}
+    </Field.Error>
+  );
+}
+
+/**
+ * One labelled row of a field box, carrying its own refusal under the field it refuses.
+ *
+ * @summary The row keeps the commit contract every editable field in the app follows: Enter and
+ * leaving the field settle the value, and Escape walks the entry back to the one last settled
+ * without settling anything. The walk back travels out through `onChangeValue` rather than a draft
+ * held here, because the row is controlled and a second copy of the value could disagree with the
+ * one its owner holds.
+ */
 export function FieldBoxRow({
   label,
   value,
@@ -87,17 +103,17 @@ export function FieldBoxRow({
           if (event.key === 'Enter') {
             settle(event.currentTarget.value);
           }
+
+          if (event.key === 'Escape') {
+            onChangeValue(lastSettled.current);
+          }
         }}
         placeholder={placeholder}
         ref={ref}
         type={type}
         value={value}
       />
-      {refusal === undefined ? null : (
-        <Field.Error className="w-full text-caption text-danger-ink" match role="alert">
-          {refusal}
-        </Field.Error>
-      )}
+      {refusalLine(refusal)}
     </Field.Root>
   );
 }

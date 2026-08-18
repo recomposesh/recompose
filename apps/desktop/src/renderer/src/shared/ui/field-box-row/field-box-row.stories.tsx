@@ -110,5 +110,24 @@ export const CommitsOnBlur = meta.story({
   },
 });
 
+/**
+ * Escape abandons the entry in hand, so a half-typed value never reaches the document.
+ *
+ * @summary The reading walks back to the opening value rather than to an empty field, because the
+ * row reverts to what was last settled and nothing has settled yet.
+ */
+export const RevertsOnEscape = meta.story({
+  render: ControlledFieldBoxRow,
+  play: async ({ canvas }) => {
+    const control = await canvas.findByRole('textbox', { name: 'Name' });
+
+    await typeInto(control, 'Cursor');
+    await userEvent.keyboard('{Escape}');
+
+    await expect(control).toHaveValue('Codex');
+    await expect(await canvas.findByText('settled:')).toBeInTheDocument();
+  },
+});
+
 /** The same row in the dark scheme, where the field keeps its inset edge. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
