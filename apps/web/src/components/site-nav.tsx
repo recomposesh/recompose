@@ -1,52 +1,50 @@
 import { Link } from '@tanstack/react-router';
+import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
-import { gitHubUrl } from '../lib/links';
-import { NoteLabel } from './note-label';
-import { TrebleClef } from './treble-clef';
+import { SiteNavDesktop } from './site-nav-desktop';
+import { SiteNavMenu } from './site-nav-menu';
 import { Wordmark } from './wordmark';
 
-export function SiteNav() {
-  return (
-    <nav className="relative z-10 mx-auto flex w-full max-w-360 items-center justify-between px-16 py-6 text-base">
-      <Link to="/" aria-label="recompose" className="relative inline-flex text-fd-foreground">
-        <Wordmark height={22} />
-        <span aria-hidden="true" data-spot="mask" className="spot-mask absolute inset-0">
-          <Wordmark height={22} />
-        </span>
-      </Link>
+const MOBILE_INK = {
+  page: '',
+  stage: 'max-md:text-neutral-50',
+};
 
-      <div className="flex items-center gap-8 text-fd-foreground">
+export function SiteNav({ tone = 'page' }: { tone?: keyof typeof MOBILE_INK }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const mobileInk = MOBILE_INK[tone];
+
+  return (
+    <nav className="relative z-10 mx-auto w-full max-w-360 px-5 text-base md:px-10 lg:px-16">
+      <div className="flex items-center justify-between py-6">
         <Link
-          to="/docs/$"
-          params={{ _splat: '' }}
-          aria-label="docs"
-          data-spot="var"
-          className="note-link"
+          to="/"
+          aria-label="recompose"
+          className={`relative inline-flex text-fd-foreground ${mobileInk}`}
         >
-          <NoteLabel label="docs" />
+          <Wordmark height={22} />
+          <span aria-hidden="true" data-spot="mask" className="spot-mask absolute inset-0">
+            <Wordmark height={22} />
+          </span>
         </Link>
-        <Link to="/changelog" aria-label="changelog" data-spot="var" className="note-link">
-          <NoteLabel label="changelog" />
-        </Link>
-        <a href={gitHubUrl} aria-label="github" data-spot="var" className="note-link">
-          <NoteLabel label="github" />
-        </a>
+
+        <SiteNavDesktop />
+
+        <button
+          type="button"
+          aria-label="menu"
+          aria-expanded={menuOpen}
+          onClick={() => {
+            setMenuOpen((open) => !open);
+          }}
+          className={`text-fd-foreground md:hidden ${mobileInk}`}
+        >
+          {menuOpen ? <X className="size-5.5" /> : <Menu className="size-5.5" />}
+        </button>
       </div>
 
-      <Link
-        to="/download"
-        aria-label="download"
-        data-spot="var"
-        className="note-link group inline-flex items-center gap-1 text-fd-foreground"
-      >
-        <span className="relative inline-flex">
-          <TrebleClef />
-          <span aria-hidden="true" data-spot="mask" className="spot-mask absolute inset-0">
-            <TrebleClef />
-          </span>
-        </span>
-        <NoteLabel label="download" />
-      </Link>
+      {menuOpen && <SiteNavMenu />}
     </nav>
   );
 }

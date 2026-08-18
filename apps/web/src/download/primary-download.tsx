@@ -22,9 +22,9 @@ export function PrimaryDownload({ platform }: { platform: Platform }) {
   const Buttons = buttons[platform];
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-full flex-col items-center">
       <Buttons />
-      <p className="mt-4 text-control text-stage-faint">{requirements[platform]}</p>
+      <p className="mt-4 text-center text-control text-stage-faint">{requirements[platform]}</p>
     </div>
   );
 }

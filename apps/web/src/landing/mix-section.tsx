@@ -1,19 +1,24 @@
 import { BrandTile } from './brand-tile';
 import { DIAGRAM_HEIGHT, DIAGRAM_WIDTH, HARNESSES, MODELS, leftPercent } from './mix-layout';
 import { MixWires } from './mix-wires';
+import { StackedMixDiagram } from './stacked-mix-diagram';
 
 export function MixSection() {
   return (
     <section className="bg-stage dot-field">
-      <div className="mx-auto max-w-360 px-16 py-28">
-        <h2 className="text-4xl font-medium text-stage-ink">swap the model, keep the harness</h2>
-        <p className="mt-4 max-w-xl text-lg leading-relaxed text-stage-dim">
+      <div className="mx-auto max-w-360 px-5 py-16 md:px-10 md:py-20 lg:px-16 lg:py-28">
+        <h2 className="text-2xl font-medium text-stage-ink md:text-3xl lg:text-4xl">
+          swap the model, keep the harness
+        </h2>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-stage-dim md:text-lg">
           every client dials the same local URL. swapping the model behind it is a dropdown, not a
           migration.
         </p>
 
+        <StackedMixDiagram />
+
         <div
-          className="relative mt-16 w-full"
+          className="relative mt-16 hidden w-full lg:block"
           style={{ aspectRatio: `${DIAGRAM_WIDTH} / ${DIAGRAM_HEIGHT}` }}
         >
           <MixWires />

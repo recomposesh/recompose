@@ -60,7 +60,7 @@ const WORDMARK = wordmarkDots('recompose');
 
 export function FooterWordmark() {
   return (
-    <div className="relative mt-20">
+    <div className="relative mt-12 md:mt-20">
       <svg
         role="img"
         aria-label="recompose"

@@ -11,7 +11,7 @@ export function SiteFooter() {
     <footer className="relative overflow-hidden bg-stage">
       <FooterBeam />
 
-      <div className="relative mx-auto max-w-360 px-16 pt-28 pb-16">
+      <div className="relative mx-auto max-w-360 px-5 pt-16 pb-10 md:px-10 md:pt-20 lg:px-16 lg:pt-28 lg:pb-16">
         <div className="flex flex-col justify-between gap-16 lg:flex-row">
           <div className="flex items-start gap-3">
             <NoteMark className="mt-1.5 h-5.5 w-4 text-stage-bright" />
@@ -22,7 +22,7 @@ export function SiteFooter() {
             </p>
           </div>
 
-          <div className="flex gap-24">
+          <div className="flex gap-14 md:gap-24">
             <FooterColumn label="PRODUCT">
               <Link to="/docs/$" params={{ _splat: '' }} className="footer-link">
                 docs

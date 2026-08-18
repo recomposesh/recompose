@@ -25,10 +25,10 @@ const rowsFor: Record<Platform, DownloadTarget[]> = {
 
 export function OtherPlatforms({ platform }: { platform: Platform }) {
   return (
-    <section className="mx-auto flex max-w-360 flex-col items-center px-16 pt-6 pb-14">
+    <section className="mx-auto flex max-w-360 flex-col items-center px-5 pt-6 pb-14 md:px-10 lg:px-16">
       <p className="text-xs font-medium tracking-caps text-stage-faint">OTHER PLATFORMS</p>
 
-      <div className="mt-4.5 w-full max-w-220 rounded-2xl border border-stage-hairline bg-stage-card px-6.5 py-2.5">
+      <div className="mt-4.5 w-full max-w-220 rounded-2xl border border-stage-hairline bg-stage-card px-4 py-2.5 md:px-6.5">
         {rowsFor[platform].map((target, index) => (
           <Fragment key={target}>
             {index > 0 && <div className="h-px bg-stage-hairline" />}

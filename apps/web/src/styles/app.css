@@ -313,10 +313,25 @@
 
 :root {
   --hero-lift: transparent;
+  --diorama-overlap: 32svh;
+  --diorama-gutter: 8rem;
+}
+
+@media (width < 64rem) {
+  :root {
+    --diorama-overlap: 48svh;
+    --diorama-gutter: 5rem;
+  }
 }
 
 .dark {
   --hero-lift: rgb(0 0 0 / 78%);
+}
+
+@media (width < 48rem) {
+  :root {
+    --hero-lift: rgb(0 0 0 / 78%);
+  }
 }
 
 .hero-lift {
@@ -331,24 +346,26 @@ html:not(.dark) .note-link:hover .note-notehead {
   background-image: none;
 }
 
-html:not(.dark) [data-spot='text'] {
-  background-image:
-    radial-gradient(
-      circle 260px at 260px 260px,
-      var(--color-white) 0%,
-      var(--color-white) 40%,
-      transparent 100%
-    ),
-    linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-size:
-    520px 520px,
-    100% 100%;
-  background-position:
-    var(--spot-x, -1000px) var(--spot-y, -1000px),
-    0 0;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+@media (width >= 48rem) {
+  html:not(.dark) [data-spot='text'] {
+    background-image:
+      radial-gradient(
+        circle 260px at 260px 260px,
+        var(--color-white) 0%,
+        var(--color-white) 40%,
+        transparent 100%
+      ),
+      linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-size:
+      520px 520px,
+      100% 100%;
+    background-position:
+      var(--spot-x, -1000px) var(--spot-y, -1000px),
+      0 0;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 html:not(.dark) .spot-copy {

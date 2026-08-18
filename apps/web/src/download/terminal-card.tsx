@@ -21,7 +21,7 @@ export function TerminalCard() {
   };
 
   return (
-    <section className="mx-auto flex max-w-360 flex-col items-center px-16 pb-18">
+    <section className="mx-auto flex max-w-360 flex-col items-center px-5 pb-18 md:px-10 lg:px-16">
       <div className="w-full max-w-220 rounded-card bg-terminal-card px-5.5 py-4.5">
         <p className="text-annotation font-medium tracking-caps text-stage-faint">
           PREFER THE TERMINAL?

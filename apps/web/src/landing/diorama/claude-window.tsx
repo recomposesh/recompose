@@ -4,9 +4,11 @@ import { TypedText } from './typed-text';
 
 const LOGOMARK = ' ▐▛███▜▌\n▝▜█████▛▘\n  ▘▘ ▝▝';
 
-export function ClaudeWindow() {
+export function ClaudeWindow({ className = 'absolute h-77.5 w-90' }: { className?: string }) {
   return (
-    <div className="absolute flex h-77.5 w-90 flex-col overflow-hidden rounded-xl bg-term-bg shadow-2xl backdrop-blur-sm">
+    <div
+      className={`${className} flex flex-col overflow-hidden rounded-xl bg-term-bg shadow-2xl backdrop-blur-sm`}
+    >
       <TerminalChrome title="claude" />
 
       <div className="flex flex-1 flex-col px-4 pt-2 font-mono text-xs leading-relaxed">
