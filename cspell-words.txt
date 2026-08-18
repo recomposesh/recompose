@@ -25,6 +25,7 @@ argjson
 asar
 Attio
 autobump
+autostarts
 Aydin
 backticked
 bddgen
