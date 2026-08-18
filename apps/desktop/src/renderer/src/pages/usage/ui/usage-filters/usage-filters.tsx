@@ -50,7 +50,7 @@ export function UsageFilters({ search, onSearchChange }: UsageFiltersProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <FilterMenu
         label="Gateways"
         members={named(

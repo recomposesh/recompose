@@ -157,12 +157,12 @@ function panelHeader(props: HeaderProps) {
   const stacks = props.measure !== 'latency' && props.measure !== 'spend';
 
   return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex flex-col gap-0.5">
+    <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+      <div className="flex min-w-0 flex-col gap-0.5">
         <h2 className="text-card-title text-ink">{props.title}</h2>
         <p className="text-caption text-ink-secondary">{props.subCaption}</p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {stackMenu(
           props.stackedBy,
           props.onStackedByChange,

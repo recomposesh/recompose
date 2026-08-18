@@ -43,8 +43,10 @@ export function AppToolbar({ slug, leading, trailing }: AppToolbarProps) {
             <SidebarToggle where="standing" />
           </span>
         )}
-        <span className="app-no-drag flex items-center gap-2 ps-4">{leading}</span>
-        <span className="app-no-drag ms-auto flex items-center gap-2 pe-3.5">{trailing}</span>
+        <span className="app-no-drag flex min-w-0 items-center gap-2 ps-4">{leading}</span>
+        <span className="app-no-drag ms-auto flex shrink-0 items-center gap-2 pe-3.5">
+          {trailing}
+        </span>
       </div>
     );
   }

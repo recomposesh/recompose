@@ -241,7 +241,9 @@ function refusedWrite(refusal: string | undefined): ReactNode {
  * @summary The subject decides what the drawer says: the gateway reads as its endpoint and what
  * serves, a virtual model and a cable read as the binding they share, a target reads as the
  * account behind it, and a draft edits right here. Adding a virtual model has no button in this
- * panel, because the plus on the canvas is the one add path.
+ * panel, because the plus on the canvas is the one add path. The drawer never paints wider than
+ * most of the workspace, so a window shrunk under the width a person once dragged to keeps the
+ * canvas standing beside it.
  */
 export function GatewayDrawer({
   gateway,
@@ -279,10 +281,10 @@ export function GatewayDrawer({
       aria-label="Inspector"
       data-panel-control=""
       data-focus-group=""
-      className={`shrink-0 overflow-hidden border-s border-line-subtle bg-surface-toolbar ${leaving ? 'inspector-panel-leaving' : 'inspector-panel'}`}
+      className={`max-w-inspector-reach shrink-0 overflow-hidden border-s border-line-subtle bg-surface-toolbar ${leaving ? 'inspector-panel-leaving' : 'inspector-panel'}`}
       style={{ width }}
     >
-      <div className="flex h-full shrink-0 flex-col" style={{ width }}>
+      <div className="flex h-full max-w-inspector-reach shrink-0 flex-col" style={{ width }}>
         {refusedWrite(refusal)}
         {body}
       </div>

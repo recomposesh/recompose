@@ -88,6 +88,38 @@ export const Streaming = meta.story({
   },
 });
 
+const INSPECTOR_BESIDE_PX = 176;
+
+/**
+ * The drawer against the pane a small window leaves it, whose header sheds before it clips.
+ *
+ * @summary The subject type and the filter segments leave rather than clipping mid-glyph, and the
+ * name, the stream state, and the close control stand whole, because those three are what a person
+ * checks before widening the window.
+ */
+export const NarrowPane = meta.story({
+  decorators: [
+    (Story) => (
+      <div style={{ width: INSPECTOR_BESIDE_PX }}>
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const header = (await canvas.findByText('Logs for My Gateway')).closest('header');
+
+    if (header === null) {
+      throw new Error('the story rendered no header to measure');
+    }
+
+    await expect(canvas.getByText('Gateway', { exact: true })).not.toBeVisible();
+    await expect(canvas.getByText('All', { exact: true })).not.toBeVisible();
+    await expect(await canvas.findByText('Live')).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Close logs' })).toBeVisible();
+    await expect(header.scrollWidth).toBeLessThanOrEqual(header.clientWidth);
+  },
+});
+
 /** A gateway that stopped, whose state holds its place rather than leaving the header. */
 export const Stopped = meta.story({
   args: { serving: notAnswering },

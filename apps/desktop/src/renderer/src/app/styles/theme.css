@@ -162,6 +162,9 @@
   --spacing-ghost-width: 436px;
   --spacing-ghost-height: 114px;
   --spacing-hairline: 2px;
+  --spacing-inspector-reach: 65cqw;
+  --spacing-logs-reach: 65vh;
+  --spacing-connect-body-reach: calc(100vh - 192px);
 
   --radius-mark: 2px;
   --radius-chip: 4px;
@@ -336,6 +339,7 @@
   inset-inline-start: 50%;
   translate: -50% -50%;
   width: var(--sheet-surface-width, var(--spacing-sheet));
+  max-width: calc(100vw - 32px);
   overflow: hidden;
   border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-sheet);

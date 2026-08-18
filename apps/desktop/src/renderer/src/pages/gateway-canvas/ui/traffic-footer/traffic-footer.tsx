@@ -22,6 +22,8 @@ const AWAY_WITH_THE_TOKENS = '@max-[37rem]:hidden';
 
 const AWAY_WITH_THE_LATENCY = '@max-[29rem]:hidden';
 
+const AWAY_WITH_THE_CLIENTS = '@max-[18rem]:hidden';
+
 type TrafficFooterProps = {
   /** The gateway whose served requests the traffic side reads. */
   slug: string;
@@ -68,7 +70,9 @@ function trafficSide(traffic: TrafficAggregates, meaning: string): ReactNode {
         {reading(readDuration(traffic.p95Ms))}
         {' latency'}
       </span>
-      <span aria-describedby={meaning}>{counted(traffic.clientApps, 'client app')}</span>
+      <span aria-describedby={meaning} className={AWAY_WITH_THE_CLIENTS}>
+        {counted(traffic.clientApps, 'client app')}
+      </span>
       <span aria-hidden className={`h-3.5 w-px bg-line-subtle ${AWAY_WITH_THE_TOKENS}`} />
       <span className={AWAY_WITH_THE_TOKENS}>
         {reading(compactCount(traffic.tokensPerMinute))}

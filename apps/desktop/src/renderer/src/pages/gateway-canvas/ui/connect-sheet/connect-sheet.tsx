@@ -50,7 +50,7 @@ export function ConnectSheet({ open, onOpenChange, facts, answered }: ConnectShe
       title={`Connect a client to ${facts.gatewayName}`}
       width="broad"
     >
-      <div className="flex h-connect-body border-t border-line-faint">
+      <div className="flex h-connect-body max-h-connect-body-reach border-t border-line-faint">
         <ConnectRail
           asked={asked}
           groups={connectGroups}

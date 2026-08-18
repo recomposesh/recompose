@@ -117,15 +117,21 @@ function filterTrigger(label: string, selected: readonly string[], total: number
   return (
     <Popover.Trigger
       aria-label={`${label} ${standingWord}`}
-      className={`flex h-control items-center gap-1.5 rounded-control border bg-surface-card px-2 text-detail focus-ring-wide ${standing ? 'border-line-subtle' : 'border-accent'}`}
+      className={`flex h-control min-w-0 items-center gap-1.5 rounded-control border bg-surface-card px-2 text-detail focus-ring-wide ${standing ? 'border-line-subtle' : 'border-accent'}`}
     >
-      <span aria-hidden className={standing ? 'text-ink-secondary' : 'text-accent-ink'}>
+      <span
+        aria-hidden
+        className={`min-w-0 truncate ${standing ? 'text-ink-secondary' : 'text-accent-ink'}`}
+      >
         {label}
       </span>
-      <span aria-hidden className={`font-medium ${standing ? 'text-ink' : 'text-accent-ink'}`}>
+      <span
+        aria-hidden
+        className={`shrink-0 font-medium ${standing ? 'text-ink' : 'text-accent-ink'}`}
+      >
         {standingWord}
       </span>
-      <Icon aria-hidden className="size-3 text-ink-secondary" name="chevron" />
+      <Icon aria-hidden className="size-3 shrink-0 text-ink-secondary" name="chevron" />
     </Popover.Trigger>
   );
 }

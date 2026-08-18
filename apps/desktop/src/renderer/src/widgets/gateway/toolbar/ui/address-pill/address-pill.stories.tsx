@@ -2,6 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { fitsItsPane, narrowed } from '../../../../../shared/testing';
 import { AddressPill } from './address-pill';
 
 const meta = preview.meta({
@@ -39,6 +40,46 @@ export const Stopped = meta.story({
   args: { status: 'stopped' as const },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Stopped')).toBeVisible();
+  },
+});
+
+const WORD_STANDS_PX = 256;
+
+const WORD_GONE_PX = 192;
+
+const MARK_GONE_PX = 88;
+
+/**
+ * The pill against a narrowing strip, where the address gives way before anything leaves.
+ *
+ * @summary The address shortens to an ellipsis rather than losing glyphs off both edges. Once even
+ * the ellipsis cannot buy room, the state word leaves, then the state mark, and the copy control
+ * stands to the last, because handing over the whole address is the one act the pill owes at any
+ * width.
+ */
+export const NarrowStrip = meta.story({
+  decorators: [
+    (Story) => (
+      <div className="flex" data-pane="" style={{ width: WORD_STANDS_PX }}>
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas, canvasElement }) => {
+    const pane = canvasElement.querySelector('[data-pane]');
+    const pill = pane?.querySelector('span.app-no-drag') ?? null;
+    const word = await canvas.findByText('Running');
+
+    await expect(word).toBeVisible();
+    await expect(fitsItsPane(pill)).toBe(true);
+
+    narrowed(pane, WORD_GONE_PX);
+    await expect(word).not.toBeVisible();
+    await expect(fitsItsPane(pill)).toBe(true);
+
+    narrowed(pane, MARK_GONE_PX);
+    await expect(fitsItsPane(pill)).toBe(true);
+    await expect(await canvas.findByRole('button', { name: 'Copy address' })).toBeVisible();
   },
 });
 
