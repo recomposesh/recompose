@@ -5,6 +5,7 @@ import { userEvent } from 'vitest/browser';
 
 import { emitEngineTraffic } from '../../../../shared/testing';
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
+import { pooledGateway } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -84,6 +85,43 @@ test('traffic through one virtual model leaves the cables of the others at rest'
   for (const standing of standingsOn(screen.container, 'creative')) {
     expect(standing).toContain('stroke-cable-resting');
   }
+});
+
+const throughThePool: GatewayTraffic = {
+  'my-gateway': { pooled: { t2: { outcome: 'served', at: Date.now() } } },
+};
+
+const pooledMovedOn: GatewayTraffic = {
+  'my-gateway': {
+    pooled: {
+      t1: { outcome: 'failed', at: 1, status: 429, detail: REFUSED },
+      t2: { outcome: 'served', at: Date.now() },
+    },
+  },
+};
+
+test('a request through a routed model lights every cable down to the child that answered', async () => {
+  const screen = await canvasPageOn({ gateways: [pooledGateway] });
+
+  emitEngineTraffic(throughThePool);
+
+  await expect
+    .poll(() =>
+      ['wire:model:pooled', 'cable:pooled', 'cable:pooled:t2'].every((id) =>
+        standingOf(screen.container, id).includes('served'),
+      ),
+    )
+    .toBe(true);
+  expect(standingOf(screen.container, 'cable:pooled:t1')).toContain('stroke-cable-resting');
+});
+
+test('a routed walk that moved on stands its one error on the child that failed', async () => {
+  const screen = await canvasPageOn({ gateways: [pooledGateway] });
+
+  emitEngineTraffic(pooledMovedOn);
+
+  await expect.element(screen.getByRole('button', { name: /last error/i })).toBeVisible();
+  expect(screen.getByRole('button', { name: /last error/i }).elements()).toHaveLength(1);
 });
 
 test('a request served after a failure gives the cables back their green and takes the error away', async () => {

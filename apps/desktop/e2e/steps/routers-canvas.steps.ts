@@ -274,3 +274,11 @@ Then("the second target's cable paints as served", async ({ page }) => {
     .poll(async () => cablePaints(page, cableInto(routed, SECOND_TARGET.providerModel)))
     .toBe('served');
 });
+
+Then('the cable into the router paints as served', async ({ page }) => {
+  const routed = await theRoutedModel(page);
+
+  await expect
+    .poll(async () => cablePaints(page, `cable:${addressNamed(routed, routed.routing.entry)}`))
+    .toBe('served');
+});
