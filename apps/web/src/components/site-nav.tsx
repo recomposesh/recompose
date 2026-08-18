@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
-import { gitHubUrl, releasesUrl } from '../lib/links';
+import { gitHubUrl } from '../lib/links';
 import { NoteLabel } from './note-label';
 import { TrebleClef } from './treble-clef';
 import { Wordmark } from './wordmark';
@@ -25,16 +25,16 @@ export function SiteNav() {
         >
           <NoteLabel label="docs" />
         </Link>
-        <a href={releasesUrl} aria-label="changelog" data-spot="var" className="note-link">
+        <Link to="/changelog" aria-label="changelog" data-spot="var" className="note-link">
           <NoteLabel label="changelog" />
-        </a>
+        </Link>
         <a href={gitHubUrl} aria-label="github" data-spot="var" className="note-link">
           <NoteLabel label="github" />
         </a>
       </div>
 
-      <a
-        href={releasesUrl}
+      <Link
+        to="/download"
         aria-label="download"
         data-spot="var"
         className="note-link group inline-flex items-center gap-1 text-fd-foreground"
@@ -46,7 +46,7 @@ export function SiteNav() {
           </span>
         </span>
         <NoteLabel label="download" />
-      </a>
+      </Link>
     </nav>
   );
 }

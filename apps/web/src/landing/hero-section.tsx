@@ -3,7 +3,6 @@ import { Link } from '@tanstack/react-router';
 import { AppleMark } from '../components/apple-mark';
 import { SiteNav } from '../components/site-nav';
 import { HeroCanvas } from '../hero/hero-canvas';
-import { releasesUrl } from '../lib/links';
 
 export function HeroSection() {
   return (
@@ -34,13 +33,13 @@ export function HeroSection() {
         </p>
 
         <div className="mt-9 flex items-center gap-2">
-          <a
+          <Link
             className="inline-flex items-center gap-2 rounded-lg bg-fd-primary px-5 py-3 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-85"
-            href={releasesUrl}
+            to="/download"
           >
             <AppleMark />
             download for macOS
-          </a>
+          </Link>
           <Link
             className="hero-lift rounded-lg px-5 py-3 text-sm text-fd-foreground transition-colors hover:bg-fd-accent"
             to="/docs/$"

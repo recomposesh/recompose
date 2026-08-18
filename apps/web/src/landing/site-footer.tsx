@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
-import { gitHubUrl, releasesUrl } from '../lib/links';
+import { gitHubUrl } from '../lib/links';
 import { FooterBeam } from './footer-beam';
 import { FooterColumn } from './footer-column';
 import { FooterWordmark } from './footer-wordmark';
@@ -27,12 +27,12 @@ export function SiteFooter() {
               <Link to="/docs/$" params={{ _splat: '' }} className="footer-link">
                 docs
               </Link>
-              <a href={releasesUrl} className="footer-link">
+              <Link to="/changelog" className="footer-link">
                 changelog
-              </a>
-              <a href={releasesUrl} className="footer-link">
+              </Link>
+              <Link to="/download" className="footer-link">
                 download
-              </a>
+              </Link>
             </FooterColumn>
             <FooterColumn label="PROJECT">
               <a href={gitHubUrl} className="footer-link">

@@ -1,7 +1,8 @@
+import { Link } from '@tanstack/react-router';
 import { Star } from 'lucide-react';
 
 import { AppleMark } from '../components/apple-mark';
-import { gitHubUrl, releasesUrl } from '../lib/links';
+import { gitHubUrl } from '../lib/links';
 import { CtaWires, STAGE_HEIGHT, STAGE_WIDTH } from './cta-wires';
 
 const PILL_GLOW = '0 0 60px rgb(50 215 75 / 0.15), 0 24px 60px rgb(0 0 0 / 0.35)';
@@ -30,13 +31,13 @@ export function CtaSection() {
         </div>
 
         <div className="mt-12 flex items-center gap-2.5">
-          <a
+          <Link
             className="inline-flex items-center gap-2 rounded-lg bg-fd-primary px-6 py-3.5 text-body font-medium text-fd-primary-foreground transition-opacity hover:opacity-85"
-            href={releasesUrl}
+            to="/download"
           >
             <AppleMark />
             download for macOS
-          </a>
+          </Link>
           <a
             className="inline-flex items-center gap-2 rounded-lg px-6 py-3.5 text-body text-stage-ink transition-colors hover:bg-fd-accent"
             href={gitHubUrl}
