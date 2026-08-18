@@ -6,6 +6,10 @@ const MAGNITUDE_LADDER = [
 
 const MS_IN_SECOND = 1000;
 
+const MS_IN_MINUTE = 60_000;
+
+const MS_IN_HOUR = 3_600_000;
+
 const GROUPED = new Intl.NumberFormat('en-US');
 
 /**
@@ -57,4 +61,25 @@ export function readDuration(milliseconds: number): string {
  */
 export function pluralized(count: number, thing: string): string {
   return count === 1 ? thing : `${thing}s`;
+}
+
+/**
+ * How long ago a stamped reading was taken, one unit coarse.
+ *
+ * @summary Every surface printing a reading's own age reads it through this, so a stamp says the
+ * same thing wherever it stands. A stamp ahead of the reader's clock reads as just taken, because
+ * main and the renderer keep their own clocks and a negative age would read as broken.
+ */
+export function agedWording(at: number, now: number): string {
+  const passed = Math.max(0, now - at);
+
+  if (passed < MS_IN_MINUTE) {
+    return `${String(Math.floor(passed / MS_IN_SECOND))}s ago`;
+  }
+
+  if (passed < MS_IN_HOUR) {
+    return `${String(Math.floor(passed / MS_IN_MINUTE))}m ago`;
+  }
+
+  return `${String(Math.floor(passed / MS_IN_HOUR))}h ago`;
 }

@@ -74,6 +74,36 @@ export const NarrowedToOneGateway = meta.story({
   },
 });
 
+/** The standing account readings under the explorer: window burn, then credits. */
+export const AccountStandingUnderTheExplorer = meta.story({
+  parameters: {
+    bridge: {
+      usageReport: servedReport,
+      quotaWindows: [
+        {
+          accountId: 'work',
+          provider: 'anthropic',
+          length: '5h',
+          burnTokens: 1_200_000,
+          record: { burnTokens: 2_000_000, openedAt: Date.UTC(2026, 7, 3, 9, 0) },
+        },
+      ],
+      balances: [
+        {
+          accountId: 'build',
+          reading: { totalCredits: 100, totalUsage: 62.29, readAt: Date.now() },
+        },
+      ],
+    },
+  },
+  render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('region', { name: 'Quota windows' })).toBeVisible();
+    await expect(await canvas.findByRole('region', { name: 'Credits' })).toBeVisible();
+    await expect(await canvas.findByText('$37.71')).toBeVisible();
+  },
+});
+
 /** A refused history read names itself and offers Retry. */
 export const ARefusedRead = meta.story({
   parameters: {

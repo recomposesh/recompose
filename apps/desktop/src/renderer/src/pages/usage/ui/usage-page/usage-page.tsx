@@ -12,10 +12,12 @@ import { quietRecovery, quietSentence } from '../../lib/quiet-recovery';
 import { chartSubCaption, scopeSentence } from '../../lib/usage-caption';
 import { filteredMembers, spendSnappedRange } from '../../lib/usage-search';
 import { windowWording } from '../../lib/usage-window';
+import { BalanceStrip } from '../balance-strip/balance-strip';
 import { BreakdownPanel } from '../breakdown-panel/breakdown-panel';
 import { ChartPanel } from '../chart-panel/chart-panel';
 import { MetricTiles } from '../metric-tiles/metric-tiles';
 import { QuietReading } from '../quiet-reading/quiet-reading';
+import { QuotaStrip } from '../quota-strip/quota-strip';
 import { UsageHeader } from '../usage-header/usage-header';
 import { movedSearch } from './usage-page-moves';
 import { useUsageView } from './use-usage-view';
@@ -246,6 +248,8 @@ export function UsagePage({ search, onSearchChange }: UsagePageProps) {
           refreshedUsageReadings(queryClient);
         },
       })}
+      <QuotaStrip />
+      <BalanceStrip />
     </section>
   );
 }

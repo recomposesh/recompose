@@ -1,3 +1,4 @@
+import { agedWording } from '../../../../shared/lib';
 import { Button, Icon } from '../../../../shared/ui';
 
 type UsageHeaderProps = {
@@ -11,25 +12,12 @@ type UsageHeaderProps = {
   onRefresh: () => void;
 };
 
-const MINUTE_MS = 60_000;
-const HOUR_MS = 3_600_000;
-
 function stampWording(updatedAt: number | undefined, now: number): string {
   if (updatedAt === undefined) {
     return 'Reading history';
   }
 
-  const passed = Math.max(0, now - updatedAt);
-
-  if (passed < MINUTE_MS) {
-    return `Updated ${String(Math.floor(passed / 1_000))}s ago`;
-  }
-
-  if (passed < HOUR_MS) {
-    return `Updated ${String(Math.floor(passed / MINUTE_MS))}m ago`;
-  }
-
-  return `Updated ${String(Math.floor(passed / HOUR_MS))}h ago`;
+  return `Updated ${agedWording(updatedAt, now)}`;
 }
 
 /**

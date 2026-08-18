@@ -13,6 +13,7 @@ import {
   refusalSentence,
   settingsQueryOptions,
 } from '../../../../shared/api';
+import { accountLabelOf } from '../../lib/account-labels';
 import { panelRowsOf } from '../../lib/panel-rows';
 import { stackedChart } from '../../lib/usage-chart-fold';
 import { metricFaces } from '../../lib/usage-faces';
@@ -65,17 +66,6 @@ type Sourced = {
   oldestRetainedStart: number | undefined;
   widthWord: BucketWidthWord;
 };
-
-function accountLabelOf(
-  accounts: { accounts: readonly { id: string }[] } | undefined,
-  accountId: string,
-): string {
-  const held = accounts?.accounts.find((account) => account.id === accountId);
-
-  return held !== undefined && 'label' in held && typeof held.label === 'string'
-    ? held.label
-    : accountId;
-}
 
 function targetNameOf(key: string, nameOfAccount: (id: string) => string): string {
   const seam = key.indexOf(' ');
