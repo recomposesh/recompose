@@ -9,6 +9,7 @@ const everyOutcome: readonly BindingOutcome[] = [
   { kind: 'rebound', virtualModel: 'fast', target: 'personal key' },
   { kind: 'released', virtualModel: 'fast' },
   { kind: 'repaired', virtualModel: 'fast', target: 'work key' },
+  { kind: 'nested', virtualModel: 'fast', parentRouter: 'Round-robin', target: 'Failover' },
   { kind: 'refused', refusal: 'recompose cannot store this virtual model as it stands.' },
 ];
 
@@ -35,6 +36,17 @@ describe('what the live region says about a binding', () => {
     expect(announcedOutcome({ kind: 'repaired', virtualModel: 'fast', target: 'work key' })).toBe(
       'Repaired the virtual model "fast", which is bound to "work key" again.',
     );
+  });
+
+  it('names the router a nested router joined, rather than leaving it to be guessed', () => {
+    expect(
+      announcedOutcome({
+        kind: 'nested',
+        virtualModel: 'fast',
+        parentRouter: 'Round-robin',
+        target: 'Failover',
+      }),
+    ).toBe('Added "Failover" under the router "Round-robin" in the virtual model "fast".');
   });
 
   it('carries a refusal in the words the refusal itself used', () => {
@@ -66,6 +78,12 @@ describe('how loudly the live region speaks', () => {
   it('waits its turn for every outcome a person already asked for', () => {
     const routine = everyOutcome.filter((outcome) => outcome.kind !== 'refused');
 
-    expect(routine.map(announcedUrgency)).toEqual(['polite', 'polite', 'polite', 'polite']);
+    expect(routine.map(announcedUrgency)).toEqual([
+      'polite',
+      'polite',
+      'polite',
+      'polite',
+      'polite',
+    ]);
   });
 });
