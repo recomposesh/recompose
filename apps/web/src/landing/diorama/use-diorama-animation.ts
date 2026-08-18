@@ -10,10 +10,14 @@ const CONTAINER_GUTTER = 128;
 const REST_WIDTH = 1312;
 const REST_RATIO = 820 / 1312;
 
-export const HERO_OVERLAP_SVH = 32;
+const HERO_OVERLAP_SVH = 32;
+
+const TABLET_GUTTER = 80;
 
 function restWidth() {
-  return Math.min(window.innerWidth - CONTAINER_GUTTER, REST_WIDTH);
+  const gutter = window.innerWidth < 1024 ? TABLET_GUTTER : CONTAINER_GUTTER;
+
+  return Math.min(window.innerWidth - gutter, REST_WIDTH);
 }
 
 function animateStageEntry(section: HTMLElement | null) {
@@ -40,13 +44,17 @@ function animateStageEntry(section: HTMLElement | null) {
   );
 }
 
+function storyScrub() {
+  return window.matchMedia('(pointer: coarse)').matches ? 0.6 : true;
+}
+
 function animatePinnedStory(section: HTMLElement | null) {
   const timeline = gsap.timeline({
     scrollTrigger: {
       trigger: section,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: true,
+      scrub: storyScrub(),
       pin: '[data-diorama-viewport]',
       pinSpacing: false,
     },
@@ -70,12 +78,15 @@ function animatePinnedStory(section: HTMLElement | null) {
 export function useDioramaAnimation(sectionRef: RefObject<HTMLElement | null>) {
   useGSAP(
     () => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       gsap.registerPlugin(ScrollTrigger);
 
-      hideStoryProps();
-      animateStageEntry(sectionRef.current);
-      animatePinnedStory(sectionRef.current);
+      const stage = gsap.matchMedia();
+
+      stage.add('(min-width: 768px) and (prefers-reduced-motion: no-preference)', () => {
+        hideStoryProps();
+        animateStageEntry(sectionRef.current);
+        animatePinnedStory(sectionRef.current);
+      });
     },
     { scope: sectionRef },
   );

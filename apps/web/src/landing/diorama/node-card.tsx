@@ -28,11 +28,12 @@ const PORT_SIDES = {
   in: ['left'],
   out: ['right'],
   both: ['left', 'right'],
+  none: [],
 } as const;
 
 export type CanvasNode = {
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
   kind: keyof typeof KIND_STYLES;
   kicker: string;
   title: string;
@@ -64,7 +65,7 @@ function detailRows(prose: string | undefined, mono: string | undefined) {
   return rows;
 }
 
-export function NodeCard({ node }: { node: CanvasNode }) {
+export function NodeCard({ node, className }: { node: CanvasNode; className?: string }) {
   const { kicker, title, prose, mono } = node;
   const styles = KIND_STYLES[node.kind];
   const Glyph = node.glyph ?? KIND_GLYPHS[node.kind];
@@ -72,8 +73,12 @@ export function NodeCard({ node }: { node: CanvasNode }) {
 
   return (
     <div
-      className={`absolute flex h-22 w-46 flex-col justify-center gap-0.5 rounded-node bg-win-card px-2.75 shadow-xl ${styles.border}`}
-      style={{ left: node.x, top: node.y, borderWidth: 1.5 }}
+      className={`absolute flex flex-col justify-center gap-0.5 rounded-node bg-win-card shadow-xl ${styles.border} ${className ?? 'h-22 w-46 px-2.75'}`}
+      style={
+        className === undefined
+          ? { left: node.x, top: node.y, borderWidth: 1.5 }
+          : { borderWidth: 1.5 }
+      }
     >
       <span className="flex items-center gap-1.5">
         <span className={`flex size-4.25 items-center justify-center rounded ${styles.chip}`}>

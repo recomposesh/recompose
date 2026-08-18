@@ -22,8 +22,8 @@ const QUESTIONS = [
 export function FaqSection() {
   return (
     <section className="bg-stage">
-      <div className="mx-auto grid max-w-360 gap-16 px-16 py-28 lg:grid-cols-faq lg:gap-24">
-        <h2 className="text-4xl font-medium">
+      <div className="mx-auto grid max-w-360 gap-10 px-5 py-16 md:px-10 md:py-20 lg:grid-cols-faq lg:gap-24 lg:px-16 lg:py-28">
+        <h2 className="text-2xl font-medium md:text-3xl lg:text-4xl">
           <span className="block text-stage-ink">questions,</span>
           <span className="block text-stage-faint">answered.</span>
         </h2>
@@ -33,7 +33,7 @@ export function FaqSection() {
             <Accordion.Item key={q} value={q} className="border-t border-stage-line">
               <Accordion.Header>
                 <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-6 py-5 text-start">
-                  <span className="text-xl font-medium text-stage-ink underline-offset-4 group-hover:underline">
+                  <span className="text-lg font-medium text-stage-ink underline-offset-4 group-hover:underline md:text-xl">
                     {q}
                   </span>
                   <Plus className="size-4 shrink-0 text-stage-faint transition-transform duration-200 group-data-[panel-open]:rotate-45" />

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { mountHero } from './mount-hero';
+import { stageHero } from './hero-stage';
 
 const SOURCES = { poster: '/orchestra-poster.jpg', loop: '/orchestra-loop.mp4' };
 
@@ -12,8 +12,17 @@ export function HeroCanvas() {
 
     if (!canvas) return undefined;
 
-    return mountHero(canvas, SOURCES);
+    return stageHero(canvas, SOURCES);
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 size-full" aria-hidden="true" />;
+  return (
+    <div aria-hidden="true" className="absolute inset-0">
+      <img
+        src={SOURCES.poster}
+        alt=""
+        className="absolute inset-0 size-full object-cover md:hidden"
+      />
+      <canvas ref={canvasRef} className="absolute inset-0 size-full" />
+    </div>
+  );
 }
