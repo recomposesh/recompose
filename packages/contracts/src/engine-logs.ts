@@ -34,9 +34,12 @@ export type TokenSplit = z.infer<typeof tokenSplitSchema>;
 /**
  * One request a gateway answered, as the drawer lists it and the footer counts it.
  *
- * @summary No prompt, no completion, and no body of any kind ever rides a row. A failure carries
- * `failure` alone, a sentence written from the status and nothing else, which extends the rule
- * `requestOutcomeSchema` already states to every row here. `clientKey` carries the `sha256:` digest
+ * @summary No prompt, no completion, and no provider body of any kind ever rides a row. `failure`
+ * carries a sentence the gateway wrote itself: where the gateway refused the request, the very
+ * sentence the caller was handed, so a row and the answer a client holds can never disagree about
+ * why; where a target failed, the reading that status earns. A cable may quote the target's own words
+ * and a row may not, which is the one place this rule and `requestOutcomeSchema` part ways.
+ * `clientKey` carries the `sha256:` digest
  * form the gateway writes at its edge and nothing else, so an address cannot ride the field even by
  * mistake, and the renderer counts distinct callers apart without ever reading one. The count it
  * feeds reads as client apps: the distinct client apps seen in the last minute. A row

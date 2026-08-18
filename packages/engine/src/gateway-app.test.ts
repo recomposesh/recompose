@@ -189,16 +189,17 @@ describe('a Gemini model path the gateway serves', () => {
     expect(await refusal.json()).toMatchObject({ error: { status: 'INVALID_ARGUMENT' } });
   });
 
-  test('an action the gateway does not serve refuses as an unserved path', async () => {
+  test('an action the gateway does not serve refuses in the Gemini envelope', async () => {
     const refusal = await askCodex('/v1beta/models/gemini-2.5-pro:countTokens', {
       method: 'POST',
       body: JSON.stringify({ contents: [] }),
     });
 
     expect(refusal.status).toBe(404);
-    expect(await refusal.json()).toMatchObject({
+    expect(await refusal.json()).toEqual({
       error: {
-        type: 'not_found_error',
+        code: 404,
+        status: 'NOT_FOUND',
         message: 'The gateway "Codex" serves no path "/v1beta/models/gemini-2.5-pro:countTokens".',
       },
     });

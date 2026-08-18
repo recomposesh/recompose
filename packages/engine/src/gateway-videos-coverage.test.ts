@@ -101,6 +101,20 @@ describe('a video request names a servable virtual model', () => {
     expect(answer.status).toBe(400);
     expect(await refusalOf(answer)).toBe('The video model has no target.');
   });
+
+  test('the refusal is written in the envelope an OpenAI client reads', async () => {
+    const app = refusedGateway(xaiGrant, { standing: 'removed' });
+    const answer = await app.request(generations, videoPost({ model: 'clip', prompt: 'a cat' }));
+
+    await expect(answer.json()).resolves.toEqual({
+      error: {
+        message: 'The video model has no target.',
+        type: 'invalid_request_error',
+        param: null,
+        code: 'missing_target',
+      },
+    });
+  });
 });
 
 describe('a video request needs an xAI credential', () => {

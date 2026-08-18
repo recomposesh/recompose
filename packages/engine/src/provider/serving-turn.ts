@@ -10,6 +10,11 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * from one an upstream attempt already stands for, which is how one request stays one row. It turns
  * on when a row is actually told to a reader, never when a call merely began, because a call that
  * began and never answered is exactly the failure the gateway has to raise a row for itself.
+ *
+ * `refusedWith` holds the sentence the gateway wrote for this turn, so the row a person reads carries
+ * the words the caller was actually given rather than a second sentence written from the status. Only
+ * refusals the gateway composed itself are ever remembered here, which is what keeps a provider's own
+ * words off every row while still letting them ride a cable.
  */
 export type ServingTurn = {
   gateway: string;
@@ -17,6 +22,7 @@ export type ServingTurn = {
   method: string;
   virtualModel?: string | undefined;
   rowPublished: boolean;
+  refusedWith?: string | undefined;
   aborted?: boolean | undefined;
   abortListeners?: Set<() => void> | undefined;
 };
@@ -83,4 +89,30 @@ export function withinServingTurn<Answer>(turn: ServingTurn, serve: () => Answer
 
 export function servingTurn(): ServingTurn | undefined {
   return servingTurns.getStore();
+}
+
+/**
+ * Names the virtual model whose route table this turn is about to walk.
+ *
+ * @summary Naming it is also what tells a request refused before any child could carry it apart from
+ * one that never resolved a model at all. The first is a gateway fault a person can fix and owes a
+ * row; the second named something that does not exist, and owes none because no model ever stood for
+ * it.
+ */
+export function servingTurnWalks(virtualModel: string): void {
+  const turn = servingTurns.getStore();
+
+  if (turn !== undefined) turn.virtualModel = virtualModel;
+}
+
+/**
+ * Remembers the sentence the gateway itself refused this turn with.
+ *
+ * @summary The last one stands, because a walk writes a refusal for every child it could not use and
+ * only the one written last reaches the caller.
+ */
+export function gatewayRefusedWith(sentence: string): void {
+  const turn = servingTurns.getStore();
+
+  if (turn !== undefined) turn.refusedWith = sentence;
 }

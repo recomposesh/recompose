@@ -5,6 +5,7 @@ import type { SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { JsonObject } from './gateway-wire';
 
 import { type PreparedImageBody, readImageBody } from './gateway-images-body';
+import { mediaRefusal } from './gateway-media-refusal';
 import { requestSessions } from './gateway-session';
 import { reachXAIImage } from './provider/xai-image';
 import { firstDeclaredTarget } from './routing/route-table';
@@ -17,10 +18,6 @@ import { reachSubscription } from './subscription/reach';
 import { reachCodexImage } from './subscription/reach-image';
 
 export type ImagePath = '/images/generations' | '/images/edits';
-
-function imageError(message: string, status: 400 | 404 = 400): Response {
-  return Response.json({ error: { type: 'invalid_request_error', message } }, { status });
-}
 
 function directImageModel(model: string): string | null {
   const base = model.trim().split('/').at(-1)?.toLowerCase();
@@ -128,7 +125,7 @@ async function xaiImageAnswer(
   fetchLike: typeof fetch,
 ): Promise<Response> {
   if (grant.spend.custody !== 'credentialed')
-    return imageError('The xAI image credential is missing.');
+    return mediaRefusal('The xAI image credential is missing.', 'missing_credential');
 
   return reachXAIImage(
     grant.providerOrigin,
@@ -149,7 +146,10 @@ async function targetImageAnswer(
   fetchLike: typeof fetch,
 ): Promise<Response> {
   if (xaiImageGrant(grant)) return xaiImageAnswer(grant, providerModel, prepared, path, fetchLike);
-  if (!codexImageGrant(grant)) return imageError('The image target has no supported credential.');
+
+  if (!codexImageGrant(grant)) {
+    return mediaRefusal('The image target has no supported credential.', 'missing_credential');
+  }
 
   return servedImageAnswer(c, grant, providerModel, prepared, path, runtime);
 }
@@ -166,11 +166,13 @@ export async function proxyImageRequest(
   const virtual = gateway.virtualModels.find((candidate) => candidate.id === prepared.model);
 
   if (virtual === undefined)
-    return imageError(`The model "${prepared.model}" does not exist.`, 404);
+    return mediaRefusal(`The model "${prepared.model}" does not exist.`, 'model_not_found', 404);
 
   const declared = firstDeclaredTarget(virtual.routing);
 
-  if (declared?.standing.standing !== 'bound') return imageError('The image model has no target.');
+  if (declared?.standing.standing !== 'bound') {
+    return mediaRefusal('The image model has no target.', 'missing_target');
+  }
 
   const grant = await spendGrantFor(gateway.slug, virtual.id, declared.routeNode);
 

@@ -44,14 +44,14 @@ function refusingGateway(): Hono {
   return createGatewayApp(codex, grantsNothing, neverFetches);
 }
 
-async function ask(app: Hono, body: string, userAgent = 'curl/8.7.1'): Promise<void> {
+async function ask(app: Hono, body: string, userAgent = 'curl/8.7.1'): Promise<string> {
   const answer = await app.request(
     'http://127.0.0.1:8397/v1/chat/completions',
     { method: 'POST', body, headers: { 'user-agent': userAgent } },
     loopbackClient,
   );
 
-  await answer.text();
+  return answer.text();
 }
 
 async function rowsWhile(serving: () => Promise<void>): Promise<LogRow[]> {
@@ -153,7 +153,7 @@ describe('a request that failed', () => {
         origin: 'gateway',
         method: 'POST',
         status: 502,
-        failure: 'The gateway could not reach the target.',
+        failure: 'The gateway "Codex" holds no target for the virtual model "fast".',
       },
     ]);
     expect(rows.at(0)?.provider).toBeUndefined();
@@ -172,6 +172,30 @@ describe('a request that failed', () => {
       },
     ]);
     expect(rows.at(0)?.virtualModel).toBeUndefined();
+  });
+});
+
+const NO_ACCOUNT =
+  'The virtual model "fast" in the gateway "Codex" has no account behind it. Reconnect the account it spends, or point it at another.';
+
+describe('the sentence a row the gateway raised carries', () => {
+  test('a virtual model with no account behind it reads what the caller was told', async () => {
+    const grantFor = granting({ verdict: 'missing-credential' }).grantFor;
+    const collected = collectingRows();
+    const told: unknown = JSON.parse(
+      await ask(createGatewayApp(codex, grantFor, neverFetches), aTurn),
+    );
+
+    collected.forget();
+
+    expect(told).toMatchObject({ error: { message: NO_ACCOUNT } });
+    expect(collected.standing().at(0)).toMatchObject({ status: 502, failure: NO_ACCOUNT });
+  });
+
+  test('a status no gateway sentence stands for still reads as the status', async () => {
+    const rows = await rowsFrom(servingGateway(() => new Response('{}', { status: 503 })));
+
+    expect(rows.at(0)?.failure).toBe('The target answered 503.');
   });
 });
 

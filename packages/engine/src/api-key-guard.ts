@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 
 import { timingSafeEqual } from 'node:crypto';
 
+import { turnedAway } from './gateway-turned-away';
 import { presentedCredentials } from './presented-credential';
 import { apiKeyRequired } from './refusals';
 
@@ -29,9 +30,10 @@ function matches(presented: string, held: Buffer): boolean {
 /**
  * The guard standing between a gateway that requires a key and everyone who reaches its port.
  *
- * @summary It mounts after the loopback guard and before the serving turn opens, so a refused request
- * never counts as traffic and never reaches a virtual model. A caller may carry the key in any of the
- * four fields the gateway's four dialects use, and any single match serves: a client that fills its own
+ * @summary It mounts after the loopback guard and inside the serving turn, so a refused request is
+ * keyed and left on the log while still reaching no virtual model, which is what keeps it off every
+ * cable. A caller may carry the key in any field `presentedCredentials` reads, and any single match
+ * serves: a client that fills its own
  * field with a placeholder while carrying the real key in another is ordinary rather than hostile. The
  * compare runs in constant time, so nothing says how many leading bytes a guess got right. An absent
  * key and a wrong one draw the same answer, because telling them apart would say whether this gateway
@@ -54,6 +56,6 @@ export function guardApiKey(displayName: string, apiKey: string): MiddlewareHand
       return next();
     }
 
-    return c.json(apiKeyRequired(displayName), 401, { 'WWW-Authenticate': 'Bearer' });
+    return turnedAway(c, apiKeyRequired(displayName), 401, { 'WWW-Authenticate': 'Bearer' });
   };
 }

@@ -96,6 +96,20 @@ describe('refusing an image request the gateway cannot serve', () => {
       error: { message: 'The image target has no supported credential.' },
     });
   });
+
+  it('writes the refusal in the envelope an OpenAI image client reads', async () => {
+    const app = refusingApp(aVirtualModel({ id: 'fast' }));
+    const answer = await imageRequest(app, '/generations', { model: 'slow', prompt: 'otter' });
+
+    await expect(answer.json()).resolves.toEqual({
+      error: {
+        message: 'The model "slow" does not exist.',
+        type: 'invalid_request_error',
+        param: null,
+        code: 'model_not_found',
+      },
+    });
+  });
 });
 
 describe('editing an image through the Codex Responses tool', () => {

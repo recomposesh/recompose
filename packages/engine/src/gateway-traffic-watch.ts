@@ -84,25 +84,52 @@ function watchedAttempts(watching: Watching): NoteAttempt {
   };
 }
 
+function paintTheCable(
+  watching: Watching,
+  spent: RouteNodeAddress,
+  failure: RequestOutcome | undefined,
+  at: number,
+): void {
+  const outcome: RequestOutcome =
+    failure === undefined ? { outcome: 'served', at } : { ...failure, at };
+
+  watching.note(spent.slug, spent.virtualModel, spent.routeNode, outcome);
+}
+
+function settleTheTurn(
+  watching: Watching,
+  spent: RouteNodeAddress | undefined,
+  failure: RequestOutcome | undefined,
+  status: number,
+): void {
+  watching.stopListening();
+
+  if (watching.interrupted) return;
+
+  const at = watching.now();
+
+  if (spent !== undefined) paintTheCable(watching, spent, failure, at);
+
+  watching.raiseFailure(watching.turn, status, at);
+}
+
+/**
+ * Settles one finished answer against the child that carried it and against the turn as a whole.
+ *
+ * @summary A turn that spent no child paints no cable, because a cable says what the last request
+ * through one child came to and no child carried this one. It still settles when the turn reached a
+ * route table, so a request refused before any child could take it leaves the row a person needs.
+ * A turn that never named a virtual model reached no table and settles nowhere.
+ */
 async function noteWhenTheBodyEnds(watching: Watching, answer: Response): Promise<Response> {
   const spent = watching.asked.at(-1);
 
-  if (spent === undefined) return answer;
+  if (spent === undefined && watching.turn?.virtualModel === undefined) return answer;
 
-  const preparedFailure =
-    answer.status < FIRST_FAILING_STATUS ? undefined : await outcomeOf(answer, 0);
+  const failure = answer.status < FIRST_FAILING_STATUS ? undefined : await outcomeOf(answer, 0);
 
   return afterResponseBody(answer, () => {
-    watching.stopListening();
-
-    if (watching.interrupted) return;
-
-    const at = watching.now();
-    const outcome: RequestOutcome =
-      preparedFailure === undefined ? { outcome: 'served', at } : { ...preparedFailure, at };
-
-    watching.note(spent.slug, spent.virtualModel, spent.routeNode, outcome);
-    watching.raiseFailure(watching.turn, answer.status, at);
+    settleTheTurn(watching, spent, failure, answer.status);
   });
 }
 

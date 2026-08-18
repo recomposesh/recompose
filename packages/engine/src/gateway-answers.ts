@@ -15,6 +15,7 @@ import {
   refusalResponse,
   wantsStream,
 } from './gateway-wire';
+import { gatewayRefusedWith } from './provider/serving-turn';
 import { jsonEventsFrom } from './stream-wire';
 import { codexTerminalErrorAnswer } from './subscription/codex-terminal-error';
 
@@ -50,6 +51,8 @@ function unreachableTargetBody(crossing: Crossing): unknown {
 }
 
 export function unreachableTargetAnswer(crossing: Crossing): Response {
+  gatewayRefusedWith(unreachableTargetMessage(crossing));
+
   return jsonResponse(unreachableTargetBody(crossing), 502, attributionOf(crossing));
 }
 

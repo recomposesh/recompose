@@ -5,6 +5,8 @@ import type { WalkResult } from './routing/attempt-walk';
 
 export type WalkNote = WalkResult<never>['notes'][number];
 
+type FailedOutcome = Extract<RequestOutcome, { outcome: 'failed' }>;
+
 const UNREACHED_STATUS = 502;
 
 /**
@@ -95,6 +97,17 @@ export function notesThatCarriedARequest(notes: readonly WalkNote[]): readonly W
  * @summary The status is the provider's own where one came back, and the unreachable status where
  * none did, so a cable never claims a code no one answered with.
  */
-export function failedOutcome(note: WalkNote, at: number): RequestOutcome {
+export function failedOutcome(note: WalkNote, at: number): FailedOutcome {
   return { outcome: 'failed', at, status: statusOf(note), detail: `The child ${whyOf(note)}.` };
+}
+
+/**
+ * Whether nothing ever answered for one child, which is what decides who owes it a row.
+ *
+ * @summary A child a provider refused already stands as the row the attempt that reached it raised,
+ * so a second row would count one try twice. A child nothing answered for reached no provider at all,
+ * and the gateway raises its row instead.
+ */
+export function nothingAnsweredFor(note: WalkNote): boolean {
+  return note.reason.because !== 'refused' && note.reason.because !== 'stream-error';
 }

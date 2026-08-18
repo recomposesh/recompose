@@ -12,6 +12,7 @@ import { InvalidJsonBodyError } from './invalid-json-body-error';
 import { duplicateJsonKey } from './json-duplicates';
 import { isJsonObject } from './json-object';
 import { parsePreciseJson } from './json-precise';
+import { gatewayRefusedWith } from './provider/serving-turn';
 import { renderRefusal } from './refusals';
 
 export { InvalidJsonBodyError };
@@ -203,6 +204,8 @@ function retryAfterHeader(rendered: RenderedRefusal): Record<string, string> {
  */
 export function refusalResponse(dialect: ProxyDialect, refusal: TranslationRefusal): Response {
   const rendered = renderRefusal(dialect, refusal);
+
+  gatewayRefusedWith(rendered.message);
 
   return jsonResponse(rendered.body, rendered.status, retryAfterHeader(rendered));
 }

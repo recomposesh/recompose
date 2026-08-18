@@ -15,13 +15,10 @@ type BoundTarget = DeclaredTarget & {
   standing: Extract<EngineTargetStanding, { standing: 'bound' }>;
 };
 
+import { mediaRefusal } from './gateway-media-refusal';
 import { readJsonBody } from './gateway-wire';
 import { reachXAIVideo } from './provider/xai-video';
 import { firstDeclaredTarget } from './routing/route-table';
-
-function videoError(message: string, status: 400 | 404 = 400): Response {
-  return Response.json({ error: { type: 'invalid_request_error', message } }, { status });
-}
 
 type XAIGrant = Extract<SpendGrant, { verdict: 'resolved' }> & {
   spend: { custody: 'credentialed'; provider: 'xai'; credential: string };
@@ -56,7 +53,7 @@ async function videoAnswerForTarget(
   const grant = await spendGrantFor(gateway.slug, made.virtual.id, made.declared.routeNode);
 
   if (!xaiGrant(grant)) {
-    return videoError('The video target has no xAI credential.');
+    return mediaRefusal('The video target has no xAI credential.', 'missing_credential');
   }
 
   return reachXAIVideo(
@@ -80,11 +77,15 @@ export async function proxyVideoRequest(
   const model = typeof body['model'] === 'string' ? body['model'] : '';
   const virtual = gateway.virtualModels.find((candidate) => candidate.id === model);
 
-  if (virtual === undefined) return videoError(`The model "${model}" does not exist.`, 404);
+  if (virtual === undefined) {
+    return mediaRefusal(`The model "${model}" does not exist.`, 'model_not_found', 404);
+  }
 
   const declared = firstDeclaredTarget(virtual.routing);
 
-  if (declared?.standing.standing !== 'bound') return videoError('The video model has no target.');
+  if (declared?.standing.standing !== 'bound') {
+    return mediaRefusal('The video model has no target.', 'missing_target');
+  }
 
   return videoAnswerForTarget(
     c,

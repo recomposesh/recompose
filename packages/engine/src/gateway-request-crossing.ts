@@ -16,6 +16,7 @@ import {
   requestsResponsesLite,
 } from './gateway-session';
 import { ingressPayload, readJsonBody, refusalResponse, virtualNameOf } from './gateway-wire';
+import { servingTurnWalks } from './provider/serving-turn';
 import { missingTarget, unknownModel } from './refusals';
 import { entryNodeOf } from './router-entry';
 import { firstDeclaredTarget } from './routing/route-table';
@@ -90,6 +91,8 @@ export async function gatewayRequestCrossing(
   if (virtualModel === undefined) {
     return { response: refusalResponse(dialect, unknownModel(name)) };
   }
+
+  servingTurnWalks(virtualModel.id);
 
   const refusal = refusalTheEntryEarns(dialect, gateway, name, virtualModel.routing);
 

@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 
 import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
 
+import { turnedAway } from './gateway-turned-away';
 import { nonLoopbackClient, requestCarriesOrigin } from './refusals';
 
 const LOOPBACK_ADDRESSES = ['127.0.0.1', 'localhost', '[::1]'];
@@ -17,11 +18,11 @@ export function guardLoopback(
       bindAddress === DEFAULT_GATEWAY_BIND_ADDRESS &&
       !ownAddresses.has(new URL(c.req.url).host)
     ) {
-      return c.json(nonLoopbackClient(), 403);
+      return turnedAway(c, nonLoopbackClient(), 403);
     }
 
     if (c.req.header('origin') !== undefined) {
-      return c.json(requestCarriesOrigin(), 403);
+      return turnedAway(c, requestCarriesOrigin(), 403);
     }
 
     return next();

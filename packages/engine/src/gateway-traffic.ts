@@ -124,7 +124,7 @@ function attemptRow(attempt: ProviderAttempt): LogRow {
   };
 }
 
-function raisedRow(turn: ServingTurn, status: number, at: number): LogRow {
+function raisedRow(turn: ServingTurn, status: number, at: number, failure: string): LogRow {
   return {
     id: crypto.randomUUID(),
     at,
@@ -134,7 +134,7 @@ function raisedRow(turn: ServingTurn, status: number, at: number): LogRow {
     method: turn.method,
     status,
     clientKey: turn.clientKey,
-    failure: detailFor(status),
+    failure,
   };
 }
 
@@ -163,18 +163,56 @@ function publishRow(row: LogRow): void {
   tellingReaders(rowListeners, () => row, 'log row');
 }
 
+/**
+ * Leaves the row for a request too broken to read, in the words the status alone earns.
+ *
+ * @summary The sentence stays the status reading rather than the refusal the caller was handed,
+ * because that refusal names the JSON key the request itself repeated and a row carries nothing the
+ * request said.
+ */
 export function noteUnreadableRequest(at: number = Date.now()): void {
   const turn = servingTurn();
 
   if (turn === undefined || turn.rowPublished) return;
 
-  publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS, at));
+  publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS, at, detailFor(UNREADABLE_REQUEST_STATUS)));
+}
+
+/**
+ * Leaves the row for a request the gateway turned away before any virtual model stood for it.
+ *
+ * @summary The serving turn opens ahead of every guard so that a refused caller is keyed and named
+ * like any other, which is what lets a person see the rejection at all. It still reaches no virtual
+ * model and paints no cable, so the row carries no provider cells and names no model.
+ */
+export function noteTurnedAway(status: number, failure: string, at: number = Date.now()): void {
+  const turn = servingTurn();
+
+  if (turn === undefined || turn.rowPublished) return;
+
+  publishRow(raisedRow(turn, status, at, failure));
+}
+
+/**
+ * Leaves the row standing for one child the gateway could never place the request with.
+ *
+ * @summary A child a provider refused already stands as the row that attempt raised, so only a child
+ * nothing answered for is raised here. It deliberately leaves `rowPublished` alone: a ladder that
+ * tried three children owes a person three rows, and the turn's own outcome is still owed its row on
+ * top of them.
+ */
+export function noteUnreachedChild(status: number, failure: string, at: number = Date.now()): void {
+  const turn = servingTurn();
+
+  if (turn === undefined) return;
+
+  publishRow(raisedRow(turn, status, at, failure));
 }
 
 function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: number): void {
   if (turn === undefined || turn.rowPublished || !failed(status)) return;
 
-  publishRow(raisedRow(turn, status, at));
+  publishRow(raisedRow(turn, status, at, turn.refusedWith ?? detailFor(status)));
 }
 
 /**
