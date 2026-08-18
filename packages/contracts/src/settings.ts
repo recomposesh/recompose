@@ -13,18 +13,19 @@ export const DEFAULT_GATEWAY_BIND_ADDRESS = '127.0.0.1';
 const EVERY_INTERFACE_BIND_ADDRESS = '0.0.0.0';
 
 /**
- * The origin a client is handed for a gateway bound to a given address.
+ * The host a client is handed for a gateway bound to a given address.
  *
  * @summary The bind address answers which interfaces a listener accepts on, which is not the same
  * question as where a client sends. `0.0.0.0` names every interface and routes nowhere, so a
- * snippet carrying it hands out an origin that cannot connect. Every other address a person can
+ * snippet carrying it hands out a host that cannot connect. Every other address a person can
  * store is one they chose to be reached at, so it travels as written.
  */
-export function routableGatewayOrigin(bindAddress: string, port: number): string {
-  const reachableHost =
-    bindAddress === EVERY_INTERFACE_BIND_ADDRESS ? DEFAULT_GATEWAY_BIND_ADDRESS : bindAddress;
+export function routableGatewayHost(bindAddress: string): string {
+  return bindAddress === EVERY_INTERFACE_BIND_ADDRESS ? DEFAULT_GATEWAY_BIND_ADDRESS : bindAddress;
+}
 
-  return `http://${reachableHost}:${String(port)}`;
+export function routableGatewayOrigin(bindAddress: string, port: number): string {
+  return `http://${routableGatewayHost(bindAddress)}:${String(port)}`;
 }
 
 export const gatewayBindAddressSchema = z

@@ -3,6 +3,7 @@ import {
   GATEWAY_PORT_RANGE,
   gatewayPortSchema,
   gatewaySlugSchema,
+  routableGatewayHost,
   slugFromName,
 } from '@recompose/contracts';
 
@@ -41,7 +42,9 @@ export function previewAddressFor(
   port: string,
   bindAddress = DEFAULT_GATEWAY_BIND_ADDRESS,
 ): string {
-  return port === '' ? `http://${bindAddress}` : `http://${bindAddress}:${port}`;
+  const host = routableGatewayHost(bindAddress);
+
+  return port === '' ? `http://${host}` : `http://${host}:${port}`;
 }
 
 /** Where each refusal the draft can draw stands: under a field, or under the sheet itself. */
