@@ -1,0 +1,105 @@
+name: release-surfaces
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  download-redirects:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - shell: bash
+        run: |
+          [ -n "$CF_API_TOKEN" ] || { echo "download redirects halted: secret CF_API_TOKEN is empty; create a Cloudflare API token with zone-level Single Redirect edit scope"; exit 1; }
+          [ -n "$CF_ZONE_ID" ] || { echo "download redirects halted: secret CF_ZONE_ID is empty; set it to the recompose.sh zone id"; exit 1; }
+          version="${TAG#v}"
+          assets=$(gh api "repos/${REPO}/releases/tags/${TAG}" --jq '.assets[].name')
+          declare -A targets=(
+            [mac-arm64]="Recompose-${version}-arm64.dmg"
+            [mac-x64]="Recompose-${version}-x64.dmg"
+            [windows]="Recompose-${version}-setup.exe"
+            [linux-appimage]="Recompose-${version}.AppImage"
+            [linux-deb]="Recompose_${version}_amd64.deb"
+          )
+          for slug in mac-arm64 mac-x64 windows linux-appimage linux-deb; do
+            grep -qxF "${targets[$slug]}" <<<"$assets" \
+              || { echo "download redirects halted: release ${TAG} carries no asset named ${targets[$slug]}"; exit 1; }
+          done
+          rules='[]'
+          for slug in mac-arm64 mac-x64 windows linux-appimage linux-deb; do
+            rules=$(jq -c \
+              --arg path "/download/${slug}" \
+              --arg url "https://github.com/${REPO}/releases/download/${TAG}/${targets[$slug]}" \
+              '. + [{
+                ref: ("download-" + ($path | ltrimstr("/download/"))),
+                expression: ("http.request.uri.path eq \"" + $path + "\""),
+                description: ("302 to the " + $url + " release asset"),
+                action: "redirect",
+                action_parameters: {from_value: {status_code: 302, target_url: {value: $url}}}
+              }]' <<<"$rules")
+          done
+          payload=$(jq -n --argjson rules "$rules" \
+            '{name: "download redirects", kind: "zone", phase: "http_request_dynamic_redirect", rules: $rules}')
+          response=$(curl -sS -X PUT \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/rulesets/phases/http_request_dynamic_redirect/entrypoint" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+          jq -e '.success == true' <<<"$response" > /dev/null \
+            || { echo "download redirects halted: ruleset write refused: $(jq -c '.errors' <<<"$response")"; exit 1; }
+          for slug in mac-arm64 mac-x64 windows linux-appimage linux-deb; do
+            url="https://recompose.sh/download/${slug}"
+            expected="https://github.com/${REPO}/releases/download/${TAG}/${targets[$slug]}"
+            status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+            location=$(curl -sI "$url" | tr -d '\r' | awk 'tolower($1) == "location:" {print $2}')
+            [ "$status" = "302" ] || { echo "verification failed: ${url} answered ${status}, not 302"; exit 1; }
+            [ "$location" = "$expected" ] || { echo "verification failed: ${url} points at ${location}, not ${expected}"; exit 1; }
+            echo "verified: ${url} -> ${expected}"
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+
+  release-notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - shell: bash
+        run: |
+          version="${TAG#v}"
+          entry="apps/web/content/changelog/${version}.md"
+          [ -f "$entry" ] || { echo "release notes halted: ${entry} does not exist; merge the curated changelog entry, then re-run this workflow"; exit 1; }
+          body=$(sed -e '1,/^---$/d' -e '/./,$!d' "$entry")
+          [ -n "$body" ] || { echo "release notes halted: ${entry} has no body after its frontmatter"; exit 1; }
+          previous=$(git tag --list 'v*' --sort=-v:refname | grep -A1 -xF "$TAG" | tail -n +2)
+          if [ -n "$previous" ]; then
+            log_url="https://github.com/${REPO}/compare/${previous}...${TAG}"
+          else
+            log_url="https://github.com/${REPO}/commits/${TAG}"
+          fi
+          release_id=$(gh api "repos/${REPO}/releases/tags/${TAG}" --jq '.id')
+          printf '%s\n\n**Full commit log**: %s\n' "$body" "$log_url" \
+            | gh api -X PATCH "repos/${REPO}/releases/${release_id}" -F body=@- > /dev/null
+          echo "release ${TAG} now wears ${entry}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
