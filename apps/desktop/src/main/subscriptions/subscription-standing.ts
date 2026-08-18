@@ -33,6 +33,11 @@ async function blobIn(home: string, file: string): Promise<string | null> {
   );
 }
 
+/**
+ * @summary Evidence is presence, never expiry: an account this app signed in is one the app
+ * renews at spend time, so a stored expiry proves nothing about standing here. Expiry reaches
+ * only the adopted reader, where no renewer of the app's own stands behind the credential.
+ */
 function readingOf(
   provider: SubscriptionProviderId,
   credential: string | null,

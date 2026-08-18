@@ -79,3 +79,22 @@ A router in `round-robin` mode MUST distribute eligible requests evenly across i
 - When a request arrives under the virtual model's name
 - Then the gateway answers a typed refusal naming the exhausted router and each cooling child
 - And no request leaves the machine
+
+### Requirement: A chained turn refuses at the router that would spread it
+
+A request MAY resume state one account alone holds: it names an earlier response, replays sealed reasoning, or carries a signed thinking block, in whatever dialect the request arrived. Such a chained turn MUST NOT rotate across accounts, because only the account that minted the seal can read it. A router in `round-robin` mode MUST refuse a chained turn with a typed refusal, whatever depth that router stands at. The refusal MUST name the router and offer the two ways out: switching the router to failover, or starting a conversation that resumes nothing. A round-robin router holding no child MUST still refuse the chained turn rather than report itself empty, because the question comes before the pick. A router in `failover` mode MUST carry a chained turn, and a turn that resumes nothing MUST rotate as any other request.
+
+#### Scenario: a chained turn refuses at a nested round-robin
+
+- Given a virtual model bound to a failover router whose child is a round-robin router over two targets
+- When a request arrives that resumes state a provider holds for one account
+- Then the gateway answers a typed refusal naming the round-robin router
+- And the refusal offers failover mode or a conversation that resumes nothing
+- And no request leaves the machine
+
+#### Scenario: a failover chain carries the chained turn
+
+- Given a virtual model bound to a failover router over two targets
+- When a request arrives that resumes state a provider holds for one account
+- Then the first target receives it
+- And the answer travels back to the caller

@@ -1,7 +1,12 @@
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
-import { GATEWAY_CONFIG_VERSION, GATEWAY_PORT_RANGE, gatewayConfigSchema } from './gateway-config';
+import {
+  GATEWAY_CONFIG_VERSION,
+  GATEWAY_PORT_BAND,
+  GATEWAY_PORT_RANGE,
+  gatewayConfigSchema,
+} from './gateway-config';
 
 const validConfig = {
   schemaVersion: GATEWAY_CONFIG_VERSION,
@@ -44,6 +49,28 @@ describe('the port a gateway answers on', () => {
     for (const port of [0, 80, 443, 8397.5]) {
       expect(() => gatewayConfigSchema.parse({ ...validConfig, port })).toThrow();
     }
+  });
+});
+
+describe('the band a first offer is drawn from', () => {
+  test('the published band spans the forty-eight ports recompose owns', () => {
+    expect(GATEWAY_PORT_BAND).toEqual({ first: 8389, count: 48 });
+  });
+
+  test('every port in the band parses, so no offer can be refused by the document', () => {
+    for (let step = 0; step < GATEWAY_PORT_BAND.count; step += 1) {
+      const port = GATEWAY_PORT_BAND.first + step;
+
+      expect(gatewayConfigSchema.parse({ ...validConfig, port }).port).toBe(port);
+    }
+  });
+
+  test('the band sits below every ephemeral floor, so a reboot cannot hand a port away', () => {
+    const LOWEST_EPHEMERAL_FLOOR = 32768;
+
+    expect(GATEWAY_PORT_BAND.first + GATEWAY_PORT_BAND.count - 1).toBeLessThan(
+      LOWEST_EPHEMERAL_FLOOR,
+    );
   });
 });
 

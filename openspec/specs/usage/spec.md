@@ -176,7 +176,7 @@ Cost MUST exist at day width only, priced at answer time in main from the LiteLL
 
 ### Requirement: Missing data reads as missing, never as zero
 
-While history loads, tiles MUST hold placeholders instead of zeros and the chart MUST draw its furniture without bars. An idle live hour MUST read a true zero. A refused read MUST surface as an inline card that names the failure and offers Retry, on the live plane as much as on the ledger plane. The range control MUST then move to the live plane, so it matches what draws. Range segments wider than the retention window MUST render inert with the window named as the reason.
+While history loads, tiles MUST hold placeholders instead of zeros and the chart MUST draw its furniture without bars. An idle live hour MUST read a true zero. A refused read MUST surface as an inline card that names the failure and offers Try again, on the live plane as much as on the ledger plane. The range control MUST then move to the live plane, so it matches what draws. Range segments wider than the retention window MUST render inert with the window named as the reason.
 
 #### Scenario: a history-backed range loads as placeholders
 
@@ -188,7 +188,7 @@ While history loads, tiles MUST hold placeholders instead of zeros and the chart
 
 - Given stored usage history the app fails to read
 - When the person selects the 7d range
-- Then an inline card names the failed read and offers Retry
+- Then an inline card names the failed read and offers Try again
 - And the range control moves to 1h
 
 ### Requirement: Retention prunes the ledger to the stored window

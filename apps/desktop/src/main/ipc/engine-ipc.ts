@@ -59,6 +59,12 @@ async function offerPort(ctx: EngineIpcContext) {
  * @summary It rewrites a gateway document, so it takes the same lane the create and the rewrite
  * take. Without that, a definition stored between this read and this write would be erased by the
  * stale copy held here, and the caller who stored it would already have read success.
+ *
+ * It is the one document rewrite that serves a gateway standing stopped, so it does not follow the
+ * rule the plain rewrite follows. A person only ever reaches it from the offer a failed start puts
+ * on screen, and that start is what left the gateway stopped a moment earlier, so serving is the
+ * whole of what they asked for. Guarding it the way the rewrite is guarded would answer the offer
+ * by moving the port and leaving the gateway dark, which is the recovery refusing to recover.
  */
 async function movePort(ctx: EngineIpcContext, slug: string) {
   try {

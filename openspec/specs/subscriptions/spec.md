@@ -23,7 +23,7 @@ Connecting a subscription MUST record the account as a managed account. A connec
 
 ### Requirement: The provider's own tool performs the sign-in
 
-The app MUST delegate signing in to the provider's own command-line tool rather than running an authorization flow of its own.
+Where a provider ships a command-line tool that owns its flow, the app MUST delegate signing in to that tool rather than run its own authorization flow. The plans no tool on the machine owns carry their own sign-in requirements below.
 
 Renewal ownership follows where the account came from. An account the app signed in lives in a config home the app created, which no other program reads, so the app MUST renew that credential itself. An account the app adopted from the machine belongs to the tool that wrote it as well, so the app MUST NOT renew it. It MUST hand that renewal over, as the adopted-credential requirement sets out.
 
@@ -55,25 +55,30 @@ A config home the app hands to the provider's tool for a sign-in MUST arrive pre
 - When a request needs that account
 - Then the app renews the credential itself
 
-### Requirement: Kimi Code signs in through the tool that owns its flow
+### Requirement: Kimi Code signs in through a device flow the app runs
 
-Kimi Code authenticates through a device authorization grant, and CLIProxyAPI implements that
-whole flow. recompose already runs that tool for another plan. The app MUST therefore delegate
-this sign-in to it rather than keeping a second copy of an authorization to maintain.
+Kimi Code authenticates through a device authorization grant, and nothing on the machine owns
+that flow, so the app MUST run it itself, on the device-flow channel Copilot rides. The surface
+shows the code and the address to enter it at, and polling follows the pace the server sets. The
+handle that completes the flow never crosses to the screen.
 
-The app MUST spend the resulting account against the endpoint the provider directory names for
-Kimi, which is the endpoint the engine already serves.
+Kimi names nobody behind a token, so a connected row MUST stand under its plan name rather than
+an address. The credential the sign-in yields MUST keep the shape CLIProxyAPI writes, so an
+account signed in here and one adopted from that tool read the same way downstream. The app MUST
+spend the resulting account against the endpoint the provider directory names for Kimi, which is
+the endpoint the engine already serves.
 
 #### Scenario: a person signs in to Kimi Code
 
 - Given the Subscriptions catalog stands open
 - When a person picks Kimi Code
-- Then the sign-in stands alone, and the tool that owns the flow runs it
+- Then the surface shows a code and the address to enter it at
+- And authorizing there records the account under its plan name
 
-#### Scenario: the tool that owns the flow is the one already installed
+#### Scenario: nothing asks a tool about Kimi Code
 
 - When the surface reports which tools this machine can run
-- Then Kimi Code names the same tool the Gemini plan names
+- Then Kimi Code names none, because recompose runs its flow itself
 
 ### Requirement: GitHub Copilot signs in through a device flow the app runs
 
@@ -120,6 +125,44 @@ through fails a request a person is watching.
 
 - When the surface reports which tools this machine can run
 - Then GitHub Copilot names none, because recompose runs its flow itself
+
+### Requirement: Gemini (Antigravity) signs in through the browser the app opens
+
+The Subscriptions catalog MUST offer Gemini (Antigravity). Nothing on the machine owns its
+sign-in, so the app MUST run the authorization itself. It hands Google's authorization address to
+the person's own browser and listens on the loopback callback port the client registration names.
+
+The browser MUST open only once the loopback listener stands, so an immediate authorization never
+lands on a port nothing holds. A callback MUST settle the sign-in only when it carries the
+unguessable state the ask minted. A denial in the browser, a callback the person never finishes,
+and a callback port something else holds MUST each refuse in words naming what happened.
+
+A serving turn against this plan names a Google Cloud project. The sign-in MUST therefore read
+the account's project, and MUST refuse rather than record a credential that would connect and
+answer nothing. On authorization the app MUST record the address Google names, and a sign-in
+Google leaves unnamed MUST still connect. The credential the sign-in yields MUST keep the shape
+CLIProxyAPI writes, so an account signed in here and one adopted from that tool read the same way
+downstream.
+
+#### Scenario: a person signs in to Gemini (Antigravity)
+
+- Given the Subscriptions catalog stands open
+- When a person picks Gemini (Antigravity)
+- Then the person's own browser opens on Google's authorization page
+- And authorizing there records the account under the address Google names
+
+#### Scenario: a denied sign-in says so
+
+- Given a sign-in stands waiting on the browser
+- When the person denies it there
+- Then the app stops waiting and reports the denial
+
+#### Scenario: an account with no Antigravity project refuses at sign-in
+
+- Given an authorization that lands for an account Google names no project for
+- When the sign-in settles
+- Then it refuses and names the missing project
+- And no account records
 
 ### Requirement: A plan that issues a token connects by taking one
 
@@ -224,18 +267,18 @@ The way back follows where the account came from. An account the app signed in M
 
 The way to another account MUST stand once, at the trailing edge of the window strip. It MUST open a catalog over the surface, holding only the kind that surface holds. Each entry MUST name the plan product and what connecting it gives.
 
-The Subscriptions catalog MUST hold Claude, Codex, GitHub Copilot, Kimi Code, the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge, because every one of the seven connects.
+The Subscriptions catalog MUST hold Claude, Codex, GitHub Copilot, Kimi Code, Gemini (Antigravity), the GLM Coding Plan, the Qwen Coding Plan, and the MiniMax Coding Plan. No entry MUST stand under a Soon badge, because every one of the eight connects.
 
 #### Scenario: a person opens the catalog from the subscriptions surface
 
 - When a person asks to add a provider
 - Then the catalog opens over the surface, holding only subscription plans
-- And it lists seven of them
+- And it lists eight of them
 - And every entry answers a pointer and a keyboard
 
 ### Requirement: Picking a provider offers the one way the surface holds
 
-The surface opens the catalog for one kind, so a picked provider MUST offer only that kind's way of connecting. A subscription pick MUST hand the sign-in to the provider's own tool and MUST NOT offer a key beside it. A key pick MUST ask for a name and a key, because the provider rides in from the picked entry.
+The surface opens the catalog for one kind, so a picked provider MUST offer only that kind's way of connecting. A subscription pick MUST offer the sign-in alone and MUST NOT offer a key beside it. Whether the provider's own tool or the app itself runs that sign-in follows the plan's own requirement. A key pick MUST ask for a name and a key, because the provider rides in from the picked entry.
 
 A subscription pick MUST lead with the account the machine already holds, when it holds one. The sign-in MUST stay reachable as the quieter act rather than as the first thing a person meets. While either act runs, the other MUST stand inert rather than disappear, so the surface doesn't resize under the person's hand.
 
@@ -264,7 +307,8 @@ A plan that issues a token instead of a sign-in MUST ask for a name and that tok
 #### Scenario: a plan with a sign-in offers the sign-in alone
 
 - When a person picks Kimi Code
-- Then the sign-in stands alone, yielding an account for the provider's own tool
+- Then the sign-in stands alone
+- And the connect asks for no key and no token
 
 #### Scenario: a plan with no sign-in offers the token alone
 

@@ -1,3 +1,4 @@
+import { defaultSettings } from '@recompose/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Suspense } from 'react';
 import { expect, test } from 'vitest';
@@ -53,6 +54,16 @@ test('the pill carries the address a person pastes into a client, with no path',
   const { screen } = await renderToolbar({ gateways: [codex], engineStates: {} });
 
   await expect.element(screen.getByText('http://')).toBeVisible();
+  await expect.element(screen.getByText('127.0.0.1:51234')).toBeVisible();
+});
+
+test('a gateway bound to every interface carries an address a client can reach', async () => {
+  const { screen } = await renderToolbar({
+    gateways: [codex],
+    engineStates: {},
+    settings: { ...defaultSettings(), bindAddress: '0.0.0.0' },
+  });
+
   await expect.element(screen.getByText('127.0.0.1:51234')).toBeVisible();
 });
 

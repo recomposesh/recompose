@@ -65,17 +65,17 @@ brew install --cask recomposesh/tap/recompose
 | [Apple Silicon (.dmg)][mac-arm] |                         | [Debian / Ubuntu (.deb)][deb] |
 | [Intel (.dmg)][mac-intel]       |                         |                               |
 
-The app updates itself through whichever channel installed it: a dmg install pulls updates on its own, the AppImage replaces itself, and Homebrew waits for the cask. macOS builds carry a Developer ID signature and Apple's notary ticket, and need macOS 12 Monterey or later.
+The app updates itself through whichever channel installed it. A macOS copy in the Applications folder pulls updates on its own, and a Homebrew install counts: `brew upgrade` leaves it alone. The AppImage replaces itself, and a deb install waits for apt. macOS builds carry a Developer ID signature and Apple's notary ticket, and need macOS 12 Monterey or later.
 
 > [!NOTE]
-> The Windows installer carries no signature yet, so SmartScreen shows a warning on first launch. Pick "More info," then "Run anyway."
+> The Windows installer carries no signature yet, so SmartScreen shows a warning on first launch. Pick "More info," then "Run anyway." Until signing lands, a Windows install also updates by downloading the new installer rather than through the app.
 
 ## How it works
 
 A gateway is a running local server that owns one port. Its canvas wires virtual models through routers to provider targets:
 
 ```
-Claude Code ──▶ http://localhost:8397
+Claude Code ──▶ http://127.0.0.1:8397
                        │
               [ gateway "coding" ]
                        │
@@ -86,21 +86,21 @@ Claude Code ──▶ http://localhost:8397
      [ Claude · sonnet ]  [ OpenAI · gpt-5 ]
 ```
 
-Clients connect through an environment variable:
+Claude Code points at the gateway through an environment variable:
 
 ```sh
-export ANTHROPIC_BASE_URL=http://localhost:8397
+export ANTHROPIC_BASE_URL=http://127.0.0.1:8397
 ```
 
-OpenAI-dialect clients set `OPENAI_BASE_URL` to the same address.
+Every gateway carries a connect sheet that writes the exact setup for each client it knows. The sheet covers terminal agents such as Codex CLI and opencode, editors such as Cursor and Cline, desktop apps, and a plain curl for everything else.
 
 ## Features
 
-- **One address for every client**: each gateway serves both API dialects on its own port, `/v1/messages` (Anthropic) and `/v1/chat/completions` (OpenAI). The request path picks the dialect, and there is nothing to configure per client.
+- **One address for every client**: each gateway serves five API dialects on its own port: Anthropic Messages (`/v1/messages`), OpenAI Chat Completions (`/v1/chat/completions`), OpenAI Responses (`/v1/responses`), Gemini (`/v1beta/models`), and Gemini Interactions (`/v1/interactions`). The request path picks the dialect, and there is nothing to configure per client.
 - **Virtual models**: clients see aliases such as `fast` or `smart`. Swap the real model behind that name without touching a single client config.
-- **Composable routing**: failover ladders send traffic to the topmost healthy target, round-robin pools spread it evenly, and routers chain to combine strategies.
-- **Every provider shape**: subscriptions the provider's own tool signs in (Claude, Codex, and more), API keys the gateway spends request by request, aggregators such as OpenRouter, and local runtimes such as Ollama.
-- **Private by default**: no signup, no telemetry. Credentials stay on your machine in `~/.recompose`, with secrets in the system vault. Serving on a Local Area Network (LAN) is opt-in, and the app recommends turning on the local API token when you do.
+- **Composable routing**: a failover router sends traffic to the topmost healthy target, a round-robin router spreads it evenly, and routers nest to combine strategies.
+- **Every provider shape**: subscription plans such as Claude, ChatGPT, and GitHub Copilot, API keys the gateway spends request by request, aggregators such as OpenRouter and Groq, and the local runtimes Ollama, LM Studio, llama.cpp, and vLLM, plus any server of your own.
+- **Private by default**: no signup, no telemetry. Credentials stay on your machine in `~/.recompose`, with secrets sealed through the system keychain where the platform provides one. Gateways answer this machine alone until you widen the bind address in settings, and each gateway can require its own API key.
 
 ## Documentation
 
@@ -115,12 +115,14 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` opens the Electron app with hot reload. `pnpm build` compiles every workspace, and `pnpm test` runs the unit suites.
+`pnpm dev` opens the Electron app with hot reload and serves the site beside it. `pnpm build` compiles every workspace, and `pnpm test` runs the unit suites.
 
 ## Architecture
 
 - **`apps/desktop`**: the Electron app. The main process owns the gateway engine in a utility process, and the renderer is a React app organized by Feature-Sliced Design.
-- **`apps/web`**: the public site, statically built: landing, docs, download, and changelog.
+- **`apps/web`**: the public site: landing, docs, download, and changelog.
+- **`packages/engine`**: the gateway server itself: dialect translation, routing, and serving.
+- **`packages/contracts`**: the schemas the desktop app and the engine share.
 - **`docs/adr`**: every technical decision, recorded as an Architecture Decision Record (ADR).
 
 [ci-badge]: https://github.com/recomposesh/recompose/actions/workflows/ci.yml/badge.svg
