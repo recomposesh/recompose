@@ -1,38 +1,32 @@
+import type { ReactNode } from 'react';
+
+import type { DownloadTarget } from '../lib/download-targets';
+
 import { AppleMark } from '../components/apple-mark';
 import { TuxMark } from '../components/tux-mark';
 import { UbuntuMark } from '../components/ubuntu-mark';
 import { WindowsMark } from '../components/windows-mark';
 
-const tileFrame = 'flex size-9 items-center justify-center rounded-tile';
+const tiles: Record<DownloadTarget, { tone: string; mark: ReactNode }> = {
+  'mac-arm64': {
+    tone: 'bg-fd-primary text-fd-primary-foreground',
+    mark: <AppleMark className="-mt-0.5 size-4.5" />,
+  },
+  'mac-x64': {
+    tone: 'bg-fd-primary text-fd-primary-foreground',
+    mark: <AppleMark className="-mt-0.5 size-4.5" />,
+  },
+  windows: { tone: 'bg-windows text-white', mark: <WindowsMark className="size-4.5" /> },
+  'linux-appimage': { tone: 'bg-tux text-tile', mark: <TuxMark className="size-4.5" /> },
+  'linux-deb': { tone: 'bg-ubuntu text-white', mark: <UbuntuMark className="size-4.5" /> },
+};
 
-export function PlatformTile({ target }: { target: string }) {
-  if (target.startsWith('mac')) {
-    return (
-      <span className={`${tileFrame} bg-fd-primary text-fd-primary-foreground`}>
-        <AppleMark className="-mt-0.5 size-4.5" />
-      </span>
-    );
-  }
-
-  if (target === 'windows') {
-    return (
-      <span className={`${tileFrame} bg-windows text-white`}>
-        <WindowsMark className="size-4.5" />
-      </span>
-    );
-  }
-
-  if (target === 'linux-appimage') {
-    return (
-      <span className={`${tileFrame} bg-tux text-tile`}>
-        <TuxMark className="size-4.5" />
-      </span>
-    );
-  }
+export function PlatformTile({ target }: { target: DownloadTarget }) {
+  const tile = tiles[target];
 
   return (
-    <span className={`${tileFrame} bg-ubuntu text-white`}>
-      <UbuntuMark className="size-4.5" />
+    <span className={`flex size-9 items-center justify-center rounded-tile ${tile.tone}`}>
+      {tile.mark}
     </span>
   );
 }

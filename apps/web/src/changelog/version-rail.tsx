@@ -2,26 +2,7 @@ import { Link } from '@tanstack/react-router';
 
 import type { ChangelogEntry } from '../lib/changelog';
 
-import { formatEntryMonth } from '../lib/changelog';
-
-interface MonthGroup {
-  month: string;
-  versions: string[];
-}
-
-function monthGroups(entries: ChangelogEntry[]): MonthGroup[] {
-  const groups: MonthGroup[] = [];
-
-  for (const entry of entries) {
-    const month = formatEntryMonth(entry.date);
-    const last = groups.at(-1);
-
-    if (last?.month === month) last.versions.push(entry.version);
-    else groups.push({ month, versions: [entry.version] });
-  }
-
-  return groups;
-}
+import { monthGroups } from '../lib/changelog';
 
 const chip = 'rounded-md px-2.5 py-1.5 font-mono text-control';
 

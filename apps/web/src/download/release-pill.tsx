@@ -1,43 +1,17 @@
 import { Link } from '@tanstack/react-router';
 
-const months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-function stampOf(match: RegExpExecArray): string | undefined {
-  const [, year, month, day] = match;
-  const name = months[Number(month) - 1];
-
-  return name === undefined || year === undefined || day === undefined
-    ? undefined
-    : `${name} ${Number(day)}, ${year}`;
-}
-
-function pillDate(date: string | undefined): string | undefined {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date ?? '');
-
-  return match === null ? undefined : stampOf(match);
-}
+import { formatReleaseDate } from '../lib/changelog';
 
 function releaseStamp(): string | undefined {
   const version = import.meta.env.VITE_RELEASE_VERSION;
 
   if (version === undefined || version === '') return undefined;
 
-  const date = pillDate(import.meta.env.VITE_RELEASE_DATE);
+  const date = import.meta.env.VITE_RELEASE_DATE;
 
-  return date === undefined ? `v${version}` : `v${version} — ${date}`;
+  return date === undefined || date === ''
+    ? `v${version}`
+    : `v${version} — ${formatReleaseDate(date)}`;
 }
 
 export function ReleasePill() {

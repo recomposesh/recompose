@@ -2,12 +2,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 import { SiteNav } from '../components/site-nav';
 import { SiteFooter } from '../landing/site-footer';
-import { changelogEntries } from '../lib/changelog-entries';
+import { changelogEntries, latestChangelogEntry } from '../lib/changelog-entries';
 import { ReleaseArticle } from './release-article';
 import { VersionRail } from './version-rail';
 
 export function ChangelogScreen({ entry }: { entry: ChangelogEntry }) {
-  const latest = changelogEntries[0]?.version === entry.version;
+  const latest = latestChangelogEntry.version === entry.version;
 
   return (
     <>

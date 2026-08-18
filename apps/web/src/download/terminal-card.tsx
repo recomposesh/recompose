@@ -1,17 +1,23 @@
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
-const brewCommand = 'brew install --cask recomposesh/tap/recompose';
+import { brewInstallCommand } from '../lib/download-targets';
 
 export function TerminalCard() {
   const [copied, setCopied] = useState(false);
 
   const copyCommand = () => {
-    void navigator.clipboard.writeText(brewCommand);
-    setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-    }, 1500);
+    navigator.clipboard.writeText(brewInstallCommand).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => {
+          setCopied(false);
+        }, 1500);
+      },
+      () => {
+        setCopied(false);
+      },
+    );
   };
 
   return (
@@ -21,7 +27,7 @@ export function TerminalCard() {
           PREFER THE TERMINAL?
         </p>
         <div className="mt-2.5 flex items-center justify-between gap-2.5">
-          <code className="font-mono text-control text-fd-foreground">{brewCommand}</code>
+          <code className="font-mono text-control text-fd-foreground">{brewInstallCommand}</code>
           <button
             type="button"
             aria-label="copy the brew command"

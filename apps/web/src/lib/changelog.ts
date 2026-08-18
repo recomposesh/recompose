@@ -174,6 +174,31 @@ export function formatEntryMonth(date: string): string {
   return `${name} ${parts.year}`;
 }
 
+export function formatReleaseDate(date: string): string {
+  const { name, parts } = monthNameOf(fullMonths, date);
+
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${parts.day}, ${parts.year}`;
+}
+
+export interface MonthGroup {
+  month: string;
+  versions: string[];
+}
+
+export function monthGroups(entries: ChangelogEntry[]): MonthGroup[] {
+  const groups: MonthGroup[] = [];
+
+  for (const entry of entries) {
+    const month = formatEntryMonth(entry.date);
+    const last = groups.at(-1);
+
+    if (last?.month === month) last.versions.push(entry.version);
+    else groups.push({ month, versions: [entry.version] });
+  }
+
+  return groups;
+}
+
 export function byNewestVersion(a: string, b: string): number {
   const left = a.split('.').map(Number);
   const right = b.split('.').map(Number);

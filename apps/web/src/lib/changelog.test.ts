@@ -4,6 +4,8 @@ import {
   byNewestVersion,
   formatEntryDate,
   formatEntryMonth,
+  formatReleaseDate,
+  monthGroups,
   parseChangelogEntry,
 } from './changelog';
 
@@ -90,6 +92,40 @@ describe('changelog dates render the way the design writes them', () => {
   it('spells the rail month out in full', () => {
     expect(formatEntryMonth('2026-08-02')).toBe('august 2026');
     expect(formatEntryMonth('2026-01-15')).toBe('january 2026');
+  });
+
+  it('dresses the release pill date in title case', () => {
+    expect(formatReleaseDate('2026-08-18')).toBe('August 18, 2026');
+    expect(formatReleaseDate('2026-07-05')).toBe('July 5, 2026');
+  });
+
+  it('refuses a malformed release date instead of hiding it', () => {
+    expect(() => formatReleaseDate('yesterday')).toThrow(
+      'changelog date "yesterday" is not a yyyy-mm-dd date',
+    );
+  });
+});
+
+describe('the version rail groups releases by month', () => {
+  it('collapses same-month versions into one group, newest order preserved', () => {
+    const entry = (version: string, date: string) => ({
+      version,
+      date,
+      hasAssets: true,
+      intro: '',
+      sections: [],
+    });
+
+    expect(
+      monthGroups([
+        entry('0.4.0', '2026-08-12'),
+        entry('0.3.0', '2026-08-02'),
+        entry('0.2.0', '2026-07-25'),
+      ]),
+    ).toStrictEqual([
+      { month: 'august 2026', versions: ['0.4.0', '0.3.0'] },
+      { month: 'july 2026', versions: ['0.2.0'] },
+    ]);
   });
 });
 

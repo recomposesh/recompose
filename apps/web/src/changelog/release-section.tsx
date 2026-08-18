@@ -1,7 +1,8 @@
 import type { ChangelogSection } from '../lib/changelog';
 
 import { gitHubUrl } from '../lib/links';
-import { ItemMarker } from './item-marker';
+import { BreakingMarker } from './breaking-marker';
+import { ItemDot } from './item-dot';
 
 export function ReleaseSection({ index, section }: { index: number; section: ChangelogSection }) {
   const breaking = section.title === 'Breaking changes';
@@ -18,7 +19,7 @@ export function ReleaseSection({ index, section }: { index: number; section: Cha
 
       {section.items.map((item) => (
         <div key={item.text} className="flex gap-2 text-body leading-prose">
-          <ItemMarker breaking={breaking} />
+          {breaking ? <BreakingMarker /> : <ItemDot />}
           <p className="text-stage-prose">
             {item.text}
             {item.prNumbers.map((pr) => (

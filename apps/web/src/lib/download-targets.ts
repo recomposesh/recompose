@@ -1,5 +1,7 @@
 import { gitHubUrl } from './links';
 
+export const brewInstallCommand = 'brew install --cask recomposesh/tap/recompose';
+
 export const downloadTargets = [
   'mac-arm64',
   'mac-x64',

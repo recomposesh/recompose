@@ -1,15 +1,11 @@
-import type { ReactNode } from 'react';
-
 import { Terminal } from 'lucide-react';
-
-import type { DownloadTarget } from '../lib/download-targets';
 
 import { AppleMark } from '../components/apple-mark';
 import { TuxMark } from '../components/tux-mark';
 import { WindowsMark } from '../components/windows-mark';
-import { releaseAssetUrl } from '../lib/download-targets';
+import { brewInstallCommand, releaseAssetUrl } from '../lib/download-targets';
 
-const rows: { target: DownloadTarget; label: string; asset: string; mark: ReactNode }[] = [
+const rows = [
   {
     target: 'mac-arm64',
     label: 'macOS · apple silicon',
@@ -40,7 +36,7 @@ const rows: { target: DownloadTarget; label: string; asset: string; mark: ReactN
     asset: 'deb ↓',
     mark: <TuxMark className="size-3.75" />,
   },
-];
+] as const;
 
 export function ReleaseDownloads({ version }: { version: string }) {
   return (
@@ -67,7 +63,7 @@ export function ReleaseDownloads({ version }: { version: string }) {
           <Terminal className="size-3.75" />
           homebrew
         </span>
-        <code className="font-mono text-xs text-fd-foreground">brew install --cask recompose</code>
+        <code className="font-mono text-xs text-fd-foreground">{brewInstallCommand}</code>
       </div>
     </div>
   );

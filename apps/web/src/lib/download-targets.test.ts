@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { downloadHref, downloadTargets, releaseAssetUrl } from './download-targets';
+import {
+  brewInstallCommand,
+  downloadHref,
+  downloadTargets,
+  releaseAssetUrl,
+} from './download-targets';
 
 describe('the permanent download contract on recompose.sh', () => {
   it('names exactly the five published targets', () => {
@@ -11,6 +16,10 @@ describe('the permanent download contract on recompose.sh', () => {
       'linux-appimage',
       'linux-deb',
     ]);
+  });
+
+  it('installs through the tap, the only place the cask lives', () => {
+    expect(brewInstallCommand).toBe('brew install --cask recomposesh/tap/recompose');
   });
 
   it('links every target under /download, never at an asset', () => {
