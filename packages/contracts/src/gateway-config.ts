@@ -71,7 +71,7 @@ export function slugFromName(displayName: string): string {
 
 export const modelAliasSchema = z
   .string()
-  .regex(/^[a-z0-9._-]+$/u, 'lowercase id of letters, digits, dots and dashes')
+  .regex(/^[a-z0-9._-]+$/u, 'lowercase id of letters, digits, dots, underscores and dashes')
   .refine((id) => !/^[._-]|[._-]$/u.test(id), 'a model id starts and ends with a letter or digit');
 
 /**
