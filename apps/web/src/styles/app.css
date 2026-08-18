@@ -54,12 +54,52 @@
   --color-note-tile-start: #4b9eff;
   --color-note-tile-end: #2f6ae0;
   --color-menubar: light-dark(rgb(255 255 255 / 42%), rgb(30 30 34 / 28%));
+  --color-windows: #0078d4;
+  --color-tux: #fcc624;
+  --color-ubuntu: #e95420;
+  --color-stage-soft: light-dark(#999999, #9a9a9f);
+  --color-stage-prose: light-dark(#3f3f46, #c9c9ce);
+  --color-stage-mist: light-dark(#909095, #71717a);
+  --color-stage-hush: light-dark(#a3a3a8, #5b5b60);
+  --color-stage-ghost: light-dark(#ababb0, #52525b);
+  --color-stage-chip: light-dark(#e9e9eb, #18181b);
+  --color-stage-ring: light-dark(rgb(23 23 23 / 15%), rgb(242 242 244 / 15%));
+  --color-terminal-card: light-dark(#f4f4f6, #1c1c1e);
+  --color-breaking: light-dark(#b08430, #d8b26e);
+  --color-cable-ink: light-dark(rgb(23 23 23 / 8%), rgb(242 242 244 / 8%));
+  --color-cable-ink-dim: light-dark(rgb(23 23 23 / 6%), rgb(242 242 244 / 6%));
+  --color-cable-gateway: light-dark(rgb(23 134 155 / 18%), rgb(64 200 224 / 40%));
+  --color-cable-virtual: light-dark(rgb(173 45 117 / 13%), rgb(255 114 196 / 33%));
+  --color-port-gateway: light-dark(rgb(23 134 155 / 33%), rgb(64 200 224 / 67%));
+  --color-port-virtual: light-dark(rgb(173 45 117 / 33%), rgb(255 114 196 / 67%));
+  --color-port-ink: light-dark(rgb(23 23 23 / 33%), rgb(242 242 244 / 33%));
   --text-caption: 10px;
   --text-terminal: 10.5px;
   --text-annotation: 11px;
   --text-control: 13px;
   --text-body: 15px;
+  --text-reading: 17px;
+  --text-headline: 40px;
+  --text-hero: 84px;
+  --tracking-caps: 1.4px;
+  --tracking-mono-label: 1px;
+  --leading-prose: 1.6;
+  --leading-display: 1.05;
   --radius-node: 10px;
+  --radius-chip: 5px;
+  --radius-tile: 9px;
+  --radius-card: 14px;
+}
+
+@utility download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 50px;
+  padding-inline: 26px;
+  border-radius: var(--radius-node);
+  font-size: 16px;
+  font-weight: 500;
 }
 
 @utility grid-cols-faq {
@@ -86,9 +126,12 @@
   color: var(--color-fd-foreground);
 }
 
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 500;
+}
+
 @utility footer-link {
   font-size: 17px;
-  font-weight: 500;
   color: var(--color-stage-ink);
 
   &:hover {
