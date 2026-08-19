@@ -101,7 +101,7 @@
 - [x] 8.2 Engine: a pin write and a pin expiry each emit the router's tally
 - [x] 8.3 The bridge carries the tally to the renderer
 - [ ] 8.4 The inspector rows read the live tally
-- [ ] 8.5 The tally law, never negative and dropped on expiry, lands as a property with its twin
+- [x] 8.5 The tally law, never negative and dropped on expiry, lands as a property with its twin
 
 ## 9. Canvas interactions the testing pass caught (replan, approved 2026-08-19 evening)
 
