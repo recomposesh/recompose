@@ -23,3 +23,20 @@ const TALLIES = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
 export function spokenRank(rank: number, total: number): string {
   return `${ORDINALS[rank - 1] ?? String(rank)} of ${TALLIES[total - 1] ?? String(total)}`;
 }
+
+/** What a row is called out loud, which is enough of it to tell one row from its siblings. */
+type SpokenRow = { name: string; label?: string | undefined };
+
+/**
+ * What a moved row is called out loud, which is its branch label wherever one names it.
+ *
+ * @summary A branch answers to the word the judge answers with, and that word is what a person
+ * moved rather than the account behind it: two branches can sit on one account, so announcing the
+ * account would tell someone that something moved without telling them which. A child holding no
+ * label yet has only its account to be called by, which is also what the row prints.
+ */
+export function spokenSubject({ name, label }: SpokenRow): string {
+  const named = label?.trim() ?? '';
+
+  return named === '' ? name : `the ${named} branch`;
+}

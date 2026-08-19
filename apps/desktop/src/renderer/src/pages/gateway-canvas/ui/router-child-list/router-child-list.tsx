@@ -7,7 +7,7 @@ import type { LadderActs, OpenChild, RouterChild } from './router-child';
 
 import { childFace, ladderRow } from './child-row';
 import { rowShell } from './router-child';
-import { spokenRank } from './spoken-rank';
+import { spokenRank, spokenSubject } from './spoken-rank';
 
 export type { RouterChild };
 
@@ -82,7 +82,7 @@ export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListP
     }
 
     onMove(from, to);
-    setSaid(`${held.name} is now ${spokenRank(to + 1, rows.length)}.`);
+    setSaid(`${spokenSubject(held)} is now ${spokenRank(to + 1, rows.length)}.`);
   };
 
   if (rows.length === 0) {
