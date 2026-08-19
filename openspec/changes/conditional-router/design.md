@@ -267,6 +267,18 @@ Three segments overflow the narrowest panel, wrapping "Round-robin" onto two lin
 
 **Alternatives considered:** keeping the segmented control with a narrow-width stack, rejected because three growing words keep competing at every width. A dropdown, rejected because it hides two of three options behind a press for no space gain the rows don't already give.
 
+### 11. The satellite drags and its offset persists (replan)
+
+The maintainer's testing pass overrode the fixed seat. The satellite drags, its offset from the router persists beside the other stored card positions, and it still travels with the router. The tidy act returns it to the default shoulder seat.
+
+**Alternatives considered:** a transient drag that tidy and reload forget, rejected by the maintainer. The fixed seat, rejected because a person arranging a crowded canvas needs to move the advisor out of a cable's way.
+
+### 12. A judge directive joins the policy and the prompt shows itself (replan)
+
+The compiled classification prompt gets a read-only preview in the judge inspector, so a person can see exactly what the judge reads. An optional directive field joins the conditional policy and rides ahead of the compiled labels and rules. The directive is policy configuration, so it lives in the stored document and counts as a semantic edit like a rule.
+
+**Alternatives considered:** no visibility, rejected by the maintainer at the testing gate. A free-form editable prompt template, rejected because the label enum and the delimiting are the injection posture and must stay machine-owned.
+
 ## Test matrix
 
 | Layer          | What this layer proves (or why none)                                                                                                                                                                                                                                                                                                                                                                    | Check command                                                                                                                                                     |
