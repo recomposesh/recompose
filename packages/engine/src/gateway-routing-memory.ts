@@ -30,10 +30,8 @@ function pinKey(address: RouteNodeAddress, fingerprint: string): string {
 }
 
 function forgetPastTheBound(held: Map<string, Pinned>): void {
-  while (held.size > PINNED_CONVERSATION_LIMIT) {
-    const oldest = held.keys().next().value;
-
-    if (oldest === undefined) return;
+  for (const oldest of held.keys()) {
+    if (held.size <= PINNED_CONVERSATION_LIMIT) return;
 
     held.delete(oldest);
   }
