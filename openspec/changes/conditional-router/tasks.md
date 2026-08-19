@@ -130,3 +130,6 @@
 - [ ] 10.6 The re-judge toggle says what it does: the title names the action and one plain
       sentence explains each position
 - [ ] 10.7 The tie's endpoint dots wear the router border color instead of cable blue
+- [ ] 10.8 Switching away from conditional works: the press confirms the cost through the
+      consequence dialog, the children stay in declared order, and the judge leaves with the
+      wording
