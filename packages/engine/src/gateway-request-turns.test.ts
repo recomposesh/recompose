@@ -73,4 +73,35 @@ describe('what never reads as a turn the caller spoke', () => {
   test('a body carrying nothing a caller spoke reads as no turns at all', () => {
     expect(userTurnsOf({ model: 'fast' })).toEqual([]);
   });
+
+  test('a block holding no text is passed over rather than read as a blank line', () => {
+    const raw = {
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { data: 'zzz' } },
+            { type: 'text', text: 'look at this' },
+          ],
+        },
+      ],
+    };
+
+    expect(userTurnsOf(raw)).toEqual(['look at this']);
+  });
+
+  test('a turn that said nothing at all is left out of the turns that follow it', () => {
+    const raw = {
+      messages: [
+        { role: 'user', content: [] },
+        { role: 'user', content: 'hello' },
+      ],
+    };
+
+    expect(userTurnsOf(raw)).toEqual(['hello']);
+  });
+
+  test('a turn whose content is no text at all reads as nothing said', () => {
+    expect(userTurnsOf({ messages: [{ role: 'user', content: 42 }] })).toEqual([]);
+  });
 });

@@ -107,6 +107,12 @@ describe('the reading one classification call earns', () => {
 
     await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'answer', label: '' });
   });
+
+  test('a judge answering something no reader can parse still reads as an answer', async () => {
+    const watched = answering(() => new Response('not json at all', { status: 200 }));
+
+    await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'answer', label: '' });
+  });
 });
 
 describe('the budget one classification call is held to', () => {
