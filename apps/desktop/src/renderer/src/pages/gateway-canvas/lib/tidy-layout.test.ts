@@ -88,7 +88,7 @@ test('a ghost seats among the targets, where the account it stands for used to',
   expect(seatAt(seats, 'ghost-target-1').x).toBe(seatAt(seats, 'target-0').x);
 });
 
-test('a gateway holding no router seats every card exactly where it seated before', () => {
+test('a gateway holding no router seats each model on its own row, its target beside it', () => {
   const stored: GatewayConfig = {
     schemaVersion: GATEWAY_CONFIG_VERSION,
     slug: 'codex',
@@ -120,8 +120,8 @@ test('a gateway holding no router seats every card exactly where it seated befor
     gateway: { x: 0, y: 0 },
     'model:fast': { x: 320, y: 0 },
     'target:fast': { x: 640, y: 0 },
-    'model:slow': { x: 320, y: 150 },
-    'target:slow': { x: 640, y: 150 },
+    'model:slow': { x: 320, y: 176 },
+    'target:slow': { x: 640, y: 176 },
   });
 });
 

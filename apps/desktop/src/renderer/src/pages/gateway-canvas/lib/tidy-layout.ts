@@ -11,7 +11,19 @@ const CABLE_SPAN = 136;
 export const SATELLITE_MEASURE = { width: 96, height: 72 };
 
 const COLUMN_PITCH = CARD_MEASURE.width + CABLE_SPAN;
-const ROW_PITCH = 150;
+
+/** The clear space a satellite keeps from the card above it and the router under it, in pixels. */
+const SATELLITE_CLEARANCE = 8;
+
+/**
+ * How far one row stands from the next, which is whatever a satellite needs between two cards.
+ *
+ * @summary A judge seats above the router it advises, so the gap between two rows is not spare
+ * canvas: it is the room the advisor stands in. Deriving the pitch from that room rather than
+ * fixing it is what keeps the arrangement from seating an advisor on top of the row above it the
+ * next time either measure moves.
+ */
+const ROW_PITCH = CARD_MEASURE.height + SATELLITE_MEASURE.height + SATELLITE_CLEARANCE * 2;
 
 /** The column a virtual model and the draft standing in for one both seat in. */
 export const MODEL_COLUMN = 1;
@@ -59,10 +71,15 @@ export function columnBeyond(parent: CanvasNode | undefined): number {
 /**
  * Where a judge stands off its router until somebody moves it, measured from the router's corner.
  *
- * @summary It seats to the start side rather than straight above, because the gap between two rows
- * is shorter than a satellite and the field beside a column is empty.
+ * @summary It seats centered over the card's top edge rather than off to the start side, because a
+ * judge belongs to the router beneath it and an advisor drifting left reads as a card of its own
+ * that a request could travel to. The row pitch is sized to hold it, so the satellite clears the
+ * card above it as well as the router under it.
  */
-export const SATELLITE_SHOULDER: XY = { x: -(SATELLITE_MEASURE.width + 12), y: -60 };
+export const SATELLITE_SHOULDER: XY = {
+  x: (CARD_MEASURE.width - SATELLITE_MEASURE.width) / 2,
+  y: -(SATELLITE_MEASURE.height + SATELLITE_CLEARANCE),
+};
 
 /**
  * What the arrangement remembers one satellite's own place under, which is never a card seat.

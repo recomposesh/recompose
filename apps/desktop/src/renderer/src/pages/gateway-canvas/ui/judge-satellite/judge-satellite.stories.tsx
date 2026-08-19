@@ -4,7 +4,7 @@ import preview from '#.storybook/preview';
 
 import type { JudgeSatelliteData } from './judge-satellite';
 
-import { paintedBox, paintedStyle } from '../../../../shared/testing';
+import { paintedBox, paintedCentre, paintedStyle } from '../../../../shared/testing';
 import { cardOnCanvas, inScheme } from '../../testing/canvas-flow.testkit';
 import { JudgeSatellite } from './judge-satellite';
 
@@ -55,6 +55,22 @@ export const ItWearsTheRouterTint = meta.story({
 
     await expect(paintedStyle(node).borderTopColor).toBe(indigo);
     await expect(paintedStyle(node).color).toBe(indigo);
+  },
+});
+
+/**
+ * The tie leaves by the side facing the router, which is the one beneath the silhouette.
+ *
+ * @summary The satellite seats centered over its router's top edge, so a port on the flank would
+ * send the tie out sideways and back, crossing the very card it belongs to.
+ */
+export const TheTiePortFacesTheRouterBelow = meta.story({
+  play: async ({ canvas, canvasElement }) => {
+    const node = await canvas.findByRole('button', { name: 'Judge' });
+    const port = paintedCentre(canvasElement.querySelector('.react-flow__handle'));
+
+    await expect(port.y).toBeGreaterThanOrEqual(paintedBox(node).bottom);
+    await expect(port.x).toBe(paintedCentre(node).x);
   },
 });
 

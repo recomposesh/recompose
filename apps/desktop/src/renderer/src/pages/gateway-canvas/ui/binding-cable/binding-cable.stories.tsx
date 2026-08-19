@@ -4,7 +4,7 @@ import preview from '#.storybook/preview';
 
 import type { BranchSeat } from '../../lib/route-graph';
 
-import { paintedBox, paintedStyle } from '../../../../shared/testing';
+import { paintedBox, paintedCentre, paintedStyle } from '../../../../shared/testing';
 import {
   barelyCabledFlow,
   cabledFlow,
@@ -106,12 +106,8 @@ export const AJudgedCableCarriesItsLabel = meta.story({
   },
 });
 
-function centreOf(box: DOMRect): { x: number; y: number } {
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-}
-
 async function labelCentre(find: (name: string) => Promise<HTMLElement>) {
-  return centreOf(paintedBox(await find(CODE_LABEL)));
+  return paintedCentre(await find(CODE_LABEL));
 }
 
 /** The label rides earlier along the path than the midpoint, which the failure chip keeps. */
@@ -119,7 +115,7 @@ export const TheLabelLeavesTheMidpointToTheFailureChip = meta.story({
   render: () => judgedFlow(codeBranch, 'failed', REFUSED),
   play: async ({ canvas }) => {
     const label = await labelCentre(async (name) => canvas.findByRole('button', { name }));
-    const error = centreOf(paintedBox(await canvas.findByRole('button', { name: 'Last error' })));
+    const error = paintedCentre(await canvas.findByRole('button', { name: 'Last error' }));
 
     await expect(label.x).toBeLessThan(error.x);
     await expect(label.y).toBeLessThan(error.y);

@@ -6,6 +6,7 @@ import type { CanvasNode } from './node-graph';
 import {
   CARD_MEASURE,
   SATELLITE_MEASURE,
+  SATELLITE_SHOULDER,
   satellitesFollowTheirRouters,
   tidyPositions,
 } from './tidy-layout';
@@ -42,13 +43,24 @@ function overlaps(one: ReturnType<typeof boxOf>, other: ReturnType<typeof boxOf>
   );
 }
 
-test('a satellite seats above its router rather than in a column of its own', () => {
+function centreAcross(seat: XY, measure: { width: number; height: number }): number {
+  return seat.x + measure.width / 2;
+}
+
+test('a satellite seats centered over its router rather than drifting off to one side', () => {
   const seats = tidyPositions(judgedCanvas());
   const judge = seatAt(seats, 'judge:fast:advisor');
   const router = seatAt(seats, LADDER);
 
-  expect(judge.y).toBeLessThan(router.y + CARD_MEASURE.height);
-  expect(judge.x).toBeLessThan(router.x);
+  expect(centreAcross(judge, SATELLITE_MEASURE)).toBe(centreAcross(router, CARD_MEASURE));
+});
+
+test("a satellite seats clear above its router's top edge, never over the card itself", () => {
+  const seats = tidyPositions(judgedCanvas());
+  const judge = seatAt(seats, 'judge:fast:advisor');
+  const router = seatAt(seats, LADDER);
+
+  expect(judge.y + SATELLITE_MEASURE.height).toBeLessThan(router.y);
 });
 
 test('a satellite takes no row from the column its router stands in', () => {
@@ -79,8 +91,8 @@ test('a satellite follows the router a person dragged, so the tie never stretche
   const seats = satellitesFollowTheirRouters(judgedCanvas(), dragged);
 
   expect(seatAt(seats, 'judge:fast:advisor')).toEqual({
-    x: 900 - (SATELLITE_MEASURE.width + 12),
-    y: 700 - 60,
+    x: 900 + SATELLITE_SHOULDER.x,
+    y: 700 + SATELLITE_SHOULDER.y,
   });
 });
 

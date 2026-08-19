@@ -19,7 +19,7 @@ type JudgeSatelliteProps = {
 const silhouette =
   'flex size-11 items-center justify-center rounded-pill border border-router bg-surface-card text-router shadow-raised focus-ring aria-pressed:bg-router/12 aria-pressed:ring-2 aria-pressed:ring-router/40';
 
-const anchor = 'top-1/2 z-1 flex size-hit-target items-center justify-center bg-transparent';
+const anchor = 'z-1 flex size-hit-target items-center justify-center bg-transparent';
 
 /**
  * What the caption under the silhouette says, which is what the judge answers with right now.
@@ -58,7 +58,7 @@ export function JudgeSatellite({ data, selected }: JudgeSatelliteProps) {
   return (
     <div className="flex w-24 flex-col items-center gap-1 node-tint-router">
       <span className="relative flex">
-        <Handle className={anchor} isConnectable={false} position={Position.Right} type="target">
+        <Handle className={anchor} isConnectable={false} position={Position.Bottom} type="target">
           <span aria-hidden className="port-dot" data-bound />
         </Handle>
         <button aria-pressed={selected} className={silhouette} type="button">

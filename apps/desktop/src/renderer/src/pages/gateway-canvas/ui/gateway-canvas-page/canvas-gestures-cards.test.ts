@@ -159,7 +159,7 @@ describe('the asks a card hangs off its own port', () => {
 
     askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel')();
 
-    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: 300 });
+    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: 326 });
   });
 
   test("pressing the gateway's plus again never walks the draft up the column", () => {
