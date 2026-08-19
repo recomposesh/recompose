@@ -11,9 +11,9 @@ import type { RouterChild } from '../router-child-list/router-child';
 
 import { accountName } from '../../../../entities/account';
 import { useDefineVirtualModel } from '../../../../shared/api';
-import { SegmentedControl, Switch } from '../../../../shared/ui';
+import { Switch } from '../../../../shared/ui';
 import { conditionalIn } from '../../lib/conditional-policy';
-import { modeOptions, modeSentences, rejudgeSentences } from '../../lib/router-modes';
+import { rejudgeSentences } from '../../lib/router-modes';
 import { gatewayDroppingNode, gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
 import {
   gatewayBindingJudge,
@@ -24,6 +24,7 @@ import { targetGroups } from '../../lib/target-groups';
 import { useOfferedModels } from '../../lib/use-offered-models';
 import { BranchEditor } from '../branch-editor/branch-editor';
 import { JudgeSection } from '../judge-section/judge-section';
+import { ModeRows } from '../mode-rows/mode-rows';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
 import { routerChildRows } from './router-child-rows';
@@ -50,49 +51,35 @@ type RouterInspectorProps = {
 };
 
 /**
- * The mode a switch can actually write, and nothing for the one it cannot.
+ * Why this router cannot be switched to conditional, or nothing where it already is one.
  *
- * @summary Conditional is missing on purpose: its stored policy names a judge and an else child
- * that a mode strip cannot supply, which is exactly what the strip's own inert reason says. The
- * control refuses an inert segment before it reports one, so this reading answers nothing for
- * conditional rather than pretending a switch could write it.
+ * @summary The mode's stored policy names a judge and an else child that no mode control can
+ * supply, so the row says what a switch would need rather than going missing without a word.
  */
-function switchWriting(mode: RouterMode): SpreadingMode | undefined {
-  return mode === 'conditional' ? undefined : mode;
-}
-
-function modeChoices(mode: RouterMode) {
-  return modeOptions.map((option) =>
-    option.value === 'conditional' && mode !== 'conditional'
-      ? { ...option, inertReason: A_SWITCH_WOULD_NEED }
-      : option,
-  );
+function switchReasons(mode: RouterMode): Partial<Record<RouterMode, string>> {
+  return mode === 'conditional' ? {} : { conditional: A_SWITCH_WOULD_NEED };
 }
 
 /**
- * How a router spreads, offered as a choice with the cost of each mode said where it is made.
+ * How a router spreads, offered as rows that each carry the cost of standing in that mode.
  *
- * @summary The sentence follows the strip rather than standing above it, so it describes the mode
- * a person just landed on rather than reading as fixed help about all three.
+ * @summary The sentence rides inside each row rather than under the control, so a person reads
+ * what a mode costs before choosing it rather than after landing on the one they already picked.
+ * Three modes also outgrow a strip in the narrowest panel, where the longest name wraps.
  */
 function modeSection(mode: RouterMode, onSwitch: (mode: SpreadingMode) => void): ReactNode {
   return (
     <>
       {sectionHeading('Mode')}
-      <SegmentedControl
-        label="Routing mode"
-        onChangeValue={(next: RouterMode) => {
-          const spreading = switchWriting(next);
-
-          if (spreading !== undefined) {
-            onSwitch(spreading);
+      <ModeRows
+        inertReasons={switchReasons(mode)}
+        onChangeValue={(next) => {
+          if (next !== 'conditional') {
+            onSwitch(next);
           }
         }}
-        options={modeChoices(mode)}
-        spread="row"
         value={mode}
       />
-      <p className="mt-2 px-1 text-detail text-ink-secondary">{modeSentences[mode]}</p>
     </>
   );
 }

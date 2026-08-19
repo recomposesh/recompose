@@ -44,9 +44,24 @@ export const DetailUnderTheName = meta.story({
   },
 });
 
-/** A router answers the whole question, so the step says what happens next instead of listing. */
-export const RoutingThroughARouter = meta.story({
+/**
+ * Answering with a router asks which kind, on a step of its own, before anything else.
+ *
+ * @summary It stands where the provider list stands on the other branch of the ask: the mode
+ * decides what the draft still owes, so it is asked first and each row carries its own cost.
+ */
+export const PickingTheRoutingMode = meta.story({
   args: { bindsThrough: 'router' },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the routing mode')).toBeVisible();
+    await expect(await canvas.findByRole('radio', { name: 'Failover' })).not.toBeChecked();
+    await expect(await canvas.findByRole('radio', { name: 'Conditional' })).toBeVisible();
+  },
+});
+
+/** A spreading router answers the whole question, so the step says what happens next. */
+export const RoutingThroughARouter = meta.story({
+  args: { bindsThrough: 'router', routerMode: 'failover' },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Routes through a router')).toBeVisible();
     await expect(await canvas.findByText(/drag a cable/)).toBeVisible();
@@ -121,7 +136,7 @@ export const ConditionalPicksTheJudgesModel = meta.story({
   },
 });
 
-/** Every answer given, so the picker rests back on the mode and names the judge it settled on. */
+/** Every answer given, so the picker rests back on the name and reads its mode and judge back. */
 export const ConditionalRestsOnItsMode = meta.story({
   args: {
     ...fallenBack,
@@ -133,7 +148,7 @@ export const ConditionalRestsOnItsMode = meta.story({
     },
   },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
+    await expect(await canvas.findByText('Conditional')).toBeVisible();
     await expect(await canvas.findByText('personal · gpt-5-mini')).toBeVisible();
   },
 });

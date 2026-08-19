@@ -11,12 +11,7 @@ import type { JudgePick } from '../routing-picker/routing-picker';
 import { accountsQueryOptions } from '../../../../shared/api';
 import { placeFocus } from '../../../../shared/ui';
 import { idRefusal, nameRefusal } from '../../lib/draft-refusals';
-import {
-  BORN_ROUTER_MODE,
-  draftFilledIn,
-  emptyDefinition,
-  servesPreview,
-} from '../../lib/model-draft';
+import { draftFilledIn, emptyDefinition, servesPreview } from '../../lib/model-draft';
 import { targetGroups } from '../../lib/target-groups';
 import { editDraft, useHeldDraft } from '../../lib/use-held-draft';
 import { useOfferedModels } from '../../lib/use-offered-models';
@@ -158,7 +153,7 @@ function draftFields(view: DraftFieldsView): ReactNode {
       onRouterNameChange={onRouterNameChange}
       onSelectDifferentProvider={onSelectDifferentProvider}
       providerModel={definition.providerModel}
-      routerMode={definition.routerMode ?? BORN_ROUTER_MODE}
+      routerMode={definition.routerMode}
       routerName={definition.routerName ?? ''}
       target={view.picked.target}
       targetName={view.picked.targetName}

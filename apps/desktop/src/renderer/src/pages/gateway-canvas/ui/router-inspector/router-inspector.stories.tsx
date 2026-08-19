@@ -72,40 +72,35 @@ const meta = preview.meta({
 /** The whole of what a person decides about a router: the mode, and the ladder under it. */
 export const Basic = meta.story({});
 
-const SELECTION_BORDER = 2;
-
-const STRIP_INSET = 8;
-
 /**
- * The three segments split the row evenly and fill it, so no mode looks like the bigger choice.
+ * Every mode owns a whole row of the panel, stacked, so no name competes with another for width.
  *
- * The checked segment measures wider by exactly the one-pixel selection border the shipped chip
- * language draws on each of its sides, and the strip keeps only its own two-pixel padding and the
- * two-pixel gaps between the three. Nothing else stands between them and the full row. The third
- * mode is what makes this worth measuring again: a strip that fit two can still crowd three.
+ * The strip these rows replace split one row between three names and wrapped the longest onto two
+ * lines at this width. Each row now spans the column and starts at the same edge, which is what
+ * lets a sentence ride beside the name and what leaves room for a fourth mode.
  */
-export const TheThreeSegmentsSplitTheRowEvenly = meta.story({
+export const EveryModeOwnsAWholeRow = meta.story({
   play: async ({ canvas }) => {
-    const strip = paintedBox(await canvas.findByRole('radiogroup', { name: 'Routing mode' }));
-    const failing = paintedBox(await canvas.findByRole('radio', { name: 'Failover' }));
-    const rotate = paintedBox(await canvas.findByRole('radio', { name: 'Round-robin' }));
-    const judged = paintedBox(await canvas.findByRole('radio', { name: 'Conditional' }));
-
-    await expect(Math.round(failing.width - rotate.width)).toBe(SELECTION_BORDER);
-    await expect(Math.round(rotate.width - judged.width)).toBe(0);
-    await expect(Math.round(strip.width - (failing.width + rotate.width + judged.width))).toBe(
-      STRIP_INSET,
+    const stack = paintedBox(await canvas.findByRole('radiogroup', { name: 'Routing mode' }));
+    const rows = ['Failover', 'Round-robin', 'Conditional'];
+    const boxes = await Promise.all(
+      rows.map(async (name) => paintedBox(await canvas.findByRole('radio', { name }))),
     );
+
+    for (const box of boxes) {
+      await expect(Math.round(stack.width - box.width)).toBe(0);
+      await expect(Math.round(stack.left - box.left)).toBe(0);
+    }
   },
 });
 
-/** Every mode reads whole in the narrowest inspector, so no third segment crowds its label out. */
-export const NoModeLabelOverflowsItsSegment = meta.story({
+/** Every mode reads whole in the narrowest inspector, name and sentence alike. */
+export const NoModeRowOverflowsThePanel = meta.story({
   play: async ({ canvas }) => {
     for (const name of ['Failover', 'Round-robin', 'Conditional']) {
-      const segment = await canvas.findByRole('radio', { name });
+      const row = await canvas.findByRole('radio', { name });
 
-      await expect(segment.scrollWidth).toBeLessThanOrEqual(segment.clientWidth);
+      await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
     }
   },
 });
@@ -180,9 +175,9 @@ export const ConditionalRejudgingNamesItsCost = meta.story({
 });
 
 /**
- * A router that spreads some other way cannot be switched to conditional, and the strip says why.
+ * A router that spreads some other way cannot be switched to conditional, and the row says why.
  *
- * @summary The mode needs a judge and an else child that no mode strip can supply, so the segment
+ * @summary The mode needs a judge and an else child that no mode control can supply, so the row
  * stays reachable and unmovable rather than going missing without a word.
  */
 export const ConditionalSaysWhatASwitchWouldNeed = meta.story({

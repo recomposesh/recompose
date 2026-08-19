@@ -45,7 +45,11 @@ function routerHeldUntilTheDraftIsNamed(world: CanvasWorld, routed: SettledDefin
 function definedThroughARouter(world: CanvasWorld): void {
   const held = heldDraft(world.slug);
   const definition = held?.definition ?? emptyDefinition();
-  const routed: SettledDefinition = { ...definition, bindsThrough: 'router' };
+  const routed: SettledDefinition = {
+    ...definition,
+    bindsThrough: 'router',
+    routerMode: BORN_ROUTER_MODE,
+  };
 
   if (held !== undefined && !draftFilledIn(routed)) {
     routerHeldUntilTheDraftIsNamed(world, routed);

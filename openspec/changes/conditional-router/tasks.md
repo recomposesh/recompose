@@ -90,9 +90,9 @@
       reason stays
 - [ ] 7.3 Existing children arrive as draft branches, amber until labeled and ruled, following
       the fresh-switch screen
-- [ ] 7.4 The mode choice becomes one shared vertical option-row list, mode name plus its
+- [x] 7.4 The mode choice becomes one shared vertical option-row list, mode name plus its
       sentence per row, replacing the segmented control in the inspector and the canvas picker
-      step
+      step, which asks it as a step of its own
 - [ ] 7.5 Stories cover the mode rows and every switch state, and the suites stay green
 
 ## 8. The pin tally crosses to the renderer (replan, approved at the gate of 2026-08-19)

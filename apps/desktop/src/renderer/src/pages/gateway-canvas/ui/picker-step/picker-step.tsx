@@ -5,7 +5,9 @@ import type { JudgePick, RoutingPickerProps, RoutingStep } from '../routing-pick
 
 import { Button } from '../../../../shared/ui';
 import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
+import { BORN_ROUTER_MODE } from '../../lib/model-draft';
 import { JUDGE_ADVICE } from '../../lib/router-modes';
+import { ModeRows } from '../mode-rows/mode-rows';
 import { NoProviderNote } from '../no-provider-note/no-provider-note';
 import { OptionList } from '../option-list/option-list';
 import { RouterDraftFields } from '../router-draft-fields/router-draft-fields';
@@ -178,7 +180,25 @@ function judgeSummary(judge: JudgePick): ReactNode {
 }
 
 /**
- * The step a draft rests on once a person answered the ask with a router.
+ * Which kind of router the draft becomes, asked on a step of its own.
+ *
+ * @summary It stands where the provider list stands on the other branch of the ask, because the
+ * mode decides what the draft still owes exactly as a provider decides which models it can name.
+ * The rows carry each mode's cost beside its name, which is why the choice earns a step rather
+ * than a strip: three sentences have nowhere to stand side by side in this column.
+ */
+function routerModeStep(props: RoutingPickerProps): ReactNode {
+  return stepPanel(
+    'Pick the routing mode',
+    { label: 'Bind this model to something else', onPress: props.onReopenKind },
+    <div className="px-1 py-0.5">
+      <ModeRows onChangeValue={props.onRouterModeChange} value={props.routerMode} />
+    </div>,
+  );
+}
+
+/**
+ * The step a draft rests on once it settled on a router and on how that router spreads.
  *
  * @summary A router is born holding no child, so this step has nothing left to pick and says what
  * the save will leave standing instead. The pool is filled by cable on the canvas rather than here,
@@ -189,12 +209,11 @@ function judgeSummary(judge: JudgePick): ReactNode {
 function routerStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
     'Routes through a router',
-    { label: 'Bind this model to something else', onPress: props.onReopenKind },
+    { label: 'Choose a different routing mode', onPress: props.onReopenRouterMode },
     <RouterDraftFields
       judge={judgeSummary(props.judge)}
-      mode={props.routerMode}
+      mode={props.routerMode ?? BORN_ROUTER_MODE}
       name={props.routerName}
-      onModeChange={props.onRouterModeChange}
       onNameChange={props.onRouterNameChange}
     />,
   );
@@ -234,6 +253,7 @@ function kindStep(props: RoutingPickerProps): ReactNode {
 
 const SPREADING_BODIES: Record<RoutingStep, (props: RoutingPickerProps) => ReactNode> = {
   kind: kindStep,
+  'router-mode': routerModeStep,
   router: routerStep,
   provider: providerStep,
   model: modelStep,

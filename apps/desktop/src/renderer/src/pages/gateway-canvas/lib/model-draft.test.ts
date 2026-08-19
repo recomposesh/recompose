@@ -6,6 +6,7 @@ import { expect, test } from 'vitest';
 import { IpcResultError } from '../../../shared/api';
 import { discoveryHint, idRefusal, nameRefusal } from './draft-refusals';
 import {
+  draftFilledIn,
   emptyDefinition,
   gatewayDefining,
   gatewayRebinding,
@@ -140,6 +141,17 @@ test('a settled draft reaches storage as the gateway carrying the id a person sa
       },
     ],
   });
+});
+
+const named = { displayName: 'Fast', id: 'fast', accountId: '', providerModel: '' };
+
+test('a draft standing on the mode step has no mode to store, so the save waits on one', () => {
+  expect(draftFilledIn({ ...named, bindsThrough: 'router' })).toBe(false);
+});
+
+test('a draft that settled on how its router spreads has answered everything a router needs', () => {
+  expect(draftFilledIn({ ...named, bindsThrough: 'router', routerMode: 'failover' })).toBe(true);
+  expect(draftFilledIn({ ...named, bindsThrough: 'router', routerMode: 'round-robin' })).toBe(true);
 });
 
 test('a definition joins the ones the gateway already holds rather than replacing them', () => {

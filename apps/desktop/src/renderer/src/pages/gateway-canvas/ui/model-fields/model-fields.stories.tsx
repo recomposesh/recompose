@@ -61,7 +61,7 @@ export const PickingAProvider = meta.story({
  * it through a router does not lose the name they typed.
  */
 export const RoutingThroughARouter = meta.story({
-  args: { bindsThrough: 'router', name: 'Fast', id: 'fast' },
+  args: { bindsThrough: 'router', routerMode: 'failover', name: 'Fast', id: 'fast' },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Routes through a router')).toBeVisible();
     await expect(await canvas.findByRole('textbox', { name: 'Name' })).toHaveValue('Fast');

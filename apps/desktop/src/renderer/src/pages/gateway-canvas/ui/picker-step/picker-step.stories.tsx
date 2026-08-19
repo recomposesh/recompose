@@ -18,6 +18,24 @@ export const TheBindingAsk = meta.story({
   },
 });
 
+/**
+ * The mode step, where a router draft says which kind it is before owing anything else.
+ *
+ * @summary It stacks the three modes the way the provider step stacks accounts, because both ask
+ * one question with a handful of answers and both have a column rather than a row to spend.
+ */
+export const PickingTheRoutingMode = meta.story({
+  args: {
+    ask: { ...pickerArgs, bindsThrough: 'router' as const },
+    step: 'router-mode' as const,
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the routing mode')).toBeVisible();
+    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
+    await expect(await canvas.findByText(/topmost healthy provider/)).toBeVisible();
+  },
+});
+
 /** The provider step, which names the one account a plain binding reaches. */
 export const PickingAProvider = meta.story({
   args: { step: 'provider' as const },

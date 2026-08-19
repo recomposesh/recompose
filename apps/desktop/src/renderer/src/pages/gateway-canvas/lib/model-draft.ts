@@ -60,6 +60,10 @@ function routingAnswered(definition: SettledDefinition): boolean {
     return targetAnswered(definition);
   }
 
+  if (definition.routerMode === undefined) {
+    return false;
+  }
+
   return definition.routerMode === 'conditional'
     ? judgeAnswered(definition.judge) && targetAnswered(definition)
     : true;
@@ -73,10 +77,12 @@ function routingAnswered(definition: SettledDefinition): boolean {
  * an id this gateway already serves cannot see it, and a button that refuses to press would leave
  * them guessing, so that refusal waits for the press and speaks under the field it refuses.
  *
- * A router counts as a whole answer on its own, because one is born holding no child and fills by
- * cable afterwards. Its own name never counts, because a router with no name answers to its mode.
- * A conditional router is the one exception: it is born naming a judge and an else child, so the
- * save waits on both rather than offering a press the stored shape would refuse.
+ * A router counts as a whole answer once it says how it spreads, because one is born holding no
+ * child and fills by cable afterwards. The mode is asked on a step of its own, so a draft that has
+ * yet to answer it holds the save shut rather than storing the mode a default would have picked.
+ * Its own name never counts, because a router with no name answers to its mode. A conditional
+ * router owes two answers more: it is born naming a judge and an else child, so the save waits on
+ * both rather than offering a press the stored shape would refuse.
  */
 export function draftFilledIn(definition: SettledDefinition): boolean {
   return (

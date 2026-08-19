@@ -37,7 +37,7 @@ export const pickerArgs: RoutingPickerProps = {
   targets: pickerTargets,
   onPickKind: () => {},
   onReopenKind: () => {},
-  routerMode: 'failover',
+  routerMode: undefined,
   onRouterModeChange: () => {},
   onReopenRouterMode: () => {},
   routerName: '',

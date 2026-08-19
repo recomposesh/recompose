@@ -39,8 +39,14 @@ export type RoutingPickerProps = {
   onPickKind: (kind: BoundKind) => void;
   /** Returns the picker to the ask that offers the two shapes. */
   onReopenKind: () => void;
-  /** How the router being composed spreads, which stands at its born mode until a person moves it. */
-  routerMode: RouterMode;
+  /**
+   * How the router being composed spreads, or nothing while the step that asks still stands.
+   *
+   * @summary Nothing is the unanswered state rather than a mode standing in for one, because the
+   * mode is a step of its own: a draft holding a default would walk straight past the question and
+   * store a router nobody chose.
+   */
+  routerMode?: RouterMode | undefined;
   /** Receives the mode the person landed on. */
   onRouterModeChange: (mode: RouterMode) => void;
   /** Returns the picker to the mode strip, from a step a mode with more to answer walked to. */
@@ -76,10 +82,12 @@ export type RoutingStep =
   | 'kind'
   | 'model'
   | 'provider'
-  | 'router';
+  | 'router'
+  | 'router-mode';
 
 export const STEP_ORDER: readonly RoutingStep[] = [
   'kind',
+  'router-mode',
   'router',
   'provider',
   'model',
@@ -87,16 +95,8 @@ export const STEP_ORDER: readonly RoutingStep[] = [
   'judge-model',
 ];
 
-function spreadingStep(props: RoutingPickerProps): RoutingStep {
-  if (props.target !== undefined) {
-    return 'model';
-  }
-
-  if (props.bindsThrough === undefined) {
-    return 'kind';
-  }
-
-  return props.bindsThrough === 'router' ? 'router' : 'provider';
+function targetStep(props: RoutingPickerProps): RoutingStep {
+  return props.target === undefined ? 'provider' : 'model';
 }
 
 /**
@@ -123,13 +123,31 @@ function conditionalStep(props: RoutingPickerProps): RoutingStep {
 }
 
 /**
+ * Which step a router draft stands on, which is the mode until one is chosen.
+ *
+ * @summary The mode leads because it decides what the router still owes: the two spreading modes
+ * owe nothing and rest on the name, while conditional owes an else branch and a judge. Asking it on
+ * a step of its own rather than as a strip above the name is what lets the three modes stand as
+ * rows a sentence wide, and what keeps a draft from storing a mode nobody picked.
+ */
+function routerStep(props: RoutingPickerProps): RoutingStep {
+  if (props.routerMode === undefined) {
+    return 'router-mode';
+  }
+
+  return props.routerMode === 'conditional' ? conditionalStep(props) : 'router';
+}
+
+/**
  * Which step the picker stands on, read out of what the draft already says.
  *
  * @summary A target already picked outranks the ask, so a draft written before the drawer offered
  * the two shapes opens on its model list rather than back at a question it has already answered.
  */
 export function stepOf(props: RoutingPickerProps): RoutingStep {
-  const conditional = props.bindsThrough === 'router' && props.routerMode === 'conditional';
+  if (props.bindsThrough === undefined) {
+    return props.target === undefined ? 'kind' : 'model';
+  }
 
-  return conditional ? conditionalStep(props) : spreadingStep(props);
+  return props.bindsThrough === 'router' ? routerStep(props) : targetStep(props);
 }

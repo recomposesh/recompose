@@ -6,12 +6,7 @@ import { RouterDraftFields } from './router-draft-fields';
 
 const meta = preview.meta({
   component: RouterDraftFields,
-  args: {
-    mode: 'failover' as const,
-    onModeChange: () => {},
-    name: '',
-    onNameChange: () => {},
-  },
+  args: { mode: 'failover' as const, name: '', onNameChange: () => {} },
   decorators: [
     (Story) => (
       <div className="mx-auto my-4 w-72 field-box">
@@ -22,14 +17,15 @@ const meta = preview.meta({
 });
 
 /**
- * The two decisions a router carries into existence, with the mode's cost said at the point of choice.
+ * The step the save waits on, reading back the mode chosen a step earlier over the name field.
  *
- * @summary The sentence follows the strip rather than standing above it, so it describes the mode
- * a person just landed on rather than reading as fixed help about both.
+ * @summary The mode is a fact here rather than a control, because a person landing back from the
+ * judge and the else branch presses save on this step: the one answer that decides what all of it
+ * means has to be readable where it becomes final.
  */
 export const Failover = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
+    await expect(await canvas.findByText('Failover')).toBeVisible();
     await expect(await canvas.findByText(/topmost healthy provider/)).toBeVisible();
   },
 });
@@ -38,6 +34,7 @@ export const Failover = meta.story({
 export const RoundRobin = meta.story({
   args: { mode: 'round-robin' },
   play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Round-robin')).toBeVisible();
     await expect(await canvas.findByText(/prompt cache/)).toBeVisible();
   },
 });
@@ -57,5 +54,5 @@ export const NamedByHand = meta.story({
   },
 });
 
-/** The fields in the dark scheme, where the segmented track has to hold against the box. */
+/** The fields in the dark scheme, where the mode fact has to hold against the box. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
