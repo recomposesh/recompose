@@ -73,13 +73,32 @@ export async function sendTurn(
   body: unknown,
   clientApp?: string,
 ): Promise<GatewayAnswer> {
+  return sendTurnUnder(
+    address,
+    path,
+    body,
+    clientApp === undefined ? {} : { 'user-agent': clientApp },
+  );
+}
+
+/**
+ * Sends a turn under headers the caller wrote, which is how a client names its own conversation.
+ *
+ * @summary A gateway recognizes a conversation by the key its client sent before it falls back to
+ * reading the words, so a scenario about a conversation that keeps its branch has to be able to send
+ * one. The headers go on the wire beside the body rather than into it, because that is where the
+ * clients this stands in for actually carry them.
+ */
+export async function sendTurnUnder(
+  address: string,
+  path: string,
+  body: unknown,
+  headers: Record<string, string>,
+): Promise<GatewayAnswer> {
   return answerOf(
     await fetch(new URL(path, address), {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(clientApp === undefined ? {} : { 'user-agent': clientApp }),
-      },
+      headers: { 'content-type': 'application/json', ...headers },
       body: JSON.stringify(body),
     }),
   );

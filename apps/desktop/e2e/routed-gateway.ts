@@ -42,7 +42,8 @@ const PROVIDER = 'anthropic';
 /** Plainly nobody's, since a routers scenario stores an account rather than proving a key. */
 const KEY_NOBODY_HOLDS = 'sk-ant-api03-not-a-real-key-7f2c';
 
-async function accountStandsStored(page: Page, label: string): Promise<string> {
+/** One key account a routed child is paid for by, stored through the lane the catalog writes on. */
+export async function accountStandsStored(page: Page, label: string): Promise<string> {
   const stored = await page.evaluate(async (asked) => window.recompose['accounts:connect'](asked), {
     provider: PROVIDER,
     kind: 'api-key' as const,
