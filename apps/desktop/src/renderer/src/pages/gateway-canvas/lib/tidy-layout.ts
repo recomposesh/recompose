@@ -56,35 +56,71 @@ export function columnBeyond(parent: CanvasNode | undefined): number {
   return parent === undefined ? ROUTE_COLUMN : columnOf(parent) + 1;
 }
 
-const SATELLITE_INSET = SATELLITE_MEASURE.width + 12;
+/**
+ * Where a judge stands off its router until somebody moves it, measured from the router's corner.
+ *
+ * @summary It seats to the start side rather than straight above, because the gap between two rows
+ * is shorter than a satellite and the field beside a column is empty.
+ */
+export const SATELLITE_SHOULDER: XY = { x: -(SATELLITE_MEASURE.width + 12), y: -60 };
 
-const SATELLITE_RISE = 60;
+/**
+ * What the arrangement remembers one satellite's own place under, which is never a card seat.
+ *
+ * @summary A satellite has no seat of its own to remember: it stands off its router, so what
+ * survives a drag is the distance rather than the point. The name is kept apart from the card seats
+ * so the tidy arrangement, which decides which cards stand at all, drops it on sight and a
+ * satellite whose judge left the table cannot leave a stray point behind.
+ */
+export function satelliteOffsetKey(judgeNodeId: string): string {
+  return `satellite:${judgeNodeId}`;
+}
+
+/** The distance a satellite came to rest at, read off the router it advises. */
+export function satelliteOffset(router: XY, at: XY): XY {
+  return { x: at.x - router.x, y: at.y - router.y };
+}
 
 /**
  * Where every judge stands, which is an offset from its router rather than a seat of its own.
  *
  * @summary A judge advises one router, so it belongs beside that router wherever the router ends
  * up: taking a column would put an advisor in the row of things a request travels to, and taking a
- * row would push a router's own children down a place. It seats to the start side rather than
- * straight above, because the gap between two rows is shorter than a satellite and the field beside
- * a column is empty. Reading the seats as they already stand is what lets a dragged router carry
- * its judge, so the tie never stretches across the canvas. A judge whose router the canvas does not
- * stand seats nowhere, because an advisor with nothing to advise stands for nothing.
+ * row would push a router's own children down a place. Reading the seats as they already stand is
+ * what lets a dragged router carry its judge, so the tie never stretches across the canvas, and it
+ * is why a satellite a person moved is remembered as a distance rather than as a point: the move
+ * survives a drag of the router underneath it. A judge whose router the canvas does not stand seats
+ * nowhere, because an advisor with nothing to advise stands for nothing.
  */
+function satelliteSeat(
+  node: CanvasNode,
+  seats: NodePositions,
+  offsets: NodePositions,
+): XY | undefined {
+  const router = node.kind === 'judge' ? seats[node.advises] : undefined;
+
+  if (router === undefined) {
+    return undefined;
+  }
+
+  const off = offsets[satelliteOffsetKey(node.id)] ?? SATELLITE_SHOULDER;
+
+  return { x: router.x + off.x, y: router.y + off.y };
+}
+
 export function satellitesFollowTheirRouters(
   nodes: readonly CanvasNode[],
   seats: NodePositions,
+  offsets: NodePositions = {},
 ): NodePositions {
   const settled: Record<string, XY> = { ...seats };
 
   for (const node of nodes) {
-    const router = node.kind === 'judge' ? settled[node.advises] : undefined;
+    const seat = satelliteSeat(node, settled, offsets);
 
-    if (router === undefined) {
-      continue;
+    if (seat !== undefined) {
+      settled[node.id] = seat;
     }
-
-    settled[node.id] = { x: router.x - SATELLITE_INSET, y: router.y - SATELLITE_RISE };
   }
 
   return settled;

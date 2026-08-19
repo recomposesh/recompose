@@ -209,7 +209,7 @@ export function flowNodesOf(
     position: seats[node.id] ?? { x: 0, y: 0 },
     data: askedData(node, asks),
     selected: node.id === selection,
-    draggable: node.kind !== 'judge',
+    draggable: true,
     ...(node.kind === 'judge' ? SATELLITE_MEASURE : CARD_MEASURE),
   }));
 }

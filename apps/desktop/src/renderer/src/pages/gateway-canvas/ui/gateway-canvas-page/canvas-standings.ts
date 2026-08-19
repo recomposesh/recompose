@@ -200,7 +200,9 @@ export function overlayOf(
  * the ones a person dragged, and the overlay cards always sit exactly where their standing says,
  * because a draft and a pending card were each placed by the gesture that made them. A judge seats
  * last, off whichever seat its router actually took, so dragging a router carries its advisor
- * along instead of leaving the tie stretched across the canvas.
+ * along instead of leaving the tie stretched across the canvas. Its own move is read from the
+ * written arrangement rather than from the seats, because a satellite is remembered by the distance
+ * a person left it at and the tidy arrangement it is laid over holds no such distance.
  */
 export function seatsOf(
   graph: CanvasGraph,
@@ -217,5 +219,9 @@ export function seatsOf(
     held['pending'] = overlay.pending.at;
   }
 
-  return satellitesFollowTheirRouters(graph.nodes, heldOver(tidyPositions(graph.nodes), held));
+  return satellitesFollowTheirRouters(
+    graph.nodes,
+    heldOver(tidyPositions(graph.nodes), held),
+    stored,
+  );
 }
