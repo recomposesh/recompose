@@ -64,7 +64,9 @@ function asksRecording(pressed: string[]): CanvasAsks {
 }
 
 function standing(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> {
-  return { ...flowNodesOf({ nodes: [node], edges: [] }, {}, undefined, asks)[0]?.data };
+  const seated = flowNodesOf({ nodes: [node], edges: [] }, {}, undefined, asks, () => false);
+
+  return { ...seated[0]?.data };
 }
 
 function press(node: CanvasNode, ask: string, asks: CanvasAsks): void {
@@ -112,7 +114,7 @@ describe('the ask each card hangs off its port', () => {
 });
 
 describe('what a card carrying no ask stands on', () => {
-  test('a target card carries its facts alone, because no plus hangs off it', () => {
+  test('a target card carries its facts and its landing, because no plus hangs off it', () => {
     expect(Object.keys(standing(targetCard, asksRecording([]))).sort()).toEqual([
       'account',
       'depth',
@@ -121,6 +123,7 @@ describe('what a card carrying no ask stands on', () => {
       'modelId',
       'providerModel',
       'routeNodeId',
+      'takesCableFrom',
     ]);
   });
 });

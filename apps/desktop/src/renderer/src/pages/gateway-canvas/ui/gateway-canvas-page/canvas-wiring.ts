@@ -164,7 +164,43 @@ export function oneTargetRule(gateway: GatewayConfig) {
   };
 }
 
-function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> {
+/**
+ * Whether the cable one card is carrying could land on another, asked of any pair of cards.
+ *
+ * @summary It is the same rule the drop itself answers by rather than a second reading of it, so a
+ * card cannot light up for a landing the release would then refuse. A pair naming no handle is what
+ * a drag over open card face is: the rule reads the two cards, and the handles are the library's
+ * business at the moment of release.
+ */
+export function cableLandings(gateway: GatewayConfig): (from: string, onto: string) => boolean {
+  const stands = oneTargetRule(gateway);
+
+  return (from, onto) =>
+    stands({ source: from, target: onto, sourceHandle: null, targetHandle: null });
+}
+
+/**
+ * The landing question one card answers about the cable in flight, or nothing where it takes none.
+ *
+ * @summary Only a card a cable can actually land on carries it, so the card itself needs no rule
+ * and no gateway to know whether to light: a card that answers nothing is a card that never lights.
+ */
+function landingAsk(
+  node: CanvasNode,
+  takesCable: (from: string, onto: string) => boolean,
+): Record<string, unknown> {
+  if (node.kind !== 'target' && node.kind !== 'ghost-target') {
+    return {};
+  }
+
+  return { takesCableFrom: (from: string) => takesCable(from, node.id) };
+}
+
+function askedData(
+  node: CanvasNode,
+  asks: CanvasAsks,
+  takesCable: (from: string, onto: string) => boolean,
+): Record<string, unknown> {
   if (node.kind === 'gateway') {
     return { ...node, onAddVirtualModel: asks.onAddVirtualModel };
   }
@@ -187,7 +223,7 @@ function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> 
     };
   }
 
-  return { ...node };
+  return { ...node, ...landingAsk(node, takesCable) };
 }
 
 /**
@@ -195,19 +231,22 @@ function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> 
  *
  * @summary Each node declares the card's own measure, so edges draw on first paint instead of
  * waiting for a layout pass, and each carries its ask beside its facts, because the card is where
- * the plus lives and the page is what answers it.
+ * the plus lives and the page is what answers it. A card a cable could land on carries the landing
+ * question too, so a drag in flight lights every card that would take it rather than only the one
+ * a pointer already found.
  */
 export function flowNodesOf(
   graph: CanvasGraph,
   seats: NodePositions,
   selection: string | undefined,
   asks: CanvasAsks,
+  takesCable: (from: string, onto: string) => boolean,
 ): Node[] {
   return graph.nodes.map((node) => ({
     id: node.id,
     type: node.kind,
     position: seats[node.id] ?? { x: 0, y: 0 },
-    data: askedData(node, asks),
+    data: askedData(node, asks, takesCable),
     selected: node.id === selection,
     draggable: true,
     ...(node.kind === 'judge' ? SATELLITE_MEASURE : CARD_MEASURE),

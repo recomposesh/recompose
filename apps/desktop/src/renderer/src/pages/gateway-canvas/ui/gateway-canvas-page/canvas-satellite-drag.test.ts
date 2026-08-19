@@ -39,10 +39,13 @@ describe('the judge satellite a person drags', () => {
   });
 
   test('offers itself to a drag at all, the way every other card does', () => {
-    const seated = flowNodesOf(judgedGraph(), {}, undefined, {
-      onAddVirtualModel: () => {},
-      onBindFrom: () => {},
-    });
+    const seated = flowNodesOf(
+      judgedGraph(),
+      {},
+      undefined,
+      { onAddVirtualModel: () => {}, onBindFrom: () => {} },
+      () => false,
+    );
 
     expect(seated.find((node) => node.id === ADVISOR)?.draggable).toBe(true);
   });

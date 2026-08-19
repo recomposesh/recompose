@@ -671,6 +671,7 @@
 
   &:hover,
   &[data-hovered],
+  &[data-landing],
   &:focus-visible {
     --node-card-line: var(--node-card-emphasis);
     --node-card-fill: color-mix(in srgb, var(--node-card-emphasis) 8%, var(--color-surface-card));
