@@ -3,9 +3,14 @@ import { describe, expect, it } from 'vitest';
 import type { CableStanding } from './node-graph';
 
 import {
+  branchIn,
   CABLE_GRAB_SPAN,
   failureIn,
+  pointAlongCable,
   pulseForStanding,
+  RULE_PILL_ANCHOR,
+  RULE_PILL_CHARACTERS,
+  ruleShown,
   strokeForRelease,
   strokeForStanding,
   tintForStanding,
@@ -114,6 +119,79 @@ describe('what a cable in flight paints for the release under the pointer', () =
 
   it('reads pending over open canvas, where the release opens the picker instead', () => {
     expect(strokeForRelease(null)).toBe('stroke-cable-pending');
+  });
+});
+
+describe('where furniture rides along a cable', () => {
+  const bowed = 'M0,0 C60,0 140,100 200,100';
+
+  it('leaves the midpoint free, so the rule pill and the failure chip never stack', () => {
+    expect(RULE_PILL_ANCHOR).toBeGreaterThan(0);
+    expect(RULE_PILL_ANCHOR).toBeLessThan(0.5);
+  });
+
+  it('reads a point off the curve itself rather than off the line between the two ends', () => {
+    const rode = pointAlongCable(bowed, 0.5);
+
+    expect(rode).toEqual({ x: 100, y: 50 });
+  });
+
+  it('rides earlier along the cable than the midpoint the failure chip holds', () => {
+    const early = pointAlongCable(bowed, RULE_PILL_ANCHOR);
+
+    expect(early?.x).toBeLessThan(100);
+    expect(early?.y).toBeLessThan(50);
+  });
+
+  it('reads nothing off a path this canvas never drew as one curve', () => {
+    expect(pointAlongCable('M0,0 L200,100', 0.35)).toBeUndefined();
+    expect(pointAlongCable('', 0.35)).toBeUndefined();
+  });
+});
+
+describe('the rule a pill prints on the cable it rides', () => {
+  it('keeps a rule the clear span between two columns can hold', () => {
+    expect(ruleShown('Code review')).toBe('Code review');
+  });
+
+  it('cuts a rule longer than that span, so the pill never covers the cards it runs between', () => {
+    const long = 'The request asks for a review of code the caller pasted in';
+    const shown = ruleShown(long);
+
+    expect(shown.length).toBeLessThanOrEqual(RULE_PILL_CHARACTERS);
+    expect(shown.endsWith('…')).toBe(true);
+    expect(long.startsWith(shown.slice(0, -1))).toBe(true);
+  });
+
+  it('caps at a count the span between one card and the next affords', () => {
+    expect(RULE_PILL_CHARACTERS).toBeGreaterThan(10);
+    expect(RULE_PILL_CHARACTERS).toBeLessThan(30);
+  });
+});
+
+describe('the branch a cable carries', () => {
+  it('hands over the label and the rule the judge reads this cable by', () => {
+    expect(branchIn({ kind: 'rule', label: 'code', rule: 'It writes code.' })).toEqual({
+      kind: 'rule',
+      label: 'code',
+      rule: 'It writes code.',
+    });
+  });
+
+  it('hands over the fallback seat, which carries no rule anybody wrote', () => {
+    expect(branchIn({ kind: 'else' })).toEqual({ kind: 'else' });
+  });
+
+  it('reads no branch off a cable carrying none, which is every unjudged binding', () => {
+    expect(branchIn(undefined)).toBeUndefined();
+    expect(branchIn('code')).toBeUndefined();
+    expect(branchIn({ kind: 'rotation' })).toBeUndefined();
+  });
+
+  it('refuses half a branch, so no pill stands offering a rule it cannot finish saying', () => {
+    expect(branchIn({ kind: 'rule', label: 'code' })).toBeUndefined();
+    expect(branchIn({ kind: 'rule', rule: 'It writes code.' })).toBeUndefined();
+    expect(branchIn({ kind: 'rule', label: 7, rule: 'It writes code.' })).toBeUndefined();
   });
 });
 

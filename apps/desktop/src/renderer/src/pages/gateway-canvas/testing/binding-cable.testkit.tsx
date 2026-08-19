@@ -5,6 +5,7 @@ import { Handle, Position, ReactFlow } from '@xyflow/react';
 import { expect, waitFor } from 'storybook/test';
 
 import type { CableFailure, CableStanding } from '../lib/node-graph';
+import type { BranchSeat } from '../lib/route-graph';
 
 import { BindingCable } from '../ui/binding-cable/binding-cable';
 
@@ -91,6 +92,20 @@ function cardsWiredBy(carried: Record<string, unknown> | undefined): ReactElemen
  */
 export function cabledFlow(standing: CableStanding, failure?: CableFailure): ReactElement {
   return cardsWiredBy({ standing, failure });
+}
+
+/**
+ * The same two cards with a cable a conditional router decides, carrying the branch it draws.
+ *
+ * @summary Reach for it in any story about the furniture a judged cable stands, so the rule pill
+ * and the failure chip are measured against one another on the very path they both ride.
+ */
+export function judgedFlow(
+  seat: BranchSeat,
+  standing: CableStanding = 'resting',
+  failure?: CableFailure,
+): ReactElement {
+  return cardsWiredBy({ standing, failure, branch: seat });
 }
 
 /**

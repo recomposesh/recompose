@@ -9,6 +9,7 @@ import type { RouteAddress } from '../../lib/route-addresses';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
 import { routeNodeIn, addressUnder, addressWritten } from '../../lib/route-addresses';
+import { CARD_MEASURE } from '../../lib/tidy-layout';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
@@ -20,8 +21,6 @@ export type CanvasAsks = {
 
 /** One seat a position change moved, and whether the drag settled there. */
 export type MovedSeat = { id: string; to: XY; settled: boolean };
-
-export const CARD_MEASURE = { width: 184, height: 88 };
 
 /** The definition id inside a model card's node id, or nothing for any other card. */
 export function modelIdOf(nodeId: string): string | undefined {
@@ -230,7 +229,7 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
     source: edge.source,
     target: edge.target,
     type: 'cable',
-    data: { standing: edge.standing, failure: edge.failure },
+    data: { standing: edge.standing, failure: edge.failure, branch: edge.branch },
     selected: edge.id === selection,
     ...(bindingCableId(edge.id) === undefined
       ? { selectable: false, reconnectable: false, focusable: false, interactionWidth: 0 }

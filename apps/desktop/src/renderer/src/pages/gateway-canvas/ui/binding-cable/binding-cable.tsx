@@ -6,12 +6,16 @@ import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { CableFailure } from '../../lib/node-graph';
 
 import {
+  branchIn,
   CABLE_GRAB_SPAN,
   failureIn,
+  pointAlongCable,
   pulseForStanding,
+  RULE_PILL_ANCHOR,
   strokeForStanding,
   tintForStanding,
 } from '../../lib/cable-standing';
+import { CableBranchPill } from '../cable-branch-pill/cable-branch-pill';
 import { CableFailureChip } from '../cable-failure-chip/cable-failure-chip';
 
 function grabEnd(x: number, y: number, tint: string): ReactElement {
@@ -62,11 +66,13 @@ function pulse(drawn: string, stroke: string, traveling: string): ReactNode {
   );
 }
 
-function lastError(failure: CableFailure | undefined, x: number, y: number): ReactNode {
-  if (failure === undefined) {
-    return null;
-  }
-
+/**
+ * One piece of furniture standing at a point on the cable, in the flow's own coordinates.
+ *
+ * @summary Everything a cable carries rides the same way, so the anchoring, the pointer claim, and
+ * the lift a reading takes when it opens are written once rather than once per chip.
+ */
+function riding(at: { x: number; y: number }, furniture: ReactNode): ReactNode {
   return (
     <EdgeLabelRenderer>
       <div
@@ -75,12 +81,38 @@ function lastError(failure: CableFailure | undefined, x: number, y: number): Rea
           event.stopPropagation();
         }}
         role="presentation"
-        style={{ transform: `translate(-50%, -50%) translate(${String(x)}px, ${String(y)}px)` }}
+        style={{
+          transform: `translate(-50%, -50%) translate(${String(at.x)}px, ${String(at.y)}px)`,
+        }}
       >
-        <CableFailureChip detail={failure.detail} status={failure.status} />
+        {furniture}
       </div>
     </EdgeLabelRenderer>
   );
+}
+
+function lastError(failure: CableFailure | undefined, at: { x: number; y: number }): ReactNode {
+  if (failure === undefined) {
+    return null;
+  }
+
+  return riding(at, <CableFailureChip detail={failure.detail} status={failure.status} />);
+}
+
+function branchDrawn(
+  carried: unknown,
+  drawn: string,
+  midpoint: { x: number; y: number },
+): ReactNode {
+  const seat = branchIn(carried);
+
+  if (seat === undefined) {
+    return null;
+  }
+
+  const rides = pointAlongCable(drawn, RULE_PILL_ANCHOR) ?? midpoint;
+
+  return riding(rides, <CableBranchPill seat={seat} />);
 }
 
 /**
@@ -89,7 +121,9 @@ function lastError(failure: CableFailure | undefined, x: number, y: number): Rea
  * @summary Register it as the canvas edge type, so every binding reads at a glance: at rest, live,
  * served, failed, broken where its account left, or one of the two the overlay draws. A live
  * binding sends a pulse down its line, and a failed one stands its last error on the path, for the
- * person who wants the reason rather than the color. Every line stays whole either way, because a
+ * person who wants the reason rather than the color. A cable a judge decides carries its branch
+ * earlier along the same path, so the rule and the error each keep a place of their own rather than
+ * stacking on the midpoint. Every line stays whole either way, because a
  * break in the drawing would claim a break in the wire, so the pulse is the only thing that moves.
  * A selected cable widens and takes the halo the selected node card wears, a crisp ring inside a
  * soft bloom, so selection reads the same whichever a person pressed, and the halo never pulses,
@@ -108,6 +142,7 @@ export function BindingCable(cable: EdgeProps): ReactElement {
   });
   const carried = held['standing'];
   const chosen = cable.selected === true;
+  const midpoint = { x: labelX, y: labelY };
 
   return (
     <>
@@ -119,7 +154,8 @@ export function BindingCable(cable: EdgeProps): ReactElement {
       />
       {pulse(drawn, strokeForStanding(carried), pulseForStanding(carried))}
       {chosen ? grabEnds(cable, tintForStanding(carried)) : null}
-      {lastError(failureIn(held['failure']), labelX, labelY)}
+      {branchDrawn(held['branch'], drawn, midpoint)}
+      {lastError(failureIn(held['failure']), midpoint)}
     </>
   );
 }

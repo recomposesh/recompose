@@ -5,7 +5,8 @@ import { describe, expect, test } from 'vitest';
 import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { CARD_MEASURE, flowEdgesOf, flowNodesOf, movedSeats } from './canvas-wiring';
+import { CARD_MEASURE } from '../../lib/tidy-layout';
+import { flowEdgesOf, flowNodesOf, movedSeats } from './canvas-wiring';
 
 describe('the controlled flow applies position changes only', () => {
   test('a position change in flight moves a seat without settling it', () => {

@@ -7,14 +7,13 @@ import type { CanvasStandings, CanvasWorld } from './canvas-standings';
 import { closeInspector, inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { flowPointOf, viewportOf } from '../../lib/canvas-viewport';
 import { emptyDefinition } from '../../lib/model-draft';
-import { columnBeyond, MODEL_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
+import { CARD_MEASURE, columnBeyond, MODEL_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, startDrafting } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import { shownWhereItWasBorn } from './born-card-camera';
 import {
   bindingCableId,
   cableAddressOf,
-  CARD_MEASURE,
   flowEdgesOf,
   flowNodesOf,
   modelIdOf,
