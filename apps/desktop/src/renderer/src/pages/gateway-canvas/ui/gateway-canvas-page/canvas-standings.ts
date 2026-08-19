@@ -10,7 +10,7 @@ import type { HeldDraft } from '../../lib/use-held-draft';
 
 import { heldOver } from '../../lib/canvas-positions';
 import { refusalFromMain } from '../../lib/model-draft';
-import { tidyPositions } from '../../lib/tidy-layout';
+import { satellitesFollowTheirRouters, tidyPositions } from '../../lib/tidy-layout';
 
 /**
  * A binding ask hanging off a card that already stands, which is where a cable was let go.
@@ -198,7 +198,9 @@ export function overlayOf(
  *
  * @summary The tidy arrangement decides which cards stand at all, the written arrangement moves
  * the ones a person dragged, and the overlay cards always sit exactly where their standing says,
- * because a draft and a pending card were each placed by the gesture that made them.
+ * because a draft and a pending card were each placed by the gesture that made them. A judge seats
+ * last, off whichever seat its router actually took, so dragging a router carries its advisor
+ * along instead of leaving the tie stretched across the canvas.
  */
 export function seatsOf(
   graph: CanvasGraph,
@@ -215,5 +217,5 @@ export function seatsOf(
     held['pending'] = overlay.pending.at;
   }
 
-  return heldOver(tidyPositions(graph.nodes), held);
+  return satellitesFollowTheirRouters(graph.nodes, heldOver(tidyPositions(graph.nodes), held));
 }

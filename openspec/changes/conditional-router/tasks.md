@@ -64,7 +64,7 @@
 - [x] 5.2 The rule pill rides the cable at the 0.35 anchor with truncation and press-to-reveal,
       with stories
 - [x] 5.3 The judge satellite lands with its dotted tie and shoulder anchor, with stories
-- [ ] 5.4 The satellite seats as an offset from its router in `tidy-layout.ts`
+- [x] 5.4 The satellite seats as an offset from its router in `tidy-layout.ts`
 - [ ] 5.5 The minimap gains the satellite fill and the dotted tie class
 - [ ] 5.6 The `cooling` standing joins every exhaustive record in `cable-standing.ts`, painted
       `--color-attention`
