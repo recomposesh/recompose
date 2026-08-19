@@ -1,13 +1,21 @@
-import type { Account, SubscriptionAccountView, VirtualModel } from '@recompose/contracts';
+import type {
+  Account,
+  GatewayConfig,
+  SubscriptionAccountView,
+  VirtualModel,
+} from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { nameOfRouter } from '@recompose/contracts';
 
 import type { WalkedRouteNode } from '../../lib/route-graph';
+import type { JudgeDirectiveProps } from '../judge-directive/judge-directive';
 
 import { accountProductName } from '../../../../entities/account';
 import { StatusChip } from '../../../../shared/ui';
+import { conditionalIn } from '../../lib/conditional-policy';
 import { walkedRouteNodes } from '../../lib/route-graph';
+import { JudgeDirective } from '../judge-directive/judge-directive';
 import { targetFacts } from '../subject-bodies/subject-bodies';
 import { factRow, glyph, sectionHeading, subjectShell } from '../subject-shell/subject-shell';
 
@@ -21,6 +29,8 @@ export type JudgeBinding = {
   providerModel: string;
   /** What the router it advises is called, in the words the canvas already showed. */
   advises: string;
+  /** The router it advises, its branches, and the directive it hands the judge. */
+  directing: JudgeDirectiveProps;
 };
 
 const JUDGE_NOTE =
@@ -51,7 +61,7 @@ export function judgeBody(
   judge: JudgeBinding,
   subscriptions: readonly SubscriptionAccountView[],
 ): ReactNode {
-  const { account, accountId, providerModel, advises } = judge;
+  const { account, accountId, providerModel, advises, directing } = judge;
 
   return subjectShell(
     {
@@ -69,9 +79,23 @@ export function judgeBody(
         {factRow('Standing', judgeHealth(account))}
       </div>
       <p className="mt-3.5 field-box px-3 py-2.5 text-detail text-ink-secondary">{JUDGE_NOTE}</p>
+      <JudgeDirective
+        branches={directing.branches}
+        directive={directing.directive}
+        gateway={directing.gateway}
+        modelId={directing.modelId}
+        routerId={directing.routerId}
+      />
     </>,
   );
 }
+
+/** Everything outside one definition that a judge's body reads, which the drawer already holds. */
+export type JudgeRegistry = {
+  gateway: GatewayConfig;
+  accounts: readonly Account[];
+  subscriptions: readonly SubscriptionAccountView[];
+};
 
 function routerAdvised(model: VirtualModel, advises: string | undefined): string | undefined {
   const node = model.routing.nodes[advises ?? ''];
@@ -88,21 +112,43 @@ function judgeSeatIn(
   return walked.find((held) => held.routeNodeId === routeNodeId && held.advises !== undefined);
 }
 
+function directingOf(
+  gateway: GatewayConfig,
+  model: VirtualModel,
+  routerId: string,
+): JudgeDirectiveProps | undefined {
+  const policy = conditionalIn(model.routing.nodes[routerId]);
+
+  if (policy === undefined) {
+    return undefined;
+  }
+
+  return {
+    gateway,
+    modelId: model.id,
+    routerId,
+    branches: policy.branches,
+    directive: policy.directive,
+  };
+}
+
 function bindingOf(
+  gateway: GatewayConfig,
   model: VirtualModel,
   walked: WalkedRouteNode,
   accounts: readonly Account[],
 ): JudgeBinding | undefined {
   const advises = routerAdvised(model, walked.advises);
+  const directing = directingOf(gateway, model, walked.advises ?? '');
 
-  if (walked.node.kind !== 'target' || advises === undefined) {
+  if (walked.node.kind !== 'target' || advises === undefined || directing === undefined) {
     return undefined;
   }
 
   const { accountId, providerModel } = walked.node;
   const account = accounts.find((held) => held.id === accountId);
 
-  return { account, accountId, providerModel, advises };
+  return { account, accountId, providerModel, advises, directing };
 }
 
 /**
@@ -113,14 +159,15 @@ function bindingOf(
  * judge's body while no policy classifies through it.
  */
 export function judgeBodyIn(
+  registry: JudgeRegistry,
   model: VirtualModel | undefined,
   routeNodeId: string | undefined,
-  accounts: readonly Account[],
-  subscriptions: readonly SubscriptionAccountView[],
 ): ReactNode | undefined {
   const walked = judgeSeatIn(model, routeNodeId);
   const binding =
-    model === undefined || walked === undefined ? undefined : bindingOf(model, walked, accounts);
+    model === undefined || walked === undefined
+      ? undefined
+      : bindingOf(registry.gateway, model, walked, registry.accounts);
 
-  return binding === undefined ? undefined : judgeBody(binding, subscriptions);
+  return binding === undefined ? undefined : judgeBody(binding, registry.subscriptions);
 }

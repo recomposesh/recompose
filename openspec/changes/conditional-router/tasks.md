@@ -114,5 +114,5 @@
       default seat
 - [x] 9.5 An optional judge directive joins the policy and rides ahead of the compiled
       classification prompt
-- [ ] 9.6 The judge inspector shows the compiled prompt read-only and edits the directive
+- [x] 9.6 The judge inspector shows the compiled prompt read-only and edits the directive
 - [ ] 9.7 Stories cover the new interactions and the suites stay green

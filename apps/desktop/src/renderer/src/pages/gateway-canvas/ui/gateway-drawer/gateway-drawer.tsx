@@ -172,9 +172,7 @@ function routedSubjectBody(subject: InspectorSubject, world: DrawerWorld): React
   }
 
   if (subject.kind === 'judge') {
-    const model = modelHeldBy(world, subject.modelId);
-
-    return judgeBodyIn(model, subject.routeNodeId, world.accounts, world.subscriptions);
+    return judgeBodyIn(world, modelHeldBy(world, subject.modelId), subject.routeNodeId);
   }
 
   return subject.kind === 'router' ? routerSubjectBody(world, subject) : undefined;
