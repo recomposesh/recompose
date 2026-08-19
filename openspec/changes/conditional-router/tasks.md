@@ -71,7 +71,7 @@
 - [x] 5.7 The judge becomes a focusable subject with its own drawer body
 - [x] 5.8 Else removal gets refused in `router-acts.ts`, and the mode pill lands on the router
       card
-- [ ] 5.9 The browser pass covers the canvas in both schemes
+- [x] 5.9 The browser pass covers the canvas in both schemes
 
 ## 6. Graduation and the outer loop (moved after 7 and 8 in the run order)
 
