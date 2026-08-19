@@ -173,3 +173,45 @@ export const ASelectedCardRingsInItsTint = meta.story({
     );
   },
 });
+
+/**
+ * A card a cable in flight could land on lights, so a person pulling one reads where it may go.
+ *
+ * @summary The card answers the question rather than being told the answer, because whether a
+ * landing is offered changes with every drag and nothing outside the flow re-renders when one
+ * begins. Only a card that answers at all ever lights, which keeps the routers and the gateway
+ * dark while a cable hangs over them.
+ */
+export const ACableInFlightLightsWhereItCanLand = meta.story({
+  args: { takesCableFrom: () => true },
+  play: async ({ canvas, canvasElement }) => {
+    const card = await canvas.findByRole('button', { name: /Everyday Sonnet/ });
+
+    await expect(card).not.toHaveAttribute('data-landing');
+
+    await waitFor(async () => {
+      draggedFromPort(canvasElement.querySelector('.react-flow__handle.source'));
+      await expect(card).toHaveAttribute('data-landing');
+    });
+
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+
+    await waitFor(async () => {
+      await expect(card).not.toHaveAttribute('data-landing');
+    });
+  },
+});
+
+/** A card the cable could not land on stays dark, so the lit ones read as the whole answer. */
+export const ACardTheCableCannotLandOnStaysDark = meta.story({
+  args: { takesCableFrom: () => false },
+  play: async ({ canvas, canvasElement }) => {
+    const card = await canvas.findByRole('button', { name: /Everyday Sonnet/ });
+
+    draggedFromPort(canvasElement.querySelector('.react-flow__handle.source'));
+
+    await expect(card).not.toHaveAttribute('data-landing');
+
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  },
+});
