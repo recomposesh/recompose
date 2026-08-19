@@ -2,20 +2,22 @@ import type { ElectronApplication, Page, TestInfo } from '@playwright/test';
 
 import { _electron as electron } from '@playwright/test';
 import { mkdir, rm } from 'node:fs/promises';
-import { type Server } from 'node:net';
 import { join } from 'node:path';
 import { createBdd, test as base } from 'playwright-bdd';
 
+import type { JudgeStub } from './judge-stub';
 import type { KeyProbeStub } from './key-probe-stub';
+import type { PortSquatter } from './port-squatter';
 import type { RuntimeStub } from './runtime-stub';
 import type { ScriptedProvider } from './scripted-provider';
 import type { SubscriptionTools } from './subscription-tools';
 
+import { fakeJudge } from './judge-stub';
 import { fakeKeyProbe } from './key-probe-stub';
 import { scenarioEnv } from './launch-environment';
 import { readLoginItem, restoreLoginItem } from './login-item-guard';
-import { dropServer, holdPort, LOOPBACK_HOSTS } from './loopback-ports';
 import { theClipboardIsHeld } from './one-clipboard';
+import { portsHeldFromRecompose } from './port-squatter';
 import { fakeLocalRuntime } from './runtime-stub';
 import { scenarioUserDataDir } from './scenario-user-data';
 import { fakeScriptedProvider } from './scripted-provider';
@@ -31,12 +33,6 @@ const appRoot = join(__dirname, '..');
 
 export { inheritedEnv } from './launch-environment';
 
-/** Holds loopback ports away from recompose, the way a rival process on the machine would. */
-export type PortSquatter = {
-  take: (port: number) => Promise<void>;
-  release: (port: number) => Promise<void>;
-};
-
 type ElectronFixtures = {
   /**
    * Holds the machine's one clipboard for a scenario tagged `@one-clipboard`.
@@ -49,9 +45,9 @@ type ElectronFixtures = {
   /**
    * Forgets everything the last scenario scripted, before this one arranges anything.
    *
-   * @summary The provider outlives one scenario, so a fixture left behind would answer the next
-   * one's first attempt. It is automatic because a scenario that never scripts an answer is
-   * exactly the one a leftover would fool.
+   * @summary Both stand-ins outlive one scenario, so a fixture left behind would answer the next
+   * one's first attempt and a call already counted would read as this scenario's. It is automatic
+   * because a scenario that never scripts an answer is exactly the one a leftover would fool.
    */
   aFreshScript: void;
   electronApp: ElectronApplication;
@@ -81,6 +77,14 @@ type ElectronFixtures = {
  * which `aFreshScript` takes away before the next one arranges anything.
  */
 type WorkerStandIns = {
+  /**
+   * The judge a conditional scenario binds, standing at an origin no branch child answers at.
+   *
+   * @summary A conditional router spends a classification call and a served request on one request,
+   * and both would reach the scripted provider under one origin. A second origin is what tells them
+   * apart, which is what a scenario proving no classification call left the machine rests on.
+   */
+  judge: JudgeStub;
   scriptedProvider: ScriptedProvider;
 };
 
@@ -125,25 +129,6 @@ function servingOriginFor(
     : keyProbe.origin;
 }
 
-async function takePort(held: Map<number, Server[]>, port: number): Promise<void> {
-  const holders = await Promise.all(LOOPBACK_HOSTS.map(async (host) => holdPort(host, port)));
-  const bound = holders.filter((holder): holder is Server => holder !== null);
-
-  if (bound.length === 0) {
-    throw new Error(`the scenario could not take port ${String(port)} away from recompose`);
-  }
-
-  held.set(port, bound);
-}
-
-async function releasePort(held: Map<number, Server[]>, port: number): Promise<void> {
-  const bound = held.get(port) ?? [];
-
-  held.delete(port);
-
-  await Promise.all(bound.map(dropServer));
-}
-
 export const test = base.extend<ElectronFixtures, WorkerStandIns>({
   oneClipboard: [
     async ({ $tags }, use) => {
@@ -169,9 +154,22 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
     },
     { scope: 'worker' },
   ],
+  judge: [
+    async ({}, use) => {
+      const standIn = await fakeJudge();
+
+      try {
+        await use(standIn);
+      } finally {
+        await standIn.dispose();
+      }
+    },
+    { scope: 'worker' },
+  ],
   aFreshScript: [
-    async ({ scriptedProvider }, use) => {
+    async ({ judge, scriptedProvider }, use) => {
       scriptedProvider.forgets();
+      judge.forgets();
 
       await use();
     },
@@ -276,15 +274,12 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
     await use(page);
   },
   portSquatter: async ({}, use) => {
-    const held = new Map<number, Server[]>();
+    const held = portsHeldFromRecompose();
 
     try {
-      await use({
-        take: async (port) => takePort(held, port),
-        release: async (port) => releasePort(held, port),
-      });
+      await use(held.squatter);
     } finally {
-      await Promise.all([...held.keys()].map(async (port) => releasePort(held, port)));
+      await held.letEveryPortGo();
     }
   },
 });
