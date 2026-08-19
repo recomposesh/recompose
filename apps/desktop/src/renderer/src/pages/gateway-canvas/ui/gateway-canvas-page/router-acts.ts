@@ -164,6 +164,25 @@ export function boundThroughARouter(world: CanvasWorld, from: string): void {
   }
 }
 
+const ELSE_STAYS_REFUSAL =
+  'The else branch catches every request no rule matched, so it stays. Change where it goes instead.';
+
+/**
+ * Whether one route node is the else branch of the router holding it, which no gesture may remove.
+ *
+ * @summary A conditional router without an else branch is a shape the stored document refuses, and
+ * the walk would strand the judge's fallback with nowhere to land, so the canvas refuses the
+ * gesture rather than writing a table the engine would reject on the next request.
+ */
+function catchesWhatNoRuleMatched(model: VirtualModel, routeNodeId: string): boolean {
+  return Object.values(model.routing.nodes).some(
+    (node) =>
+      node.kind === 'router' &&
+      node.policy.mode === 'conditional' &&
+      node.policy.elseChild === routeNodeId,
+  );
+}
+
 /**
  * Takes one route node off the canvas, with everything standing under it.
  *
@@ -172,18 +191,30 @@ export function boundThroughARouter(world: CanvasWorld, from: string): void {
  * holding it and the definition keeps serving through whatever else stands there, which is what a
  * person thinning a pool by one asked for. The entry has nothing above it to leave, so removing it
  * releases the binding altogether and stands the definition back as a draft, the way deleting the
- * one thing a virtual model reached has always worked on this canvas.
+ * one thing a virtual model reached has always worked on this canvas. The one node this refuses is
+ * a judged router's else branch, because every request no rule matched lands there.
  */
 export function removedRouteNode(world: CanvasWorld, nodeId: string): void {
   const address = cardAddressOf(nodeId);
-  const parent = address === undefined ? undefined : parentRouterAt(world, address);
 
-  if (address === undefined || parent === undefined) {
+  if (address === undefined) {
+    return;
+  }
+
+  const parent = parentRouterAt(world, address);
+
+  if (parent === undefined) {
     return;
   }
 
   if (parent.routeNodeId === parent.model.routing.entry) {
     releasedWithNothingSelected(world, address.modelId);
+
+    return;
+  }
+
+  if (catchesWhatNoRuleMatched(parent.model, parent.routeNodeId)) {
+    world.standings.refuse(new Error(ELSE_STAYS_REFUSAL));
 
     return;
   }

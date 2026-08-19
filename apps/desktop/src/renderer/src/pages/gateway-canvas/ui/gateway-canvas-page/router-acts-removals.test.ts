@@ -14,6 +14,7 @@ import {
   accounts,
   CANVAS,
   definitionsWritten,
+  gatewayOfAJudgedRouter,
   ladderIn,
   nodeWritten,
   routingWritten,
@@ -86,5 +87,37 @@ describe('a route node taken off the canvas', () => {
 
     expect(record.written).toEqual([]);
     expect(record.selected).toEqual([]);
+  });
+});
+
+describe('a branch of a judged router taken off the canvas', () => {
+  test('the else child of a judged router refuses to leave, because trouble lands there', () => {
+    const { world, record } = worldWhereWritesLand(gatewayOfAJudgedRouter(), { accounts });
+
+    removedRouteNode(world, 'target:judged:c2');
+
+    expect(record.written).toEqual([]);
+    expect(record.refused).toHaveLength(1);
+  });
+
+  test('the refusal names what the else branch is for, so a person reads why it stays', () => {
+    const { world, record } = worldWhereWritesAreRefused(
+      gatewayOfAJudgedRouter(),
+      new Error('never reached'),
+      { accounts },
+    );
+
+    removedRouteNode(world, 'target:judged:c2');
+
+    expect(String(record.refused[0])).toContain('else');
+  });
+
+  test('a branch a rule names still leaves, because only the fallback is permanent', () => {
+    const { world, record } = worldWhereWritesLand(gatewayOfAJudgedRouter(), { accounts });
+
+    removedRouteNode(world, 'target:judged:c1');
+
+    expect(ladderIn(routingWritten(record, 'judged'), 'r1')).toEqual(['c2']);
+    expect(record.refused).toEqual([]);
   });
 });

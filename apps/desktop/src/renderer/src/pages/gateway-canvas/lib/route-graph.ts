@@ -17,7 +17,19 @@ export type WalkedRouteNode = {
   branch: BranchSeat | undefined;
   /** The router this node judges for, or nothing wherever it stands as a child instead. */
   advises: string | undefined;
+  /** The judge standing beside this router, or nothing where the table holds none. */
+  judgedBy: string | undefined;
 };
+
+type RouterNode = Extract<RouteNode, { kind: 'router' }>;
+
+function judgedPolicyOf(node: RouteNode) {
+  if (node.kind !== 'router') {
+    return undefined;
+  }
+
+  return node.policy.mode === 'conditional' ? node.policy : undefined;
+}
 
 /**
  * Which branch of one router reaches each of its children, keyed by the child it reaches.
@@ -27,14 +39,6 @@ export type WalkedRouteNode = {
  * a cable never loses the rule it draws for. A router that reads no request at all names nothing
  * here, because ordering children and rotating between them are not decisions about the request.
  */
-function judgedPolicyOf(node: RouteNode) {
-  if (node.kind !== 'router') {
-    return undefined;
-  }
-
-  return node.policy.mode === 'conditional' ? node.policy : undefined;
-}
-
 function branchSeatsOf(node: RouteNode): ReadonlyMap<string, BranchSeat> {
   const policy = judgedPolicyOf(node);
   const seats = new Map<string, BranchSeat>();
@@ -71,25 +75,19 @@ function judgeBeside(routing: Routing, walked: WalkedRouteNode): WalkedRouteNode
     parent: walked.routeNodeId,
     branch: undefined,
     advises: walked.routeNodeId,
+    judgedBy: undefined,
   };
 }
 
-function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRouteNode[]): void {
-  into.push(walked);
+function childrenWalked(
+  routing: Routing,
+  walked: WalkedRouteNode,
+  node: RouterNode,
+  into: WalkedRouteNode[],
+): void {
+  const seats = branchSeatsOf(node);
 
-  if (walked.node.kind !== 'router') {
-    return;
-  }
-
-  const advisor = judgeBeside(routing, walked);
-
-  if (advisor !== undefined) {
-    into.push(advisor);
-  }
-
-  const seats = branchSeatsOf(walked.node);
-
-  for (const childId of walked.node.children) {
+  for (const childId of node.children) {
     const child = routing.nodes[childId];
 
     if (child !== undefined) {
@@ -102,11 +100,30 @@ function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRout
           parent: walked.routeNodeId,
           branch: seats.get(childId),
           advises: undefined,
+          judgedBy: undefined,
         },
         into,
       );
     }
   }
+}
+
+function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRouteNode[]): void {
+  if (walked.node.kind !== 'router') {
+    into.push(walked);
+
+    return;
+  }
+
+  const advisor = judgeBeside(routing, walked);
+
+  into.push(advisor === undefined ? walked : { ...walked, judgedBy: advisor.routeNodeId });
+
+  if (advisor !== undefined) {
+    into.push(advisor);
+  }
+
+  childrenWalked(routing, walked, walked.node, into);
 }
 
 /**
@@ -122,8 +139,9 @@ function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRout
  *
  * A conditional router's judge follows the router it advises and stands at the router's own depth,
  * because it advises rather than answers: it takes no column of its own and no request travels to
- * it. It carries the router it advises, which is how every reader tells an advisor from a child
- * without looking the policy up again.
+ * it. It carries the router it advises, and the router carries it back, which is how every reader
+ * tells an advisor from a child, and a card says whether its judge resolved, without looking the
+ * policy up again. A judge naming no node in the table stands nowhere and the router says so.
  */
 export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
   const entry = routing.nodes[routing.entry];
@@ -143,6 +161,7 @@ export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
       parent: undefined,
       branch: undefined,
       advises: undefined,
+      judgedBy: undefined,
     },
     walked,
   );

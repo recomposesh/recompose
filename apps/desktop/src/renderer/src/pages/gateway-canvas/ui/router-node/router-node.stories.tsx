@@ -26,6 +26,15 @@ const empty: RouterNodeData = { ...spreading, childCount: 0 };
 
 const rotating: RouterNodeData = { ...spreading, mode: 'round-robin', childCount: 3 };
 
+const judging: RouterNodeData = {
+  ...spreading,
+  mode: 'conditional',
+  childCount: 3,
+  judged: { branches: 2, judge: 'advisor' },
+};
+
+const unjudged: RouterNodeData = { ...judging, judged: { branches: 2, judge: undefined } };
+
 const CARD_WIDTH = 184;
 const CARD_HEIGHT = 88;
 
@@ -159,6 +168,44 @@ export const ADerivedNameSpendsTheMonoLineOnTheChildCount = meta.story({
     await expect(card).toHaveTextContent('Round-robin');
     await expect(card).toHaveTextContent('3 children');
     await expect(card).not.toHaveTextContent('round-robin');
+  },
+});
+
+/**
+ * A router the judge decides wears its mode as a pill, behind a glyph the word never carries.
+ *
+ * @summary The pill is where a person reads that this router asks a question, and the glyph stays
+ * decoration so the same word reaches the inspector and a refusal unchanged.
+ */
+export const AJudgedRouterWearsItsModeAsAPill = meta.story({
+  args: { data: judging },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+
+    await expect(card).toHaveTextContent('Conditional');
+    await expect(card).toHaveTextContent('2 branches, one judge');
+    await expect(canvas.queryByRole('button', { name: /\?/u })).toBeNull();
+  },
+});
+
+/** A judge no table holds reads as absent, because every request then lands on else. */
+export const AJudgedRouterMissingItsJudgeSaysSo = meta.story({
+  args: { data: unjudged },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+
+    await expect(card).toHaveTextContent('2 branches, no judge');
+  },
+});
+
+/** The two shipped modes keep the card they always had, with no pill riding the kicker row. */
+export const TheOtherModesWearNoPill = meta.story({
+  args: { data: rotating },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Round-robin/ });
+
+    await expect(card).toHaveTextContent('3 children');
+    await expect(card).not.toHaveTextContent('Conditional');
   },
 });
 
