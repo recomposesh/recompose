@@ -29,6 +29,11 @@ function judgeRefusals(policy: ConditionalPolicy, seat: JudgeSeat): PolicyRefusa
 
   if (seat.kind === undefined) {
     refusals.push({ at: 'judge', message: `the judge ${judge} names no node in the table` });
+  } else if (seat.kind === 'router') {
+    refusals.push({
+      at: 'judge',
+      message: `the judge ${judge} names a router rather than a target`,
+    });
   }
 
   if (seat.standsAsChild) {

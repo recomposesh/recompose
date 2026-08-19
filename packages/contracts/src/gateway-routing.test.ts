@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { routingSchema } from './gateway-routing';
+import { ROUTER_DEPTH_LIMIT, routingSchema } from './gateway-routing';
 
 type Refusal = { code: string; path: PropertyKey[]; message: string };
 
@@ -22,33 +22,44 @@ function conditionalPolicy(over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
-function routingSortedBy(policy: Record<string, unknown>): Record<string, unknown> {
-  return {
-    entry: 'sorter',
-    nodes: {
-      sorter: { kind: 'router', policy, children: ['coder', 'chatter'] },
-      coder: targetNode('acc-claude-max'),
-      chatter: targetNode('acc-openrouter'),
-      arbiter: targetNode('acc-cheap-judge'),
-    },
-  };
+function routingSortedBy(
+  policy: Record<string, unknown>,
+  children: readonly string[] = ['coder', 'chatter'],
+): Record<string, unknown> {
+  const nodes: Record<string, unknown> = { sorter: { kind: 'router', policy, children } };
+
+  for (const child of [...children, 'arbiter']) {
+    nodes[child] = targetNode(`acc-${child}`);
+  }
+
+  return { entry: 'sorter', nodes };
 }
 
 function routingSortedInto(branches: readonly Record<string, unknown>[]): Record<string, unknown> {
-  return {
-    entry: 'sorter',
-    nodes: {
-      sorter: {
-        kind: 'router',
-        policy: conditionalPolicy({ branches }),
-        children: ['coder', 'drafter', 'chatter'],
-      },
-      coder: targetNode('acc-claude-max'),
-      drafter: targetNode('acc-openrouter'),
-      chatter: targetNode('acc-fallback'),
-      arbiter: targetNode('acc-cheap-judge'),
-    },
-  };
+  return routingSortedBy(conditionalPolicy({ branches }), ['coder', 'drafter', 'chatter']);
+}
+
+function conditionalDeep(levels: number): Record<string, unknown> {
+  const nodes: Record<string, unknown> = { leaf: targetNode('acc-claude-max') };
+  let outermost = 'leaf';
+
+  for (let level = levels; level > 0; level -= 1) {
+    const id = `sorter-${String(level)}`;
+    const fallback = `fallback-${String(level)}`;
+    const judge = `judge-${String(level)}`;
+    const branches = [{ label: 'code', rule: 'the request asks for code', child: outermost }];
+
+    nodes[fallback] = targetNode('acc-openrouter');
+    nodes[judge] = targetNode('acc-cheap-judge');
+    nodes[id] = {
+      kind: 'router',
+      policy: conditionalPolicy({ judge, branches, elseChild: fallback }),
+      children: [outermost, fallback],
+    };
+    outermost = id;
+  }
+
+  return { entry: outermost, nodes };
 }
 
 function refusalsFor(routing: Record<string, unknown>): Refusal[] {
@@ -233,6 +244,47 @@ describe('the labels a conditional router hands its judge', () => {
 
     expect(refusalsFor(routingSortedInto(blank)).map((refusal) => refusal.path)).toEqual([
       ['nodes', 'sorter', 'policy', 'branches', 0, 'label'],
+    ]);
+  });
+});
+
+describe('the depth bound holds however deep conditional routers nest', () => {
+  test('conditional routers nest as deep as the bound allows', () => {
+    expect(refusalsFor(conditionalDeep(ROUTER_DEPTH_LIMIT))).toEqual([]);
+  });
+
+  test('conditional routers past the bound are refused, and the refusal names the deepest', () => {
+    expect(refusalsFor(conditionalDeep(ROUTER_DEPTH_LIMIT + 1))).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter-5'],
+        message: 'sorter-5 stands past 4 nested routers',
+      },
+    ]);
+  });
+
+  test('a judge naming a router is refused, so a chain stands only as deep as its children say', () => {
+    const layered = {
+      entry: 'sorter',
+      nodes: {
+        sorter: {
+          kind: 'router',
+          policy: conditionalPolicy({ judge: 'panel' }),
+          children: ['coder', 'chatter'],
+        },
+        panel: { kind: 'router', policy: { mode: 'failover' }, children: ['second'] },
+        second: targetNode('acc-second-opinion'),
+        coder: targetNode('acc-claude-max'),
+        chatter: targetNode('acc-openrouter'),
+      },
+    };
+
+    expect(refusalsFor(layered)).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'judge'],
+        message: 'the judge panel names a router rather than a target',
+      },
     ]);
   });
 });
