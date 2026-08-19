@@ -81,5 +81,27 @@ export const ASelectedJudgeRings = meta.story({
   },
 });
 
+/**
+ * A judge standing out of a cooldown says so in a word, and never counts the seconds down.
+ *
+ * @summary A number ticking on the canvas would pull the eye off the composition every second, so
+ * the remaining window is a thing a person reads once, in the inspector.
+ */
+export const ACoolingJudgeSaysSoWithoutACountdown = meta.story({
+  args: { data: { ...advising, standing: 'cooling' } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Cooling')).toBeVisible();
+    await expect(canvas.queryByText(/\d+\s*s/u)).toBeNull();
+  },
+});
+
+/** A judge nothing is wrong with spends its caption on the model it classifies with. */
+export const ARestingJudgeNamesItsModelInstead = meta.story({
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByTitle('claude-haiku-5')).toBeVisible();
+    await expect(canvas.queryByText('Cooling')).toBeNull();
+  },
+});
+
 /** The judge in the dark scheme, where its ink and its line both read against the canvas. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

@@ -5,6 +5,7 @@ import type {
   SubscriptionAccountView,
 } from '@recompose/contracts';
 
+import type { CableStanding } from './cable-traffic';
 import type { BranchSeat, WalkedRouteNode } from './route-graph';
 
 import { accountDetail } from '../../../entities/account';
@@ -59,6 +60,7 @@ export type CanvasNode =
       advises: string;
       accountId: string;
       providerModel: string;
+      standing?: CableStanding | undefined;
     }
   | { id: string; kind: 'draft-model'; modelId: string; displayName: string }
   | { id: string; kind: 'pending-target' };

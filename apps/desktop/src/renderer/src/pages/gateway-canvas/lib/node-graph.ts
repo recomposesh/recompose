@@ -12,7 +12,12 @@ import type { CanvasEdge } from './canvas-cables';
 import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
 
-import { carriedBy, latestAcrossNodes, outcomesThroughRouters } from './cable-traffic';
+import {
+  carriedBy,
+  latestAcrossNodes,
+  outcomesThroughRouters,
+  standingCarried,
+} from './cable-traffic';
 import {
   cableInto,
   GATEWAY_NODE_ID,
@@ -95,6 +100,24 @@ function outcomeOnto(
     : painted[placed.walked.routeNodeId];
 }
 
+/**
+ * The judge card as it stands right now, which is the one card a reading paints rather than a cable.
+ *
+ * @summary A person asks the judge one question, so what the judge is doing has no cable of its own
+ * to light: the tie says which router it belongs to rather than where a request went. The card
+ * therefore carries the standing, which is what lets a cooling judge say so where a person is
+ * already looking rather than in a badge counting seconds down.
+ */
+function cardStanding(seated: SeatedCard, painted: Readonly<Record<string, RequestOutcome>>) {
+  const { placed, card } = seated;
+
+  if (card.kind !== 'judge') {
+    return card;
+  }
+
+  return { ...card, standing: standingCarried(painted[placed.walked.routeNodeId]) ?? 'resting' };
+}
+
 function routedCards(
   model: VirtualModel,
   registry: Registry,
@@ -109,11 +132,11 @@ function routedCards(
   const edges = seated.map(({ placed, card }) =>
     placed.walked.advises === undefined
       ? cableInto(placed, card, outcomeOnto(placed, painted, throughRouters))
-      : tieOnto(placed, card),
+      : tieOnto(placed, card, painted[placed.walked.routeNodeId]),
   );
 
   return {
-    nodes: seated.map((held) => held.card),
+    nodes: seated.map((held) => cardStanding(held, painted)),
     edges,
     flowed: latestAcrossNodes(painted),
   };

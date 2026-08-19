@@ -24,6 +24,7 @@ const everyStanding: readonly CableStanding[] = [
   'broken',
   'draft',
   'pending',
+  'cooling',
 ];
 
 describe('what a cable paints for its standing', () => {
@@ -36,6 +37,7 @@ describe('what a cable paints for its standing', () => {
       'stroke-cable-broken',
       'stroke-cable-draft',
       'stroke-cable-pending',
+      'stroke-attention',
     ]);
   });
 
@@ -48,6 +50,7 @@ describe('what a cable paints for its standing', () => {
       'node-tint-cable-broken',
       'node-tint-cable-draft',
       'node-tint-cable-pending',
+      'node-tint-attention',
     ]);
   });
 
