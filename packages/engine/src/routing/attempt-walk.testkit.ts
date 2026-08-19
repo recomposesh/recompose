@@ -17,6 +17,7 @@ export type Replies = Readonly<Record<string, AttemptReading<string>>>;
 export type Scene = {
   resumesServerState?: boolean;
   classifyBranch?: BranchClassifier;
+  pinnedBranchAt?: (routeNode: string) => string | undefined;
 };
 
 export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {

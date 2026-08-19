@@ -1,4 +1,4 @@
-import type { EngineVirtualModel, RouterPolicy } from '@recompose/contracts';
+import type { EngineRouteNode, EngineVirtualModel, RouterPolicy } from '@recompose/contracts';
 
 import { describe, expect, it } from 'vitest';
 
@@ -7,6 +7,8 @@ import { answeringInTurn, childRouteNode, served, serving } from './gateway-rout
 const ENTRY = 'ladder';
 
 const NESTED = 'spread';
+
+const JUDGE = 'judge';
 
 const FIRST_CHILD = 'http://first.test';
 
@@ -26,7 +28,8 @@ const RESUMING = {
 const OPENING = { model: 'fast', messages: [{ role: 'user', content: 'hello' }] };
 
 function aFailoverOverANested(
-  mode: Exclude<RouterPolicy['mode'], 'conditional'>,
+  policy: RouterPolicy,
+  beside: Readonly<Record<string, EngineRouteNode>> = {},
 ): EngineVirtualModel {
   return {
     id: 'fast',
@@ -37,7 +40,7 @@ function aFailoverOverANested(
         [ENTRY]: { kind: 'router', policy: { mode: 'failover' }, children: [NESTED] },
         [NESTED]: {
           kind: 'router',
-          policy: { mode },
+          policy,
           children: [childRouteNode(1), childRouteNode(2)],
         },
         [childRouteNode(1)]: {
@@ -48,14 +51,29 @@ function aFailoverOverANested(
           kind: 'target',
           standing: { standing: 'bound', providerModel: 'claude-sonnet-4-5' },
         },
+        ...beside,
       },
     },
   };
 }
 
+function aFailoverOverAJudged(): EngineVirtualModel {
+  return aFailoverOverANested(
+    {
+      mode: 'conditional',
+      judge: JUDGE,
+      branches: [{ label: 'code', rule: 'asks to write code', child: childRouteNode(1) }],
+      elseChild: childRouteNode(2),
+      judgeBoundMs: 2_000,
+      rejudgeEveryRequest: false,
+    },
+    { [JUDGE]: { kind: 'target', standing: { standing: 'bound', providerModel: 'gpt-5-mini' } } },
+  );
+}
+
 describe('a chained turn refuses at the router that would rotate it, however deep it stands', () => {
   it('refuses under a round-robin nested below a failover entry', async () => {
-    const scene = serving(aFailoverOverANested('round-robin'), answeringInTurn(served));
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
     const answer = await scene.ask(RESUMING);
 
     expect(answer.status).toBe(400);
@@ -63,7 +81,7 @@ describe('a chained turn refuses at the router that would rotate it, however dee
   });
 
   it('names the nested router and the two ways out', async () => {
-    const scene = serving(aFailoverOverANested('round-robin'), answeringInTurn(served));
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
     const answer = await scene.ask(RESUMING);
 
     await expect(answer.json()).resolves.toMatchObject({
@@ -76,15 +94,23 @@ describe('a chained turn refuses at the router that would rotate it, however dee
   });
 
   it('serves a chained turn where every router in the way fails over instead', async () => {
-    const scene = serving(aFailoverOverANested('failover'), answeringInTurn(served));
+    const scene = serving(aFailoverOverANested({ mode: 'failover' }), answeringInTurn(served));
     const answer = await scene.ask(RESUMING);
 
     expect(answer.status).toBe(200);
     expect(scene.sentTo).toEqual([`${FIRST_CHILD}/v1/chat/completions`]);
   });
 
+  it('never refuses that turn at a conditional router, carrying it down else instead', async () => {
+    const scene = serving(aFailoverOverAJudged(), answeringInTurn(served));
+    const answer = await scene.ask(RESUMING);
+
+    expect(answer.status).toBe(200);
+    expect(scene.sentTo).toEqual([`${SECOND_CHILD}/v1/chat/completions`]);
+  });
+
   it('lets a turn that resumes nothing rotate across the nested round-robin', async () => {
-    const scene = serving(aFailoverOverANested('round-robin'), answeringInTurn(served));
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
 
     await (await scene.ask(OPENING)).text();
     await (await scene.ask(OPENING)).text();
