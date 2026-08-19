@@ -25,7 +25,9 @@ const RESUMING = {
 
 const OPENING = { model: 'fast', messages: [{ role: 'user', content: 'hello' }] };
 
-function aFailoverOverANested(mode: RouterPolicy['mode']): EngineVirtualModel {
+function aFailoverOverANested(
+  mode: Exclude<RouterPolicy['mode'], 'conditional'>,
+): EngineVirtualModel {
   return {
     id: 'fast',
     displayName: 'Fast',

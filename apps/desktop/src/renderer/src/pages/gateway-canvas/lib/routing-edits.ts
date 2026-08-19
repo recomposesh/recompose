@@ -8,8 +8,11 @@ import type {
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
-/** Which of the two shipped ways a router spreads the requests reaching it. */
+/** Which of the shipped ways a router spreads the requests reaching it. */
 export type RouterMode = RouterPolicy['mode'];
+
+/** A mode whose whole policy is the mode, which is every mode a canvas edit builds a router with. */
+export type SpreadingMode = Exclude<RouterMode, 'conditional'>;
 
 /**
  * A route table reaching one fresh router, which holds no child until a person binds one.
@@ -23,7 +26,7 @@ export type RouterMode = RouterPolicy['mode'];
  * The name is absent wherever nobody wrote one, never empty, because a router falls back to its
  * mode only while it holds no name at all.
  */
-export function routedThroughARouter(mode: RouterMode, displayName?: string): Routing {
+export function routedThroughARouter(mode: SpreadingMode, displayName?: string): Routing {
   const entry = mintRouteNodeId();
   const router: RouteNode = { kind: 'router', policy: { mode }, children: [] };
 
@@ -67,7 +70,7 @@ function routerEdited(
 export function gatewayRoutingThrough(
   gateway: GatewayConfig,
   modelId: string,
-  mode: RouterMode,
+  mode: SpreadingMode,
 ): GatewayConfig {
   return routedBy(gateway, modelId, (was) => {
     const entry = mintRouteNodeId();
@@ -270,7 +273,7 @@ export function gatewaySwitching(
   gateway: GatewayConfig,
   modelId: string,
   routerId: string,
-  mode: RouterMode,
+  mode: SpreadingMode,
 ): GatewayConfig {
   return routedBy(gateway, modelId, (was) =>
     routerEdited(was, routerId, (router) => ({ ...router, policy: { mode } })),

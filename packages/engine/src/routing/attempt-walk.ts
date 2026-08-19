@@ -68,6 +68,7 @@ const PICK_BY_MODE: Record<RouterPolicy['mode'], ChildPicker> = {
 
     return spun.child;
   },
+  conditional: () => undefined,
 };
 
 function addressOf(walking: Walking, routeNode: string): RouteNodeAddress {

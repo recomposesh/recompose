@@ -19,16 +19,33 @@ export function mintRouteNodeId(): string {
   return crypto.randomUUID();
 }
 
+const branchSchema = z.strictObject({
+  label: nonBlankString,
+  rule: nonBlankString,
+  child: routeNodeIdSchema,
+});
+
 export const routerPolicySchema = z.discriminatedUnion('mode', [
   z.strictObject({ mode: z.literal('failover') }),
   z.strictObject({ mode: z.literal('round-robin') }),
+  z.strictObject({
+    mode: z.literal('conditional'),
+    judge: routeNodeIdSchema,
+    branches: z.array(branchSchema),
+    elseChild: routeNodeIdSchema,
+    judgeBoundMs: z.number().int().positive(),
+    rejudgeEveryRequest: z.boolean(),
+  }),
 ]);
 
 export type RouterPolicy = z.infer<typeof routerPolicySchema>;
 
+type ConditionalPolicy = Extract<RouterPolicy, { mode: 'conditional' }>;
+
 const NAME_OF_MODE: Record<RouterPolicy['mode'], string> = {
   failover: 'Failover',
   'round-robin': 'Round-robin',
+  conditional: 'Conditional',
 };
 
 /**
@@ -93,6 +110,63 @@ function childrenOf(node: RouteNode): readonly string[] {
   return node.kind === 'router' ? node.children : [];
 }
 
+function conditionalPolicyOf(node: RouteNode): ConditionalPolicy | undefined {
+  if (node.kind !== 'router' || node.policy.mode !== 'conditional') {
+    return undefined;
+  }
+
+  return node.policy;
+}
+
+function referencesOf(node: RouteNode): readonly string[] {
+  const judge = conditionalPolicyOf(node)?.judge;
+
+  return judge === undefined ? childrenOf(node) : [...childrenOf(node), judge];
+}
+
+function eachBranchNamesAChild(
+  id: string,
+  node: RouteNode,
+  policy: ConditionalPolicy,
+  context: z.RefinementCtx,
+): void {
+  const children = new Set(childrenOf(node));
+  const at: PropertyKey[] = ['nodes', id, 'policy'];
+
+  if (!children.has(policy.elseChild)) {
+    const stray = policy.elseChild;
+
+    refuse(
+      context,
+      [...at, 'elseChild'],
+      `the else child ${stray} stands outside this router's children`,
+    );
+  }
+
+  for (const branch of policy.branches) {
+    if (!children.has(branch.child)) {
+      refuse(
+        context,
+        [...at, 'branches'],
+        `the ${branch.label} branch names ${branch.child}, standing outside this router's children`,
+      );
+    }
+  }
+}
+
+function eachConditionalRouterHoldsItsBranches(
+  nodes: Map<string, RouteNode>,
+  context: z.RefinementCtx,
+): void {
+  for (const [id, node] of nodes) {
+    const policy = conditionalPolicyOf(node);
+
+    if (policy !== undefined) {
+      eachBranchNamesAChild(id, node, policy, context);
+    }
+  }
+}
+
 function eachChildResolves(nodes: Map<string, RouteNode>, context: z.RefinementCtx): void {
   for (const [id, node] of nodes) {
     for (const child of childrenOf(node)) {
@@ -141,9 +215,9 @@ function nodeAwaitingVisit(
   return visited.has(visit.id) ? undefined : nodes.get(visit.id);
 }
 
-function queueChildren(visit: PendingVisit, node: RouteNode, pending: PendingVisit[]): void {
-  for (const child of childrenOf(node)) {
-    pending.push({ id: child, routersAbove: visit.routersAbove + 1 });
+function queueReferences(visit: PendingVisit, node: RouteNode, pending: PendingVisit[]): void {
+  for (const referenced of referencesOf(node)) {
+    pending.push({ id: referenced, routersAbove: visit.routersAbove + 1 });
   }
 }
 
@@ -167,7 +241,7 @@ function reachedFromEntry(
     }
 
     visited.add(visit.id);
-    queueChildren(visit, node, pending);
+    queueReferences(visit, node, pending);
 
     if (standsTooDeep(node, visit)) {
       const bound = String(ROUTER_DEPTH_LIMIT);
@@ -189,6 +263,7 @@ function routingServesFromItsEntry(table: RouteTable, context: z.RefinementCtx):
   }
 
   eachChildResolves(nodes, context);
+  eachConditionalRouterHoldsItsBranches(nodes, context);
   eachNodeAnswersToOneParent(table.entry, nodes, context);
 
   const reached = reachedFromEntry(table.entry, nodes, context);

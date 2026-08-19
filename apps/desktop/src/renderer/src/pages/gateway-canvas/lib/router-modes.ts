@@ -16,6 +16,8 @@ export const modeSentences: Record<RouterMode, string> = {
     'The topmost healthy provider answers. Each child below it stands in only when everything above it fails.',
   'round-robin':
     'Requests alternate across the children. This spreads the load, and each switch costs a prompt cache hit.',
+  conditional:
+    "A judge reads each request and names the branch it belongs to. Anything it can't place lands on the else branch.",
 };
 
 export const modeOptions = [

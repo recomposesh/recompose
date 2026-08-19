@@ -2,7 +2,7 @@
 
 ## 1. The contracts variant
 
-- [ ] 1.1 Specify the conditional member refusing a missing else, a dangling branch child, and a
+- [x] 1.1 Specify the conditional member refusing a missing else, a dangling branch child, and a
       dangling else child
 - [ ] 1.2 Specify duplicate and blank branch labels refused after trimming
 - [ ] 1.3 Specify judge reachability: a judge referenced only from the policy counts as reachable,
@@ -10,7 +10,7 @@
 - [ ] 1.4 Specify that declared-order walkers never meet the judge, so token counting can't
       resolve to it
 - [ ] 1.5 Specify `nameOfRouterMode('conditional')` returning `Conditional` in both naming specs
-- [ ] 1.6 Widen the mode union in `gateway-config.test-d.ts` in the same commit as the schema
+- [x] 1.6 Widen the mode union in `gateway-config.test-d.ts` in the same commit as the schema
 - [ ] 1.7 Specify router depth staying capped with a conditional member in the chain
 
 ## 2. The engine walk and the pure pick

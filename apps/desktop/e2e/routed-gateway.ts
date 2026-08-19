@@ -11,8 +11,8 @@ import { accountLabeled } from './served-gateway';
 import { theGatewayAScenarioActsOn } from './stored-target-accounts';
 import { seedVirtualModels } from './stored-virtual-models';
 
-/** Either mode a router ships with, named the way a scenario names it. */
-export type RouterMode = RouterPolicy['mode'];
+/** Either mode a scenario builds a router with, named the way a scenario names it. */
+export type RouterMode = Exclude<RouterPolicy['mode'], 'conditional'>;
 
 /**
  * One child a routers scenario names.
