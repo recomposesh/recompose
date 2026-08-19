@@ -98,7 +98,7 @@
 ## 8. The pin tally crosses to the renderer (replan, approved at the gate of 2026-08-19)
 
 - [x] 8.1 Contracts: the per-branch pin tally joins the watch channel schema
-- [ ] 8.2 Engine: a pin write and a pin expiry each emit the router's tally
+- [x] 8.2 Engine: a pin write and a pin expiry each emit the router's tally
 - [ ] 8.3 The bridge carries the tally to the renderer
 - [ ] 8.4 The inspector rows read the live tally
 - [ ] 8.5 The tally law, never negative and dropped on expiry, lands as a property with its twin

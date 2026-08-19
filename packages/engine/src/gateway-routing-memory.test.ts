@@ -1,6 +1,9 @@
+import type { BranchPinTally } from '@recompose/contracts';
+
 import { fc, test as propertyTest } from '@fast-check/vitest';
 import { describe, expect, test } from 'vitest';
 
+import type { TallyBranchPins } from './gateway-routing-memory';
 import type { RouteNodeAddress } from './routing/route-node-key';
 
 import {
@@ -137,6 +140,119 @@ describe('the law a long-running gateway keeps', () => {
     );
 
     expect(held).toHaveLength(PINNED_CONVERSATION_LIMIT);
+  });
+});
+
+type Counted = { address: RouteNodeAddress; pinned: BranchPinTally };
+
+function aTallyLine(): { heard: Counted[]; tallied: TallyBranchPins } {
+  const heard: Counted[] = [];
+
+  return {
+    heard,
+    tallied: (address, pinned) => {
+      heard.push({ address, pinned });
+    },
+  };
+}
+
+describe('what a router says it is holding as conversations arrive', () => {
+  test('the first conversation to earn a branch counts one against it', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+
+    expect(line.heard).toEqual([{ address: LADDER, pinned: { coder: 1 } }]);
+  });
+
+  test('a second conversation earning the same branch counts two against it', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+    pins.pin(LADDER, 'session-2', 'coder');
+
+    expect(line.heard.at(-1)?.pinned).toEqual({ coder: 2 });
+  });
+
+  test('two branches of one router are counted apart', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+    pins.pin(LADDER, 'session-2', 'talker');
+
+    expect(line.heard.at(-1)?.pinned).toEqual({ coder: 1, talker: 1 });
+  });
+
+  test('a re-judged conversation moves between branches rather than counting twice', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+    pins.pin(LADDER, 'session-1', 'talker');
+
+    expect(line.heard.at(-1)?.pinned).toEqual({ talker: 1 });
+  });
+
+  test('a router counts only its own conversations, never the router next to it', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+    pins.pin(OTHER_LADDER, 'session-2', 'coder');
+
+    expect(line.heard).toEqual([
+      { address: LADDER, pinned: { coder: 1 } },
+      { address: OTHER_LADDER, pinned: { coder: 1 } },
+    ]);
+  });
+
+  test('the count is all that is said, so no conversation crosses with it', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    pins.pin(LADDER, 'a-recognizable-fingerprint', 'coder');
+
+    expect(JSON.stringify(line.heard)).not.toContain('a-recognizable-fingerprint');
+  });
+});
+
+describe('what a router says it is holding as conversations leave', () => {
+  test('a conversation forgotten for going quiet drops out of the count', () => {
+    const clock = aClock();
+    const line = aTallyLine();
+    const pins = createBranchPins(clock.now, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+    clock.tick(PIN_IDLE_MS + 1);
+    pins.pinnedAt(LADDER, 'session-1');
+
+    expect(line.heard.at(-1)).toEqual({ address: LADDER, pinned: {} });
+  });
+
+  test('a conversation still talking is counted once and said nothing more about', () => {
+    const clock = aClock();
+    const line = aTallyLine();
+    const pins = createBranchPins(clock.now, line.tallied);
+
+    pins.pin(LADDER, 'session-1', 'coder');
+    clock.tick(PIN_IDLE_MS - 1);
+    pins.pinnedAt(LADDER, 'session-1');
+
+    expect(line.heard).toHaveLength(1);
+  });
+
+  test('a conversation dropped to keep the store bounded drops out of the count', () => {
+    const line = aTallyLine();
+    const pins = createBranchPins(() => NOW, line.tallied);
+
+    for (let rank = 0; rank <= PINNED_CONVERSATION_LIMIT; rank += 1) {
+      pins.pin(LADDER, conversation(rank), 'coder');
+    }
+
+    expect(line.heard.at(-1)?.pinned).toEqual({ coder: PINNED_CONVERSATION_LIMIT });
   });
 });
 
