@@ -2,13 +2,57 @@ import type { Account, RouteNode, Routing } from '@recompose/contracts';
 
 import { nameOfRouter } from '@recompose/contracts';
 
+import type { ConditionalPolicy } from '../../lib/conditional-policy';
 import type { RouterChild } from '../router-child-list/router-child-list';
 
 import { accountMark, accountName } from '../../../../entities/account';
 import { addressWritten } from '../../lib/route-addresses';
 import { childTally } from '../router-node/router-reading';
 
+/** The word the else row answers to, which is the same word the judge is never offered. */
+const ELSE = 'Else';
+
+const WHY_ELSE_STAYS =
+  'Every conditional router keeps an else branch. It catches what the judge cannot place.';
+
+/** How a conditional router reads its own children, which is what turns rows into branches. */
+export type BranchReading = {
+  /** The policy naming the branches and the else child. */
+  policy: ConditionalPolicy;
+  /** How many conversations each child currently holds, keyed by route node id. */
+  pins?: ReadonlyMap<string, number> | undefined;
+};
+
 type ChildPlace = { modelId: string; routeNodeId: string };
+
+function pinsHeld(routeNodeId: string, reading: BranchReading): { pins?: number } {
+  const pins = reading.pins?.get(routeNodeId) ?? 0;
+
+  return pins === 0 ? {} : { pins };
+}
+
+/**
+ * What one child of a conditional router is, beyond the binding behind it.
+ *
+ * @summary The else child takes no label of its own and no rule, because it catches exactly what
+ * no rule placed, and it says why it stays rather than losing its controls without a word. A child
+ * holding no branch yet is left blank on purpose: that blankness is the draft state the canvas
+ * paints amber, and inventing a label here would tell the judge a word nobody wrote.
+ */
+function branchFacts(
+  routeNodeId: string,
+  reading: BranchReading,
+): Pick<RouterChild, 'inertReason' | 'label' | 'pins' | 'rule'> {
+  const counted = pinsHeld(routeNodeId, reading);
+
+  if (routeNodeId === reading.policy.elseChild) {
+    return { label: ELSE, inertReason: WHY_ELSE_STAYS, ...counted };
+  }
+
+  const branch = reading.policy.branches.find((held) => held.child === routeNodeId);
+
+  return branch === undefined ? counted : { label: branch.label, rule: branch.rule, ...counted };
+}
 
 function targetChildRow(
   place: ChildPlace,
@@ -62,6 +106,7 @@ export function routerChildRows(
   routing: Routing,
   children: readonly string[],
   accounts: readonly Account[],
+  reading?: BranchReading,
 ): readonly RouterChild[] {
   const rows: RouterChild[] = [];
 
@@ -69,7 +114,9 @@ export function routerChildRows(
     const node = routing.nodes[routeNodeId];
 
     if (node !== undefined) {
-      rows.push(childRow({ modelId, routeNodeId }, node, accounts));
+      const row = childRow({ modelId, routeNodeId }, node, accounts);
+
+      rows.push(reading === undefined ? row : { ...row, ...branchFacts(routeNodeId, reading) });
     }
   }
 
