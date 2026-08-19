@@ -2,73 +2,11 @@ import type { ReactElement } from 'react';
 
 import { ContextMenu } from '@base-ui/react/context-menu';
 
-import type { LadderRow, OpenChild, RouterChild, Toward } from './router-child';
+import type { LadderRow, OpenChild, RouterChild, Toward } from '../router-child-list/router-child';
 
 import { Icon } from '../../../../shared/ui';
-import { RowLead } from '../row-lead/row-lead';
-import { moveButtonFace, rowShell } from './router-child';
-
-/**
- * What one child answers to, with the binding it stands for under it.
- *
- * @summary The two read as two lines rather than one, because the account and the real model it
- * serves are both long and side by side each one truncates the other away. Stacked, the name a
- * person scans down the ladder starts in one column and the binding they check reads whole.
- */
-export function childFace(child: RouterChild, onOpen: (child: RouterChild) => void): ReactElement {
-  return (
-    <button
-      className="flex min-h-hit-target min-w-0 flex-1 items-center gap-2.5 rounded-control focus-ring text-start"
-      onClick={() => {
-        onOpen(child);
-      }}
-      type="button"
-    >
-      <RowLead glyph={child.glyph} glyphTint={child.glyphTint} mark={child.mark} />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-control font-medium text-ink" data-child-name="">
-          {child.name}
-        </span>{' '}
-        {child.detail === undefined ? null : (
-          <span className="truncate font-mono text-mono-value text-ink-secondary">
-            {child.detail}
-          </span>
-        )}
-        {ruleLine(child)}
-      </span>
-    </button>
-  );
-}
-
-const NO_RULE_YET = 'No rule yet, so the judge is never offered this branch.';
-
-/**
- * The rule this branch routes by, in one line, with the whole of it a press away in the sheet.
- *
- * @summary A branch holding no rule says so rather than showing an empty line, because a child
- * bound by cable and left unruled receives nothing and a blank row would read as a working branch.
- * The else row shows neither: it catches what no rule placed, so a rule is the one thing it cannot
- * have.
- */
-function ruleLine(child: RouterChild): ReactElement | null {
-  if (child.inertReason !== undefined) {
-    return (
-      <span className="text-detail text-ink-secondary" data-else-reason="">
-        {child.inertReason}
-      </span>
-    );
-  }
-
-  if (child.label === undefined && child.rule === undefined) {
-    return null;
-  }
-
-  return (
-    <span className="truncate text-detail text-ink-secondary" data-rule-preview="">
-      {child.rule ?? NO_RULE_YET}
-    </span>
-  );
-}
+import { ChildFace } from '../child-face/child-face';
+import { moveButtonFace, rowShell } from '../router-child-list/router-child';
 
 /**
  * The word the judge answers with for this row, and how many conversations it currently holds.
@@ -169,12 +107,12 @@ function heldRow(child: RouterChild, onOpen: OpenChild): ReactElement {
   return (
     <li className={rowShell} data-held="" key={child.routeNodeId}>
       {branchLead(child)}
-      {childFace(child, onOpen)}
+      <ChildFace child={child} onOpen={onOpen} />
     </li>
   );
 }
 
-export function ladderRow(row: LadderRow, onOpen: OpenChild): ReactElement {
+export function ChildRow({ row, onOpen }: { row: LadderRow; onOpen: OpenChild }): ReactElement {
   const { child, rank, onDrop, onDragStart } = row;
 
   if (child.inertReason !== undefined) {
@@ -192,7 +130,7 @@ export function ladderRow(row: LadderRow, onOpen: OpenChild): ReactElement {
         render={<li />}
       >
         {rowLead(child, rank)}
-        {childFace(child, onOpen)}
+        <ChildFace child={child} onOpen={onOpen} />
         {moveButton(row, 'up')}
         {moveButton(row, 'down')}
         <span

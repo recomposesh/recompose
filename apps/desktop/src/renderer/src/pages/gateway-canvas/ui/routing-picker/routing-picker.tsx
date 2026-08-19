@@ -1,8 +1,8 @@
 import type { JudgePick, RoutingPickerProps } from './picker-asks';
 
 import { useStepTransition } from '../../../../shared/lib';
+import { PickerStep } from '../picker-step/picker-step';
 import { STEP_ORDER, stepOf } from './picker-asks';
-import { stepBody } from './picker-steps';
 
 export type { JudgePick, RoutingPickerProps };
 
@@ -27,7 +27,7 @@ export function RoutingPicker(props: RoutingPickerProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col field-box">
       <div className={`flex min-h-0 flex-1 flex-col ${transition}`} key={step}>
-        {stepBody(step, props)}
+        <PickerStep ask={props} step={step} />
       </div>
     </div>
   );
