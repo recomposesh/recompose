@@ -8,6 +8,7 @@ export type LogSubject =
   | { kind: 'virtual-model'; modelId: string }
   | { kind: 'cable'; modelId: string }
   | { kind: 'router'; modelId: string }
+  | { kind: 'judge'; modelId: string }
   | { kind: 'target'; accountId: string }
   | { kind: 'ghost-target'; accountId: string }
   | { kind: 'draft' };
@@ -18,12 +19,13 @@ export type LogSubject =
  * @summary A router stands inside exactly one virtual model's routing, and a log row names the
  * virtual model it passed through rather than the route node it attempted, so a router shows what its
  * model carried. That reads as more history than the router itself served rather than as an empty
- * lie, which is the stance every unnamed scope here already takes.
+ * lie, which is the stance every unnamed scope here already takes. A judge answers the same way: it
+ * advises one router inside one definition, and the classification calls it makes reach no log row.
  */
 function scopedToItsModel(
   subject: LogSubject,
 ): subject is Extract<LogSubject, { modelId: string }> {
-  return subject.kind === 'virtual-model' || subject.kind === 'cable' || subject.kind === 'router';
+  return ['virtual-model', 'cable', 'router', 'judge'].includes(subject.kind);
 }
 
 /**

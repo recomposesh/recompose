@@ -28,6 +28,7 @@ import { walkedRouteNodes } from '../../lib/route-graph';
 import { servedModels } from '../../model/served-models';
 import { DraftInspector } from '../draft-inspector/draft-inspector';
 import { nodeIdOf } from '../gateway-canvas-page/canvas-subjects';
+import { judgeBodyIn } from '../judge-body/judge-body';
 import {
   gatewayBody,
   ghostBody,
@@ -168,6 +169,12 @@ function routerSubjectBody(
 function routedSubjectBody(subject: InspectorSubject, world: DrawerWorld): ReactNode | undefined {
   if (subject.kind === 'virtual-model' || subject.kind === 'cable') {
     return bindingSubjectBody(world, subject);
+  }
+
+  if (subject.kind === 'judge') {
+    const model = modelHeldBy(world, subject.modelId);
+
+    return judgeBodyIn(model, subject.routeNodeId, world.accounts, world.subscriptions);
   }
 
   return subject.kind === 'router' ? routerSubjectBody(world, subject) : undefined;

@@ -3,6 +3,7 @@ import type { GatewayConfig } from '@recompose/contracts';
 import type { RouteAddress } from '../../lib/route-addresses';
 
 import { addressUnder, addressWritten, routeNodeIn } from '../../lib/route-addresses';
+import { walkedRouteNodes } from '../../lib/route-graph';
 import { modelIdOf, targetAccountIdIn } from './canvas-wiring';
 
 const DRAFT_CARD = 'draft';
@@ -20,6 +21,7 @@ export type InspectorSubject =
   | { kind: 'virtual-model'; modelId: string }
   | ({ kind: 'cable' } & RouteAddress)
   | ({ kind: 'router' } & RouteAddress)
+  | ({ kind: 'judge' } & RouteAddress)
   | ({ kind: 'target'; accountId: string } & RouteAddress)
   | ({ kind: 'ghost-target'; accountId: string } & RouteAddress)
   | { kind: 'draft' };
@@ -59,11 +61,41 @@ function routerSubject(gateway: GatewayConfig, selection: string): InspectorSubj
   return { kind: 'router', ...address };
 }
 
+/**
+ * Whether one route node stands as a judge, which is what tells an advisor from a plain target.
+ *
+ * @summary The canvas reads it off the same walk the cards come from rather than off the id alone,
+ * because a card prefix is a name a caller can spell and a person selecting a child would then
+ * meet the judge's body instead of the target's.
+ */
+function standsAsAJudge(gateway: GatewayConfig, address: RouteAddress): boolean {
+  const model = gateway.virtualModels.find((held) => held.id === address.modelId);
+
+  if (model === undefined) {
+    return false;
+  }
+
+  return walkedRouteNodes(model.routing).some(
+    (walked) => walked.routeNodeId === address.routeNodeId && walked.advises !== undefined,
+  );
+}
+
+function judgeSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
+  const address = addressUnder(['judge:'], selection);
+
+  if (address === undefined || !standsAsAJudge(gateway, address)) {
+    return undefined;
+  }
+
+  return { kind: 'judge', ...address };
+}
+
 function prefixedSubject(gateway: GatewayConfig, selection: string): InspectorSubject | undefined {
   return (
     modelSubject(selection) ??
     cableSubject(selection) ??
     routerSubject(gateway, selection) ??
+    judgeSubject(gateway, selection) ??
     targetSubject(gateway, selection)
   );
 }
@@ -99,6 +131,10 @@ function modelCardOf(subject: InspectorSubject): string | undefined {
 function routeCardOf(subject: InspectorSubject): string | undefined {
   if (subject.kind === 'router') {
     return `route:${addressWritten(subject)}`;
+  }
+
+  if (subject.kind === 'judge') {
+    return `judge:${addressWritten(subject)}`;
   }
 
   if (subject.kind === 'target') {

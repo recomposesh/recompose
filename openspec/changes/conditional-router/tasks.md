@@ -68,7 +68,7 @@
 - [x] 5.5 The minimap gains the satellite fill and the dotted tie class
 - [x] 5.6 The `cooling` standing joins every exhaustive record in `cable-standing.ts`, painted
       `--color-attention`
-- [ ] 5.7 The judge becomes a focusable subject with its own drawer body
+- [x] 5.7 The judge becomes a focusable subject with its own drawer body
 - [ ] 5.8 Else removal gets refused in `router-acts.ts`, and the mode pill lands on the router
       card
 - [ ] 5.9 The browser pass covers the canvas in both schemes
