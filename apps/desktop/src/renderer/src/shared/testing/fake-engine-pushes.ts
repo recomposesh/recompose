@@ -1,4 +1,10 @@
-import type { EngineStates, GatewayTraffic, LogBatch, LogRow } from '@recompose/contracts';
+import type {
+  EngineStates,
+  GatewayBranchPins,
+  GatewayTraffic,
+  LogBatch,
+  LogRow,
+} from '@recompose/contracts';
 
 type PushLine<Payload> = {
   forget: () => void;
@@ -74,6 +80,18 @@ export function listenForEngineTraffic(listener: (traffic: GatewayTraffic) => vo
  */
 export function emitEngineTraffic(traffic: GatewayTraffic): void {
   engineTrafficLine.emit(traffic);
+}
+
+const engineBranchPinsLine = aPushLine<GatewayBranchPins>();
+
+export function forgetEngineBranchPinListeners(): void {
+  engineBranchPinsLine.forget();
+}
+
+export function listenForEngineBranchPins(
+  listener: (pinned: GatewayBranchPins) => void,
+): () => void {
+  return engineBranchPinsLine.listen(listener);
 }
 
 const servedRows: LogRow[] = [];

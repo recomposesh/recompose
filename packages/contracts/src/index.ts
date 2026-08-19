@@ -9,6 +9,7 @@ export * from './gateway-api-key';
 export * from './engine-routing';
 export * from './engine-state';
 export * from './engine-traffic';
+export * from './engine-branch-pins';
 export * from './engine-logs';
 export * from './file-browser';
 export * from './usage';
