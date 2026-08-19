@@ -13,6 +13,35 @@ const rows: readonly RouterChild[] = [
   { routeNodeId: 'n3', cardId: 'target:fast@n3', name: 'Ollama', detail: 'qwen3' },
 ];
 
+const branched: readonly RouterChild[] = [
+  {
+    routeNodeId: 'n1',
+    cardId: 'target:fast@n1',
+    name: 'Work key',
+    detail: 'claude-sonnet-5',
+    label: 'code',
+    rule: 'questions about source code, diffs, and build failures',
+    pins: 3,
+  },
+  {
+    routeNodeId: 'n2',
+    cardId: 'target:fast@n2',
+    name: 'Claude Max',
+    detail: 'claude-opus-5',
+    label: 'chat',
+    rule: 'everyday conversation',
+  },
+  {
+    routeNodeId: 'n3',
+    cardId: 'target:fast@n3',
+    name: 'Ollama',
+    detail: 'qwen3',
+    label: 'Else',
+    inertReason:
+      'Every conditional router keeps an else branch. It catches what the judge cannot place.',
+  },
+];
+
 const HIT_TARGET = 24;
 
 const meta = preview.meta({
@@ -67,6 +96,62 @@ export const EveryControlKeepsItsHitTarget = meta.story({
       await expect(box.height).toBeGreaterThanOrEqual(HIT_TARGET);
     }
   },
+});
+
+const conditional = { mode: 'conditional' as const, rows: branched };
+
+const unruled: readonly RouterChild[] = [
+  { routeNodeId: 'n1', cardId: 'target:fast@n1', name: 'Work key', label: 'draft' },
+  {
+    routeNodeId: 'n3',
+    cardId: 'target:fast@n3',
+    name: 'Ollama',
+    label: 'Else',
+    inertReason:
+      'Every conditional router keeps an else branch. It catches what the judge cannot place.',
+  },
+];
+
+/** A branch reads by its label, with its rule under the binding and its pinned tally beside it. */
+export const BranchesReadByTheirLabel = meta.story({
+  args: conditional,
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByText('code')).toBeVisible();
+    await expect(await canvas.findByText(/questions about source code/)).toBeVisible();
+    await expect(canvasElement.querySelectorAll('[data-rank]')).toHaveLength(0);
+  },
+});
+
+/** A branch holding conversations says how many, because a pin never tints a cable. */
+export const ABranchCountsItsStickyConversations = meta.story({
+  args: conditional,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('3 pinned')).toBeVisible();
+  },
+});
+
+/** The else row offers no way to move or leave, and says why where a person meets it. */
+export const TheElseRowSaysWhyItStays = meta.story({
+  args: conditional,
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByText(/keeps an else branch/)).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Move Ollama up' })).toBeNull();
+    await expect(canvasElement.querySelectorAll('[data-held] [data-drag-handle]')).toHaveLength(0);
+  },
+});
+
+/** A child bound by cable but never ruled says the judge is never offered it. */
+export const AnUnruledBranchRoutesNothing = meta.story({
+  args: { mode: 'conditional' as const, rows: unruled },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText(/No rule yet/)).toBeVisible();
+  },
+});
+
+/** The branch ladder in the dark scheme, where the label column sits against the box. */
+export const ConditionalDarkScheme = meta.story({
+  args: conditional,
+  globals: { theme: 'dark' },
 });
 
 /**

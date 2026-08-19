@@ -68,6 +68,34 @@ function modeChoices(mode: RouterMode) {
 }
 
 /**
+ * How a router spreads, offered as a choice with the cost of each mode said where it is made.
+ *
+ * @summary The sentence follows the strip rather than standing above it, so it describes the mode
+ * a person just landed on rather than reading as fixed help about all three.
+ */
+function modeSection(mode: RouterMode, onSwitch: (mode: SpreadingMode) => void): ReactNode {
+  return (
+    <>
+      {sectionHeading('Mode')}
+      <SegmentedControl
+        label="Routing mode"
+        onChangeValue={(next: RouterMode) => {
+          const spreading = switchWriting(next);
+
+          if (spreading !== undefined) {
+            onSwitch(spreading);
+          }
+        }}
+        options={modeChoices(mode)}
+        spread="row"
+        value={mode}
+      />
+      <p className="mt-2 px-1 text-detail text-ink-secondary">{modeSentences[mode]}</p>
+    </>
+  );
+}
+
+/**
  * How often this router asks its judge, in the words the sentence beneath the toggle is keyed by.
  */
 function rhythmOf(policy: ConditionalPolicy) {
@@ -185,21 +213,9 @@ export function RouterInspector(props: RouterInspectorProps) {
         modelId={model.id}
         routeNodeId={routeNodeId}
       />
-      {sectionHeading('Mode')}
-      <SegmentedControl
-        label="Routing mode"
-        onChangeValue={(next: RouterMode) => {
-          const spreading = switchWriting(next);
-
-          if (spreading !== undefined) {
-            onRewrite(gatewaySwitching(gateway, model.id, routeNodeId, spreading));
-          }
-        }}
-        options={modeChoices(mode)}
-        spread="row"
-        value={mode}
-      />
-      <p className="mt-2 px-1 text-detail text-ink-secondary">{modeSentences[mode]}</p>
+      {modeSection(mode, (spreading) => {
+        onRewrite(gatewaySwitching(gateway, model.id, routeNodeId, spreading));
+      })}
       {policy === undefined
         ? null
         : judgingBody({ props, policy, picking, onPicking: setPicking, offered, onRewrite })}
@@ -212,7 +228,13 @@ export function RouterInspector(props: RouterInspectorProps) {
         onOpen={(child) => {
           onSelectNode(child.cardId);
         }}
-        rows={routerChildRows(model.id, model.routing, router.children, accounts)}
+        rows={routerChildRows(
+          model.id,
+          model.routing,
+          router.children,
+          accounts,
+          policy === undefined ? undefined : { policy },
+        )}
       />
     </>
   );
