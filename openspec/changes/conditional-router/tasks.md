@@ -119,7 +119,7 @@
 
 ## 10. The branch rows stack (replan, approved 2026-08-20)
 
-- [ ] 10.1 Each branch row stacks label and pin tally, rule preview, and destination on their own
+- [x] 10.1 Each branch row stacks label and pin tally, rule preview, and destination on their own
       lines, and the else row wears the same anatomy
 - [ ] 10.2 Stories cover worded, unworded, else, and pinned rows in both schemes
 - [ ] 10.3 The cable carries only the branch label: the rule pill leaves the cable, the label

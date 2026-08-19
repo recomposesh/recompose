@@ -8,39 +8,6 @@ import { Icon } from '../../../../shared/ui';
 import { ChildFace } from '../child-face/child-face';
 import { moveButtonFace, rowShell } from '../router-child-list/router-child';
 
-const AWAITING_ITS_WORDS = 'Needs a rule';
-
-/**
- * The word the judge answers with for this row, and how many conversations it currently holds.
- *
- * @summary The count stands in the row rather than tinting the cable, because a pin is a fact
- * about conversations while green on this canvas is a claim about now. It says the word rather
- * than wearing a glyph: at caption size a mark this small reads as a speck, and the whole point of
- * the count is that a person can tell three sticky conversations from thirty.
- *
- * A branch still waiting for its words says so in amber rather than printing an empty column: it
- * is the one row standing between a person and a switch they cannot save, so the row that owes
- * something has to be the row that says it.
- */
-function branchLead(child: RouterChild): ReactElement {
-  const awaited = child.label === '';
-
-  return (
-    <span className="flex w-16 shrink-0 flex-col" data-branch-label="">
-      <span
-        className={`truncate text-control font-medium ${awaited ? 'text-attention-ink' : 'text-ink-secondary'}`}
-      >
-        {awaited ? AWAITING_ITS_WORDS : child.label}
-      </span>
-      {child.pins === undefined ? null : (
-        <span className="truncate text-caption text-ink-secondary" data-pin-tally="">
-          {`${String(child.pins)} pinned`}
-        </span>
-      )}
-    </span>
-  );
-}
-
 /**
  * One move control, which stays reachable at the end of the ladder rather than dropping out.
  *
@@ -121,9 +88,15 @@ function branchActs(row: LadderRow): ReactElement | null {
   );
 }
 
-function rowLead(child: RouterChild, rank: number): ReactElement {
+/**
+ * The rank a row answers to, which only a row standing for no branch prints.
+ *
+ * @summary A branch answers to the word its judge names rather than to a place in a queue, and that
+ * word already leads the face, so a rank beside it would offer an order nothing reads.
+ */
+function rowLead(child: RouterChild, rank: number): ReactElement | null {
   if (child.label !== undefined) {
-    return branchLead(child);
+    return null;
   }
 
   return (
@@ -141,12 +114,12 @@ function rowLead(child: RouterChild, rank: number): ReactElement {
  *
  * @summary The else branch cannot move or leave, and a row that simply lost its handle would say
  * nothing about why. It keeps its face, so opening the child it names still works, and the reason
- * reads under the name where a person meets it before they go looking for the missing control.
+ * reads in the line every other row explains itself on, where a person meets it before they go
+ * looking for the missing control.
  */
 function heldRow(child: RouterChild, onOpen: OpenChild): ReactElement {
   return (
     <li className={rowShell} data-held="" key={child.routeNodeId}>
-      {branchLead(child)}
       <ChildFace child={child} onOpen={onOpen} />
     </li>
   );
