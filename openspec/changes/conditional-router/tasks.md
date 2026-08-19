@@ -59,7 +59,7 @@
 
 ## 5. The canvas cluster
 
-- [ ] 5.1 Branch labels reach placed nodes and cards through `route-graph.ts` and
+- [x] 5.1 Branch labels reach placed nodes and cards through `route-graph.ts` and
       `canvas-cards.ts`
 - [ ] 5.2 The rule pill rides the cable at the 0.35 anchor with truncation and press-to-reveal,
       with stories

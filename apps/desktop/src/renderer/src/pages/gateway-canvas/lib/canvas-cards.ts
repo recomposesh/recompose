@@ -5,7 +5,7 @@ import type {
   SubscriptionAccountView,
 } from '@recompose/contracts';
 
-import type { WalkedRouteNode } from './route-graph';
+import type { BranchSeat, WalkedRouteNode } from './route-graph';
 
 import { accountDetail } from '../../../entities/account';
 
@@ -27,6 +27,7 @@ export type CanvasNode =
       providerModel: string;
       routeNodeId: string;
       depth: number;
+      branch?: BranchSeat | undefined;
       detail?: string;
     }
   | {
@@ -36,6 +37,7 @@ export type CanvasNode =
       modelId: string;
       routeNodeId: string;
       depth: number;
+      branch?: BranchSeat | undefined;
     }
   | {
       id: string;
@@ -46,6 +48,7 @@ export type CanvasNode =
       mode: RouterPolicy['mode'];
       displayName: string | undefined;
       childCount: number;
+      branch?: BranchSeat | undefined;
     }
   | { id: string; kind: 'draft-model'; modelId: string; displayName: string }
   | { id: string; kind: 'pending-target' };
@@ -72,6 +75,7 @@ function ghostCard(placed: PlacedRouteNode, bound: RouteTarget): CanvasNode {
     modelId: placed.modelId,
     routeNodeId: placed.walked.routeNodeId,
     depth: placed.walked.depth,
+    branch: placed.walked.branch,
   };
 }
 
@@ -92,6 +96,7 @@ function targetCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Regis
     providerModel: bound.providerModel,
     routeNodeId: placed.walked.routeNodeId,
     depth: placed.walked.depth,
+    branch: placed.walked.branch,
     detail: accountDetail(account, signedInAs),
   };
 }
@@ -106,6 +111,7 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
     mode: node.policy.mode,
     displayName: node.displayName,
     childCount: node.children.length,
+    branch: placed.walked.branch,
   };
 }
 
@@ -117,7 +123,9 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
  * one, so the card and the inspector both read one stored fact. A target whose account left the
  * registry stands as a ghost, because a broken binding is what a person came back to repair. The
  * observed sign-in is handed over whatever kind of account stands there, because which kinds wear
- * an address is the account identity's own rule and stating it twice would let the two drift.
+ * an address is the account identity's own rule and stating it twice would let the two drift. A
+ * card a judge's branch reaches carries that branch, so the card and the cable arriving at it read
+ * one branch rather than two lookups that can disagree about which rule sends requests here.
  */
 export function routeCard(placed: PlacedRouteNode, registry: Registry): CanvasNode {
   return placed.walked.node.kind === 'router'
