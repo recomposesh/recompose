@@ -19,7 +19,7 @@
       untouched specs
 - [x] 2.2 Specify the pure branch pick: a clean label maps to its child, and everything else maps
       to else
-- [ ] 2.3 Specify the walk-scoped memo: one classification per walk, and retried children never
+- [x] 2.3 Specify the walk-scoped memo: one classification per walk, and retried children never
       re-ask the judge
 - [ ] 2.4 Specify a decided branch that can't serve falling through to else without a second call
 - [ ] 2.5 Specify server-state turns: a pinned turn follows its pin, and an unpinned one goes to
