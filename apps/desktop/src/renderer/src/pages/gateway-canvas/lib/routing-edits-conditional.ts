@@ -2,8 +2,10 @@ import type { GatewayConfig, RouteNode, RouteTarget, Routing } from '@recompose/
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
-import type { BranchWording } from './conditional-policy';
+import type { ConditionalSwitch, JudgeBinding } from './conditional-draft';
+import type { BranchWording, ConditionalPolicy } from './conditional-policy';
 
+import { switchWhole } from './conditional-draft';
 import { bornConditionalPolicy, branchesWriting, conditionalIn } from './conditional-policy';
 import { routedBy, routerEdited } from './routing-edits';
 
@@ -39,10 +41,101 @@ export function routedThroughAConditionalRouter(
   };
 }
 
+/**
+ * The gateway as it stands once it carries a definition routing through a conditional router.
+ *
+ * @summary The target the drawer already collected becomes the else child, because choosing this
+ * mode is choosing what catches everything the judge cannot place, and a conditional router born
+ * without one is a table the stored shape refuses. The branches arrive later, one per cable, so the
+ * router is born holding the judge, the fallback, and nothing else.
+ */
+export function gatewayDefiningJudged(
+  gateway: GatewayConfig,
+  named: { id: string; displayName: string },
+  judge: JudgeBinding,
+  elseChild: RouteTarget,
+  routerName?: string,
+): GatewayConfig {
+  const reading: RouteTarget = { kind: 'target', ...judge };
+
+  return {
+    ...gateway,
+    virtualModels: [
+      ...gateway.virtualModels,
+      { ...named, routing: routedThroughAConditionalRouter(reading, elseChild, routerName) },
+    ],
+  };
+}
+
 function standsAsAChild(routing: Routing, nodeId: string): boolean {
   return Object.values(routing.nodes).some(
     (node) => node.kind === 'router' && node.children.includes(nodeId),
   );
+}
+
+/**
+ * What a whole switch writes, which is the policy the router takes and the judge that joins it.
+ *
+ * @summary Nothing where the definition would not store: the stored shape refuses a conditional
+ * router missing a judge, an else child, or a labelled branch, so the refusal lands before the
+ * write rather than as a schema message written for a developer. The last declared child becomes
+ * the else, because that is the order the ladder already read in and an unruled last row is the one
+ * a person meant to catch the rest. The words reach storage trimmed, since the judge answers with
+ * the very word the cable prints.
+ */
+function switchWriting(
+  judgeId: string,
+  held: ConditionalSwitch,
+): { policy: ConditionalPolicy; judge: RouteTarget } | undefined {
+  const elseChild = held.branches.at(-1);
+
+  if (elseChild === undefined || held.judge === undefined || !switchWhole(held)) {
+    return undefined;
+  }
+
+  return {
+    policy: {
+      ...bornConditionalPolicy(judgeId, elseChild.routeNodeId),
+      branches: held.branches.slice(0, -1).map((branch) => ({
+        label: branch.label.trim(),
+        rule: branch.rule.trim(),
+        child: branch.routeNodeId,
+      })),
+    },
+    judge: { kind: 'target', ...held.judge },
+  };
+}
+
+/**
+ * The gateway once a stored router spreads by reading its requests instead of by ranking them.
+ *
+ * @summary The children and their order stand exactly as they did, so the switch changes how a
+ * ladder decides rather than rebuilding what it holds: a person trying this mode keeps every
+ * binding they already made. The judge joins as a target of its own that no children array names,
+ * which is what keeps declared-order walkers from ever meeting it, and an id some ladder already
+ * holds is refused for that same reason.
+ */
+export function gatewaySwitchingToConditional(
+  gateway: GatewayConfig,
+  modelId: string,
+  routerId: string,
+  judgeId: string,
+  held: ConditionalSwitch,
+): GatewayConfig {
+  return routedBy(gateway, modelId, (was) => {
+    const writing = switchWriting(judgeId, held);
+
+    if (writing === undefined || standsAsAChild(was, judgeId)) {
+      return was;
+    }
+
+    const pointed = routerEdited(was, routerId, (router) => ({
+      ...router,
+      policy: writing.policy,
+    }));
+
+    return { entry: pointed.entry, nodes: { ...pointed.nodes, [judgeId]: writing.judge } };
+  });
 }
 
 /**

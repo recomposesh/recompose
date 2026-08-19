@@ -7,12 +7,9 @@ import type { BoundKind } from './binding-kinds';
 import type { JudgeBinding } from './conditional-draft';
 import type { RouterMode, SpreadingMode } from './routing-edits';
 
-import { IpcResultError, refusalSentence } from '../../../shared/api';
-import { gatewayDefiningJudged, judgeAnswered } from './conditional-draft';
+import { judgeAnswered } from './conditional-draft';
 import { routedThroughARouter } from './routing-edits';
-
-const MALFORMED_DEFINITION_REFUSAL =
-  "recompose can't store this virtual model. Check the name and the id, then try again.";
+import { gatewayDefiningJudged } from './routing-edits-conditional';
 
 /**
  * The id a name derives to, kept in step with the name until a person edits the id by hand.
@@ -281,20 +278,4 @@ export function modelListReading(answer: ProviderModelList | undefined): ModelLi
   return answer.standing === 'listed'
     ? { offered: answer.modelIds, refusal: undefined }
     : { offered: [], refusal: answer.refusal };
-}
-
-/**
- * The sentence a refused save reads as, in words about the virtual model a person was defining.
- *
- * @summary A schema refusal trades its words, because the schema writes for a developer and names
- * a path inside a document nobody typed. Everything else travels as main wrote it: a gateway the
- * rewrite could not find and a port the move lane owns are both already sentences a person can act
- * on, and rewriting them here would only put this module's guess in front of main's fact.
- */
-export function refusalFromMain(failure: unknown): string {
-  if (!(failure instanceof IpcResultError)) {
-    return refusalSentence(failure);
-  }
-
-  return failure.code === 'validation-failed' ? MALFORMED_DEFINITION_REFUSAL : failure.message;
 }

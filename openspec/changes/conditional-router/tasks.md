@@ -83,7 +83,7 @@
 
 ## 7. The mode switch and the mode rows (replan, approved at the gate of 2026-08-19)
 
-- [ ] 7.1 Specify the switch to conditional entering definition state: storable once a judge
+- [x] 7.1 Specify the switch to conditional entering definition state: storable once a judge
       binds, every non-else child holds a label and a rule, and the last declared child stands
       as else
 - [ ] 7.2 The inspector opens the switch definition on a childful router, and the childless

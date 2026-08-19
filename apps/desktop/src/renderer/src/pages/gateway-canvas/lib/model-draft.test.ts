@@ -4,7 +4,7 @@ import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import { IpcResultError } from '../../../shared/api';
-import { discoveryHint, idRefusal, nameRefusal } from './draft-refusals';
+import { discoveryHint, idRefusal, nameRefusal, refusalFromMain } from './draft-refusals';
 import {
   draftFilledIn,
   emptyDefinition,
@@ -13,7 +13,6 @@ import {
   gatewayReleasing,
   idFollowingName,
   modelListReading,
-  refusalFromMain,
   servesPreview,
 } from './model-draft';
 

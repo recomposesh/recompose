@@ -10,7 +10,7 @@ import type { HeldDraft } from '../../lib/use-held-draft';
 
 import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { heldOver } from '../../lib/canvas-positions';
-import { refusalFromMain } from '../../lib/model-draft';
+import { refusalFromMain } from '../../lib/draft-refusals';
 import { satellitesFollowTheirRouters, tidyPositions } from '../../lib/tidy-layout';
 
 /**
