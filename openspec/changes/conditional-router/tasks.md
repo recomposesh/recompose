@@ -65,7 +65,7 @@
       with stories
 - [x] 5.3 The judge satellite lands with its dotted tie and shoulder anchor, with stories
 - [x] 5.4 The satellite seats as an offset from its router in `tidy-layout.ts`
-- [ ] 5.5 The minimap gains the satellite fill and the dotted tie class
+- [x] 5.5 The minimap gains the satellite fill and the dotted tie class
 - [ ] 5.6 The `cooling` standing joins every exhaustive record in `cable-standing.ts`, painted
       `--color-attention`
 - [ ] 5.7 The judge becomes a focusable subject with its own drawer body

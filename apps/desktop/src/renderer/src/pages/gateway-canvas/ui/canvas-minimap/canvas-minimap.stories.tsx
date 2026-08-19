@@ -143,6 +143,25 @@ export const TheMapDrawsTheCables = meta.story({
   },
 });
 
+/** The tie to a judge breaks into dashes on the map too, so an advisor never reads as a target. */
+export const TheMapDrawsTheJudgeTieDotted = meta.story({
+  decorators: [
+    inCanvasFlow(
+      [...seats, seat('judge:sonnet', 'judge', 'Judge', { x: 380, y: 320 })],
+      { x: 20, y: 20, zoom: 0.5 },
+      [...cables, { id: 'tie:sonnet', source: 'model:sonnet', target: 'judge:sonnet' }],
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const map = await canvas.findByRole('img', mapLabel);
+    const wires = [...map.querySelectorAll('path[vector-effect="non-scaling-stroke"]')];
+    const dashed = wires.filter((wire) => paintedStyle(wire).strokeDasharray !== 'none');
+
+    await expect(wires).toHaveLength(3);
+    await expect(dashed).toHaveLength(1);
+  },
+});
+
 /** Dragging the map moves the viewport it pictures, so the corner steers the composition. */
 export const DraggingTheMapMovesTheViewport = meta.story({
   play: async ({ canvas, canvasElement }) => {
