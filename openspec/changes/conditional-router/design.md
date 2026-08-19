@@ -279,6 +279,12 @@ The compiled classification prompt gets a read-only preview in the judge inspect
 
 **Alternatives considered:** no visibility, rejected by the maintainer at the testing gate. A free-form editable prompt template, rejected because the label enum and the delimiting are the injection posture and must stay machine-owned.
 
+### 13. Branch rows stack, and cables carry only the label (replan)
+
+The maintainer's second testing pass reshaped the two branch surfaces. Each inspector row stacks its facts on their own lines: the label with the pin tally, the rule preview, and the destination. The else row wears the same anatomy. The cable slims to the label alone: the rule pill leaves the cable, the label press keeps opening the editor, and else keeps its quiet text. The rule reads in the inspector and edits in the sheet, so the canvas stays legible at every zoom.
+
+**Alternatives considered:** the crammed single-line row, rejected on sight at the narrowest panel. Sentence rows in the "if this then that" shape, rejected because a long rule swallows the destination. Keeping the rule pill on the cable, rejected by the maintainer as canvas noise once rows carry the preview.
+
 ## Test matrix
 
 | Layer          | What this layer proves (or why none)                                                                                                                                                                                                                                                                                                                                                                    | Check command                                                                                                                                                     |

@@ -116,3 +116,16 @@
       classification prompt
 - [x] 9.6 The judge inspector shows the compiled prompt read-only and edits the directive
 - [x] 9.7 Stories cover the new interactions and the suites stay green
+
+## 10. The branch rows stack (replan, approved 2026-08-20)
+
+- [ ] 10.1 Each branch row stacks label and pin tally, rule preview, and destination on their own
+      lines, and the else row wears the same anatomy
+- [ ] 10.2 Stories cover worded, unworded, else, and pinned rows in both schemes
+- [ ] 10.3 The cable carries only the branch label: the rule pill leaves the cable, the label
+      press keeps opening the editor, and else keeps its quiet text
+- [ ] 10.4 A conditional router born from the drawer seats its else child in the next column
+      beside it, never a far row
+- [ ] 10.5 The satellite's default seat centers above its router instead of drifting left
+- [ ] 10.6 The re-judge toggle says what it does: the title names the action and one plain
+      sentence explains each position
