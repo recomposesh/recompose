@@ -8,6 +8,8 @@ import { Icon } from '../../../../shared/ui';
 import { ChildFace } from '../child-face/child-face';
 import { moveButtonFace, rowShell } from '../router-child-list/router-child';
 
+const AWAITING_ITS_WORDS = 'Needs a rule';
+
 /**
  * The word the judge answers with for this row, and how many conversations it currently holds.
  *
@@ -15,11 +17,21 @@ import { moveButtonFace, rowShell } from '../router-child-list/router-child';
  * about conversations while green on this canvas is a claim about now. It says the word rather
  * than wearing a glyph: at caption size a mark this small reads as a speck, and the whole point of
  * the count is that a person can tell three sticky conversations from thirty.
+ *
+ * A branch still waiting for its words says so in amber rather than printing an empty column: it
+ * is the one row standing between a person and a switch they cannot save, so the row that owes
+ * something has to be the row that says it.
  */
 function branchLead(child: RouterChild): ReactElement {
+  const awaited = child.label === '';
+
   return (
     <span className="flex w-16 shrink-0 flex-col" data-branch-label="">
-      <span className="truncate text-control font-medium text-ink-secondary">{child.label}</span>
+      <span
+        className={`truncate text-control font-medium ${awaited ? 'text-attention-ink' : 'text-ink-secondary'}`}
+      >
+        {awaited ? AWAITING_ITS_WORDS : child.label}
+      </span>
       {child.pins === undefined ? null : (
         <span className="truncate text-caption text-ink-secondary" data-pin-tally="">
           {`${String(child.pins)} pinned`}

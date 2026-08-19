@@ -71,6 +71,15 @@ export const PickingTheJudge = meta.story({
   },
 });
 
+/** The mode step in the dark scheme, where each row's ring has to hold against the picker box. */
+export const ModeStepDarkScheme = meta.story({
+  args: {
+    ask: { ...pickerArgs, bindsThrough: 'router' as const },
+    step: 'router-mode' as const,
+  },
+  globals: { theme: 'dark' },
+});
+
 /** The judge step in the dark scheme, where its note sits above the provider list. */
 export const DarkScheme = meta.story({
   args: {

@@ -94,6 +94,16 @@ export function listenForEngineBranchPins(
   return engineBranchPinsLine.listen(listener);
 }
 
+/**
+ * Pushes a pin snapshot at everything listening, the way the main process would.
+ *
+ * @summary Reach for it in a story or a spec that has to show branch rows counting conversations
+ * nobody on screen started.
+ */
+export function emitEngineBranchPins(pinned: GatewayBranchPins): void {
+  engineBranchPinsLine.emit(pinned);
+}
+
 const servedRows: LogRow[] = [];
 
 /**

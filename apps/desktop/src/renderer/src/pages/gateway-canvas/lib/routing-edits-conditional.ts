@@ -109,11 +109,13 @@ function switchWriting(
 /**
  * The gateway once a stored router spreads by reading its requests instead of by ranking them.
  *
- * @summary The children and their order stand exactly as they did, so the switch changes how a
- * ladder decides rather than rebuilding what it holds: a person trying this mode keeps every
- * binding they already made. The judge joins as a target of its own that no children array names,
- * which is what keeps declared-order walkers from ever meeting it, and an id some ladder already
- * holds is refused for that same reason.
+ * @summary Every binding a person already made stands, so the switch changes how a ladder decides
+ * rather than rebuilding what it holds. The children take the order the definition arranged them
+ * in, because that order is how the else was chosen: a stored ladder whose rows read differently
+ * from the ones a person just arranged would leave the else somewhere they did not put it. The
+ * judge joins as a target of its own that no children array names, which is what keeps
+ * declared-order walkers from ever meeting it, and an id some ladder already holds is refused for
+ * that same reason.
  */
 export function gatewaySwitchingToConditional(
   gateway: GatewayConfig,
@@ -131,6 +133,7 @@ export function gatewaySwitchingToConditional(
 
     const pointed = routerEdited(was, routerId, (router) => ({
       ...router,
+      children: held.branches.map((branch) => branch.routeNodeId),
       policy: writing.policy,
     }));
 

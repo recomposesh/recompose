@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { fitsItsPane } from '../../../../shared/testing';
+import { fitsItsPane, paintedBox } from '../../../../shared/testing';
 import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { ModeRows } from './mode-rows';
 
@@ -83,6 +83,26 @@ export const NoModeRowOverflowsTheNarrowestPanel = meta.story({
   play: async ({ canvas }) => {
     for (const name of ['Failover', 'Round-robin', 'Conditional']) {
       await expect(fitsItsPane(await canvas.findByRole('radio', { name }))).toBe(true);
+    }
+  },
+});
+
+/**
+ * Every row spans the whole column and starts at the same edge, so no mode reads as the bigger one.
+ *
+ * The strip these rows replace split one row between three names, which is what made the longest
+ * wrap. Measuring both edges is what proves the stack rather than the eye: a row inset by a
+ * hair would still look right in a screenshot and still crowd its sentence at this width.
+ */
+export const EveryModeOwnsAWholeRow = meta.story({
+  play: async ({ canvas }) => {
+    const stack = paintedBox(await canvas.findByRole('radiogroup', { name: 'Routing mode' }));
+
+    for (const name of ['Failover', 'Round-robin', 'Conditional']) {
+      const row = paintedBox(await canvas.findByRole('radio', { name }));
+
+      await expect(Math.round(stack.width - row.width)).toBe(0);
+      await expect(Math.round(stack.left - row.left)).toBe(0);
     }
   },
 });

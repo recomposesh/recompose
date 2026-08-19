@@ -5,7 +5,12 @@ import { expect, test } from 'vitest';
 
 import type { ConditionalSwitch, JudgeBinding } from './conditional-draft';
 
-import { switchBindingJudge, switchOpenedOn, switchRuling } from './conditional-draft';
+import {
+  switchBindingJudge,
+  switchOpenedOn,
+  switchReordering,
+  switchRuling,
+} from './conditional-draft';
 import { gatewayRoutingThrough } from './routing-edits';
 import { gatewaySwitchingToConditional } from './routing-edits-conditional';
 import { childrenOf, codex, ladderOfThree, policyOf, routingOf } from './routing-edits.testkit';
@@ -26,17 +31,28 @@ function spreadingLadder() {
   return { three, routerId, children: childrenOf(routingOf(three), routerId) };
 }
 
-/** That ladder read as a switch a save would take: every child but the last labelled and ruled. */
-function wholeSwitch(children: readonly string[]): ConditionalSwitch {
-  const ruled = switchRuling(switchOpenedOn(children), String(children[0]), {
-    label: 'code',
-    rule: 'questions about source code',
-  });
-
-  return switchBindingJudge(
-    switchRuling(ruled, String(children[1]), { label: 'chat', rule: 'everything conversational' }),
-    judging,
+/**
+ * The same switch once a save would take it: a judge bound, and every child but the last worded.
+ *
+ * @summary It words whichever rows currently owe words rather than fixed ids, because moving a row
+ * to the end hands it the else and takes its words out of the count.
+ */
+function worded(held: ConditionalSwitch): ConditionalSwitch {
+  const owing = held.branches.slice(0, -1).map((branch) => branch.routeNodeId);
+  const ruled = switchRuling(
+    switchRuling(held, String(owing[0]), {
+      label: 'code',
+      rule: 'questions about source code',
+    }),
+    String(owing[1]),
+    { label: 'chat', rule: 'everything conversational' },
   );
+
+  return switchBindingJudge(ruled, judging);
+}
+
+function wholeSwitch(children: readonly string[]): ConditionalSwitch {
+  return worded(switchOpenedOn(children));
 }
 
 /** The ladder as it stands once the switch it was walked through reaches storage. */
@@ -54,6 +70,19 @@ test('switching a stored router to conditional keeps its children and their orde
   const { switched, routerId, children } = switchedLadder();
 
   expect(childrenOf(routingOf(switched), routerId)).toEqual(children);
+});
+
+test('the children follow the order the definition arranged them in, so the else reads last', () => {
+  const { three, routerId, children } = spreadingLadder();
+  const arranged = worded(switchReordering(switchOpenedOn(children), 0, 2));
+  const switched = gatewaySwitchingToConditional(three, 'fast', routerId, 'j9', arranged);
+
+  expect(childrenOf(routingOf(switched), routerId)).toEqual([
+    children[1],
+    children[2],
+    children[0],
+  ]);
+  expect(conditionalPolicyOf(switched, routerId)?.elseChild).toBe(children[0]);
 });
 
 test('the last declared child becomes the else, and every child above it becomes a branch', () => {

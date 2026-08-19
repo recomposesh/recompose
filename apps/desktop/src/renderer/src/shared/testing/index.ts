@@ -2,6 +2,7 @@ export { noAccounts } from './fake-accounts';
 export { installFakeBridge } from './fake-bridge';
 export type { BridgeParameters } from './fake-bridge';
 export {
+  emitEngineBranchPins,
   emitEngineLogs,
   emitEngineStates,
   emitEngineTraffic,

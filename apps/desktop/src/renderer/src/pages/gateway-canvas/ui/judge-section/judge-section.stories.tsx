@@ -2,28 +2,18 @@ import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { storedAccounts } from '../../testing/gateway-canvas.testkit';
 import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { JudgeSection } from './judge-section';
-
-const targets = [
-  {
-    heading: 'API keys',
-    options: [
-      { id: 'k1', name: 'work', mark: 'anthropic' as const },
-      { id: 'k2', name: 'personal', mark: 'openai' as const },
-    ],
-  },
-];
 
 const meta = preview.meta({
   component: JudgeSection,
   args: {
-    accountName: 'work',
-    providerModel: 'claude-haiku-4-5',
-    targets,
+    accounts: storedAccounts.accounts,
+    bound: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
     picking: undefined,
     onPicking: () => {},
-    models: ['gpt-5-mini', 'gpt-5'],
+    offered: { offered: ['gpt-5-mini', 'gpt-5'], refusal: undefined },
     onBindJudge: () => {},
   },
   decorators: [framedAsDrawerBox],
@@ -41,14 +31,14 @@ export const Basic = meta.story({
 export const EditingOpensOnTheProviders = meta.story({
   args: { picking: '' },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: 'work' })).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'personal' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: /Anthropic/u })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: /OpenRouter/u })).toBeVisible();
   },
 });
 
 /** An account picked walks on to its models, with the way back to the providers beside them. */
 export const APickedAccountShowsItsModels = meta.story({
-  args: { picking: 'k2' },
+  args: { picking: 'g1' },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: 'gpt-5-mini' })).toBeVisible();
     await expect(
@@ -59,12 +49,12 @@ export const APickedAccountShowsItsModels = meta.story({
 
 /** Picking a model lands the whole binding, because half a judge refuses every request it reads. */
 export const PickingAModelBindsTheWholeJudge = meta.story({
-  args: { picking: 'k2', onBindJudge: fn() },
+  args: { picking: 'g1', onBindJudge: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(await canvas.findByRole('button', { name: 'gpt-5-mini' }));
 
     await expect(args.onBindJudge).toHaveBeenCalledWith({
-      accountId: 'k2',
+      accountId: 'g1',
       providerModel: 'gpt-5-mini',
     });
   },
@@ -72,7 +62,10 @@ export const PickingAModelBindsTheWholeJudge = meta.story({
 
 /** A look that reached nothing says so where the models would have stood. */
 export const AModelListThatAnsweredNothing = meta.story({
-  args: { picking: 'k2', models: [], modelRefusal: 'That key no longer reaches this provider.' },
+  args: {
+    picking: 'g1',
+    offered: { offered: [], refusal: 'That key no longer reaches this provider.' },
+  },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('alert')).toHaveTextContent(/no longer reaches/);
   },

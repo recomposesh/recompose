@@ -2,7 +2,14 @@ import { expect, test } from 'vitest';
 
 import type { ConditionalSwitch, JudgeBinding } from './conditional-draft';
 
-import { switchBindingJudge, switchOpenedOn, switchRuling, switchWhole } from './conditional-draft';
+import {
+  switchBindingJudge,
+  switchOpenedOn,
+  switchReordering,
+  switchRuling,
+  switchWhole,
+  switchWithout,
+} from './conditional-draft';
 
 const haiku: JudgeBinding = { accountId: 'a3', providerModel: 'claude-haiku-5' };
 
@@ -93,4 +100,34 @@ test('binding a judge leaves the branches exactly as they stood, since only the 
 
 test('a router holding one child is whole once a judge binds, since that child is the else', () => {
   expect(switchWhole(switchBindingJudge(switchOpenedOn(['c1']), haiku))).toBe(true);
+});
+
+test('moving a branch carries the words written on it, so a person orders what they wrote', () => {
+  const moved = switchReordering(ruledSwitch(), 0, 2);
+
+  expect(moved.branches.map((branch) => branch.routeNodeId)).toEqual(['c2', 'c3', 'c1']);
+  expect(moved.branches.at(-1)).toMatchObject({ label: 'code' });
+});
+
+test('moving a branch to the end hands it the else, which is what the last row stands as', () => {
+  const moved = switchReordering(ruledSwitch(), 0, 2);
+
+  expect(switchWhole(moved)).toBe(false);
+});
+
+test('a move naming a rank no row holds leaves every branch exactly where it stood', () => {
+  const held = ruledSwitch();
+
+  expect(switchReordering(held, 9, 0).branches).toEqual(held.branches);
+  expect(switchReordering(held, 0, 9).branches).toEqual(held.branches);
+});
+
+test('a child that leaves takes the words written about it with it', () => {
+  const dropped = switchWithout(ruledSwitch(), 'c1');
+
+  expect(dropped.branches.map((branch) => branch.routeNodeId)).toEqual(['c2', 'c3']);
+});
+
+test('a child that leaves takes no judge with it, since the reader answers for all of them', () => {
+  expect(switchWithout(ruledSwitch(), 'c1').judge).toEqual(haiku);
 });

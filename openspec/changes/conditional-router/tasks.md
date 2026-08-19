@@ -86,21 +86,21 @@
 - [x] 7.1 Specify the switch to conditional entering definition state: storable once a judge
       binds, every non-else child holds a label and a rule, and the last declared child stands
       as else
-- [ ] 7.2 The inspector opens the switch definition on a childful router, and the childless
+- [x] 7.2 The inspector opens the switch definition on a childful router, and the childless
       reason stays
-- [ ] 7.3 Existing children arrive as draft branches, amber until labeled and ruled, following
+- [x] 7.3 Existing children arrive as draft branches, amber until labeled and ruled, following
       the fresh-switch screen
 - [x] 7.4 The mode choice becomes one shared vertical option-row list, mode name plus its
       sentence per row, replacing the segmented control in the inspector and the canvas picker
       step, which asks it as a step of its own
-- [ ] 7.5 Stories cover the mode rows and every switch state, and the suites stay green
+- [x] 7.5 Stories cover the mode rows and every switch state, and the suites stay green
 
 ## 8. The pin tally crosses to the renderer (replan, approved at the gate of 2026-08-19)
 
 - [x] 8.1 Contracts: the per-branch pin tally joins the watch channel schema
 - [x] 8.2 Engine: a pin write and a pin expiry each emit the router's tally
 - [x] 8.3 The bridge carries the tally to the renderer
-- [ ] 8.4 The inspector rows read the live tally
+- [x] 8.4 The inspector rows read the live tally
 - [x] 8.5 The tally law, never negative and dropped on expiry, lands as a property with its twin
 
 ## 9. Canvas interactions the testing pass caught (replan, approved 2026-08-19 evening)

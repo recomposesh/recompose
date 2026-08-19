@@ -100,6 +100,34 @@ export function switchBindingJudge(
 }
 
 /**
+ * The switch once a person moved one branch, words and all.
+ *
+ * @summary Ordering is how the else gets chosen: the last row stands as the branch that catches
+ * everything, so dragging a child to the bottom is the gesture that names it. The words travel
+ * with the row, because a person reordering is arranging what they already wrote.
+ */
+export function switchReordering(
+  held: ConditionalSwitch,
+  from: number,
+  to: number,
+): ConditionalSwitch {
+  const moved = held.branches[from];
+
+  if (moved === undefined || to < 0 || to >= held.branches.length) {
+    return held;
+  }
+
+  const without = held.branches.filter((_, rank) => rank !== from);
+
+  return { ...held, branches: [...without.slice(0, to), moved, ...without.slice(to)] };
+}
+
+/** The switch once one child left the ladder, taking the words written about it with it. */
+export function switchWithout(held: ConditionalSwitch, child: string): ConditionalSwitch {
+  return { ...held, branches: held.branches.filter((branch) => branch.routeNodeId !== child) };
+}
+
+/**
  * Whether the judge has been named whole, which is the last answer a conditional draft waits on.
  *
  * @summary Half a judge is worse than none: a router stored against an account with no model would

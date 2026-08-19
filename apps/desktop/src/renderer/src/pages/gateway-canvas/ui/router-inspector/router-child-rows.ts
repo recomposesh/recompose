@@ -10,9 +10,15 @@ import { addressWritten } from '../../lib/route-addresses';
 import { childTally } from '../router-node/router-reading';
 
 /** The word the else row answers to, which is the same word the judge is never offered. */
-const ELSE = 'Else';
+export const ELSE = 'Else';
 
-const WHY_ELSE_STAYS =
+/**
+ * Why the else row keeps its place, said wherever a ladder shows one.
+ *
+ * @summary The stored rows and the rows a switch is still being defined over both draw an else,
+ * and one sentence rather than two keeps a person reading their own reason on either surface.
+ */
+export const WHY_ELSE_STAYS =
   'Every conditional router keeps an else branch. It catches what the judge cannot place.';
 
 /** How a conditional router reads its own children, which is what turns rows into branches. */

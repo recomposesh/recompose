@@ -95,6 +95,15 @@ export function editRow(label: string, control: ReactNode): ReactNode {
 type EditFooterActs = {
   onCancel: () => void;
   onSave: () => void;
+  /** What the press that commits is called, where Save is not the word for what it does. */
+  label?: string | undefined;
+  /**
+   * Whether the commit is held shut, because what it would write is not whole yet.
+   *
+   * @summary Reach for it only where the surface says elsewhere what is still owed. A press that
+   * refuses without a word leaves a person pressing it again to find out why.
+   */
+  withheld?: boolean | undefined;
 };
 
 function editRefusal(refused: string | undefined): ReactNode {
@@ -107,7 +116,7 @@ function editRefusal(refused: string | undefined): ReactNode {
 
 /** The Cancel and Save pair under an editing box, with the refusal the last save left. */
 export function editFooter(
-  { onCancel, onSave }: EditFooterActs,
+  { onCancel, onSave, label = 'Save', withheld = false }: EditFooterActs,
   refused: string | undefined,
 ): ReactNode {
   return (
@@ -116,8 +125,8 @@ export function editFooter(
         <button className="push-button" onClick={onCancel} type="button">
           Cancel
         </button>
-        <button className="push-button-primary" onClick={onSave} type="button">
-          Save
+        <button className="push-button-primary" disabled={withheld} onClick={onSave} type="button">
+          {label}
         </button>
       </div>
       {editRefusal(refused)}
