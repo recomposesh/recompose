@@ -182,3 +182,25 @@ The gap the user caught: clicking a gateway in the sidebar opens its canvas (spa
 ## Backend (deferred, references)
 
 - cliproxyapi, opencodex, ccproxy → translation + gateway logic adapted from these.
+
+## Conditional router (2026-08-19)
+
+- **Mode, not a node (A):** conditional joins failover and round-robin as the third mode of the single Router node. The mode pill reads `? conditional`. Chaining stays free. A separate node type (B) eliminated: it would fork the locked "single-mode router + mode pill" rule.
+- **How it decides:** one constrained classification call per decision. The judge receives the branch labels, the rules, and the request tail, then answers with one branch label. A broken answer earns one retry, then the else branch. A timeout budget (about 3 seconds) also lands on else. Routing trouble never drops a request.
+- **Judge = a real binding:** the judge is an account plus a provider model, resolved with the same custody, cooldown, and health rules as any target. Fast, cheap models judge best, and the inspector says so.
+- **Mandatory else:** every conditional router carries a permanent else branch. No match, judge error, judge cooling, and timeout all land there. Ref: OpenAI If/else "Else" branch.
+- **Sticky by default:** a conversation keeps the branch it first earned, keyed by a conversation fingerprint. The prompt cache survives, and mid-conversation behavior stays stable. An inspector toggle ("Re-judge every request") opts out. Server-state turns follow the `wouldRotate` precedent and refuse a branch change.
+- **V1 rules are natural language only:** each branch = a short label plus a free-text rule. Deterministic conditions (regex, token count, headers) stay out. They belong to a future judge-free rule mode.
+- **Canvas language (wire rules, A):** each branch cable carries its rule pill. The chosen branch flows green. Else hangs dashed until it carries traffic. Eliminated: B slot rules (rule rows with their own ports inside a tall card, which swallowed the hexagon) and C prompt panel (bare canvas, all meaning hidden in the inspector).
+- **Judge on the canvas (satellite, E):** a small round node with a scale glyph rides above the router on a dotted tie from a shoulder port. The distinct silhouette says advisor, not target. Cooling turns it amber with a timer badge. Eliminated: side cable to a full card (target lookalike), docked badge (hides health), sub-port below (crowds the row), inbound-wire chip (collides with rule pills).
+- **Labels:** the branch label is the classification token the judge answers with. A dropped cable births a draft branch, amber until named and ruled. The pill opens the same inline editor as virtual model naming (Ditto). An empty label fills itself from the rule text (Customer.io's derived wire labels, judge flavored).
+- **Rule editing:** inspector rows show a one-line preview. The full rule lives in a "Branch rule" sheet: a label field, a routes-to line, a wide textarea, and a destructive "Delete branch." In-panel editors (too cramped) and accordions eliminated.
+- **Flow screens:** `recompose.pen` carries the full flow, 0 to 7, in both schemes: fresh switch (judge unbound), rules in the inspector, branch birth, pill rename, rule editor sheet, the judge decides, judged traffic flows, and judge cooling with else catching.
+- **Engine landing spots:** `RouterPolicy` grows a `conditional` variant with payload (judge binding, rules, else, timeout). The walk's `ChildPicker` goes async. The judge inherits the cooldown ledger. Router depth stays capped at 4, so chained judges stay bounded.
+
+### Mobbin reference IDs (conditional router)
+
+- OpenAI platform classifier into If/else: a3f3b2d7 · WRITER classification node with per-category ports: 38c59932
+- Customer.io split-branch derived labels plus "All others": 2ae31404 · Twenty if/else wire pills: 8289b902
+- Flodesk Yes/No pills: daf1786d · Zapier Canvas edge labels: 8c45f47d
+- Textarea precedents: Sana b23d6f81 · Langdock 34d078d5 · Mistral c694fcb5 · ElevenLabs 9e0eefdb
