@@ -23,4 +23,24 @@ export const modeSentences: Record<RouterMode, string> = {
 export const modeOptions = [
   { value: 'failover', label: nameOfRouterMode('failover') },
   { value: 'round-robin', label: nameOfRouterMode('round-robin') },
+  { value: 'conditional', label: nameOfRouterMode('conditional') },
 ] as const satisfies readonly { value: RouterMode; label: string }[];
+
+/** How often a conditional router asks its judge, which is the whole of what the toggle moves. */
+export type JudgingRhythm = 'every-request' | 'once-per-conversation';
+
+/**
+ * What each judging rhythm costs and wins, in the words the toggle offering the choice prints.
+ *
+ * @summary Keyed like `modeSentences` and read the same way: the sentence describes the rhythm a
+ * person is standing in rather than fixed helper text, because the prompt cache is the reason to
+ * weigh one against the other and a cost named after the fact is a cost nobody chose. Both
+ * sentences name the server-state turn, because that turn holds its branch under either rhythm and
+ * a person who read only the re-judging one would otherwise expect it to move.
+ */
+export const rejudgeSentences: Record<JudgingRhythm, string> = {
+  'once-per-conversation':
+    'A conversation keeps the branch it first earned, so its prompt cache survives every turn. A turn that resumes server-held state never changes branch.',
+  'every-request':
+    'Every request is judged again, so a conversation can change branch mid-way and each change costs a prompt cache hit. A turn that resumes server-held state keeps the branch it earned either way.',
+};
