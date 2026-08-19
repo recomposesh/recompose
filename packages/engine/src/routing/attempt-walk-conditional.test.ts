@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { JUDGE, aGatewayServing, aJudgeAnswering, aJudgedRouterOver } from './attempt-walk.testkit';
+import { aRateLimit } from './routing.testkit';
 
 describe('the branch a conditional router sends one request down', () => {
   test('the child behind the label the judge answered receives the request', async () => {
@@ -89,5 +90,36 @@ describe('the answers a conditional router asks its judge twice about', () => {
       routeNode: 'catchall',
       answer: 'catchall',
     });
+  });
+});
+
+describe('the one classification a walk spends, however many children it tries', () => {
+  test('a branch child that refuses never sends the walk back to its judge', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    await gateway.send({ coder: aRateLimit() });
+
+    expect(judge.asked).toEqual([JUDGE]);
+  });
+
+  test('a walk that runs out of children entirely still asked its judge once', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    const walk = await gateway.send({ coder: aRateLimit(), catchall: aRateLimit() });
+
+    expect(judge.asked).toEqual([JUDGE]);
+    expect(walk.verdict.outcome).toBe('exhausted');
+  });
+
+  test('a later walk judges again, because the memo dies with the walk that made it', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    await gateway.send();
+    await gateway.send();
+
+    expect(judge.asked).toEqual([JUDGE, JUDGE]);
   });
 });

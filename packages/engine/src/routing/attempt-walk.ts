@@ -48,6 +48,7 @@ type Walking = {
   resumesServerState: boolean;
   classifyBranch?: BranchClassifier;
   attempted: Map<string, WalkNote>;
+  decided: Map<string, string>;
 };
 
 type WalkStep =
@@ -80,18 +81,31 @@ function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string
   return node.children.some((child) => subtreeCanServe(walking, child, passed));
 }
 
+/**
+ * The branch one conditional router follows for this whole walk, decided at most once.
+ *
+ * @summary The memo is the walk's, not the gateway's, so the attempt cap can retry a branch child
+ * eight times without spending eight judge calls, eight charges, and eight seconds of a caller's
+ * patience. It is keyed by route node because a chain can hold several conditional routers, each
+ * owed its own single decision.
+ */
 async function branchTheWalkFollows(
   walking: Walking,
+  routeNode: string,
   policy: RouterPolicy,
 ): Promise<BranchChoice | undefined> {
   if (policy.mode !== 'conditional') return undefined;
 
-  const decided = await childTheJudgeDecides({
-    judge: policy.judge,
-    branches: policy.branches,
-    elseChild: policy.elseChild,
-    classify: walking.classifyBranch,
-  });
+  const decided =
+    walking.decided.get(routeNode) ??
+    (await childTheJudgeDecides({
+      judge: policy.judge,
+      branches: policy.branches,
+      elseChild: policy.elseChild,
+      classify: walking.classifyBranch,
+    }));
+
+  walking.decided.set(routeNode, decided);
 
   return { decided, elseChild: policy.elseChild };
 }
@@ -114,7 +128,7 @@ async function childTheRouterOffers(
         walking.cursors.advanceTo(address, cursor);
       },
     },
-    branch: await branchTheWalkFollows(walking, policy),
+    branch: await branchTheWalkFollows(walking, routeNode, policy),
   });
 }
 
@@ -266,7 +280,7 @@ async function verdictTheWalkSettles<TAnswer>(
 export async function walkAttempts<TAnswer>(
   request: WalkRequest<TAnswer>,
 ): Promise<WalkResult<TAnswer>> {
-  const walking: Walking = { ...request, attempted: new Map() };
+  const walking: Walking = { ...request, attempted: new Map(), decided: new Map() };
   const settled = await verdictTheWalkSettles(walking, request);
   const notes = notesOfTheWalk(walking);
 
