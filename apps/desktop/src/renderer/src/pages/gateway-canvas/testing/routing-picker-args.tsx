@@ -23,12 +23,23 @@ const pickerTargets = [
   },
 ];
 
+/** The judge sub-pick as a draft that has answered nothing about it yet. */
+export const unjudged: RoutingPickerProps['judge'] = {
+  binding: undefined,
+  name: undefined,
+  models: [],
+  onPickAccount: () => {},
+  onPickModel: () => {},
+  onSelectDifferentProvider: () => {},
+};
+
 export const pickerArgs: RoutingPickerProps = {
   targets: pickerTargets,
   onPickKind: () => {},
   onReopenKind: () => {},
   routerMode: 'failover',
   onRouterModeChange: () => {},
+  onReopenRouterMode: () => {},
   routerName: '',
   onRouterNameChange: () => {},
   onPickTarget: () => {},
@@ -36,6 +47,7 @@ export const pickerArgs: RoutingPickerProps = {
   models: [],
   providerModel: '',
   onPickModel: () => {},
+  judge: unjudged,
 };
 
 /**

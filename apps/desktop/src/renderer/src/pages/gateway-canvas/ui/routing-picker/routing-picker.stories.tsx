@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { inTheDrawersColumn, pickerArgs } from '../../testing/routing-picker-args';
+import { inTheDrawersColumn, pickerArgs, unjudged } from '../../testing/routing-picker-args';
 import { RoutingPicker } from './routing-picker';
 
 const meta = preview.meta({
@@ -75,5 +75,82 @@ export const NothingConnected = meta.story({
   },
 });
 
+const judged = {
+  bindsThrough: 'router' as const,
+  routerMode: 'conditional' as const,
+};
+
+const fallenBack = {
+  ...judged,
+  target: 'k1',
+  targetName: 'work',
+  providerModel: 'claude-sonnet-5',
+};
+
+/** Choosing conditional walks straight on, because the mode needs somewhere to send the rest. */
+export const ConditionalAsksWhatItFallsBackTo = meta.story({
+  args: judged,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the else branch')).toBeVisible();
+    await expect(await canvas.findByText('work')).toBeVisible();
+  },
+});
+
+/** Once the else branch is whole the step asks for the judge, which is the last answer owed. */
+export const ConditionalAsksForItsJudge = meta.story({
+  args: fallenBack,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the judge')).toBeVisible();
+    await expect(await canvas.findByText(/Fast, cheap models judge best/)).toBeVisible();
+  },
+});
+
+/** A judge with an account but no model yet reads its own list, named by whose it is. */
+export const ConditionalPicksTheJudgesModel = meta.story({
+  args: {
+    ...fallenBack,
+    judge: {
+      ...unjudged,
+      binding: { accountId: 'k2', providerModel: '' },
+      name: 'personal',
+      models: ['gpt-5-mini', 'gpt-5'],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Models personal judges with')).toBeVisible();
+  },
+});
+
+/** Every answer given, so the picker rests back on the mode and names the judge it settled on. */
+export const ConditionalRestsOnItsMode = meta.story({
+  args: {
+    ...fallenBack,
+    judge: {
+      ...unjudged,
+      binding: { accountId: 'k2', providerModel: 'gpt-5-mini' },
+      name: 'personal',
+      models: ['gpt-5-mini'],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
+    await expect(await canvas.findByText('personal · gpt-5-mini')).toBeVisible();
+  },
+});
+
 /** The ask in the dark scheme, where both kind glyphs have to hold against the box. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/** The conditional flow in the dark scheme, where the judge summary sits on the box. */
+export const ConditionalDarkScheme = meta.story({
+  args: {
+    ...fallenBack,
+    judge: {
+      ...unjudged,
+      binding: { accountId: 'k2', providerModel: 'gpt-5-mini' },
+      name: 'personal',
+      models: ['gpt-5-mini'],
+    },
+  },
+  globals: { theme: 'dark' },
+});

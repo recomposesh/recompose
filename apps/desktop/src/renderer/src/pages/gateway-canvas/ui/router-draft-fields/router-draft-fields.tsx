@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { nameOfRouterMode } from '@recompose/contracts';
 
 import type { RouterMode } from '../../lib/routing-edits';
@@ -17,6 +19,14 @@ export type RouterDraftFieldsProps = {
   name: string;
   /** Receives every keystroke in the router name field. */
   onNameChange: (typed: string) => void;
+  /**
+   * What a mode that reads its requests settled on, standing under the sentence that named it.
+   *
+   * @summary A slot rather than fields of its own, because only one mode asks for a judge and the
+   * step that picked it already knows how to say what it picked. Leave it out for a mode that asks
+   * nothing beyond how it spreads.
+   */
+  judge?: ReactNode;
 };
 
 /**
@@ -36,6 +46,7 @@ export function RouterDraftFields({
   onModeChange,
   name,
   onNameChange,
+  judge,
 }: RouterDraftFieldsProps) {
   return (
     <div className="flex flex-col gap-1.5 px-2 py-1.5">
@@ -47,6 +58,7 @@ export function RouterDraftFields({
         value={mode}
       />
       <p className="text-detail text-ink-secondary">{modeSentences[mode]}</p>
+      {judge}
       <label className="mt-1.5 flex flex-col gap-1">
         <span className="drawer-picker-heading">Router name</span>
         <input
