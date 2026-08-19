@@ -8,22 +8,18 @@ import type { SettledDefinition } from '../../lib/model-draft';
 import type { OptionGroup } from '../option-list/option-list';
 import type { JudgePick } from '../routing-picker/routing-picker';
 
-import {
-  accountsQueryOptions,
-  providerModelsQueryOptions,
-  refusalSentence,
-} from '../../../../shared/api';
+import { accountsQueryOptions } from '../../../../shared/api';
 import { placeFocus } from '../../../../shared/ui';
 import { idRefusal, nameRefusal } from '../../lib/draft-refusals';
 import {
   BORN_ROUTER_MODE,
   draftFilledIn,
   emptyDefinition,
-  modelListReading,
   servesPreview,
 } from '../../lib/model-draft';
 import { targetGroups } from '../../lib/target-groups';
 import { editDraft, useHeldDraft } from '../../lib/use-held-draft';
+import { useOfferedModels } from '../../lib/use-offered-models';
 import { ModelFields } from '../model-fields/model-fields';
 import { draftEdits, judgeAccountOf, judgePick } from './draft-edits';
 import { useDraftSaving } from './use-draft-saving';
@@ -34,19 +30,6 @@ type DraftInspectorProps = {
   /** Receives the definition the moment the save lands, which is when the draft graduates. */
   onDefined: (definition: SettledDefinition) => void;
 };
-
-function useOfferedModels(accountId: string) {
-  const look = useQuery({
-    ...providerModelsQueryOptions(accountId),
-    enabled: accountId !== '',
-  });
-  const reading = modelListReading(look.data);
-
-  return {
-    offered: reading.offered,
-    refusal: look.error === null ? reading.refusal : refusalSentence(look.error),
-  };
-}
 
 function spokenAfterAsking(attempted: boolean, spoken: string | undefined): string | undefined {
   return attempted ? spoken : undefined;

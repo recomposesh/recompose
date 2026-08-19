@@ -26,6 +26,15 @@ export const modeOptions = [
   { value: 'conditional', label: nameOfRouterMode('conditional') },
 ] as const satisfies readonly { value: RouterMode; label: string }[];
 
+/**
+ * Why a small model makes the better judge, said wherever a person binds one.
+ *
+ * @summary The drawer binds a judge while composing and the inspector rebinds one afterwards, so
+ * both say it in the same words rather than two drafts of the same advice.
+ */
+export const JUDGE_ADVICE =
+  'Fast, cheap models judge best. The judge only names a branch, and every request waits on its answer.';
+
 /** How often a conditional router asks its judge, which is the whole of what the toggle moves. */
 export type JudgingRhythm = 'every-request' | 'once-per-conversation';
 
