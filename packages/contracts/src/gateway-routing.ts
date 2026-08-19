@@ -126,7 +126,9 @@ function eachConditionalRouterHoldsItsBranches(
       continue;
     }
 
-    for (const refusal of refusalsOfAConditionalPolicy(policy, childrenOf(node))) {
+    const standing = nodes.get(policy.judge)?.kind;
+
+    for (const refusal of refusalsOfAConditionalPolicy(policy, childrenOf(node), standing)) {
       refuse(context, ['nodes', id, 'policy', refusal.at], refusal.message);
     }
   }

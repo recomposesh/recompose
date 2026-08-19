@@ -114,6 +114,55 @@ describe('a conditional router whose branches name what its children do not hold
   });
 });
 
+describe('the judge a conditional router binds', () => {
+  test('a judge naming no node in the table is refused, and the refusal names the judge', () => {
+    const stranded = {
+      entry: 'sorter',
+      nodes: {
+        sorter: {
+          kind: 'router',
+          policy: conditionalPolicy({ judge: 'nowhere' }),
+          children: ['coder', 'chatter'],
+        },
+        coder: targetNode('acc-claude-max'),
+        chatter: targetNode('acc-openrouter'),
+      },
+    };
+
+    expect(refusalsFor(stranded)).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'judge'],
+        message: 'the judge nowhere names no node in the table',
+      },
+    ]);
+  });
+
+  test('a judge its own router also lists as a child is refused, and the refusal names it', () => {
+    const listed = {
+      entry: 'sorter',
+      nodes: {
+        sorter: {
+          kind: 'router',
+          policy: conditionalPolicy(),
+          children: ['coder', 'chatter', 'arbiter'],
+        },
+        coder: targetNode('acc-claude-max'),
+        chatter: targetNode('acc-openrouter'),
+        arbiter: targetNode('acc-cheap-judge'),
+      },
+    };
+
+    expect(refusalsFor(listed)).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'judge'],
+        message: 'the judge arbiter also stands as a child',
+      },
+    ]);
+  });
+});
+
 describe('the labels a conditional router hands its judge', () => {
   test('two branches wearing one label are refused, and the refusal names the label', () => {
     const twice = [
