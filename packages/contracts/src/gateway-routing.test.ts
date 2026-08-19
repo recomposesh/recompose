@@ -163,6 +163,44 @@ describe('the judge a conditional router binds', () => {
   });
 });
 
+describe('the declared order a walk reads never meets the judge', () => {
+  test('a served table lists the judge in no declared order, though the table still holds it', () => {
+    const parsed = routingSchema.parse(routingSortedBy(conditionalPolicy()));
+    const declared = Object.values(parsed.nodes).flatMap((node) =>
+      node.kind === 'router' ? node.children : [],
+    );
+
+    expect(declared).toEqual(['coder', 'chatter']);
+  });
+
+  test('a judge some other router lists as a child is refused, and the refusal names it', () => {
+    const borrowed = {
+      entry: 'sorter',
+      nodes: {
+        sorter: {
+          kind: 'router',
+          policy: conditionalPolicy({
+            branches: [{ label: 'code', rule: 'the request asks for code', child: 'pool' }],
+          }),
+          children: ['pool', 'chatter'],
+        },
+        pool: { kind: 'router', policy: { mode: 'failover' }, children: ['coder', 'arbiter'] },
+        coder: targetNode('acc-claude-max'),
+        chatter: targetNode('acc-openrouter'),
+        arbiter: targetNode('acc-cheap-judge'),
+      },
+    };
+
+    expect(refusalsFor(borrowed)).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'judge'],
+        message: 'the judge arbiter also stands as a child',
+      },
+    ]);
+  });
+});
+
 describe('the labels a conditional router hands its judge', () => {
   test('two branches wearing one label are refused, and the refusal names the label', () => {
     const twice = [

@@ -21,21 +21,17 @@ export type ConditionalPolicy = z.infer<typeof conditionalPolicySchema>;
 
 type PolicyRefusal = { at: 'branches' | 'elseChild' | 'judge'; message: string };
 
-type JudgeStanding = 'router' | 'target' | undefined;
+export type JudgeSeat = { kind: 'router' | 'target' | undefined; standsAsChild: boolean };
 
-function judgeRefusals(
-  policy: ConditionalPolicy,
-  children: ReadonlySet<string>,
-  standing: JudgeStanding,
-): PolicyRefusal[] {
+function judgeRefusals(policy: ConditionalPolicy, seat: JudgeSeat): PolicyRefusal[] {
   const judge = policy.judge;
   const refusals: PolicyRefusal[] = [];
 
-  if (standing === undefined) {
+  if (seat.kind === undefined) {
     refusals.push({ at: 'judge', message: `the judge ${judge} names no node in the table` });
   }
 
-  if (children.has(judge)) {
+  if (seat.standsAsChild) {
     refusals.push({ at: 'judge', message: `the judge ${judge} also stands as a child` });
   }
 
@@ -84,13 +80,13 @@ function branchRefusals(policy: ConditionalPolicy, children: ReadonlySet<string>
 export function refusalsOfAConditionalPolicy(
   policy: ConditionalPolicy,
   children: readonly string[],
-  judgeStanding: JudgeStanding,
+  judge: JudgeSeat,
 ): readonly PolicyRefusal[] {
   const held = new Set(children);
 
   return [
     ...elseRefusals(policy, held),
     ...branchRefusals(policy, held),
-    ...judgeRefusals(policy, held, judgeStanding),
+    ...judgeRefusals(policy, judge),
   ];
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ConditionalPolicy } from './gateway-routing-conditional';
+import type { ConditionalPolicy, JudgeSeat } from './gateway-routing-conditional';
 
 import {
   conditionalPolicySchema,
@@ -115,8 +115,17 @@ function referencesOf(node: RouteNode): readonly string[] {
   return judge === undefined ? childrenOf(node) : [...childrenOf(node), judge];
 }
 
+function seatOfTheJudge(
+  policy: ConditionalPolicy,
+  nodes: Map<string, RouteNode>,
+  references: Map<string, number>,
+): JudgeSeat {
+  return { kind: nodes.get(policy.judge)?.kind, standsAsChild: references.has(policy.judge) };
+}
+
 function eachConditionalRouterHoldsItsBranches(
   nodes: Map<string, RouteNode>,
+  references: Map<string, number>,
   context: z.RefinementCtx,
 ): void {
   for (const [id, node] of nodes) {
@@ -126,9 +135,9 @@ function eachConditionalRouterHoldsItsBranches(
       continue;
     }
 
-    const standing = nodes.get(policy.judge)?.kind;
+    const seat = seatOfTheJudge(policy, nodes, references);
 
-    for (const refusal of refusalsOfAConditionalPolicy(policy, childrenOf(node), standing)) {
+    for (const refusal of refusalsOfAConditionalPolicy(policy, childrenOf(node), seat)) {
       refuse(context, ['nodes', id, 'policy', refusal.at], refusal.message);
     }
   }
@@ -158,11 +167,9 @@ function inboundReferences(nodes: Map<string, RouteNode>): Map<string, number> {
 
 function eachNodeAnswersToOneParent(
   entry: string,
-  nodes: Map<string, RouteNode>,
+  references: Map<string, number>,
   context: z.RefinementCtx,
 ): void {
-  const references = inboundReferences(nodes);
-
   for (const [id, count] of references) {
     if (count > 1) {
       refuse(context, ['nodes', id], `node ${id} answers to more than one parent`);
@@ -229,9 +236,11 @@ function routingServesFromItsEntry(table: RouteTable, context: z.RefinementCtx):
     return;
   }
 
+  const references = inboundReferences(nodes);
+
   eachChildResolves(nodes, context);
-  eachConditionalRouterHoldsItsBranches(nodes, context);
-  eachNodeAnswersToOneParent(table.entry, nodes, context);
+  eachConditionalRouterHoldsItsBranches(nodes, references, context);
+  eachNodeAnswersToOneParent(table.entry, references, context);
 
   const reached = reachedFromEntry(table.entry, nodes, context);
 
