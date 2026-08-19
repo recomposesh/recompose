@@ -9,7 +9,7 @@
       and a judge sitting in any `children` array gets refused
 - [x] 1.4 Specify that declared-order walkers never meet the judge, so token counting can't
       resolve to it
-- [ ] 1.5 Specify `nameOfRouterMode('conditional')` returning `Conditional` in both naming specs
+- [x] 1.5 Specify `nameOfRouterMode('conditional')` returning `Conditional` in both naming specs
 - [x] 1.6 Widen the mode union in `gateway-config.test-d.ts` in the same commit as the schema
 - [ ] 1.7 Specify router depth staying capped with a conditional member in the chain
 
