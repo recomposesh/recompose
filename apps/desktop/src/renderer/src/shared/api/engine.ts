@@ -1,5 +1,6 @@
 import type {
   EngineStates,
+  GatewayBranchPins,
   GatewayEngineState,
   GatewayTraffic,
   IpcRequest,
@@ -14,6 +15,8 @@ import { unwrapIpcResult, withRefusal } from './ipc-result';
 const STOPPED: GatewayEngineState = { status: 'stopped' };
 
 const NOTHING_HAS_FLOWED: GatewayTraffic = {};
+
+const NOTHING_IS_PINNED: GatewayBranchPins = {};
 
 export const engineStatesQueryOptions = queryOptions({
   queryKey: ['engine-states'],
@@ -66,6 +69,35 @@ export function bindEngineTrafficToCache(
 ): () => void {
   return subscribe((traffic) => {
     queryClient.setQueryData(engineTrafficQueryOptions.queryKey, traffic);
+  });
+}
+
+/**
+ * How many conversations each conditional router is holding, per branch.
+ *
+ * @summary The counts reach the renderer only by push, so the query starts on an empty snapshot and
+ * a router nothing has judged through yet reads as nothing rather than as loading. They are held
+ * apart from traffic because a cable and a branch count move on entirely different occasions, and
+ * one snapshot carrying both would repaint each at the other's pace.
+ */
+export const engineBranchPinsQueryOptions = queryOptions({
+  queryKey: ['engine-branch-pins'],
+  queryFn: skipToken,
+  initialData: NOTHING_IS_PINNED,
+});
+
+/**
+ * Points the pin push at the query cache and hands back the way to stop listening.
+ *
+ * @summary Every push carries the whole snapshot, so writing it straight into the cache leaves
+ * nothing to reconcile and no ordering rule to get wrong.
+ */
+export function bindEngineBranchPinsToCache(
+  queryClient: QueryClient,
+  subscribe: RecomposeIpcEvents['engine:pins'] = window.recomposeEvents['engine:pins'],
+): () => void {
+  return subscribe((pinning) => {
+    queryClient.setQueryData(engineBranchPinsQueryOptions.queryKey, pinning);
   });
 }
 

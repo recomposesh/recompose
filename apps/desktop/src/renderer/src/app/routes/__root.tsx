@@ -20,6 +20,7 @@ import { AddProviderAct } from '../../pages/providers';
 import {
   accountsQueryOptions,
   bindAccountChangesToCache,
+  bindEngineBranchPinsToCache,
   bindEngineLogsToCache,
   bindEngineStatesToCache,
   bindEngineTrafficToCache,
@@ -110,6 +111,7 @@ function useWindowBand(sidebarAway: boolean): void {
 function usePushedCaches(queryClient: QueryClient): void {
   useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineTrafficToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineBranchPinsToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineLogsToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
   useEffect(() => bindSettingsToCache(queryClient), [queryClient]);

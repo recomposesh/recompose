@@ -4,6 +4,7 @@ import type {
   EngineSpendGrant,
   EngineStates,
   EngineSubscriptionCredentialUpdated,
+  GatewayBranchPins,
   GatewayEngineState,
   GatewayTraffic,
   KeyCheckReport,
@@ -38,6 +39,7 @@ export type EngineHostDeps = {
     credential: string,
   ) => Promise<void>;
   onTraffic?: (traffic: GatewayTraffic) => void;
+  onBranchPins?: (pinning: GatewayBranchPins) => void;
   onLogs?: (batch: LogBatch) => void;
   onSettledRow?: (row: LogRow) => void;
 };
