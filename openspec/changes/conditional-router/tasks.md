@@ -127,7 +127,7 @@
 - [x] 10.4 A conditional router born from the drawer seats its else child in the next column
       beside it, never a far row
 - [x] 10.5 The satellite's default seat centers above its router instead of drifting left
-- [ ] 10.6 The re-judge toggle says what it does: the title names the action and one plain
+- [x] 10.6 The re-judge toggle says what it does: the title names the action and one plain
       sentence explains each position
 - [ ] 10.7 The tie's endpoint dots wear the router border color instead of cable blue
 - [ ] 10.8 Switching away from conditional works: the press confirms the cost through the

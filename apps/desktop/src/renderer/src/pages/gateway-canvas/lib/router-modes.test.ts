@@ -26,20 +26,26 @@ test('the conditional sentence names the judge and where an unplaced request lan
   expect(modeSentences.conditional).toContain('else');
 });
 
-test('re-judging every request names what it costs the prompt cache', () => {
-  expect(rejudgeSentences['every-request']).toContain('prompt cache');
+test('each rhythm says what it does in one plain sentence', () => {
+  for (const said of Object.values(rejudgeSentences)) {
+    expect(said.endsWith('.')).toBe(true);
+    expect(said.split('.').filter((part) => part.trim() !== '')).toHaveLength(1);
+  }
 });
 
-test('re-judging every request still says a server-state turn keeps its branch', () => {
-  expect(rejudgeSentences['every-request']).toContain('server-held state');
+test('each rhythm keeps the server-state turn to a clause rather than a sentence of its own', () => {
+  for (const said of Object.values(rejudgeSentences)) {
+    expect(said).toContain('server-held state');
+    expect(said).toContain(', ');
+  }
 });
 
-test('a conversation that keeps its branch says the prompt cache is what it keeps', () => {
-  expect(rejudgeSentences['once-per-conversation']).toContain('prompt cache');
+test('re-judging every request says the judge reads every one of them', () => {
+  expect(rejudgeSentences['every-request']).toContain('every request');
 });
 
-test('a conversation that keeps its branch says a server-state turn never moves it', () => {
-  expect(rejudgeSentences['once-per-conversation']).toContain('server-held state');
+test('a conversation that keeps its branch says it stays on the one it earned', () => {
+  expect(rejudgeSentences['once-per-conversation']).toContain('first earned');
 });
 
 test('neither rhythm reads as the other, so the toggle says something when it moves', () => {

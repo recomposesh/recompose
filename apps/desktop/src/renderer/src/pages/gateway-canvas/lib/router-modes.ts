@@ -39,17 +39,17 @@ export const JUDGE_ADVICE =
 export type JudgingRhythm = 'every-request' | 'once-per-conversation';
 
 /**
- * What each judging rhythm costs and wins, in the words the toggle offering the choice prints.
+ * What each judging rhythm does, in the words the toggle offering the choice prints.
  *
  * @summary Keyed like `modeSentences` and read the same way: the sentence describes the rhythm a
- * person is standing in rather than fixed helper text, because the prompt cache is the reason to
- * weigh one against the other and a cost named after the fact is a cost nobody chose. Both
- * sentences name the server-state turn, because that turn holds its branch under either rhythm and
- * a person who read only the re-judging one would otherwise expect it to move.
+ * person is standing in rather than fixed helper text. One sentence each, saying what the setting
+ * does rather than what it costs, because a person reading a toggle wants to know what moves. Both
+ * name the server-state turn in a closing clause, because that turn holds its branch under either
+ * rhythm and a person who read only the re-judging one would otherwise expect it to move.
  */
 export const rejudgeSentences: Record<JudgingRhythm, string> = {
   'once-per-conversation':
-    'A conversation keeps the branch it first earned, so its prompt cache survives every turn. A turn that resumes server-held state never changes branch.',
+    'A conversation stays on the branch it first earned, even when a turn resumes server-held state.',
   'every-request':
-    'Every request is judged again, so a conversation can change branch mid-way and each change costs a prompt cache hit. A turn that resumes server-held state keeps the branch it earned either way.',
+    'The judge picks a branch for every request, unless the turn resumes server-held state.',
 };

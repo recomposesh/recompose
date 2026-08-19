@@ -11,11 +11,9 @@ import type { RouterMode } from '../../lib/routing-edits';
 import type { RouterChild } from '../router-child-list/router-child';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
-import { Switch } from '../../../../shared/ui';
 import { useBranchPinsAt } from '../../lib/branch-pins';
 import { switchOpenedOn } from '../../lib/conditional-draft';
 import { conditionalIn } from '../../lib/conditional-policy';
-import { rejudgeSentences } from '../../lib/router-modes';
 import { gatewayDroppingNode, gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
 import {
   gatewayBindingJudge,
@@ -26,6 +24,7 @@ import { useOfferedModels } from '../../lib/use-offered-models';
 import { BranchEditor } from '../branch-editor/branch-editor';
 import { JudgeSection } from '../judge-section/judge-section';
 import { ModeRows } from '../mode-rows/mode-rows';
+import { RejudgeToggle } from '../rejudge-toggle/rejudge-toggle';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
 import { SwitchDefinition } from '../switch-definition/switch-definition';
@@ -84,13 +83,6 @@ function modeSection(
   );
 }
 
-/**
- * How often this router asks its judge, in the words the sentence beneath the toggle is keyed by.
- */
-function rhythmOf(policy: ConditionalPolicy) {
-  return policy.rejudgeEveryRequest ? 'every-request' : 'once-per-conversation';
-}
-
 type StoredView = {
   props: RouterInspectorProps;
   policy: ConditionalPolicy | undefined;
@@ -107,19 +99,12 @@ function judgingBody(view: StoredView, policy: ConditionalPolicy): ReactNode {
 
   return (
     <>
-      {sectionHeading(
-        'Judging',
-        <span className="ms-auto shrink-0">
-          <Switch
-            checked={policy.rejudgeEveryRequest}
-            label="Re-judge every request"
-            onChangeChecked={(next) => {
-              view.onRewrite(gatewayJudgingEveryRequest(gateway, model.id, routeNodeId, next));
-            }}
-          />
-        </span>,
-      )}
-      <p className="px-1 text-detail text-ink-secondary">{rejudgeSentences[rhythmOf(policy)]}</p>
+      <RejudgeToggle
+        onChangeChecked={(next) => {
+          onRewrite(gatewayJudgingEveryRequest(gateway, model.id, routeNodeId, next));
+        }}
+        rejudgeEveryRequest={policy.rejudgeEveryRequest}
+      />
       <JudgeSection
         accounts={accounts}
         bound={judgeBoundIn(model, policy)}

@@ -122,22 +122,37 @@ export const ConditionalNamesItsJudge = meta.story({
   },
 });
 
-/** Sticking is the resting rhythm, and the sentence says the prompt cache is what it keeps. */
+/**
+ * The rhythm section is titled by the act its toggle carries out, never by a category.
+ *
+ * @summary A person reading the panel meets the decision they are about to make rather than a
+ * heading they have to translate into one.
+ */
+export const TheRhythmSectionNamesItsAct = meta.story({
+  args: { model: pooled(judging, true), router: judging },
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByRole('heading', { name: 'Re-judge every request' }),
+    ).toBeVisible();
+  },
+});
+
+/** Resting, the sentence says a conversation stays on the branch it first earned. */
 export const ConditionalKeepsTheBranchItEarned = meta.story({
   args: { model: pooled(judging, true), router: judging },
   play: async ({ canvas }) => {
     await expect(
       await canvas.findByRole('switch', { name: 'Re-judge every request' }),
     ).not.toBeChecked();
-    await expect(await canvas.findByText(/keeps the branch it first earned/)).toBeVisible();
+    await expect(await canvas.findByText(/stays on the branch it first earned/)).toBeVisible();
   },
 });
 
-/** Re-judging names the prompt cache hit it costs and the turn that holds its branch anyway. */
-export const ConditionalRejudgingNamesItsCost = meta.story({
+/** Switched on, the sentence says the judge reads every request and names the one exception. */
+export const ConditionalRejudgingSaysWhatItDoes = meta.story({
   args: { model: pooled(rejudging, true), router: rejudging },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText(/each change costs a prompt cache hit/)).toBeVisible();
+    await expect(await canvas.findByText(/picks a branch for every request/)).toBeVisible();
     await expect(await canvas.findByText(/server-held state/)).toBeVisible();
   },
 });
