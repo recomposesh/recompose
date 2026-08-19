@@ -75,6 +75,14 @@ export type NodeCardProps = {
   selected: boolean;
   /** Whether a cable arrives at this card, which only the gateway says no to. */
   incoming: boolean;
+  /**
+   * Whether the cable a drag is carrying could land here, asked of the card it left.
+   *
+   * @summary Cards that take no cable leave it out and never light. The card asks rather than
+   * being told, because whether a landing is offered changes with every drag and nothing outside
+   * the flow re-renders when one begins.
+   */
+  takesCableFrom?: ((from: string) => boolean) | undefined;
   /** The outgoing port and its ask, or nothing where the flow ends at this card. */
   outgoing: OutgoingPort | undefined;
 };
@@ -169,6 +177,27 @@ function incomingSide(): ReactNode {
   );
 }
 
+/**
+ * What the cable in flight means for this one card: whether one hangs, and whether it could land.
+ *
+ * @summary Both readings come off one subscription, because a card that lit while its own plus
+ * still showed would offer two ways to bind the very thing the drag is already binding.
+ */
+function useCableInFlight(takesCableFrom: NodeCardProps['takesCableFrom']): {
+  pulling: boolean;
+  landing: boolean;
+} {
+  const pulledFrom = useConnection((connection) =>
+    connection.inProgress ? connection.fromNode.id : undefined,
+  );
+
+  if (pulledFrom === undefined) {
+    return { pulling: false, landing: false };
+  }
+
+  return { pulling: true, landing: takesCableFrom?.(pulledFrom) === true };
+}
+
 function cardFace(props: NodeCardProps): ReactNode {
   const { chipTint, kickerTint, chipGlyph, chipMark, kicker, badge, name, nameInk } = props;
   const { subtitle, subtitleInk, subtitleFace = 'mono', footnote } = props;
@@ -213,11 +242,14 @@ function cardFace(props: NodeCardProps): ReactNode {
  * targets are one design and drift the moment they are written twice. The outgoing port carries a
  * keyboard ask that paints only under keyboard focus, so a pointer only ever meets the cable and
  * the canvas stays clear of icons the drag already covers. The ask steps aside while a cable is in
- * flight, since the drag already asks for the very thing it would.
+ * flight, since the drag already asks for the very thing it would. Every card a cable in flight
+ * could land on lights at once, so a person pulling one reads where it may go before they get
+ * there rather than hunting for the one port that answers.
  */
 export function NodeCard(props: NodeCardProps) {
-  const dragging = useConnection((connection) => connection.inProgress);
+  const cable = useCableInFlight(props.takesCableFrom);
   const { tint, frame, shape = 'rounded', selected, incoming, outgoing } = props;
+  const { landing } = cable;
 
   return (
     <div className={`relative h-22 w-46 ${tint}`}>
@@ -225,13 +257,14 @@ export function NodeCard(props: NodeCardProps) {
       <button
         aria-pressed={selected}
         className={`${cardFrame} ${outlines[shape]} ${frame}`}
+        data-landing={landing || undefined}
         data-shape={shape}
         type="button"
       >
         {drawnFrame(shape)}
         {cardFace(props)}
       </button>
-      {outgoing === undefined ? null : outgoingSide(outgoing, dragging)}
+      {outgoing === undefined ? null : outgoingSide(outgoing, cable.pulling)}
     </div>
   );
 }

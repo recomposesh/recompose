@@ -72,13 +72,19 @@ describe('what the flow hands each card to stand on', () => {
   const asks = { onAddVirtualModel: () => {}, onBindFrom: () => {} };
 
   test('a card seats where the arrangement puts it', () => {
-    const seated = flowNodesOf(graph, { 'model:fast': { x: 320, y: 140 } }, undefined, asks);
+    const seated = flowNodesOf(
+      graph,
+      { 'model:fast': { x: 320, y: 140 } },
+      undefined,
+      asks,
+      () => false,
+    );
 
     expect(seated.find((node) => node.id === 'model:fast')?.position).toEqual({ x: 320, y: 140 });
   });
 
   test('a card the arrangement never seated stands at the origin rather than nowhere', () => {
-    const seated = flowNodesOf(graph, {}, undefined, asks);
+    const seated = flowNodesOf(graph, {}, undefined, asks, () => false);
 
     expect(seated.map((node) => node.position)).toEqual([
       { x: 0, y: 0 },
@@ -87,13 +93,13 @@ describe('what the flow hands each card to stand on', () => {
   });
 
   test('only the selected card reads as selected', () => {
-    const seated = flowNodesOf(graph, {}, 'model:fast', asks);
+    const seated = flowNodesOf(graph, {}, 'model:fast', asks, () => false);
 
     expect(seated.map((node) => node.selected)).toEqual([false, true]);
   });
 
   test('a card stands under its own kind, carrying the measure edges draw against', () => {
-    const seated = flowNodesOf(graph, {}, undefined, asks);
+    const seated = flowNodesOf(graph, {}, undefined, asks, () => false);
 
     expect(seated.map((node) => node.type)).toEqual(['gateway', 'virtual-model']);
     expect(seated.map((node) => ({ width: node.width, height: node.height }))).toEqual([

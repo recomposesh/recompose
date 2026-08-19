@@ -109,7 +109,7 @@
       editor
 - [ ] 9.2 The label pill on the cable opens the inline rename editor, and the rule press keeps
       its reveal
-- [ ] 9.3 Valid drop targets highlight while a cable drags
+- [x] 9.3 Valid drop targets highlight while a cable drags
 - [x] 9.4 The satellite drags with a persisted per-router offset, and tidy returns it to the
       default seat
 - [x] 9.5 An optional judge directive joins the policy and rides ahead of the compiled

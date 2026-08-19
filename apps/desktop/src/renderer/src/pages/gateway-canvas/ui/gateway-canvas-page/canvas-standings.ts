@@ -8,6 +8,7 @@ import type { NodePositions, XY } from '../../lib/canvas-positions';
 import type { CanvasGraph, CanvasOverlay } from '../../lib/node-graph';
 import type { HeldDraft } from '../../lib/use-held-draft';
 
+import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { heldOver } from '../../lib/canvas-positions';
 import { refusalFromMain } from '../../lib/model-draft';
 import { satellitesFollowTheirRouters, tidyPositions } from '../../lib/tidy-layout';
@@ -167,6 +168,21 @@ export type EscapeSettling = 'canvas' | 'nobody';
  */
 export function escapeSettling(holders: EscapeHolders): EscapeSettling {
   return holders.dragging || holders.editing || holders.dialogOpen ? 'nobody' : 'canvas';
+}
+
+/**
+ * Turns the canvas to one subject, which is the selection and the drawer moving together.
+ *
+ * @summary Every gesture that answers "look at this" reads here, so a card press, a cable press,
+ * and a birth all leave a person in the same place. An inspector already open stays open rather
+ * than toggling shut under a person who just asked to see something.
+ */
+export function revealOn(standings: CanvasStandings, subject: string): void {
+  standings.select(subject);
+
+  if (!inspectorOpen()) {
+    toggleInspector();
+  }
 }
 
 /** The account whose models the picker asks for, or none while it is asking something else. */

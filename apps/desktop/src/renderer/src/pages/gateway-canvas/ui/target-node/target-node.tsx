@@ -22,7 +22,7 @@ export type TargetNodeData = Extract<
 
 type TargetNodeProps = {
   /** What the card reads itself off, which is the node the graph derived for this column. */
-  data: TargetNodeData;
+  data: TargetNodeData & { takesCableFrom?: ((from: string) => boolean) | undefined };
   /** Whether the card stands selected, which is what rings it and puts the inspector on it. */
   selected: boolean;
 };
@@ -134,6 +134,7 @@ export function TargetNode({ data, selected }: TargetNodeProps) {
       subtitle={reading.subtitle}
       subtitleFace="prose"
       subtitleInk="text-ink-secondary"
+      takesCableFrom={data.takesCableFrom}
       tint={reading.tint}
     />
   );
