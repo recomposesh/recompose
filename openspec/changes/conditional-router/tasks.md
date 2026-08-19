@@ -32,7 +32,7 @@
 
 - [x] 3.1 Shape the constrained classification call per dialect, with forced tool use as the
       fallback channel
-- [ ] 3.2 Specify the timeout clock starting at dispatch through `AbortSignal.timeout`
+- [x] 3.2 Specify the timeout clock starting at dispatch through `AbortSignal.timeout`
 - [ ] 3.3 Inject `classifyBranch` from `gateway-proxy.ts` under the judge's own custody
 - [ ] 3.4 Specify the pin store's idle expiry, with the bound as a property law and its twin
 - [ ] 3.5 Specify the fingerprint preferring a client key and hashing only turn-stable content
