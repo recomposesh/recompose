@@ -1,47 +1,34 @@
-import { CornerDownRight, Repeat, X } from 'lucide-react';
+import { CornerDownRight, Repeat, Split } from 'lucide-react';
 
+import { ConditionalDiagram } from './conditional-diagram';
+import { FailoverDiagram } from './failover-diagram';
 import { ModeCard } from './mode-card';
+import { RoundRobinDiagram } from './round-robin-diagram';
 
 export function RouterModes() {
   return (
-    <div className="mt-6 grid gap-6 sm:grid-cols-2">
+    <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <ModeCard
         title="failover"
         icon={<CornerDownRight className="size-4 text-router" />}
         body="targets in order. the first one serves until it errors or hits a limit, then the next takes the same request."
       >
-        <svg aria-hidden="true" viewBox="0 0 596 120" className="size-full">
-          <rect x={180} y={24} width={200} height={10} rx={3} className="fill-down/40" />
-          <rect x={180} y={55} width={200} height={10} rx={3} className="fill-live" />
-          <rect x={180} y={86} width={200} height={10} rx={3} className="fill-stage-line" />
-          <path
-            d="M414 29 C414 52, 400 60, 388 60"
-            strokeWidth={2}
-            className="stroke-live"
-            fill="none"
-          />
-          <foreignObject x={386} y={20} width={16} height={16}>
-            <X className="size-3.5 text-down" />
-          </foreignObject>
-        </svg>
+        <FailoverDiagram />
       </ModeCard>
       <ModeCard
         title="round-robin"
         icon={<Repeat className="size-4 text-router" />}
         body="a pool of equals. each request goes to the next account in turn, so no single subscription burns out."
       >
-        <svg aria-hidden="true" viewBox="0 0 596 120" className="size-full">
-          <circle cx={298} cy={60} r={38} className="stroke-wire" strokeWidth={2} fill="none" />
-          <circle cx={298} cy={22} r={5} className="fill-gateway" />
-          <circle cx={265} cy={81} r={5} className="fill-virtual-model" />
-          <circle cx={331} cy={81} r={5} className="fill-subscription" />
-          <path
-            d="M322 42 L332 30 M332 30 l-6 0 M332 30 l1 7"
-            strokeWidth={2}
-            className="stroke-live"
-            fill="none"
-          />
-        </svg>
+        <RoundRobinDiagram />
+      </ModeCard>
+      <ModeCard
+        title="conditional"
+        icon={<Split className="size-4 text-router" />}
+        body="the right model for each request. a judge reads it and picks who answers."
+        className="sm:col-span-2 lg:col-span-1"
+      >
+        <ConditionalDiagram />
       </ModeCard>
     </div>
   );

@@ -6,6 +6,7 @@
     "virtual-models",
     "failover",
     "round-robin",
+    "conditional",
     "chaining-routers",
     "recipes"
   ]

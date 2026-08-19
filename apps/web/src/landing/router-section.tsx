@@ -11,7 +11,8 @@ export function RouterSection() {
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-stage-dim md:text-lg">
           failover tries the next target the moment one stumbles. a round-robin pool spreads the day
-          across accounts. clients never see either.
+          across accounts. conditional sends each request to the model that fits it best. clients
+          never see any of it.
         </p>
 
         <FailoverStrip />
