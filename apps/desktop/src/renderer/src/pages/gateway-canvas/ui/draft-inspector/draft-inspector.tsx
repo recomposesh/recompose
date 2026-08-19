@@ -4,10 +4,9 @@ import type { ReactNode, RefObject } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
-import type { BoundKind } from '../../lib/binding-kinds';
 import type { SettledDefinition } from '../../lib/model-draft';
-import type { RouterMode } from '../../lib/routing-edits';
 import type { OptionGroup } from '../option-list/option-list';
+import type { JudgePick } from '../routing-picker/routing-picker';
 
 import {
   accountsQueryOptions,
@@ -20,13 +19,13 @@ import {
   BORN_ROUTER_MODE,
   draftFilledIn,
   emptyDefinition,
-  idFollowingName,
   modelListReading,
   servesPreview,
 } from '../../lib/model-draft';
 import { targetGroups } from '../../lib/target-groups';
 import { editDraft, useHeldDraft } from '../../lib/use-held-draft';
 import { ModelFields } from '../model-fields/model-fields';
+import { draftEdits, judgeAccountOf, judgePick } from './draft-edits';
 import { useDraftSaving } from './use-draft-saving';
 
 type DraftInspectorProps = {
@@ -133,50 +132,8 @@ type DraftFieldsView = {
   attempted: boolean;
   nameField: RefObject<HTMLInputElement | null>;
   edited: (next: SettledDefinition) => void;
+  judge: JudgePick;
 };
-
-/**
- * Every edit the fields can make, each one written back to the held draft as a whole definition.
- *
- * @summary Answering the binding ask again clears the account and the model, because a person who
- * walked back to that question is choosing a different shape and a target left standing under a
- * router would reach storage as a binding nobody asked for.
- */
-function draftEdits(definition: SettledDefinition, edited: (next: SettledDefinition) => void) {
-  return {
-    onIdChange: (typed: string) => {
-      edited({ ...definition, id: typed });
-    },
-    onNameChange: (typed: string) => {
-      edited({
-        ...definition,
-        displayName: typed,
-        id: idFollowingName(definition.displayName, typed, definition.id),
-      });
-    },
-    onPickKind: (kind: BoundKind) => {
-      edited({ ...definition, bindsThrough: kind, accountId: '', providerModel: '' });
-    },
-    onPickModel: (picked: string) => {
-      edited({ ...definition, providerModel: picked });
-    },
-    onPickTarget: (picked: string) => {
-      edited({ ...definition, accountId: picked, providerModel: '' });
-    },
-    onReopenKind: () => {
-      edited({ ...definition, bindsThrough: undefined, accountId: '', providerModel: '' });
-    },
-    onRouterModeChange: (mode: RouterMode) => {
-      edited({ ...definition, routerMode: mode });
-    },
-    onRouterNameChange: (typed: string) => {
-      edited({ ...definition, routerName: typed });
-    },
-    onSelectDifferentProvider: () => {
-      edited({ ...definition, accountId: '', providerModel: '' });
-    },
-  };
-}
 
 function draftFields(view: DraftFieldsView): ReactNode {
   const { definition } = view;
@@ -187,6 +144,7 @@ function draftFields(view: DraftFieldsView): ReactNode {
     onPickModel,
     onPickTarget,
     onReopenKind,
+    onReopenRouterMode,
     onRouterModeChange,
     onRouterNameChange,
     onSelectDifferentProvider,
@@ -200,6 +158,7 @@ function draftFields(view: DraftFieldsView): ReactNode {
         view.attempted,
         idRefusal(definition.id, view.gateway.virtualModels),
       )}
+      judge={view.judge}
       models={view.models.offered}
       modelRefusal={view.models.refusal}
       name={definition.displayName}
@@ -211,6 +170,7 @@ function draftFields(view: DraftFieldsView): ReactNode {
       onPickModel={onPickModel}
       onPickTarget={onPickTarget}
       onReopenKind={onReopenKind}
+      onReopenRouterMode={onReopenRouterMode}
       onRouterModeChange={onRouterModeChange}
       onRouterNameChange={onRouterNameChange}
       onSelectDifferentProvider={onSelectDifferentProvider}
@@ -237,6 +197,7 @@ export function DraftInspector({ gateway, onDefined }: DraftInspectorProps) {
   const registry = useQuery(accountsQueryOptions);
   const definition = held?.definition ?? emptyDefinition();
   const models = useOfferedModels(definition.accountId);
+  const judgeModels = useOfferedModels(judgeAccountOf(definition));
   const saving = useDraftSaving(gateway, definition, onDefined);
   const nameField = useRef<HTMLInputElement>(null);
   const newlyAdded = untouchedDefinition(definition);
@@ -255,6 +216,7 @@ export function DraftInspector({ gateway, onDefined }: DraftInspectorProps) {
 
   const offered = registry.data === undefined ? undefined : targetGroups(registry.data.accounts);
   const picked = draftTargetsOf(definition, offered);
+  const judgeName = nameOfPicked(offered ?? [], judgeAccountOf(definition));
 
   return (
     <>
@@ -267,6 +229,7 @@ export function DraftInspector({ gateway, onDefined }: DraftInspectorProps) {
           attempted: saving.attempted,
           nameField,
           edited,
+          judge: judgePick(definition, edited, judgeModels, judgeName),
         })}
       </div>
       {servesLine(

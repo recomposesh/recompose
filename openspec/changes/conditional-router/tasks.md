@@ -54,7 +54,7 @@
 - [ ] 4.7 The branch rule sheet lands with the shared textarea primitive and their stories
 - [ ] 4.8 Row delete lands in the `ContextMenu` confirmed through `ConsequenceDialog`, naming the
       else cost
-- [ ] 4.9 Draft fields, the routing picker, and general info offer the conditional mode
+- [x] 4.9 Draft fields, the routing picker, and general info offer the conditional mode
 - [ ] 4.10 Every touched component's stories land, then the browser pass covers both schemes
 
 ## 5. The canvas cluster
