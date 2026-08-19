@@ -32,6 +32,7 @@ import { CanvasMinimap } from '../canvas-minimap/canvas-minimap';
 import { CanvasZoomControls } from '../canvas-zoom-controls/canvas-zoom-controls';
 import { DraftModelNode } from '../draft-model-node/draft-model-node';
 import { GatewayNode } from '../gateway-node/gateway-node';
+import { JudgeSatellite } from '../judge-satellite/judge-satellite';
 import { RouterNode } from '../router-node/router-node';
 import { TargetNode } from '../target-node/target-node';
 import { VirtualModelNode } from '../virtual-model-node/virtual-model-node';
@@ -74,6 +75,7 @@ const nodeTypes: NodeTypes = {
   'virtual-model': VirtualModelNode,
   'draft-model': DraftModelNode,
   router: RouterNode,
+  judge: JudgeSatellite,
   target: TargetNode,
   'ghost-target': TargetNode,
   'pending-target': TargetNode,

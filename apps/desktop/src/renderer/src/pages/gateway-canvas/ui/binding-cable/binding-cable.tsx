@@ -8,11 +8,13 @@ import type { CableFailure } from '../../lib/node-graph';
 import {
   branchIn,
   CABLE_GRAB_SPAN,
+  drawnAsATie,
   failureIn,
   pointAlongCable,
   pulseForStanding,
   RULE_PILL_ANCHOR,
   strokeForStanding,
+  TIE_DASH,
   tintForStanding,
 } from '../../lib/cable-standing';
 import { CableBranchPill } from '../cable-branch-pill/cable-branch-pill';
@@ -49,6 +51,10 @@ function cableClasses(carried: unknown, chosen: boolean): string {
   const width = chosen ? 'binding-cable-selected' : 'binding-cable';
 
   return `${width} ${strokeForStanding(carried)}`;
+}
+
+function tieDashing(edgeId: string): { strokeDasharray: string } | undefined {
+  return drawnAsATie(edgeId) ? { strokeDasharray: TIE_DASH } : undefined;
 }
 
 function halo(drawn: string, stroke: string): ReactNode {
@@ -123,8 +129,9 @@ function branchDrawn(
  * binding sends a pulse down its line, and a failed one stands its last error on the path, for the
  * person who wants the reason rather than the color. A cable a judge decides carries its branch
  * earlier along the same path, so the rule and the error each keep a place of their own rather than
- * stacking on the midpoint. Every line stays whole either way, because a
+ * stacking on the midpoint. Every line carrying a request stays whole either way, because a
  * break in the drawing would claim a break in the wire, so the pulse is the only thing that moves.
+ * The one line that does break is the tie to a judge, which carries no request at all and says so.
  * A selected cable widens and takes the halo the selected node card wears, a crisp ring inside a
  * soft bloom, so selection reads the same whichever a person pressed, and the halo never pulses,
  * because a bloom in motion says nothing the cable inside it has not said already. Both ends then
@@ -151,6 +158,7 @@ export function BindingCable(cable: EdgeProps): ReactElement {
         className={cableClasses(carried, chosen)}
         interactionWidth={cable.interactionWidth ?? CABLE_GRAB_SPAN}
         path={drawn}
+        style={tieDashing(cable.id)}
       />
       {pulse(drawn, strokeForStanding(carried), pulseForStanding(carried))}
       {chosen ? grabEnds(cable, tintForStanding(carried)) : null}

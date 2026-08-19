@@ -19,6 +19,7 @@ import {
   modelNodeId,
   outcomeInto,
   structuralWire,
+  tieOnto,
 } from './canvas-cables';
 import { routeCard } from './canvas-cards';
 import { addressName } from './route-addresses';
@@ -58,6 +59,8 @@ function seatedCards(model: VirtualModel, registry: Registry): readonly SeatedCa
     const placed = {
       modelId: model.id,
       name: addressName(model.id, walked.routeNodeId, entry),
+      parentName:
+        walked.parent === undefined ? undefined : addressName(model.id, walked.parent, entry),
       walked,
     };
 
@@ -104,7 +107,9 @@ function routedCards(
     painted,
   );
   const edges = seated.map(({ placed, card }) =>
-    cableInto(placed, card, outcomeOnto(placed, painted, throughRouters), model.routing.entry),
+    placed.walked.advises === undefined
+      ? cableInto(placed, card, outcomeOnto(placed, painted, throughRouters))
+      : tieOnto(placed, card),
   );
 
   return {

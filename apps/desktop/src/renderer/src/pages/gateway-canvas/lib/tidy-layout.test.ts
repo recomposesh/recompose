@@ -1,11 +1,8 @@
-import type { Account, GatewayConfig } from '@recompose/contracts';
+import type { GatewayConfig } from '@recompose/contracts';
 
-import { fc, test as propertyTest } from '@fast-check/vitest';
+import { test as propertyTest } from '@fast-check/vitest';
 import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
-
-import type { NodePositions, XY } from './canvas-positions';
-import type { CanvasNode, CanvasNodeKind } from './node-graph';
 
 import { canvasGraph } from './node-graph';
 import {
@@ -16,109 +13,16 @@ import {
   seatForNewNode,
   tidyPositions,
 } from './tidy-layout';
-
-const work: Account = {
-  id: 'a1',
-  provider: 'anthropic',
-  kind: 'subscription',
-  provenance: 'sign-in',
-  label: 'Work',
-};
-
-const nodeOfKind: Record<CanvasNodeKind, (id: string) => CanvasNode> = {
-  gateway: (id) => ({ id, kind: 'gateway', displayName: 'Codex', port: 8397 }),
-  'virtual-model': (id) => ({
-    id,
-    kind: 'virtual-model',
-    modelId: 'fast',
-    displayName: 'Fast',
-    providerModel: 'claude-sonnet-5',
-  }),
-  target: (id) => ({
-    id,
-    kind: 'target',
-    account: work,
-    modelId: 'fast',
-    providerModel: 'claude-sonnet-5',
-    routeNodeId: id,
-    depth: 0,
-  }),
-  'ghost-target': (id) => ({
-    id,
-    kind: 'ghost-target',
-    accountId: 'a2',
-    modelId: 'slow',
-    routeNodeId: id,
-    depth: 0,
-  }),
-  router: (id) => ({
-    id,
-    kind: 'router',
-    modelId: 'fast',
-    routeNodeId: id,
-    depth: 0,
-    mode: 'failover',
-    displayName: undefined,
-    childCount: 2,
-  }),
-  'draft-model': (id) => ({ id, kind: 'draft-model', modelId: '', displayName: '' }),
-  'pending-target': (id) => ({ id, kind: 'pending-target' }),
-};
-
-const columnRank: Record<CanvasNodeKind, number> = {
-  gateway: 0,
-  'virtual-model': 1,
-  'draft-model': 1,
-  target: 2,
-  'ghost-target': 2,
-  router: 2,
-  'pending-target': 2,
-};
-
-const anyCanvas = fc.array(
-  fc.constantFrom<CanvasNodeKind>(
-    'gateway',
-    'virtual-model',
-    'target',
-    'ghost-target',
-    'router',
-    'draft-model',
-    'pending-target',
-  ),
-  { maxLength: 12 },
-);
-
-function seatAt(seats: NodePositions, id: string): XY {
-  const seat = seats[id];
-
-  if (seat === undefined) {
-    throw new Error(`the arrangement seats nothing under "${id}"`);
-  }
-
-  return seat;
-}
-
-function canvasOf(kinds: readonly CanvasNodeKind[]): readonly CanvasNode[] {
-  return kinds.map((kind, index) => nodeOfKind[kind](`${kind}-${String(index)}`));
-}
-
-function columnStep(): number {
-  const seats = tidyPositions(canvasOf(['gateway', 'virtual-model']));
-
-  return seatAt(seats, 'virtual-model-1').x - seatAt(seats, 'gateway-0').x;
-}
-
-function oneRouterDeep(id: string, depth: number): CanvasNode {
-  return {
-    id,
-    kind: 'target',
-    account: work,
-    modelId: 'fast',
-    providerModel: 'claude-sonnet-5',
-    routeNodeId: id,
-    depth,
-  };
-}
+import {
+  anyCanvas,
+  canvasOf,
+  columnRank,
+  columnStep,
+  nodeOfKind,
+  oneRouterDeep,
+  seatAt,
+  work,
+} from './tidy-layout.testkit';
 
 test('the gateway seats at the origin, which is the leading edge every column reads from', () => {
   expect(seatAt(tidyPositions(canvasOf(['gateway'])), 'gateway-0')).toEqual({ x: 0, y: 0 });

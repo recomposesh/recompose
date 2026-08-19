@@ -15,6 +15,8 @@ export type WalkedRouteNode = {
   parent: string | undefined;
   /** The branch the parent reaches this node by, or nothing where no judge decides. */
   branch: BranchSeat | undefined;
+  /** The router this node judges for, or nothing wherever it stands as a child instead. */
+  advises: string | undefined;
 };
 
 /**
@@ -54,11 +56,35 @@ function branchSeatsOf(node: RouteNode): ReadonlyMap<string, BranchSeat> {
   return seats;
 }
 
+function judgeBeside(routing: Routing, walked: WalkedRouteNode): WalkedRouteNode | undefined {
+  const judge = judgedPolicyOf(walked.node)?.judge;
+  const node = judge === undefined ? undefined : routing.nodes[judge];
+
+  if (judge === undefined || node === undefined) {
+    return undefined;
+  }
+
+  return {
+    routeNodeId: judge,
+    node,
+    depth: walked.depth,
+    parent: walked.routeNodeId,
+    branch: undefined,
+    advises: walked.routeNodeId,
+  };
+}
+
 function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRouteNode[]): void {
   into.push(walked);
 
   if (walked.node.kind !== 'router') {
     return;
+  }
+
+  const advisor = judgeBeside(routing, walked);
+
+  if (advisor !== undefined) {
+    into.push(advisor);
   }
 
   const seats = branchSeatsOf(walked.node);
@@ -75,6 +101,7 @@ function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRout
           depth: walked.depth + 1,
           parent: walked.routeNodeId,
           branch: seats.get(childId),
+          advises: undefined,
         },
         into,
       );
@@ -92,6 +119,11 @@ function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRout
  * the column derives from, so a node one router down stands one pitch further out. A child naming
  * no node in the table adds nothing, because the stored shape refuses that table at parse and a
  * card standing for nothing would say a binding exists where none does.
+ *
+ * A conditional router's judge follows the router it advises and stands at the router's own depth,
+ * because it advises rather than answers: it takes no column of its own and no request travels to
+ * it. It carries the router it advises, which is how every reader tells an advisor from a child
+ * without looking the policy up again.
  */
 export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
   const entry = routing.nodes[routing.entry];
@@ -104,7 +136,14 @@ export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
 
   walkSubtree(
     routing,
-    { routeNodeId: routing.entry, node: entry, depth: 0, parent: undefined, branch: undefined },
+    {
+      routeNodeId: routing.entry,
+      node: entry,
+      depth: 0,
+      parent: undefined,
+      branch: undefined,
+      advises: undefined,
+    },
     walked,
   );
 
@@ -117,11 +156,13 @@ export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
  * @summary A reader needing one account and one real model asks the ladder what it tries first,
  * because that is the target a request meets before any failure moves it along. A table holding no
  * target at all answers nothing, so a router a person has not filled yet reads as incomplete rather
- * than as bound to something.
+ * than as bound to something. A judge is never that target however early it stands in the walk: no
+ * request is routed to it, so a reading of what a model answers with must never name it and no
+ * count of what a model costs may bill it.
  */
 export function firstDeclaredTarget(routing: Routing): RouteTarget | undefined {
   for (const walked of walkedRouteNodes(routing)) {
-    if (walked.node.kind === 'target') {
+    if (walked.node.kind === 'target' && walked.advises === undefined) {
       return walked.node;
     }
   }

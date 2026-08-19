@@ -9,7 +9,7 @@ import type { RouteAddress } from '../../lib/route-addresses';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
 import { routeNodeIn, addressUnder, addressWritten } from '../../lib/route-addresses';
-import { CARD_MEASURE } from '../../lib/tidy-layout';
+import { CARD_MEASURE, SATELLITE_MEASURE } from '../../lib/tidy-layout';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
@@ -209,7 +209,7 @@ export function flowNodesOf(
     position: seats[node.id] ?? { x: 0, y: 0 },
     data: askedData(node, asks),
     selected: node.id === selection,
-    ...CARD_MEASURE,
+    ...(node.kind === 'judge' ? SATELLITE_MEASURE : CARD_MEASURE),
   }));
 }
 
@@ -229,6 +229,7 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
     source: edge.source,
     target: edge.target,
     type: 'cable',
+    sourceHandle: edge.sourceHandle ?? null,
     data: { standing: edge.standing, failure: edge.failure, branch: edge.branch },
     selected: edge.id === selection,
     ...(bindingCableId(edge.id) === undefined

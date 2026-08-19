@@ -1,7 +1,11 @@
+import type { ReactNode } from 'react';
+
 import { nameOfRouter } from '@recompose/contracts';
+import { Handle, Position } from '@xyflow/react';
 
 import type { CanvasNode } from '../../lib/node-graph';
 
+import { JUDGE_SHOULDER_PORT } from '../../lib/canvas-cables';
 import { NodeCard } from '../node-card/node-card';
 import { childTally } from './router-reading';
 
@@ -29,27 +33,52 @@ type RouterNodeProps = {
  * A router holding no child dashes the way a removed target does, because the canvas says
  * incomplete at compose time rather than waiting for a request to refuse.
  */
+/**
+ * The port the judge's tie leaves a conditional router by, which is its shoulder.
+ *
+ * @summary It answers no drag at all: a judge is bound in the inspector rather than pulled out of
+ * the card, and a port that started a cable here would let a person ladder a child off the very
+ * anchor that says advisor.
+ */
+function shoulderPort(): ReactNode {
+  return (
+    <Handle
+      className="z-1 flex size-hit-target items-center justify-center bg-transparent"
+      id={JUDGE_SHOULDER_PORT}
+      isConnectable={false}
+      isConnectableStart={false}
+      position={Position.Top}
+      type="source"
+    >
+      <span aria-hidden className="port-dot" data-bound />
+    </Handle>
+  );
+}
+
 export function RouterNode({ data, selected }: RouterNodeProps) {
   const { mode, displayName, childCount, onAddChild } = data;
   const incomplete = childCount === 0;
 
   return (
-    <NodeCard
-      chipGlyph="branch"
-      chipMark={undefined}
-      chipTint="text-router"
-      frame={incomplete ? 'node-card-drafted' : ''}
-      incoming
-      kicker="Router"
-      kickerTint="text-router-ink"
-      name={nameOfRouter(mode, displayName)}
-      nameInk="text-ink"
-      outgoing={{ bound: !incomplete, ask: 'Add a child', onAsk: onAddChild }}
-      selected={selected}
-      shape="chamfered"
-      subtitle={displayName === undefined ? childTally(childCount) : mode}
-      subtitleInk="text-ink-secondary"
-      tint="node-tint-router"
-    />
+    <>
+      <NodeCard
+        chipGlyph="branch"
+        chipMark={undefined}
+        chipTint="text-router"
+        frame={incomplete ? 'node-card-drafted' : ''}
+        incoming
+        kicker="Router"
+        kickerTint="text-router-ink"
+        name={nameOfRouter(mode, displayName)}
+        nameInk="text-ink"
+        outgoing={{ bound: !incomplete, ask: 'Add a child', onAsk: onAddChild }}
+        selected={selected}
+        shape="chamfered"
+        subtitle={displayName === undefined ? childTally(childCount) : mode}
+        subtitleInk="text-ink-secondary"
+        tint="node-tint-router"
+      />
+      {mode === 'conditional' ? shoulderPort() : null}
+    </>
   );
 }

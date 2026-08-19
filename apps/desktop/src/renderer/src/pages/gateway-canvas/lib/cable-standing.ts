@@ -17,6 +17,22 @@ const CAPTION_ADVANCE = 6;
 /** How many characters a rule pill prints before it cuts, sized by the span a cable crosses. */
 export const RULE_PILL_CHARACTERS = Math.floor((CABLE_SPAN - PILL_PADDING) / CAPTION_ADVANCE);
 
+/** The dash rhythm a tie draws with, which is the one the dashed card frames already keep. */
+export const TIE_DASH = 'var(--spacing-node-dash) var(--spacing-node-dash-gap)';
+
+const TIE_PREFIX = 'tie:';
+
+/**
+ * Whether one drawn line is the tie between a router and its judge rather than a binding.
+ *
+ * @summary A tie says a node advises rather than answers, so it breaks into dashes where every
+ * binding stays whole, and it reads that off the id the graph gave it rather than off data an edge
+ * can lose. The map asks the same question, so a judge is never an orphan there either.
+ */
+export function drawnAsATie(edgeId: string): boolean {
+  return edgeId.startsWith(TIE_PREFIX);
+}
+
 const standingStroke: Record<CableStanding, string> = {
   resting: 'stroke-cable-resting',
   live: 'stroke-cable-live',
