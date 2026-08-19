@@ -1,7 +1,9 @@
 ---
 tier: full
-phase: design
+phase: implementation
 approvals:
   - design-document
+  - solution-design
+  - gherkin
 branch: worktree-conditional-router
 ---
