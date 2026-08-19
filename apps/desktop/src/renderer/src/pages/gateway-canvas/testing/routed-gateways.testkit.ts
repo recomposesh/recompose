@@ -2,6 +2,7 @@ import type {
   Account,
   AccountsDocument,
   GatewayConfig,
+  RouteNode,
   Routing,
   VirtualModel,
 } from '@recompose/contracts';
@@ -82,6 +83,33 @@ const emptyRouterGateway: GatewayConfig = pooledSeed({
   r1: { kind: 'router', policy: { mode: 'failover' }, children: [] },
 });
 
+/**
+ * A router a judge decides: one worded branch, an else child, and the judge the policy names.
+ *
+ * @summary The canvas scenarios stand it on a gateway and the inspector stories stand it on their
+ * own model, so the policy is written once rather than drifting between the two surfaces.
+ */
+export const judgedRouter = {
+  kind: 'router',
+  policy: {
+    mode: 'conditional',
+    judge: 'j1',
+    branches: [{ label: 'code', rule: 'questions about source code', child: 't1' }],
+    elseChild: 't2',
+    judgeBoundMs: 3000,
+    rejudgeEveryRequest: false,
+  },
+  children: ['t1', 't2'],
+} as const satisfies RouteNode;
+
+/** A pool that judge decides, standing beside the judge target its policy names. */
+const judgedGateway: GatewayConfig = pooledSeed({
+  r1: judgedRouter,
+  t1: HAIKU,
+  t2: GPT,
+  j1: HAIKU,
+});
+
 /** The pooled composition as a whole bridge seeding, which every router scenario opens on. */
 export const pooledWorld = {
   accounts: storedAccounts,
@@ -100,5 +128,12 @@ export const nestedWorld = {
 export const emptyRouterWorld = {
   accounts: storedAccounts,
   gateways: [emptyRouterGateway],
+  providerModels: listedModels,
+};
+
+/** The judged composition as a whole bridge seeding, for the scenarios about leaving conditional. */
+export const judgedWorld = {
+  accounts: storedAccounts,
+  gateways: [judgedGateway],
   providerModels: listedModels,
 };

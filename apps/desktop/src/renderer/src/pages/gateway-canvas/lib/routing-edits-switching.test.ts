@@ -11,7 +11,7 @@ import {
   switchReordering,
   switchRuling,
 } from './conditional-draft';
-import { gatewayRoutingThrough } from './routing-edits';
+import { gatewayRoutingThrough, gatewaySwitching } from './routing-edits';
 import { gatewaySwitchingToConditional } from './routing-edits-conditional';
 import { childrenOf, codex, ladderOfThree, policyOf, routingOf } from './routing-edits.testkit';
 
@@ -137,4 +137,34 @@ test('a judge under an id a child already answers to stores nothing, so no walk 
   expect(
     gatewaySwitchingToConditional(three, 'fast', routerId, onAChild, wholeSwitch(children)),
   ).toEqual(three);
+});
+
+test('switching a conditional router back to failover keeps its children in declared order', () => {
+  const { switched, routerId, children } = switchedLadder();
+  const spread = gatewaySwitching(switched, 'fast', routerId, 'failover');
+
+  expect(childrenOf(routingOf(spread), routerId)).toEqual(children);
+  expect(policyOf(routingOf(spread), routerId)).toEqual({ mode: 'failover' });
+});
+
+test('switching a conditional router to round-robin takes the same children the same way', () => {
+  const { switched, routerId, children } = switchedLadder();
+  const spread = gatewaySwitching(switched, 'fast', routerId, 'round-robin');
+
+  expect(childrenOf(routingOf(spread), routerId)).toEqual(children);
+  expect(policyOf(routingOf(spread), routerId)).toEqual({ mode: 'round-robin' });
+});
+
+test('the judge leaves the table with the wording, since no policy would reference it', () => {
+  const { switched, routerId } = switchedLadder();
+  const spread = gatewaySwitching(switched, 'fast', routerId, 'failover');
+
+  expect(routingOf(spread).nodes['j9']).toBeUndefined();
+});
+
+test('a router switched away from conditional stands as a table the stored shape will serve', () => {
+  const { switched, routerId } = switchedLadder();
+  const spread = gatewaySwitching(switched, 'fast', routerId, 'failover');
+
+  expect(routingSchema.safeParse(routingOf(spread)).success).toBe(true);
 });

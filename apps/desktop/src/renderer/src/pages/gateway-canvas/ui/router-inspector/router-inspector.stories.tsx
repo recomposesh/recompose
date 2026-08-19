@@ -9,6 +9,7 @@ import type { StoredRouter } from './router-inspector';
 import { gatewaySeed } from '../../../../shared/testing';
 import { pushingPins } from '../../testing/branch-pins.testkit';
 import { servingBridgeWorld, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import { judgedRouter } from '../../testing/routed-gateways.testkit';
 import { pickedFromTheRowMenu } from '../../testing/router-child.testkit';
 import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { RouterInspector } from './router-inspector';
@@ -92,18 +93,7 @@ export const RoundRobinNamesThePromptCacheCost = meta.story({
   },
 });
 
-const judging: StoredRouter = {
-  kind: 'router',
-  policy: {
-    mode: 'conditional',
-    judge: 'j1',
-    branches: [{ label: 'code', rule: 'questions about source code', child: 't1' }],
-    elseChild: 't2',
-    judgeBoundMs: 3000,
-    rejudgeEveryRequest: false,
-  },
-  children: ['t1', 't2'],
-};
+const judging: StoredRouter = judgedRouter;
 
 const rejudging: StoredRouter = {
   ...judging,
@@ -166,6 +156,27 @@ const emptyRouter = {
   },
   router: childless,
 };
+
+/**
+ * Pressing a spreading mode on a judged router asks before it writes, and takes no for an answer.
+ *
+ * @summary The wording a person composed branch by branch has no second copy anywhere and the
+ * judge leaves with it, so the press asks first and the rows snap back where they refuse.
+ */
+export const LeavingConditionalAsksFirst = meta.story({
+  args: { model: pooled(judging, true), router: judging },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('radio', { name: 'Failover' }));
+
+    await expect(screen.getByRole('dialog')).toHaveTextContent(/labels and rules go/);
+    await expect(screen.getByRole('dialog')).toHaveTextContent(/judge goes with them/);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await expect(screen.queryByRole('dialog')).toBeNull();
+    await expect(await canvas.findByRole('radio', { name: 'Conditional' })).toBeChecked();
+  },
+});
 
 /**
  * A router holding no child cannot be switched to conditional, and the row says why.

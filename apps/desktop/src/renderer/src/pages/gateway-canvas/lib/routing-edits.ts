@@ -8,7 +8,7 @@ import type {
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
-import { namedByAPolicyAbove, nodeWithout } from './conditional-policy';
+import { conditionalIn, namedByAPolicyAbove, nodeWithout } from './conditional-policy';
 
 /** Which of the shipped ways a router spreads the requests reaching it. */
 export type RouterMode = RouterPolicy['mode'];
@@ -268,6 +268,9 @@ export function gatewayNamingRouter(
  *
  * @summary The mode is the whole of what a router decides, so switching it leaves the children and
  * their order exactly as they stood: a person trying the other mode is not rebuilding the ladder.
+ * A router leaving conditional loses its judge as well as its wording, because the policy was the
+ * only thing naming that node and a target no reference reaches is a table the stored shape
+ * refuses: left behind, the whole write bounces and the mode never moves at all.
  */
 export function gatewaySwitching(
   gateway: GatewayConfig,
@@ -275,7 +278,10 @@ export function gatewaySwitching(
   routerId: string,
   mode: SpreadingMode,
 ): GatewayConfig {
-  return routedBy(gateway, modelId, (was) =>
-    routerEdited(was, routerId, (router) => ({ ...router, policy: { mode } })),
-  );
+  return routedBy(gateway, modelId, (was) => {
+    const advisor = conditionalIn(was.nodes[routerId])?.judge;
+    const spread = routerEdited(was, routerId, (router) => ({ ...router, policy: { mode } }));
+
+    return advisor === undefined ? spread : tableWithout(spread, new Set([advisor]));
+  });
 }

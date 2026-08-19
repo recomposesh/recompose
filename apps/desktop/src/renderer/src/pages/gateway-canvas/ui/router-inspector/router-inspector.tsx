@@ -1,18 +1,17 @@
 import type { Account, GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { mintRouteNodeId } from '@recompose/contracts';
+import { mintRouteNodeId, nameOfRouter } from '@recompose/contracts';
 import { useState } from 'react';
 
 import type { ConditionalSwitch } from '../../lib/conditional-draft';
 import type { BranchWording, ConditionalPolicy } from '../../lib/conditional-policy';
 import type { ModelListReading } from '../../lib/model-draft';
-import type { RouterMode } from '../../lib/routing-edits';
+import type { SpreadingMode } from '../../lib/routing-edits';
 import type { RouterChild } from '../router-child-list/router-child';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
 import { useBranchPinsAt } from '../../lib/branch-pins';
-import { switchOpenedOn } from '../../lib/conditional-draft';
 import { conditionalIn } from '../../lib/conditional-policy';
 import { gatewayDroppingNode, gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
 import {
@@ -23,7 +22,9 @@ import {
 import { useOfferedModels } from '../../lib/use-offered-models';
 import { BranchEditor } from '../branch-editor/branch-editor';
 import { JudgeSection } from '../judge-section/judge-section';
-import { ModeRows } from '../mode-rows/mode-rows';
+import { useLeavingConditional } from '../leaving-conditional/use-leaving-conditional';
+import { modePicking } from '../mode-rows/mode-picking';
+import { ModeSection } from '../mode-section/mode-section';
 import { RejudgeToggle } from '../rejudge-toggle/rejudge-toggle';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
@@ -33,9 +34,6 @@ import { routerChildRows } from './router-child-rows';
 
 /** What a router node the inspector speaks for stands as, which is the stored router arm. */
 export type StoredRouter = Extract<RouteNode, { kind: 'router' }>;
-
-const A_SWITCH_WOULD_NEED =
-  'Conditional needs a judge and an else branch. Compose one when you add the virtual model.';
 
 type RouterInspectorProps = {
   /** The stored gateway holding the routing, which every router edit rewrites as a whole. */
@@ -51,37 +49,6 @@ type RouterInspectorProps = {
   /** Receives the card a person opened from the ladder, which turns the drawer to that child. */
   onSelectNode: (nodeId: string) => void;
 };
-
-/**
- * Why this router cannot be switched to conditional, or nothing where it can.
- *
- * @summary A router holding no child has nothing to branch on: the mode's stored policy names an
- * else child among the children, so a switch would have to invent a binding nobody made. A router
- * that already holds children can be switched, which is what the definition the row opens is for.
- */
-function switchReasons(router: StoredRouter): Partial<Record<RouterMode, string>> {
-  return router.children.length === 0 ? { conditional: A_SWITCH_WOULD_NEED } : {};
-}
-
-/**
- * How a router spreads, offered as rows that each carry the cost of standing in that mode.
- *
- * @summary The sentence rides inside each row rather than under the control, so a person reads
- * what a mode costs before choosing it rather than after landing on the one they already picked.
- * Three modes also outgrow a strip in the narrowest panel, where the longest name wraps.
- */
-function modeSection(
-  router: StoredRouter,
-  mode: RouterMode,
-  onPick: (mode: RouterMode) => void,
-): ReactNode {
-  return (
-    <>
-      {sectionHeading('Mode')}
-      <ModeRows inertReasons={switchReasons(router)} onChangeValue={onPick} value={mode} />
-    </>
-  );
-}
 
 type StoredView = {
   props: RouterInspectorProps;
@@ -218,6 +185,7 @@ function ladderEdits(props: RouterInspectorProps, onRewrite: (next: GatewayConfi
  * under round-robin it names the prompt-cache cost of rotation at the point of choice, because
  * that cost is the reason to weigh one mode against the other. Switching the mode leaves the
  * children and their order exactly as they stood, so trying the other mode is never a rebuild.
+ * Leaving conditional is the one switch that costs something, and it asks before it takes it.
  *
  * A conditional router carries two more decisions between the mode and the children: how often it
  * asks its judge, and which judge it asks. Both stand above the ladder, because both change what
@@ -231,27 +199,28 @@ export function RouterInspector(props: RouterInspectorProps) {
   const offered = useOfferedModels(picking ?? '');
   const mode = router.policy.mode;
   const policy = conditionalIn(router);
-  const pins = useBranchPinsAt({
-    slug: gateway.slug,
-    virtualModel: model.id,
-    routeNode: routeNodeId,
-  });
+  const pinsAt = { slug: gateway.slug, virtualModel: model.id, routeNode: routeNodeId };
+  const pins = useBranchPinsAt(pinsAt);
 
   const onRewrite = (next: GatewayConfig): void => {
     rewrite.mutate(next);
   };
 
+  const spread = (next: SpreadingMode): void => {
+    onRewrite(gatewaySwitching(gateway, model.id, routeNodeId, next));
+  };
+  const leaving = useLeavingConditional(spread);
   const rows = routerChildRows(model.id, model.routing, router.children, accounts);
   const view = { props, policy, pins, offered, picking, onPicking: setPicking, onRewrite };
   const ladder = ladderEdits(props, onRewrite);
 
-  const onPickMode = (next: RouterMode): void => {
-    setHeld(next === 'conditional' ? switchOpenedOn(router.children) : undefined);
-
-    if (next !== 'conditional') {
-      onRewrite(gatewaySwitching(gateway, model.id, routeNodeId, next));
-    }
-  };
+  const onChangeValue = modePicking({
+    children: router.children,
+    branching: policy !== undefined,
+    onHeld: setHeld,
+    onSpread: spread,
+    onAsk: leaving.askToLeave,
+  });
 
   return (
     <>
@@ -262,7 +231,13 @@ export function RouterInspector(props: RouterInspectorProps) {
         modelId={model.id}
         routeNodeId={routeNodeId}
       />
-      {modeSection(router, held === undefined ? mode : 'conditional', onPickMode)}
+      <ModeSection
+        childCount={router.children.length}
+        leaving={leaving}
+        mode={held === undefined ? mode : 'conditional'}
+        onChangeValue={onChangeValue}
+        routerName={nameOfRouter(mode, router.displayName)}
+      />
       {held === undefined
         ? storedBody(view, rows)
         : switchingBody({ view, rows, ladder, held, onHeld: setHeld })}

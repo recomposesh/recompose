@@ -16,7 +16,7 @@ import {
   routeNodeOf,
   routingOf,
 } from '../../testing/routed-canvas.testkit';
-import { emptyRouterWorld, pooledWorld } from '../../testing/routed-gateways.testkit';
+import { emptyRouterWorld, judgedWorld, pooledWorld } from '../../testing/routed-gateways.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -239,4 +239,61 @@ test('the keyboard reorders the failover ladder, and the write lands in the stor
   await userEvent.click(screen.getByRole('button', { name: 'Move openrouter up' }));
 
   await expect.poll(async () => ladderUnder('pooled')).toEqual(['t2', 't1']);
+});
+
+async function spreadingModeOf(modelId: string): Promise<string | undefined> {
+  const routing = await routingOf(modelId);
+  const entry = routing === undefined ? undefined : routing.nodes[routing.entry];
+
+  return entry?.kind === 'router' ? entry.policy.mode : undefined;
+}
+
+async function leavingConditionalFor(mode: string) {
+  const screen = await canvasPageOn(judgedWorld);
+
+  await userEvent.click(screen.getByRole('button', { name: /Conditional/ }).first());
+  await userEvent.click(screen.getByRole('radio', { name: mode }));
+
+  return screen;
+}
+
+test('leaving conditional asks first, naming the wording and the judge it costs', async () => {
+  const screen = await leavingConditionalFor('Failover');
+  const asked = screen.getByRole('dialog');
+
+  await expect.element(asked).toBeVisible();
+  await expect
+    .element(asked)
+    .toHaveTextContent(/labels and rules go, and the judge goes with them/);
+  expect(await spreadingModeOf('pooled')).toBe('conditional');
+});
+
+test('keeping the router as it stands leaves the mode and the judge exactly where they were', async () => {
+  const screen = await leavingConditionalFor('Failover');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+  await expect.element(screen.getByRole('dialog')).not.toBeInTheDocument();
+  expect(await spreadingModeOf('pooled')).toBe('conditional');
+  expect((await routingOf('pooled'))?.nodes['j1']).toBeDefined();
+});
+
+test('confirming the switch to failover keeps every child and drops the judge with the wording', async () => {
+  const screen = await leavingConditionalFor('Failover');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Switch anyway' }));
+
+  await expect.poll(async () => spreadingModeOf('pooled')).toBe('failover');
+  expect(await ladderUnder('pooled')).toEqual(['t1', 't2']);
+  expect((await routingOf('pooled'))?.nodes['j1']).toBeUndefined();
+});
+
+test('confirming the switch to round-robin takes the same children the same way', async () => {
+  const screen = await leavingConditionalFor('Round-robin');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Switch anyway' }));
+
+  await expect.poll(async () => spreadingModeOf('pooled')).toBe('round-robin');
+  expect(await ladderUnder('pooled')).toEqual(['t1', 't2']);
+  expect((await routingOf('pooled'))?.nodes['j1']).toBeUndefined();
 });
