@@ -8,6 +8,14 @@ const branchSchema = z.strictObject({
   child: nonBlankString,
 });
 
+/**
+ * The standing instruction one router hands its judge, read ahead of the labels and the rules.
+ *
+ * @summary It is optional because a router whose labels already read plainly needs no preamble, and
+ * every table stored before this field existed is one of those. It carries a person's own words and
+ * nothing structural: the label set, the ordering, and the marking of the request stay machine-owned,
+ * so a directive can steer a reading without ever widening what the judge is allowed to answer.
+ */
 export const conditionalPolicySchema = z.strictObject({
   mode: z.literal('conditional'),
   judge: nonBlankString,
@@ -15,6 +23,7 @@ export const conditionalPolicySchema = z.strictObject({
   elseChild: nonBlankString,
   judgeBoundMs: z.number().int().positive(),
   rejudgeEveryRequest: z.boolean(),
+  directive: nonBlankString.optional(),
 });
 
 export type ConditionalPolicy = z.infer<typeof conditionalPolicySchema>;

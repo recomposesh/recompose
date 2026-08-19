@@ -24,6 +24,7 @@ export type JudgeAsk = {
   gatewayName: string;
   virtualModel: string;
   branches: readonly BranchRule[];
+  directive?: string | undefined;
   raw: JsonObject;
   boundMs: number;
   fetchLike: typeof fetch;
@@ -150,6 +151,7 @@ export async function readingOfTheJudge(ask: JudgeAsk): Promise<JudgeReading> {
     dialect: dialectFor(grant, ask.sourceDialect),
     providerModel: ask.providerModel,
     branches: ask.branches,
+    directive: ask.directive,
     raw: ask.raw,
   });
   const answer = await answerTheJudgeGave(ask, grant, crossingOfTheAsk(ask, grant, body), body);
