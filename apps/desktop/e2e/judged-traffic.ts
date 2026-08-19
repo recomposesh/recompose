@@ -19,6 +19,8 @@ const AN_ORDINARY_ASK = 'Say hello.';
 
 /** How one request a scenario sends differs from the plain one. */
 export type TurnAsked = {
+  /** The name the caller asks under, where the scenario says one rather than leaving it implied. */
+  model?: string;
   /** The caller's own words, which are also what a fingerprint falls back to reading. */
   opening?: string;
   /** The key a client names its conversation by, where the scenario is about a conversation. */
@@ -53,7 +55,7 @@ function bodyOf(model: string, asked: TurnAsked): unknown {
 export async function aTurnArrives(page: Page, asked: TurnAsked = {}): Promise<GatewayAnswer> {
   const gateway = focusedGateway(page);
   const address = await gatewayAddress(page, gateway);
-  const model = await theRoutedModelName(page);
+  const model = asked.model ?? (await theRoutedModelName(page));
   const answer = await sendTurnUnder(
     address,
     TURN_PATH,

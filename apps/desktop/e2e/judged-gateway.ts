@@ -32,7 +32,35 @@ export const CHAT_BRANCH: JudgedBranch = {
 export const ELSE_TARGET = THIRD_TARGET;
 
 /** The judge's own binding, standing apart from every child in both account and model. */
-const JUDGE_TARGET: RoutedTarget = { account: 'referee', providerModel: 'qwen3-4b' };
+export const JUDGE_TARGET: RoutedTarget = { account: 'referee', providerModel: 'qwen3-4b' };
+
+/** Every child a judged router holds, so a step can arm or refuse one by the model it serves. */
+export const JUDGED_CHILDREN: readonly RoutedTarget[] = [
+  CODE_BRANCH.target,
+  CHAT_BRANCH.target,
+  ELSE_TARGET,
+];
+
+/**
+ * Puts both stand-ins back where the arrangement left them, after a scenario's opening turns.
+ *
+ * @summary A scenario that has to cool something first pays for it in calls the stand-ins remember,
+ * and a step counting classification calls would then count the opening's as well. The cooling
+ * itself survives, because it lives in the gateway's own ledger rather than in either stand-in,
+ * which is exactly the state such a scenario meant to arrange.
+ */
+export function theStandInsForgetTheOpening(stands: {
+  provider: ScriptedProvider;
+  judge: JudgeStub;
+}): void {
+  stands.provider.forgets();
+
+  for (const child of JUDGED_CHILDREN) {
+    stands.provider.serves(child.providerModel);
+  }
+
+  stands.judge.forgets();
+}
 
 /**
  * How long every judged router in these scenarios gives its judge.

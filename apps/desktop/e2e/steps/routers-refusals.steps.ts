@@ -4,7 +4,12 @@ import { Given, Then } from '../fixtures';
 import { refusalSentence, sendTurn, turnUnder } from '../gateway-client';
 import { lastAnswerFrom } from '../gateway-exchanges';
 import { gatewayAddress, storedGateway } from '../gateway-screen';
-import { aRoutedModelStands, FIRST_TARGET, SECOND_TARGET } from '../routed-gateway';
+import {
+  aRoutedModelStands,
+  FIRST_TARGET,
+  SECOND_TARGET,
+  theChildrenServing,
+} from '../routed-gateway';
 import { focusedGateway } from '../scenario-memory';
 
 const MESSAGES_PATH = '/v1/messages';
@@ -80,11 +85,18 @@ Then('the gateway answers a typed refusal naming the empty router', ({ page }) =
   expect(refusalSentence(answer.body)).toMatch(NAMES_THE_EMPTY_ROUTER);
 });
 
-Then('the gateway answers a typed refusal naming each child and its reason', ({ page }) => {
+/**
+ * @summary The children are read off the router this scenario actually stood up rather than named
+ * here, because a ladder holds two and a judged router holds three, and both mean every one of them
+ * when they say each child. Reading the list also keeps a judge out by construction: it is a node of
+ * the same table, and never one of the router's children.
+ */
+Then('the gateway answers a typed refusal naming each child and its reason', async ({ page }) => {
   const sentence = refusalSentence(lastAnswerFrom(page, focusedGateway(page)).body);
 
-  expect(sentence).toContain(`${FIRST_TARGET.providerModel} stands cooling`);
-  expect(sentence).toContain(`${SECOND_TARGET.providerModel} stands cooling`);
+  for (const serving of await theChildrenServing(page)) {
+    expect(sentence).toContain(`${serving} stands cooling`);
+  }
 });
 
 Then('the refusal carries the earliest retry time', ({ page }) => {
