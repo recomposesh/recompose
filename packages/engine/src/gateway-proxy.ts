@@ -38,7 +38,11 @@ export type { SpendGrantContext, SpendGrantFor } from './gateway-spend';
 export type { SubscriptionRuntime } from './subscription/reach';
 export { subscriptionRuntime } from './subscription/reach';
 
-export type RouterServing = { memory: RoutingMemory; noteAttempt: NoteAttempt };
+export type RouterServing = {
+  memory: RoutingMemory;
+  noteAttempt: NoteAttempt;
+  judgeGrantFor: SpendGrantFor;
+};
 
 function couldServe(target: DeclaredTarget): boolean {
   return target.standing.standing === 'bound';
@@ -117,17 +121,18 @@ function notesOwedACable(
  * @summary A table with no conditional router in it never reaches any of this, so a ladder pays
  * nothing for a mode it does not use. The judge resolves per request rather than per gateway,
  * because a person can rebind it between two turns and the second turn must reach the account the
- * canvas now shows.
+ * canvas now shows. Its custody rides the lane that paints no cable: asking for a child's grant is
+ * how that child announces it is about to carry the request, and the judge carries none.
  */
-function judgingThisRequest(deps: AttemptDeps, memory: RoutingMemory): Judged {
+function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): Judged {
   return judgedRouting({
     routing: deps.virtualModel.routing,
     slug: deps.gateway.slug,
     virtualModel: deps.virtualModel.id,
     crossing: deps.crossing,
-    spendGrantFor: deps.spendGrantFor,
+    spendGrantFor: serving.judgeGrantFor,
     fetchLike: deps.fetchLike,
-    memory,
+    memory: serving.memory,
   });
 }
 
@@ -137,7 +142,7 @@ async function walkedAnswer(
   serving: RouterServing,
 ): Promise<Response> {
   const routing = deps.virtualModel.routing;
-  const judged = judgingThisRequest(deps, serving.memory);
+  const judged = judgingThisRequest(deps, serving);
   let answerable: Response | undefined;
   let lastTried: string | undefined;
 
