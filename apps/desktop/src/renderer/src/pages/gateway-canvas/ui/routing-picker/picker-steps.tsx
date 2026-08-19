@@ -5,14 +5,12 @@ import type { JudgePick, RoutingPickerProps, RoutingStep } from './picker-asks';
 
 import { Button } from '../../../../shared/ui';
 import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
+import { JUDGE_ADVICE } from '../../lib/router-modes';
 import { NoProviderNote } from '../no-provider-note/no-provider-note';
 import { OptionList } from '../option-list/option-list';
 import { RouterDraftFields } from '../router-draft-fields/router-draft-fields';
 
 const KIND_GROUPS: readonly OptionGroup[] = [{ options: BINDING_KINDS }];
-
-const WHY_A_CHEAP_JUDGE =
-  'Fast, cheap models judge best. The judge only names a branch, and every request waits on its answer.';
 
 type StepBack = { label: string; onPress: () => void };
 
@@ -135,7 +133,7 @@ function judgeProviderStep(props: RoutingPickerProps): ReactNode {
     'Pick the judge',
     { label: 'Change what this router falls back to', onPress: props.onSelectDifferentProvider },
     <>
-      <p className="px-2 py-1.5 text-detail text-ink-secondary">{WHY_A_CHEAP_JUDGE}</p>
+      <p className="px-2 py-1.5 text-detail text-ink-secondary">{JUDGE_ADVICE}</p>
       {accountControl(props.targets, props.judge.binding?.accountId, props.judge.onPickAccount)}
     </>,
   );

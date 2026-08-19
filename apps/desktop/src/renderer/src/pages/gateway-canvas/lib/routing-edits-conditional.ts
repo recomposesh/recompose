@@ -84,6 +84,32 @@ export function gatewayBindingJudge(
 }
 
 /**
+ * The gateway once one conditional router asks its judge at a different rhythm.
+ *
+ * @summary The rhythm is the whole of what the toggle moves, so the judge, the branches, and the
+ * else child stand exactly as they did: a person trying the other rhythm is not rebinding anything.
+ */
+export function gatewayJudgingEveryRequest(
+  gateway: GatewayConfig,
+  modelId: string,
+  routerId: string,
+  rejudgeEveryRequest: boolean,
+): GatewayConfig {
+  return routedBy(gateway, modelId, (was) => {
+    const policy = conditionalIn(was.nodes[routerId]);
+
+    if (policy === undefined) {
+      return was;
+    }
+
+    return routerEdited(was, routerId, (router) => ({
+      ...router,
+      policy: { ...policy, rejudgeEveryRequest },
+    }));
+  });
+}
+
+/**
  * The gateway once one child of a conditional router answers to a label and a rule.
  *
  * @summary Writing the same child twice rewrites the branch it already stood as rather than adding

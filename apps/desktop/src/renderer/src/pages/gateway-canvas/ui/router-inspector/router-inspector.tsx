@@ -1,11 +1,26 @@
 import type { Account, GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
+import type { ReactNode } from 'react';
 
-import type { RouterMode } from '../../lib/routing-edits';
+import { mintRouteNodeId } from '@recompose/contracts';
+import { useState } from 'react';
 
+import type { JudgeBinding } from '../../lib/conditional-draft';
+import type { ConditionalPolicy } from '../../lib/conditional-policy';
+import type { RouterMode, SpreadingMode } from '../../lib/routing-edits';
+
+import { accountName } from '../../../../entities/account';
 import { useDefineVirtualModel } from '../../../../shared/api';
-import { SegmentedControl } from '../../../../shared/ui';
-import { modeOptions, modeSentences } from '../../lib/router-modes';
+import { SegmentedControl, Switch } from '../../../../shared/ui';
+import { conditionalIn } from '../../lib/conditional-policy';
+import { modeOptions, modeSentences, rejudgeSentences } from '../../lib/router-modes';
 import { gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
+import {
+  gatewayBindingJudge,
+  gatewayJudgingEveryRequest,
+} from '../../lib/routing-edits-conditional';
+import { targetGroups } from '../../lib/target-groups';
+import { useOfferedModels } from '../../lib/use-offered-models';
+import { JudgeSection } from '../judge-section/judge-section';
 import { RouterChildList } from '../router-child-list/router-child-list';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
@@ -13,6 +28,9 @@ import { routerChildRows } from './router-child-rows';
 
 /** What a router node the inspector speaks for stands as, which is the stored router arm. */
 export type StoredRouter = Extract<RouteNode, { kind: 'router' }>;
+
+const A_SWITCH_WOULD_NEED =
+  'Conditional needs a judge and an else branch. Compose one when you add the virtual model.';
 
 type RouterInspectorProps = {
   /** The stored gateway holding the routing, which every router edit rewrites as a whole. */
@@ -30,6 +48,108 @@ type RouterInspectorProps = {
 };
 
 /**
+ * The mode a switch can actually write, and nothing for the one it cannot.
+ *
+ * @summary Conditional is missing on purpose: its stored policy names a judge and an else child
+ * that a mode strip cannot supply, which is exactly what the strip's own inert reason says. The
+ * control refuses an inert segment before it reports one, so this reading answers nothing for
+ * conditional rather than pretending a switch could write it.
+ */
+function switchWriting(mode: RouterMode): SpreadingMode | undefined {
+  return mode === 'conditional' ? undefined : mode;
+}
+
+function modeChoices(mode: RouterMode) {
+  return modeOptions.map((option) =>
+    option.value === 'conditional' && mode !== 'conditional'
+      ? { ...option, inertReason: A_SWITCH_WOULD_NEED }
+      : option,
+  );
+}
+
+/**
+ * How often this router asks its judge, in the words the sentence beneath the toggle is keyed by.
+ */
+function rhythmOf(policy: ConditionalPolicy) {
+  return policy.rejudgeEveryRequest ? 'every-request' : 'once-per-conversation';
+}
+
+const NO_JUDGE: JudgeBinding = { accountId: '', providerModel: '' };
+
+function judgeBoundIn(model: VirtualModel, policy: ConditionalPolicy): JudgeBinding {
+  const node = model.routing.nodes[policy.judge];
+
+  return node?.kind === 'target' ? node : NO_JUDGE;
+}
+
+/**
+ * What the judge answers to, which is the account behind it and the real model it runs.
+ *
+ * @summary An account the registry no longer holds keeps its id in the name, because a judge a
+ * person came back to repair is exactly the one a blank row would say nothing about.
+ */
+function judgeReading(
+  model: VirtualModel,
+  policy: ConditionalPolicy,
+  accounts: readonly Account[],
+): JudgeBinding & { name: string } {
+  const bound = judgeBoundIn(model, policy);
+  const held = accounts.find((account) => account.id === bound.accountId);
+
+  return { ...bound, name: held === undefined ? bound.accountId : accountName(held) };
+}
+
+type JudgingView = {
+  props: RouterInspectorProps;
+  policy: ConditionalPolicy;
+  picking: string | undefined;
+  onPicking: (accountId: string | undefined) => void;
+  offered: ReturnType<typeof useOfferedModels>;
+  onRewrite: (gateway: GatewayConfig) => void;
+};
+
+function judgingBody(view: JudgingView): ReactNode {
+  const { props, policy, offered, onPicking } = view;
+  const { gateway, model, routeNodeId, accounts } = props;
+  const judge = judgeReading(model, policy, accounts);
+
+  return (
+    <>
+      {sectionHeading(
+        'Judging',
+        <span className="ms-auto shrink-0">
+          <Switch
+            checked={policy.rejudgeEveryRequest}
+            label="Re-judge every request"
+            onChangeChecked={(next) => {
+              view.onRewrite(gatewayJudgingEveryRequest(gateway, model.id, routeNodeId, next));
+            }}
+          />
+        </span>,
+      )}
+      <p className="px-1 text-detail text-ink-secondary">{rejudgeSentences[rhythmOf(policy)]}</p>
+      <JudgeSection
+        accountName={judge.name}
+        models={offered.offered}
+        modelRefusal={offered.refusal}
+        onBindJudge={(bound) => {
+          view.onRewrite(
+            gatewayBindingJudge(gateway, model.id, routeNodeId, mintRouteNodeId(), {
+              kind: 'target',
+              ...bound,
+            }),
+          );
+        }}
+        onPicking={onPicking}
+        picking={view.picking}
+        providerModel={judge.providerModel}
+        targets={targetGroups([...accounts])}
+      />
+    </>
+  );
+}
+
+/**
  * The whole of what a person decides about a router: what it is called, how it spreads, over what.
  *
  * @summary The name leads, because it is the one fact a person writes rather than picks, and every
@@ -39,17 +159,22 @@ type RouterInspectorProps = {
  * under round-robin it names the prompt-cache cost of rotation at the point of choice, because
  * that cost is the reason to weigh one mode against the other. Switching the mode leaves the
  * children and their order exactly as they stood, so trying the other mode is never a rebuild.
+ *
+ * A conditional router carries two more decisions between the mode and the children: how often it
+ * asks its judge, and which judge it asks. Both stand above the ladder, because both change what
+ * every row below them receives.
  */
-export function RouterInspector({
-  gateway,
-  model,
-  routeNodeId,
-  router,
-  accounts,
-  onSelectNode,
-}: RouterInspectorProps) {
+export function RouterInspector(props: RouterInspectorProps) {
+  const { gateway, model, routeNodeId, router, accounts, onSelectNode } = props;
   const rewrite = useDefineVirtualModel();
+  const [picking, setPicking] = useState<string | undefined>(undefined);
+  const offered = useOfferedModels(picking ?? '');
   const mode = router.policy.mode;
+  const policy = conditionalIn(router);
+
+  const onRewrite = (next: GatewayConfig): void => {
+    rewrite.mutate(next);
+  };
 
   return (
     <>
@@ -64,22 +189,25 @@ export function RouterInspector({
       <SegmentedControl
         label="Routing mode"
         onChangeValue={(next: RouterMode) => {
-          if (next === 'conditional') {
-            return;
-          }
+          const spreading = switchWriting(next);
 
-          rewrite.mutate(gatewaySwitching(gateway, model.id, routeNodeId, next));
+          if (spreading !== undefined) {
+            onRewrite(gatewaySwitching(gateway, model.id, routeNodeId, spreading));
+          }
         }}
-        options={modeOptions}
+        options={modeChoices(mode)}
         spread="row"
         value={mode}
       />
       <p className="mt-2 px-1 text-detail text-ink-secondary">{modeSentences[mode]}</p>
+      {policy === undefined
+        ? null
+        : judgingBody({ props, policy, picking, onPicking: setPicking, offered, onRewrite })}
       {sectionHeading('Children')}
       <RouterChildList
         mode={mode}
         onMove={(from, to) => {
-          rewrite.mutate(gatewayReordering(gateway, model.id, routeNodeId, from, to));
+          onRewrite(gatewayReordering(gateway, model.id, routeNodeId, from, to));
         }}
         onOpen={(child) => {
           onSelectNode(child.cardId);

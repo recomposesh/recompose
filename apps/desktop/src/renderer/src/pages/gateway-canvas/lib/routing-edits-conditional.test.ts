@@ -6,6 +6,7 @@ import { expect, test } from 'vitest';
 import { gatewayBindingChild, gatewayDroppingNode } from './routing-edits';
 import {
   gatewayBindingJudge,
+  gatewayJudgingEveryRequest,
   gatewayWritingBranch,
   routedThroughAConditionalRouter,
 } from './routing-edits-conditional';
@@ -91,6 +92,20 @@ test('binding a judge under an id a child already answers to leaves the gateway 
 
 test('binding a judge onto a router that spreads some other way leaves the gateway as it stood', () => {
   expect(gatewayBindingJudge(codex, 'fast', 't1', 'j1', judge)).toEqual(codex);
+});
+
+test('moving the judging rhythm leaves the judge, the branches, and the else child alone', () => {
+  const rejudging = gatewayJudgingEveryRequest(judged(), 'fast', 'r1', true);
+
+  expect(conditionalPolicyOf(rejudging)).toEqual({
+    ...conditionalPolicyOf(),
+    rejudgeEveryRequest: true,
+  });
+  expect(routingSchema.safeParse(routingOf(rejudging)).success).toBe(true);
+});
+
+test('a router that spreads some other way has no rhythm to move', () => {
+  expect(gatewayJudgingEveryRequest(codex, 'fast', 't1', true)).toEqual(codex);
 });
 
 test('writing a branch pairs a label and a rule with the child that answers to them', () => {

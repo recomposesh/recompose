@@ -48,7 +48,7 @@
       `router-modes.ts`
 - [x] 4.2 Specify branch writes, the judge binding, and else protection in `routing-edits.ts`
 - [x] 4.3 Specify the conditional draft save gate wanting a judge in `model-draft.ts`
-- [ ] 4.4 The judge picker and the re-judge toggle land in the router inspector
+- [x] 4.4 The judge picker and the re-judge toggle land in the router inspector
 - [ ] 4.5 Child rows carry labels, rule previews, pin marks, and an inert else row that says why
 - [ ] 4.6 Specify label-aware announcements in `spoken-rank.ts`
 - [ ] 4.7 The branch rule sheet lands with the shared textarea primitive and their stories
