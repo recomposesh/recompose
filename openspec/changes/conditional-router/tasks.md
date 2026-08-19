@@ -22,7 +22,7 @@
 - [x] 2.3 Specify the walk-scoped memo: one classification per walk, and retried children never
       re-ask the judge
 - [x] 2.4 Specify a decided branch that can't serve falling through to else without a second call
-- [ ] 2.5 Specify server-state turns: a pinned turn follows its pin, and an unpinned one goes to
+- [x] 2.5 Specify server-state turns: a pinned turn follows its pin, and an unpinned one goes to
       else with no call
 - [x] 2.6 Specify a cooling judge short-circuiting before any call leaves the machine
 - [x] 2.7 Property law with its deterministic twin: every judge reading maps to exactly one child

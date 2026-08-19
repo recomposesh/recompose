@@ -1,14 +1,13 @@
-import type { EngineRouting, RouterPolicy } from '@recompose/contracts';
+import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
-import type { BranchClassifier, BranchQuestion } from './judge-decision';
+import type { BranchClassifier, Judging } from './judge-decision';
 import type { AttemptReading, AttemptReason } from './outcome-classification';
-import type { BranchChoice, ConditionalPolicy } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
 
-import { childTheJudgeDecides } from './judge-decision';
+import { branchTheWalkFollows } from './judge-decision';
 import { classify } from './outcome-classification';
 import { childTheModeOffers } from './policies';
 import { childlessRouterTheTableHolds, targetsInDeclaredOrder } from './route-table';
@@ -36,6 +35,7 @@ export type WalkRequest<TAnswer> = {
   resumesServerState: boolean;
   now: () => number;
   classifyBranch?: BranchClassifier;
+  pinnedBranchAt?: (routeNode: string) => string | undefined;
   attempt: (routeNode: string) => Promise<AttemptReading<TAnswer>>;
 };
 
@@ -46,9 +46,8 @@ type Walking = {
   ledger: CooldownLedger;
   cursors: RotationCursors;
   resumesServerState: boolean;
-  classifyBranch?: BranchClassifier;
   attempted: Map<string, WalkNote>;
-  decided: Map<string, string>;
+  judging: Judging;
 };
 
 type WalkStep =
@@ -81,37 +80,17 @@ function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string
   return node.children.some((child) => subtreeCanServe(walking, child, passed));
 }
 
-function questionOf(walking: Walking, policy: ConditionalPolicy): BranchQuestion {
+function judgingOf<TAnswer>(request: WalkRequest<TAnswer>): Judging {
+  const { slug, virtualModel } = request;
+
   return {
-    judge: policy.judge,
-    branches: policy.branches,
-    elseChild: policy.elseChild,
-    classify: walking.classifyBranch,
-    judgeStandsCooling: walking.ledger.coolingAt(addressOf(walking, policy.judge)) !== undefined,
+    classify: request.classifyBranch,
+    resumesServerState: request.resumesServerState,
+    pinnedBranchAt: (routeNode) => request.pinnedBranchAt?.(routeNode),
+    judgeStandsCooling: (judge) =>
+      request.ledger.coolingAt({ slug, virtualModel, routeNode: judge }) !== undefined,
+    decided: new Map(),
   };
-}
-
-/**
- * The branch one conditional router follows for this whole walk, decided at most once.
- *
- * @summary The memo is the walk's, not the gateway's, so the attempt cap can retry a branch child
- * eight times without spending eight judge calls, eight charges, and eight seconds of a caller's
- * patience. It is keyed by route node because a chain can hold several conditional routers, each
- * owed its own single decision.
- */
-async function branchTheWalkFollows(
-  walking: Walking,
-  routeNode: string,
-  policy: RouterPolicy,
-): Promise<BranchChoice | undefined> {
-  if (policy.mode !== 'conditional') return undefined;
-
-  const decided =
-    walking.decided.get(routeNode) ?? (await childTheJudgeDecides(questionOf(walking, policy)));
-
-  walking.decided.set(routeNode, decided);
-
-  return { decided, elseChild: policy.elseChild };
 }
 
 async function childTheRouterOffers(
@@ -132,7 +111,7 @@ async function childTheRouterOffers(
         walking.cursors.advanceTo(address, cursor);
       },
     },
-    branch: await branchTheWalkFollows(walking, routeNode, policy),
+    branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
   });
 }
 
@@ -284,7 +263,7 @@ async function verdictTheWalkSettles<TAnswer>(
 export async function walkAttempts<TAnswer>(
   request: WalkRequest<TAnswer>,
 ): Promise<WalkResult<TAnswer>> {
-  const walking: Walking = { ...request, attempted: new Map(), decided: new Map() };
+  const walking: Walking = { ...request, attempted: new Map(), judging: judgingOf(request) };
   const settled = await verdictTheWalkSettles(walking, request);
   const notes = notesOfTheWalk(walking);
 

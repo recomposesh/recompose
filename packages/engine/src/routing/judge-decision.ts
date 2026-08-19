@@ -1,5 +1,7 @@
+import type { RouterPolicy } from '@recompose/contracts';
+
 import type { JudgeReading } from './outcome-classification';
-import type { BranchRule } from './policies';
+import type { BranchChoice, BranchRule, ConditionalPolicy } from './policies';
 
 import { classifyJudge } from './outcome-classification';
 import { branchWearingTheLabel, childTheLabelNames } from './policies';
@@ -9,12 +11,23 @@ export type BranchClassifier = (
   branches: readonly BranchRule[],
 ) => Promise<JudgeReading>;
 
-export type BranchQuestion = {
+export type Judging = {
+  classify: BranchClassifier | undefined;
+  judgeStandsCooling: (judge: string) => boolean;
+  pinnedBranchAt: (routeNode: string) => string | undefined;
+  resumesServerState: boolean;
+  decided: Map<string, string>;
+};
+
+type BranchQuestion = {
   judge: string;
   branches: readonly BranchRule[];
   elseChild: string;
   classify: BranchClassifier | undefined;
   judgeStandsCooling: boolean;
+  pinnedBranch: string | undefined;
+  resumesServerState: boolean;
+  rejudgeEveryRequest: boolean;
 };
 
 type Asking = { question: BranchQuestion; classify: BranchClassifier };
@@ -39,6 +52,20 @@ async function childTheJudgeAnswers(asking: Asking): Promise<string> {
   return named === undefined ? childASecondAskEarns(asking) : named.child;
 }
 
+function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
+  const reads = question.resumesServerState || !question.rejudgeEveryRequest;
+
+  return reads ? question.pinnedBranch : undefined;
+}
+
+async function childNoPinNames(question: BranchQuestion): Promise<string> {
+  if (question.resumesServerState) return question.elseChild;
+
+  const classify = question.judgeStandsCooling ? undefined : question.classify;
+
+  return classify === undefined ? question.elseChild : childTheJudgeAnswers({ question, classify });
+}
+
 /**
  * The child one conditional router hands this request to, judged at most twice.
  *
@@ -49,11 +76,57 @@ async function childTheJudgeAnswers(asking: Asking): Promise<string> {
  * two judge calls no matter how strangely the judge behaves. A judge already standing cooling is
  * read here as no judge at all, so the else branch is reached without spending a call the ledger
  * already knows would fail.
+ *
+ * A turn resuming state one account holds never earns a fresh judgment: it follows its pin when one
+ * exists and takes the else branch when none does. Re-judging it could hand a sealed conversation to
+ * a second account that cannot read the token it carries, and refusing it, the way a spreading
+ * router does, would break the promise that routing trouble never drops a request. That is also why
+ * re-judge every request skips the pin on an ordinary turn but never on this one.
  */
-export async function childTheJudgeDecides(question: BranchQuestion): Promise<string> {
-  const classify = question.judgeStandsCooling ? undefined : question.classify;
+async function childTheJudgeDecides(question: BranchQuestion): Promise<string> {
+  return pinTheTurnKeeps(question) ?? childNoPinNames(question);
+}
 
-  return classify === undefined ? question.elseChild : childTheJudgeAnswers({ question, classify });
+function questionOf(
+  routeNode: string,
+  policy: ConditionalPolicy,
+  judging: Judging,
+): BranchQuestion {
+  return {
+    judge: policy.judge,
+    branches: policy.branches,
+    elseChild: policy.elseChild,
+    classify: judging.classify,
+    judgeStandsCooling: judging.judgeStandsCooling(policy.judge),
+    pinnedBranch: judging.pinnedBranchAt(routeNode),
+    resumesServerState: judging.resumesServerState,
+    rejudgeEveryRequest: policy.rejudgeEveryRequest,
+  };
+}
+
+/**
+ * The branch one conditional router follows for a whole walk, decided at most once.
+ *
+ * @summary The memo belongs to the walk rather than to the gateway, so the attempt cap can retry a
+ * branch child eight times without spending eight judge calls, eight charges, and eight seconds of
+ * a caller's patience. It is keyed by route node because a chain can hold several conditional
+ * routers, each owed its own single decision. A router of any other mode answers nothing here, which
+ * is what keeps failover and round-robin from ever reaching a judge.
+ */
+export async function branchTheWalkFollows(
+  routeNode: string,
+  policy: RouterPolicy,
+  judging: Judging,
+): Promise<BranchChoice | undefined> {
+  if (policy.mode !== 'conditional') return undefined;
+
+  const decided =
+    judging.decided.get(routeNode) ??
+    (await childTheJudgeDecides(questionOf(routeNode, policy, judging)));
+
+  judging.decided.set(routeNode, decided);
+
+  return { decided, elseChild: policy.elseChild };
 }
 
 /**
