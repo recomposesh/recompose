@@ -50,6 +50,16 @@ export type CanvasNode =
       childCount: number;
       branch?: BranchSeat | undefined;
     }
+  | {
+      id: string;
+      kind: 'judge';
+      modelId: string;
+      routeNodeId: string;
+      depth: number;
+      advises: string;
+      accountId: string;
+      providerModel: string;
+    }
   | { id: string; kind: 'draft-model'; modelId: string; displayName: string }
   | { id: string; kind: 'pending-target' };
 
@@ -57,7 +67,12 @@ export type CanvasNode =
 export type CanvasNodeKind = CanvasNode['kind'];
 
 /** One route node placed on the canvas, holding the name its card and its cable both read. */
-export type PlacedRouteNode = { modelId: string; name: string; walked: WalkedRouteNode };
+export type PlacedRouteNode = {
+  modelId: string;
+  name: string;
+  parentName: string | undefined;
+  walked: WalkedRouteNode;
+};
 
 /** The registry a target card reads itself against, as the drawer holds it. */
 export type Registry = {
@@ -115,6 +130,25 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
   };
 }
 
+function judgeCard(placed: PlacedRouteNode, bound: RouteTarget): CanvasNode {
+  return {
+    id: `judge:${placed.name}`,
+    kind: 'judge',
+    modelId: placed.modelId,
+    routeNodeId: placed.walked.routeNodeId,
+    depth: placed.walked.depth,
+    advises: `route:${placed.parentName ?? placed.modelId}`,
+    accountId: bound.accountId,
+    providerModel: bound.providerModel,
+  };
+}
+
+function boundCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Registry): CanvasNode {
+  return placed.walked.advises === undefined
+    ? targetCard(placed, bound, registry)
+    : judgeCard(placed, bound);
+}
+
 /**
  * The card one route node stands as, read against the registry as it stands now.
  *
@@ -125,10 +159,12 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
  * observed sign-in is handed over whatever kind of account stands there, because which kinds wear
  * an address is the account identity's own rule and stating it twice would let the two drift. A
  * card a judge's branch reaches carries that branch, so the card and the cable arriving at it read
- * one branch rather than two lookups that can disagree about which rule sends requests here.
+ * one branch rather than two lookups that can disagree about which rule sends requests here. A
+ * judge stands as its own kind of card rather than as one more target, because it takes no request
+ * and a card that looked like a target would say a person could route to it.
  */
 export function routeCard(placed: PlacedRouteNode, registry: Registry): CanvasNode {
   return placed.walked.node.kind === 'router'
     ? routerCard(placed, placed.walked.node)
-    : targetCard(placed, placed.walked.node, registry);
+    : boundCard(placed, placed.walked.node, registry);
 }

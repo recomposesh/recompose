@@ -15,6 +15,7 @@ import {
   grabEnds,
   judgedFlow,
   REFUSED,
+  tiedFlow,
 } from '../../testing/binding-cable.testkit';
 import { BindingCable } from './binding-cable';
 
@@ -123,6 +124,25 @@ export const TheRuleRidesTheCableItself = meta.story({
     await expect(rule.x).toBeLessThan(path.x + path.width / 2);
     await expect(rule.y).toBeGreaterThan(path.y);
     await expect(rule.y).toBeLessThan(path.y + path.height / 2);
+  },
+});
+
+/** The tie to a judge breaks into dashes, because no request travels it. */
+export const ATieToAJudgeDrawsDotted = meta.story({
+  render: () => tiedFlow(),
+  play: async ({ canvasElement }) => {
+    const [tie] = await cablesDrawn(canvasElement);
+
+    await expect(paintedStyle(tie).strokeDasharray).toBe('4px, 3px');
+  },
+});
+
+/** A binding cable never breaks, so the dash is what tells an advisor from a target. */
+export const ABindingCableNeverBreaks = meta.story({
+  play: async ({ canvasElement }) => {
+    const [cable] = await cablesDrawn(canvasElement);
+
+    await expect(paintedStyle(cable).strokeDasharray).toBe('none');
   },
 });
 

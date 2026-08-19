@@ -60,13 +60,16 @@ export const cableSeats = {
   targetY: 228,
 };
 
-function cardsWiredBy(carried: Record<string, unknown> | undefined): ReactElement {
+function cardsWiredBy(
+  carried: Record<string, unknown> | undefined,
+  id = 'cable:fast',
+): ReactElement {
   return (
     <div className="h-96 w-160 bg-surface-content dot-grid">
       <ReactFlow
         defaultEdges={[
           {
-            id: 'cable:fast',
+            id,
             type: 'binding',
             source: 'model:fast',
             target: 'target:work',
@@ -106,6 +109,16 @@ export function judgedFlow(
   failure?: CableFailure,
 ): ReactElement {
   return cardsWiredBy({ standing, failure, branch: seat });
+}
+
+/**
+ * The same two cards joined by the dotted tie a router hangs its judge from.
+ *
+ * @summary Reach for it to ask how a tie draws beside a binding, since the whole claim the tie
+ * makes is that it does not look like one.
+ */
+export function tiedFlow(): ReactElement {
+  return cardsWiredBy({ standing: 'resting' }, 'tie:fast:advisor');
 }
 
 /**

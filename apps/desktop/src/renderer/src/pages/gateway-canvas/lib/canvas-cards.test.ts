@@ -5,6 +5,7 @@ import { expect, test } from 'vitest';
 import type { PlacedRouteNode, Registry } from './canvas-cards';
 
 import { routeCard } from './canvas-cards';
+import { addressName } from './route-addresses';
 import { walkedRouteNodes } from './route-graph';
 
 const work: Account = {
@@ -45,7 +46,14 @@ function placed(routing: Routing, routeNodeId: string): PlacedRouteNode {
     throw new Error(`the walk never reached "${routeNodeId}"`);
   }
 
-  return { modelId: 'fast', name: `fast:${routeNodeId}`, walked };
+  const { entry } = routing;
+
+  return {
+    modelId: 'fast',
+    name: addressName('fast', routeNodeId, entry),
+    parentName: walked.parent === undefined ? undefined : addressName('fast', walked.parent, entry),
+    walked,
+  };
 }
 
 function cardFor(routeNodeId: string) {
@@ -65,4 +73,17 @@ test('a card standing where an account left still carries the branch that reache
 
 test('a router nobody branched to carries no branch of its own', () => {
   expect(cardFor('ladder')).toMatchObject({ kind: 'router', branch: undefined });
+});
+
+test('the judge stands as its own card, naming the router it advises and what it judges with', () => {
+  expect(cardFor('advisor')).toEqual({
+    id: 'judge:fast:advisor',
+    kind: 'judge',
+    modelId: 'fast',
+    routeNodeId: 'advisor',
+    depth: 0,
+    advises: 'route:fast',
+    accountId: 'a1',
+    providerModel: 'claude-haiku-5',
+  });
 });

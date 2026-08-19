@@ -106,6 +106,40 @@ test('a router naming a child the table never held seats the router alone', () =
   expect(walkedRouteNodes(dangling).map((walked) => walked.routeNodeId)).toEqual(['ladder']);
 });
 
+test('the judge stands on the canvas right beside the router it advises', () => {
+  expect(walkedRouteNodes(judged).map((walked) => [walked.routeNodeId, walked.advises])).toEqual([
+    ['ladder', undefined],
+    ['advisor', 'ladder'],
+    ['first', undefined],
+    ['second', undefined],
+  ]);
+});
+
+test('the judge seats beside its router rather than a column further out', () => {
+  const seated = walkedRouteNodes(judged);
+  const advisor = seated.find((walked) => walked.routeNodeId === 'advisor');
+  const router = seated.find((walked) => walked.routeNodeId === 'ladder');
+
+  expect(advisor?.depth).toBe(router?.depth);
+  expect(advisor?.parent).toBe('ladder');
+});
+
+test('a judge naming no node in the table stands nothing at all', () => {
+  const { advisor, ...withoutTheJudge } = judged.nodes;
+  const strayJudge: Routing = { entry: 'ladder', nodes: withoutTheJudge };
+
+  expect(advisor).toBeDefined();
+  expect(walkedRouteNodes(strayJudge).map((walked) => walked.routeNodeId)).toEqual([
+    'ladder',
+    'first',
+    'second',
+  ]);
+});
+
+test('the target a reading of one model uses is never the judge, so no count bills it', () => {
+  expect(firstDeclaredTarget(judged)).toMatchObject({ accountId: 'a1' });
+});
+
 test('a labeled branch hands its child the label and the rule the judge reads it by', () => {
   expect(branchAt(judged, 'first')).toEqual({
     kind: 'rule',
