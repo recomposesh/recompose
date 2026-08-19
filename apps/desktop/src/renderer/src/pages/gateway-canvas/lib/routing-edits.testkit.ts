@@ -1,4 +1,4 @@
-import type { GatewayConfig, RouteNode, Routing } from '@recompose/contracts';
+import type { GatewayConfig, RouteNode, RouterPolicy, Routing } from '@recompose/contracts';
 
 import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 
@@ -46,6 +46,52 @@ export function childrenOf(routing: Routing, routerId: string): readonly string[
   const node = routing.nodes[routerId];
 
   return node?.kind === 'router' ? node.children : [];
+}
+
+/** The policy one router of a routing spreads by, or nothing where the node routes nothing. */
+export function policyOf(routing: Routing, routerId: string): RouterPolicy | undefined {
+  const node = routing.nodes[routerId];
+
+  return node?.kind === 'router' ? node.policy : undefined;
+}
+
+/**
+ * A conditional router over two children: `c1` under the `code` branch, and `c2` as its else.
+ *
+ * @summary Written out rather than built by the edits under test, so a scenario about an edit reads
+ * against a table nobody edited into shape.
+ */
+export function judged(): GatewayConfig {
+  return {
+    ...codex,
+    virtualModels: [
+      {
+        id: 'fast',
+        displayName: 'Fast',
+        routing: {
+          entry: 'r1',
+          nodes: {
+            r1: {
+              kind: 'router',
+              policy: {
+                mode: 'conditional',
+                judge: 'j1',
+                branches: [{ label: 'code', rule: 'questions about source code', child: 'c1' }],
+                elseChild: 'c2',
+                judgeBoundMs: 3000,
+                rejudgeEveryRequest: false,
+              },
+              children: ['c1', 'c2'],
+            },
+            c1: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' },
+            c2: { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' },
+            j1: { kind: 'target', accountId: 'a3', providerModel: 'claude-haiku-5' },
+          },
+        },
+      },
+      { id: 'slow', displayName: 'Slow', routing: bound },
+    ],
+  };
 }
 
 /** A failover ladder of three targets under one entry router, named `second` and `third`. */

@@ -8,6 +8,8 @@ import type {
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
+import { namedByAPolicyAbove, nodeWithout } from './conditional-policy';
+
 /** Which of the shipped ways a router spreads the requests reaching it. */
 export type RouterMode = RouterPolicy['mode'];
 
@@ -36,7 +38,7 @@ export function routedThroughARouter(mode: SpreadingMode, displayName?: string):
   };
 }
 
-function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) => Routing) {
+export function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) => Routing) {
   return {
     ...gateway,
     virtualModels: gateway.virtualModels.map((model) =>
@@ -45,7 +47,7 @@ function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) 
   };
 }
 
-function routerEdited(
+export function routerEdited(
   routing: Routing,
   routerId: string,
   edit: (was: Extract<RouteNode, { kind: 'router' }>) => RouteNode,
@@ -136,6 +138,18 @@ function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
   return reached;
 }
 
+function tableWithout(routing: Routing, gone: ReadonlySet<string>): Routing {
+  const kept: Record<string, RouteNode> = {};
+
+  for (const [id, node] of Object.entries(routing.nodes)) {
+    if (!gone.has(id)) {
+      kept[id] = nodeWithout(node, gone);
+    }
+  }
+
+  return { entry: routing.entry, nodes: kept };
+}
+
 /**
  * The gateway once one route node and everything standing under it leaves the table.
  *
@@ -144,32 +158,18 @@ function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
  * stored walk refuses at parse. The entry is never dropped here, because a routing binds something
  * by construction, so releasing the whole definition is what a person deleting the entry asked for.
  * A node the table never held drops nothing, which falls out of the walk rather than needing a
- * guard of its own.
+ * guard of its own. The else child and the judge are refused outright, because a conditional policy
+ * names both by id and a refusal at the edit beats a schema message about a document nobody typed.
  */
-function tableWithout(routing: Routing, gone: ReadonlySet<string>): Routing {
-  const kept: Record<string, RouteNode> = {};
-
-  for (const [id, node] of Object.entries(routing.nodes)) {
-    if (gone.has(id)) {
-      continue;
-    }
-
-    kept[id] =
-      node.kind === 'router'
-        ? { ...node, children: node.children.filter((child) => !gone.has(child)) }
-        : node;
-  }
-
-  return { entry: routing.entry, nodes: kept };
-}
-
 export function gatewayDroppingNode(
   gateway: GatewayConfig,
   modelId: string,
   nodeId: string,
 ): GatewayConfig {
   return routedBy(gateway, modelId, (was) =>
-    nodeId === was.entry ? was : tableWithout(was, standingUnder(was, nodeId)),
+    nodeId === was.entry || namedByAPolicyAbove(Object.values(was.nodes), nodeId)
+      ? was
+      : tableWithout(was, standingUnder(was, nodeId)),
   );
 }
 
