@@ -1,6 +1,7 @@
 ---
 tier: full
-phase: discovery
-approvals: []
+phase: design
+approvals:
+  - design-document
 branch: worktree-conditional-router
 ---
