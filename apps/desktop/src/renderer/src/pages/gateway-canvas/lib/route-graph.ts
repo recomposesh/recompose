@@ -1,7 +1,17 @@
 import type { RouteNode, RouteTarget, Routing } from '@recompose/contracts';
 
-/** Which branch of a conditional router reaches one child: a labeled rule, or the fallback. */
-export type BranchSeat = { kind: 'rule'; label: string; rule: string } | { kind: 'else' };
+/**
+ * Which branch of a conditional router reaches one child.
+ *
+ * @summary Three, not two: a child nobody has worded yet is a branch in the making rather than a
+ * child without one, so it says so on its own cable and a person can see the composition is unfinished
+ * before a request ever reaches it. The stored shape refuses a blank label and a blank rule, which is
+ * why that standing lives here rather than as an empty branch in the document.
+ */
+export type BranchSeat =
+  | { kind: 'rule'; label: string; rule: string }
+  | { kind: 'draft' }
+  | { kind: 'else' };
 
 /** One node of a virtual model's route table, read with where it stands in the routing. */
 export type WalkedRouteNode = {
@@ -39,13 +49,10 @@ function judgedPolicyOf(node: RouteNode) {
  * a cable never loses the rule it draws for. A router that reads no request at all names nothing
  * here, because ordering children and rotating between them are not decisions about the request.
  */
-function branchSeatsOf(node: RouteNode): ReadonlyMap<string, BranchSeat> {
-  const policy = judgedPolicyOf(node);
-  const seats = new Map<string, BranchSeat>();
+type JudgedPolicy = NonNullable<ReturnType<typeof judgedPolicyOf>>;
 
-  if (policy === undefined) {
-    return seats;
-  }
+function ruledSeatsOf(policy: JudgedPolicy): Map<string, BranchSeat> {
+  const seats = new Map<string, BranchSeat>();
 
   for (const branch of policy.branches) {
     if (!seats.has(branch.child)) {
@@ -53,11 +60,38 @@ function branchSeatsOf(node: RouteNode): ReadonlyMap<string, BranchSeat> {
     }
   }
 
-  if (!seats.has(policy.elseChild)) {
-    seats.set(policy.elseChild, { kind: 'else' });
+  return seats;
+}
+
+/**
+ * The seats every child of a judged router takes once the written rules have taken theirs.
+ *
+ * @summary Else takes whatever child the policy named, and every child still unaccounted for is a
+ * branch waiting to be worded rather than a child with no branch: that is what lets a person see,
+ * off the canvas alone, that a router is holding a child the judge can never name.
+ */
+function seatsTheRestTake(
+  node: RouterNode,
+  policy: JudgedPolicy,
+  seats: Map<string, BranchSeat>,
+): Map<string, BranchSeat> {
+  seats.set(policy.elseChild, seats.get(policy.elseChild) ?? { kind: 'else' });
+
+  for (const child of node.children) {
+    seats.set(child, seats.get(child) ?? { kind: 'draft' });
   }
 
   return seats;
+}
+
+function branchSeatsOf(node: RouteNode): ReadonlyMap<string, BranchSeat> {
+  const policy = judgedPolicyOf(node);
+
+  if (policy === undefined || node.kind !== 'router') {
+    return new Map();
+  }
+
+  return seatsTheRestTake(node, policy, ruledSeatsOf(policy));
 }
 
 function judgeBeside(routing: Routing, walked: WalkedRouteNode): WalkedRouteNode | undefined {

@@ -8,8 +8,9 @@ import { heldDraft } from '../../lib/use-held-draft';
 import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import { shownWhereItWasBorn } from './born-card-camera';
 import { birthedDraftAt, connectWiring } from './cable-gestures';
+import { cableLandings } from './cable-rules';
 import { revealOn } from './canvas-standings';
-import { bindingCableId, cableLandings, flowEdgesOf, flowNodesOf } from './canvas-wiring';
+import { bindingCableId, flowEdgesOf, flowNodesOf } from './canvas-wiring';
 import { deletionWiring } from './deletion-gestures';
 
 function pressedTheCardItself(target: EventTarget | null): boolean {

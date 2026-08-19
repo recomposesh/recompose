@@ -1,3 +1,4 @@
+import type { CableWording } from './canvas-cables';
 import type { XY } from './canvas-positions';
 import type { CableFailure, CableStanding } from './node-graph';
 import type { BranchSeat } from './route-graph';
@@ -213,11 +214,31 @@ export function branchIn(carried: unknown): BranchSeat | undefined {
 
   const { kind } = carried;
 
+  return wordlessSeat(kind) ?? (kind === 'rule' ? labeledSeat(carried) : undefined);
+}
+
+function wordlessSeat(kind: unknown): BranchSeat | undefined {
   if (kind === 'else') {
     return { kind: 'else' };
   }
 
-  return kind === 'rule' ? labeledSeat(carried) : undefined;
+  return kind === 'draft' ? { kind: 'draft' } : undefined;
+}
+
+const WORDING_IDS = ['modelId', 'routerId', 'child', 'routesTo'] as const;
+
+function namesWhatAWriteNeeds(carried: object): carried is CableWording {
+  return WORDING_IDS.every((id) => typeof Reflect.get(carried, id) === 'string');
+}
+
+/**
+ * The branch a press on this cable would word, read off the loose data the library hands the edge.
+ *
+ * @summary A cable missing any of the four is a cable that cannot name what a write would edit, so
+ * it offers no wording at all rather than opening an editor that would save into nothing.
+ */
+export function wordingIn(carried: unknown): CableWording | undefined {
+  return carried instanceof Object && namesWhatAWriteNeeds(carried) ? carried : undefined;
 }
 
 /**

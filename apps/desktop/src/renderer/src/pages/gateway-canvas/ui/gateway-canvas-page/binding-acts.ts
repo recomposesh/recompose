@@ -15,9 +15,9 @@ import {
   gatewayRebinding,
   gatewayReleasing,
 } from '../../lib/model-draft';
-import { ROUTE_COLUMN, seatForNewNode } from '../../lib/tidy-layout';
 import { heldDraft, leaveDrafting, startDrafting } from '../../lib/use-held-draft';
 import { shownWhereItWasBorn } from './born-card-camera';
+import { lookAfterTheBornTarget, seatedWhereItBelongs } from './born-card-seating';
 import { modelIdOf, targetModelIdOf } from './canvas-wiring';
 
 /** The name a definition answers to out loud, which is its id until a person names it. */
@@ -65,45 +65,6 @@ export function targetNameIn(accounts: readonly Account[], accountId: string): s
 }
 
 /**
- * Hands back the seating a completed pick owes the target card it brings into being.
- *
- * @summary A cable let go on open canvas stands a pending card exactly where the pointer released,
- * and the target that answers the pick takes that card's place, so what a person aimed at is where
- * the composition grows. It seats nothing when the account already stands on the canvas, because
- * a card a person can see is one they placed rather than one this pick is making, and nothing
- * when the picker was opened on a card rather than by a drop, which named no spot at all.
- */
-function seatedWhereTheCableLanded(world: CanvasWorld, bornTargetId: string): () => void {
-  const picker = world.standings.picker;
-  const at = picker !== undefined && 'at' in picker ? picker.at : undefined;
-  const alreadyStanding = world.graph.nodes.some((node) => node.id === bornTargetId);
-
-  return () => {
-    if (at === undefined || alreadyStanding) {
-      return;
-    }
-
-    setNodePosition(world.slug, bornTargetId, at);
-    keepCanvasPositions(world.slug);
-  };
-}
-
-function seatOfTheBornTarget(world: CanvasWorld, bornTargetId: string): XY | undefined {
-  const picker = world.standings.picker;
-  const alreadyStanding = world.graph.nodes.some((node) => node.id === bornTargetId);
-
-  if (picker === undefined || alreadyStanding) {
-    return undefined;
-  }
-
-  if ('at' in picker) {
-    return picker.origin === 'drop' ? undefined : picker.at;
-  }
-
-  return seatForNewNode(ROUTE_COLUMN, world.seats);
-}
-
-/**
  * Writes one rewritten gateway, seating whatever card the pick brought into being.
  *
  * @summary Every completed pick lands here, so a born card is seated, the picker put away, and a
@@ -116,8 +77,8 @@ export function committedPick(
   rewritten: GatewayConfig,
   landed: () => void,
 ): void {
-  const seatTheTarget = seatedWhereTheCableLanded(world, bornTargetId);
-  const bornAt = seatOfTheBornTarget(world, bornTargetId);
+  const seatTheTarget = seatedWhereItBelongs(world, bornTargetId);
+  const bornAt = lookAfterTheBornTarget(world, bornTargetId);
 
   world.define.mutate(rewritten, {
     onSuccess: () => {

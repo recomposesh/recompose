@@ -33,6 +33,7 @@ import { gatewayBaseUrl } from '../../lib/gateway-base-url';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { usePanelReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
+import { BranchWording } from '../branch-wording/branch-wording';
 import { ConnectInView } from '../connect-in-view/connect-in-view';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
@@ -160,6 +161,7 @@ function canvasColumn(standing: CanvasColumn): ReactNode {
       <GatewayStage announced={canvas.announced} flow={canvas.flow} slug={slug}>
         {anchoredPicker(canvas.picker)}
       </GatewayStage>
+      <BranchWording gateway={gateway} />
       {logs.rendered ? (
         <LogsDrawer
           accounts={accounts}

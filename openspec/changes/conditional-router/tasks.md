@@ -105,9 +105,9 @@
 
 ## 9. Canvas interactions the testing pass caught (replan, approved 2026-08-19 evening)
 
-- [ ] 9.1 A cable dropped from a conditional router births a draft branch and opens the label
+- [x] 9.1 A cable dropped from a conditional router births a draft branch and opens the label
       editor
-- [ ] 9.2 The label pill on the cable opens the inline rename editor, and the rule press keeps
+- [x] 9.2 The label pill on the cable opens the inline rename editor, and the rule press keeps
       its reveal
 - [x] 9.3 Valid drop targets highlight while a cable drags
 - [x] 9.4 The satellite drags with a persisted per-router offset, and tidy returns it to the
