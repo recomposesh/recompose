@@ -14,6 +14,7 @@ export type BranchQuestion = {
   branches: readonly BranchRule[];
   elseChild: string;
   classify: BranchClassifier | undefined;
+  judgeStandsCooling: boolean;
 };
 
 type Asking = { question: BranchQuestion; classify: BranchClassifier };
@@ -45,10 +46,12 @@ async function childTheJudgeAnswers(asking: Asking): Promise<string> {
  * judge saying it cannot classify at all, so asking again spends a second call to learn the same
  * thing, while an answer no branch wears may well be the judge misreading a closed set it can read
  * on a second look. The second answer is final however it reads, which is what bounds a request at
- * two judge calls no matter how strangely the judge behaves.
+ * two judge calls no matter how strangely the judge behaves. A judge already standing cooling is
+ * read here as no judge at all, so the else branch is reached without spending a call the ledger
+ * already knows would fail.
  */
 export async function childTheJudgeDecides(question: BranchQuestion): Promise<string> {
-  const classify = question.classify;
+  const classify = question.judgeStandsCooling ? undefined : question.classify;
 
   return classify === undefined ? question.elseChild : childTheJudgeAnswers({ question, classify });
 }

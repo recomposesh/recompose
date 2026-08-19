@@ -2,7 +2,7 @@ import type { RouterPolicy } from '@recompose/contracts';
 
 export type ChildCanServe = (child: string) => boolean;
 
-type ConditionalPolicy = Extract<RouterPolicy, { mode: 'conditional' }>;
+export type ConditionalPolicy = Extract<RouterPolicy, { mode: 'conditional' }>;
 
 export type BranchRule = ConditionalPolicy['branches'][number];
 

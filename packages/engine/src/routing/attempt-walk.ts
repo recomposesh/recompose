@@ -1,9 +1,9 @@
 import type { EngineRouting, RouterPolicy } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
-import type { BranchClassifier } from './judge-decision';
+import type { BranchClassifier, BranchQuestion } from './judge-decision';
 import type { AttemptReading, AttemptReason } from './outcome-classification';
-import type { BranchChoice } from './policies';
+import type { BranchChoice, ConditionalPolicy } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
@@ -81,6 +81,16 @@ function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string
   return node.children.some((child) => subtreeCanServe(walking, child, passed));
 }
 
+function questionOf(walking: Walking, policy: ConditionalPolicy): BranchQuestion {
+  return {
+    judge: policy.judge,
+    branches: policy.branches,
+    elseChild: policy.elseChild,
+    classify: walking.classifyBranch,
+    judgeStandsCooling: walking.ledger.coolingAt(addressOf(walking, policy.judge)) !== undefined,
+  };
+}
+
 /**
  * The branch one conditional router follows for this whole walk, decided at most once.
  *
@@ -97,13 +107,7 @@ async function branchTheWalkFollows(
   if (policy.mode !== 'conditional') return undefined;
 
   const decided =
-    walking.decided.get(routeNode) ??
-    (await childTheJudgeDecides({
-      judge: policy.judge,
-      branches: policy.branches,
-      elseChild: policy.elseChild,
-      classify: walking.classifyBranch,
-    }));
+    walking.decided.get(routeNode) ?? (await childTheJudgeDecides(questionOf(walking, policy)));
 
   walking.decided.set(routeNode, decided);
 

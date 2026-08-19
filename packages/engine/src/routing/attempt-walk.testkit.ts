@@ -30,6 +30,9 @@ export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
     },
     cooling: (routeNode: string) =>
       ledger.coolingAt({ slug: 'main', virtualModel: 'fast', routeNode }),
+    standDown: (routeNode: string, span: number) => {
+      ledger.cool({ slug: 'main', virtualModel: 'fast', routeNode }, { coolUntilMs: clock + span });
+    },
     send: async (replies: Replies = {}) => {
       const attempted: string[] = [];
       const walk = await walkAttempts<string>({
