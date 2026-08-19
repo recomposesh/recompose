@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import type { ConditionalPolicy } from './gateway-routing-conditional';
+
+import {
+  conditionalPolicySchema,
+  refusalsOfAConditionalPolicy,
+} from './gateway-routing-conditional';
 import { nonBlankString } from './non-blank';
 
 export const routeNodeIdSchema = nonBlankString;
@@ -19,28 +25,13 @@ export function mintRouteNodeId(): string {
   return crypto.randomUUID();
 }
 
-const branchSchema = z.strictObject({
-  label: nonBlankString,
-  rule: nonBlankString,
-  child: routeNodeIdSchema,
-});
-
 export const routerPolicySchema = z.discriminatedUnion('mode', [
   z.strictObject({ mode: z.literal('failover') }),
   z.strictObject({ mode: z.literal('round-robin') }),
-  z.strictObject({
-    mode: z.literal('conditional'),
-    judge: routeNodeIdSchema,
-    branches: z.array(branchSchema),
-    elseChild: routeNodeIdSchema,
-    judgeBoundMs: z.number().int().positive(),
-    rejudgeEveryRequest: z.boolean(),
-  }),
+  conditionalPolicySchema,
 ]);
 
 export type RouterPolicy = z.infer<typeof routerPolicySchema>;
-
-type ConditionalPolicy = Extract<RouterPolicy, { mode: 'conditional' }>;
 
 const NAME_OF_MODE: Record<RouterPolicy['mode'], string> = {
   failover: 'Failover',
@@ -124,36 +115,6 @@ function referencesOf(node: RouteNode): readonly string[] {
   return judge === undefined ? childrenOf(node) : [...childrenOf(node), judge];
 }
 
-function eachBranchNamesAChild(
-  id: string,
-  node: RouteNode,
-  policy: ConditionalPolicy,
-  context: z.RefinementCtx,
-): void {
-  const children = new Set(childrenOf(node));
-  const at: PropertyKey[] = ['nodes', id, 'policy'];
-
-  if (!children.has(policy.elseChild)) {
-    const stray = policy.elseChild;
-
-    refuse(
-      context,
-      [...at, 'elseChild'],
-      `the else child ${stray} stands outside this router's children`,
-    );
-  }
-
-  for (const branch of policy.branches) {
-    if (!children.has(branch.child)) {
-      refuse(
-        context,
-        [...at, 'branches'],
-        `the ${branch.label} branch names ${branch.child}, standing outside this router's children`,
-      );
-    }
-  }
-}
-
 function eachConditionalRouterHoldsItsBranches(
   nodes: Map<string, RouteNode>,
   context: z.RefinementCtx,
@@ -161,8 +122,12 @@ function eachConditionalRouterHoldsItsBranches(
   for (const [id, node] of nodes) {
     const policy = conditionalPolicyOf(node);
 
-    if (policy !== undefined) {
-      eachBranchNamesAChild(id, node, policy, context);
+    if (policy === undefined) {
+      continue;
+    }
+
+    for (const refusal of refusalsOfAConditionalPolicy(policy, childrenOf(node))) {
+      refuse(context, ['nodes', id, 'policy', refusal.at], refusal.message);
     }
   }
 }
