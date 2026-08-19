@@ -84,6 +84,7 @@ function wirePaths(wires: MapWire[]): ReactNode {
     <g className="stroke-cable-resting" fill="none">
       {wires.map((wire) => (
         <path
+          className={drawnAsATie(wire.id) ? 'stroke-router' : undefined}
           d={`M${String(wire.from.x)},${String(wire.from.y)} L${String(wire.to.x)},${String(wire.to.y)}`}
           key={wire.id}
           style={drawnAsATie(wire.id) ? { strokeDasharray: TIE_DASH } : undefined}

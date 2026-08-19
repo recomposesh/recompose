@@ -159,6 +159,9 @@ export const TheMapDrawsTheJudgeTieDotted = meta.story({
 
     await expect(wires).toHaveLength(3);
     await expect(dashed).toHaveLength(1);
+    await expect(paintedStyle(dashed[0]).stroke).toBe(
+      forScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)'),
+    );
   },
 });
 

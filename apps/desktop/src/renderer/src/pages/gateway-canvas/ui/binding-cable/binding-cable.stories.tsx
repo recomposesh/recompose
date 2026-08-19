@@ -159,13 +159,16 @@ export const ACoolingCablePaintsItsStanding = meta.story({
   },
 });
 
-/** The tie to a judge breaks into dashes, because no request travels it. */
+/** The tie to a judge breaks into dashes and wears the router tint, because an advisor belongs to its router. */
 export const ATieToAJudgeDrawsDotted = meta.story({
   render: () => tiedFlow(),
   play: async ({ canvasElement }) => {
     const [tie] = await cablesDrawn(canvasElement);
 
     await expect(paintedStyle(tie).strokeDasharray).toBe('4px, 3px');
+    await expect(paintedStyle(tie).stroke).toBe(
+      forScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)'),
+    );
   },
 });
 

@@ -50,10 +50,11 @@ function grabEnds(cable: EdgeProps, tint: string): ReactNode {
   );
 }
 
-function cableClasses(carried: unknown, chosen: boolean): string {
+function cableClasses(carried: unknown, chosen: boolean, edgeId: string): string {
   const width = chosen ? 'binding-cable-selected' : 'binding-cable';
+  const stroke = drawnAsATie(edgeId) ? 'stroke-router' : strokeForStanding(carried);
 
-  return `${width} ${strokeForStanding(carried)}`;
+  return `${width} ${stroke}`;
 }
 
 function tieDashing(edgeId: string): { strokeDasharray: string } | undefined {
@@ -168,7 +169,7 @@ export function BindingCable(cable: EdgeProps): ReactElement {
     <>
       {chosen ? halo(drawn, strokeForStanding(carried)) : null}
       <BaseEdge
-        className={cableClasses(carried, chosen)}
+        className={cableClasses(carried, chosen, cable.id)}
         interactionWidth={cable.interactionWidth ?? CABLE_GRAB_SPAN}
         path={drawn}
         style={tieDashing(cable.id)}
