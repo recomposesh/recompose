@@ -64,6 +64,10 @@ export function RouterInspector({
       <SegmentedControl
         label="Routing mode"
         onChangeValue={(next: RouterMode) => {
+          if (next === 'conditional') {
+            return;
+          }
+
           rewrite.mutate(gatewaySwitching(gateway, model.id, routeNodeId, next));
         }}
         options={modeOptions}

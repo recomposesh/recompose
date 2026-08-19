@@ -97,8 +97,10 @@ describe('the stored shape of a router', () => {
     expectTypeOf<RouterNode['displayName']>().toEqualTypeOf<string | undefined>();
   });
 
-  test('the two shipped modes are the only ones a router can wear', () => {
-    expectTypeOf<RouterPolicy['mode']>().toEqualTypeOf<'failover' | 'round-robin'>();
+  test('the three shipped modes are the only ones a router can wear', () => {
+    expectTypeOf<RouterPolicy['mode']>().toEqualTypeOf<
+      'failover' | 'round-robin' | 'conditional'
+    >();
   });
 
   test('a router names its children by id, never by value', () => {

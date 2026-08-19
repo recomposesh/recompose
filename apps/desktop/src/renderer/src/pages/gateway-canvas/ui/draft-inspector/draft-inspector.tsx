@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 
 import type { BoundKind } from '../../lib/binding-kinds';
 import type { SettledDefinition } from '../../lib/model-draft';
-import type { RouterMode } from '../../lib/routing-edits';
+import type { SpreadingMode } from '../../lib/routing-edits';
 import type { OptionGroup } from '../option-list/option-list';
 
 import {
@@ -166,7 +166,7 @@ function draftEdits(definition: SettledDefinition, edited: (next: SettledDefinit
     onReopenKind: () => {
       edited({ ...definition, bindsThrough: undefined, accountId: '', providerModel: '' });
     },
-    onRouterModeChange: (mode: RouterMode) => {
+    onRouterModeChange: (mode: SpreadingMode) => {
       edited({ ...definition, routerMode: mode });
     },
     onRouterNameChange: (typed: string) => {

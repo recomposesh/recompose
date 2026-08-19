@@ -4,7 +4,7 @@ import { mintRouteNodeId, modelAliasFromName } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
 import type { BoundKind } from './binding-kinds';
-import type { RouterMode } from './routing-edits';
+import type { SpreadingMode } from './routing-edits';
 
 import { IpcResultError, refusalSentence } from '../../../shared/api';
 import { routedThroughARouter } from './routing-edits';
@@ -33,7 +33,7 @@ export type SettledDefinition = {
   /** Which shape the binding takes, or nothing while the ask that offers the two stands open. */
   bindsThrough?: BoundKind | undefined;
   /** How the router spreads, or nothing while the draft has yet to answer with a router at all. */
-  routerMode?: RouterMode | undefined;
+  routerMode?: SpreadingMode | undefined;
   /** What a person called the router, which is empty while it answers to its mode. */
   routerName?: string | undefined;
   /** The account the model reaches. */
@@ -79,7 +79,7 @@ export function draftFilledIn(definition: SettledDefinition): boolean {
  * child answers and the rest stand in. Round-robin trades the prompt cache for spread, which is a
  * choice worth making on purpose in the inspector rather than one to inherit from a drop.
  */
-export const BORN_ROUTER_MODE: RouterMode = 'failover';
+export const BORN_ROUTER_MODE: SpreadingMode = 'failover';
 
 function boundThroughOneNode(target: RouteTarget): Routing {
   const entry = mintRouteNodeId();
@@ -119,7 +119,7 @@ export type NamedDefinition = { id: string; displayName: string };
 export function gatewayDefiningRouted(
   gateway: GatewayConfig,
   named: NamedDefinition,
-  mode: RouterMode,
+  mode: SpreadingMode,
   routerName?: string,
 ): GatewayConfig {
   return {

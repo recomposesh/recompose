@@ -1,0 +1,98 @@
+import { describe, expect, test } from 'vitest';
+
+import { routingSchema } from './gateway-routing';
+
+type Refusal = { code: string; path: PropertyKey[]; message: string };
+
+const CODE_BRANCH = { label: 'code', rule: 'the request asks for code', child: 'coder' };
+
+function targetNode(accountId: string): Record<string, unknown> {
+  return { kind: 'target', accountId, providerModel: 'a-real-model' };
+}
+
+function conditionalPolicy(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    mode: 'conditional',
+    judge: 'arbiter',
+    branches: [CODE_BRANCH],
+    elseChild: 'chatter',
+    judgeBoundMs: 2000,
+    rejudgeEveryRequest: false,
+    ...over,
+  };
+}
+
+function routingSortedBy(policy: Record<string, unknown>): Record<string, unknown> {
+  return {
+    entry: 'sorter',
+    nodes: {
+      sorter: { kind: 'router', policy, children: ['coder', 'chatter'] },
+      coder: targetNode('acc-claude-max'),
+      chatter: targetNode('acc-openrouter'),
+      arbiter: targetNode('acc-cheap-judge'),
+    },
+  };
+}
+
+function refusalsFor(routing: Record<string, unknown>): Refusal[] {
+  const parsed = routingSchema.safeParse(routing);
+
+  return parsed.success
+    ? []
+    : parsed.error.issues.map(({ code, path, message }) => ({ code, path: [...path], message }));
+}
+
+describe('a router that asks a judge which branch a request belongs to', () => {
+  test('stores the judge, the labeled branches, the else, the budget, and the re-judge choice', () => {
+    const policy = conditionalPolicy();
+    const parsed = routingSchema.parse(routingSortedBy(policy));
+
+    expect(parsed.nodes['sorter']).toEqual({
+      kind: 'router',
+      policy,
+      children: ['coder', 'chatter'],
+    });
+  });
+
+  test('reaches its judge through the policy that names it, though no children array holds it', () => {
+    expect(refusalsFor(routingSortedBy(conditionalPolicy()))).toEqual([]);
+  });
+});
+
+describe('a conditional router whose branches name what its children do not hold', () => {
+  test('a router carrying no else at all is refused, and the refusal names the else', () => {
+    const elseless = conditionalPolicy();
+
+    delete elseless['elseChild'];
+
+    expect(refusalsFor(routingSortedBy(elseless)).map((refusal) => refusal.path)).toEqual([
+      ['nodes', 'sorter', 'policy', 'elseChild'],
+    ]);
+  });
+
+  test('an else standing outside the children is refused, and the refusal names the else', () => {
+    const strayElse = conditionalPolicy({ elseChild: 'nowhere' });
+
+    expect(refusalsFor(routingSortedBy(strayElse))).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'elseChild'],
+        message: "the else child nowhere stands outside this router's children",
+      },
+    ]);
+  });
+
+  test('a branch standing outside the children is refused, and the refusal names the branch', () => {
+    const strayBranch = conditionalPolicy({
+      branches: [{ label: 'code', rule: 'the request asks for code', child: 'nowhere' }],
+    });
+
+    expect(refusalsFor(routingSortedBy(strayBranch))).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'branches'],
+        message: "the code branch names nowhere, standing outside this router's children",
+      },
+    ]);
+  });
+});
