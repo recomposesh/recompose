@@ -17,7 +17,7 @@
 
 - [ ] 2.1 Make `ChildPicker` async with both existing picks wrapped unchanged, proved by their
       untouched specs
-- [ ] 2.2 Specify the pure branch pick: a clean label maps to its child, and everything else maps
+- [x] 2.2 Specify the pure branch pick: a clean label maps to its child, and everything else maps
       to else
 - [ ] 2.3 Specify the walk-scoped memo: one classification per walk, and retried children never
       re-ask the judge
