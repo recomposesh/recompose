@@ -93,6 +93,46 @@ describe('the answers a conditional router asks its judge twice about', () => {
   });
 });
 
+describe('the judge a conditional router refuses to call', () => {
+  test('a judge standing cooling sends the request to else with no call leaving the machine', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    gateway.standDown(JUDGE, 60_000);
+    const walk = await gateway.send();
+
+    expect(judge.asked).toEqual([]);
+    expect(walk.attempted).toEqual(['catchall']);
+  });
+
+  test('a judge whose cooling ran out classifies the next request again', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    gateway.standDown(JUDGE, 60_000);
+    gateway.tick(60_001);
+    const walk = await gateway.send();
+
+    expect(judge.asked).toEqual([JUDGE]);
+    expect(walk.attempted).toEqual(['coder']);
+  });
+
+  test('a cooling judge leaves the branch children of its router free to serve', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    gateway.standDown(JUDGE, 60_000);
+    const walk = await gateway.send();
+
+    expect(gateway.cooling('coder')).toBeUndefined();
+    expect(walk.verdict).toEqual({
+      outcome: 'answered',
+      routeNode: 'catchall',
+      answer: 'catchall',
+    });
+  });
+});
+
 describe('the one classification a walk spends, however many children it tries', () => {
   test('a branch child that refuses never sends the walk back to its judge', async () => {
     const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
