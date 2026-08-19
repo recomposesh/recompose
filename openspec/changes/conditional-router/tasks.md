@@ -73,10 +73,32 @@
       card
 - [ ] 5.9 The browser pass covers the canvas in both schemes
 
-## 6. Graduation and the outer loop
+## 6. Graduation and the outer loop (moved after 7 and 8 in the run order)
 
 - [ ] 6.1 The shared end-to-end surface lands alone and first, carrying no feature file
 - [ ] 6.2 Each feature file graduates with its own step definitions in one commit, five units in
       parallel
 - [ ] 6.3 The outer loop goes green on mock traffic
 - [ ] 6.4 Visual baselines regenerate on the runners when the canvas changes what they see
+
+## 7. The mode switch and the mode rows (replan, approved at the gate of 2026-08-19)
+
+- [ ] 7.1 Specify the switch to conditional entering definition state: storable once a judge
+      binds, every non-else child holds a label and a rule, and the last declared child stands
+      as else
+- [ ] 7.2 The inspector opens the switch definition on a childful router, and the childless
+      reason stays
+- [ ] 7.3 Existing children arrive as draft branches, amber until labeled and ruled, following
+      the fresh-switch screen
+- [ ] 7.4 The mode choice becomes one shared vertical option-row list, mode name plus its
+      sentence per row, replacing the segmented control in the inspector and the canvas picker
+      step
+- [ ] 7.5 Stories cover the mode rows and every switch state, and the suites stay green
+
+## 8. The pin tally crosses to the renderer (replan, approved at the gate of 2026-08-19)
+
+- [ ] 8.1 Contracts: the per-branch pin tally joins the watch channel schema
+- [ ] 8.2 Engine: a pin write and a pin expiry each emit the router's tally
+- [ ] 8.3 The bridge carries the tally to the renderer
+- [ ] 8.4 The inspector rows read the live tally
+- [ ] 8.5 The tally law, never negative and dropped on expiry, lands as a property with its twin
