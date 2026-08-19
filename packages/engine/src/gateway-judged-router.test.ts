@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   aJudgedModel,
+  childOverloaded,
   childServing,
   judgeNaming,
   judgeRefusing,
+  rowsRaisedBy,
   servingJudged,
 } from './gateway-judged-router.testkit';
 
@@ -121,5 +123,34 @@ describe('a conversation keeps the branch its first request earned', () => {
 
     expect(scene.reached()).toEqual(['catchall', 'catchall']);
     expect(scene.askedJudge()).toHaveLength(4);
+  });
+});
+
+describe('the judge stays off the canvas the request paints', () => {
+  it('raises a row for the child that carried the request and none for the judge', async () => {
+    const scene = servingJudged(aJudgedModel(), judgeNaming('code'), childOverloaded());
+
+    await scene.ask();
+
+    expect(rowsRaisedBy(scene)).toContain('coder');
+    expect(rowsRaisedBy(scene)).not.toContain('judge');
+  });
+
+  it('raises no row at all for a judge that refused the classification', async () => {
+    const scene = servingJudged(aJudgedModel(), judgeRefusing(), childOverloaded());
+
+    await scene.ask();
+
+    expect(rowsRaisedBy(scene)).not.toContain('judge');
+  });
+
+  it('never names the judge among the children an exhausted router tried', async () => {
+    const scene = servingJudged(aJudgedModel(), judgeNaming('code'), childOverloaded());
+    const answer = await scene.ask();
+    const said = await answer.text();
+
+    expect(answer.status).toBe(502);
+    expect(said).toContain('gpt-5-codex');
+    expect(said).not.toContain('gpt-5-nano');
   });
 });

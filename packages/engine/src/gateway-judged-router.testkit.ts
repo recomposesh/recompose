@@ -145,3 +145,15 @@ export function judgeRefusing(): () => Response {
 export function childServing(): () => Response {
   return () => Response.json({ id: 'msg_1', content: [{ type: 'text', text: 'the answer' }] });
 }
+
+export function childOverloaded(): () => Response {
+  return () =>
+    new Response(JSON.stringify({ error: { message: 'overloaded' } }), {
+      status: 503,
+      headers: { 'content-type': 'application/json' },
+    });
+}
+
+export function rowsRaisedBy(serving: JudgedServing): readonly string[] {
+  return Object.keys(serving.traffic['codex']?.['fast'] ?? {});
+}
