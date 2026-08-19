@@ -25,7 +25,7 @@
 - [ ] 2.5 Specify server-state turns: a pinned turn follows its pin, and an unpinned one goes to
       else with no call
 - [ ] 2.6 Specify a cooling judge short-circuiting before any call leaves the machine
-- [ ] 2.7 Property law with its deterministic twin: every judge reading maps to exactly one child
+- [x] 2.7 Property law with its deterministic twin: every judge reading maps to exactly one child
 - [x] 2.8 Specify judge refusal and judge timeout readings that route rather than refuse
 
 ## 3. The judge call, the proxy injection, and the pins
