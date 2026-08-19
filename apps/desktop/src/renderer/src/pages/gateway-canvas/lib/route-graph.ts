@@ -1,5 +1,8 @@
 import type { RouteNode, RouteTarget, Routing } from '@recompose/contracts';
 
+/** Which branch of a conditional router reaches one child: a labeled rule, or the fallback. */
+export type BranchSeat = { kind: 'rule'; label: string; rule: string } | { kind: 'else' };
+
 /** One node of a virtual model's route table, read with where it stands in the routing. */
 export type WalkedRouteNode = {
   /** The id the stored table holds this node under. */
@@ -10,7 +13,46 @@ export type WalkedRouteNode = {
   depth: number;
   /** The route node that names this one as a child, or nothing at the entry. */
   parent: string | undefined;
+  /** The branch the parent reaches this node by, or nothing where no judge decides. */
+  branch: BranchSeat | undefined;
 };
+
+/**
+ * Which branch of one router reaches each of its children, keyed by the child it reaches.
+ *
+ * @summary The first branch that names a child does the naming, and else takes only a child no
+ * branch spoke for, so a child two rules reach still reads as the rule a person declared first and
+ * a cable never loses the rule it draws for. A router that reads no request at all names nothing
+ * here, because ordering children and rotating between them are not decisions about the request.
+ */
+function judgedPolicyOf(node: RouteNode) {
+  if (node.kind !== 'router') {
+    return undefined;
+  }
+
+  return node.policy.mode === 'conditional' ? node.policy : undefined;
+}
+
+function branchSeatsOf(node: RouteNode): ReadonlyMap<string, BranchSeat> {
+  const policy = judgedPolicyOf(node);
+  const seats = new Map<string, BranchSeat>();
+
+  if (policy === undefined) {
+    return seats;
+  }
+
+  for (const branch of policy.branches) {
+    if (!seats.has(branch.child)) {
+      seats.set(branch.child, { kind: 'rule', label: branch.label, rule: branch.rule });
+    }
+  }
+
+  if (!seats.has(policy.elseChild)) {
+    seats.set(policy.elseChild, { kind: 'else' });
+  }
+
+  return seats;
+}
 
 function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRouteNode[]): void {
   into.push(walked);
@@ -19,13 +61,21 @@ function walkSubtree(routing: Routing, walked: WalkedRouteNode, into: WalkedRout
     return;
   }
 
+  const seats = branchSeatsOf(walked.node);
+
   for (const childId of walked.node.children) {
     const child = routing.nodes[childId];
 
     if (child !== undefined) {
       walkSubtree(
         routing,
-        { routeNodeId: childId, node: child, depth: walked.depth + 1, parent: walked.routeNodeId },
+        {
+          routeNodeId: childId,
+          node: child,
+          depth: walked.depth + 1,
+          parent: walked.routeNodeId,
+          branch: seats.get(childId),
+        },
         into,
       );
     }
@@ -54,7 +104,7 @@ export function walkedRouteNodes(routing: Routing): readonly WalkedRouteNode[] {
 
   walkSubtree(
     routing,
-    { routeNodeId: routing.entry, node: entry, depth: 0, parent: undefined },
+    { routeNodeId: routing.entry, node: entry, depth: 0, parent: undefined, branch: undefined },
     walked,
   );
 
