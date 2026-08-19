@@ -24,6 +24,7 @@ import {
   pushAccountsChanged,
   pushEngineLogs,
   pushEngineStates,
+  pushEngineBranchPins,
   pushEngineTraffic,
 } from '../ipc/push-events';
 import { storagePathsFor } from '../ipc/storage-context';
@@ -155,6 +156,7 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
       custody,
     ).write,
     onTraffic: pushEngineTraffic,
+    onBranchPins: pushEngineBranchPins,
     onLogs: pushEngineLogs,
     onSettledRow: usageStore.accrue,
   });
