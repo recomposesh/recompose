@@ -102,3 +102,17 @@
 - [ ] 8.3 The bridge carries the tally to the renderer
 - [ ] 8.4 The inspector rows read the live tally
 - [ ] 8.5 The tally law, never negative and dropped on expiry, lands as a property with its twin
+
+## 9. Canvas interactions the testing pass caught (replan, approved 2026-08-19 evening)
+
+- [ ] 9.1 A cable dropped from a conditional router births a draft branch and opens the label
+      editor
+- [ ] 9.2 The label pill on the cable opens the inline rename editor, and the rule press keeps
+      its reveal
+- [ ] 9.3 Valid drop targets highlight while a cable drags
+- [ ] 9.4 The satellite drags with a persisted per-router offset, and tidy returns it to the
+      default seat
+- [ ] 9.5 An optional judge directive joins the policy and rides ahead of the compiled
+      classification prompt
+- [ ] 9.6 The judge inspector shows the compiled prompt read-only and edits the directive
+- [ ] 9.7 Stories cover the new interactions and the suites stay green
