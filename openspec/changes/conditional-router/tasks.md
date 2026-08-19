@@ -4,7 +4,7 @@
 
 - [x] 1.1 Specify the conditional member refusing a missing else, a dangling branch child, and a
       dangling else child
-- [ ] 1.2 Specify duplicate and blank branch labels refused after trimming
+- [x] 1.2 Specify duplicate and blank branch labels refused after trimming
 - [ ] 1.3 Specify judge reachability: a judge referenced only from the policy counts as reachable,
       and a judge sitting in any `children` array gets refused
 - [ ] 1.4 Specify that declared-order walkers never meet the judge, so token counting can't

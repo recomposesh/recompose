@@ -34,6 +34,23 @@ function routingSortedBy(policy: Record<string, unknown>): Record<string, unknow
   };
 }
 
+function routingSortedInto(branches: readonly Record<string, unknown>[]): Record<string, unknown> {
+  return {
+    entry: 'sorter',
+    nodes: {
+      sorter: {
+        kind: 'router',
+        policy: conditionalPolicy({ branches }),
+        children: ['coder', 'drafter', 'chatter'],
+      },
+      coder: targetNode('acc-claude-max'),
+      drafter: targetNode('acc-openrouter'),
+      chatter: targetNode('acc-fallback'),
+      arbiter: targetNode('acc-cheap-judge'),
+    },
+  };
+}
+
 function refusalsFor(routing: Record<string, unknown>): Refusal[] {
   const parsed = routingSchema.safeParse(routing);
 
@@ -93,6 +110,42 @@ describe('a conditional router whose branches name what its children do not hold
         path: ['nodes', 'sorter', 'policy', 'branches'],
         message: "the code branch names nowhere, standing outside this router's children",
       },
+    ]);
+  });
+});
+
+describe('the labels a conditional router hands its judge', () => {
+  test('two branches wearing one label are refused, and the refusal names the label', () => {
+    const twice = [
+      { label: 'code', rule: 'the request asks for code', child: 'coder' },
+      { label: 'code', rule: 'the request asks for a draft', child: 'drafter' },
+    ];
+
+    expect(refusalsFor(routingSortedInto(twice))).toEqual([
+      {
+        code: 'custom',
+        path: ['nodes', 'sorter', 'policy', 'branches'],
+        message: 'the label code stands on more than one branch',
+      },
+    ]);
+  });
+
+  test('two labels that read alike once trimmed are refused, because the judge reads one', () => {
+    const spaced = [
+      { label: 'code', rule: 'the request asks for code', child: 'coder' },
+      { label: '  code  ', rule: 'the request asks for a draft', child: 'drafter' },
+    ];
+
+    expect(refusalsFor(routingSortedInto(spaced)).map((refusal) => refusal.message)).toEqual([
+      'the label code stands on more than one branch',
+    ]);
+  });
+
+  test('a label of nothing but space is refused, because it hands the judge no word', () => {
+    const blank = [{ label: '   ', rule: 'the request asks for code', child: 'coder' }];
+
+    expect(refusalsFor(routingSortedInto(blank)).map((refusal) => refusal.path)).toEqual([
+      ['nodes', 'sorter', 'policy', 'branches', 0, 'label'],
     ]);
   });
 });
