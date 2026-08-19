@@ -39,7 +39,7 @@
 - [ ] 3.6 Specify the judge call staying out of cable accounting
 - [x] 3.7 Specify prompt assembly: delimited tail, else excluded, branch order preserved as a
       property law with its twin, and the tail never logged
-- [ ] 3.8 Integration: a conditional table serves end to end with transports doubled at the
+- [x] 3.8 Integration: a conditional table serves end to end with transports doubled at the
       network boundary
 
 ## 4. The inspector cluster

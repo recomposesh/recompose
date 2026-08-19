@@ -2,11 +2,11 @@ import type {
   EngineTargetStanding,
   EngineVirtualModel,
   GatewayTraffic,
-  RequestOutcome,
   SpendGrant,
 } from '@recompose/contracts';
 
 import type { AskedGrant, AskedGrants } from './gateway-app.testkit';
+import type { NoteTraffic } from './gateway-traffic';
 
 import { createGatewayApp } from './gateway-app';
 import { aCredentialedGrant, aGatewayHolding } from './gateway-app.testkit';
@@ -122,6 +122,22 @@ export type Serving = {
   traffic: GatewayTraffic;
 };
 
+export type WatchedTraffic = { traffic: GatewayTraffic; note: NoteTraffic };
+
+export function recordingTraffic(): WatchedTraffic {
+  const traffic: GatewayTraffic = {};
+
+  return {
+    traffic,
+    note: (slug, virtualModel, routeNode, request) => {
+      const gateway = (traffic[slug] ??= {});
+      const held = (gateway[virtualModel] ??= {});
+
+      held[routeNode] = request;
+    },
+  };
+}
+
 export function serving(
   model: EngineVirtualModel,
   answering: Answering,
@@ -132,7 +148,7 @@ export function serving(
     [childRouteNode(2)]: aCredentialedGrant('http://second.test'),
     ...grants,
   });
-  const traffic: GatewayTraffic = {};
+  const watched = recordingTraffic();
   const app = createGatewayApp(
     aGatewayHolding(model),
     perNode.grantFor,
@@ -141,18 +157,13 @@ export function serving(
     undefined,
     undefined,
     undefined,
-    (slug, virtualModel, routeNode, request: RequestOutcome) => {
-      const gateway = (traffic[slug] ??= {});
-      const held = (gateway[virtualModel] ??= {});
-
-      held[routeNode] = request;
-    },
+    watched.note,
   );
 
   return {
     sentTo: answering.sentTo,
     asked: perNode.asked,
-    traffic,
+    traffic: watched.traffic,
     ask: async (body: unknown = ASK) =>
       app.request(`${ORIGIN}/v1/messages`, { method: 'POST', body: JSON.stringify(body) }),
   };
