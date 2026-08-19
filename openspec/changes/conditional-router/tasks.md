@@ -15,7 +15,7 @@
 
 ## 2. The engine walk and the pure pick
 
-- [ ] 2.1 Make `ChildPicker` async with both existing picks wrapped unchanged, proved by their
+- [x] 2.1 Make `ChildPicker` async with both existing picks wrapped unchanged, proved by their
       untouched specs
 - [x] 2.2 Specify the pure branch pick: a clean label maps to its child, and everything else maps
       to else

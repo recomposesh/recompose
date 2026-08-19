@@ -6,7 +6,9 @@ type ConditionalPolicy = Extract<RouterPolicy, { mode: 'conditional' }>;
 
 export type BranchRule = ConditionalPolicy['branches'][number];
 
-function branchWearingTheLabel(
+export type BranchChoice = { decided: string; elseChild: string };
+
+export function branchWearingTheLabel(
   branches: readonly BranchRule[],
   label: string | undefined,
 ): BranchRule | undefined {
@@ -64,4 +66,43 @@ export function nextRoundRobinChild(
   return offered === undefined
     ? { child: undefined, cursor }
     : { child: offered, cursor: cursor + 1 };
+}
+
+type Turn = { cursor: () => number; advanceTo: (cursor: number) => void };
+
+export type Picking = {
+  children: readonly string[];
+  canServe: ChildCanServe;
+  turn: Turn;
+  branch: BranchChoice | undefined;
+};
+
+type ChildPicker = (picking: Picking) => Promise<string | undefined>;
+
+const PICK_BY_MODE: Record<RouterPolicy['mode'], ChildPicker> = {
+  failover: async ({ children, canServe }) =>
+    Promise.resolve(nextFailoverChild(children, canServe)),
+  'round-robin': async ({ children, canServe, turn }) => {
+    const spun = nextRoundRobinChild(children, canServe, turn.cursor());
+
+    turn.advanceTo(spun.cursor);
+
+    return Promise.resolve(spun.child);
+  },
+  conditional: async ({ branch }) => Promise.resolve(branch?.decided),
+};
+
+/**
+ * The child one router offers next, however its mode chooses.
+ *
+ * @summary Every pick answers a promise so the one mode that waits on a judge shares the walk's
+ * single decision point with the two that never wait. Failover and round-robin stay ordinary
+ * functions whose answers are wrapped here rather than made asynchronous, which is what leaves their
+ * behaviour, and their specs, untouched by a mode that classifies over the network.
+ */
+export async function childTheModeOffers(
+  mode: RouterPolicy['mode'],
+  picking: Picking,
+): Promise<string | undefined> {
+  return PICK_BY_MODE[mode](picking);
 }
