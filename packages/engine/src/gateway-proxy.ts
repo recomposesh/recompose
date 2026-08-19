@@ -2,6 +2,7 @@ import type { EngineGateway, EngineRouting } from '@recompose/contracts';
 import type { Context } from 'hono';
 
 import type { AttemptDeps } from './gateway-attempt';
+import type { Judged } from './gateway-judging';
 import type { RoutingMemory } from './gateway-routing-memory';
 import type { SpendGrantFor } from './gateway-spend';
 import type { NoteAttempt } from './gateway-traffic-watch';
@@ -20,6 +21,7 @@ import type { SubscriptionRuntime } from './subscription/reach';
 import { unreachableTargetAnswer } from './gateway-answers';
 import { readingAtNode } from './gateway-attempt';
 import { turnResumesServerState } from './gateway-chained-turn';
+import { judgedRouting } from './gateway-judging';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
 import { noteGatewayRow } from './gateway-traffic';
@@ -109,12 +111,33 @@ function notesOwedACable(
   return notesThatCarriedARequest(notes).filter((note) => note.routeNode !== lastTried);
 }
 
+/**
+ * The judge and the pins one request routes under, built from the same custody a target uses.
+ *
+ * @summary A table with no conditional router in it never reaches any of this, so a ladder pays
+ * nothing for a mode it does not use. The judge resolves per request rather than per gateway,
+ * because a person can rebind it between two turns and the second turn must reach the account the
+ * canvas now shows.
+ */
+function judgingThisRequest(deps: AttemptDeps, memory: RoutingMemory): Judged {
+  return judgedRouting({
+    routing: deps.virtualModel.routing,
+    slug: deps.gateway.slug,
+    virtualModel: deps.virtualModel.id,
+    crossing: deps.crossing,
+    spendGrantFor: deps.spendGrantFor,
+    fetchLike: deps.fetchLike,
+    memory,
+  });
+}
+
 async function walkedAnswer(
   deps: AttemptDeps,
   scene: WalkScene,
   serving: RouterServing,
 ): Promise<Response> {
   const routing = deps.virtualModel.routing;
+  const judged = judgingThisRequest(deps, serving.memory);
   let answerable: Response | undefined;
   let lastTried: string | undefined;
 
@@ -126,6 +149,9 @@ async function walkedAnswer(
     cursors: serving.memory.cursors,
     resumesServerState: turnResumesServerState(deps.crossing.raw),
     now: serving.memory.now,
+    classifyBranch: judged.classifyBranch,
+    pinnedBranchAt: judged.pinnedBranchAt,
+    pinBranchAt: judged.pinBranchAt,
     attempt: async (routeNode) => {
       const reading = await readingAtNode(deps, routeNode);
 
