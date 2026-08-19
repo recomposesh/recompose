@@ -30,7 +30,7 @@
 
 ## 3. The judge call, the proxy injection, and the pins
 
-- [ ] 3.1 Shape the constrained classification call per dialect, with forced tool use as the
+- [x] 3.1 Shape the constrained classification call per dialect, with forced tool use as the
       fallback channel
 - [ ] 3.2 Specify the timeout clock starting at dispatch through `AbortSignal.timeout`
 - [ ] 3.3 Inject `classifyBranch` from `gateway-proxy.ts` under the judge's own custody
