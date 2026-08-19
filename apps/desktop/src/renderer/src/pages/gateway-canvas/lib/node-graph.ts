@@ -7,38 +7,30 @@ import type {
   VirtualModel,
 } from '@recompose/contracts';
 
-import type { CableFailure, CableStanding, CarriedTraffic } from './cable-traffic';
+import type { CarriedTraffic } from './cable-traffic';
+import type { CanvasEdge } from './canvas-cables';
 import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
 
+import { carriedBy, latestAcrossNodes, outcomesThroughRouters } from './cable-traffic';
 import {
-  carriedBy,
-  failureCarried,
-  latestAcrossNodes,
-  outcomesThroughRouters,
-  standingCarried,
-} from './cable-traffic';
+  cableInto,
+  GATEWAY_NODE_ID,
+  modelNodeId,
+  outcomeInto,
+  structuralWire,
+} from './canvas-cables';
 import { routeCard } from './canvas-cards';
 import { addressName } from './route-addresses';
 import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
 export type { CableFailure, CableStanding } from './cable-traffic';
+export type { CanvasEdge } from './canvas-cables';
 export type { CanvasNode, CanvasNodeKind } from './canvas-cards';
-
-const GATEWAY_NODE_ID = 'gateway';
 
 export const DRAFT_NODE_ID = 'draft';
 
 const PENDING_NODE_ID = 'pending';
-
-/** A cable drawn between two cards standing on the canvas. */
-export type CanvasEdge = {
-  id: string;
-  source: string;
-  target: string;
-  standing: CableStanding;
-  failure: CableFailure | undefined;
-};
 
 /** A definition a person began and has not finished, holding the seat its card stands at. */
 export type DraftStanding = { modelId: string; displayName: string; seat: XY };
@@ -54,62 +46,6 @@ export type CanvasOverlay = {
 
 /** Every card and cable the canvas draws, in the order they seat. */
 export type CanvasGraph = { nodes: readonly CanvasNode[]; edges: readonly CanvasEdge[] };
-
-function modelNodeId(modelId: string): string {
-  return `model:${modelId}`;
-}
-
-/**
- * What the last request through one route node says about the cable feeding its card.
- *
- * @summary Traffic names the route node an attempt went through, so each cable of a ladder paints
- * from its own node: the child a router moved on from reads failed beside the child that answered,
- * where one reading spread over every cable would say both failed. A cable onto a card whose
- * account left the registry carries nothing at all, because it cannot serve the next request and
- * stale green would say it could.
- */
-function outcomeInto(
-  carried: CarriedTraffic,
-  card: CanvasNode,
-  placed: PlacedRouteNode,
-): RequestOutcome | undefined {
-  if (card.kind === 'ghost-target') {
-    return undefined;
-  }
-
-  return carried[placed.modelId]?.[placed.walked.routeNodeId];
-}
-
-function cableInto(
-  placed: PlacedRouteNode,
-  card: CanvasNode,
-  carried: RequestOutcome | undefined,
-  entry: string,
-): CanvasEdge {
-  const { modelId, walked } = placed;
-  const unserved: CableStanding = card.kind === 'ghost-target' ? 'broken' : 'resting';
-
-  return {
-    id: `cable:${placed.name}`,
-    source:
-      walked.parent === undefined
-        ? modelNodeId(modelId)
-        : `route:${addressName(modelId, walked.parent, entry)}`,
-    target: card.id,
-    standing: standingCarried(carried) ?? unserved,
-    failure: walked.node.kind === 'router' ? undefined : failureCarried(carried),
-  };
-}
-
-function structuralWire(servedNodeId: string, carried: RequestOutcome | undefined): CanvasEdge {
-  return {
-    id: `wire:${servedNodeId}`,
-    source: GATEWAY_NODE_ID,
-    target: servedNodeId,
-    standing: standingCarried(carried) ?? 'structural',
-    failure: undefined,
-  };
-}
 
 type RoutedCards = { nodes: CanvasNode[]; edges: CanvasEdge[]; flowed: RequestOutcome | undefined };
 

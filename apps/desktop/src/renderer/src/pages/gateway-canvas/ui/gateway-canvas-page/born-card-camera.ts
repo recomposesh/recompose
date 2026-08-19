@@ -2,7 +2,7 @@ import type { XY } from '../../lib/canvas-positions';
 import type { CanvasWorld } from './canvas-standings';
 
 import { cardFitsTheView, viewportOf } from '../../lib/canvas-viewport';
-import { CARD_MEASURE } from './canvas-wiring';
+import { CARD_MEASURE } from '../../lib/tidy-layout';
 
 function boundsAroundEveryCard(world: CanvasWorld, born: XY) {
   const stands = [...Object.values(world.seats), born];

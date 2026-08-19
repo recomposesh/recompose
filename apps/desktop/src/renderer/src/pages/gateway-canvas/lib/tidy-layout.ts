@@ -1,7 +1,13 @@
 import type { NodePositions, XY } from './canvas-positions';
 import type { CanvasNode } from './node-graph';
 
-const COLUMN_PITCH = 320;
+/** The measure every card declares itself at, which the columns are pitched around. */
+export const CARD_MEASURE = { width: 184, height: 88 };
+
+/** The clear span a cable crosses between one column's card and the next one's, in pixels. */
+export const CABLE_SPAN = 136;
+
+const COLUMN_PITCH = CARD_MEASURE.width + CABLE_SPAN;
 const ROW_PITCH = 150;
 
 /** The column a virtual model and the draft standing in for one both seat in. */

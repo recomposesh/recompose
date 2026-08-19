@@ -1,7 +1,21 @@
+import type { XY } from './canvas-positions';
 import type { CableFailure, CableStanding } from './node-graph';
+import type { BranchSeat } from './route-graph';
+
+import { CABLE_SPAN } from './tidy-layout';
 
 /** The pointer target every cable end and its snap radius is sized by, in pixels. */
 export const CABLE_GRAB_SPAN = 24;
+
+/** How far along a branch cable its rule pill rides, leaving the midpoint to the failure chip. */
+export const RULE_PILL_ANCHOR = 0.35;
+
+const PILL_PADDING = 12;
+
+const CAPTION_ADVANCE = 6;
+
+/** How many characters a rule pill prints before it cuts, sized by the span a cable crosses. */
+export const RULE_PILL_CHARACTERS = Math.floor((CABLE_SPAN - PILL_PADDING) / CAPTION_ADVANCE);
 
 const standingStroke: Record<CableStanding, string> = {
   resting: 'stroke-cable-resting',
@@ -96,6 +110,95 @@ export function failureIn(carried: unknown): CableFailure | undefined {
   const { status, detail } = carried;
 
   return typeof status === 'number' && typeof detail === 'string' ? { status, detail } : undefined;
+}
+
+/**
+ * The rule a pill prints on the cable it rides, cut to what the span between two columns holds.
+ *
+ * @summary A person writes a rule as long as the judge needs, and a pill that grew with it would
+ * cover the cards at both ends of the cable it rides. The cut keeps the pill inside the clear span,
+ * and the full rule stays one press away rather than crowding the composition it explains.
+ */
+export function ruleShown(rule: string): string {
+  if (rule.length <= RULE_PILL_CHARACTERS) {
+    return rule;
+  }
+
+  return `${rule.slice(0, RULE_PILL_CHARACTERS - 1)}…`;
+}
+
+const CUBIC_NUMBERS = 8;
+
+function numbersIn(path: string): readonly number[] {
+  return [...path.matchAll(/-?\d+(?:\.\d+)?/gu)].map(([held]) => Number(held));
+}
+
+function cubicAt(along: readonly number[], part: number): number {
+  const [from = 0, first = 0, second = 0, to = 0] = along;
+  const rest = 1 - part;
+
+  return (
+    rest ** 3 * from + 3 * rest ** 2 * part * first + 3 * rest * part ** 2 * second + part ** 3 * to
+  );
+}
+
+/**
+ * The point a fraction of the way along one cable, which is where furniture that is not centered rides.
+ *
+ * @summary A cable is one cubic curve, so a fraction of it is that curve read at that fraction
+ * rather than a fraction of the straight line between its ends: a pill placed on the chord would
+ * float off a cable that bows, which is every cable between two columns. A path this canvas did not
+ * draw as one cubic answers nothing, so the furniture falls back to the midpoint the library already
+ * hands over rather than landing at the origin.
+ */
+export function pointAlongCable(path: string, fraction: number): XY | undefined {
+  const held = numbersIn(path);
+
+  if (held.length !== CUBIC_NUMBERS) {
+    return undefined;
+  }
+
+  const across = held.filter((_, place) => place % 2 === 0);
+  const down = held.filter((_, place) => place % 2 === 1);
+
+  return { x: cubicAt(across, fraction), y: cubicAt(down, fraction) };
+}
+
+function bothHalvesOfARule(carried: object): carried is Record<'label' | 'rule', unknown> {
+  return 'label' in carried && 'rule' in carried;
+}
+
+function labeledSeat(carried: object): BranchSeat | undefined {
+  if (!bothHalvesOfARule(carried)) {
+    return undefined;
+  }
+
+  const { label, rule } = carried;
+
+  return typeof label === 'string' && typeof rule === 'string'
+    ? { kind: 'rule', label, rule }
+    : undefined;
+}
+
+/**
+ * The branch a cable draws for, read off the loose data the library hands the edge.
+ *
+ * @summary A cable carrying anything short of both halves of a rule carries no branch at all, so a
+ * pill never stands offering a rule it cannot finish saying, and a cable under a router that reads
+ * no request carries nothing here at all.
+ */
+export function branchIn(carried: unknown): BranchSeat | undefined {
+  if (!(carried instanceof Object) || !('kind' in carried)) {
+    return undefined;
+  }
+
+  const { kind } = carried;
+
+  if (kind === 'else') {
+    return { kind: 'else' };
+  }
+
+  return kind === 'rule' ? labeledSeat(carried) : undefined;
 }
 
 /**
