@@ -87,13 +87,17 @@ export function cableInto(
  * port every child leaves by: a cable running with the children would say a request travels here,
  * and a person thinning the pool would count one target too many.
  */
-export function tieOnto(placed: PlacedRouteNode, card: CanvasNode): CanvasEdge {
+export function tieOnto(
+  placed: PlacedRouteNode,
+  card: CanvasNode,
+  carried: RequestOutcome | undefined,
+): CanvasEdge {
   return {
     id: `tie:${placed.name}`,
     source: cameFrom(placed),
     sourceHandle: JUDGE_SHOULDER_PORT,
     target: card.id,
-    standing: 'resting',
+    standing: standingCarried(carried) ?? 'resting',
     failure: undefined,
   };
 }

@@ -2,7 +2,7 @@ import type { GatewayConfig, GatewayTraffic, RequestOutcome } from '@recompose/c
 
 import type { WalkedRouteNode } from './route-graph';
 
-/** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
+/** How a cable reads: a stored binding at rest or carrying traffic, one whose account left, one standing out of a cooldown, one of the two the overlay draws, or the gateway's own wire to a card it serves. */
 export type CableStanding =
   | 'resting'
   | 'live'
@@ -11,6 +11,7 @@ export type CableStanding =
   | 'broken'
   | 'draft'
   | 'pending'
+  | 'cooling'
   | 'structural';
 
 /** What a request the gateway refused or could not finish came to, as a person reads it. */

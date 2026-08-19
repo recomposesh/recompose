@@ -41,6 +41,7 @@ const standingStroke: Record<CableStanding, string> = {
   broken: 'stroke-cable-broken',
   draft: 'stroke-cable-draft',
   pending: 'stroke-cable-pending',
+  cooling: 'stroke-attention',
   structural: 'stroke-cable-resting',
 };
 
@@ -52,6 +53,7 @@ const standingTint: Record<CableStanding, string> = {
   broken: 'node-tint-cable-broken',
   draft: 'node-tint-cable-draft',
   pending: 'node-tint-cable-pending',
+  cooling: 'node-tint-attention',
   structural: 'node-tint-cable-resting',
 };
 
@@ -63,6 +65,7 @@ const standingPulse: Record<CableStanding, string> = {
   broken: '',
   draft: '',
   pending: '',
+  cooling: '',
   structural: '',
 };
 

@@ -127,6 +127,38 @@ export const TheRuleRidesTheCableItself = meta.story({
   },
 });
 
+/**
+ * The else cable rests like every other idle binding, and its pill alone says what it catches.
+ *
+ * @summary No new stroke vocabulary lands for the fallback: a dashed idle cable would say the
+ * binding is unfinished, which is the one thing else never is.
+ */
+export const TheElseCableRestsLikeAnyOther = meta.story({
+  render: () => judgedFlow({ kind: 'else' }),
+  play: async ({ canvas, canvasElement }) => {
+    const [cable] = await cablesDrawn(canvasElement);
+
+    await expect(await canvas.findByText('Else')).toBeVisible();
+    await expect(paintedStyle(cable).strokeDasharray).toBe('none');
+    await expect(paintedStyle(cable).stroke).toBe(
+      forScheme('rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.45)'),
+    );
+  },
+});
+
+/** A binding standing out of a cooldown paints amber and stays still, since nothing is in flight. */
+export const ACoolingCablePaintsItsStanding = meta.story({
+  render: () => cabledFlow('cooling'),
+  play: async ({ canvasElement }) => {
+    const [cable] = await cablesDrawn(canvasElement);
+
+    await expect(paintedStyle(cable).stroke).toBe(
+      forScheme('rgb(194, 122, 0)', 'rgb(255, 176, 46)'),
+    );
+    await expect(canvasElement.querySelector('.cable-pulse')).toBeNull();
+  },
+});
+
 /** The tie to a judge breaks into dashes, because no request travels it. */
 export const ATieToAJudgeDrawsDotted = meta.story({
   render: () => tiedFlow(),

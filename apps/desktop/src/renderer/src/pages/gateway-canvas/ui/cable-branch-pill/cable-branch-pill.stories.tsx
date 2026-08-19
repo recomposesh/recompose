@@ -4,6 +4,7 @@ import preview from '#.storybook/preview';
 
 import type { BranchSeat } from '../../lib/route-graph';
 
+import { paintedStyle } from '../../../../shared/testing';
 import { RULE_PILL_CHARACTERS } from '../../lib/cable-standing';
 import { CableBranchPill } from './cable-branch-pill';
 
@@ -27,6 +28,20 @@ const meta = preview.meta({
 
 function theRule(): HTMLElement {
   return screen.getByRole('dialog', { name: 'code rule' });
+}
+
+/** The secondary ink as the standing scheme actually paints it, read off the page. */
+function quietInk(): string {
+  const quiet = document.createElement('span');
+
+  quiet.className = 'text-ink-secondary';
+  document.body.append(quiet);
+
+  const painted = paintedStyle(quiet).color;
+
+  quiet.remove();
+
+  return painted;
 }
 
 async function pressedOpen(pill: HTMLElement, press: (on: Element) => Promise<void>) {
@@ -76,6 +91,24 @@ export const EscapePutsTheRuleAway = meta.story({
     await waitFor(() => {
       void expect(screen.queryByRole('dialog', { name: 'code rule' })).toBeNull();
     });
+  },
+});
+
+/**
+ * The fallback says its role quietly and offers nothing to press, since nobody wrote it a rule.
+ *
+ * @summary Else catches whatever the other branches did not, so the pill states that and stops:
+ * a pill loud enough to compete with the rules would claim a decision it never makes.
+ */
+export const TheFallbackSaysItsRoleQuietly = meta.story({
+  args: { seat: { kind: 'else' } },
+  play: async ({ canvas }) => {
+    const pill = await canvas.findByText('Else');
+    const quiet = quietInk();
+
+    await expect(pill).toBeVisible();
+    await expect(canvas.queryByRole('button')).toBeNull();
+    await expect(paintedStyle(pill).color).toBe(quiet);
   },
 });
 
