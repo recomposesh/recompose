@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import type { OptionGroup } from '../option-list/option-list';
-import type { JudgePick, RoutingPickerProps, RoutingStep } from './picker-asks';
+import type { JudgePick, RoutingPickerProps, RoutingStep } from '../routing-picker/picker-asks';
 
 import { Button } from '../../../../shared/ui';
 import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
@@ -251,8 +251,14 @@ const CONDITIONAL_BODIES: Partial<Record<RoutingStep, (props: RoutingPickerProps
  * @summary Only the provider step reads differently under conditional, because a person picking
  * there is naming what catches everything rather than the one thing the model binds to.
  */
-export function stepBody(step: RoutingStep, props: RoutingPickerProps): ReactNode {
-  const renamed = props.routerMode === 'conditional' ? CONDITIONAL_BODIES[step] : undefined;
+export function PickerStep({
+  step,
+  ask,
+}: {
+  step: RoutingStep;
+  ask: RoutingPickerProps;
+}): ReactNode {
+  const renamed = ask.routerMode === 'conditional' ? CONDITIONAL_BODIES[step] : undefined;
 
-  return (renamed ?? SPREADING_BODIES[step])(props);
+  return (renamed ?? SPREADING_BODIES[step])(ask);
 }

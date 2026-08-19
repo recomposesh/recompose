@@ -51,7 +51,7 @@
 - [x] 4.4 The judge picker and the re-judge toggle land in the router inspector
 - [x] 4.5 Child rows carry labels, rule previews, pin marks, and an inert else row that says why
 - [x] 4.6 Specify label-aware announcements in `spoken-rank.ts`
-- [ ] 4.7 The branch rule sheet lands with the shared textarea primitive and their stories
+- [x] 4.7 The branch rule sheet lands with the shared textarea primitive and their stories
 - [ ] 4.8 Row delete lands in the `ContextMenu` confirmed through `ConsequenceDialog`, naming the
       else cost
 - [x] 4.9 Draft fields, the routing picker, and general info offer the conditional mode

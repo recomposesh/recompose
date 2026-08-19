@@ -36,6 +36,7 @@ export { StatusChip } from './status-chip/status-chip';
 export { TableShell } from './table-shell/table-shell';
 export { StatusIndicator } from './status-indicator/status-indicator';
 export { Switch } from './switch/switch';
+export { TextArea } from './text-area/text-area';
 export { TextField } from './text-field/text-field';
 export { PageError } from './page-error/page-error';
 export { SidebarEdge } from './sidebar-edge/sidebar-edge';

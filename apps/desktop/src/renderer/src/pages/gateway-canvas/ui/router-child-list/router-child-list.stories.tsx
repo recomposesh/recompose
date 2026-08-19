@@ -5,42 +5,18 @@ import preview from '#.storybook/preview';
 import type { RouterChild } from './router-child-list';
 
 import { paintedBox, paintedStyle } from '../../../../shared/testing';
+import {
+  branchRow,
+  chatRow,
+  elseRow,
+  plainRows,
+  unruledRow,
+} from '../../testing/router-child.testkit';
 import { RouterChildList } from './router-child-list';
 
-const rows: readonly RouterChild[] = [
-  { routeNodeId: 'n1', cardId: 'target:fast@n1', name: 'Work key', detail: 'gpt-5' },
-  { routeNodeId: 'n2', cardId: 'target:fast@n2', name: 'Claude Max', detail: 'claude-opus-5' },
-  { routeNodeId: 'n3', cardId: 'target:fast@n3', name: 'Ollama', detail: 'qwen3' },
-];
+const rows = plainRows;
 
-const branched: readonly RouterChild[] = [
-  {
-    routeNodeId: 'n1',
-    cardId: 'target:fast@n1',
-    name: 'Work key',
-    detail: 'claude-sonnet-5',
-    label: 'code',
-    rule: 'questions about source code, diffs, and build failures',
-    pins: 3,
-  },
-  {
-    routeNodeId: 'n2',
-    cardId: 'target:fast@n2',
-    name: 'Claude Max',
-    detail: 'claude-opus-5',
-    label: 'chat',
-    rule: 'everyday conversation',
-  },
-  {
-    routeNodeId: 'n3',
-    cardId: 'target:fast@n3',
-    name: 'Ollama',
-    detail: 'qwen3',
-    label: 'Else',
-    inertReason:
-      'Every conditional router keeps an else branch. It catches what the judge cannot place.',
-  },
-];
+const branched: readonly RouterChild[] = [branchRow, chatRow, elseRow];
 
 const HIT_TARGET = 24;
 
@@ -100,17 +76,7 @@ export const EveryControlKeepsItsHitTarget = meta.story({
 
 const conditional = { mode: 'conditional' as const, rows: branched };
 
-const unruled: readonly RouterChild[] = [
-  { routeNodeId: 'n1', cardId: 'target:fast@n1', name: 'Work key', label: 'draft' },
-  {
-    routeNodeId: 'n3',
-    cardId: 'target:fast@n3',
-    name: 'Ollama',
-    label: 'Else',
-    inertReason:
-      'Every conditional router keeps an else branch. It catches what the judge cannot place.',
-  },
-];
+const unruled: readonly RouterChild[] = [unruledRow, elseRow];
 
 /** A branch reads by its label, with its rule under the binding and its pinned tally beside it. */
 export const BranchesReadByTheirLabel = meta.story({

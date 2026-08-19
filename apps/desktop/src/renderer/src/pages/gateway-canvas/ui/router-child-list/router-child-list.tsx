@@ -5,7 +5,8 @@ import { useRef, useState } from 'react';
 import type { RouterMode } from '../../lib/routing-edits';
 import type { LadderActs, OpenChild, RouterChild } from './router-child';
 
-import { childFace, ladderRow } from './child-row';
+import { ChildFace } from '../child-face/child-face';
+import { ChildRow } from '../child-row/child-row';
 import { rowShell } from './router-child';
 import { spokenRank, spokenSubject } from './spoken-rank';
 
@@ -27,7 +28,7 @@ function unorderedList(rows: readonly RouterChild[], onOpen: OpenChild): ReactEl
     <ul aria-label="Children" className="field-box p-px">
       {rows.map((child) => (
         <li className={rowShell} key={child.routeNodeId}>
-          {childFace(child, onOpen)}
+          <ChildFace child={child} onOpen={onOpen} />
         </li>
       ))}
     </ul>
@@ -100,17 +101,18 @@ export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListP
   return (
     <>
       <ol aria-label="Children" className="field-box p-px">
-        {rows.map((child, index) =>
-          ladderRow(
-            {
+        {rows.map((child, index) => (
+          <ChildRow
+            key={child.routeNodeId}
+            onOpen={onOpen}
+            row={{
               child,
               rank: index + 1,
               total: rows.length,
               ...ladderActs(index, grabbed, carried),
-            },
-            onOpen,
-          ),
-        )}
+            }}
+          />
+        ))}
       </ol>
       <p className="sr-only" role="status">
         {said}
