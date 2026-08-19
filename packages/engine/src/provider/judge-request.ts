@@ -8,6 +8,7 @@ export type JudgeQuestion = {
   dialect: ProviderDialect;
   providerModel: string;
   branches: readonly BranchRule[];
+  directive?: string | undefined;
   raw: JsonObject;
 };
 
@@ -35,15 +36,21 @@ function labelsOf(question: JudgeQuestion): readonly string[] {
  * The branches keep their declared order, because two rules that both fit resolve to the earlier one
  * and a reordered list would quietly reroute traffic. Nothing here numbers the branches, because a
  * numbered list invites a model to pick by position rather than by fit.
+ *
+ * A directive a person wrote stands between the framing and the branch list: after the sentences
+ * that close the answer to one label, so nothing written there can widen what counts as an answer,
+ * and before the rules it exists to steer the reading of.
  */
 function judgeInstructions(question: JudgeQuestion): string {
   const listed = question.branches
     .map((branch) => `${branch.label.trim()}: ${branch.rule.trim()}`)
     .join('\n');
+  const directive = question.directive?.trim();
 
   return [
     'Pick the one branch that fits the request.',
     'Answer with exactly one branch name from this list and nothing else.',
+    ...(directive === undefined || directive === '' ? [] : ['', directive]),
     '',
     'Branches:',
     listed,

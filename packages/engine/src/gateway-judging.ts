@@ -76,7 +76,7 @@ function addressOf(scene: JudgingScene, routeNode: string): RouteNodeAddress {
 }
 
 function classifierFor(scene: JudgingScene): BranchClassifier {
-  return async (judge, branches) => {
+  return async (judge, branches, directive) => {
     const boundMs = budgetTheTableAsksOf(scene.routing, judge);
 
     if (boundMs === undefined) return { heard: 'timeout' };
@@ -92,6 +92,7 @@ function classifierFor(scene: JudgingScene): BranchClassifier {
       gatewayName: scene.crossing.gatewayName,
       virtualModel: scene.virtualModel,
       branches,
+      directive,
       raw: scene.crossing.raw,
       boundMs,
       fetchLike: scene.fetchLike,

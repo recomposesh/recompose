@@ -9,6 +9,7 @@ import { branchWearingTheLabel, childTheLabelNames } from './policies';
 export type BranchClassifier = (
   judge: string,
   branches: readonly BranchRule[],
+  directive?: string,
 ) => Promise<JudgeReading>;
 
 export type Judging = {
@@ -23,6 +24,7 @@ export type Judging = {
 type BranchQuestion = {
   judge: string;
   branches: readonly BranchRule[];
+  directive: string | undefined;
   elseChild: string;
   classify: BranchClassifier | undefined;
   judgeStandsCooling: boolean;
@@ -43,7 +45,11 @@ type Asking = { question: BranchQuestion; classify: BranchClassifier };
 type Decided = { child: string; from: 'label' | 'trouble' | 'pin' };
 
 async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
-  return asking.classify(asking.question.judge, asking.question.branches);
+  return asking.classify(
+    asking.question.judge,
+    asking.question.branches,
+    asking.question.directive,
+  );
 }
 
 function labelABranchWears(question: BranchQuestion, reading: JudgeReading): boolean {
@@ -122,6 +128,7 @@ function questionOf(
   return {
     judge: policy.judge,
     branches: policy.branches,
+    directive: policy.directive,
     elseChild: policy.elseChild,
     classify: judging.classify,
     judgeStandsCooling: judging.judgeStandsCooling(policy.judge),
