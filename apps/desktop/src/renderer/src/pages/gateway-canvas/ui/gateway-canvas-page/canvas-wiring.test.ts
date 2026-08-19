@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
+import { oneTargetRule } from './cable-rules';
 import {
   bindingCableId,
   cableAddressOf,
   cardAddressOf,
-  oneTargetRule,
   routerAddressOf,
   targetAccountIdIn,
   targetModelIdOf,

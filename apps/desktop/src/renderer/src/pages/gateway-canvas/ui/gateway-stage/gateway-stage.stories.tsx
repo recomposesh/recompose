@@ -9,7 +9,8 @@ import { canvasGraph } from '../../lib/node-graph';
 import { tidyPositions } from '../../lib/tidy-layout';
 import { inScheme } from '../../testing/canvas-flow.testkit';
 import { servingGateway, storedAccounts } from '../../testing/gateway-canvas.testkit';
-import { cableLandings, flowEdgesOf, flowNodesOf } from '../gateway-canvas-page/canvas-wiring';
+import { cableLandings } from '../gateway-canvas-page/cable-rules';
+import { flowEdgesOf, flowNodesOf } from '../gateway-canvas-page/canvas-wiring';
 import { GatewayStage } from './gateway-stage';
 
 const graph = canvasGraph(servingGateway, storedAccounts.accounts, {

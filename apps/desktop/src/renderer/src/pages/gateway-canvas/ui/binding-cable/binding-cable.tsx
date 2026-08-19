@@ -4,7 +4,9 @@ import type { ReactElement, ReactNode } from 'react';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 
 import type { CableFailure } from '../../lib/node-graph';
+import type { BranchSeat } from '../../lib/route-graph';
 
+import { wordingIn } from '../../lib/cable-standing';
 import {
   branchIn,
   CABLE_GRAB_SPAN,
@@ -17,6 +19,7 @@ import {
   TIE_DASH,
   tintForStanding,
 } from '../../lib/cable-standing';
+import { wordBranch } from '../../lib/use-branch-wording';
 import { CableBranchPill } from '../cable-branch-pill/cable-branch-pill';
 import { CableFailureChip } from '../cable-failure-chip/cable-failure-chip';
 
@@ -106,19 +109,29 @@ function lastError(failure: CableFailure | undefined, at: { x: number; y: number
 }
 
 function branchDrawn(
-  carried: unknown,
+  held: Readonly<Record<string, unknown>>,
   drawn: string,
   midpoint: { x: number; y: number },
 ): ReactNode {
-  const seat = branchIn(carried);
+  const seat = branchIn(held['branch']);
+  const wording = wordingIn(held['wording']);
 
   if (seat === undefined) {
     return null;
   }
 
   const rides = pointAlongCable(drawn, RULE_PILL_ANCHOR) ?? midpoint;
+  const word = (): void => {
+    if (wording !== undefined) {
+      wordBranch({ ...wording, ...wordsAlready(seat) });
+    }
+  };
 
-  return riding(rides, <CableBranchPill seat={seat} />);
+  return riding(rides, <CableBranchPill onWord={word} seat={seat} />);
+}
+
+function wordsAlready(seat: BranchSeat): { label: string; rule: string } {
+  return seat.kind === 'rule' ? { label: seat.label, rule: seat.rule } : { label: '', rule: '' };
 }
 
 /**
@@ -162,7 +175,7 @@ export function BindingCable(cable: EdgeProps): ReactElement {
       />
       {pulse(drawn, strokeForStanding(carried), pulseForStanding(carried))}
       {chosen ? grabEnds(cable, tintForStanding(carried)) : null}
-      {branchDrawn(held['branch'], drawn, midpoint)}
+      {branchDrawn(held, drawn, midpoint)}
       {lastError(failureIn(held['failure']), midpoint)}
     </>
   );

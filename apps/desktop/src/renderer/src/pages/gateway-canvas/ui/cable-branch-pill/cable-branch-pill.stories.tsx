@@ -1,11 +1,11 @@
-import { expect, screen, waitFor } from 'storybook/test';
+import { expect, fn, screen, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import type { BranchSeat } from '../../lib/route-graph';
 
 import { paintedStyle } from '../../../../shared/testing';
-import { RULE_PILL_CHARACTERS } from '../../lib/cable-standing';
+import { RULE_PILL_CHARACTERS, ruleShown } from '../../lib/cable-standing';
 import { CableBranchPill } from './cable-branch-pill';
 
 const SHORT_RULE = 'It writes code.';
@@ -18,7 +18,7 @@ const longBranch: BranchSeat = { kind: 'rule', label: 'code', rule: LONG_RULE };
 
 const meta = preview.meta({
   component: CableBranchPill,
-  args: { seat: shortBranch },
+  args: { seat: shortBranch, onWord: fn() },
   render: (args) => (
     <div className="h-40 w-72 bg-surface-content p-4 dot-grid">
       <CableBranchPill {...args} />
@@ -44,16 +44,17 @@ function quietInk(): string {
   return painted;
 }
 
-async function pressedOpen(pill: HTMLElement, press: (on: Element) => Promise<void>) {
-  await press(pill);
+async function pressedTheRuleOpen(press: (on: Element) => Promise<void>) {
+  await press(screen.getByRole('button', { name: ruleShown(LONG_RULE) }));
   await waitFor(() => {
     void expect(theRule()).toBeVisible();
   });
 }
 
-/** A labeled branch as its cable carries it, printing the rule that sends requests down it. */
+/** A worded branch carries the label its judge answers with beside the rule behind it. */
 export const Basic = meta.story({
   play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('button', { name: 'code' })).toBeVisible();
     await expect(await canvas.findByRole('button', { name: SHORT_RULE })).toBeVisible();
   },
 });
@@ -62,7 +63,7 @@ export const Basic = meta.story({
 export const ALongRuleCutsToTheClearSpan = meta.story({
   args: { seat: longBranch },
   play: async ({ canvas }) => {
-    const pill = await canvas.findByRole('button');
+    const pill = await canvas.findByRole('button', { name: ruleShown(LONG_RULE) });
     const shown = pill.textContent;
 
     await expect(shown.length).toBeLessThanOrEqual(RULE_PILL_CHARACTERS);
@@ -71,11 +72,11 @@ export const ALongRuleCutsToTheClearSpan = meta.story({
   },
 });
 
-/** Pressing the pill hands over the whole rule and the label the judge answers with. */
-export const PressingItShowsTheWholeRule = meta.story({
+/** Pressing the rule hands over the whole of it and the label the judge answers with. */
+export const PressingTheRuleShowsTheWholeOfIt = meta.story({
   args: { seat: longBranch },
-  play: async ({ canvas, userEvent }) => {
-    await pressedOpen(await canvas.findByRole('button'), userEvent.click);
+  play: async ({ userEvent }) => {
+    await pressedTheRuleOpen(userEvent.click);
 
     await expect(theRule()).toHaveTextContent(LONG_RULE);
     await expect(theRule()).toHaveTextContent('code');
@@ -85,12 +86,46 @@ export const PressingItShowsTheWholeRule = meta.story({
 /** Esc puts the rule away and leaves the composition exactly where the person left it. */
 export const EscapePutsTheRuleAway = meta.story({
   args: { seat: longBranch },
-  play: async ({ canvas, userEvent }) => {
-    await pressedOpen(await canvas.findByRole('button'), userEvent.click);
+  play: async ({ userEvent }) => {
+    await pressedTheRuleOpen(userEvent.click);
     await userEvent.keyboard('{Escape}');
     await waitFor(() => {
       void expect(screen.queryByRole('dialog', { name: 'code rule' })).toBeNull();
     });
+  },
+});
+
+/**
+ * Pressing the label asks to reword the branch, since the label is the judge's own vocabulary.
+ *
+ * @summary Renaming reroutes traffic rather than tidying a caption, so the press that starts it
+ * lives on the label itself where a person reads that word, not behind a panel two steps away.
+ */
+export const PressingTheLabelAsksToRewordIt = meta.story({
+  play: async ({ args, canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'code' }));
+
+    await expect(args.onWord).toHaveBeenCalled();
+  },
+});
+
+/**
+ * A branch nobody has worded yet wears the attention tint and asks for its name.
+ *
+ * @summary A child under a judged router that carries no label is a branch the judge can never
+ * name, so the cable says the composition is unfinished rather than looking finished and quietly
+ * sending every request to else.
+ */
+export const ABranchStillToBeNamed = meta.story({
+  args: { seat: { kind: 'draft' } },
+  play: async ({ args, canvas, userEvent }) => {
+    const pill = await canvas.findByRole('button', { name: 'Name this branch' });
+
+    await expect(pill).toBeVisible();
+
+    await userEvent.click(pill);
+
+    await expect(args.onWord).toHaveBeenCalled();
   },
 });
 
@@ -114,3 +149,9 @@ export const TheFallbackSaysItsRoleQuietly = meta.story({
 
 /** The pill in the dark scheme, where its ink has to read against the canvas behind it. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/** A branch still to be named in the dark scheme, where the attention tint has to carry. */
+export const ADraftInDarkScheme = meta.story({
+  args: { seat: { kind: 'draft' } },
+  globals: { theme: 'dark' },
+});

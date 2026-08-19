@@ -5,8 +5,10 @@ import { mintRouteNodeId } from '@recompose/contracts';
 import type { RouteAddress } from '../../lib/route-addresses';
 import type { CanvasWorld } from './canvas-standings';
 
+import { conditionalIn } from '../../lib/conditional-policy';
 import { addressWritten } from '../../lib/route-addresses';
 import { gatewayBindingChild, gatewayRebindingNode } from '../../lib/routing-edits';
+import { wordBranch } from '../../lib/use-branch-wording';
 import { committedPick, targetNameIn } from './binding-acts';
 import { parentRouterAt } from './route-parents';
 
@@ -91,6 +93,34 @@ export function completedChildPick(
     },
     accountId,
   );
+
+  wordedIfJudged(asking, born, providerModel);
+}
+
+/**
+ * Opens the wording editor on a branch the moment its child lands, where a judge decides the router.
+ *
+ * @summary A conditional router's children answer to labels, and the label is the vocabulary the
+ * judge itself uses, so a child that attached without one would be a branch the judge can never
+ * name and a cable a person cannot read. The editor opens on the birth rather than waiting to be
+ * found in a panel, which is what keeps the unnamed state to the seconds between the drop and the
+ * naming. A router that reads no request has no such vocabulary, so its children attach in silence.
+ */
+function wordedIfJudged(asking: LadderAsking, child: string, routesTo: string): void {
+  const parent = asking.parent.model.routing.nodes[asking.parent.routeNodeId];
+
+  if (conditionalIn(parent) === undefined) {
+    return;
+  }
+
+  wordBranch({
+    modelId: asking.address.modelId,
+    routerId: asking.parent.routeNodeId,
+    child,
+    label: '',
+    rule: '',
+    routesTo,
+  });
 }
 
 /**

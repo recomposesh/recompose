@@ -12,6 +12,14 @@ export const GATEWAY_NODE_ID = 'gateway';
 /** The port a router hangs its judge from, which is the shoulder rather than the child port. */
 export const JUDGE_SHOULDER_PORT = 'judge';
 
+/** Which branch a press on this cable's pill would open for wording. */
+export type CableWording = {
+  modelId: string;
+  routerId: string;
+  child: string;
+  routesTo: string;
+};
+
 /** A cable drawn between two cards standing on the canvas. */
 export type CanvasEdge = {
   id: string;
@@ -20,6 +28,7 @@ export type CanvasEdge = {
   standing: CableStanding;
   failure: CableFailure | undefined;
   branch?: BranchSeat | undefined;
+  wording?: CableWording | undefined;
   sourceHandle?: string | undefined;
 };
 
@@ -63,6 +72,36 @@ function cameFrom(placed: PlacedRouteNode): string {
   return parentName === undefined ? modelNodeId(placed.modelId) : `route:${parentName}`;
 }
 
+/**
+ * Which branch a press on this cable's pill words, or nothing where the cable draws no branch.
+ *
+ * @summary The cable carries the three ids a write needs, because the press happens on the drawn
+ * line and the surface that draws it knows nothing about route tables. The else branch is left out:
+ * nobody wrote it and nobody may, since it catches whatever the other branches did not.
+ */
+function cardNamed(card: CanvasNode): string {
+  if (card.kind === 'target') {
+    return card.providerModel;
+  }
+
+  return card.kind === 'ghost-target' ? card.accountId : card.id;
+}
+
+function wordingOn(placed: PlacedRouteNode, card: CanvasNode): CableWording | undefined {
+  const { branch, parent, routeNodeId } = placed.walked;
+
+  if (branch === undefined || branch.kind === 'else' || parent === undefined) {
+    return undefined;
+  }
+
+  return {
+    modelId: placed.modelId,
+    routerId: parent,
+    child: routeNodeId,
+    routesTo: cardNamed(card),
+  };
+}
+
 export function cableInto(
   placed: PlacedRouteNode,
   card: CanvasNode,
@@ -77,6 +116,7 @@ export function cableInto(
     standing: standingCarried(carried) ?? unserved,
     failure: placed.walked.node.kind === 'router' ? undefined : failureCarried(carried),
     branch: placed.walked.branch,
+    wording: wordingOn(placed, card),
   };
 }
 

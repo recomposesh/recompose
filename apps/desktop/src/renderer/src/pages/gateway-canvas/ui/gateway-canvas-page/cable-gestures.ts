@@ -9,14 +9,9 @@ import { flowPointOf, viewportOf } from '../../lib/canvas-viewport';
 import { emptyDefinition } from '../../lib/model-draft';
 import { CARD_MEASURE } from '../../lib/tidy-layout';
 import { heldDraft, startDrafting } from '../../lib/use-held-draft';
+import { oneTargetRule } from './cable-rules';
 import { revealOn } from './canvas-standings';
-import {
-  cableAddressOf,
-  modelIdOf,
-  oneTargetRule,
-  routerAddressOf,
-  targetAccountIdIn,
-} from './canvas-wiring';
+import { cableAddressOf, modelIdOf, routerAddressOf, targetAccountIdIn } from './canvas-wiring';
 
 const REFUSED_LANDING =
   'A cable binds a virtual model or a router to a provider it does not already hold.';
