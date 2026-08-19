@@ -119,7 +119,7 @@ const PICK_BY_MODE: Record<RouterPolicy['mode'], ChildPicker> = {
  * @summary Every pick answers a promise so the one mode that waits on a judge shares the walk's
  * single decision point with the two that never wait. Failover and round-robin stay ordinary
  * functions whose answers are wrapped here rather than made asynchronous, which is what leaves their
- * behaviour, and their specs, untouched by a mode that classifies over the network.
+ * behavior, and their specs, untouched by a mode that classifies over the network.
  */
 export async function childTheModeOffers(
   mode: RouterPolicy['mode'],
