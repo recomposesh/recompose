@@ -100,6 +100,41 @@ export function targetCard(id: string): CanvasNode {
   };
 }
 
+/** A gateway whose definition routes through a router a judge decides the branches of. */
+export function gatewayOfAJudgedRouter(): GatewayConfig {
+  return gatewaySeed({
+    slug: CANVAS,
+    displayName: 'My Gateway',
+    port: 8397,
+    virtualModels: [
+      {
+        id: 'judged',
+        displayName: 'Judged',
+        routing: {
+          entry: 'r1',
+          nodes: {
+            r1: {
+              kind: 'router',
+              policy: {
+                mode: 'conditional',
+                judge: 'advisor',
+                branches: [{ label: 'code', rule: 'It writes code.', child: 'c1' }],
+                elseChild: 'c2',
+                judgeBoundMs: 3000,
+                rejudgeEveryRequest: false,
+              },
+              children: ['c1', 'c2'],
+            },
+            c1: { kind: 'target', accountId: 'k1', providerModel: 'claude-sonnet-5' },
+            c2: { kind: 'target', accountId: 'k1', providerModel: 'claude-opus-5' },
+            advisor: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+          },
+        },
+      },
+    ],
+  });
+}
+
 /** A gateway whose definition routes through a router standing under another router. */
 export function gatewayOfNestedRouters(): GatewayConfig {
   return gatewaySeed({

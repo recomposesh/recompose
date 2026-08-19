@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 
-import { nameOfRouter } from '@recompose/contracts';
+import { nameOfRouter, nameOfRouterMode } from '@recompose/contracts';
 import { Handle, Position } from '@xyflow/react';
 
 import type { CanvasNode } from '../../lib/node-graph';
 
 import { JUDGE_SHOULDER_PORT } from '../../lib/canvas-cables';
 import { NodeCard } from '../node-card/node-card';
-import { childTally } from './router-reading';
+import { branchTally, childTally } from './router-reading';
 
 /** What a router card reads itself off, the stored router plus the one ask it carries. */
 export type RouterNodeData = Extract<CanvasNode, { kind: 'router' }> & {
@@ -55,6 +55,32 @@ function shoulderPort(): ReactNode {
   );
 }
 
+/**
+ * The pill a judged router wears, saying the mode behind a glyph that never enters the word.
+ *
+ * @summary The glyph is decoration rather than vocabulary: `nameOfRouterMode` is the one writer of
+ * a mode's name, and a question mark folded into that string would reach the inspector sentences
+ * and the refusal bodies that read the very same name.
+ */
+function modePill(mode: RouterNodeData['mode']): ReactNode {
+  return (
+    <span className="ms-auto inline-flex h-chip shrink-0 items-center gap-0.5 rounded-chip bg-router/12 px-1.5 text-caption font-medium text-router-ink">
+      <span aria-hidden>?</span>
+      {nameOfRouterMode(mode)}
+    </span>
+  );
+}
+
+function monoLine(data: RouterNodeData): string {
+  const { judged, displayName, childCount, mode } = data;
+
+  if (judged !== undefined) {
+    return branchTally(judged.branches, judged.judge);
+  }
+
+  return displayName === undefined ? childTally(childCount) : mode;
+}
+
 export function RouterNode({ data, selected }: RouterNodeProps) {
   const { mode, displayName, childCount, onAddChild } = data;
   const incomplete = childCount === 0;
@@ -62,6 +88,7 @@ export function RouterNode({ data, selected }: RouterNodeProps) {
   return (
     <>
       <NodeCard
+        badge={mode === 'conditional' ? modePill(mode) : undefined}
         chipGlyph="branch"
         chipMark={undefined}
         chipTint="text-router"
@@ -74,7 +101,7 @@ export function RouterNode({ data, selected }: RouterNodeProps) {
         outgoing={{ bound: !incomplete, ask: 'Add a child', onAsk: onAddChild }}
         selected={selected}
         shape="chamfered"
-        subtitle={displayName === undefined ? childTally(childCount) : mode}
+        subtitle={monoLine(data)}
         subtitleInk="text-ink-secondary"
         tint="node-tint-router"
       />

@@ -39,6 +39,13 @@ export type NodeCardProps = {
   chipMark: ReactNode | undefined;
   /** The uppercase word above the name, saying which kind of card this is. */
   kicker: string;
+  /**
+   * A pill riding the end of the kicker row, where one card has a standing the kicker can't say.
+   *
+   * @summary It shares the kicker's row rather than taking a line, because the two lines under it
+   * are the card's whole measure and a fourth line would push the mono line out of the frame.
+   */
+  badge?: ReactNode;
   /** The name the card answers to, cut short with its own tooltip when it runs long. */
   name: string;
   /** The ink class the name takes, which quietens on a card nothing answers yet. */
@@ -163,12 +170,12 @@ function incomingSide(): ReactNode {
 }
 
 function cardFace(props: NodeCardProps): ReactNode {
-  const { chipTint, kickerTint, chipGlyph, chipMark, kicker, name, nameInk } = props;
+  const { chipTint, kickerTint, chipGlyph, chipMark, kicker, badge, name, nameInk } = props;
   const { subtitle, subtitleInk, subtitleFace = 'mono', footnote } = props;
 
   return (
     <>
-      <span className="relative flex items-center gap-1.5">
+      <span className="relative flex min-w-0 items-center gap-1.5">
         <span
           aria-hidden
           className={`flex size-4.25 items-center justify-center rounded-chip bg-current/12 ${chipTint}`}
@@ -176,6 +183,7 @@ function cardFace(props: NodeCardProps): ReactNode {
           {chipMark ?? <Icon className="size-2.75" name={chipGlyph} />}
         </span>
         <span className={`${kickerLine} ${kickerTint}`}>{kicker}</span>
+        {badge}
       </span>
       <span className={`relative truncate text-card-title ${nameInk}`} title={name}>
         {name}

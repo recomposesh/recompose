@@ -10,6 +10,9 @@ import type { BranchSeat, WalkedRouteNode } from './route-graph';
 
 import { accountDetail } from '../../../entities/account';
 
+/** What a router the judge decides carries beyond its mode: its rules, and the judge behind them. */
+type JudgedReading = { branches: number; judge: string | undefined };
+
 /** A card standing on the canvas, which is either engine truth or one of the two overlay cards. */
 export type CanvasNode =
   | { id: string; kind: 'gateway'; displayName: string; port: number }
@@ -50,6 +53,7 @@ export type CanvasNode =
       displayName: string | undefined;
       childCount: number;
       branch?: BranchSeat | undefined;
+      judged?: JudgedReading | undefined;
     }
   | {
       id: string;
@@ -118,6 +122,12 @@ function targetCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Regis
   };
 }
 
+function judgedReading(placed: PlacedRouteNode, node: RouterNode): JudgedReading | undefined {
+  return node.policy.mode === 'conditional'
+    ? { branches: node.policy.branches.length, judge: placed.walked.judgedBy }
+    : undefined;
+}
+
 function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
   return {
     id: `route:${placed.name}`,
@@ -129,6 +139,7 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
     displayName: node.displayName,
     childCount: node.children.length,
     branch: placed.walked.branch,
+    judged: judgedReading(placed, node),
   };
 }
 
