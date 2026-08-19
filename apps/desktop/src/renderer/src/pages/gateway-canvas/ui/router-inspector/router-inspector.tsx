@@ -5,23 +5,25 @@ import { mintRouteNodeId } from '@recompose/contracts';
 import { useState } from 'react';
 
 import type { JudgeBinding } from '../../lib/conditional-draft';
-import type { ConditionalPolicy } from '../../lib/conditional-policy';
+import type { BranchWording, ConditionalPolicy } from '../../lib/conditional-policy';
 import type { RouterMode, SpreadingMode } from '../../lib/routing-edits';
+import type { RouterChild } from '../router-child-list/router-child';
 
 import { accountName } from '../../../../entities/account';
 import { useDefineVirtualModel } from '../../../../shared/api';
 import { SegmentedControl, Switch } from '../../../../shared/ui';
 import { conditionalIn } from '../../lib/conditional-policy';
 import { modeOptions, modeSentences, rejudgeSentences } from '../../lib/router-modes';
-import { gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
+import { gatewayDroppingNode, gatewayReordering, gatewaySwitching } from '../../lib/routing-edits';
 import {
   gatewayBindingJudge,
   gatewayJudgingEveryRequest,
+  gatewayWritingBranch,
 } from '../../lib/routing-edits-conditional';
 import { targetGroups } from '../../lib/target-groups';
 import { useOfferedModels } from '../../lib/use-offered-models';
+import { BranchEditor } from '../branch-editor/branch-editor';
 import { JudgeSection } from '../judge-section/judge-section';
-import { RouterChildList } from '../router-child-list/router-child-list';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
 import { routerChildRows } from './router-child-rows';
@@ -178,6 +180,28 @@ function judgingBody(view: JudgingView): ReactNode {
 }
 
 /**
+ * Every write the ladder can ask for, each one a whole gateway the rewrite carries to storage.
+ */
+function ladderEdits(props: RouterInspectorProps, onRewrite: (next: GatewayConfig) => void) {
+  const { gateway, model, routeNodeId, onSelectNode } = props;
+
+  return {
+    onDropBranch: (child: RouterChild) => {
+      onRewrite(gatewayDroppingNode(gateway, model.id, child.routeNodeId));
+    },
+    onMove: (from: number, to: number) => {
+      onRewrite(gatewayReordering(gateway, model.id, routeNodeId, from, to));
+    },
+    onOpen: (child: RouterChild) => {
+      onSelectNode(child.cardId);
+    },
+    onRuleBranch: (child: RouterChild, wording: BranchWording) => {
+      onRewrite(gatewayWritingBranch(gateway, model.id, routeNodeId, child.routeNodeId, wording));
+    },
+  };
+}
+
+/**
  * The whole of what a person decides about a router: what it is called, how it spreads, over what.
  *
  * @summary The name leads, because it is the one fact a person writes rather than picks, and every
@@ -193,7 +217,7 @@ function judgingBody(view: JudgingView): ReactNode {
  * every row below them receives.
  */
 export function RouterInspector(props: RouterInspectorProps) {
-  const { gateway, model, routeNodeId, router, accounts, onSelectNode } = props;
+  const { gateway, model, routeNodeId, router, accounts } = props;
   const rewrite = useDefineVirtualModel();
   const [picking, setPicking] = useState<string | undefined>(undefined);
   const offered = useOfferedModels(picking ?? '');
@@ -203,6 +227,8 @@ export function RouterInspector(props: RouterInspectorProps) {
   const onRewrite = (next: GatewayConfig): void => {
     rewrite.mutate(next);
   };
+
+  const { onDropBranch, onMove, onOpen, onRuleBranch } = ladderEdits(props, onRewrite);
 
   return (
     <>
@@ -220,14 +246,9 @@ export function RouterInspector(props: RouterInspectorProps) {
         ? null
         : judgingBody({ props, policy, picking, onPicking: setPicking, offered, onRewrite })}
       {sectionHeading('Children')}
-      <RouterChildList
+      <BranchEditor
+        branching={policy !== undefined}
         mode={mode}
-        onMove={(from, to) => {
-          onRewrite(gatewayReordering(gateway, model.id, routeNodeId, from, to));
-        }}
-        onOpen={(child) => {
-          onSelectNode(child.cardId);
-        }}
         rows={routerChildRows(
           model.id,
           model.routing,
@@ -235,6 +256,10 @@ export function RouterInspector(props: RouterInspectorProps) {
           accounts,
           policy === undefined ? undefined : { policy },
         )}
+        onDropBranch={onDropBranch}
+        onMove={onMove}
+        onOpen={onOpen}
+        onRuleBranch={onRuleBranch}
       />
     </>
   );

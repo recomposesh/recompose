@@ -1,3 +1,5 @@
+import { screen, userEvent } from 'storybook/test';
+
 import type { LadderRow, RouterChild } from '../ui/router-child-list/router-child';
 
 /**
@@ -63,4 +65,16 @@ export const unruledRow: RouterChild = {
 /** One row of the ladder with the acts a story never needs to answer. */
 export function ladderRowOf(child: RouterChild, rank: number, total = 3): LadderRow {
   return { child, rank, total, onMove: () => {}, onDragStart: () => {}, onDrop: () => {} };
+}
+
+/**
+ * Opens one row's own context menu and takes the act named on it.
+ *
+ * @summary The menu is the only way to reach a branch's rule or its removal, so every reading of
+ * either one walks the same two steps and spelling them per story would drift the moment the menu
+ * gained an item.
+ */
+export async function pickedFromTheRowMenu(row: HTMLElement, act: string): Promise<void> {
+  await userEvent.pointer({ keys: '[MouseRight]', target: row });
+  await userEvent.click(await screen.findByRole('menuitem', { name: act }));
 }

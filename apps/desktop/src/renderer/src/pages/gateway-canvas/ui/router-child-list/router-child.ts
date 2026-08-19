@@ -28,6 +28,10 @@ export type LadderActs = {
   onMove: (toward: Toward) => void;
   onDragStart: () => void;
   onDrop: () => void;
+  /** Opens the branch's rule for editing, where the row stands for a branch. */
+  onEditRule?: (() => void) | undefined;
+  /** Asks to take the branch and the child behind it away, where the row stands for a branch. */
+  onDelete?: (() => void) | undefined;
 };
 
 /** One row of the ladder, which is the child, where it stands, and what it can be asked. */

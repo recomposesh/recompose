@@ -1,6 +1,6 @@
 import type { GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
 
-import { expect } from 'storybook/test';
+import { expect, screen } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -8,6 +8,7 @@ import type { StoredRouter } from './router-inspector';
 
 import { gatewaySeed, paintedBox } from '../../../../shared/testing';
 import { servingBridgeWorld, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import { pickedFromTheRowMenu } from '../../testing/router-child.testkit';
 import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { RouterInspector } from './router-inspector';
 
@@ -190,6 +191,34 @@ export const ConditionalSaysWhatASwitchWouldNeed = meta.story({
 
     await expect(segment).toHaveAttribute('aria-disabled', 'true');
     await expect(segment).toHaveAccessibleDescription(/judge/);
+  },
+});
+
+/**
+ * Deleting a branch names the real cost first, which is where its traffic goes next.
+ *
+ * @summary The act lives in the row's own context menu rather than in the rule sheet, so a person
+ * fixing a typo never reads two buttons to find the safe one.
+ */
+export const DeletingABranchNamesItsCost = meta.story({
+  args: { model: pooled(judging, true), router: judging },
+  play: async ({ canvas }) => {
+    await pickedFromTheRowMenu(await canvas.findByText('code'), 'Delete branch');
+
+    await expect(await screen.findByRole('heading', { name: 'Delete the code branch?' })) //
+      .toBeVisible();
+    await expect(await screen.findByText(/fall to else/)).toBeVisible();
+  },
+});
+
+/** Editing a rule opens the sheet on the branch a person asked about, holding its own words. */
+export const EditingARuleOpensTheSheet = meta.story({
+  args: { model: pooled(judging, true), router: judging },
+  play: async ({ canvas }) => {
+    await pickedFromTheRowMenu(await canvas.findByText('code'), 'Edit rule');
+
+    await expect(await screen.findByLabelText('Label')).toHaveValue('code');
+    await expect(await screen.findByLabelText('Rule')).toHaveValue('questions about source code');
   },
 });
 
