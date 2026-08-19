@@ -113,6 +113,26 @@ describe('the one classification a walk spends, however many children it tries',
     expect(walk.verdict.outcome).toBe('exhausted');
   });
 
+  test('a decided branch that cannot serve falls to else without asking again', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    const walk = await gateway.send({ coder: aRateLimit() });
+
+    expect(walk.attempted).toEqual(['coder', 'catchall']);
+    expect(judge.asked).toEqual([JUDGE]);
+  });
+
+  test('a branch child already standing cooling never receives the request at all', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    await gateway.send({ coder: aRateLimit() });
+    const next = await gateway.send();
+
+    expect(next.attempted).toEqual(['catchall']);
+  });
+
   test('a later walk judges again, because the memo dies with the walk that made it', async () => {
     const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
     const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });

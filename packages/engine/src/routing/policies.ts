@@ -68,6 +68,26 @@ export function nextRoundRobinChild(
     : { child: offered, cursor: cursor + 1 };
 }
 
+/**
+ * The child a conditional router offers next, once a judge has named its branch.
+ *
+ * @summary A branch whose subtree cannot serve falls to else here rather than back at the judge,
+ * because the branch was decided for the whole walk and only the health below it changed. Asking a
+ * second time would spend another call to be told the same label about the same request. A router
+ * that reached no branch at all offers nothing rather than guessing one, so the walk reports
+ * exhaustion exactly as it does for a ladder whose children have all stood down.
+ */
+export function nextConditionalChild(
+  branch: BranchChoice | undefined,
+  canServe: ChildCanServe,
+): string | undefined {
+  if (branch === undefined) return undefined;
+
+  if (canServe(branch.decided)) return branch.decided;
+
+  return canServe(branch.elseChild) ? branch.elseChild : undefined;
+}
+
 type Turn = { cursor: () => number; advanceTo: (cursor: number) => void };
 
 export type Picking = {
@@ -89,7 +109,8 @@ const PICK_BY_MODE: Record<RouterPolicy['mode'], ChildPicker> = {
 
     return Promise.resolve(spun.child);
   },
-  conditional: async ({ branch }) => Promise.resolve(branch?.decided),
+  conditional: async ({ branch, canServe }) =>
+    Promise.resolve(nextConditionalChild(branch, canServe)),
 };
 
 /**
