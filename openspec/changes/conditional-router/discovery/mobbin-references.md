@@ -37,3 +37,14 @@ Session-run discovery arm (`isUI: true`). Fresh searches on 2026-08-19, folded t
 - Mandatory else is industry-standard in every surveyed builder (OpenAI, Twenty, Customer.io "All others", Flodesk, n8n false-port).
 - Rule text previews on the wire (Lindy, Twenty, Zapier) beat rule rows inside the node (WRITER, ManyChat) for canvas economy; the drawn screens 0 to 7 already follow the wire-pill choice.
 - No surveyed product renders the classifier as a satellite advisor node; the judge satellite is recompose's own move, so the design critique should weigh its legibility on screens 5 to 7 rather than look for outside precedent.
+
+## Replan search, 2026-08-19 evening: the mode choice control
+
+Prompted by the three-segment control wrapping "Round-robin" at the narrowest panel width.
+
+- GitBook merge rules, policy choice as stacked radio rows with one-line descriptions: https://mobbin.com/screens/39454abe-01b2-43ac-8b2f-32446fbc24de
+- Square cookie-consent banner choice, radio cards with a Recommended badge: https://mobbin.com/screens/a5a2fe99-3d8e-4bb3-9307-13381a5f0a8e
+- Komoot map font size, three stacked options in a narrow settings column: https://mobbin.com/screens/73ee17a4-3226-4874-a325-02539b2ccf54
+- Hers refill picker, selected row rings while unselected rows rest: https://mobbin.com/screens/11e361ff-bd62-4b94-8ab2-79815c0eab05
+
+Chosen at the replan gate: vertical option rows carrying the mode name plus its sentence, shared by the inspector and the canvas picker step.

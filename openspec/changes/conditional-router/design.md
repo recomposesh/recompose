@@ -190,7 +190,7 @@ Renderer, gateway-canvas slice unless said otherwise:
 
 ## Interfaces
 
-- Consumes: `routerPolicySchema`, `RouteNode`, `routeNodeIdSchema`, `ROUTER_DEPTH_LIMIT`, and `nameOfRouterMode` from `@recompose/contracts`. `CooldownLedger.coolingAt`, `classify`, `RouteNodeAddress`, and `turnResumesServerState` inside the engine. `SegmentedControl`, `InspectorToggle`, `TextField`, `FieldRow`, `Sheet`, `ConsequenceDialog`, and `StatusChip` from the renderer's shared kit.
+- Consumes: `routerPolicySchema`, `RouteNode`, `routeNodeIdSchema`, `ROUTER_DEPTH_LIMIT`, and `nameOfRouterMode` from `@recompose/contracts`. `CooldownLedger.coolingAt`, `classify`, `RouteNodeAddress`, and `turnResumesServerState` inside the engine. `Switch`, `TextField`, `FieldRow`, `Sheet`, `ConsequenceDialog`, and `StatusChip` from the renderer's shared kit (the build corrected the plan's `InspectorToggle` naming: that component is the drawer button, and the re-judge control composes from `Switch`).
 - Produces, contracts: the widened `RouterPolicy` union whose `conditional` member carries `judge`, `branches`, `elseChild`, `judgeBoundMs`, and `rejudgeEveryRequest`. `nameOfRouterMode('conditional')` returns `Conditional`.
 - Produces, engine: `type ChildPicker = (children, canServe, turn) => Promise<string | undefined>`. `WalkRequest` gains `classifyBranch: (judge: string, branches: readonly BranchRule[], tail: string) => Promise<JudgeReading>`. `walkAttempts` keeps its exported signature.
 - Produces, renderer: no new slice exports. `GatewayCanvasPage` stays the single public surface.
@@ -248,6 +248,24 @@ The classification call constrains the answer with the dialect's own enum mechan
 `wouldRotate` answers for round-robin with a refusal. The conditional mode extends the same question with a different answer: hold the pin when one exists, and go to else when none does. A refusal would contradict the never-drop invariant.
 
 **Alternatives considered:** refusing like round-robin, rejected because the spec words are "routing failure never drops a request." Judging the turn anyway, rejected because a fresh judgment could move a sealed conversation across accounts.
+
+### 8. Switching a stored router to conditional enters definition state (replan)
+
+The maintainer approved building the fresh-switch flow in this cycle. A switch to conditional stores nothing until the policy is whole. Whole means a judge binds, every non-else child holds a label and a rule, and the last declared child stands as else. Until then the inspector holds the definition open, which is what the fresh-switch screen depicts. A childless router keeps the inert reason.
+
+**Alternatives considered:** deferring the switch to a rider, rejected by the maintainer at the replan gate. Storing a partial policy, rejected because the schema refuses it by design.
+
+### 9. The pin tally rides the watch lane to the renderer (replan)
+
+The maintainer approved wiring the inspector's pin count in this cycle. The engine emits a per-branch tally on every pin write and expiry. The tally crosses on the existing watch channel beside traffic rows, and the inspector rows read it live. Pin state itself stays engine runtime memory.
+
+**Alternatives considered:** deferring the badge to a rider, rejected by the maintainer at the replan gate. A renderer poll, rejected because the watch lane already pushes engine state and a second transport would split one mechanism in two.
+
+### 10. The mode choice is a vertical option-row list (replan)
+
+Three segments overflow the narrowest panel, wrapping "Round-robin" onto two lines. The mode choice becomes one shared list of option rows, each carrying the mode's name and its sentence, used by the router inspector and the canvas picker step alike. The sentences move from below the control into the rows, so each mode's cost reads at the point of choice. A fourth mode extends the list without a layout fight. Mobbin precedent in `discovery/mobbin-references.md`: GitBook's merge-rules policy rows, Square's recommended-badge rows, and Komoot's narrow stacked list.
+
+**Alternatives considered:** keeping the segmented control with a narrow-width stack, rejected because three growing words keep competing at every width. A dropdown, rejected because it hides two of three options behind a press for no space gain the rows don't already give.
 
 ## Test matrix
 
