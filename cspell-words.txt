@@ -116,6 +116,7 @@ Firecrawl
 firstsecond
 Flathub
 flatlist
+Flodesk
 fract
 freenothing
 frontmatter
