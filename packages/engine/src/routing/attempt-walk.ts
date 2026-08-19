@@ -1,14 +1,16 @@
 import type { EngineRouting, RouterPolicy } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
+import type { BranchClassifier } from './judge-decision';
 import type { AttemptReading, AttemptReason } from './outcome-classification';
-import type { ChildCanServe } from './policies';
+import type { BranchChoice } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
 
+import { childTheJudgeDecides } from './judge-decision';
 import { classify } from './outcome-classification';
-import { nextFailoverChild, nextRoundRobinChild } from './policies';
+import { childTheModeOffers } from './policies';
 import { childlessRouterTheTableHolds, targetsInDeclaredOrder } from './route-table';
 
 export const ATTEMPT_LIMIT = 8;
@@ -33,6 +35,7 @@ export type WalkRequest<TAnswer> = {
   cursors: RotationCursors;
   resumesServerState: boolean;
   now: () => number;
+  classifyBranch?: BranchClassifier;
   attempt: (routeNode: string) => Promise<AttemptReading<TAnswer>>;
 };
 
@@ -43,6 +46,7 @@ type Walking = {
   ledger: CooldownLedger;
   cursors: RotationCursors;
   resumesServerState: boolean;
+  classifyBranch?: BranchClassifier;
   attempted: Map<string, WalkNote>;
 };
 
@@ -50,26 +54,6 @@ type WalkStep =
   | { at: 'target'; routeNode: string }
   | { at: 'rotation'; routeNode: string; router: EngineRouter }
   | { at: 'nowhere' };
-
-type Turn = { cursor: () => number; advanceTo: (cursor: number) => void };
-
-type ChildPicker = (
-  children: readonly string[],
-  canServe: ChildCanServe,
-  turn: Turn,
-) => string | undefined;
-
-const PICK_BY_MODE: Record<RouterPolicy['mode'], ChildPicker> = {
-  failover: (children, canServe) => nextFailoverChild(children, canServe),
-  'round-robin': (children, canServe, turn) => {
-    const spun = nextRoundRobinChild(children, canServe, turn.cursor());
-
-    turn.advanceTo(spun.cursor);
-
-    return spun.child;
-  },
-  conditional: () => undefined,
-};
 
 function addressOf(walking: Walking, routeNode: string): RouteNodeAddress {
   return { slug: walking.slug, virtualModel: walking.virtualModel, routeNode };
@@ -96,24 +80,42 @@ function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string
   return node.children.some((child) => subtreeCanServe(walking, child, passed));
 }
 
-function childTheRouterOffers(
+async function branchTheWalkFollows(
+  walking: Walking,
+  policy: RouterPolicy,
+): Promise<BranchChoice | undefined> {
+  if (policy.mode !== 'conditional') return undefined;
+
+  const decided = await childTheJudgeDecides({
+    judge: policy.judge,
+    branches: policy.branches,
+    elseChild: policy.elseChild,
+    classify: walking.classifyBranch,
+  });
+
+  return { decided, elseChild: policy.elseChild };
+}
+
+async function childTheRouterOffers(
   walking: Walking,
   routeNode: string,
   router: EngineRouter,
   path: ReadonlySet<string>,
-): string | undefined {
+): Promise<string | undefined> {
   const address = addressOf(walking, routeNode);
+  const policy = router.policy;
 
-  return PICK_BY_MODE[router.policy.mode](
-    router.children,
-    (child) => subtreeCanServe(walking, child, new Set(path)),
-    {
+  return childTheModeOffers(policy.mode, {
+    children: router.children,
+    canServe: (child) => subtreeCanServe(walking, child, new Set(path)),
+    turn: {
       cursor: () => walking.cursors.cursorAt(address),
       advanceTo: (cursor) => {
         walking.cursors.advanceTo(address, cursor);
       },
     },
-  );
+    branch: await branchTheWalkFollows(walking, policy),
+  });
 }
 
 function stepAtTarget(walking: Walking, routeNode: string): WalkStep {
@@ -133,7 +135,7 @@ function wouldRotate(walking: Walking, router: EngineRouter): boolean {
  * account a token it cannot read. The question is asked before the router picks, so a spreading
  * router holding no child still refuses the chain rather than reporting itself empty.
  */
-function stepTheWalkTakesNext(walking: Walking): WalkStep {
+async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> {
   const path = new Set<string>();
   let routeNode: string | undefined = walking.routing.entry;
 
@@ -148,7 +150,7 @@ function stepTheWalkTakesNext(walking: Walking): WalkStep {
 
     if (wouldRotate(walking, node)) return { at: 'rotation', routeNode, router: node };
 
-    routeNode = childTheRouterOffers(walking, routeNode, node, path);
+    routeNode = await childTheRouterOffers(walking, routeNode, node, path);
   }
 
   return { at: 'nowhere' };
@@ -234,7 +236,7 @@ async function verdictTheWalkSettles<TAnswer>(
   request: WalkRequest<TAnswer>,
 ): Promise<WalkVerdict<TAnswer> | undefined> {
   while (walking.attempted.size < ATTEMPT_LIMIT) {
-    const step = stepTheWalkTakesNext(walking);
+    const step = await stepTheWalkTakesNext(walking);
 
     if (step.at === 'nowhere') return undefined;
 
@@ -254,7 +256,8 @@ async function verdictTheWalkSettles<TAnswer>(
  * The walk one request takes across a route table until a child answers or none can.
  *
  * @summary It decides and records; it opens no connection and knows no transport, because the
- * attempt arrives injected and the answer crosses back untouched. Termination is structural rather
+ * attempt and the branch classification both arrive injected and the answer crosses back untouched.
+ * Termination is structural rather
  * than counted: a child attempted once is never eligible again, so the attempted set only grows and
  * the recorded cap bounds it against a table too wide to walk. Every child the walk could not use
  * earns a note in the table's declared order, whichever order the policies actually tried them, so
