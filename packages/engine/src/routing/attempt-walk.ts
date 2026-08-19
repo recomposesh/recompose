@@ -36,6 +36,7 @@ export type WalkRequest<TAnswer> = {
   now: () => number;
   classifyBranch?: BranchClassifier;
   pinnedBranchAt?: (routeNode: string) => string | undefined;
+  pinBranchAt?: (routeNode: string, child: string) => void;
   attempt: (routeNode: string) => Promise<AttemptReading<TAnswer>>;
 };
 
@@ -87,6 +88,7 @@ function judgingOf<TAnswer>(request: WalkRequest<TAnswer>): Judging {
     classify: request.classifyBranch,
     resumesServerState: request.resumesServerState,
     pinnedBranchAt: (routeNode) => request.pinnedBranchAt?.(routeNode),
+    pinBranchAt: (routeNode, child) => request.pinBranchAt?.(routeNode, child),
     judgeStandsCooling: (judge) =>
       request.ledger.coolingAt({ slug, virtualModel, routeNode: judge }) !== undefined,
     decided: new Map(),

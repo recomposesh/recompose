@@ -18,6 +18,7 @@ export type Scene = {
   resumesServerState?: boolean;
   classifyBranch?: BranchClassifier;
   pinnedBranchAt?: (routeNode: string) => string | undefined;
+  pinBranchAt?: (routeNode: string, child: string) => void;
 };
 
 export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {

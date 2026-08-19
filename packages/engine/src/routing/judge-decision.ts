@@ -15,6 +15,7 @@ export type Judging = {
   classify: BranchClassifier | undefined;
   judgeStandsCooling: (judge: string) => boolean;
   pinnedBranchAt: (routeNode: string) => string | undefined;
+  pinBranchAt: (routeNode: string, child: string) => void;
   resumesServerState: boolean;
   decided: Map<string, string>;
 };
@@ -32,24 +33,46 @@ type BranchQuestion = {
 
 type Asking = { question: BranchQuestion; classify: BranchClassifier };
 
+/**
+ * The child a conditional router settles on, and who settled it.
+ *
+ * @summary Only a branch a judge actually named is worth remembering for the rest of a conversation.
+ * A child the else branch caught is what trouble left behind, so pinning it would let one bad minute
+ * from a judge park a whole conversation on the fallback long after the judge came back.
+ */
+type Decided = { child: string; from: 'label' | 'trouble' | 'pin' };
+
 async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
   return asking.classify(asking.question.judge, asking.question.branches);
 }
 
-async function childASecondAskEarns(asking: Asking): Promise<string> {
-  const reading = await readingOneAskEarns(asking);
+function labelABranchWears(question: BranchQuestion, reading: JudgeReading): boolean {
+  const verdict = classifyJudge(reading);
 
-  return childOneReadingNames(asking.question.branches, asking.question.elseChild, reading);
+  return (
+    verdict.verdict === 'answered' &&
+    branchWearingTheLabel(question.branches, verdict.label) !== undefined
+  );
 }
 
-async function childTheJudgeAnswers(asking: Asking): Promise<string> {
+async function childASecondAskEarns(asking: Asking): Promise<Decided> {
+  const reading = await readingOneAskEarns(asking);
+  const question = asking.question;
+
+  return {
+    child: childOneReadingNames(question.branches, question.elseChild, reading),
+    from: labelABranchWears(question, reading) ? 'label' : 'trouble',
+  };
+}
+
+async function childTheJudgeAnswers(asking: Asking): Promise<Decided> {
   const verdict = classifyJudge(await readingOneAskEarns(asking));
 
-  if (verdict.verdict === 'to-else') return asking.question.elseChild;
+  if (verdict.verdict === 'to-else') return { child: asking.question.elseChild, from: 'trouble' };
 
   const named = branchWearingTheLabel(asking.question.branches, verdict.label);
 
-  return named === undefined ? childASecondAskEarns(asking) : named.child;
+  return named === undefined ? childASecondAskEarns(asking) : { child: named.child, from: 'label' };
 }
 
 function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
@@ -58,12 +81,14 @@ function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
   return reads ? question.pinnedBranch : undefined;
 }
 
-async function childNoPinNames(question: BranchQuestion): Promise<string> {
-  if (question.resumesServerState) return question.elseChild;
+async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
+  if (question.resumesServerState) return { child: question.elseChild, from: 'trouble' };
 
   const classify = question.judgeStandsCooling ? undefined : question.classify;
 
-  return classify === undefined ? question.elseChild : childTheJudgeAnswers({ question, classify });
+  return classify === undefined
+    ? { child: question.elseChild, from: 'trouble' }
+    : childTheJudgeAnswers({ question, classify });
 }
 
 /**
@@ -83,8 +108,10 @@ async function childNoPinNames(question: BranchQuestion): Promise<string> {
  * router does, would break the promise that routing trouble never drops a request. That is also why
  * re-judge every request skips the pin on an ordinary turn but never on this one.
  */
-async function childTheJudgeDecides(question: BranchQuestion): Promise<string> {
-  return pinTheTurnKeeps(question) ?? childNoPinNames(question);
+async function childTheJudgeDecides(question: BranchQuestion): Promise<Decided> {
+  const pinned = pinTheTurnKeeps(question);
+
+  return pinned === undefined ? childNoPinNames(question) : { child: pinned, from: 'pin' };
 }
 
 function questionOf(
@@ -112,6 +139,9 @@ function questionOf(
  * a caller's patience. It is keyed by route node because a chain can hold several conditional
  * routers, each owed its own single decision. A router of any other mode answers nothing here, which
  * is what keeps failover and round-robin from ever reaching a judge.
+ *
+ * The conversation is pinned here and only here, the moment a judgment settles, so the branch a
+ * request earned outlives the walk that earned it while the branch trouble picked never does.
  */
 export async function branchTheWalkFollows(
   routeNode: string,
@@ -120,13 +150,17 @@ export async function branchTheWalkFollows(
 ): Promise<BranchChoice | undefined> {
   if (policy.mode !== 'conditional') return undefined;
 
-  const decided =
-    judging.decided.get(routeNode) ??
-    (await childTheJudgeDecides(questionOf(routeNode, policy, judging)));
+  const held = judging.decided.get(routeNode);
 
-  judging.decided.set(routeNode, decided);
+  if (held !== undefined) return { decided: held, elseChild: policy.elseChild };
 
-  return { decided, elseChild: policy.elseChild };
+  const decided = await childTheJudgeDecides(questionOf(routeNode, policy, judging));
+
+  judging.decided.set(routeNode, decided.child);
+
+  if (decided.from === 'label') judging.pinBranchAt(routeNode, decided.child);
+
+  return { decided: decided.child, elseChild: policy.elseChild };
 }
 
 /**
