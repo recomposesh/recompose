@@ -141,6 +141,14 @@ export const ModelListRefused = meta.story({
   },
 });
 
+/** A conditional draft walks past the mode, because it is born naming an else child too. */
+export const ConditionalWalksOnForItsElseBranch = meta.story({
+  args: { name: 'Fast', bindsThrough: 'router' as const, routerMode: 'conditional' as const },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the else branch')).toBeVisible();
+  },
+});
+
 /** The fields in the dark scheme, where the refusal tint has to hold against the box. */
 export const DarkScheme = meta.story({
   args: {
