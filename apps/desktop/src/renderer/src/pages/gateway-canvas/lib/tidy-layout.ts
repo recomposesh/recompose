@@ -56,6 +56,40 @@ export function columnBeyond(parent: CanvasNode | undefined): number {
   return parent === undefined ? ROUTE_COLUMN : columnOf(parent) + 1;
 }
 
+const SATELLITE_INSET = SATELLITE_MEASURE.width + 12;
+
+const SATELLITE_RISE = 60;
+
+/**
+ * Where every judge stands, which is an offset from its router rather than a seat of its own.
+ *
+ * @summary A judge advises one router, so it belongs beside that router wherever the router ends
+ * up: taking a column would put an advisor in the row of things a request travels to, and taking a
+ * row would push a router's own children down a place. It seats to the start side rather than
+ * straight above, because the gap between two rows is shorter than a satellite and the field beside
+ * a column is empty. Reading the seats as they already stand is what lets a dragged router carry
+ * its judge, so the tie never stretches across the canvas. A judge whose router the canvas does not
+ * stand seats nowhere, because an advisor with nothing to advise stands for nothing.
+ */
+export function satellitesFollowTheirRouters(
+  nodes: readonly CanvasNode[],
+  seats: NodePositions,
+): NodePositions {
+  const settled: Record<string, XY> = { ...seats };
+
+  for (const node of nodes) {
+    const router = node.kind === 'judge' ? settled[node.advises] : undefined;
+
+    if (router === undefined) {
+      continue;
+    }
+
+    settled[node.id] = { x: router.x - SATELLITE_INSET, y: router.y - SATELLITE_RISE };
+  }
+
+  return settled;
+}
+
 /**
  * Where every card stands once the canvas arranges itself, read left to right by role.
  *
@@ -63,13 +97,18 @@ export function columnBeyond(parent: CanvasNode | undefined): number {
  * run in that direction and a person reads the composition the way it runs. The columns stand one
  * pitch apart, so a binding's cable reads at a glance instead of crossing an empty field. The graph
  * hands its route nodes over entry first and each child before its own children, so one router's
- * children take adjacent rows in their column and the cables fan without crossing.
+ * children take adjacent rows in their column and the cables fan without crossing. A judge takes no
+ * place in that arrangement at all: it seats off its router once every card has one.
  */
 export function tidyPositions(nodes: readonly CanvasNode[]): NodePositions {
   const rows = new Map<number, number>();
   const seats: Record<string, XY> = {};
 
   for (const node of nodes) {
+    if (node.kind === 'judge') {
+      continue;
+    }
+
     const column = columnOf(node);
     const row = rows.get(column) ?? 0;
 
@@ -77,7 +116,7 @@ export function tidyPositions(nodes: readonly CanvasNode[]): NodePositions {
     seats[node.id] = { x: column * COLUMN_PITCH, y: row * ROW_PITCH };
   }
 
-  return seats;
+  return satellitesFollowTheirRouters(nodes, seats);
 }
 
 /**

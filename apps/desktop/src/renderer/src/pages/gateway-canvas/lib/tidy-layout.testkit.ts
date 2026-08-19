@@ -116,6 +116,20 @@ export function columnStep(): number {
   return seatAt(seats, 'virtual-model-1').x - seatAt(seats, 'gateway-0').x;
 }
 
+/** A judge satellite advising whichever router card a scenario names. */
+export function judgeAdvising(id: string, advises: string): CanvasNode {
+  return {
+    id,
+    kind: 'judge',
+    modelId: 'fast',
+    routeNodeId: id,
+    depth: 0,
+    advises,
+    accountId: 'a1',
+    providerModel: 'claude-haiku-5',
+  };
+}
+
 /** A target card standing however many routers below the entry a scenario names. */
 export function oneRouterDeep(id: string, depth: number): CanvasNode {
   return {
