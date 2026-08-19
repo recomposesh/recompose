@@ -21,6 +21,10 @@ type RouterChildListProps = {
   onMove: (from: number, to: number) => void;
   /** Receives the child a person opened, which selects its card and turns the drawer to it. */
   onOpen: OpenChild;
+  /** Receives the branch whose rule a person asked to edit, where the mode has branches at all. */
+  onEditRule?: OpenChild | undefined;
+  /** Receives the branch a person asked to delete, before anything is written. */
+  onDeleteBranch?: OpenChild | undefined;
 };
 
 function unorderedList(rows: readonly RouterChild[], onOpen: OpenChild): ReactElement {
@@ -32,6 +36,14 @@ function unorderedList(rows: readonly RouterChild[], onOpen: OpenChild): ReactEl
         </li>
       ))}
     </ul>
+  );
+}
+
+function holdsNoChildYet(): ReactElement {
+  return (
+    <p className="field-box px-3 py-2.5 text-detail text-ink-secondary">
+      This router holds no child yet. Drag a cable from its port to bind one.
+    </p>
   );
 }
 
@@ -60,6 +72,31 @@ function ladderActs(
 }
 
 /**
+ * What the row can be asked about its branch, which is nothing where the caller offers nothing.
+ *
+ * @summary Both acts arrive together or not at all, because a menu offering a delete with no way
+ * to edit the rule beside it would read as the row's only act rather than its last resort.
+ */
+function branchActsFor(
+  child: RouterChild,
+  onEditRule: OpenChild | undefined,
+  onDeleteBranch: OpenChild | undefined,
+): Partial<LadderActs> {
+  if (onEditRule === undefined || onDeleteBranch === undefined) {
+    return {};
+  }
+
+  return {
+    onEditRule: () => {
+      onEditRule(child);
+    },
+    onDelete: () => {
+      onDeleteBranch(child);
+    },
+  };
+}
+
+/**
  * The children a router holds, as a ladder under failover and as a plain list under round-robin.
  *
  * @summary Reach for it in the router inspector, which is the one place this canvas hosts the
@@ -71,7 +108,14 @@ function ladderActs(
  * person pressed keeps the focus it had. Under round-robin no end of the list wins, so it carries
  * no rank and no way to order it, because an affordance for an order nothing reads would be a lie.
  */
-export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListProps) {
+export function RouterChildList({
+  mode,
+  rows,
+  onMove,
+  onOpen,
+  onEditRule,
+  onDeleteBranch,
+}: RouterChildListProps) {
   const grabbed = useRef<number | undefined>(undefined);
   const [said, setSaid] = useState<string | undefined>(undefined);
 
@@ -87,11 +131,7 @@ export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListP
   };
 
   if (rows.length === 0) {
-    return (
-      <p className="field-box px-3 py-2.5 text-detail text-ink-secondary">
-        This router holds no child yet. Drag a cable from its port to bind one.
-      </p>
-    );
+    return holdsNoChildYet();
   }
 
   if (mode === 'round-robin') {
@@ -110,6 +150,7 @@ export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListP
               rank: index + 1,
               total: rows.length,
               ...ladderActs(index, grabbed, carried),
+              ...branchActsFor(child, onEditRule, onDeleteBranch),
             }}
           />
         ))}

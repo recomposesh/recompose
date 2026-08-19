@@ -75,9 +75,37 @@ function rowMenu(row: LadderRow): ReactElement {
           >
             Move down
           </ContextMenu.Item>
+          {branchActs(row)}
         </ContextMenu.Popup>
       </ContextMenu.Positioner>
     </ContextMenu.Portal>
+  );
+}
+
+/**
+ * What a person can do to a branch beyond moving it, which is edit its rule or take it away.
+ *
+ * @summary They live in the row's own menu rather than in the rule sheet, because a surface that
+ * can both save and destroy makes a person read two buttons carefully every time they meant to fix
+ * a typo. A child holding no branch offers neither, since there is no rule to edit and dropping it
+ * is the plain node removal every other row already answers to.
+ */
+function branchActs(row: LadderRow): ReactElement | null {
+  const { child, onEditRule, onDelete } = row;
+
+  if (child.label === undefined || onEditRule === undefined || onDelete === undefined) {
+    return null;
+  }
+
+  return (
+    <>
+      <ContextMenu.Item className="menu-action" onClick={onEditRule}>
+        Edit rule
+      </ContextMenu.Item>
+      <ContextMenu.Item className="menu-action text-danger-ink" onClick={onDelete}>
+        Delete branch
+      </ContextMenu.Item>
+    </>
   );
 }
 
