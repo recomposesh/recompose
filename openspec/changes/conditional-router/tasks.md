@@ -34,7 +34,7 @@
       fallback channel
 - [x] 3.2 Specify the timeout clock starting at dispatch through `AbortSignal.timeout`
 - [ ] 3.3 Inject `classifyBranch` from `gateway-proxy.ts` under the judge's own custody
-- [ ] 3.4 Specify the pin store's idle expiry, with the bound as a property law and its twin
+- [x] 3.4 Specify the pin store's idle expiry, with the bound as a property law and its twin
 - [ ] 3.5 Specify the fingerprint preferring a client key and hashing only turn-stable content
 - [ ] 3.6 Specify the judge call staying out of cable accounting
 - [ ] 3.7 Specify prompt assembly: delimited tail, else excluded, branch order preserved as a
