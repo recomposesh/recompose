@@ -1,7 +1,12 @@
 import { fc, test as propertyTest } from '@fast-check/vitest';
 import { describe, expect, test } from 'vitest';
 
-import { childTheLabelNames, nextFailoverChild, nextRoundRobinChild } from './policies';
+import {
+  childTheLabelNames,
+  nextConditionalChild,
+  nextFailoverChild,
+  nextRoundRobinChild,
+} from './policies';
 
 const everyChildEligible = () => true;
 
@@ -108,6 +113,32 @@ describe('the child the label a judge answered names', () => {
 
   test('a router holding no branch lands every answer on the else child', () => {
     expect(childTheLabelNames([], 'catchall', 'code')).toBe('catchall');
+  });
+});
+
+describe('the child a conditional router offers next', () => {
+  const judged = { decided: 'coder', elseChild: 'catchall' };
+
+  test('a decided branch whose subtree can serve is the child offered', () => {
+    expect(nextConditionalChild(judged, everyChildEligible)).toBe('coder');
+  });
+
+  test('a decided branch whose subtree cannot serve hands the request to the else child', () => {
+    expect(nextConditionalChild(judged, (child) => child !== 'coder')).toBe('catchall');
+  });
+
+  test('a router whose else child cannot serve either offers no child', () => {
+    expect(nextConditionalChild(judged, () => false)).toBeUndefined();
+  });
+
+  test('a decision that already landed on else offers the else child', () => {
+    const landed = { decided: 'catchall', elseChild: 'catchall' };
+
+    expect(nextConditionalChild(landed, everyChildEligible)).toBe('catchall');
+  });
+
+  test('a router that reached no branch at all offers no child', () => {
+    expect(nextConditionalChild(undefined, everyChildEligible)).toBeUndefined();
   });
 });
 
