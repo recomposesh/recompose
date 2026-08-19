@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import type { BoundKind } from '../../lib/binding-kinds';
-import type { SpreadingMode } from '../../lib/routing-edits';
+import type { RouterMode } from '../../lib/routing-edits';
 import type { OptionGroup } from '../option-list/option-list';
 
 import { useStepTransition } from '../../../../shared/lib';
@@ -27,9 +27,9 @@ export type RoutingPickerProps = {
   /** Returns the picker to the ask that offers the two shapes. */
   onReopenKind: () => void;
   /** How the router being composed spreads, which stands at its born mode until a person moves it. */
-  routerMode: SpreadingMode;
+  routerMode: RouterMode;
   /** Receives the mode the person landed on. */
-  onRouterModeChange: (mode: SpreadingMode) => void;
+  onRouterModeChange: (mode: RouterMode) => void;
   /** What the person called the router, which is empty while it answers to its mode. */
   routerName: string;
   /** Receives every keystroke in the router name field. */

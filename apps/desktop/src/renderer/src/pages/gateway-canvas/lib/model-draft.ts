@@ -4,9 +4,11 @@ import { mintRouteNodeId, modelAliasFromName } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
 import type { BoundKind } from './binding-kinds';
-import type { SpreadingMode } from './routing-edits';
+import type { JudgeBinding } from './conditional-draft';
+import type { RouterMode, SpreadingMode } from './routing-edits';
 
 import { IpcResultError, refusalSentence } from '../../../shared/api';
+import { gatewayDefiningJudged, judgeAnswered } from './conditional-draft';
 import { routedThroughARouter } from './routing-edits';
 
 const MALFORMED_DEFINITION_REFUSAL =
@@ -33,7 +35,9 @@ export type SettledDefinition = {
   /** Which shape the binding takes, or nothing while the ask that offers the two stands open. */
   bindsThrough?: BoundKind | undefined;
   /** How the router spreads, or nothing while the draft has yet to answer with a router at all. */
-  routerMode?: SpreadingMode | undefined;
+  routerMode?: RouterMode | undefined;
+  /** What reads the requests a conditional router spreads, which no other mode asks for. */
+  judge?: JudgeBinding | undefined;
   /** What a person called the router, which is empty while it answers to its mode. */
   routerName?: string | undefined;
   /** The account the model reaches. */
@@ -47,10 +51,18 @@ export function emptyDefinition(): SettledDefinition {
   return { displayName: '', id: '', accountId: '', providerModel: '' };
 }
 
+function targetAnswered(definition: SettledDefinition): boolean {
+  return definition.accountId !== '' && definition.providerModel !== '';
+}
+
 function routingAnswered(definition: SettledDefinition): boolean {
-  return definition.bindsThrough === 'router'
-    ? true
-    : definition.accountId !== '' && definition.providerModel !== '';
+  if (definition.bindsThrough !== 'router') {
+    return targetAnswered(definition);
+  }
+
+  return definition.routerMode === 'conditional'
+    ? judgeAnswered(definition.judge) && targetAnswered(definition)
+    : true;
 }
 
 /**
@@ -63,6 +75,8 @@ function routingAnswered(definition: SettledDefinition): boolean {
  *
  * A router counts as a whole answer on its own, because one is born holding no child and fills by
  * cable afterwards. Its own name never counts, because a router with no name answers to its mode.
+ * A conditional router is the one exception: it is born naming a judge and an else child, so the
+ * save waits on both rather than offering a press the stored shape would refuse.
  */
 export function draftFilledIn(definition: SettledDefinition): boolean {
   return (
@@ -159,10 +173,18 @@ export function gatewayDefiningDraft(
     return gatewayDefining(gateway, settled);
   }
 
-  return gatewayDefiningRouted(
+  const named = { id: settled.id, displayName: settled.displayName };
+  const mode = settled.routerMode ?? BORN_ROUTER_MODE;
+
+  if (mode !== 'conditional') {
+    return gatewayDefiningRouted(gateway, named, mode, routerNamed(settled.routerName));
+  }
+
+  return gatewayDefiningJudged(
     gateway,
-    { id: settled.id, displayName: settled.displayName },
-    settled.routerMode ?? BORN_ROUTER_MODE,
+    named,
+    settled.judge ?? { accountId: '', providerModel: '' },
+    { kind: 'target', accountId: settled.accountId, providerModel: settled.providerModel },
     routerNamed(settled.routerName),
   );
 }

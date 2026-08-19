@@ -1,6 +1,6 @@
 import { nameOfRouterMode } from '@recompose/contracts';
 
-import type { SpreadingMode } from '../../lib/routing-edits';
+import type { RouterMode } from '../../lib/routing-edits';
 
 import { SegmentedControl } from '../../../../shared/ui';
 import { modeOptions, modeSentences } from '../../lib/router-modes';
@@ -10,9 +10,9 @@ const NEXT_STEP =
 
 export type RouterDraftFieldsProps = {
   /** How the router being composed spreads, which is the one choice it cannot be born without. */
-  mode: SpreadingMode;
+  mode: RouterMode;
   /** Receives the mode the person landed on. */
-  onModeChange: (mode: SpreadingMode) => void;
+  onModeChange: (mode: RouterMode) => void;
   /** What the person called it, which is empty while it answers to its mode. */
   name: string;
   /** Receives every keystroke in the router name field. */
