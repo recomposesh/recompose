@@ -127,17 +127,32 @@ export function satellitesFollowTheirRouters(
 }
 
 /**
+ * The row one card takes in its column, which is never above the card it hangs off.
+ *
+ * @summary The graph hands its cards over parent first, so the last card placed in the column to
+ * the left is the one this card was bound from. Starting on that row is what puts a router's first
+ * child beside it rather than back at the top of its column, where a canvas already holding other
+ * definitions would strand it rows above the router that took it. The column's own counter still
+ * wins wherever it stands lower, so siblings stack downward and no two cards share a seat.
+ */
+function rowFor(column: number, rows: Map<number, number>, placed: Map<number, number>): number {
+  return Math.max(rows.get(column) ?? 0, placed.get(column - 1) ?? 0);
+}
+
+/**
  * Where every card stands once the canvas arranges itself, read left to right by role.
  *
  * @summary A request travels from the gateway through a virtual model to a target, so the columns
  * run in that direction and a person reads the composition the way it runs. The columns stand one
  * pitch apart, so a binding's cable reads at a glance instead of crossing an empty field. The graph
  * hands its route nodes over entry first and each child before its own children, so one router's
- * children take adjacent rows in their column and the cables fan without crossing. A judge takes no
- * place in that arrangement at all: it seats off its router once every card has one.
+ * children open on that router's own row and stack downward from there, and the cables fan without
+ * crossing. A judge takes no place in that arrangement at all: it seats off its router once every
+ * card has one.
  */
 export function tidyPositions(nodes: readonly CanvasNode[]): NodePositions {
   const rows = new Map<number, number>();
+  const placed = new Map<number, number>();
   const seats: Record<string, XY> = {};
 
   for (const node of nodes) {
@@ -146,9 +161,10 @@ export function tidyPositions(nodes: readonly CanvasNode[]): NodePositions {
     }
 
     const column = columnOf(node);
-    const row = rows.get(column) ?? 0;
+    const row = rowFor(column, rows, placed);
 
     rows.set(column, row + 1);
+    placed.set(column, row);
     seats[node.id] = { x: column * COLUMN_PITCH, y: row * ROW_PITCH };
   }
 
