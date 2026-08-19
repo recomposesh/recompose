@@ -15,3 +15,20 @@ export function framedAsDrawerBox(Story: () => ReactNode): ReactElement {
     </div>
   );
 }
+
+/**
+ * Stands a whole subject body in the panel the inspector gives it, head, scroll, and foot.
+ *
+ * @summary A body is a shell rather than a box, so it needs the panel's full height and its own
+ * scrolling to read the way it ships: framed as a box, a foot would float wherever the content
+ * ended and no story would ever meet the layout a person does.
+ */
+export function framedAsDrawerPanel(body: ReactNode): ReactElement {
+  return (
+    <div className="flex justify-end bg-surface-content">
+      <aside className="flex h-150 w-80 flex-col overflow-hidden border-s border-line-subtle bg-surface-toolbar">
+        {body}
+      </aside>
+    </div>
+  );
+}

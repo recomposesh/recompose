@@ -124,7 +124,8 @@ function accountSpecificRow(
   return factRow('Encrypted key', encryptedKey(account));
 }
 
-function targetFacts(
+/** The three rows every account reads as in the drawer, whichever body is asking. */
+export function targetFacts(
   account: Account,
   subscriptions: readonly SubscriptionAccountView[],
 ): ReactNode {

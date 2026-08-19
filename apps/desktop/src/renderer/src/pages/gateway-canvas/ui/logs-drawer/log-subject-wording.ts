@@ -13,6 +13,7 @@ const NOTHING_YET: Record<InspectorSubject['kind'], string> = {
   'virtual-model': 'No requests through this virtual model yet.',
   cable: 'No requests through this virtual model yet.',
   router: 'No requests through this virtual model yet.',
+  judge: 'No requests through this virtual model yet.',
   target: 'No requests reached this provider yet.',
   'ghost-target': 'No requests reached the removed provider yet.',
 };
@@ -23,6 +24,7 @@ const NO_ERRORS_YET: Record<InspectorSubject['kind'], string> = {
   'virtual-model': 'No errors through this virtual model yet.',
   cable: 'No errors through this virtual model yet.',
   router: 'No errors through this virtual model yet.',
+  judge: 'No errors through this virtual model yet.',
   target: 'No errors from this provider yet.',
   'ghost-target': 'No errors from the removed provider yet.',
 };
@@ -33,6 +35,7 @@ const NO_SUCCESSES_YET: Record<InspectorSubject['kind'], string> = {
   'virtual-model': 'No successful requests through this virtual model yet.',
   cable: 'No successful requests through this virtual model yet.',
   router: 'No successful requests through this virtual model yet.',
+  judge: 'No successful requests through this virtual model yet.',
   target: 'No successful requests from this provider yet.',
   'ghost-target': 'No successful requests from the removed provider yet.',
 };
@@ -54,6 +57,7 @@ export type SubjectHeading = {
     | 'Virtual model'
     | 'Binding'
     | 'Router'
+    | 'Judge'
     | 'Provider'
     | 'Removed provider'
     | 'Draft';
@@ -67,13 +71,14 @@ function nameOrId(displayName: string, id: string): string {
  * Whether the heading names a selection after the virtual model that holds it.
  *
  * @summary A cable and a router each stand inside exactly one definition and carry no name of
- * their own that a person would recognize in a log heading, so both read as the model they belong
- * to, and the type beside the name is what says which of the three a person selected.
+ * their own that a person would recognize in a log heading, so each reads as the model they belong
+ * to, and the type beside the name is what says which a person selected. A judge answers the same
+ * way, because it advises one router inside one definition and answers to no name of its own.
  */
 function namedByItsModel(
   subject: InspectorSubject,
-): subject is Extract<InspectorSubject, { kind: 'cable' | 'router' | 'virtual-model' }> {
-  return subject.kind === 'virtual-model' || subject.kind === 'cable' || subject.kind === 'router';
+): subject is Extract<InspectorSubject, { kind: 'cable' | 'judge' | 'router' | 'virtual-model' }> {
+  return ['virtual-model', 'cable', 'router', 'judge'].includes(subject.kind);
 }
 
 function modelName(gateway: GatewayConfig, modelId: string): string {
@@ -93,6 +98,7 @@ const SUBJECT_TYPE: Record<InspectorSubject['kind'], SubjectHeading['type']> = {
   'virtual-model': 'Virtual model',
   cable: 'Binding',
   router: 'Router',
+  judge: 'Judge',
   target: 'Provider',
   'ghost-target': 'Removed provider',
   draft: 'Draft',

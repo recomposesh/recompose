@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 import { targetTheEntryNames } from '@recompose/contracts';
 import { expect, fn } from 'storybook/test';
 
@@ -13,51 +11,38 @@ import {
   workKey,
 } from '../../testing/gateway-canvas.testkit';
 import { pooledGateway } from '../../testing/routed-gateways.testkit';
+import { framedAsDrawerPanel } from '../../testing/subject-shell.testkit';
 import { gatewayBody, ghostBody, routerBody, targetBody } from './subject-bodies';
 
 const asked = fn<() => void>();
 
-function InspectorFrame({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex justify-end bg-surface-content">
-      <aside className="flex h-150 w-80 flex-col overflow-hidden border-s border-line-subtle bg-surface-toolbar">
-        {children}
-      </aside>
-    </div>
-  );
-}
-
 function GatewaySubjectUnderProof() {
-  return (
-    <InspectorFrame>
-      {gatewayBody(
-        servingGateway,
-        servedModels(servingGateway.virtualModels, storedAccounts.accounts),
-        'running',
-        '127.0.0.1',
-        asked,
-      )}
-    </InspectorFrame>
+  return framedAsDrawerPanel(
+    gatewayBody(
+      servingGateway,
+      servedModels(servingGateway.virtualModels, storedAccounts.accounts),
+      'running',
+      '127.0.0.1',
+      asked,
+    ),
   );
 }
 
 function TargetSubjectUnderProof() {
-  return (
-    <InspectorFrame>
-      {targetBody(
-        workKey,
-        [],
-        servingGateway.virtualModels.filter(
-          (model) => targetTheEntryNames(model.routing)?.accountId === workKey.id,
-        ),
-        asked,
-      )}
-    </InspectorFrame>
+  return framedAsDrawerPanel(
+    targetBody(
+      workKey,
+      [],
+      servingGateway.virtualModels.filter(
+        (model) => targetTheEntryNames(model.routing)?.accountId === workKey.id,
+      ),
+      asked,
+    ),
   );
 }
 
 function GhostSubjectUnderProof() {
-  return <InspectorFrame>{ghostBody('gone')}</InspectorFrame>;
+  return framedAsDrawerPanel(ghostBody('gone'));
 }
 
 const pooled = pooledGateway.virtualModels[0];
@@ -69,13 +54,11 @@ function RouterSubjectUnderProof() {
     throw new Error('the pooled fixture stands no router at its entry');
   }
 
-  return (
-    <InspectorFrame>
-      {routerBody(pooledGateway, pooled, 'r1', pooledRouter, storedAccounts.accounts, {
-        onDelete: asked,
-        onSelectNode: () => {},
-      })}
-    </InspectorFrame>
+  return framedAsDrawerPanel(
+    routerBody(pooledGateway, pooled, 'r1', pooledRouter, storedAccounts.accounts, {
+      onDelete: asked,
+      onSelectNode: () => {},
+    }),
   );
 }
 

@@ -47,6 +47,30 @@ const gateway = gatewaySeed({
       },
     },
     {
+      id: 'judged',
+      displayName: 'Judged',
+      routing: {
+        entry: 'r3',
+        nodes: {
+          r3: {
+            kind: 'router',
+            policy: {
+              mode: 'conditional',
+              judge: 'advisor',
+              branches: [{ label: 'code', rule: 'It writes code.', child: 'c1' }],
+              elseChild: 'c2',
+              judgeBoundMs: 3000,
+              rejudgeEveryRequest: false,
+            },
+            children: ['c1', 'c2'],
+          },
+          c1: { kind: 'target', accountId: 'k1', providerModel: 'claude-sonnet-5' },
+          c2: { kind: 'target', accountId: 'k1', providerModel: 'claude-opus-5' },
+          advisor: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+        },
+      },
+    },
+    {
       id: 'migrated',
       displayName: 'Migrated',
       routing: {
@@ -139,6 +163,21 @@ describe('the subject a card below a routing entry reads as', () => {
   });
 });
 
+describe('the subject a judge reads as', () => {
+  test('the judge reads as its own subject, so keyboard focus reaches the advisor', () => {
+    expect(subjectOf(gateway, 'judge:judged:advisor')).toEqual({
+      kind: 'judge',
+      modelId: 'judged',
+      routeNodeId: 'advisor',
+    });
+  });
+
+  test('a card naming a target no policy judges by falls back to the gateway', () => {
+    expect(subjectOf(gateway, 'judge:judged:c1')).toEqual({ kind: 'gateway' });
+    expect(subjectOf(gateway, 'judge:pooled:t1')).toEqual({ kind: 'gateway' });
+  });
+});
+
 describe('the card a subject stands for', () => {
   test('the gateway stands for no card, because it is what the whole screen is about', () => {
     expect(nodeIdOf({ kind: 'gateway' })).toBeUndefined();
@@ -151,6 +190,7 @@ describe('the card a subject stands for', () => {
       [{ kind: 'target', accountId: 'k1', modelId: 'fast' }, 'target:fast'],
       [{ kind: 'ghost-target', accountId: 'gone', modelId: 'slow' }, 'ghost:slow'],
       [{ kind: 'router', modelId: 'pooled', routeNodeId: undefined }, 'route:pooled'],
+      [{ kind: 'judge', modelId: 'judged', routeNodeId: 'advisor' }, 'judge:judged:advisor'],
       [
         { kind: 'target', accountId: 'k1', modelId: 'pooled', routeNodeId: 't1' },
         'target:pooled:t1',
@@ -169,6 +209,7 @@ describe('the card a subject stands for', () => {
       { kind: 'target', accountId: 'k1', modelId: 'fast' },
       { kind: 'ghost-target', accountId: 'gone', modelId: 'slow' },
       { kind: 'router', modelId: 'pooled', routeNodeId: undefined },
+      { kind: 'judge', modelId: 'judged', routeNodeId: 'advisor' },
       { kind: 'target', accountId: 'k1', modelId: 'pooled', routeNodeId: 't1' },
       { kind: 'draft' },
     ];
