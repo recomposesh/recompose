@@ -75,11 +75,40 @@
 
 ## 6. Graduation and the outer loop (moved after 7 and 8 in the run order)
 
-- [ ] 6.1 The shared end-to-end surface lands alone and first, carrying no feature file
+- [x] 6.1 The shared end-to-end surface lands alone and first, carrying no feature file
 - [ ] 6.2 Each feature file graduates with its own step definitions in one commit, five units in
-      parallel
-- [ ] 6.3 The outer loop goes green on mock traffic
-- [ ] 6.4 Visual baselines regenerate on the runners when the canvas changes what they see
+      parallel. Conditional and else have landed. Branches, judge, and sticky conversations wait on
+      the three gaps recorded below, each of which needs a source change outside the graduation.
+- [ ] 6.3 The outer loop goes green on mock traffic. Green over the two graduated files, and to be
+      run again once the remaining three land.
+- [x] 6.4 Visual baselines regenerate on the runners when the canvas changes what they see. No
+      canvas baseline exists, so the row pitch changed nothing any visual spec sees. The four
+      standing visual failures reproduce unchanged at the commit before this graduation, so they
+      belong to an earlier pass rather than to it.
+
+### What the last three feature files wait on
+
+Each of the three needs a change to renderer or engine source, which graduation itself may not make.
+
+- **Sticky conversations: nothing outside the engine can age a pin.** `PIN_IDLE_MS` in
+  `packages/engine/src/gateway-routing-memory.ts` is ten minutes on the engine child's own
+  `Date.now`, and that child reads no clock override from its environment. The scenario "A pin
+  expires with the idle conversation" therefore has no honest arrangement inside a thirty-second
+  scenario budget. Restarting the gateway also forgets a pin, but it proves a different rule.
+- **Branches: no label is ever drawn from a rule.** `branchSchema` makes both the label and the
+  rule non-blank, so nothing can store the Given of "An empty label derives from the rule text."
+  `CableBranchPill` prints either the stored label or the words "Name this branch" and never reads
+  the rule. `bornConditionalPolicy` states the opposite policy on purpose: a branch arrives blank
+  rather than carrying a word nobody wrote. The proposal promised the derivation and nothing
+  built it.
+- **Judge: the inspector prints no remaining cooldown window.** `judgeHealth` in `judge-body.tsx`
+  prints "Bound" or "Account left the registry" and says the cooldown reading belongs to the
+  satellite, while the satellite prints the word "Cooling" and declines to count seconds down.
+  Nothing prints the window itself.
+- **Judge: no card wears a draft treatment for a missing judge.** `RouterNode` decides its dashed
+  frame on child count alone, so a router holding a branch and an else branch never wears one. The
+  second half of that scenario does hold: `switchWhole` and `judgeAnswered` withhold the
+  "Switch to conditional" button, and `draftFilledIn` withholds the "Add virtual model" one.
 
 ## 7. The mode switch and the mode rows (replan, approved at the gate of 2026-08-19)
 
