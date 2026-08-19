@@ -1,5 +1,6 @@
 import {
   type EngineDirective,
+  engineBranchPinReportSchema,
   engineDirectiveSchema,
   engineLogReportSchema,
   engineReportSchema,
@@ -13,6 +14,7 @@ import type { PluginHost } from './plugin-host';
 
 import { openCredentialUpdateLane, openSpendLane } from './engine-child-lanes';
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
+import { subscribeToBranchPinTallies } from './gateway-branch-pins-watch';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { loopbackOverrideOrNull } from './loopback-override';
@@ -160,6 +162,36 @@ function notingTraffic(parentPort: ParentPort): NoteTraffic {
   };
 }
 
+function tellingTheParentEveryLogRow(parentPort: ParentPort): void {
+  subscribeToLogRows((row) => {
+    try {
+      parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
+    } catch (failure) {
+      console.error(`The engine child dropped a log row for "${row.gateway}".`, failure);
+    }
+  });
+}
+
+/**
+ * Tells the parent what one router is holding, the moment a conversation earns or loses a branch.
+ *
+ * @summary The address the store counts under is the address the report files under, so the parent
+ * places a tally without knowing anything about how a branch is decided. A tally the parent cannot
+ * be told is written down and dropped, because the request that moved it is owed its answer either
+ * way and a count is only ever the newest word.
+ */
+function tellingTheParentEveryBranchTally(parentPort: ParentPort): void {
+  subscribeToBranchPinTallies(({ address, pinned }) => {
+    try {
+      parentPort.postMessage(
+        engineBranchPinReportSchema.parse({ kind: 'branch-pins', ...address, pinned }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a branch tally for "${address.slug}".`, failure);
+    }
+  });
+}
+
 export function attachEngineChild(
   parentPort: ParentPort,
   openListeners: OpenListeners,
@@ -181,13 +213,8 @@ export function attachEngineChild(
     notingTraffic(parentPort),
   );
 
-  subscribeToLogRows((row) => {
-    try {
-      parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
-    } catch (failure) {
-      console.error(`The engine child dropped a log row for "${row.gateway}".`, failure);
-    }
-  });
+  tellingTheParentEveryLogRow(parentPort);
+  tellingTheParentEveryBranchTally(parentPort);
 
   parentPort.on('message', (messageEvent) => {
     if (spendLane.settle(messageEvent.data) || credentialLane.settle(messageEvent.data)) {
