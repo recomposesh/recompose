@@ -38,12 +38,14 @@ type RouterNodeProps = {
  *
  * @summary It answers no drag at all: a judge is bound in the inspector rather than pulled out of
  * the card, and a port that started a cable here would let a person ladder a child off the very
- * anchor that says advisor.
+ * anchor that says advisor. It carries the router tint itself rather than inheriting it, because
+ * it stands outside the card's own frame: left to the fallback its dot would paint cable blue at
+ * the end of an indigo dashed line and read as one more binding a request could travel down.
  */
 function shoulderPort(): ReactNode {
   return (
     <Handle
-      className="z-1 flex size-hit-target items-center justify-center bg-transparent"
+      className="z-1 flex size-hit-target items-center justify-center bg-transparent node-tint-router"
       id={JUDGE_SHOULDER_PORT}
       isConnectable={false}
       isConnectableStart={false}

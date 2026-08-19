@@ -188,6 +188,35 @@ export const AJudgedRouterWearsItsModeAsAPill = meta.story({
   },
 });
 
+/**
+ * The shoulder the tie leaves by wears the router's own line, never the cable's.
+ *
+ * @summary The dot at each end of a tie belongs to the tie rather than to the cables around it, and
+ * the tie already draws in the router tint: a blue dot on an indigo dashed line would read as one
+ * more binding a request could travel down.
+ */
+export const TheJudgeShoulderWearsTheRouterTint = meta.story({
+  args: { data: judging },
+  play: async ({ canvasElement }) => {
+    const shoulder = canvasElement.querySelector('.react-flow__handle-top .port-dot');
+    const indigo = inScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)');
+
+    await expect(paintedStyle(shoulder).borderTopColor).toBe(indigo);
+    await expect(paintedStyle(shoulder).backgroundColor).toBe(indigo);
+  },
+});
+
+/** The shoulder joins the tint this card's own binding ports already wear, so nothing else moved. */
+export const TheShoulderMatchesTheCardsOwnPorts = meta.story({
+  args: { data: judging },
+  play: async ({ canvasElement }) => {
+    const shoulder = canvasElement.querySelector('.react-flow__handle-top .port-dot');
+    const binding = canvasElement.querySelector('.react-flow__handle-left .port-dot');
+
+    await expect(paintedStyle(shoulder).borderTopColor).toBe(paintedStyle(binding).borderTopColor);
+  },
+});
+
 /** A judge no table holds reads as absent, because every request then lands on else. */
 export const AJudgedRouterMissingItsJudgeSaysSo = meta.story({
   args: { data: unjudged },

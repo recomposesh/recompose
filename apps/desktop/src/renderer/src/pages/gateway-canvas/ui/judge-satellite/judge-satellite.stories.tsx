@@ -74,6 +74,22 @@ export const TheTiePortFacesTheRouterBelow = meta.story({
   },
 });
 
+/**
+ * The dot the tie lands on wears the router's own line rather than the cable's blue.
+ *
+ * @summary The tie already draws in the router tint, so a blue dot at its end would read as one
+ * more binding a request could travel down.
+ */
+export const TheTiePortWearsTheRouterTint = meta.story({
+  play: async ({ canvasElement }) => {
+    const port = canvasElement.querySelector('.react-flow__handle .port-dot');
+    const indigo = inScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)');
+
+    await expect(paintedStyle(port).borderTopColor).toBe(indigo);
+    await expect(paintedStyle(port).backgroundColor).toBe(indigo);
+  },
+});
+
 /** It takes far less room than a card, so it never crowds the row a router stands in. */
 export const ItStandsSmallerThanEveryCard = meta.story({
   play: async ({ canvas }) => {
