@@ -4983,7 +4983,7 @@
                   "fill": "#9A9A9F",
                   "textGrowth": "fixed-width",
                   "width": 640,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.5,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 17,
@@ -6403,7 +6403,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "cfOAk",
-                          "x": 180,
+                          "x": 69,
                           "y": 24,
                           "name": "rung1",
                           "fill": "#FF453A59",
@@ -6413,7 +6413,7 @@
                         {
                           "type": "icon",
                           "id": "W11ucT",
-                          "x": 390,
+                          "x": 279,
                           "y": 22,
                           "name": "x",
                           "width": 13,
@@ -6426,7 +6426,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "TA1og",
-                          "x": 180,
+                          "x": 69,
                           "y": 55,
                           "name": "rung2",
                           "fill": "#32d74b",
@@ -6437,7 +6437,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "Rzei6",
-                          "x": 180,
+                          "x": 69,
                           "y": 86,
                           "name": "rung3",
                           "fill": "#FFFFFF1F",
@@ -6447,7 +6447,7 @@
                         {
                           "type": "path",
                           "id": "O2J2s",
-                          "x": 388,
+                          "x": 277,
                           "y": 29,
                           "name": "drop",
                           "geometry": "M414 29c0 23-14 31-26 31",
@@ -6535,7 +6535,7 @@
                         {
                           "type": "ellipse",
                           "id": "blmiy",
-                          "x": 250,
+                          "x": 139,
                           "y": 22,
                           "name": "ring",
                           "width": 76,
@@ -6546,7 +6546,7 @@
                         {
                           "type": "ellipse",
                           "id": "Eg2NZ",
-                          "x": 283,
+                          "x": 172,
                           "y": 17,
                           "name": "p1",
                           "fill": "#40c8e0",
@@ -6556,7 +6556,7 @@
                         {
                           "type": "ellipse",
                           "id": "b863v",
-                          "x": 250,
+                          "x": 139,
                           "y": 76,
                           "name": "p2",
                           "fill": "#ff72c4",
@@ -6566,7 +6566,7 @@
                         {
                           "type": "ellipse",
                           "id": "m74d8B",
-                          "x": 316,
+                          "x": 205,
                           "y": 76,
                           "name": "p3",
                           "fill": "#0a84ff",
@@ -6576,7 +6576,7 @@
                         {
                           "type": "path",
                           "id": "MyFLj",
-                          "x": 322,
+                          "x": 211,
                           "y": 28,
                           "name": "arrow",
                           "geometry": "M322 42l10-12m0 0l-6 0m6 0l1 7",
@@ -6630,6 +6630,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "sdifk",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#101114",
+                  "cornerRadius": 12,
+                  "stroke": "#FFFFFF12",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Nstpr",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": "#0C0C0F",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Z30QOw",
+                          "x": 70,
+                          "y": 55,
+                          "name": "through line",
+                          "fill": "#32d74b",
+                          "width": 230,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "xRmhE",
+                          "x": 160,
+                          "y": 29,
+                          "name": "peel up",
+                          "geometry": "M160 60c15 0 15-31 30-31",
+                          "viewBox": [
+                            160,
+                            29,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "D9DGt",
+                          "x": 190,
+                          "y": 24,
+                          "name": "rung other",
+                          "fill": "#FFFFFF1F",
+                          "width": 110,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "swMG1",
+                          "x": 160,
+                          "y": 60,
+                          "name": "peel down",
+                          "geometry": "M160 60c15 0 15 31 30 31",
+                          "viewBox": [
+                            160,
+                            60,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "jdjZg",
+                          "x": 190,
+                          "y": 86,
+                          "name": "else dash 1",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "QUmy2",
+                          "x": 214,
+                          "y": 86,
+                          "name": "else dash 2",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "OYzAw",
+                          "x": 238,
+                          "y": 86,
+                          "name": "else dash 3",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "T2Mi1G",
+                          "x": 262,
+                          "y": 86,
+                          "name": "else dash 4",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "HPoY4",
+                          "x": 286,
+                          "y": 86,
+                          "name": "else dash 5",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "LoEh7",
+                          "x": 104,
+                          "y": 10,
+                          "name": "judge ring",
+                          "width": 22,
+                          "height": 22,
+                          "stroke": "#a5a3ff",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "M6dU2i",
+                          "x": 109,
+                          "y": 15,
+                          "name": "judge glyph",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "b5TXNT",
+                          "x": 114,
+                          "y": 36,
+                          "name": "tie dot 1",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "FcgjO",
+                          "x": 114,
+                          "y": 42,
+                          "name": "tie dot 2",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "G2UXWw",
+                          "x": 114,
+                          "y": 48,
+                          "name": "tie dot 3",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "T52Or",
+                      "name": "title row",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "AJBpn",
+                          "name": "split",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "text",
+                          "id": "uYPgX",
+                          "name": "t",
+                          "fill": "#F2F2F4",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 17,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "leTVo",
+                      "name": "b",
+                      "fill": "#9A9A9F",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.5,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 15,
@@ -13073,7 +13309,7 @@
                   "fill": "#737373",
                   "textGrowth": "fixed-width",
                   "width": 640,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.5,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 17,
@@ -14493,7 +14729,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "vV3iF",
-                          "x": 180,
+                          "x": 69,
                           "y": 24,
                           "name": "rung1",
                           "fill": "#D7001559",
@@ -14503,7 +14739,7 @@
                         {
                           "type": "icon",
                           "id": "fZBNd",
-                          "x": 390,
+                          "x": 279,
                           "y": 22,
                           "name": "x",
                           "width": 13,
@@ -14516,7 +14752,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "gWsDc",
-                          "x": 180,
+                          "x": 69,
                           "y": 55,
                           "name": "rung2",
                           "fill": "#1A9E33",
@@ -14527,7 +14763,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "vOVZL",
-                          "x": 180,
+                          "x": 69,
                           "y": 86,
                           "name": "rung3",
                           "fill": "#0000001A",
@@ -14537,7 +14773,7 @@
                         {
                           "type": "path",
                           "id": "S5AKy6",
-                          "x": 388,
+                          "x": 277,
                           "y": 29,
                           "name": "drop",
                           "geometry": "M414 29c0 23-14 31-26 31",
@@ -14625,7 +14861,7 @@
                         {
                           "type": "ellipse",
                           "id": "SMV9m",
-                          "x": 250,
+                          "x": 139,
                           "y": 22,
                           "name": "ring",
                           "width": 76,
@@ -14636,7 +14872,7 @@
                         {
                           "type": "ellipse",
                           "id": "lHthz",
-                          "x": 283,
+                          "x": 172,
                           "y": 17,
                           "name": "p1",
                           "fill": "#17869B",
@@ -14646,7 +14882,7 @@
                         {
                           "type": "ellipse",
                           "id": "ChVW6",
-                          "x": 250,
+                          "x": 139,
                           "y": 76,
                           "name": "p2",
                           "fill": "#AD2D75",
@@ -14656,7 +14892,7 @@
                         {
                           "type": "ellipse",
                           "id": "gnwUD",
-                          "x": 316,
+                          "x": 205,
                           "y": 76,
                           "name": "p3",
                           "fill": "#007AFF",
@@ -14666,7 +14902,7 @@
                         {
                           "type": "path",
                           "id": "Vex1L",
-                          "x": 322,
+                          "x": 211,
                           "y": 28,
                           "name": "arrow",
                           "geometry": "M322 42l10-12m0 0l-6 0m6 0l1 7",
@@ -14720,6 +14956,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Uwc6k",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "stroke": "#00000010",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "AWwZv",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": "#F4F4F6",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "y5MfA",
+                          "x": 70,
+                          "y": 55,
+                          "name": "through line",
+                          "fill": "#1A9E33",
+                          "width": 230,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "gHd0h",
+                          "x": 160,
+                          "y": 29,
+                          "name": "peel up",
+                          "geometry": "M160 60c15 0 15-31 30-31",
+                          "viewBox": [
+                            160,
+                            29,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Y8nYam",
+                          "x": 190,
+                          "y": 24,
+                          "name": "rung other",
+                          "fill": "#0000001A",
+                          "width": 110,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "VHucG",
+                          "x": 160,
+                          "y": 60,
+                          "name": "peel down",
+                          "geometry": "M160 60c15 0 15 31 30 31",
+                          "viewBox": [
+                            160,
+                            60,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "NmrpH",
+                          "x": 190,
+                          "y": 86,
+                          "name": "else dash 1",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "ibv3U",
+                          "x": 214,
+                          "y": 86,
+                          "name": "else dash 2",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "V2QWp",
+                          "x": 238,
+                          "y": 86,
+                          "name": "else dash 3",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "FVc64",
+                          "x": 262,
+                          "y": 86,
+                          "name": "else dash 4",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "LBqwh",
+                          "x": 286,
+                          "y": 86,
+                          "name": "else dash 5",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "x5sXJ",
+                          "x": 104,
+                          "y": 10,
+                          "name": "judge ring",
+                          "width": 22,
+                          "height": 22,
+                          "stroke": "#3F3DAA",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "XfI9r",
+                          "x": 109,
+                          "y": 15,
+                          "name": "judge glyph",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "CSLVa",
+                          "x": 114,
+                          "y": 36,
+                          "name": "tie dot 1",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "Z3Fkw",
+                          "x": 114,
+                          "y": 42,
+                          "name": "tie dot 2",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "kBTZ0",
+                          "x": 114,
+                          "y": 48,
+                          "name": "tie dot 3",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ABDyD",
+                      "name": "title row",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "UA8fZ",
+                          "name": "split",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "text",
+                          "id": "c4ZZ9G",
+                          "name": "t",
+                          "fill": "#111113",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 17,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "BwmzD",
+                      "name": "b",
+                      "fill": "#737373",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.5,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 15,
@@ -40371,7 +40843,7 @@
                   "fill": "#737373",
                   "textGrowth": "fixed-width",
                   "width": 640,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.5,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 17,
@@ -41791,7 +42263,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "zgZbx",
-                          "x": 180,
+                          "x": 69,
                           "y": 24,
                           "name": "rung1",
                           "fill": "#D7001559",
@@ -41801,7 +42273,7 @@
                         {
                           "type": "icon",
                           "id": "QCO7m",
-                          "x": 390,
+                          "x": 279,
                           "y": 22,
                           "name": "x",
                           "width": 13,
@@ -41814,7 +42286,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "vgPZd",
-                          "x": 180,
+                          "x": 69,
                           "y": 55,
                           "name": "rung2",
                           "fill": "#1A9E33",
@@ -41825,7 +42297,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "CrUJF",
-                          "x": 180,
+                          "x": 69,
                           "y": 86,
                           "name": "rung3",
                           "fill": "#0000001A",
@@ -41835,7 +42307,7 @@
                         {
                           "type": "path",
                           "id": "hZ3nx",
-                          "x": 388,
+                          "x": 277,
                           "y": 29,
                           "name": "drop",
                           "geometry": "M414 29c0 23-14 31-26 31",
@@ -41923,7 +42395,7 @@
                         {
                           "type": "ellipse",
                           "id": "AJzm9",
-                          "x": 250,
+                          "x": 139,
                           "y": 22,
                           "name": "ring",
                           "width": 76,
@@ -41934,7 +42406,7 @@
                         {
                           "type": "ellipse",
                           "id": "J7G0E",
-                          "x": 283,
+                          "x": 172,
                           "y": 17,
                           "name": "p1",
                           "fill": "#17869B",
@@ -41944,7 +42416,7 @@
                         {
                           "type": "ellipse",
                           "id": "I2EJt",
-                          "x": 250,
+                          "x": 139,
                           "y": 76,
                           "name": "p2",
                           "fill": "#AD2D75",
@@ -41954,7 +42426,7 @@
                         {
                           "type": "ellipse",
                           "id": "zGbcq",
-                          "x": 316,
+                          "x": 205,
                           "y": 76,
                           "name": "p3",
                           "fill": "#007AFF",
@@ -41964,7 +42436,7 @@
                         {
                           "type": "path",
                           "id": "s72R8",
-                          "x": 322,
+                          "x": 211,
                           "y": 28,
                           "name": "arrow",
                           "geometry": "M322 42l10-12m0 0l-6 0m6 0l1 7",
@@ -42018,6 +42490,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VUUy1",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "stroke": "#00000010",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "c5BFd",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": "#F4F4F6",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "gEUnt",
+                          "x": 70,
+                          "y": 55,
+                          "name": "through line",
+                          "fill": "#1A9E33",
+                          "width": 230,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "q4EoCV",
+                          "x": 160,
+                          "y": 29,
+                          "name": "peel up",
+                          "geometry": "M160 60c15 0 15-31 30-31",
+                          "viewBox": [
+                            160,
+                            29,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "S6gEB",
+                          "x": 190,
+                          "y": 24,
+                          "name": "rung other",
+                          "fill": "#0000001A",
+                          "width": 110,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "KnCUH",
+                          "x": 160,
+                          "y": 60,
+                          "name": "peel down",
+                          "geometry": "M160 60c15 0 15 31 30 31",
+                          "viewBox": [
+                            160,
+                            60,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "ahJQk",
+                          "x": 190,
+                          "y": 86,
+                          "name": "else dash 1",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "iRlAo",
+                          "x": 214,
+                          "y": 86,
+                          "name": "else dash 2",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "cbozH",
+                          "x": 238,
+                          "y": 86,
+                          "name": "else dash 3",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "O5Hk0",
+                          "x": 262,
+                          "y": 86,
+                          "name": "else dash 4",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "sBQBM",
+                          "x": 286,
+                          "y": 86,
+                          "name": "else dash 5",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "e0wJ19",
+                          "x": 104,
+                          "y": 10,
+                          "name": "judge ring",
+                          "width": 22,
+                          "height": 22,
+                          "stroke": "#3F3DAA",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "uyW0T",
+                          "x": 109,
+                          "y": 15,
+                          "name": "judge glyph",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "Nv8EL",
+                          "x": 114,
+                          "y": 36,
+                          "name": "tie dot 1",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "PytQT",
+                          "x": 114,
+                          "y": 42,
+                          "name": "tie dot 2",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "ofMfv",
+                          "x": 114,
+                          "y": 48,
+                          "name": "tie dot 3",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "anlWH",
+                      "name": "title row",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "QQEDJ",
+                          "name": "split",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "text",
+                          "id": "xjj4J",
+                          "name": "t",
+                          "fill": "#111113",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 17,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "J79J3C",
+                      "name": "b",
+                      "fill": "#737373",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.5,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 15,
@@ -48457,7 +49165,7 @@
                   "fill": "#737373",
                   "textGrowth": "fixed-width",
                   "width": 640,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.5,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 17,
@@ -49877,7 +50585,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "Y66L2t",
-                          "x": 180,
+                          "x": 69,
                           "y": 24,
                           "name": "rung1",
                           "fill": "#D7001559",
@@ -49887,7 +50595,7 @@
                         {
                           "type": "icon",
                           "id": "mmAJy",
-                          "x": 390,
+                          "x": 279,
                           "y": 22,
                           "name": "x",
                           "width": 13,
@@ -49900,7 +50608,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "lBY7C",
-                          "x": 180,
+                          "x": 69,
                           "y": 55,
                           "name": "rung2",
                           "fill": "#1A9E33",
@@ -49911,7 +50619,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "xBthH",
-                          "x": 180,
+                          "x": 69,
                           "y": 86,
                           "name": "rung3",
                           "fill": "#0000001A",
@@ -49921,7 +50629,7 @@
                         {
                           "type": "path",
                           "id": "TmGD0",
-                          "x": 388,
+                          "x": 277,
                           "y": 29,
                           "name": "drop",
                           "geometry": "M414 29c0 23-14 31-26 31",
@@ -50009,7 +50717,7 @@
                         {
                           "type": "ellipse",
                           "id": "lqEPw",
-                          "x": 250,
+                          "x": 139,
                           "y": 22,
                           "name": "ring",
                           "width": 76,
@@ -50020,7 +50728,7 @@
                         {
                           "type": "ellipse",
                           "id": "oHjN2",
-                          "x": 283,
+                          "x": 172,
                           "y": 17,
                           "name": "p1",
                           "fill": "#17869B",
@@ -50030,7 +50738,7 @@
                         {
                           "type": "ellipse",
                           "id": "EhABg",
-                          "x": 250,
+                          "x": 139,
                           "y": 76,
                           "name": "p2",
                           "fill": "#AD2D75",
@@ -50040,7 +50748,7 @@
                         {
                           "type": "ellipse",
                           "id": "zBWzv",
-                          "x": 316,
+                          "x": 205,
                           "y": 76,
                           "name": "p3",
                           "fill": "#007AFF",
@@ -50050,7 +50758,7 @@
                         {
                           "type": "path",
                           "id": "LuhLG",
-                          "x": 322,
+                          "x": 211,
                           "y": 28,
                           "name": "arrow",
                           "geometry": "M322 42l10-12m0 0l-6 0m6 0l1 7",
@@ -50104,6 +50812,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bhim0",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "stroke": "#00000010",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "tzhDR",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": "#F4F4F6",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "tAdLh",
+                          "x": 70,
+                          "y": 55,
+                          "name": "through line",
+                          "fill": "#1A9E33",
+                          "width": 230,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "Y9DpxK",
+                          "x": 160,
+                          "y": 29,
+                          "name": "peel up",
+                          "geometry": "M160 60c15 0 15-31 30-31",
+                          "viewBox": [
+                            160,
+                            29,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "ELgP3",
+                          "x": 190,
+                          "y": 24,
+                          "name": "rung other",
+                          "fill": "#0000001A",
+                          "width": 110,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "PfzaH",
+                          "x": 160,
+                          "y": 60,
+                          "name": "peel down",
+                          "geometry": "M160 60c15 0 15 31 30 31",
+                          "viewBox": [
+                            160,
+                            60,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "aGfdL",
+                          "x": 190,
+                          "y": 86,
+                          "name": "else dash 1",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "VLFgu",
+                          "x": 214,
+                          "y": 86,
+                          "name": "else dash 2",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "cyE8Z",
+                          "x": 238,
+                          "y": 86,
+                          "name": "else dash 3",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "hGLEG",
+                          "x": 262,
+                          "y": 86,
+                          "name": "else dash 4",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "xA6uG",
+                          "x": 286,
+                          "y": 86,
+                          "name": "else dash 5",
+                          "fill": "#0000001A",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "Y7ulnf",
+                          "x": 104,
+                          "y": 10,
+                          "name": "judge ring",
+                          "width": 22,
+                          "height": 22,
+                          "stroke": "#3F3DAA",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "jKpCh",
+                          "x": 109,
+                          "y": 15,
+                          "name": "judge glyph",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "e4U6e",
+                          "x": 114,
+                          "y": 36,
+                          "name": "tie dot 1",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "RmCmZ",
+                          "x": 114,
+                          "y": 42,
+                          "name": "tie dot 2",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "a44rOl",
+                          "x": 114,
+                          "y": 48,
+                          "name": "tie dot 3",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AO7Cj",
+                      "name": "title row",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "wbSns",
+                          "name": "split",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "text",
+                          "id": "L2VPQm",
+                          "name": "t",
+                          "fill": "#111113",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 17,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "knMOV",
+                      "name": "b",
+                      "fill": "#737373",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.5,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 15,
@@ -56543,7 +57487,7 @@
                   "fill": "#9A9A9F",
                   "textGrowth": "fixed-width",
                   "width": 640,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.5,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 17,
@@ -57963,7 +58907,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "jzYQM",
-                          "x": 180,
+                          "x": 69,
                           "y": 24,
                           "name": "rung1",
                           "fill": "#FF453A59",
@@ -57973,7 +58917,7 @@
                         {
                           "type": "icon",
                           "id": "UaZ5P",
-                          "x": 390,
+                          "x": 279,
                           "y": 22,
                           "name": "x",
                           "width": 13,
@@ -57986,7 +58930,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "AQNl4",
-                          "x": 180,
+                          "x": 69,
                           "y": 55,
                           "name": "rung2",
                           "fill": "#32d74b",
@@ -57997,7 +58941,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "icAkq",
-                          "x": 180,
+                          "x": 69,
                           "y": 86,
                           "name": "rung3",
                           "fill": "#FFFFFF1F",
@@ -58007,7 +58951,7 @@
                         {
                           "type": "path",
                           "id": "h6MI3Z",
-                          "x": 388,
+                          "x": 277,
                           "y": 29,
                           "name": "drop",
                           "geometry": "M414 29c0 23-14 31-26 31",
@@ -58095,7 +59039,7 @@
                         {
                           "type": "ellipse",
                           "id": "F12tWe",
-                          "x": 250,
+                          "x": 139,
                           "y": 22,
                           "name": "ring",
                           "width": 76,
@@ -58106,7 +59050,7 @@
                         {
                           "type": "ellipse",
                           "id": "N3X4Y8",
-                          "x": 283,
+                          "x": 172,
                           "y": 17,
                           "name": "p1",
                           "fill": "#40c8e0",
@@ -58116,7 +59060,7 @@
                         {
                           "type": "ellipse",
                           "id": "jTVPY",
-                          "x": 250,
+                          "x": 139,
                           "y": 76,
                           "name": "p2",
                           "fill": "#ff72c4",
@@ -58126,7 +59070,7 @@
                         {
                           "type": "ellipse",
                           "id": "oBIqU",
-                          "x": 316,
+                          "x": 205,
                           "y": 76,
                           "name": "p3",
                           "fill": "#0a84ff",
@@ -58136,7 +59080,7 @@
                         {
                           "type": "path",
                           "id": "f6pMd",
-                          "x": 322,
+                          "x": 211,
                           "y": 28,
                           "name": "arrow",
                           "geometry": "M322 42l10-12m0 0l-6 0m6 0l1 7",
@@ -58190,6 +59134,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "m8lqtx",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#101114",
+                  "cornerRadius": 12,
+                  "stroke": "#FFFFFF12",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "RJLuM",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": "#0C0C0F",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "H3383",
+                          "x": 70,
+                          "y": 55,
+                          "name": "through line",
+                          "fill": "#32d74b",
+                          "width": 230,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "EGKhz",
+                          "x": 160,
+                          "y": 29,
+                          "name": "peel up",
+                          "geometry": "M160 60c15 0 15-31 30-31",
+                          "viewBox": [
+                            160,
+                            29,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "NWp6Z",
+                          "x": 190,
+                          "y": 24,
+                          "name": "rung other",
+                          "fill": "#FFFFFF1F",
+                          "width": 110,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "WQhD8",
+                          "x": 160,
+                          "y": 60,
+                          "name": "peel down",
+                          "geometry": "M160 60c15 0 15 31 30 31",
+                          "viewBox": [
+                            160,
+                            60,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "WTuSH",
+                          "x": 190,
+                          "y": 86,
+                          "name": "else dash 1",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "L9EoW",
+                          "x": 214,
+                          "y": 86,
+                          "name": "else dash 2",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "UIG4d",
+                          "x": 238,
+                          "y": 86,
+                          "name": "else dash 3",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "KYzap",
+                          "x": 262,
+                          "y": 86,
+                          "name": "else dash 4",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "PUmak",
+                          "x": 286,
+                          "y": 86,
+                          "name": "else dash 5",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "Q77AxU",
+                          "x": 104,
+                          "y": 10,
+                          "name": "judge ring",
+                          "width": 22,
+                          "height": 22,
+                          "stroke": "#a5a3ff",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "fApu0",
+                          "x": 109,
+                          "y": 15,
+                          "name": "judge glyph",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "Cjkpy",
+                          "x": 114,
+                          "y": 36,
+                          "name": "tie dot 1",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "byQN8",
+                          "x": 114,
+                          "y": 42,
+                          "name": "tie dot 2",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "t1FHKJ",
+                          "x": 114,
+                          "y": 48,
+                          "name": "tie dot 3",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "H2vi2",
+                      "name": "title row",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "pn6XG",
+                          "name": "split",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "text",
+                          "id": "fXrxW",
+                          "name": "t",
+                          "fill": "#F2F2F4",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 17,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "w4C0d",
+                      "name": "b",
+                      "fill": "#9A9A9F",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.5,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 15,
@@ -64629,7 +65809,7 @@
                   "fill": "#9A9A9F",
                   "textGrowth": "fixed-width",
                   "width": 640,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.5,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 17,
@@ -66049,7 +67229,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "o4AxOi",
-                          "x": 180,
+                          "x": 69,
                           "y": 24,
                           "name": "rung1",
                           "fill": "#FF453A59",
@@ -66059,7 +67239,7 @@
                         {
                           "type": "icon",
                           "id": "XjXYW",
-                          "x": 390,
+                          "x": 279,
                           "y": 22,
                           "name": "x",
                           "width": 13,
@@ -66072,7 +67252,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "EIqiv",
-                          "x": 180,
+                          "x": 69,
                           "y": 55,
                           "name": "rung2",
                           "fill": "#32d74b",
@@ -66083,7 +67263,7 @@
                           "type": "rectangle",
                           "cornerRadius": 3,
                           "id": "drYMJ",
-                          "x": 180,
+                          "x": 69,
                           "y": 86,
                           "name": "rung3",
                           "fill": "#FFFFFF1F",
@@ -66093,7 +67273,7 @@
                         {
                           "type": "path",
                           "id": "k9dbH",
-                          "x": 388,
+                          "x": 277,
                           "y": 29,
                           "name": "drop",
                           "geometry": "M414 29c0 23-14 31-26 31",
@@ -66181,7 +67361,7 @@
                         {
                           "type": "ellipse",
                           "id": "kw87f",
-                          "x": 250,
+                          "x": 139,
                           "y": 22,
                           "name": "ring",
                           "width": 76,
@@ -66192,7 +67372,7 @@
                         {
                           "type": "ellipse",
                           "id": "l22B7o",
-                          "x": 283,
+                          "x": 172,
                           "y": 17,
                           "name": "p1",
                           "fill": "#40c8e0",
@@ -66202,7 +67382,7 @@
                         {
                           "type": "ellipse",
                           "id": "NvELf",
-                          "x": 250,
+                          "x": 139,
                           "y": 76,
                           "name": "p2",
                           "fill": "#ff72c4",
@@ -66212,7 +67392,7 @@
                         {
                           "type": "ellipse",
                           "id": "ZD8VO",
-                          "x": 316,
+                          "x": 205,
                           "y": 76,
                           "name": "p3",
                           "fill": "#0a84ff",
@@ -66222,7 +67402,7 @@
                         {
                           "type": "path",
                           "id": "dh2Tt",
-                          "x": 322,
+                          "x": 211,
                           "y": 28,
                           "name": "arrow",
                           "geometry": "M322 42l10-12m0 0l-6 0m6 0l1 7",
@@ -66276,6 +67456,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "WfUhS",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#101114",
+                  "cornerRadius": 12,
+                  "stroke": "#FFFFFF12",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "wOo3A",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": "#0C0C0F",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "O6Qm2X",
+                          "x": 70,
+                          "y": 55,
+                          "name": "through line",
+                          "fill": "#32d74b",
+                          "width": 230,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "koUqv",
+                          "x": 160,
+                          "y": 29,
+                          "name": "peel up",
+                          "geometry": "M160 60c15 0 15-31 30-31",
+                          "viewBox": [
+                            160,
+                            29,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "fP7K4",
+                          "x": 190,
+                          "y": 24,
+                          "name": "rung other",
+                          "fill": "#FFFFFF1F",
+                          "width": 110,
+                          "height": 10
+                        },
+                        {
+                          "type": "path",
+                          "id": "letih",
+                          "x": 160,
+                          "y": 60,
+                          "name": "peel down",
+                          "geometry": "M160 60c15 0 15 31 30 31",
+                          "viewBox": [
+                            160,
+                            60,
+                            30,
+                            31
+                          ],
+                          "width": 30,
+                          "height": 31,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "x8OyHY",
+                          "x": 190,
+                          "y": 86,
+                          "name": "else dash 1",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "jAqEe",
+                          "x": 214,
+                          "y": 86,
+                          "name": "else dash 2",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "J1wTe",
+                          "x": 238,
+                          "y": 86,
+                          "name": "else dash 3",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "ObS2Q",
+                          "x": 262,
+                          "y": 86,
+                          "name": "else dash 4",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "OWkHS",
+                          "x": 286,
+                          "y": 86,
+                          "name": "else dash 5",
+                          "fill": "#FFFFFF1F",
+                          "width": 14,
+                          "height": 10
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "nY54e",
+                          "x": 104,
+                          "y": 10,
+                          "name": "judge ring",
+                          "width": 22,
+                          "height": 22,
+                          "stroke": "#a5a3ff",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "XoXYI",
+                          "x": 109,
+                          "y": 15,
+                          "name": "judge glyph",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "Wzwki",
+                          "x": 114,
+                          "y": 36,
+                          "name": "tie dot 1",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "Knuf6",
+                          "x": 114,
+                          "y": 42,
+                          "name": "tie dot 2",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "dquKa",
+                          "x": 114,
+                          "y": 48,
+                          "name": "tie dot 3",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "C16sn",
+                      "name": "title row",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "iCDFh",
+                          "name": "split",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "text",
+                          "id": "djaB7",
+                          "name": "t",
+                          "fill": "#F2F2F4",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 17,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "LDSwj",
+                      "name": "b",
+                      "fill": "#9A9A9F",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.5,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 15,
@@ -70367,7 +71783,7 @@
                   "fill": "#737373",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.45,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 15,
@@ -71153,6 +72569,242 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.45,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "RAoYP",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "stroke": "#00000010",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "jmaQD",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 96,
+                      "fill": "#F4F4F6",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "V6918",
+                          "x": 24,
+                          "y": 44,
+                          "name": "through line",
+                          "fill": "#1A9E33",
+                          "width": 256,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "X010D",
+                          "x": 144,
+                          "y": 22,
+                          "name": "peel up",
+                          "geometry": "M144 48c13 0 13-26 26-26",
+                          "viewBox": [
+                            144,
+                            22,
+                            26,
+                            26
+                          ],
+                          "width": 26,
+                          "height": 26,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "agewp",
+                          "x": 170,
+                          "y": 18,
+                          "name": "rung other",
+                          "fill": "#0000001A",
+                          "width": 110,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "L9rJp",
+                          "x": 144,
+                          "y": 48,
+                          "name": "peel down",
+                          "geometry": "M144 48c13 0 13 26 26 26",
+                          "viewBox": [
+                            144,
+                            48,
+                            26,
+                            26
+                          ],
+                          "width": 26,
+                          "height": 26,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "mmTds",
+                          "x": 170,
+                          "y": 70,
+                          "name": "else dash 1",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "UrYkl",
+                          "x": 190,
+                          "y": 70,
+                          "name": "else dash 2",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Mozu2",
+                          "x": 210,
+                          "y": 70,
+                          "name": "else dash 3",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Im8bj",
+                          "x": 230,
+                          "y": 70,
+                          "name": "else dash 4",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "wgCvJ",
+                          "x": 250,
+                          "y": 70,
+                          "name": "else dash 5",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "jUL63",
+                          "x": 60,
+                          "y": 4,
+                          "name": "judge ring",
+                          "width": 18,
+                          "height": 18,
+                          "stroke": "#3F3DAA",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "wgQmc",
+                          "x": 64,
+                          "y": 8,
+                          "name": "judge glyph",
+                          "width": 10,
+                          "height": 10,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "utsdO",
+                          "x": 68,
+                          "y": 24,
+                          "name": "tie dot 1",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "RWfCH",
+                          "x": 68,
+                          "y": 30,
+                          "name": "tie dot 2",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "b1cgWc",
+                          "x": 68,
+                          "y": 36,
+                          "name": "tie dot 3",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ciWQT",
+                      "name": "title row",
+                      "gap": 9,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "DZJFV",
+                          "name": "i",
+                          "width": 15,
+                          "height": 15,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#737373"
+                        },
+                        {
+                          "type": "text",
+                          "id": "GDwb2",
+                          "name": "t",
+                          "fill": "#111113",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ylfes",
+                      "name": "b",
+                      "fill": "#737373",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.45,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 14,
@@ -74838,7 +76490,7 @@
                   "fill": "#9A9A9F",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.45,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 15,
@@ -75620,6 +77272,240 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "lineHeight": 1.45,
+                      "fontFamily": "neue-haas-grotesk-text",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QyJMb",
+                  "name": "mode card conditional",
+                  "width": "fill_container",
+                  "fill": "#101114",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "w4kDi",
+                      "name": "diagram",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 96,
+                      "fill": "#0C0C0F",
+                      "cornerRadius": 8,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "i6qzcy",
+                          "x": 24,
+                          "y": 44,
+                          "name": "through line",
+                          "fill": "#32d74b",
+                          "width": 256,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "gbyrl",
+                          "x": 144,
+                          "y": 22,
+                          "name": "peel up",
+                          "geometry": "M144 48c13 0 13-26 26-26",
+                          "viewBox": [
+                            144,
+                            22,
+                            26,
+                            26
+                          ],
+                          "width": 26,
+                          "height": 26,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "bwKa4",
+                          "x": 170,
+                          "y": 18,
+                          "name": "rung other",
+                          "fill": "#FFFFFF1F",
+                          "width": 110,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "OnrkG",
+                          "x": 144,
+                          "y": 48,
+                          "name": "peel down",
+                          "geometry": "M144 48c13 0 13 26 26 26",
+                          "viewBox": [
+                            144,
+                            48,
+                            26,
+                            26
+                          ],
+                          "width": 26,
+                          "height": 26,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "AE7px",
+                          "x": 170,
+                          "y": 70,
+                          "name": "else dash 1",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "EBlX2",
+                          "x": 190,
+                          "y": 70,
+                          "name": "else dash 2",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "u12sUl",
+                          "x": 210,
+                          "y": 70,
+                          "name": "else dash 3",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "icnu2",
+                          "x": 230,
+                          "y": 70,
+                          "name": "else dash 4",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "KRDmV",
+                          "x": 250,
+                          "y": 70,
+                          "name": "else dash 5",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "dMPBg",
+                          "x": 60,
+                          "y": 4,
+                          "name": "judge ring",
+                          "width": 18,
+                          "height": 18,
+                          "stroke": "#a5a3ff",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "icon",
+                          "id": "e1QCbJ",
+                          "x": 64,
+                          "y": 8,
+                          "name": "judge glyph",
+                          "width": 10,
+                          "height": 10,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "wZ7Uy",
+                          "x": 68,
+                          "y": 24,
+                          "name": "tie dot 1",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "xFVz0",
+                          "x": 68,
+                          "y": 30,
+                          "name": "tie dot 2",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "ovr7Z",
+                          "x": 68,
+                          "y": 36,
+                          "name": "tie dot 3",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "r1pzC",
+                      "name": "title row",
+                      "gap": 9,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "cCeI6",
+                          "name": "i",
+                          "width": 15,
+                          "height": 15,
+                          "icon": "split",
+                          "library": "lucide",
+                          "fill": "#9A9A9F"
+                        },
+                        {
+                          "type": "text",
+                          "id": "i7fWbL",
+                          "name": "t",
+                          "fill": "#F2F2F4",
+                          "content": "conditional",
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "T6fdCx",
+                      "name": "b",
+                      "fill": "#9A9A9F",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.45,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 14,
@@ -89498,7 +91384,7 @@
                   "fill": "#737373",
                   "textGrowth": "fixed-width",
                   "width": 600,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.45,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 16,
@@ -90361,124 +92247,245 @@
               "id": "AW5aj",
               "name": "modes",
               "width": "fill_container",
+              "layout": "vertical",
               "gap": 14,
               "children": [
                 {
                   "type": "frame",
-                  "id": "xWGde",
-                  "name": "mode card failover",
+                  "id": "h4kxYd",
+                  "name": "mode row",
                   "width": "fill_container",
-                  "fill": "#FFFFFF",
-                  "cornerRadius": 12,
-                  "stroke": "#00000010",
-                  "strokeWidth": 1,
-                  "layout": "vertical",
-                  "gap": 12,
-                  "padding": 20,
+                  "gap": 14,
                   "children": [
                     {
                       "type": "frame",
-                      "id": "UOR28",
-                      "name": "diagram",
-                      "clip": true,
+                      "id": "xWGde",
+                      "name": "mode card failover",
                       "width": "fill_container",
-                      "height": 100,
-                      "fill": "#F4F4F6",
-                      "cornerRadius": 8,
-                      "layout": "none",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#00000010",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
                       "children": [
                         {
-                          "type": "rectangle",
-                          "id": "SXrl6",
-                          "x": 24,
-                          "y": 22,
-                          "name": "rung1",
-                          "fill": "#D7001540",
-                          "width": 170,
-                          "height": 8
+                          "type": "frame",
+                          "id": "UOR28",
+                          "name": "diagram",
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 100,
+                          "fill": "#F4F4F6",
+                          "cornerRadius": 8,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "SXrl6",
+                              "x": 24,
+                              "y": 22,
+                              "name": "rung1",
+                              "fill": "#D7001540",
+                              "width": 170,
+                              "height": 8
+                            },
+                            {
+                              "type": "icon",
+                              "id": "TItb5",
+                              "x": 204,
+                              "y": 20,
+                              "name": "x",
+                              "width": 12,
+                              "height": 12,
+                              "icon": "x",
+                              "library": "lucide",
+                              "fill": "#D70015"
+                            },
+                            {
+                              "type": "rectangle",
+                              "id": "iwrjL",
+                              "x": 24,
+                              "y": 46,
+                              "name": "rung2",
+                              "fill": "#1A9E33",
+                              "width": 170,
+                              "height": 8
+                            },
+                            {
+                              "type": "rectangle",
+                              "id": "y12e0R",
+                              "x": 24,
+                              "y": 70,
+                              "name": "rung3",
+                              "fill": "#0000001A",
+                              "width": 170,
+                              "height": 8
+                            }
+                          ]
                         },
                         {
-                          "type": "icon",
-                          "id": "TItb5",
-                          "x": 204,
-                          "y": 20,
-                          "name": "x",
-                          "width": 12,
-                          "height": 12,
-                          "icon": "x",
-                          "library": "lucide",
-                          "fill": "#D70015"
+                          "type": "frame",
+                          "id": "hviOA",
+                          "name": "title row",
+                          "gap": 9,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "GJnLI",
+                              "name": "i",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "corner-down-right",
+                              "library": "lucide",
+                              "fill": "#737373"
+                            },
+                            {
+                              "type": "text",
+                              "id": "BMAPT",
+                              "name": "t",
+                              "fill": "#111113",
+                              "content": "failover",
+                              "fontFamily": "neue-haas-grotesk-text",
+                              "fontSize": 16,
+                              "fontWeight": "500"
+                            }
+                          ]
                         },
                         {
-                          "type": "rectangle",
-                          "id": "iwrjL",
-                          "x": 24,
-                          "y": 46,
-                          "name": "rung2",
-                          "fill": "#1A9E33",
-                          "width": 170,
-                          "height": 8
-                        },
-                        {
-                          "type": "rectangle",
-                          "id": "y12e0R",
-                          "x": 24,
-                          "y": 70,
-                          "name": "rung3",
-                          "fill": "#0000001A",
-                          "width": 170,
-                          "height": 8
+                          "type": "text",
+                          "id": "O19n9u",
+                          "name": "b",
+                          "fill": "#737373",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "targets in order. the first one serves until it errors or hits a limit, then the next takes the same request.",
+                          "lineHeight": 1.45,
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
                     {
                       "type": "frame",
-                      "id": "hviOA",
-                      "name": "title row",
-                      "gap": 9,
-                      "alignItems": "center",
+                      "id": "A3Rn6",
+                      "name": "mode card round-robin",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#00000010",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
                       "children": [
                         {
-                          "type": "icon",
-                          "id": "GJnLI",
-                          "name": "i",
-                          "width": 15,
-                          "height": 15,
-                          "icon": "corner-down-right",
-                          "library": "lucide",
-                          "fill": "#737373"
+                          "type": "frame",
+                          "id": "bT4xV",
+                          "name": "diagram",
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 100,
+                          "fill": "#F4F4F6",
+                          "cornerRadius": 8,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "b2rgox",
+                              "x": 120,
+                              "y": 22,
+                              "name": "ring",
+                              "width": 56,
+                              "height": 56,
+                              "stroke": "#00000024",
+                              "strokeWidth": 2
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "n9aAb",
+                              "x": 143,
+                              "y": 16,
+                              "name": "p1",
+                              "fill": "#17869B",
+                              "width": 10,
+                              "height": 10
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "PITtg",
+                              "x": 168,
+                              "y": 60,
+                              "name": "p2",
+                              "fill": "#AD2D75",
+                              "width": 10,
+                              "height": 10
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "jpmId",
+                              "x": 118,
+                              "y": 60,
+                              "name": "p3",
+                              "fill": "#007AFF",
+                              "width": 10,
+                              "height": 10
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "tju2N",
+                          "name": "title row",
+                          "gap": 9,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "W5BR9a",
+                              "name": "i",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "repeat",
+                              "library": "lucide",
+                              "fill": "#737373"
+                            },
+                            {
+                              "type": "text",
+                              "id": "cGRKV",
+                              "name": "t",
+                              "fill": "#111113",
+                              "content": "round-robin",
+                              "fontFamily": "neue-haas-grotesk-text",
+                              "fontSize": 16,
+                              "fontWeight": "500"
+                            }
+                          ]
                         },
                         {
                           "type": "text",
-                          "id": "BMAPT",
-                          "name": "t",
-                          "fill": "#111113",
-                          "content": "failover",
+                          "id": "z4GAe",
+                          "name": "b",
+                          "fill": "#737373",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                          "lineHeight": 1.45,
                           "fontFamily": "neue-haas-grotesk-text",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                          "fontSize": 14,
+                          "fontWeight": "normal"
                         }
                       ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "O19n9u",
-                      "name": "b",
-                      "fill": "#737373",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "targets in order. the first one serves until it errors or hits a limit, then the next takes the same request.",
-                      "lineHeight": 1.45,
-                      "fontFamily": "neue-haas-grotesk-text",
-                      "fontSize": 14,
-                      "fontWeight": "normal"
                     }
                   ]
                 },
                 {
                   "type": "frame",
-                  "id": "A3Rn6",
-                  "name": "mode card round-robin",
+                  "id": "S8eBCV",
+                  "name": "mode card conditional",
                   "width": "fill_container",
                   "fill": "#FFFFFF",
                   "cornerRadius": 12,
@@ -90490,7 +92497,7 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "bT4xV",
+                      "id": "teLG7",
                       "name": "diagram",
                       "clip": true,
                       "width": "fill_container",
@@ -90500,71 +92507,196 @@
                       "layout": "none",
                       "children": [
                         {
-                          "type": "ellipse",
-                          "id": "b2rgox",
-                          "x": 120,
-                          "y": 22,
-                          "name": "ring",
-                          "width": 56,
-                          "height": 56,
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "BwkL7",
+                          "x": 210,
+                          "y": 46,
+                          "name": "through line",
+                          "fill": "#1A9E33",
+                          "width": 200,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "trnfC",
+                          "x": 290,
+                          "y": 24,
+                          "name": "peel up",
+                          "geometry": "M290 50c15 0 15-26 30-26",
+                          "viewBox": [
+                            290,
+                            24,
+                            30,
+                            26
+                          ],
+                          "width": 30,
+                          "height": 26,
                           "stroke": "#00000024",
                           "strokeWidth": 2
                         },
                         {
-                          "type": "ellipse",
-                          "id": "n9aAb",
-                          "x": 143,
-                          "y": 16,
-                          "name": "p1",
-                          "fill": "#17869B",
-                          "width": 10,
-                          "height": 10
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "PTxYl",
+                          "x": 320,
+                          "y": 20,
+                          "name": "rung other",
+                          "fill": "#0000001A",
+                          "width": 110,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "snkLB",
+                          "x": 290,
+                          "y": 50,
+                          "name": "peel down",
+                          "geometry": "M290 50c15 0 15 26 30 26",
+                          "viewBox": [
+                            290,
+                            50,
+                            30,
+                            26
+                          ],
+                          "width": 30,
+                          "height": 26,
+                          "stroke": "#00000024",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "r2V5ED",
+                          "x": 320,
+                          "y": 72,
+                          "name": "else dash 1",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "EcrBk",
+                          "x": 340,
+                          "y": 72,
+                          "name": "else dash 2",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "UnSsw",
+                          "x": 360,
+                          "y": 72,
+                          "name": "else dash 3",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "oXqMy",
+                          "x": 380,
+                          "y": 72,
+                          "name": "else dash 4",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "mmN6S",
+                          "x": 400,
+                          "y": 72,
+                          "name": "else dash 5",
+                          "fill": "#0000001A",
+                          "width": 12,
+                          "height": 8
                         },
                         {
                           "type": "ellipse",
-                          "id": "PITtg",
-                          "x": 168,
-                          "y": 60,
-                          "name": "p2",
-                          "fill": "#AD2D75",
-                          "width": 10,
-                          "height": 10
+                          "id": "p8IAEU",
+                          "x": 234,
+                          "y": 8,
+                          "name": "judge ring",
+                          "width": 20,
+                          "height": 20,
+                          "stroke": "#3F3DAA",
+                          "strokeWidth": 2
                         },
                         {
-                          "type": "ellipse",
-                          "id": "jpmId",
-                          "x": 118,
-                          "y": 60,
-                          "name": "p3",
-                          "fill": "#007AFF",
+                          "type": "icon",
+                          "id": "eC5el",
+                          "x": 239,
+                          "y": 13,
+                          "name": "judge glyph",
                           "width": 10,
-                          "height": 10
+                          "height": 10,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#3F3DAA"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "b2J4F",
+                          "x": 243,
+                          "y": 30,
+                          "name": "tie dot 1",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "RSfEj",
+                          "x": 243,
+                          "y": 36,
+                          "name": "tie dot 2",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "qXymS",
+                          "x": 243,
+                          "y": 42,
+                          "name": "tie dot 3",
+                          "fill": "#3F3DAA66",
+                          "width": 2,
+                          "height": 3
                         }
                       ]
                     },
                     {
                       "type": "frame",
-                      "id": "tju2N",
+                      "id": "J8rKWa",
                       "name": "title row",
                       "gap": 9,
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "icon",
-                          "id": "W5BR9a",
+                          "id": "Tx9h3",
                           "name": "i",
                           "width": 15,
                           "height": 15,
-                          "icon": "repeat",
+                          "icon": "split",
                           "library": "lucide",
                           "fill": "#737373"
                         },
                         {
                           "type": "text",
-                          "id": "cGRKV",
+                          "id": "k3QKyu",
                           "name": "t",
                           "fill": "#111113",
-                          "content": "round-robin",
+                          "content": "conditional",
                           "fontFamily": "neue-haas-grotesk-text",
                           "fontSize": 16,
                           "fontWeight": "500"
@@ -90573,12 +92705,12 @@
                     },
                     {
                       "type": "text",
-                      "id": "z4GAe",
+                      "id": "UQ1eJ",
                       "name": "b",
                       "fill": "#737373",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.45,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 14,
@@ -94800,7 +96932,7 @@
                   "fill": "#9A9A9F",
                   "textGrowth": "fixed-width",
                   "width": 600,
-                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. clients never see either.",
+                  "content": "failover tries the next target the moment one stumbles. a round-robin pool spreads the day across accounts. conditional sends each request to the model that fits it best. clients never see any of it.",
                   "lineHeight": 1.45,
                   "fontFamily": "neue-haas-grotesk-text",
                   "fontSize": 16,
@@ -95663,122 +97795,241 @@
               "id": "Pfrk7",
               "name": "modes",
               "width": "fill_container",
+              "layout": "vertical",
               "gap": 14,
               "children": [
                 {
                   "type": "frame",
-                  "id": "xH65q",
-                  "name": "mode card failover",
+                  "id": "YhZNd",
+                  "name": "mode row",
                   "width": "fill_container",
-                  "fill": "#101114",
-                  "cornerRadius": 12,
-                  "layout": "vertical",
-                  "gap": 12,
-                  "padding": 20,
+                  "gap": 14,
                   "children": [
                     {
                       "type": "frame",
-                      "id": "AFpOF",
-                      "name": "diagram",
-                      "clip": true,
+                      "id": "xH65q",
+                      "name": "mode card failover",
                       "width": "fill_container",
-                      "height": 100,
-                      "fill": "#0C0C0F",
-                      "cornerRadius": 8,
-                      "layout": "none",
+                      "fill": "#101114",
+                      "cornerRadius": 12,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
                       "children": [
                         {
-                          "type": "rectangle",
-                          "id": "HrTyC",
-                          "x": 24,
-                          "y": 22,
-                          "name": "rung1",
-                          "fill": "#ff453a59",
-                          "width": 170,
-                          "height": 8
+                          "type": "frame",
+                          "id": "AFpOF",
+                          "name": "diagram",
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 100,
+                          "fill": "#0C0C0F",
+                          "cornerRadius": 8,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "HrTyC",
+                              "x": 24,
+                              "y": 22,
+                              "name": "rung1",
+                              "fill": "#ff453a59",
+                              "width": 170,
+                              "height": 8
+                            },
+                            {
+                              "type": "icon",
+                              "id": "f5yoX",
+                              "x": 204,
+                              "y": 20,
+                              "name": "x",
+                              "width": 12,
+                              "height": 12,
+                              "icon": "x",
+                              "library": "lucide",
+                              "fill": "#ff453a"
+                            },
+                            {
+                              "type": "rectangle",
+                              "id": "UdU9n",
+                              "x": 24,
+                              "y": 46,
+                              "name": "rung2",
+                              "fill": "#32d74b",
+                              "width": 170,
+                              "height": 8
+                            },
+                            {
+                              "type": "rectangle",
+                              "id": "h53RVs",
+                              "x": 24,
+                              "y": 70,
+                              "name": "rung3",
+                              "fill": "#FFFFFF1F",
+                              "width": 170,
+                              "height": 8
+                            }
+                          ]
                         },
                         {
-                          "type": "icon",
-                          "id": "f5yoX",
-                          "x": 204,
-                          "y": 20,
-                          "name": "x",
-                          "width": 12,
-                          "height": 12,
-                          "icon": "x",
-                          "library": "lucide",
-                          "fill": "#ff453a"
+                          "type": "frame",
+                          "id": "tkN8O",
+                          "name": "title row",
+                          "gap": 9,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "VyEqT",
+                              "name": "i",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "corner-down-right",
+                              "library": "lucide",
+                              "fill": "#9A9A9F"
+                            },
+                            {
+                              "type": "text",
+                              "id": "I4AG8D",
+                              "name": "t",
+                              "fill": "#F2F2F4",
+                              "content": "failover",
+                              "fontFamily": "neue-haas-grotesk-text",
+                              "fontSize": 16,
+                              "fontWeight": "500"
+                            }
+                          ]
                         },
                         {
-                          "type": "rectangle",
-                          "id": "UdU9n",
-                          "x": 24,
-                          "y": 46,
-                          "name": "rung2",
-                          "fill": "#32d74b",
-                          "width": 170,
-                          "height": 8
-                        },
-                        {
-                          "type": "rectangle",
-                          "id": "h53RVs",
-                          "x": 24,
-                          "y": 70,
-                          "name": "rung3",
-                          "fill": "#FFFFFF1F",
-                          "width": 170,
-                          "height": 8
+                          "type": "text",
+                          "id": "t8YJi",
+                          "name": "b",
+                          "fill": "#9A9A9F",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "targets in order. the first one serves until it errors or hits a limit, then the next takes the same request.",
+                          "lineHeight": 1.45,
+                          "fontFamily": "neue-haas-grotesk-text",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
                     {
                       "type": "frame",
-                      "id": "tkN8O",
-                      "name": "title row",
-                      "gap": 9,
-                      "alignItems": "center",
+                      "id": "U6X5GR",
+                      "name": "mode card round-robin",
+                      "width": "fill_container",
+                      "fill": "#101114",
+                      "cornerRadius": 12,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
                       "children": [
                         {
-                          "type": "icon",
-                          "id": "VyEqT",
-                          "name": "i",
-                          "width": 15,
-                          "height": 15,
-                          "icon": "corner-down-right",
-                          "library": "lucide",
-                          "fill": "#9A9A9F"
+                          "type": "frame",
+                          "id": "INIaa",
+                          "name": "diagram",
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 100,
+                          "fill": "#0C0C0F",
+                          "cornerRadius": 8,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "Y33Bd",
+                              "x": 120,
+                              "y": 22,
+                              "name": "ring",
+                              "width": 56,
+                              "height": 56,
+                              "stroke": "#FFFFFF29",
+                              "strokeWidth": 2
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "dN2QH",
+                              "x": 143,
+                              "y": 16,
+                              "name": "p1",
+                              "fill": "#40c8e0",
+                              "width": 10,
+                              "height": 10
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "oeEO9",
+                              "x": 168,
+                              "y": 60,
+                              "name": "p2",
+                              "fill": "#ff72c4",
+                              "width": 10,
+                              "height": 10
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "GAtmn",
+                              "x": 118,
+                              "y": 60,
+                              "name": "p3",
+                              "fill": "#0a84ff",
+                              "width": 10,
+                              "height": 10
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "lMtr1",
+                          "name": "title row",
+                          "gap": 9,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "X2a0A",
+                              "name": "i",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "repeat",
+                              "library": "lucide",
+                              "fill": "#9A9A9F"
+                            },
+                            {
+                              "type": "text",
+                              "id": "FMRRj",
+                              "name": "t",
+                              "fill": "#F2F2F4",
+                              "content": "round-robin",
+                              "fontFamily": "neue-haas-grotesk-text",
+                              "fontSize": 16,
+                              "fontWeight": "500"
+                            }
+                          ]
                         },
                         {
                           "type": "text",
-                          "id": "I4AG8D",
-                          "name": "t",
-                          "fill": "#F2F2F4",
-                          "content": "failover",
+                          "id": "BwrjF",
+                          "name": "b",
+                          "fill": "#9A9A9F",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                          "lineHeight": 1.45,
                           "fontFamily": "neue-haas-grotesk-text",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                          "fontSize": 14,
+                          "fontWeight": "normal"
                         }
                       ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "t8YJi",
-                      "name": "b",
-                      "fill": "#9A9A9F",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "targets in order. the first one serves until it errors or hits a limit, then the next takes the same request.",
-                      "lineHeight": 1.45,
-                      "fontFamily": "neue-haas-grotesk-text",
-                      "fontSize": 14,
-                      "fontWeight": "normal"
                     }
                   ]
                 },
                 {
                   "type": "frame",
-                  "id": "U6X5GR",
-                  "name": "mode card round-robin",
+                  "id": "U1wW0",
+                  "name": "mode card conditional",
                   "width": "fill_container",
                   "fill": "#101114",
                   "cornerRadius": 12,
@@ -95788,7 +98039,7 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "INIaa",
+                      "id": "Z9fSyy",
                       "name": "diagram",
                       "clip": true,
                       "width": "fill_container",
@@ -95798,71 +98049,196 @@
                       "layout": "none",
                       "children": [
                         {
-                          "type": "ellipse",
-                          "id": "Y33Bd",
-                          "x": 120,
-                          "y": 22,
-                          "name": "ring",
-                          "width": 56,
-                          "height": 56,
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "cfGwb",
+                          "x": 210,
+                          "y": 46,
+                          "name": "through line",
+                          "fill": "#32d74b",
+                          "width": 200,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "jaEkg",
+                          "x": 290,
+                          "y": 24,
+                          "name": "peel up",
+                          "geometry": "M290 50c15 0 15-26 30-26",
+                          "viewBox": [
+                            290,
+                            24,
+                            30,
+                            26
+                          ],
+                          "width": 30,
+                          "height": 26,
                           "stroke": "#FFFFFF29",
                           "strokeWidth": 2
                         },
                         {
-                          "type": "ellipse",
-                          "id": "dN2QH",
-                          "x": 143,
-                          "y": 16,
-                          "name": "p1",
-                          "fill": "#40c8e0",
-                          "width": 10,
-                          "height": 10
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "ZxMZE",
+                          "x": 320,
+                          "y": 20,
+                          "name": "rung other",
+                          "fill": "#FFFFFF1F",
+                          "width": 110,
+                          "height": 8
+                        },
+                        {
+                          "type": "path",
+                          "id": "amgu4",
+                          "x": 290,
+                          "y": 50,
+                          "name": "peel down",
+                          "geometry": "M290 50c15 0 15 26 30 26",
+                          "viewBox": [
+                            290,
+                            50,
+                            30,
+                            26
+                          ],
+                          "width": 30,
+                          "height": 26,
+                          "stroke": "#FFFFFF29",
+                          "strokeWidth": 2
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "nsmUo",
+                          "x": 320,
+                          "y": 72,
+                          "name": "else dash 1",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "u09j6X",
+                          "x": 340,
+                          "y": 72,
+                          "name": "else dash 2",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "sp3UG",
+                          "x": 360,
+                          "y": 72,
+                          "name": "else dash 3",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "qJPDs",
+                          "x": 380,
+                          "y": 72,
+                          "name": "else dash 4",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "DuUjT",
+                          "x": 400,
+                          "y": 72,
+                          "name": "else dash 5",
+                          "fill": "#FFFFFF1F",
+                          "width": 12,
+                          "height": 8
                         },
                         {
                           "type": "ellipse",
-                          "id": "oeEO9",
-                          "x": 168,
-                          "y": 60,
-                          "name": "p2",
-                          "fill": "#ff72c4",
-                          "width": 10,
-                          "height": 10
+                          "id": "V3Vkvt",
+                          "x": 234,
+                          "y": 8,
+                          "name": "judge ring",
+                          "width": 20,
+                          "height": 20,
+                          "stroke": "#a5a3ff",
+                          "strokeWidth": 2
                         },
                         {
-                          "type": "ellipse",
-                          "id": "GAtmn",
-                          "x": 118,
-                          "y": 60,
-                          "name": "p3",
-                          "fill": "#0a84ff",
+                          "type": "icon",
+                          "id": "A4cVR4",
+                          "x": 239,
+                          "y": 13,
+                          "name": "judge glyph",
                           "width": 10,
-                          "height": 10
+                          "height": 10,
+                          "icon": "scale",
+                          "library": "lucide",
+                          "fill": "#a5a3ff"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "KSlAO",
+                          "x": 243,
+                          "y": 30,
+                          "name": "tie dot 1",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "f4mVP",
+                          "x": 243,
+                          "y": 36,
+                          "name": "tie dot 2",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "GHCFk",
+                          "x": 243,
+                          "y": 42,
+                          "name": "tie dot 3",
+                          "fill": "#a5a3ff66",
+                          "width": 2,
+                          "height": 3
                         }
                       ]
                     },
                     {
                       "type": "frame",
-                      "id": "lMtr1",
+                      "id": "cN5yW",
                       "name": "title row",
                       "gap": 9,
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "icon",
-                          "id": "X2a0A",
+                          "id": "tXXD9",
                           "name": "i",
                           "width": 15,
                           "height": 15,
-                          "icon": "repeat",
+                          "icon": "split",
                           "library": "lucide",
                           "fill": "#9A9A9F"
                         },
                         {
                           "type": "text",
-                          "id": "FMRRj",
+                          "id": "Ht0uv",
                           "name": "t",
                           "fill": "#F2F2F4",
-                          "content": "round-robin",
+                          "content": "conditional",
                           "fontFamily": "neue-haas-grotesk-text",
                           "fontSize": 16,
                           "fontWeight": "500"
@@ -95871,12 +98247,12 @@
                     },
                     {
                       "type": "text",
-                      "id": "BwrjF",
+                      "id": "ILeGP",
                       "name": "b",
                       "fill": "#9A9A9F",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "a pool of equals. each request goes to the next account in turn, so no single subscription burns out.",
+                      "content": "the right model for each request. a judge reads it and picks who answers.",
                       "lineHeight": 1.45,
                       "fontFamily": "neue-haas-grotesk-text",
                       "fontSize": 14,
