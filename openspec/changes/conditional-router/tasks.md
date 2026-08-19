@@ -44,7 +44,7 @@
 
 ## 4. The inspector cluster
 
-- [ ] 4.1 The conditional option, its mode sentence, and the re-judge cost sentence join
+- [x] 4.1 The conditional option, its mode sentence, and the re-judge cost sentence join
       `router-modes.ts`
 - [x] 4.2 Specify branch writes, the judge binding, and else protection in `routing-edits.ts`
 - [x] 4.3 Specify the conditional draft save gate wanting a judge in `model-draft.ts`
