@@ -37,7 +37,7 @@
 - [x] 3.4 Specify the pin store's idle expiry, with the bound as a property law and its twin
 - [x] 3.5 Specify the fingerprint preferring a client key and hashing only turn-stable content
 - [ ] 3.6 Specify the judge call staying out of cable accounting
-- [ ] 3.7 Specify prompt assembly: delimited tail, else excluded, branch order preserved as a
+- [x] 3.7 Specify prompt assembly: delimited tail, else excluded, branch order preserved as a
       property law with its twin, and the tail never logged
 - [ ] 3.8 Integration: a conditional table serves end to end with transports doubled at the
       network boundary

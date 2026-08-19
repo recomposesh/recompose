@@ -1,6 +1,6 @@
 import type { SpendGrant } from '@recompose/contracts';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import type { BranchRule } from '../routing/policies';
 import type { JudgeAsk, JudgeCooling } from './judge-call';
@@ -185,6 +185,28 @@ describe('the trouble a classification call meets', () => {
 
     await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'refusal' });
     expect(watched.cooled).toEqual([{ coolUntilMs: NOW + 60_000 }]);
+  });
+});
+
+describe('where the caller’s own words are allowed to land', () => {
+  test('the tail reaches the judge and no console line anywhere else', async () => {
+    const watched = answering(() => new Response('{}', { status: 500 }));
+    const written: unknown[] = [];
+    const record = (...parts: unknown[]) => {
+      written.push(...parts);
+    };
+    const errors = vi.spyOn(console, 'error').mockImplementation(record);
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(record);
+    const logs = vi.spyOn(console, 'log').mockImplementation(record);
+
+    await readingOfTheJudge(watched.ask);
+
+    errors.mockRestore();
+    warnings.mockRestore();
+    logs.mockRestore();
+
+    expect(watched.bodies.at(0)).toContain('rename this function');
+    expect(JSON.stringify(written)).not.toContain('rename this function');
   });
 });
 
