@@ -8,9 +8,7 @@ import {
   failureIn,
   pointAlongCable,
   pulseForStanding,
-  RULE_PILL_ANCHOR,
-  RULE_PILL_CHARACTERS,
-  ruleShown,
+  BRANCH_PILL_ANCHOR,
   strokeForRelease,
   strokeForStanding,
   tintForStanding,
@@ -128,9 +126,9 @@ describe('what a cable in flight paints for the release under the pointer', () =
 describe('where furniture rides along a cable', () => {
   const bowed = 'M0,0 C60,0 140,100 200,100';
 
-  it('leaves the midpoint free, so the rule pill and the failure chip never stack', () => {
-    expect(RULE_PILL_ANCHOR).toBeGreaterThan(0);
-    expect(RULE_PILL_ANCHOR).toBeLessThan(0.5);
+  it('leaves the midpoint free, so the branch label and the failure chip never stack', () => {
+    expect(BRANCH_PILL_ANCHOR).toBeGreaterThan(0);
+    expect(BRANCH_PILL_ANCHOR).toBeLessThan(0.5);
   });
 
   it('reads a point off the curve itself rather than off the line between the two ends', () => {
@@ -140,7 +138,7 @@ describe('where furniture rides along a cable', () => {
   });
 
   it('rides earlier along the cable than the midpoint the failure chip holds', () => {
-    const early = pointAlongCable(bowed, RULE_PILL_ANCHOR);
+    const early = pointAlongCable(bowed, BRANCH_PILL_ANCHOR);
 
     expect(early?.x).toBeLessThan(100);
     expect(early?.y).toBeLessThan(50);
@@ -149,26 +147,6 @@ describe('where furniture rides along a cable', () => {
   it('reads nothing off a path this canvas never drew as one curve', () => {
     expect(pointAlongCable('M0,0 L200,100', 0.35)).toBeUndefined();
     expect(pointAlongCable('', 0.35)).toBeUndefined();
-  });
-});
-
-describe('the rule a pill prints on the cable it rides', () => {
-  it('keeps a rule the clear span between two columns can hold', () => {
-    expect(ruleShown('Code review')).toBe('Code review');
-  });
-
-  it('cuts a rule longer than that span, so the pill never covers the cards it runs between', () => {
-    const long = 'The request asks for a review of code the caller pasted in';
-    const shown = ruleShown(long);
-
-    expect(shown.length).toBeLessThanOrEqual(RULE_PILL_CHARACTERS);
-    expect(shown.endsWith('…')).toBe(true);
-    expect(long.startsWith(shown.slice(0, -1))).toBe(true);
-  });
-
-  it('caps at a count the span between one card and the next affords', () => {
-    expect(RULE_PILL_CHARACTERS).toBeGreaterThan(10);
-    expect(RULE_PILL_CHARACTERS).toBeLessThan(30);
   });
 });
 

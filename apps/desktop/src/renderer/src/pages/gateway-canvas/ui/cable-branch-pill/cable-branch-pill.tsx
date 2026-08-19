@@ -1,8 +1,4 @@
-import { Popover } from '@base-ui/react/popover';
-
 import type { BranchSeat } from '../../lib/route-graph';
-
-import { ruleShown } from '../../lib/cable-standing';
 
 type CableBranchPillProps = {
   /** Which branch of a judge's router this cable draws, which is the whole of what the pill says. */
@@ -37,7 +33,7 @@ function draftPill(onWord: () => void) {
 function labelPress(label: string, onWord: () => void) {
   return (
     <button
-      className="max-w-24 truncate rounded-chip px-1.5 text-mono-caption text-ink focus-ring-wide"
+      className={`${pillFrame} max-w-24 truncate px-1.5 text-mono-caption text-ink focus-ring-wide`}
       onClick={onWord}
       type="button"
     >
@@ -46,40 +42,16 @@ function labelPress(label: string, onWord: () => void) {
   );
 }
 
-function rulePress(seat: { label: string; rule: string }) {
-  return (
-    <Popover.Root>
-      <Popover.Trigger
-        className="max-w-32 truncate rounded-chip pe-1.5 text-ink-secondary focus-ring-wide"
-        title={seat.rule}
-      >
-        {ruleShown(seat.rule)}
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner align="start" sideOffset={4}>
-          <Popover.Popup
-            aria-label={`${seat.label} rule`}
-            className="z-40 w-56 menu-surface px-3 text-start"
-          >
-            <span className="block text-mono-caption text-ink-secondary">{seat.label}</span>
-            <span className="mt-0.5 block text-detail text-ink">{seat.rule}</span>
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
-  );
-}
-
 /**
  * The branch one cable draws, standing on the cable itself.
  *
- * @summary Reach for it on every cable under a conditional router, where the rule that sends a
- * request down this cable is what a person came to the canvas to read. A worded branch stands its
- * label beside its rule cut to the clear span: the label opens the editor, because the label is the
- * word the judge answers with, and the rule opens the whole of it read-only, because a rule long
- * enough to be worth writing is longer than a canvas has room for. A branch nobody has worded yet
+ * @summary Reach for it on every cable under a conditional router, where the word the judge answers
+ * with is what tells one cable from its siblings. The label alone: the rule reads in the inspector
+ * row and edits in the sheet, so a canvas holding a ladder of branches stays legible at the zoom a
+ * whole composition fits in rather than turning into a wall of prose. Pressing the label opens the
+ * editor, because the label is the word the judge answers with. A branch nobody has worded yet
  * wears the attention tint and says so, so an unfinished composition reads as unfinished on the
- * canvas rather than only in a panel. The fallback prints its role rather than a rule, quietly,
+ * canvas rather than only in a panel. The fallback prints its role quietly and answers no press,
  * since nobody wrote it and it catches whatever the other branches did not.
  */
 export function CableBranchPill({ seat, onWord }: CableBranchPillProps) {
@@ -91,10 +63,5 @@ export function CableBranchPill({ seat, onWord }: CableBranchPillProps) {
     return draftPill(onWord);
   }
 
-  return (
-    <span className={pillFrame}>
-      {labelPress(seat.label, onWord)}
-      {rulePress(seat)}
-    </span>
-  );
+  return labelPress(seat.label, onWord);
 }

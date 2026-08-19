@@ -84,15 +84,25 @@ export const ADraftCablePaintsItsStanding = meta.story({
   },
 });
 
-const CODE_RULE = 'It writes code.';
+const CODE_LABEL = 'code';
 
-const codeBranch: BranchSeat = { kind: 'rule', label: 'code', rule: CODE_RULE };
+const codeBranch: BranchSeat = {
+  kind: 'rule',
+  label: CODE_LABEL,
+  rule: 'It writes code.',
+};
 
-/** A cable a judge decides carries the rule that sends requests down it. */
-export const AJudgedCableCarriesItsRule = meta.story({
+/**
+ * A cable a judge decides carries the word that sends requests down it, and nothing more.
+ *
+ * @summary The rule reads in the inspector row and edits in the sheet, so a ladder of branches
+ * stays legible at the zoom a whole composition fits in.
+ */
+export const AJudgedCableCarriesItsLabel = meta.story({
   render: () => judgedFlow(codeBranch),
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: CODE_RULE })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: CODE_LABEL })).toBeVisible();
+    await expect(canvas.queryByText('It writes code.')).toBeNull();
   },
 });
 
@@ -100,30 +110,34 @@ function centreOf(box: DOMRect): { x: number; y: number } {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-/** The rule rides earlier along the path than the midpoint, which the failure chip keeps. */
-export const TheRuleLeavesTheMidpointToTheFailureChip = meta.story({
+async function labelCentre(find: (name: string) => Promise<HTMLElement>) {
+  return centreOf(paintedBox(await find(CODE_LABEL)));
+}
+
+/** The label rides earlier along the path than the midpoint, which the failure chip keeps. */
+export const TheLabelLeavesTheMidpointToTheFailureChip = meta.story({
   render: () => judgedFlow(codeBranch, 'failed', REFUSED),
   play: async ({ canvas }) => {
-    const rule = centreOf(paintedBox(await canvas.findByRole('button', { name: CODE_RULE })));
+    const label = await labelCentre(async (name) => canvas.findByRole('button', { name }));
     const error = centreOf(paintedBox(await canvas.findByRole('button', { name: 'Last error' })));
 
-    await expect(rule.x).toBeLessThan(error.x);
-    await expect(rule.y).toBeLessThan(error.y);
+    await expect(label.x).toBeLessThan(error.x);
+    await expect(label.y).toBeLessThan(error.y);
   },
 });
 
-/** The rule sits on the cable it explains, rather than floating off the curve that bows away. */
-export const TheRuleRidesTheCableItself = meta.story({
+/** The label sits on the cable it names, rather than floating off the curve that bows away. */
+export const TheLabelRidesTheCableItself = meta.story({
   render: () => judgedFlow(codeBranch),
   play: async ({ canvas, canvasElement }) => {
-    const rule = centreOf(paintedBox(await canvas.findByRole('button', { name: CODE_RULE })));
+    const label = await labelCentre(async (name) => canvas.findByRole('button', { name }));
     const [cable] = await cablesDrawn(canvasElement);
     const path = paintedBox(cable);
 
-    await expect(rule.x).toBeGreaterThan(path.x);
-    await expect(rule.x).toBeLessThan(path.x + path.width / 2);
-    await expect(rule.y).toBeGreaterThan(path.y);
-    await expect(rule.y).toBeLessThan(path.y + path.height / 2);
+    await expect(label.x).toBeGreaterThan(path.x);
+    await expect(label.x).toBeLessThan(path.x + path.width / 2);
+    await expect(label.y).toBeGreaterThan(path.y);
+    await expect(label.y).toBeLessThan(path.y + path.height / 2);
   },
 });
 

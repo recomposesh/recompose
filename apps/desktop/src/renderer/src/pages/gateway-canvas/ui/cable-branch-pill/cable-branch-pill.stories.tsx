@@ -1,34 +1,25 @@
-import { expect, fn, screen, waitFor } from 'storybook/test';
+import { expect, fn, screen } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import type { BranchSeat } from '../../lib/route-graph';
 
 import { paintedStyle } from '../../../../shared/testing';
-import { RULE_PILL_CHARACTERS, ruleShown } from '../../lib/cable-standing';
 import { CableBranchPill } from './cable-branch-pill';
 
-const SHORT_RULE = 'It writes code.';
+const RULE = 'The request asks for a review of the code the caller pasted in.';
 
-const LONG_RULE = 'The request asks for a review of the code the caller pasted in.';
-
-const shortBranch: BranchSeat = { kind: 'rule', label: 'code', rule: SHORT_RULE };
-
-const longBranch: BranchSeat = { kind: 'rule', label: 'code', rule: LONG_RULE };
+const wordedBranch: BranchSeat = { kind: 'rule', label: 'code', rule: RULE };
 
 const meta = preview.meta({
   component: CableBranchPill,
-  args: { seat: shortBranch, onWord: fn() },
+  args: { seat: wordedBranch, onWord: fn() },
   render: (args) => (
     <div className="h-40 w-72 bg-surface-content p-4 dot-grid">
       <CableBranchPill {...args} />
     </div>
   ),
 });
-
-function theRule(): HTMLElement {
-  return screen.getByRole('dialog', { name: 'code rule' });
-}
 
 /** The secondary ink as the standing scheme actually paints it, read off the page. */
 function quietInk(): string {
@@ -44,54 +35,27 @@ function quietInk(): string {
   return painted;
 }
 
-async function pressedTheRuleOpen(press: (on: Element) => Promise<void>) {
-  await press(screen.getByRole('button', { name: ruleShown(LONG_RULE) }));
-  await waitFor(() => {
-    void expect(theRule()).toBeVisible();
-  });
-}
-
-/** A worded branch carries the label its judge answers with beside the rule behind it. */
+/**
+ * A worded branch carries its label and nothing else.
+ *
+ * @summary The rule reads in the inspector row and edits in the sheet, so the cable is spared a
+ * second reading of it: a pill per rule turned every ladder into a wall of text at the zoom a whole
+ * composition fits in.
+ */
 export const Basic = meta.story({
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByRole('button', { name: 'code' })).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: SHORT_RULE })).toBeVisible();
+    await expect(canvasElement.querySelectorAll('button')).toHaveLength(1);
+    await expect(canvas.queryByText(RULE, { exact: false })).toBeNull();
   },
 });
 
-/** A rule longer than the span between two columns cuts, so the pill never covers a card. */
-export const ALongRuleCutsToTheClearSpan = meta.story({
-  args: { seat: longBranch },
-  play: async ({ canvas }) => {
-    const pill = await canvas.findByRole('button', { name: ruleShown(LONG_RULE) });
-    const shown = pill.textContent;
+/** No press on the cable opens a rule, because the cable no longer carries one. */
+export const TheCableOffersNoRuleReading = meta.story({
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'code' }));
 
-    await expect(shown.length).toBeLessThanOrEqual(RULE_PILL_CHARACTERS);
-    await expect(LONG_RULE.startsWith(shown.slice(0, -1))).toBe(true);
-    await expect(pill).toHaveAttribute('title', LONG_RULE);
-  },
-});
-
-/** Pressing the rule hands over the whole of it and the label the judge answers with. */
-export const PressingTheRuleShowsTheWholeOfIt = meta.story({
-  args: { seat: longBranch },
-  play: async ({ userEvent }) => {
-    await pressedTheRuleOpen(userEvent.click);
-
-    await expect(theRule()).toHaveTextContent(LONG_RULE);
-    await expect(theRule()).toHaveTextContent('code');
-  },
-});
-
-/** Esc puts the rule away and leaves the composition exactly where the person left it. */
-export const EscapePutsTheRuleAway = meta.story({
-  args: { seat: longBranch },
-  play: async ({ userEvent }) => {
-    await pressedTheRuleOpen(userEvent.click);
-    await userEvent.keyboard('{Escape}');
-    await waitFor(() => {
-      void expect(screen.queryByRole('dialog', { name: 'code rule' })).toBeNull();
-    });
+    await expect(screen.queryByRole('dialog')).toBeNull();
   },
 });
 
@@ -133,7 +97,7 @@ export const ABranchStillToBeNamed = meta.story({
  * The fallback says its role quietly and offers nothing to press, since nobody wrote it a rule.
  *
  * @summary Else catches whatever the other branches did not, so the pill states that and stops:
- * a pill loud enough to compete with the rules would claim a decision it never makes.
+ * a pill loud enough to compete with the labels would claim a decision it never makes.
  */
 export const TheFallbackSaysItsRoleQuietly = meta.story({
   args: { seat: { kind: 'else' } },

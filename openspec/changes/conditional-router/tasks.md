@@ -122,7 +122,7 @@
 - [x] 10.1 Each branch row stacks label and pin tally, rule preview, and destination on their own
       lines, and the else row wears the same anatomy
 - [x] 10.2 Stories cover worded, unworded, else, and pinned rows in both schemes
-- [ ] 10.3 The cable carries only the branch label: the rule pill leaves the cable, the label
+- [x] 10.3 The cable carries only the branch label: the rule pill leaves the cable, the label
       press keeps opening the editor, and else keeps its quiet text
 - [ ] 10.4 A conditional router born from the drawer seats its else child in the next column
       beside it, never a far row

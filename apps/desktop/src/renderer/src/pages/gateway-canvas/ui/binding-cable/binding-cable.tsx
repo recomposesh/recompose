@@ -14,7 +14,7 @@ import {
   failureIn,
   pointAlongCable,
   pulseForStanding,
-  RULE_PILL_ANCHOR,
+  BRANCH_PILL_ANCHOR,
   strokeForStanding,
   TIE_DASH,
   tintForStanding,
@@ -121,7 +121,7 @@ function branchDrawn(
     return null;
   }
 
-  const rides = pointAlongCable(drawn, RULE_PILL_ANCHOR) ?? midpoint;
+  const rides = pointAlongCable(drawn, BRANCH_PILL_ANCHOR) ?? midpoint;
   const word = (): void => {
     if (wording !== undefined) {
       wordBranch({ ...wording, ...wordsAlready(seat) });

@@ -3,20 +3,11 @@ import type { XY } from './canvas-positions';
 import type { CableFailure, CableStanding } from './node-graph';
 import type { BranchSeat } from './route-graph';
 
-import { CABLE_SPAN } from './tidy-layout';
-
 /** The pointer target every cable end and its snap radius is sized by, in pixels. */
 export const CABLE_GRAB_SPAN = 24;
 
-/** How far along a branch cable its rule pill rides, leaving the midpoint to the failure chip. */
-export const RULE_PILL_ANCHOR = 0.35;
-
-const PILL_PADDING = 12;
-
-const CAPTION_ADVANCE = 6;
-
-/** How many characters a rule pill prints before it cuts, sized by the span a cable crosses. */
-export const RULE_PILL_CHARACTERS = Math.floor((CABLE_SPAN - PILL_PADDING) / CAPTION_ADVANCE);
+/** How far along a branch cable its label rides, leaving the midpoint to the failure chip. */
+export const BRANCH_PILL_ANCHOR = 0.35;
 
 /** The dash rhythm a tie draws with, which is the one the dashed card frames already keep. */
 export const TIE_DASH = 'var(--spacing-node-dash) var(--spacing-node-dash-gap)';
@@ -130,21 +121,6 @@ export function failureIn(carried: unknown): CableFailure | undefined {
   const { status, detail } = carried;
 
   return typeof status === 'number' && typeof detail === 'string' ? { status, detail } : undefined;
-}
-
-/**
- * The rule a pill prints on the cable it rides, cut to what the span between two columns holds.
- *
- * @summary A person writes a rule as long as the judge needs, and a pill that grew with it would
- * cover the cards at both ends of the cable it rides. The cut keeps the pill inside the clear span,
- * and the full rule stays one press away rather than crowding the composition it explains.
- */
-export function ruleShown(rule: string): string {
-  if (rule.length <= RULE_PILL_CHARACTERS) {
-    return rule;
-  }
-
-  return `${rule.slice(0, RULE_PILL_CHARACTERS - 1)}…`;
 }
 
 const CUBIC_NUMBERS = 8;

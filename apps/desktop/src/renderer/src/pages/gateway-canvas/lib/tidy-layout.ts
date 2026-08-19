@@ -5,7 +5,7 @@ import type { CanvasNode } from './node-graph';
 export const CARD_MEASURE = { width: 184, height: 88 };
 
 /** The clear span a cable crosses between one column's card and the next one's, in pixels. */
-export const CABLE_SPAN = 136;
+const CABLE_SPAN = 136;
 
 /** The measure a judge satellite declares itself at, which is smaller than any card. */
 export const SATELLITE_MEASURE = { width: 96, height: 72 };
