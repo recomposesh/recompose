@@ -62,6 +62,9 @@ export const unruledRow: RouterChild = {
   label: 'draft',
 };
 
+/** A branch nobody has worded, which is the one row standing between a person and a save. */
+export const unwordedRow: RouterChild = { ...boundRow, label: '', rule: '' };
+
 /** One row of the ladder with the acts a story never needs to answer. */
 export function ladderRowOf(child: RouterChild, rank: number, total = 3): LadderRow {
   return { child, rank, total, onMove: () => {}, onDragStart: () => {}, onDrop: () => {} };

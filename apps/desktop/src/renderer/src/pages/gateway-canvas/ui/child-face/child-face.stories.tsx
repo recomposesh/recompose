@@ -2,7 +2,13 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { boundRow, branchRow, elseRow, unruledRow } from '../../testing/router-child.testkit';
+import {
+  boundRow,
+  branchRow,
+  elseRow,
+  unruledRow,
+  unwordedRow,
+} from '../../testing/router-child.testkit';
 import { ChildFace } from './child-face';
 
 const meta = preview.meta({
@@ -25,11 +31,21 @@ export const Basic = meta.story({
   },
 });
 
-/** A branch adds its rule under the binding, in one line, with the whole of it in the sheet. */
+/** A branch leads with its word, previews its rule, and names the binding under both. */
 export const ABranchPreviewsItsRule = meta.story({
   args: { child: branchRow },
   play: async ({ canvas }) => {
+    await expect(await canvas.findByText('code')).toBeVisible();
     await expect(await canvas.findByText(/questions about source code/)).toBeVisible();
+    await expect(await canvas.findByText('3 pinned')).toBeVisible();
+  },
+});
+
+/** A branch nobody has worded asks for its words where the label would have read. */
+export const AnUnwordedBranchAsksForItsWords = meta.story({
+  args: { child: unwordedRow },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Needs a rule')).toBeVisible();
   },
 });
 
@@ -49,5 +65,11 @@ export const TheElseFaceCarriesItsReason = meta.story({
   },
 });
 
-/** The face in the dark scheme, where the vendor mark has to hold against the box. */
-export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+/** A branch face in the dark scheme, where its word, its rule and its mark all have to hold. */
+export const DarkScheme = meta.story({ args: { child: branchRow }, globals: { theme: 'dark' } });
+
+/** An unworded face in the dark scheme, where the attention ink has to carry. */
+export const AnUnwordedBranchInDarkScheme = meta.story({
+  args: { child: unwordedRow },
+  globals: { theme: 'dark' },
+});

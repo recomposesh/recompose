@@ -3,8 +3,15 @@ import { expect } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { panelBounds } from '../../../../shared/lib';
-import { fitsItsPane, narrowed, paintedBox } from '../../../../shared/testing';
-import { boundRow, branchRow, elseRow, ladderRowOf } from '../../testing/router-child.testkit';
+import { fitsItsPane, narrowed, paintedBox, paintedStyle } from '../../../../shared/testing';
+import {
+  boundRow,
+  branchRow,
+  chatRow,
+  elseRow,
+  ladderRowOf,
+  unwordedRow,
+} from '../../testing/router-child.testkit';
 import { ChildRow } from './child-row';
 
 const meta = preview.meta({
@@ -41,6 +48,10 @@ function stacked(canvasElement: HTMLElement, marks: readonly string[]): boolean 
   return boxes.every((box, place) => place === 0 || box.top >= (boxes[place - 1]?.bottom ?? 0));
 }
 
+function inkAt(canvasElement: HTMLElement, mark: string): string {
+  return paintedStyle(lineAt(canvasElement, mark)).color;
+}
+
 const BRANCH_LINES = ['[data-branch-label]', '[data-rule-preview]', '[data-child-name]'];
 
 const ELSE_LINES = ['[data-branch-label]', '[data-else-reason]', '[data-child-name]'];
@@ -68,13 +79,39 @@ export const Basic = meta.story({
   },
 });
 
-/** A branch leads with the word the judge answers with, and counts what it holds under it. */
-export const ABranchRow = meta.story({
-  args: { row: ladderRowOf(branchRow, 1) },
+/** A branch leads with the word the judge answers with rather than with a rank. */
+export const AWordedBranch = meta.story({
+  args: { row: ladderRowOf(chatRow, 1) },
   play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByText('chat')).toBeVisible();
+    await expect(await canvas.findByText('everyday conversation')).toBeVisible();
+    await expect(canvasElement.querySelectorAll('[data-rank]')).toHaveLength(0);
+    await expect(canvasElement.querySelectorAll('[data-pin-tally]')).toHaveLength(0);
+  },
+});
+
+/** A branch holding conversations counts them beside its own word. */
+export const APinnedBranch = meta.story({
+  args: { row: ladderRowOf(branchRow, 1) },
+  play: async ({ canvas }) => {
     await expect(await canvas.findByText('code')).toBeVisible();
     await expect(await canvas.findByText('3 pinned')).toBeVisible();
-    await expect(canvasElement.querySelectorAll('[data-rank]')).toHaveLength(0);
+  },
+});
+
+/**
+ * A branch nobody has worded asks for its words in the attention ink.
+ *
+ * @summary It is the one row standing between a person and a switch they cannot save, so the row
+ * that owes something reads differently from the rows that do not.
+ */
+export const AnUnwordedBranch = meta.story({
+  args: { row: ladderRowOf(unwordedRow, 1) },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByText('Needs a rule')).toBeVisible();
+    await expect(inkAt(canvasElement, '[data-branch-label]')).not.toBe(
+      inkAt(canvasElement, '[data-child-name]'),
+    );
   },
 });
 
@@ -119,8 +156,26 @@ export const AHeldRow = meta.story({
   },
 });
 
-/** The rows in the dark scheme, where the label column has to hold against the box. */
-export const DarkScheme = meta.story({
+/** A worded branch in the dark scheme, where its three lines have to separate from the box. */
+export const AWordedBranchInDarkScheme = meta.story({
+  args: { row: ladderRowOf(chatRow, 1) },
+  globals: { theme: 'dark' },
+});
+
+/** A pinned branch in the dark scheme, where the tally has to stay quieter than the word. */
+export const APinnedBranchInDarkScheme = meta.story({
   args: { row: ladderRowOf(branchRow, 1) },
+  globals: { theme: 'dark' },
+});
+
+/** An unworded branch in the dark scheme, where the attention ink has to carry. */
+export const AnUnwordedBranchInDarkScheme = meta.story({
+  args: { row: ladderRowOf(unwordedRow, 1) },
+  globals: { theme: 'dark' },
+});
+
+/** The else row in the dark scheme, where its reason has to read against the box. */
+export const TheElseRowInDarkScheme = meta.story({
+  args: { row: ladderRowOf(elseRow, 3) },
   globals: { theme: 'dark' },
 });
