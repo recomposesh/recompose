@@ -10,7 +10,7 @@ function BlankCard() {
   return <div style={{ width: 184, height: 88 }} />;
 }
 
-const cardKinds = { target: BlankCard, gateway: BlankCard };
+const cardKinds = { target: BlankCard, gateway: BlankCard, judge: BlankCard };
 
 function targetCard(id: string, data: Node['data'], y: number): Node {
   return { id, type: 'target', position: { x: 0, y }, data, width: 184, height: 88 };
@@ -50,6 +50,14 @@ test('a target card whose account kind the map cannot read draws in the plain ca
 
   expect(fills[0]).toContain('minimap-node');
   expect(fills[0]).not.toContain('node-tint');
+});
+
+test('the judge draws on the map in its router tint, so the map never shows an orphan', async () => {
+  const fills = await mapFillsOf([
+    { id: 'judge:fast', type: 'judge', position: { x: 0, y: 0 }, data: {}, width: 96, height: 72 },
+  ]);
+
+  expect(fills[0]).toContain('node-tint-router');
 });
 
 test('a card standing outside every known role draws in the plain card fill', async () => {
