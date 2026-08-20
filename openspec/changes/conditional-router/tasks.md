@@ -215,3 +215,5 @@ missing state rather than a missing string.
       its inspector: the Judge section says the router routes nothing by rule until a judge
       binds, and the bind affordance leads there
 - [ ] 14.2 judge.feature graduates with its steps, and the outer loop runs green again
+- [ ] 13.9 The cable label stays centered on its cable while a person selects the neighboring
+      card, never dropping below the line
