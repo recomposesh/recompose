@@ -172,6 +172,7 @@ When('the person picks the target', async ({ page }) => {
 
 When('the person picks the router', async ({ page }) => {
   await pickTheRouterKind(page);
+  await pickTheNestedRouterMode(page, 'Failover');
 });
 
 When(
