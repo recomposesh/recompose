@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router';
 
+import { NotFoundScreen } from '../components/not-found-screen';
 import { RootDocument } from '../components/root-document';
 import appCss from '../styles/app.css?url';
 
@@ -18,6 +19,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootComponent,
+  notFoundComponent: NotFoundScreen,
 });
 
 function RootComponent() {

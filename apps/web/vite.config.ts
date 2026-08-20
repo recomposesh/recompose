@@ -5,6 +5,12 @@ import { fumadocsMdx } from 'fumadocs-mdx/vite';
 import { nitro } from 'nitro/vite';
 import { defineConfig, type Plugin } from 'vite';
 
+import {
+  changelogVersionPaths,
+  docsMarkdownPaths,
+  docsPagePaths,
+} from './scripts/published-paths.mts';
+
 function docsMarkdownThroughNitroDev(): Plugin {
   return {
     name: 'docs-markdown-through-nitro-dev',
@@ -29,7 +35,24 @@ export default defineConfig({
     docsMarkdownThroughNitroDev(),
     fumadocsMdx(),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+        failOnError: true,
+        filter: ({ path }) => !path.startsWith('/download/'),
+      },
+      pages: [
+        ...[
+          ...docsPagePaths(import.meta.dirname),
+          ...docsMarkdownPaths(import.meta.dirname),
+          ...changelogVersionPaths(import.meta.dirname),
+          '/api/search',
+          '/changelog.xml',
+        ].map((path) => ({ path })),
+        { path: '/404', prerender: { enabled: true, outputPath: '/404.html' } },
+      ],
+    }),
     react(),
     nitro(),
   ],
