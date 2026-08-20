@@ -35,6 +35,22 @@ export const Basic = meta.story({
   },
 });
 
+/**
+ * The mark inside the silhouette, which says the node reads a request rather than searches for one.
+ *
+ * @summary A magnifier is the vocabulary of finding something, and a judge finds nothing: it reads
+ * what arrives and names the branch it belongs to. The brain says reading, which is the one thing
+ * this node does.
+ */
+export const ItWearsTheBrainMark = meta.story({
+  play: async ({ canvas, canvasElement }) => {
+    const node = await canvas.findByRole('button', { name: 'Judge' });
+
+    await expect(node.querySelector('[data-glyph="brain"]')).not.toBeNull();
+    await expect(canvasElement.querySelector('[data-glyph="search"]')).toBeNull();
+  },
+});
+
 /** The silhouette is a circle, which is what says advisor beside a canvas of rectangles. */
 export const TheSilhouetteIsRound = meta.story({
   play: async ({ canvas }) => {

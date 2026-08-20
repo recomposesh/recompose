@@ -63,6 +63,7 @@ export const cableSeats = {
 function cardsWiredBy(
   carried: Record<string, unknown> | undefined,
   id = 'cable:fast',
+  chosenCard?: string,
 ): ReactElement {
   return (
     <div className="h-96 w-160 bg-surface-content dot-grid">
@@ -76,7 +77,7 @@ function cardsWiredBy(
             ...(carried === undefined ? {} : { data: carried }),
           },
         ]}
-        defaultNodes={seats}
+        defaultNodes={seats.map((seat) => ({ ...seat, selected: seat.id === chosenCard }))}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         edgeTypes={cables}
         nodeTypes={cards}
@@ -109,6 +110,17 @@ export function judgedFlow(
   failure?: CableFailure,
 ): ReactElement {
   return cardsWiredBy({ standing, failure, branch: seat });
+}
+
+/**
+ * The same judged cable while the card at its far end stands selected.
+ *
+ * @summary Reach for it to ask whether a cable's furniture still rides the line once a neighbor is
+ * picked. Selection is the state that moves a card's own paint, so it is the state where furniture
+ * anchored off anything but the drawn path drifts away from it.
+ */
+export function judgedFlowBesideAChosenCard(seat: BranchSeat): ReactElement {
+  return cardsWiredBy({ standing: 'resting', branch: seat }, 'cable:fast', 'target:work');
 }
 
 /**
