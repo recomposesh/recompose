@@ -34,7 +34,11 @@ export type JudgeAsk = {
 
 type Spendable = Extract<SpendGrant, { verdict: 'resolved' }>;
 
-type JudgeAnswer = { answered: Response } | { silent: 'timeout' | 'unreachable' };
+type JudgeAnswer =
+  | { answered: Response; bound: AbortSignal }
+  | { silent: 'timeout' | 'unreachable' };
+
+type JudgeBody = { read: unknown } | { unread: true };
 
 /**
  * Whether a judge binding can be spent on a classification at all.
@@ -85,7 +89,7 @@ async function answerTheJudgeGave(
       signal: bound,
     });
 
-    return { answered };
+    return { answered, bound };
   } catch {
     return { silent: bound.aborted ? 'timeout' : 'unreachable' };
   }
@@ -125,12 +129,38 @@ function refusalTheJudgeEarns(ask: JudgeAsk, reading: AttemptReading<Response>):
   return { heard: 'refusal' };
 }
 
-async function readingTheAnswerGives(ask: JudgeAsk, answer: Response): Promise<JudgeReading> {
+async function bodyTheAnswerCarried(answer: Response): Promise<JudgeBody> {
+  try {
+    return { read: await answer.json() };
+  } catch {
+    return { unread: true };
+  }
+}
+
+/**
+ * What one judge's own answer says, once the status line has let it through.
+ *
+ * @summary A body nothing can parse is not an empty answer, however much the two look alike once a
+ * label is read off them: an empty answer is a judge that classified and named no branch, which
+ * earns the second ask, while an unparsable body is a judge that never classified at all. Reading
+ * the second as the first spends a call to learn nothing and leaves a broken judge standing, since
+ * only a refusal stands one down. A body the budget severed mid-flight is the same silence as one
+ * that never began, so it reads as a timeout and the judge keeps its seat.
+ */
+async function readingTheAnswerGives(
+  ask: JudgeAsk,
+  answer: Response,
+  bound: AbortSignal,
+): Promise<JudgeReading> {
   if (!answer.ok) return refusalTheJudgeEarns(ask, readingOfARefusal(answer, ask.now()));
 
-  const body: unknown = await answer.json().catch(() => undefined);
+  const body = await bodyTheAnswerCarried(answer);
 
-  return { heard: 'answer', label: labelTheJudgeWrote(body) };
+  if (!('unread' in body)) return { heard: 'answer', label: labelTheJudgeWrote(body.read) };
+
+  return bound.aborted
+    ? { heard: 'timeout' }
+    : refusalTheJudgeEarns(ask, { kind: 'transport-failure' });
 }
 
 /**
@@ -156,7 +186,7 @@ export async function readingOfTheJudge(ask: JudgeAsk): Promise<JudgeReading> {
   });
   const answer = await answerTheJudgeGave(ask, grant, crossingOfTheAsk(ask, grant, body), body);
 
-  if ('answered' in answer) return readingTheAnswerGives(ask, answer.answered);
+  if ('answered' in answer) return readingTheAnswerGives(ask, answer.answered, answer.bound);
 
   if (answer.silent === 'timeout') return { heard: 'timeout' };
 

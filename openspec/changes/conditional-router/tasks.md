@@ -179,7 +179,7 @@ missing state rather than a missing string.
 - [x] 12.2 The walk backtracks when a judged router offers nothing: the parent tries its next
       sibling, and no request exhausts while a healthy child stands
 - [x] 12.3 A system instruction never reads as a caller turn, in either Gemini key order
-- [ ] 12.4 A judge answer whose body fails to parse routes as a refusal that cools, never as an
+- [x] 12.4 A judge answer whose body fails to parse routes as a refusal that cools, never as an
       empty label earning a second ask
 - [ ] 12.5 The pin and cooldown report schemas type the virtual model by its own alias shape
 - [ ] 12.6 An unnamed judge earns its own reading instead of wearing a timeout

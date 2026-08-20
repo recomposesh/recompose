@@ -1,87 +1,7 @@
-import type { SpendGrant } from '@recompose/contracts';
-
 import { describe, expect, test, vi } from 'vitest';
 
-import type { BranchRule } from '../routing/policies';
-import type { JudgeAsk, JudgeCooling } from './judge-call';
-
-import { requestUrlOf } from '../gateway-router.testkit';
 import { readingOfTheJudge } from './judge-call';
-
-const BRANCHES: readonly BranchRule[] = [
-  { label: 'code', rule: 'asks to write or change code', child: 'coder' },
-  { label: 'chat', rule: 'small talk and questions', child: 'talker' },
-];
-
-const NOW = 1_700_000_000_000;
-
-const A_KEYED_JUDGE: SpendGrant = {
-  verdict: 'resolved',
-  providerOrigin: 'http://judge.test',
-  spend: { custody: 'credentialed', provider: 'openai', credential: 'sk-live-40d1' },
-};
-
-type Watched = {
-  ask: JudgeAsk;
-  sentTo: string[];
-  bodies: string[];
-  cooled: JudgeCooling[];
-  aborted: () => boolean;
-};
-
-function answering(answer: () => Response | Promise<Response>, grant = A_KEYED_JUDGE): Watched {
-  const sentTo: string[] = [];
-  const bodies: string[] = [];
-  const cooled: JudgeCooling[] = [];
-  let cut = false;
-
-  const fetchLike: typeof fetch = async (input, init) => {
-    sentTo.push(requestUrlOf(input));
-    bodies.push(typeof init?.body === 'string' ? init.body : '');
-
-    const signal = init?.signal;
-
-    return new Promise<Response>((settle, fail) => {
-      signal?.addEventListener('abort', () => {
-        cut = true;
-        fail(new Error('the judge call was cut off'));
-      });
-
-      Promise.resolve(answer()).then(settle, fail);
-    });
-  };
-
-  return {
-    sentTo,
-    bodies,
-    cooled,
-    aborted: () => cut,
-    ask: {
-      grant,
-      providerModel: 'gpt-5-mini',
-      sourceDialect: 'chat-completions',
-      gatewayName: 'Codex',
-      virtualModel: 'fast',
-      branches: BRANCHES,
-      raw: { model: 'fast', messages: [{ role: 'user', content: 'rename this function' }] },
-      boundMs: 2_000,
-      fetchLike,
-      now: () => NOW,
-      cool: (cooling) => {
-        cooled.push(cooling);
-      },
-    },
-  };
-}
-
-function neverAnswering(): Watched {
-  return answering(
-    async () =>
-      new Promise<Response>(() => {
-        return;
-      }),
-  );
-}
+import { answering, answeringWithASeveredBody, NOW, neverAnswering } from './judge-call.testkit';
 
 describe('the reading one classification call earns', () => {
   test('a judge naming a branch reads as that label', async () => {
@@ -108,10 +28,42 @@ describe('the reading one classification call earns', () => {
     await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'answer', label: '' });
   });
 
-  test('a judge answering something no reader can parse still reads as an answer', async () => {
+  test('a judge answering something no reader can parse reads as a refusal', async () => {
     const watched = answering(() => new Response('not json at all', { status: 200 }));
 
-    await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'answer', label: '' });
+    await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'refusal' });
+  });
+
+  test('a judge whose answer no reader can parse stands down like any other refusal', async () => {
+    const watched = answering(() => new Response('not json at all', { status: 200 }));
+
+    await readingOfTheJudge(watched.ask);
+
+    expect(watched.cooled).toEqual([{ coolUntilMs: NOW + 60_000 }]);
+  });
+
+  test('an empty body carries no answer either, so it reads as a refusal', async () => {
+    const watched = answering(() => new Response('', { status: 200 }));
+
+    await expect(readingOfTheJudge(watched.ask)).resolves.toEqual({ heard: 'refusal' });
+  });
+});
+
+describe('a judge whose answer stopped arriving halfway', () => {
+  test('a body severed past the budget reads as a silence rather than a refusal', async () => {
+    const watched = answeringWithASeveredBody();
+
+    await expect(readingOfTheJudge({ ...watched.ask, boundMs: 20 })).resolves.toEqual({
+      heard: 'timeout',
+    });
+  });
+
+  test('a body severed past the budget never stands the judge down', async () => {
+    const watched = answeringWithASeveredBody();
+
+    await readingOfTheJudge({ ...watched.ask, boundMs: 20 });
+
+    expect(watched.cooled).toEqual([]);
   });
 });
 
