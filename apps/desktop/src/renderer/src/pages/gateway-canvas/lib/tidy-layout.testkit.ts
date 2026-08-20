@@ -116,6 +116,13 @@ export function columnStep(): number {
   return seatAt(seats, 'virtual-model-1').x - seatAt(seats, 'gateway-0').x;
 }
 
+/** The pitch between two rows, measured off the arrangement rather than spelled out. */
+export function rowStep(): number {
+  const seats = tidyPositions(canvasOf(['virtual-model', 'virtual-model']));
+
+  return seatAt(seats, 'virtual-model-1').y - seatAt(seats, 'virtual-model-0').y;
+}
+
 /** A judge satellite advising whichever router card a scenario names. */
 export function judgeAdvising(id: string, advises: string): CanvasNode {
   return {

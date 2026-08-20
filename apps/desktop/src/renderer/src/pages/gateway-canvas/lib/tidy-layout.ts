@@ -7,13 +7,25 @@ export const CARD_MEASURE = { width: 184, height: 88 };
 /** The clear span a cable crosses between one column's card and the next one's, in pixels. */
 const CABLE_SPAN = 136;
 
-/** The measure a judge satellite declares itself at, which is smaller than any card. */
-export const SATELLITE_MEASURE = { width: 96, height: 72 };
+/**
+ * The measure a judge satellite declares itself at, which is smaller than any card.
+ *
+ * @summary The height is the round silhouette and nothing else, because the node carries no
+ * caption: a declared box taller than what the node paints would reserve canvas nobody can see and
+ * shorten the tie by exactly that much.
+ */
+export const SATELLITE_MEASURE = { width: 96, height: 44 };
 
 const COLUMN_PITCH = CARD_MEASURE.width + CABLE_SPAN;
 
-/** The clear space a satellite keeps from the card above it and the router under it, in pixels. */
-const SATELLITE_CLEARANCE = 8;
+/**
+ * The clear space a satellite keeps from the card above it and the router under it, in pixels.
+ *
+ * @summary It is the tie's whole length. The tie is dashed, and a span of a few pixels draws one
+ * dash, which reads as a join rather than as the broken line that says a judge advises rather than
+ * answers, so the clearance has to leave the rhythm room to repeat.
+ */
+const SATELLITE_CLEARANCE = 32;
 
 /**
  * How far one row stands from the next, which is whatever a satellite needs between two cards.

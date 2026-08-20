@@ -198,7 +198,7 @@ missing state rather than a missing string.
       card
 - [ ] 13.2 A router born from a virtual model seats on the model's own row, so the cable runs
       flat
-- [ ] 13.3 The satellite's tie gains reading room, and the model caption under the satellite
+- [x] 13.3 The satellite's tie gains reading room, and the model caption under the satellite
       leaves
 - [x] 13.4 The satellite wears a brain mark instead of the magnifier
 - [x] 13.5 The mode rows carry an icon beside each title
