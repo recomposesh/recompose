@@ -49,6 +49,10 @@
   --color-api-key: light-dark(var(--yellow-800), var(--yellow-500));
   --color-aggregator: light-dark(var(--purple-600), var(--purple-500));
   --color-local: light-dark(var(--coral-700), var(--coral-400));
+  --color-subscription-ink: light-dark(var(--blue-700), var(--blue-400));
+  --color-api-key-ink: light-dark(var(--yellow-800), var(--yellow-500));
+  --color-aggregator-ink: light-dark(var(--purple-700), var(--purple-400));
+  --color-local-ink: light-dark(var(--coral-700), var(--coral-400));
   --color-running: light-dark(var(--green-700), var(--green-500));
   --color-running-ink: light-dark(var(--green-900), var(--green-500));
   --color-stopped: light-dark(var(--red-700), var(--red-500));

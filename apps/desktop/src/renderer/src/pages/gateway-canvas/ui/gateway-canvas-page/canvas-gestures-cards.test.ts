@@ -206,6 +206,36 @@ describe('the asks a card hangs off its own port', () => {
   });
 });
 
+describe('the row a plus opens its ask on', () => {
+  /**
+   * A card born from a plus takes its parent's row, so the cable between them runs flat. Seating it
+   * on the column's next free row instead puts it above or below the card that asked, and the cable
+   * draws a cramped S across two rows to reach a card standing beside it.
+   */
+  test("a model's plus asks what to bind on the model's own row, one column beyond", () => {
+    const { world, record } = canvasStanding({ 'model:fast': { x: 320, y: rowStep() * 3 } });
+
+    askedOn(flowWiring(world).nodes, 'model:fast', 'onPickTarget')();
+
+    expect(record.pickers).toEqual([
+      { step: 'kind', from: 'model:fast', at: { x: 640, y: rowStep() * 3 }, origin: 'ask' },
+    ]);
+  });
+
+  test('a row already taken beyond the asking card sends the born card to a free one', () => {
+    const { world, record } = canvasStanding({
+      'model:fast': { x: 320, y: 0 },
+      'target:fast': { x: 640, y: 0 },
+    });
+
+    askedOn(flowWiring(world).nodes, 'model:fast', 'onPickTarget')();
+
+    expect(record.pickers).toEqual([
+      { step: 'kind', from: 'model:fast', at: { x: 640, y: rowStep() }, origin: 'ask' },
+    ]);
+  });
+});
+
 describe('a card taking the keyboard focus', () => {
   test('a card the canvas had not selected becomes the selection', () => {
     const { world, record } = worldWhereWritesHang(gateway);

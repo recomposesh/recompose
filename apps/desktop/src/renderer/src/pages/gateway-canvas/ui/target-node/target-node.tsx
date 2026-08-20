@@ -11,7 +11,11 @@ import {
   accountProductName,
 } from '../../../../entities/account';
 import { BrandMark } from '../../../../shared/ui';
-import { accountKindNodeTint, accountKindTextTint } from '../../lib/account-kind-paint';
+import {
+  accountKindInkTint,
+  accountKindNodeTint,
+  accountKindTextTint,
+} from '../../lib/account-kind-paint';
 import { NodeCard } from '../node-card/node-card';
 
 /** What a target card stands as: a stored account, one that left the registry, or one being picked. */
@@ -61,7 +65,7 @@ function readingOf(data: TargetNodeData): CardReading {
     return {
       kicker: accountKindName(data.account.kind),
       chipTint: accountKindTextTint[data.account.kind],
-      kickerTint: accountKindTextTint[data.account.kind],
+      kickerTint: accountKindInkTint[data.account.kind],
       chipGlyph: kindGlyphs[data.account.kind],
       chipMark: vendorMark(data.account),
       name: accountProductName(data.account),
