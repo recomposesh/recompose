@@ -88,38 +88,47 @@ export type RoutingStep =
 export const STEP_ORDER: readonly RoutingStep[] = [
   'kind',
   'router-mode',
-  'router',
-  'provider',
-  'model',
   'judge-provider',
   'judge-model',
+  'provider',
+  'model',
+  'router',
 ];
 
 function targetStep(props: RoutingPickerProps): RoutingStep {
   return props.target === undefined ? 'provider' : 'model';
 }
 
-/**
- * Which answer a conditional draft still owes, walked in the order the mode needs them.
- *
- * @summary The else branch leads, because a router that cannot say where the rest goes is a table
- * the stored shape refuses, and the judge follows it. Every answer given lands back on the mode,
- * which is where the name is typed and the save waits.
- */
-function judgeStep(judge: JudgePick['binding']): RoutingStep {
+function judgeUnanswered(judge: JudgePick['binding']): RoutingStep | undefined {
   if (judge === undefined || judge.accountId === '') {
     return 'judge-provider';
   }
 
-  return judge.providerModel === '' ? 'judge-model' : 'router';
+  return judge.providerModel === '' ? 'judge-model' : undefined;
 }
 
+/**
+ * Which answer a conditional draft still owes, walked in the order the mode needs them.
+ *
+ * @summary The judge leads, because it is the answer that makes this mode the mode it is: a person
+ * who just chose conditional chose to have requests read, and asking where the rest goes before
+ * naming what does the reading opens on the one question the other two modes would also ask. The
+ * else branch follows, since a router that cannot say where the rest goes is a table the stored
+ * shape refuses. Every answer given lands back on the mode, which is where the name is typed and
+ * the save waits.
+ */
 function conditionalStep(props: RoutingPickerProps): RoutingStep {
+  const owed = judgeUnanswered(props.judge.binding);
+
+  if (owed !== undefined) {
+    return owed;
+  }
+
   if (props.target === undefined) {
     return 'provider';
   }
 
-  return props.providerModel === '' ? 'model' : judgeStep(props.judge.binding);
+  return props.providerModel === '' ? 'model' : 'router';
 }
 
 /**

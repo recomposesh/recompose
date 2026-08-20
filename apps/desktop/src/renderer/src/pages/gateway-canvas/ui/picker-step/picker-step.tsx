@@ -133,7 +133,7 @@ function modelStep(props: RoutingPickerProps): ReactNode {
 function judgeProviderStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
     'Pick the judge',
-    { label: 'Change what this router falls back to', onPress: props.onSelectDifferentProvider },
+    { label: 'Choose a different routing mode', onPress: props.onReopenRouterMode },
     <>
       <p className="px-2 py-1.5 text-detail text-ink-secondary">{JUDGE_ADVICE}</p>
       {accountControl(props.targets, props.judge.binding?.accountId, props.judge.onPickAccount)}
@@ -230,7 +230,7 @@ function providerStep(props: RoutingPickerProps): ReactNode {
 function elseBranchStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
     'Pick the else branch',
-    { label: 'Choose a different routing mode', onPress: props.onReopenRouterMode },
+    { label: 'Select a different judge', onPress: props.judge.onSelectDifferentProvider },
     accountControl(props.targets, props.target, props.onPickTarget),
   );
 }

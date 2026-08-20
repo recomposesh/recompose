@@ -141,11 +141,11 @@ export const ModelListRefused = meta.story({
   },
 });
 
-/** A conditional draft walks past the mode, because it is born naming an else child too. */
-export const ConditionalWalksOnForItsElseBranch = meta.story({
+/** A conditional draft walks past the mode, because it is born naming what reads its requests. */
+export const ConditionalWalksOnForItsJudge = meta.story({
   args: { name: 'Fast', bindsThrough: 'router' as const, routerMode: 'conditional' as const },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('Pick the else branch')).toBeVisible();
+    await expect(await canvas.findByText('Pick the judge')).toBeVisible();
   },
 });
 

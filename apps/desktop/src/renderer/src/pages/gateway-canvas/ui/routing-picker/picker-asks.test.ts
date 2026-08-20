@@ -9,6 +9,11 @@ function asked(held: Partial<RoutingPickerProps>): RoutingPickerProps {
   return { ...pickerArgs, ...held };
 }
 
+const judgeNamed = {
+  ...pickerArgs.judge,
+  binding: { accountId: 'k1', providerModel: '' },
+};
+
 const judgeBound = {
   ...pickerArgs.judge,
   binding: { accountId: 'k1', providerModel: 'claude-haiku-4-5' },
@@ -27,17 +32,26 @@ test('a router that settled on a spreading mode has nothing left to pick', () =>
   expect(stepOf(asked({ bindsThrough: 'router', routerMode: 'round-robin' }))).toBe('router');
 });
 
-test('a router that settled on conditional walks on to what that mode is born naming', () => {
+test('a router that settled on conditional asks what reads its requests before anything else', () => {
   const conditional = { bindsThrough: 'router' as const, routerMode: 'conditional' as const };
 
-  expect(stepOf(asked({ ...conditional, target: undefined }))).toBe('provider');
-  expect(stepOf(asked({ ...conditional, target: 'k1', providerModel: '' }))).toBe('model');
+  expect(stepOf(asked({ ...conditional, target: undefined }))).toBe('judge-provider');
   expect(stepOf(asked({ ...conditional, target: 'k1', providerModel: 'gpt-5' }))).toBe(
     'judge-provider',
   );
-  expect(
-    stepOf(asked({ ...conditional, target: 'k1', providerModel: 'gpt-5', judge: judgeBound })),
-  ).toBe('router');
+  expect(stepOf(asked({ ...conditional, judge: judgeNamed }))).toBe('judge-model');
+});
+
+test('a conditional router asks where the rest goes once its judge stands whole', () => {
+  const judged = {
+    bindsThrough: 'router' as const,
+    routerMode: 'conditional' as const,
+    judge: judgeBound,
+  };
+
+  expect(stepOf(asked({ ...judged, target: undefined }))).toBe('provider');
+  expect(stepOf(asked({ ...judged, target: 'k1', providerModel: '' }))).toBe('model');
+  expect(stepOf(asked({ ...judged, target: 'k1', providerModel: 'gpt-5' }))).toBe('router');
 });
 
 test('a draft that answered the ask with a provider never meets the mode step', () => {
