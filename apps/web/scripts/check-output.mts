@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { changelogVersionPaths, docsMarkdownPaths, docsPagePaths } from './published-paths.mts';
@@ -65,6 +65,18 @@ const documentPaths = [
 
 for (const sitePath of documentPaths) {
   assertDocument(sitePath);
+}
+
+const answeredFromTheBuild = path.join(emittedDir, '__tsr', 'staticServerFnCache');
+const cachedAnswers = existsSync(answeredFromTheBuild)
+  ? readdirSync(answeredFromTheBuild).length
+  : 0;
+const docsPageCount = docsPagePaths(webRoot).length;
+
+if (cachedAnswers < docsPageCount) {
+  failures.push(
+    `the docs loader left ${cachedAnswers} of ${docsPageCount} answers in the build, so a navigation into the rest calls a server no deploy runs`,
+  );
 }
 
 const markdownPaths = docsMarkdownPaths(webRoot);
