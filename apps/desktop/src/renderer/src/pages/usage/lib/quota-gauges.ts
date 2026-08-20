@@ -42,6 +42,8 @@ export type QuotaGauge = {
 export type AccountQuota = {
   /** The account every gauge under it belongs to. */
   accountId: string;
+  /** The provider the account's windows named, so the card can say whose plan burns. */
+  provider: string;
   /** The account's windows, in the order they arrived. */
   gauges: readonly QuotaGauge[];
 };
@@ -126,14 +128,14 @@ export function quotaGaugesOf(
   windows: readonly QuotaWindow[],
   now: number,
 ): readonly AccountQuota[] {
-  const folded = new Map<string, QuotaGauge[]>();
+  const folded = new Map<string, { provider: string; gauges: QuotaGauge[] }>();
 
   for (const window of windows) {
-    const held = folded.get(window.accountId) ?? [];
+    const held = folded.get(window.accountId) ?? { provider: window.provider, gauges: [] };
 
-    held.push(gaugeOf(window, now));
+    held.gauges.push(gaugeOf(window, now));
     folded.set(window.accountId, held);
   }
 
-  return [...folded].map(([accountId, gauges]) => ({ accountId, gauges }));
+  return [...folded].map(([accountId, { provider, gauges }]) => ({ accountId, provider, gauges }));
 }

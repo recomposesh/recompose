@@ -47,8 +47,12 @@ function windowsFor(now: number): readonly QuotaWindow[] {
   ];
 }
 
-async function mounted(ui: ReactNode, quotaWindows: readonly QuotaWindow[]) {
-  installFakeBridge({ accounts: registry, quotaWindows });
+async function mounted(
+  ui: ReactNode,
+  quotaWindows: readonly QuotaWindow[],
+  accounts: AccountsDocument = registry,
+) {
+  installFakeBridge({ accounts, quotaWindows });
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -58,7 +62,7 @@ async function mounted(ui: ReactNode, quotaWindows: readonly QuotaWindow[]) {
 test('a burn draws against the record, which the gauge hands to assistive tech exactly', async () => {
   const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
 
-  const gauge = screen.getByRole('meter', { name: 'Claude Max 5-hour window burn' });
+  const gauge = screen.getByRole('meter', { name: 'Claude · Claude Max 5-hour window burn' });
 
   await expect.element(screen.getByText('1.2M')).toBeVisible();
   expect(gauge.element().getAttribute('aria-valuenow')).toBe('0.48');
@@ -108,10 +112,62 @@ test('a window that matched the record says so rather than reading as exhausted'
   ];
 
   const screen = await mounted(<QuotaStrip />, matched);
-  const gauge = screen.getByRole('meter', { name: 'Claude Max 5-hour window burn' });
+  const gauge = screen.getByRole('meter', { name: 'Claude · Claude Max 5-hour window burn' });
 
   await expect.element(screen.getByText('Busiest window on record')).toBeVisible();
   expect(Number(gauge.element().getAttribute('aria-valuenow'))).toBeLessThan(1);
+});
+
+test('the card heads with the plan product and keeps the address beneath it', async () => {
+  const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
+
+  await expect.element(screen.getByText('Claude', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Claude Max', { exact: true })).toBeVisible();
+});
+
+test('two plans on one address read apart by their plan products', async () => {
+  const now = Date.now();
+  const oneAddress: AccountsDocument = {
+    schemaVersion: ACCOUNTS_VERSION,
+    accounts: [
+      {
+        id: 'work',
+        kind: 'subscription',
+        provider: 'anthropic',
+        label: 'dev@example.com',
+        provenance: 'sign-in',
+      },
+      {
+        id: 'codex-work',
+        kind: 'subscription',
+        provider: 'openai',
+        label: 'dev@example.com',
+        provenance: 'sign-in',
+      },
+    ],
+  };
+  const bothBurning: readonly QuotaWindow[] = [
+    ...windowsFor(now),
+    {
+      accountId: 'codex-work',
+      provider: 'openai',
+      length: '5h',
+      openedAt: now - AN_HOUR,
+      closesAt: now + AN_HOUR,
+      burnTokens: 300_000,
+      record: { burnTokens: 500_000, openedAt: AUGUST_THIRD },
+    },
+  ];
+
+  const screen = await mounted(<QuotaStrip />, bothBurning, oneAddress);
+
+  await expect
+    .element(screen.getByRole('meter', { name: 'Claude · dev@example.com 5-hour window burn' }))
+    .toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('meter', { name: 'Codex · dev@example.com 5-hour window burn' }))
+    .toBeInTheDocument();
+  expect(screen.getByText('dev@example.com').elements()).toHaveLength(2);
 });
 
 test('an account nothing has been logged for keeps the strip off the screen entirely', async () => {

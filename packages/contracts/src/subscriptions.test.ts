@@ -6,6 +6,7 @@ import {
   signsInByDeviceCode,
   signsInThroughTheBrowser,
   subscriptionAccountViewSchema,
+  subscriptionProductNameOf,
   subscriptionProvenanceSchema,
   subscriptionProviderIdSchema,
   subscriptionProviders,
@@ -124,6 +125,24 @@ describe('the tool run that hands a renewal back to the credential’s owner', (
 
   test('Codex names no run, because none of its commands renews without spending a turn', () => {
     expect(subscriptionProviders.openai.renewArguments).toEqual([]);
+  });
+});
+
+describe('the plan product a stored subscription reads as', () => {
+  test('every plan in the vocabulary reads as the product its provider sells', () => {
+    expect(subscriptionProductNameOf('anthropic')).toBe('Claude');
+    expect(subscriptionProductNameOf('openai')).toBe('Codex');
+    expect(subscriptionProductNameOf('antigravity')).toBe('Gemini');
+    expect(subscriptionProductNameOf('kimi')).toBe('Kimi Code');
+    expect(subscriptionProductNameOf('copilot')).toBe('GitHub Copilot');
+  });
+
+  test('a provider outside the vocabulary reads as the identity it was stored under', () => {
+    expect(subscriptionProductNameOf('some-legacy-provider')).toBe('some-legacy-provider');
+  });
+
+  test('the product name and the sign-in name stay two readings, not one', () => {
+    expect(subscriptionProductNameOf('anthropic')).not.toBe(subscriptionPlanNames.anthropic);
   });
 });
 

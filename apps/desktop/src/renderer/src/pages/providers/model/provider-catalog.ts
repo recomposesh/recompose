@@ -8,6 +8,7 @@ import type {
 import {
   documentedKeyOpeningOf,
   localRuntimeIdSchema,
+  subscriptionProductNameOf,
   subscriptionProviderIdSchema,
   vendorEndpointOf,
 } from '@recompose/contracts';
@@ -56,18 +57,13 @@ function keyOfferIn(entry: CatalogEntry): CatalogOffer | undefined {
 /**
  * The plan product a stored subscription reads as, which is what its catalog card read as.
  *
- * @summary A person connected "Claude", so the row that lists the account keeps that word
- * rather than trading it for the vendor behind it.
+ * @summary The contracts vocabulary owns the reading so every surface says the same word, and the
+ * catalog only answers for an id outside it, where a legacy row still deserves its catalog name.
  */
 export function subscriptionTitleFor(id: string): string {
-  if (id === 'antigravity') {
-    return 'Gemini';
-  }
+  const parsed = subscriptionProviderIdSchema.safeParse(id);
 
-  const entry = entryFor(id);
-  const title = entry === undefined ? undefined : offerFor(entry, 'subscription')?.title;
-
-  return title ?? providerName(id);
+  return parsed.success ? subscriptionProductNameOf(parsed.data) : providerName(id);
 }
 
 /** The vendor mark used for a subscription product whose transport has its own provider id. */
