@@ -55,7 +55,7 @@
 ## 7. The build contract
 
 - [x] 7.1 Derive the prerender page list from the content source
-- [ ] 7.2 Fail the build on a prerender error rather than emitting a partial site
+- [x] 7.2 Fail the build on a prerender error rather than emitting a partial site
 - [x] 7.3 Assert a document for every published route, including every content page
 - [x] 7.4 Assert no server function survives into the emitted directory
 - [x] 7.5 Assert the search index is present and answers
@@ -68,9 +68,9 @@
 
 ## 9. The deployment
 
-- [ ] 9.1 Configure the assets-only Worker with the emitted directory
-- [ ] 9.2 Pin not-found handling to the site's own document, never the single-page fallback
-- [ ] 9.3 Deploy on a merge
+- [x] 9.1 Configure the assets-only Worker with the emitted directory
+- [x] 9.2 Pin not-found handling to the site's own document, never the single-page fallback
+- [x] 9.3 Deploy on a merge
 
 ## 10. The record
 
