@@ -74,7 +74,10 @@ export const StandingOnItsCard = meta.story({
 
 /** The second stage stands in the same place, because one question replaced the other. */
 export const TheSecondStageKeepsTheSeat = meta.story({
-  args: { stage: { step: 'provider-model', accountId: 'key-work' }, groups: models },
+  args: {
+    stage: { step: 'provider-model', asks: 'target', accountId: 'key-work' },
+    groups: models,
+  },
   play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByRole('dialog', { name: 'Pick a model' })).toBeVisible();
 

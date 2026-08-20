@@ -65,6 +65,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
     onPickAccount,
     onPickKind,
     onPickProviderModel,
+    onPickRouterMode,
     onStepBack,
   } = picker;
 
@@ -75,6 +76,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
       onPickAccount={onPickAccount}
       onPickKind={onPickKind}
       onPickProviderModel={onPickProviderModel}
+      onPickRouterMode={onPickRouterMode}
       onStepBack={onStepBack}
       pickedName={pickedName}
       refusal={refusal}

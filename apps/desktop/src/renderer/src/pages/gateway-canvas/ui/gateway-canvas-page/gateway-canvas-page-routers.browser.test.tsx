@@ -10,7 +10,6 @@ import {
 import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 import {
   cardAcross,
-  cardSeat,
   droppedOnOpenCanvas,
   ladderUnder,
   routeNodeOf,
@@ -74,21 +73,6 @@ test('picking the router stands a wired router holding no child', async () => {
     .toMatchObject({ kind: 'router', policy: { mode: 'failover' }, children: [] });
 });
 
-test('the same ask from a router port nests a second router under the first', async () => {
-  const screen = await canvasPageOn(pooledWorld);
-
-  await droppedOnOpenCanvas(screen.container, 'route:pooled');
-  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Router/ }));
-
-  await expect
-    .poll(async () => {
-      const routing = await routingOf('pooled');
-
-      return Object.values(routing?.nodes ?? {}).filter((node) => node.kind === 'router').length;
-    })
-    .toBe(2);
-});
-
 test('a cable from a router lands on a stored target, which joins the ladder as one more child', async () => {
   const screen = await canvasPageOn(pooledWorld);
 
@@ -137,26 +121,6 @@ test('stepping back mid-child-rebind reopens the accounts, and the fresh pick st
     .poll(async () => routeNodeOf('pooled', 't2'))
     .toEqual({ kind: 'target', accountId: 'k1', providerModel: 'claude-opus-5' });
   expect(await ladderUnder('pooled')).toEqual(['t1', 't2']);
-});
-
-test('a card born under a router stands where the cable was let go rather than at a tidy seat', async () => {
-  const screen = await canvasPageOn(pooledWorld);
-
-  await droppedOnOpenCanvas(screen.container, 'route:pooled');
-
-  const letGoAt = await vi.waitFor(() => {
-    const pending = cardSeat(screen.container, '[data-id="pending"]');
-
-    if (pending === undefined) {
-      throw new Error('no pending card stands where the cable was let go yet');
-    }
-
-    return pending;
-  });
-
-  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Router/ }));
-
-  await expect.poll(() => cardSeat(screen.container, '[data-id^="route:pooled:"]')).toBe(letGoAt);
 });
 
 test("a child bound through the router's plus stands beyond the router rather than in its column", async () => {

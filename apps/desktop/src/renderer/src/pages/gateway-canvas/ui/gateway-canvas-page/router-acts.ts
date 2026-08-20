@@ -1,9 +1,8 @@
 import type { VirtualModel } from '@recompose/contracts';
 
-import { mintRouteNodeId, nameOfRouter } from '@recompose/contracts';
+import { nameOfRouter } from '@recompose/contracts';
 
 import type { SettledDefinition } from '../../lib/model-draft';
-import type { RouteAddress } from '../../lib/route-addresses';
 import type { CanvasWorld } from './canvas-standings';
 
 import { closeInspector, openInspector } from '../../../../shared/lib';
@@ -14,15 +13,11 @@ import {
   gatewayDefiningRouted,
 } from '../../lib/model-draft';
 import { DRAFT_NODE_ID } from '../../lib/node-graph';
-import { addressWritten } from '../../lib/route-addresses';
-import {
-  gatewayBindingChild,
-  gatewayDroppingNode,
-  gatewayRoutingThrough,
-} from '../../lib/routing-edits';
+import { gatewayDroppingNode, gatewayRoutingThrough } from '../../lib/routing-edits';
 import { editDraft, heldDraft } from '../../lib/use-held-draft';
 import { committedPick, graduatedDraft, releasedWithNothingSelected } from './binding-acts';
 import { cardAddressOf, modelIdOf, routerAddressOf } from './canvas-wiring';
+import { nestedUnderARouter } from './nested-routers';
 import { modelHolding, parentRouterAt } from './route-parents';
 
 const BORN_ROUTER_NAME = nameOfRouter(BORN_ROUTER_MODE);
@@ -91,60 +86,15 @@ function routedThroughANewRouter(world: CanvasWorld, modelId: string): void {
 }
 
 /**
- * What the router taking a child is called, in the words the canvas already showed for it.
- *
- * @summary The card, the inspector, and the refusal all read this name, so the live region reads it
- * too rather than naming the definition: one definition can hold many routers, and a person hearing
- * only the definition could not tell which of them just took the child.
- */
-function nameOfParentRouter(model: VirtualModel, routeNodeId: string): string | undefined {
-  const node = model.routing.nodes[routeNodeId];
-
-  return node?.kind === 'router' ? nameOfRouter(node.policy.mode, node.displayName) : undefined;
-}
-
-function nestedUnderARouter(world: CanvasWorld, address: RouteAddress): void {
-  const parent = parentRouterAt(world, address);
-
-  if (parent === undefined) {
-    return;
-  }
-
-  const parentName = nameOfParentRouter(parent.model, parent.routeNodeId);
-
-  if (parentName === undefined) {
-    return;
-  }
-
-  const born = mintRouteNodeId();
-
-  committedPick(
-    world,
-    `route:${addressWritten({ modelId: address.modelId, routeNodeId: born })}`,
-    gatewayBindingChild(world.gateway, address.modelId, parent.routeNodeId, born, {
-      kind: 'router',
-      policy: { mode: BORN_ROUTER_MODE },
-      children: [],
-    }),
-    () => {
-      world.standings.announce({
-        kind: 'nested',
-        virtualModel: parent.model.displayName,
-        parentRouter: parentName,
-        target: BORN_ROUTER_NAME,
-      });
-    },
-  );
-}
-
-/**
  * Answers the binding ask with a router, wherever the cable that opened it left from.
  *
  * @summary One ask serves three shapes of the same intent. A draft finishes as a definition
  * routing through a router, so a person composing top down never detours through a target they
  * did not want. A bound definition takes the router in its binding's place and keeps what stood
  * there as the router's first child, which is what dropping a router onto a bound model means. A
- * router's own port nests another, so one gesture reaches a nested router rather than two.
+ * router's own port nests another, so one gesture reaches a nested router rather than two, and
+ * that one alone asks how the router spreads before it writes: the two shapes above it are born
+ * empty and fill by cable, while a nested conditional owes a judge and a fallback first.
  */
 export function boundThroughARouter(world: CanvasWorld, from: string): void {
   const address = routerAddressOf(from);

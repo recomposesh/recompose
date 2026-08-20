@@ -135,8 +135,17 @@ export function gatewayOfAJudgedRouter(): GatewayConfig {
   });
 }
 
-/** A gateway whose definition routes through a router standing under another router. */
-export function gatewayOfNestedRouters(): GatewayConfig {
+/**
+ * A definition routing through a chain of failover routers, each holding the next and nothing else.
+ *
+ * @summary Depth is the only thing the nesting scenarios differ by: one wants a router below the
+ * entry to nest under, another wants the chain standing exactly at the four the stored walk allows,
+ * where one more router is the table the schema refuses. Naming the depth rather than spelling each
+ * table out keeps the two from drifting apart.
+ */
+export function gatewayOfNestedRouters(levels = 2): GatewayConfig {
+  const rungs = [...Array.from({ length: levels }).keys()].map((place) => `r${String(place + 1)}`);
+
   return gatewaySeed({
     slug: CANVAS,
     displayName: 'My Gateway',
@@ -147,10 +156,16 @@ export function gatewayOfNestedRouters(): GatewayConfig {
         displayName: 'Deep',
         routing: {
           entry: 'r1',
-          nodes: {
-            r1: { kind: 'router', policy: { mode: 'failover' }, children: ['r2'] },
-            r2: { kind: 'router', policy: { mode: 'failover' }, children: [] },
-          },
+          nodes: Object.fromEntries(
+            rungs.map((rung, place) => [
+              rung,
+              {
+                kind: 'router',
+                policy: { mode: 'failover' },
+                children: rungs.slice(place + 1, place + 2),
+              },
+            ]),
+          ),
         },
       },
     ],

@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import type { useDefineVirtualModel } from '../../../../shared/api';
 import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { NodePositions, XY } from '../../lib/canvas-positions';
+import type { JudgeBinding } from '../../lib/conditional-draft';
 import type { CanvasGraph, CanvasOverlay } from '../../lib/node-graph';
 import type { HeldDraft } from '../../lib/use-held-draft';
 
@@ -27,13 +28,32 @@ type AnchoredAsk = {
   replacing?: string | undefined;
 };
 
+/** An ask standing on its own pending card, which is where the cable that opened it was let go. */
+export type DroppedAsk = { from: string; at: XY; origin: PickerOrigin };
+
+/**
+ * What a nested conditional router has been told so far, held until the whole of it can store.
+ *
+ * @summary The stored shape refuses a conditional router missing a judge or an else child, so the
+ * walk gathers both before it writes anything, exactly as a drawer draft does. The account stands
+ * apart from the judge because a walk mid-model-pick has named one and bound neither.
+ */
+export type BornConditional = {
+  /** What will read the requests, or nothing while the judge steps still stand. */
+  judge: JudgeBinding | undefined;
+  /** The account the step standing has settled on, which is empty while that step asks for one. */
+  accountId: string;
+};
+
 /** Where the binding ask stands: on a pending card, or anchored to a stored target. */
 export type PickerStanding =
-  | { step: 'kind'; from: string; at: XY; origin: PickerOrigin }
-  | { step: 'account'; from: string; at: XY; origin: PickerOrigin }
   | ({ step: 'account' } & AnchoredAsk)
-  | { step: 'provider-model'; from: string; accountId: string; at: XY; origin: PickerOrigin }
-  | ({ step: 'provider-model'; accountId: string } & AnchoredAsk);
+  | ({ step: 'account' } & DroppedAsk)
+  | ({ step: 'kind' } & DroppedAsk)
+  | ({ step: 'nesting'; born: BornConditional } & DroppedAsk)
+  | ({ step: 'provider-model'; accountId: string } & AnchoredAsk)
+  | ({ step: 'provider-model'; accountId: string } & DroppedAsk)
+  | ({ step: 'router-mode' } & DroppedAsk);
 
 /** What opened the picker: a cable let go by hand, or an ask answered with the keyboard. */
 type PickerOrigin = 'drop' | 'ask';
@@ -187,6 +207,10 @@ export function revealOn(standings: CanvasStandings, subject: string): void {
 
 /** The account whose models the picker asks for, or none while it is asking something else. */
 export function pickedAccountId(picker: PickerStanding | undefined): string {
+  if (picker?.step === 'nesting') {
+    return picker.born.accountId;
+  }
+
   return picker?.step === 'provider-model' ? picker.accountId : '';
 }
 

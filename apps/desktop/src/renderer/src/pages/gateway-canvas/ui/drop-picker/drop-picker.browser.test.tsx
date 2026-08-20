@@ -41,6 +41,9 @@ async function renderPicker(
         onPickProviderModel={(providerModel) => {
           heard.push(`provider model ${providerModel}`);
         }}
+        onPickRouterMode={(mode) => {
+          heard.push(`router mode ${mode}`);
+        }}
         onStepBack={
           standsBehind
             ? () => {
@@ -89,7 +92,7 @@ test('Esc at the kind ask dismisses just as it does at every other stage', async
 });
 
 test('the picker opens on the stored accounts, gathered under the kinds they are', async () => {
-  const { screen } = await renderPicker({ step: 'account' }, accounts);
+  const { screen } = await renderPicker({ step: 'account', asks: 'target' }, accounts);
 
   await expect.element(screen.getByRole('button', { name: 'work key' })).toBeVisible();
   await expect.element(screen.getByRole('button', { name: 'Claude Max' })).toBeVisible();
@@ -97,7 +100,7 @@ test('the picker opens on the stored accounts, gathered under the kinds they are
 });
 
 test('picking an account hands its id back, which is what carries the binding on', async () => {
-  const { heard, screen } = await renderPicker({ step: 'account' }, accounts);
+  const { heard, screen } = await renderPicker({ step: 'account', asks: 'target' }, accounts);
 
   await screen.getByRole('button', { name: 'work key' }).click();
 
@@ -106,7 +109,7 @@ test('picking an account hands its id back, which is what carries the binding on
 
 test('the second stage picks the model the account serves, which completes the binding', async () => {
   const { heard, screen } = await renderPicker(
-    { step: 'provider-model', accountId: 'key-work' },
+    { step: 'provider-model', asks: 'target', accountId: 'key-work' },
     models,
   );
 
@@ -117,7 +120,7 @@ test('the second stage picks the model the account serves, which completes the b
 
 test('the second stage offers the way back to the provider choices', async () => {
   const { heard, screen } = await renderPicker(
-    { step: 'provider-model', accountId: 'key-work' },
+    { step: 'provider-model', asks: 'target', accountId: 'key-work' },
     models,
   );
 
@@ -127,7 +130,7 @@ test('the second stage offers the way back to the provider choices', async () =>
 });
 
 test('the account stage offers the way back to the ask that opened it', async () => {
-  const { heard, screen } = await renderPicker({ step: 'account' }, accounts);
+  const { heard, screen } = await renderPicker({ step: 'account', asks: 'target' }, accounts);
 
   await screen.getByRole('button', { name: 'Select router or provider' }).click();
 
@@ -135,7 +138,7 @@ test('the account stage offers the way back to the ask that opened it', async ()
 });
 
 test('a stage nothing stands behind offers no way back, so the chevron never lies', async () => {
-  const { screen } = await renderPicker({ step: 'account' }, accounts, false);
+  const { screen } = await renderPicker({ step: 'account', asks: 'target' }, accounts, false);
 
   await expect
     .element(screen.getByRole('button', { name: 'Select router or provider' }))
@@ -149,7 +152,7 @@ test('the kind ask offers no way back, because it is the first thing a binding a
 });
 
 test('Esc dismisses the picker, which is what takes the pending card away with it', async () => {
-  const { heard } = await renderPicker({ step: 'account' }, accounts);
+  const { heard } = await renderPicker({ step: 'account', asks: 'target' }, accounts);
 
   await userEvent.keyboard('{Escape}');
 
@@ -157,7 +160,10 @@ test('Esc dismisses the picker, which is what takes the pending card away with i
 });
 
 test('Esc at the second stage dismisses just as it does at the first', async () => {
-  const { heard } = await renderPicker({ step: 'provider-model', accountId: 'key-work' }, models);
+  const { heard } = await renderPicker(
+    { step: 'provider-model', asks: 'target', accountId: 'key-work' },
+    models,
+  );
 
   await userEvent.keyboard('{Escape}');
 
@@ -165,13 +171,13 @@ test('Esc at the second stage dismisses just as it does at the first', async () 
 });
 
 test('the picker lands focus on its first option, so a keyboard alone can bind', async () => {
-  const { screen } = await renderPicker({ step: 'account' }, accounts);
+  const { screen } = await renderPicker({ step: 'account', asks: 'target' }, accounts);
 
   await expect.element(screen.getByRole('button', { name: 'work key' })).toHaveFocus();
 });
 
 test('a picker offering nothing to pick still takes focus, so Esc has somewhere to land', async () => {
-  const { heard, screen } = await renderPicker({ step: 'account' }, []);
+  const { heard, screen } = await renderPicker({ step: 'account', asks: 'target' }, []);
 
   await expect.poll(() => screen.container.contains(document.activeElement)).toBe(true);
 
@@ -181,7 +187,7 @@ test('a picker offering nothing to pick still takes focus, so Esc has somewhere 
 });
 
 test('moving to the second stage carries focus onto the model list it opens on', async () => {
-  const { screen } = await renderPicker({ step: 'account' }, accounts);
+  const { screen } = await renderPicker({ step: 'account', asks: 'target' }, accounts);
 
   await expect.element(screen.getByRole('button', { name: 'work key' })).toHaveFocus();
 
@@ -195,8 +201,9 @@ test('moving to the second stage carries focus onto the model list it opens on',
         onPickAccount={() => {}}
         onPickKind={() => {}}
         onPickProviderModel={() => {}}
+        onPickRouterMode={() => {}}
         onStepBack={() => {}}
-        stage={{ step: 'provider-model', accountId: 'key-work' }}
+        stage={{ step: 'provider-model', asks: 'target', accountId: 'key-work' }}
       />
     </RouterFooting>,
   );
@@ -206,7 +213,7 @@ test('moving to the second stage carries focus onto the model list it opens on',
 
 test('a stage that offers nothing says so rather than standing empty', async () => {
   const { heard, screen } = await renderPicker(
-    { step: 'provider-model', accountId: 'key-work' },
+    { step: 'provider-model', asks: 'target', accountId: 'key-work' },
     [],
   );
 

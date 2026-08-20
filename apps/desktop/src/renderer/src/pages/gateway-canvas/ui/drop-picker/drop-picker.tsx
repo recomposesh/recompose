@@ -3,87 +3,104 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import { useEffect, useId, useRef } from 'react';
 
 import type { BoundKind } from '../../lib/binding-kinds';
+import type { RouterMode } from '../../lib/routing-edits';
 import type { OptionGroup } from '../option-list/option-list';
+import type { PickerStage, StageWording } from './picker-stages';
 
 import { useStepTransition } from '../../../../shared/lib';
 import { Button, placeFocus } from '../../../../shared/ui';
 import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
+import { ModeRows } from '../mode-rows/mode-rows';
 import { NoProviderRows } from '../no-provider-rows/no-provider-rows';
 import { OptionList } from '../option-list/option-list';
+import { STAGE_ORDER, stageKey, stageWording } from './picker-stages';
 
-/** Which part of the binding the ask is asking for, and what the parts before it settled on. */
-export type PickerStage =
-  | { step: 'kind' }
-  | { step: 'account' }
-  | { step: 'provider-model'; accountId: string };
-
-type StageWording = {
-  heading: string;
-  searchLabel: string;
-  nothingMatched: string;
-  stepBack: string;
-};
-
-const wording: Record<PickerStage['step'], StageWording> = {
-  kind: {
-    heading: 'Bind this model to',
-    searchLabel: 'Search kinds',
-    nothingMatched: 'Nothing binds here.',
-    stepBack: '',
-  },
-  account: {
-    heading: 'Connected providers',
-    searchLabel: 'Search providers',
-    nothingMatched: 'No provider matches that.',
-    stepBack: 'Select router or provider',
-  },
-  'provider-model': {
-    heading: 'Pick a model',
-    searchLabel: 'Search models',
-    nothingMatched: 'No model matches that.',
-    stepBack: 'Select a different provider',
-  },
-};
+export type { PickerStage };
 
 const KIND_OPTIONS: readonly OptionGroup[] = [{ options: BINDING_KINDS }];
 
-function stageBody(
-  stage: PickerStage,
-  refusal: string | undefined,
-  said: StageWording,
-  groups: readonly OptionGroup[],
-  onPick: (picked: string) => void,
-  focusSearch: boolean,
-): ReactNode {
-  if (refusal !== undefined) {
-    return (
-      <p className="px-1 pb-1 text-detail text-ink" role="alert">
-        {refusal}
-      </p>
-    );
-  }
+type PickActs = {
+  onPickKind: (kind: BoundKind) => void;
+  onPickRouterMode: (mode: RouterMode) => void;
+  onPickAccount: (accountId: string) => void;
+  onPickProviderModel: (providerModel: string) => void;
+};
 
-  if (stage.step === 'account' && groups.length === 0) {
+/** What one stage puts on offer, which is the list it draws from and the acts that receive it. */
+type StageOffer = { groups: readonly OptionGroup[]; acts: PickActs };
+
+function listedBody(stage: PickerStage, said: StageWording, offered: StageOffer): ReactNode {
+  if (stage.step === 'account' && offered.groups.length === 0) {
     return <NoProviderRows />;
   }
 
   return (
     <OptionList
-      focusSearch={focusSearch}
-      groups={groups}
+      focusSearch={stage.step === 'provider-model'}
+      groups={stage.step === 'kind' ? KIND_OPTIONS : offered.groups}
       nothingMatched={said.nothingMatched}
-      onPick={onPick}
+      onPick={pickedAt(stage, offered.acts)}
       picked={undefined}
       searchLabel={said.searchLabel}
     />
   );
 }
 
-type PickActs = {
-  onPickKind: (kind: BoundKind) => void;
-  onPickAccount: (accountId: string) => void;
-  onPickProviderModel: (providerModel: string) => void;
-};
+/**
+ * The three modes a nested router may spread by, stacked the way the drawer stacks them.
+ *
+ * @summary Each row carries its own cost beside its name, and no row rests chosen, because a mode
+ * standing preselected would answer for the person and nest a router nobody picked.
+ */
+function modeBody(acts: PickActs): ReactNode {
+  return (
+    <div className="p-0.5">
+      <ModeRows
+        onChangeValue={(mode) => {
+          acts.onPickRouterMode(mode);
+        }}
+        value={undefined}
+      />
+    </div>
+  );
+}
+
+function refusalBody(refusal: string): ReactNode {
+  return (
+    <p className="px-1 pb-1 text-detail text-ink" role="alert">
+      {refusal}
+    </p>
+  );
+}
+
+/** What the stage standing offers, which is a list on every stage but the one asking the mode. */
+function stageBody(
+  stage: PickerStage,
+  refusal: string | undefined,
+  said: StageWording,
+  offered: StageOffer,
+): ReactNode {
+  if (refusal !== undefined) {
+    return refusalBody(refusal);
+  }
+
+  return stage.step === 'router-mode' ? modeBody(offered.acts) : listedBody(stage, said, offered);
+}
+
+/**
+ * How tall the body under the heading may stand, which the mode step alone is exempt from.
+ *
+ * @summary A list is capped and scrolls, because it grows with whatever a person connected and an
+ * uncapped one would run off the canvas. The three modes are a fixed set carrying the cost of
+ * choosing each, so they render whole: a person weighing three costs against each other should not
+ * have to scroll a popover to find the third, and a capped region holding no tab stop of its own
+ * would hide that row from the keyboard as well as from the eye.
+ */
+function bodyFace(stage: PickerStage): string {
+  const face = 'px-1.5 pb-1';
+
+  return stage.step === 'router-mode' ? face : `max-h-64 overflow-y-auto ${face}`;
+}
 
 function pickedAt(stage: PickerStage, acts: PickActs): (picked: string) => void {
   if (stage.step === 'kind') {
@@ -93,14 +110,6 @@ function pickedAt(stage: PickerStage, acts: PickActs): (picked: string) => void 
   }
 
   return stage.step === 'account' ? acts.onPickAccount : acts.onPickProviderModel;
-}
-
-function headingWords(stage: PickerStage, said: StageWording, pickedName: string | undefined) {
-  if (stage.step !== 'provider-model' || pickedName === undefined) {
-    return said.heading;
-  }
-
-  return `Models ${pickedName} serves`;
 }
 
 function stageHeading(
@@ -138,6 +147,8 @@ export type DropPickerProps = {
   pickedName: string | undefined;
   /** Receives which of the two kinds a person chose to bind here. */
   onPickKind: (kind: BoundKind) => void;
+  /** Receives how the router being nested here spreads. */
+  onPickRouterMode: (mode: RouterMode) => void;
   /** Receives the account a person settled the first stage on. */
   onPickAccount: (accountId: string) => void;
   /** Receives the provider model that completes the binding. */
@@ -149,14 +160,16 @@ export type DropPickerProps = {
 };
 
 /**
- * The two-stage picker that finishes a cable a person let go of, standing on its pending card.
+ * The stepped picker that finishes a cable a person let go of, standing on its pending card.
  *
  * @summary Render it inside the pending target card, so the question stands where the cable landed
  * rather than at a coordinate a person has to hunt for. A binding needs both an account and the
  * model that account serves, so the account settles first and the model second, and one write
- * commits them together. Every stage a person walked into offers the chevron back out of it, and a
- * stage nothing stands behind wears none, so the chevron never promises a step that is not there.
- * Esc leaves at any stage, which is the one way out that changes nothing.
+ * commits them together. A router nested here walks further: it says how it spreads, and a
+ * conditional one names a judge and a fallback, because the stored shape refuses a router holding
+ * neither. Every stage a person walked into offers the chevron back out of it, and a stage nothing
+ * stands behind wears none, so the chevron never promises a step that is not there. Esc leaves at
+ * any stage, which is the one way out that changes nothing.
  */
 export function DropPicker({
   stage,
@@ -164,6 +177,7 @@ export function DropPicker({
   refusal,
   pickedName,
   onPickKind,
+  onPickRouterMode,
   onPickAccount,
   onPickProviderModel,
   onStepBack,
@@ -171,8 +185,9 @@ export function DropPicker({
 }: DropPickerProps) {
   const headingId = useId();
   const asking = useRef<HTMLDialogElement>(null);
-  const said = wording[stage.step];
-  const transition = useStepTransition(stage.step, ['kind', 'account', 'provider-model']);
+  const said = stageWording(stage, pickedName);
+  const key = stageKey(stage);
+  const transition = useStepTransition(key, STAGE_ORDER);
 
   useEffect(() => {
     const asked = asking.current;
@@ -180,7 +195,7 @@ export function DropPicker({
 
     asked?.show();
     placeFocus(body?.querySelector<HTMLElement>('input, button') ?? asked);
-  }, [stage.step]);
+  }, [key]);
 
   return (
     <dialog
@@ -195,17 +210,13 @@ export function DropPicker({
       ref={asking}
       tabIndex={-1}
     >
-      <div className={transition} key={stage.step}>
-        {stageHeading(headingId, headingWords(stage, said, pickedName), said, onStepBack)}
-        <div className="max-h-64 overflow-y-auto px-1.5 pb-1" data-picker-body="">
-          {stageBody(
-            stage,
-            refusal,
-            said,
-            stage.step === 'kind' ? KIND_OPTIONS : groups,
-            pickedAt(stage, { onPickKind, onPickAccount, onPickProviderModel }),
-            stage.step === 'provider-model',
-          )}
+      <div className={transition} key={key}>
+        {stageHeading(headingId, said.heading, said, onStepBack)}
+        <div className={bodyFace(stage)} data-picker-body="">
+          {stageBody(stage, refusal, said, {
+            groups,
+            acts: { onPickKind, onPickRouterMode, onPickAccount, onPickProviderModel },
+          })}
         </div>
       </div>
     </dialog>

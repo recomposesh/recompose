@@ -12,7 +12,6 @@ import { boundThroughARouter } from './router-acts';
 import {
   accounts,
   CANVAS,
-  gatewayOfNestedRouters,
   ladderIn,
   modeIn,
   nodeWritten,
@@ -71,30 +70,13 @@ describe('a router answering the binding ask from a bound definition', () => {
 });
 
 describe("a router answering the binding ask from another router's port", () => {
-  test('the born router joins the ladder holding it, carrying no child of its own', () => {
+  test('nothing is nested straight away, because the mode a nest spreads by is asked first', () => {
     const { world, record } = worldWhereWritesLand(gateway, { accounts });
 
     boundThroughARouter(world, 'route:pooled');
 
-    const routing = routingWritten(record, 'pooled');
-    const ladder = ladderIn(routing, 'r1');
-
-    expect(ladder?.slice(0, 2)).toEqual(['t1', 't2']);
-    expect(nodeWritten(routing, ladder?.[2])).toEqual({
-      kind: 'router',
-      policy: { mode: 'failover' },
-      children: [],
-    });
-  });
-
-  test('the nesting names the router that took the child, not the definition holding it', () => {
-    const { world, record } = worldWhereWritesLand(gateway, { accounts });
-
-    boundThroughARouter(world, 'route:pooled');
-
-    expect(record.announced).toEqual([
-      { kind: 'nested', virtualModel: 'Pooled', parentRouter: 'Failover', target: 'Failover' },
-    ]);
+    expect(record.written).toEqual([]);
+    expect(record.announced).toEqual([]);
   });
 
   test('an ask aimed at a target rather than a router nests nothing and says nothing', () => {
@@ -104,17 +86,6 @@ describe("a router answering the binding ask from another router's port", () => 
 
     expect(record.written).toEqual([]);
     expect(record.announced).toEqual([]);
-  });
-
-  test('a router below the entry takes the child itself, rather than the entry taking it', () => {
-    const { world, record } = worldWhereWritesLand(gatewayOfNestedRouters(), { accounts });
-
-    boundThroughARouter(world, 'route:deep:r2');
-
-    const routing = routingWritten(record, 'deep');
-
-    expect(ladderIn(routing, 'r1')).toEqual(['r2']);
-    expect(ladderIn(routing, 'r2')).toHaveLength(1);
   });
 });
 

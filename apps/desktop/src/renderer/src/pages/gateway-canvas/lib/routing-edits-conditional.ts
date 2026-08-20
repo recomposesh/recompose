@@ -7,7 +7,7 @@ import type { BranchWording, ConditionalPolicy } from './conditional-policy';
 
 import { switchWhole } from './conditional-draft';
 import { bornConditionalPolicy, branchesWriting, conditionalIn } from './conditional-policy';
-import { routedBy, routerEdited } from './routing-edits';
+import { gatewayBindingChild, routedBy, routerEdited } from './routing-edits';
 import { judgeStillAsked, tableWithout } from './routing-subtrees';
 
 /**
@@ -66,6 +66,38 @@ export function gatewayDefiningJudged(
       { ...named, routing: routedThroughAConditionalRouter(reading, elseChild, routerName) },
     ],
   };
+}
+
+/** Where a fresh nested router lands: the definition, the router taking it, and its own id. */
+export type NestedAddress = { modelId: string; routerId: string; bornId: string };
+
+/**
+ * The gateway once a stored router holds a fresh conditional router, over the two nodes it needs.
+ *
+ * @summary A conditional router cannot be nested the way the other two are: its stored shape names
+ * a judge and an else child by id, so one holding neither is a table the schema refuses. The walk
+ * that dropped it gathered both first, and all three nodes join in a single write, because a
+ * document carrying the router alone would never reach storage to be finished afterwards.
+ */
+export function gatewayNestingAJudgedRouter(
+  gateway: GatewayConfig,
+  address: NestedAddress,
+  judge: RouteTarget,
+  elseChild: RouteTarget,
+): GatewayConfig {
+  const judgeId = mintRouteNodeId();
+  const elseId = mintRouteNodeId();
+  const grown = gatewayBindingChild(gateway, address.modelId, address.routerId, address.bornId, {
+    kind: 'router',
+    policy: bornConditionalPolicy(judgeId, elseId),
+    children: [elseId],
+  });
+
+  return routedBy(grown, address.modelId, (was) =>
+    was.nodes[address.bornId] === undefined
+      ? was
+      : { entry: was.entry, nodes: { ...was.nodes, [judgeId]: judge, [elseId]: elseChild } },
+  );
 }
 
 function standsAsAChild(routing: Routing, nodeId: string): boolean {

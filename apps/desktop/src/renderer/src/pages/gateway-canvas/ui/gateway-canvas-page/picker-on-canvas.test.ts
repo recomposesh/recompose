@@ -48,7 +48,7 @@ describe('the stage the picker draws', () => {
   test('an ask that settled the kind stands on the account list', () => {
     const { world } = worldWhereWritesHang(gateway, { picker: accountDropped });
 
-    expect(pickerStanding(world, modelsOffered).stage).toEqual({ step: 'account' });
+    expect(pickerStanding(world, modelsOffered).stage).toEqual({ step: 'account', asks: 'target' });
   });
 
   test('an ask that settled the account carries it on to the model list', () => {
@@ -57,6 +57,7 @@ describe('the stage the picker draws', () => {
     expect(pickerStanding(world, modelsOffered).stage).toEqual({
       step: 'provider-model',
       accountId: 'k1',
+      asks: 'target',
     });
   });
 });

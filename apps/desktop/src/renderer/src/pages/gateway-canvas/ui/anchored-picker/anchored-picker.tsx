@@ -26,6 +26,7 @@ export function AnchoredPicker({
   groups,
   refusal,
   onPickKind,
+  onPickRouterMode,
   onPickAccount,
   onPickProviderModel,
   onStepBack,
@@ -46,6 +47,7 @@ export function AnchoredPicker({
         onPickAccount={onPickAccount}
         onPickKind={onPickKind}
         onPickProviderModel={onPickProviderModel}
+        onPickRouterMode={onPickRouterMode}
         onStepBack={onStepBack}
         pickedName={pickedName}
         refusal={refusal}

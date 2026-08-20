@@ -7,6 +7,16 @@ import { Button } from '../../../../shared/ui';
 import { BINDING_KINDS, boundKindOf } from '../../lib/binding-kinds';
 import { BORN_ROUTER_MODE } from '../../lib/model-draft';
 import { JUDGE_ADVICE } from '../../lib/router-modes';
+import {
+  BACK_TO_THE_JUDGE,
+  BACK_TO_THE_MODE,
+  BACK_TO_THE_PROVIDER,
+  ELSE_BRANCH_HEADING,
+  JUDGE_HEADING,
+  judgeModelsHeading,
+  ROUTING_MODE_HEADING,
+  targetModelsHeading,
+} from '../../lib/routing-step-wording';
 import { ModeRows } from '../mode-rows/mode-rows';
 import { NoProviderNote } from '../no-provider-note/no-provider-note';
 import { OptionList } from '../option-list/option-list';
@@ -124,16 +134,16 @@ function targetModelControl(props: RoutingPickerProps): ReactNode {
 
 function modelStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
-    props.targetName === undefined ? 'Pick a model' : `Models ${props.targetName} serves`,
-    { label: 'Select a different provider', onPress: props.onSelectDifferentProvider },
+    targetModelsHeading(props.targetName),
+    { label: BACK_TO_THE_PROVIDER, onPress: props.onSelectDifferentProvider },
     targetModelControl(props),
   );
 }
 
 function judgeProviderStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
-    'Pick the judge',
-    { label: 'Choose a different routing mode', onPress: props.onReopenRouterMode },
+    JUDGE_HEADING,
+    { label: BACK_TO_THE_MODE, onPress: props.onReopenRouterMode },
     <>
       <p className="px-2 py-1.5 text-detail text-ink-secondary">{JUDGE_ADVICE}</p>
       {accountControl(props.targets, props.judge.binding?.accountId, props.judge.onPickAccount)}
@@ -145,8 +155,8 @@ function judgeModelStep(props: RoutingPickerProps): ReactNode {
   const { judge } = props;
 
   return stepPanel(
-    judge.name === undefined ? "Pick the judge's model" : `Models ${judge.name} judges with`,
-    { label: 'Select a different judge', onPress: judge.onSelectDifferentProvider },
+    judgeModelsHeading(judge.name),
+    { label: BACK_TO_THE_JUDGE, onPress: judge.onSelectDifferentProvider },
     modelControl(
       judge.models,
       judge.binding?.providerModel ?? '',
@@ -189,7 +199,7 @@ function judgeSummary(judge: JudgePick): ReactNode {
  */
 function routerModeStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
-    'Pick the routing mode',
+    ROUTING_MODE_HEADING,
     { label: 'Bind this model to something else', onPress: props.onReopenKind },
     <div className="px-1 py-0.5">
       <ModeRows onChangeValue={props.onRouterModeChange} value={props.routerMode} />
@@ -209,7 +219,7 @@ function routerModeStep(props: RoutingPickerProps): ReactNode {
 function routerStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
     'Routes through a router',
-    { label: 'Choose a different routing mode', onPress: props.onReopenRouterMode },
+    { label: BACK_TO_THE_MODE, onPress: props.onReopenRouterMode },
     <RouterDraftFields
       judge={judgeSummary(props.judge)}
       mode={props.routerMode ?? BORN_ROUTER_MODE}
@@ -229,8 +239,8 @@ function providerStep(props: RoutingPickerProps): ReactNode {
 
 function elseBranchStep(props: RoutingPickerProps): ReactNode {
   return stepPanel(
-    'Pick the else branch',
-    { label: 'Select a different judge', onPress: props.judge.onSelectDifferentProvider },
+    ELSE_BRANCH_HEADING,
+    { label: BACK_TO_THE_JUDGE, onPress: props.judge.onSelectDifferentProvider },
     accountControl(props.targets, props.target, props.onPickTarget),
   );
 }
