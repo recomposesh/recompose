@@ -116,7 +116,9 @@ describe('the judge a serving gateway hands the walk', () => {
 
     expect(watched.sentTo).toHaveLength(1);
   });
+});
 
+describe('the judge a serving gateway cannot seat at all', () => {
   test('a judge the table stands unbound is never asked for a credential', async () => {
     const watched = judging(
       aJudgedTable({ kind: 'target', standing: { standing: 'removed' } }),
@@ -130,13 +132,28 @@ describe('the judge a serving gateway hands the walk', () => {
     expect(watched.sentTo).toEqual([]);
   });
 
-  test('a judge no conditional router in this table names is never called', async () => {
+  test('a judge no conditional router in this table names reads as a refusal, not a silence', async () => {
     const watched = judging(aJudgedTable(), () => Response.json({}));
 
     await expect(
       judgedRouting(watched.scene).classifyBranch('stranger', BRANCHES),
-    ).resolves.toEqual({ heard: 'timeout' });
+    ).resolves.toEqual({ heard: 'refusal' });
     expect(watched.sentTo).toEqual([]);
+  });
+
+  test('a judge no router names costs neither a credential nor a stand-down', async () => {
+    const watched = judging(aJudgedTable(), () => Response.json({}));
+
+    await judgedRouting(watched.scene).classifyBranch('stranger', BRANCHES);
+
+    expect(watched.askedFor).toEqual([]);
+    expect(
+      watched.scene.memory.ledger.coolingAt({
+        slug: 'codex',
+        virtualModel: 'fast',
+        routeNode: 'stranger',
+      }),
+    ).toBeUndefined();
   });
 });
 

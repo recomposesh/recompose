@@ -25,7 +25,7 @@ export type Judged = {
   pinBranchAt: (routeNode: string, child: string) => void;
 };
 
-type JudgeSeat = { providerModel: string; grant: SpendGrant };
+type JudgeSeat = { providerModel: string; grant: SpendGrant; boundMs: number };
 
 /**
  * How long this table lets the judge think, read from the routers that named it.
@@ -53,20 +53,27 @@ function budgetTheTableAsksOf(routing: EngineRouting, judge: string): number | u
 }
 
 /**
- * The judge's own custody, resolved per request exactly as a target's is.
+ * The judge's own seat in this table: what it answers as, how long it has, and what it spends.
  *
- * @summary A node the table already stands unbound is never asked about, so a judge whose account
- * left costs no round trip to the parent and no cooling entry either: the walk lands on else every
- * time until a person rebinds it, and standing a broken binding down would only pretend the trouble
- * was a provider's.
+ * @summary Every way a table can fail to seat a judge answers nothing here, so the caller has one
+ * reading to give rather than one per fault: the node is gone, the node stands unbound, or no
+ * conditional router in this table names it. A node the table already stands unbound is never asked
+ * about, so a judge whose account left costs no round trip to the parent and no cooling entry
+ * either: the walk lands on else every time until a person rebinds it, and standing a broken binding
+ * down would only pretend the trouble was a provider's. The budget is read here rather than beside
+ * the call so that a judge nobody named cannot reach the call at all.
  */
 async function seatOfTheJudge(scene: JudgingScene, judge: string): Promise<JudgeSeat | undefined> {
   const node = scene.routing.nodes[judge];
+  const boundMs = budgetTheTableAsksOf(scene.routing, judge);
 
-  if (node?.kind !== 'target' || node.standing.standing !== 'bound') return undefined;
+  if (node?.kind !== 'target' || node.standing.standing !== 'bound' || boundMs === undefined) {
+    return undefined;
+  }
 
   return {
     providerModel: node.standing.providerModel,
+    boundMs,
     grant: await scene.spendGrantFor(scene.slug, scene.virtualModel, judge),
   };
 }
@@ -77,10 +84,6 @@ function addressOf(scene: JudgingScene, routeNode: string): RouteNodeAddress {
 
 function classifierFor(scene: JudgingScene): BranchClassifier {
   return async (judge, branches, directive) => {
-    const boundMs = budgetTheTableAsksOf(scene.routing, judge);
-
-    if (boundMs === undefined) return { heard: 'timeout' };
-
     const seat = await seatOfTheJudge(scene, judge);
 
     if (seat === undefined) return { heard: 'refusal' };
@@ -94,7 +97,7 @@ function classifierFor(scene: JudgingScene): BranchClassifier {
       branches,
       directive,
       raw: scene.crossing.raw,
-      boundMs,
+      boundMs: seat.boundMs,
       fetchLike: scene.fetchLike,
       now: scene.memory.now,
       cool: (cooling) => {
