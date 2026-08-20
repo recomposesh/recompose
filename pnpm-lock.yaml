@@ -481,6 +481,18 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
     optionalDependencies:
+      '@koromix/koffi-darwin-arm64':
+        specifier: 3.1.4
+        version: 3.1.4
+      '@koromix/koffi-darwin-x64':
+        specifier: 3.1.4
+        version: 3.1.4
+      '@koromix/koffi-linux-x64':
+        specifier: 3.1.4
+        version: 3.1.4
+      '@koromix/koffi-win32-x64':
+        specifier: 3.1.4
+        version: 3.1.4
       '@node-wreq/darwin-arm64':
         specifier: 3.1.0
         version: 3.1.0
@@ -13956,9 +13968,9 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@types/node@24.10.9)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@8.1.5(@types/node@24.10.9)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@24.13.3)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
     optionalDependencies:
-      '@vitest/browser': 4.1.10(vite@8.1.5(@types/node@24.10.9)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))(vitest@4.1.10)
+      '@vitest/browser': 4.1.10(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))(vitest@4.1.10)
 
   '@vitest/expect@3.2.4':
     dependencies:

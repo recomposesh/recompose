@@ -62,11 +62,12 @@ jobs:
           defaults write com.apple.security.revocation CRLStyle None
 
           (
-            sleep 420
-            echo "signing watchdog: still running, dumping what the signer waits on"
-            ps -Ao pid,stat,etime,command | grep -E 'codesign|ocspd|/usr/bin/security' | grep -v grep || true
-            for stuck in $(pgrep -x codesign || true); do
-              sample "$stuck" 3 -mayDie 2>&1 | head -60 || true
+            sleep 300
+            echo "signing watchdog: the step is still running, here is every process it owns"
+            ps -Ao pid,ppid,stat,etime,command | grep -viE 'grep|com\.apple|CoreServices|Spotlight' | head -40
+            for stuck in $(pgrep -f 'electron-builder|osx-sign|codesign' || true); do
+              echo "signing watchdog: sampling $stuck"
+              sample "$stuck" 3 -mayDie 2>&1 | sed -n '1,80p' || true
             done
           ) &
           watchdog=$!

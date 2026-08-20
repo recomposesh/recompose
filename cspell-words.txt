@@ -166,6 +166,7 @@ konsole
 Langdock
 Laravel
 Lemni
+koromix
 letrec
 librsvg
 libsecret
@@ -184,6 +185,7 @@ lockfiles
 logit
 logomark
 logprobs
+loong
 lossily
 ltrimstr
 managementasset
@@ -283,6 +285,7 @@ rharkor
 rhysd
 Rlcw
 RPOP
+riscv
 rsae
 rsvg
 safemode
