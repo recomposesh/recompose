@@ -13,6 +13,7 @@ import type { AIStudioRelay } from './provider/ai-studio-relay';
 import type { TranslationRefusal } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
 import type { CooldownLedger } from './routing/cooldown-ledger';
+import type { JudgedRequest } from './routing/judge-decision';
 import type { AttemptReading } from './routing/outcome-classification';
 import type { DeclaredTarget } from './routing/route-table';
 import type { SubscriptionRuntime } from './subscription/reach';
@@ -20,6 +21,7 @@ import type { SubscriptionRuntime } from './subscription/reach';
 import { unreachableTargetAnswer } from './gateway-answers';
 import { readingAtNode } from './gateway-attempt';
 import { turnResumesServerState } from './gateway-chained-turn';
+import { judgedRouting } from './gateway-judging';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
 import { noteGatewayRow } from './gateway-traffic';
@@ -36,7 +38,11 @@ export type { SpendGrantContext, SpendGrantFor } from './gateway-spend';
 export type { SubscriptionRuntime } from './subscription/reach';
 export { subscriptionRuntime } from './subscription/reach';
 
-export type RouterServing = { memory: RoutingMemory; noteAttempt: NoteAttempt };
+export type RouterServing = {
+  memory: RoutingMemory;
+  noteAttempt: NoteAttempt;
+  judgeGrantFor: SpendGrantFor;
+};
 
 function couldServe(target: DeclaredTarget): boolean {
   return target.standing.standing === 'bound';
@@ -109,12 +115,35 @@ function notesOwedACable(
   return notesThatCarriedARequest(notes).filter((note) => note.routeNode !== lastTried);
 }
 
+/**
+ * The judge and the pins one request routes under, built from the same custody a target uses.
+ *
+ * @summary A table with no conditional router in it never reaches any of this, so a ladder pays
+ * nothing for a mode it does not use. The judge resolves per request rather than per gateway,
+ * because a person can rebind it between two turns and the second turn must reach the account the
+ * canvas now shows. Its custody rides the lane that paints no cable: asking for a child's grant is
+ * how that child announces it is about to carry the request, and the judge carries none.
+ */
+function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): JudgedRequest {
+  return judgedRouting({
+    routing: deps.virtualModel.routing,
+    slug: deps.gateway.slug,
+    virtualModel: deps.virtualModel.id,
+    crossing: deps.crossing,
+    spendGrantFor: serving.judgeGrantFor,
+    fetchLike: deps.fetchLike,
+    subscriptions: deps.subscriptions,
+    memory: serving.memory,
+  });
+}
+
 async function walkedAnswer(
   deps: AttemptDeps,
   scene: WalkScene,
   serving: RouterServing,
 ): Promise<Response> {
   const routing = deps.virtualModel.routing;
+  const judged = judgingThisRequest(deps, serving);
   let answerable: Response | undefined;
   let lastTried: string | undefined;
 
@@ -126,6 +155,7 @@ async function walkedAnswer(
     cursors: serving.memory.cursors,
     resumesServerState: turnResumesServerState(deps.crossing.raw),
     now: serving.memory.now,
+    judged,
     attempt: async (routeNode) => {
       const reading = await readingAtNode(deps, routeNode);
 

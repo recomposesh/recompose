@@ -27,7 +27,7 @@ export function DocsContent({ path, url, tree }: { path: string; url: string; tr
   const Mdx = page.body;
 
   return (
-    <DocsPage toc={toc} className="relative isolate">
+    <DocsPage toc={toc} tableOfContent={{ style: 'clerk' }} className="relative isolate">
       <DocsBackdrop />
       <DocsTitle className="font-medium">{page.title}</DocsTitle>
       <DocsDescription>{page.description}</DocsDescription>

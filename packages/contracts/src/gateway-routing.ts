@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import type { ConditionalPolicy, JudgeSeat } from './gateway-routing-conditional';
+
+import {
+  conditionalPolicySchema,
+  refusalsOfAConditionalPolicy,
+} from './gateway-routing-conditional';
 import { nonBlankString } from './non-blank';
 
 export const routeNodeIdSchema = nonBlankString;
@@ -22,6 +28,7 @@ export function mintRouteNodeId(): string {
 export const routerPolicySchema = z.discriminatedUnion('mode', [
   z.strictObject({ mode: z.literal('failover') }),
   z.strictObject({ mode: z.literal('round-robin') }),
+  conditionalPolicySchema,
 ]);
 
 export type RouterPolicy = z.infer<typeof routerPolicySchema>;
@@ -29,6 +36,7 @@ export type RouterPolicy = z.infer<typeof routerPolicySchema>;
 const NAME_OF_MODE: Record<RouterPolicy['mode'], string> = {
   failover: 'Failover',
   'round-robin': 'Round-robin',
+  conditional: 'Conditional',
 };
 
 /**
@@ -93,6 +101,48 @@ function childrenOf(node: RouteNode): readonly string[] {
   return node.kind === 'router' ? node.children : [];
 }
 
+function conditionalPolicyOf(node: RouteNode): ConditionalPolicy | undefined {
+  if (node.kind !== 'router' || node.policy.mode !== 'conditional') {
+    return undefined;
+  }
+
+  return node.policy;
+}
+
+function referencesOf(node: RouteNode): readonly string[] {
+  const judge = conditionalPolicyOf(node)?.judge;
+
+  return judge === undefined ? childrenOf(node) : [...childrenOf(node), judge];
+}
+
+function seatOfTheJudge(
+  policy: ConditionalPolicy,
+  nodes: Map<string, RouteNode>,
+  references: Map<string, number>,
+): JudgeSeat {
+  return { kind: nodes.get(policy.judge)?.kind, standsAsChild: references.has(policy.judge) };
+}
+
+function eachConditionalRouterHoldsItsBranches(
+  nodes: Map<string, RouteNode>,
+  references: Map<string, number>,
+  context: z.RefinementCtx,
+): void {
+  for (const [id, node] of nodes) {
+    const policy = conditionalPolicyOf(node);
+
+    if (policy === undefined) {
+      continue;
+    }
+
+    const seat = seatOfTheJudge(policy, nodes, references);
+
+    for (const refusal of refusalsOfAConditionalPolicy(policy, childrenOf(node), seat)) {
+      refuse(context, ['nodes', id, 'policy', refusal.at], refusal.message);
+    }
+  }
+}
+
 function eachChildResolves(nodes: Map<string, RouteNode>, context: z.RefinementCtx): void {
   for (const [id, node] of nodes) {
     for (const child of childrenOf(node)) {
@@ -117,11 +167,9 @@ function inboundReferences(nodes: Map<string, RouteNode>): Map<string, number> {
 
 function eachNodeAnswersToOneParent(
   entry: string,
-  nodes: Map<string, RouteNode>,
+  references: Map<string, number>,
   context: z.RefinementCtx,
 ): void {
-  const references = inboundReferences(nodes);
-
   for (const [id, count] of references) {
     if (count > 1) {
       refuse(context, ['nodes', id], `node ${id} answers to more than one parent`);
@@ -141,9 +189,9 @@ function nodeAwaitingVisit(
   return visited.has(visit.id) ? undefined : nodes.get(visit.id);
 }
 
-function queueChildren(visit: PendingVisit, node: RouteNode, pending: PendingVisit[]): void {
-  for (const child of childrenOf(node)) {
-    pending.push({ id: child, routersAbove: visit.routersAbove + 1 });
+function queueReferences(visit: PendingVisit, node: RouteNode, pending: PendingVisit[]): void {
+  for (const referenced of referencesOf(node)) {
+    pending.push({ id: referenced, routersAbove: visit.routersAbove + 1 });
   }
 }
 
@@ -167,7 +215,7 @@ function reachedFromEntry(
     }
 
     visited.add(visit.id);
-    queueChildren(visit, node, pending);
+    queueReferences(visit, node, pending);
 
     if (standsTooDeep(node, visit)) {
       const bound = String(ROUTER_DEPTH_LIMIT);
@@ -188,8 +236,11 @@ function routingServesFromItsEntry(table: RouteTable, context: z.RefinementCtx):
     return;
   }
 
+  const references = inboundReferences(nodes);
+
   eachChildResolves(nodes, context);
-  eachNodeAnswersToOneParent(table.entry, nodes, context);
+  eachConditionalRouterHoldsItsBranches(nodes, references, context);
+  eachNodeAnswersToOneParent(table.entry, references, context);
 
   const reached = reachedFromEntry(table.entry, nodes, context);
 

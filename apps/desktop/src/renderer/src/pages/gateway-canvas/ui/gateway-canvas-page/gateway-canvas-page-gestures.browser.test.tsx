@@ -3,6 +3,7 @@ import { userEvent } from 'vitest/browser';
 
 import type { XY } from '../../lib/canvas-positions';
 
+import { rowStep } from '../../lib/tidy-layout.testkit';
 import {
   clickedCable,
   clickedNodeFrame,
@@ -26,6 +27,18 @@ import {
   renderCanvasPage,
   standCanvasBridge,
 } from '../../testing/canvas-page.testkit';
+
+const DRAFT_COLUMN = 320;
+
+const DRAFT_ROW = 2;
+
+/** Where a born draft seats, said as a row of the arrangement rather than as a pixel count. */
+function draftSeat(nudge: XY = { x: 0, y: 0 }): string {
+  const across = DRAFT_COLUMN + nudge.x;
+  const down = rowStep() * DRAFT_ROW + nudge.y;
+
+  return `translate(${String(across)}px, ${String(down)}px)`;
+}
 
 vi.setConfig({ testTimeout: 40_000 });
 
@@ -173,11 +186,11 @@ test('a dragged draft card keeps the seat the drag left it at', async () => {
 
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 300px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe(draftSeat());
 
   draggedCard(cardWrapper(screen.container, 'draft'), { x: 40, y: 30 });
 
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(360px, 330px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe(draftSeat({ x: 40, y: 30 }));
 });
 
 test('a dragged pending card carries the pick it stands for with it', async () => {
@@ -208,14 +221,14 @@ test('tidying seats a dragged draft card back in its own column', async () => {
 
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 300px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe(draftSeat());
 
   draggedCard(cardWrapper(screen.container, 'draft'), { x: 40, y: 30 });
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(360px, 330px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe(draftSeat({ x: 40, y: 30 }));
 
   pushCommand('tidy');
 
-  await expect.poll(() => seatOf(screen.container, 'draft')).toBe('translate(320px, 300px)');
+  await expect.poll(() => seatOf(screen.container, 'draft')).toBe(draftSeat());
 });
 
 test('tidying seats a pending card in the target column with the cards it waits beside', async () => {

@@ -5,7 +5,7 @@ import { logRowSchema } from './engine-logs';
 import { engineRoutingSchema } from './engine-routing';
 import { gatewayEngineStateSchema } from './engine-state';
 import { requestOutcomeSchema } from './engine-traffic';
-import { gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
+import { gatewayPortSchema, gatewaySlugSchema, modelAliasSchema } from './gateway-config';
 import { routeNodeIdSchema } from './gateway-routing';
 import {
   localProviderIdSchema,
@@ -18,8 +18,16 @@ import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
+/**
+ * One virtual model as the child serves it: the id a client sends, and where the request goes.
+ *
+ * @summary The id reads the alias vocabulary rather than the gateway's, the way a log row and a
+ * branch tally already do: an alias keeps the dots a real model name carries, so `claude-5.6-sol`
+ * crosses to the child instead of being refused at the start directive and taking the whole gateway
+ * down with it.
+ */
 export const engineVirtualModelSchema = z.strictObject({
-  id: gatewaySlugSchema,
+  id: modelAliasSchema,
   displayName: nonBlankString,
   routing: engineRoutingSchema,
 });
@@ -184,11 +192,14 @@ export type EngineReport = z.infer<typeof engineReportSchema>;
  * lands, and the parent folds the latest word per route node into the snapshot the canvas paints
  * its cables from. One request walking a ladder speaks once per attempt, so the child that turned
  * the request away and the one that answered it each light their own cable.
+ *
+ * The model reads the alias vocabulary rather than the gateway's, so a cable under
+ * `claude-5.6-sol` files under the very id the client sent rather than bouncing off the lane.
  */
 export const engineTrafficReportSchema = z.strictObject({
   kind: z.literal('traffic'),
   slug: gatewaySlugSchema,
-  virtualModel: gatewaySlugSchema,
+  virtualModel: modelAliasSchema,
   routeNode: routeNodeIdSchema,
   request: requestOutcomeSchema,
 });
@@ -214,13 +225,14 @@ export type EngineLogReport = z.infer<typeof engineLogReportSchema>;
  *
  * @summary It names the route node it is about to try rather than the virtual model alone, because
  * a ladder spends a different account per child and only the parent may turn a route node id into a
- * credential.
+ * credential. The model reads the alias vocabulary rather than the gateway's, so an ask under
+ * `claude-5.6-sol` reaches the parent instead of throwing inside the lane that sent it.
  */
 export const engineSpendRequestSchema = z.strictObject({
   kind: z.literal('spend-request'),
   id: directiveIdSchema,
   slug: gatewaySlugSchema,
-  virtualModel: gatewaySlugSchema,
+  virtualModel: modelAliasSchema,
   routeNode: routeNodeIdSchema,
 });
 

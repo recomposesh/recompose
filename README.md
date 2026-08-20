@@ -98,7 +98,8 @@ Every gateway carries a connect sheet that writes the exact setup for each clien
 
 - **One address for every client**: each gateway serves five API dialects on its own port: Anthropic Messages (`/v1/messages`), OpenAI Chat Completions (`/v1/chat/completions`), OpenAI Responses (`/v1/responses`), Gemini (`/v1beta/models`), and Gemini Interactions (`/v1/interactions`). The request path picks the dialect, and there is nothing to configure per client.
 - **Virtual models**: clients see aliases such as `fast` or `smart`. Swap the real model behind that name without touching a single client config.
-- **Composable routing**: a failover router sends traffic to the topmost healthy target, a round-robin router spreads it evenly, and routers nest to combine strategies.
+- **Composable routing**: a failover router sends traffic to the topmost healthy target, a round-robin router spreads it evenly, and a conditional router asks a judge model to read each request and pick the branch whose rule it matches. Routers nest to combine strategies.
+- **Judge-routed branches**: describe each branch in plain words, such as "asks to write or change code," and bind a fast, cheap judge. Anything the judge can't place lands on the else branch, a conversation keeps the branch it first earned, and routing trouble never drops a request.
 - **Every provider shape**: subscription plans such as Claude, ChatGPT, and GitHub Copilot, API keys the gateway spends request by request, aggregators such as OpenRouter and Groq, and the local runtimes Ollama, LM Studio, llama.cpp, and vLLM, plus any server of your own.
 - **Private by default**: no signup, no telemetry. Credentials stay on your machine in `~/.recompose`, with secrets sealed through the system keychain where the platform provides one. Gateways answer this machine alone until you widen the bind address in settings, and each gateway can require its own API key.
 

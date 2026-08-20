@@ -28,6 +28,31 @@ const overANestedRouter: Routing = {
   },
 };
 
+const judged: Routing = {
+  entry: 'ladder',
+  nodes: {
+    ladder: {
+      kind: 'router',
+      policy: {
+        mode: 'conditional',
+        judge: 'advisor',
+        branches: [{ label: 'code', rule: 'The request reviews or writes code.', child: 'first' }],
+        elseChild: 'second',
+        judgeBoundMs: 3000,
+        rejudgeEveryRequest: false,
+      },
+      children: ['first', 'second'],
+    },
+    first: { kind: 'target', accountId: 'a1', providerModel: 'claude-sonnet-5' },
+    second: { kind: 'target', accountId: 'a2', providerModel: 'claude-opus-5' },
+    advisor: { kind: 'target', accountId: 'a3', providerModel: 'claude-haiku-5' },
+  },
+};
+
+function branchAt(routing: Routing, routeNodeId: string) {
+  return walkedRouteNodes(routing).find((walked) => walked.routeNodeId === routeNodeId)?.branch;
+}
+
 test('a model bound straight to a target seats that target at the entry, with no router above it', () => {
   expect(walkedRouteNodes(directlyBound)).toEqual([
     {
@@ -79,6 +104,84 @@ test('a router naming a child the table never held seats the router alone', () =
   };
 
   expect(walkedRouteNodes(dangling).map((walked) => walked.routeNodeId)).toEqual(['ladder']);
+});
+
+test('the judge stands on the canvas right beside the router it advises', () => {
+  expect(walkedRouteNodes(judged).map((walked) => [walked.routeNodeId, walked.advises])).toEqual([
+    ['ladder', undefined],
+    ['advisor', 'ladder'],
+    ['first', undefined],
+    ['second', undefined],
+  ]);
+});
+
+test('the judge seats beside its router rather than a column further out', () => {
+  const seated = walkedRouteNodes(judged);
+  const advisor = seated.find((walked) => walked.routeNodeId === 'advisor');
+  const router = seated.find((walked) => walked.routeNodeId === 'ladder');
+
+  expect(advisor?.depth).toBe(router?.depth);
+  expect(advisor?.parent).toBe('ladder');
+});
+
+test('a judge naming no node in the table stands nothing at all', () => {
+  const { advisor, ...withoutTheJudge } = judged.nodes;
+  const strayJudge: Routing = { entry: 'ladder', nodes: withoutTheJudge };
+
+  expect(advisor).toBeDefined();
+  expect(walkedRouteNodes(strayJudge).map((walked) => walked.routeNodeId)).toEqual([
+    'ladder',
+    'first',
+    'second',
+  ]);
+});
+
+test('the target a reading of one model uses is never the judge, so no count bills it', () => {
+  expect(firstDeclaredTarget(judged)).toMatchObject({ accountId: 'a1' });
+});
+
+test('a labeled branch hands its child the label and the rule the judge reads it by', () => {
+  expect(branchAt(judged, 'first')).toEqual({
+    kind: 'rule',
+    label: 'code',
+    rule: 'The request reviews or writes code.',
+  });
+});
+
+test('the else child reads as the fallback rather than as a rule anyone wrote', () => {
+  expect(branchAt(judged, 'second')).toEqual({ kind: 'else' });
+});
+
+test('a child of a router that reads no request at all carries no branch', () => {
+  expect(branchAt(overTwoTargets, 'first')).toBeUndefined();
+  expect(branchAt(judged, 'ladder')).toBeUndefined();
+});
+
+test('a branch naming a child before else does the naming, so no cable loses its rule', () => {
+  const bothWays: Routing = {
+    entry: 'ladder',
+    nodes: {
+      ...judged.nodes,
+      ladder: {
+        kind: 'router',
+        policy: {
+          mode: 'conditional',
+          judge: 'advisor',
+          branches: [{ label: 'code', rule: 'The request writes code.', child: 'second' }],
+          elseChild: 'second',
+          judgeBoundMs: 3000,
+          rejudgeEveryRequest: false,
+        },
+        children: ['first', 'second'],
+      },
+    },
+  };
+
+  expect(branchAt(bothWays, 'second')).toEqual({
+    kind: 'rule',
+    label: 'code',
+    rule: 'The request writes code.',
+  });
 });
 
 test('a model bound straight to a target leads with that target', () => {

@@ -33,6 +33,7 @@ import { gatewayBaseUrl } from '../../lib/gateway-base-url';
 import { inspectorWidth } from '../../lib/inspector-width';
 import { usePanelReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
+import { BranchWording } from '../branch-wording/branch-wording';
 import { ConnectInView } from '../connect-in-view/connect-in-view';
 import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
@@ -64,6 +65,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
     onPickAccount,
     onPickKind,
     onPickProviderModel,
+    onPickRouterMode,
     onStepBack,
   } = picker;
 
@@ -74,6 +76,7 @@ function anchoredPicker(picker: PickerOnCanvas | undefined): ReactNode {
       onPickAccount={onPickAccount}
       onPickKind={onPickKind}
       onPickProviderModel={onPickProviderModel}
+      onPickRouterMode={onPickRouterMode}
       onStepBack={onStepBack}
       pickedName={pickedName}
       refusal={refusal}
@@ -157,9 +160,10 @@ function canvasColumn(standing: CanvasColumn): ReactNode {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col" data-canvas-column="">
-      <GatewayStage announced={canvas.announced} flow={canvas.flow} slug={slug}>
+      <GatewayStage announced={canvas.announced} flow={canvas.flow}>
         {anchoredPicker(canvas.picker)}
       </GatewayStage>
+      <BranchWording gateway={gateway} />
       {logs.rendered ? (
         <LogsDrawer
           accounts={accounts}

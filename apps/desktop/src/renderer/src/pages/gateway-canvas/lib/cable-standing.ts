@@ -1,7 +1,29 @@
+import type { CableWording } from './canvas-cables';
+import type { XY } from './canvas-positions';
 import type { CableFailure, CableStanding } from './node-graph';
+import type { BranchSeat } from './route-graph';
 
 /** The pointer target every cable end and its snap radius is sized by, in pixels. */
 export const CABLE_GRAB_SPAN = 24;
+
+/** How far along a branch cable its label rides, leaving the midpoint to the failure chip. */
+export const BRANCH_PILL_ANCHOR = 0.35;
+
+/** The dash rhythm a tie draws with, which is the one the dashed card frames already keep. */
+export const TIE_DASH = 'var(--spacing-node-dash) var(--spacing-node-dash-gap)';
+
+const TIE_PREFIX = 'tie:';
+
+/**
+ * Whether one drawn line is the tie between a router and its judge rather than a binding.
+ *
+ * @summary A tie says a node advises rather than answers, so it breaks into dashes where every
+ * binding stays whole, and it reads that off the id the graph gave it rather than off data an edge
+ * can lose. The map asks the same question, so a judge is never an orphan there either.
+ */
+export function drawnAsATie(edgeId: string): boolean {
+  return edgeId.startsWith(TIE_PREFIX);
+}
 
 const standingStroke: Record<CableStanding, string> = {
   resting: 'stroke-cable-resting',
@@ -11,6 +33,7 @@ const standingStroke: Record<CableStanding, string> = {
   broken: 'stroke-cable-broken',
   draft: 'stroke-cable-draft',
   pending: 'stroke-cable-pending',
+  cooling: 'stroke-attention',
   structural: 'stroke-cable-resting',
 };
 
@@ -22,6 +45,7 @@ const standingTint: Record<CableStanding, string> = {
   broken: 'node-tint-cable-broken',
   draft: 'node-tint-cable-draft',
   pending: 'node-tint-cable-pending',
+  cooling: 'node-tint-attention',
   structural: 'node-tint-cable-resting',
 };
 
@@ -33,6 +57,7 @@ const standingPulse: Record<CableStanding, string> = {
   broken: '',
   draft: '',
   pending: '',
+  cooling: '',
   structural: '',
 };
 
@@ -96,6 +121,100 @@ export function failureIn(carried: unknown): CableFailure | undefined {
   const { status, detail } = carried;
 
   return typeof status === 'number' && typeof detail === 'string' ? { status, detail } : undefined;
+}
+
+const CUBIC_NUMBERS = 8;
+
+function numbersIn(path: string): readonly number[] {
+  return [...path.matchAll(/-?\d+(?:\.\d+)?/gu)].map(([held]) => Number(held));
+}
+
+function cubicAt(along: readonly number[], part: number): number {
+  const [from = 0, first = 0, second = 0, to = 0] = along;
+  const rest = 1 - part;
+
+  return (
+    rest ** 3 * from + 3 * rest ** 2 * part * first + 3 * rest * part ** 2 * second + part ** 3 * to
+  );
+}
+
+/**
+ * The point a fraction of the way along one cable, which is where furniture that is not centered rides.
+ *
+ * @summary A cable is one cubic curve, so a fraction of it is that curve read at that fraction
+ * rather than a fraction of the straight line between its ends: a pill placed on the chord would
+ * float off a cable that bows, which is every cable between two columns. A path this canvas did not
+ * draw as one cubic answers nothing, so the furniture falls back to the midpoint the library already
+ * hands over rather than landing at the origin.
+ */
+export function pointAlongCable(path: string, fraction: number): XY | undefined {
+  const held = numbersIn(path);
+
+  if (held.length !== CUBIC_NUMBERS) {
+    return undefined;
+  }
+
+  const across = held.filter((_, place) => place % 2 === 0);
+  const down = held.filter((_, place) => place % 2 === 1);
+
+  return { x: cubicAt(across, fraction), y: cubicAt(down, fraction) };
+}
+
+function bothHalvesOfARule(carried: object): carried is Record<'label' | 'rule', unknown> {
+  return 'label' in carried && 'rule' in carried;
+}
+
+function labeledSeat(carried: object): BranchSeat | undefined {
+  if (!bothHalvesOfARule(carried)) {
+    return undefined;
+  }
+
+  const { label, rule } = carried;
+
+  return typeof label === 'string' && typeof rule === 'string'
+    ? { kind: 'rule', label, rule }
+    : undefined;
+}
+
+/**
+ * The branch a cable draws for, read off the loose data the library hands the edge.
+ *
+ * @summary A cable carrying anything short of both halves of a rule carries no branch at all, so a
+ * pill never stands offering a rule it cannot finish saying, and a cable under a router that reads
+ * no request carries nothing here at all.
+ */
+export function branchIn(carried: unknown): BranchSeat | undefined {
+  if (!(carried instanceof Object) || !('kind' in carried)) {
+    return undefined;
+  }
+
+  const { kind } = carried;
+
+  return wordlessSeat(kind) ?? (kind === 'rule' ? labeledSeat(carried) : undefined);
+}
+
+function wordlessSeat(kind: unknown): BranchSeat | undefined {
+  if (kind === 'else') {
+    return { kind: 'else' };
+  }
+
+  return kind === 'draft' ? { kind: 'draft' } : undefined;
+}
+
+const WORDING_IDS = ['modelId', 'routerId', 'child', 'routesTo'] as const;
+
+function namesWhatAWriteNeeds(carried: object): carried is CableWording {
+  return WORDING_IDS.every((id) => typeof Reflect.get(carried, id) === 'string');
+}
+
+/**
+ * The branch a press on this cable would word, read off the loose data the library hands the edge.
+ *
+ * @summary A cable missing any of the four is a cable that cannot name what a write would edit, so
+ * it offers no wording at all rather than opening an editor that would save into nothing.
+ */
+export function wordingIn(carried: unknown): CableWording | undefined {
+  return carried instanceof Object && namesWhatAWriteNeeds(carried) ? carried : undefined;
 }
 
 /**

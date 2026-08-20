@@ -1,10 +1,19 @@
-import type { Account, GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
+import type {
+  Account,
+  GatewayConfig,
+  RouteNode,
+  Routing,
+  VirtualModel,
+} from '@recompose/contracts';
 
+import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { XY } from '../../lib/canvas-positions';
 import type { ModelListReading } from '../../lib/model-draft';
+import type { PickerStage } from '../drop-picker/picker-stages';
 import type { CanvasWorld, PickerStanding } from './canvas-standings';
 import type { PickerOnCanvas } from './picker-on-canvas';
 
+import { worldWhereWritesHang, worldWhereWritesLand } from './canvas-world.testkit';
 import { pickerOnCanvas } from './picker-on-canvas';
 
 /** Where a cable was let go, which every standing carrying its own point stands at. */
@@ -131,6 +140,66 @@ export function ladderUnder(
   }
 
   return router.children.map((child) => held.routing.nodes[child]);
+}
+
+/** The route table one written definition serves through. */
+export function routingOf(
+  written: GatewayConfig | undefined,
+  modelId: string,
+): Routing | undefined {
+  return definitionIn(written, modelId)?.routing;
+}
+
+/** An ask walked step by step, holding everything the walk stored and said along the way. */
+export type PickerWalk = {
+  /** Answers whatever stands open, and stands the picker back up on what the answer left. */
+  answers: (answering: (asked: PickerOnCanvas) => void, models?: ModelListReading) => void;
+  /** The stage standing open, which reads as nothing once an answer closed the ask. */
+  stage: () => PickerStage | undefined;
+  /** Every gateway the walk stored, in the order it stored them. */
+  written: GatewayConfig[];
+  /** Every outcome the walk announced. */
+  announced: BindingOutcome[];
+};
+
+/**
+ * Walks an ask the way a person does, standing the picker back up between every answer.
+ *
+ * @summary The page holds one standing at a time and each answer writes the next one, so a
+ * scenario about a walk several answers long has to stand the picker back up between them exactly as the
+ * page does. Threading that here keeps each scenario about the answers rather than the standing back up.
+ * An answer that stood no new picker leaves the walk where it was, so a refusal reads as the ask
+ * still standing rather than as the ask closing.
+ */
+export function walkedFrom(
+  seeded: GatewayConfig,
+  opened: PickerStanding,
+  accounts: readonly Account[] = storedAccounts,
+): PickerWalk {
+  let standing: PickerStanding | undefined = opened;
+  const walk: PickerWalk = {
+    written: [],
+    announced: [],
+    stage: () => {
+      if (standing === undefined) {
+        return undefined;
+      }
+
+      const { world } = worldWhereWritesHang(seeded, { accounts, picker: standing });
+
+      return pickerStanding(world, modelsOffered).stage;
+    },
+    answers: (answering, models = modelsOffered) => {
+      const { world, record } = worldWhereWritesLand(seeded, { accounts, picker: standing });
+
+      answering(pickerStanding(world, models));
+      walk.written.push(...record.written);
+      walk.announced.push(...record.announced);
+      standing = record.pickers.length === 0 ? standing : record.pickers.at(-1);
+    },
+  };
+
+  return walk;
 }
 
 /** Each group the picker offers, read as its heading and the ids standing under it. */

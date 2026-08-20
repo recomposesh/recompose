@@ -10,6 +10,7 @@ allowBuilds:
   '@swc/core': true
   '@fission-ai/openspec': false
   koffi: true
+  workerd: false
 
 minimumReleaseAge: 4320
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { gatewaySlugSchema } from './gateway-config';
+import { gatewaySlugSchema, modelAliasSchema } from './gateway-config';
 import { routeNodeIdSchema } from './gateway-routing';
 import { nonBlankString } from './non-blank';
 
@@ -43,10 +43,13 @@ export type RequestOutcome = z.infer<typeof requestOutcomeSchema>;
  * request came to and nothing before it. The node level is what lets one request paint two cables:
  * a ladder that moved on from a child records that child's failure beside the success of the one
  * that answered.
+ *
+ * The model level reads the alias vocabulary rather than the gateway's, the way the pins and the
+ * cooldowns beside it do, since an alias keeps the dots a real model name carries.
  */
 export const gatewayTrafficSchema = z.record(
   gatewaySlugSchema,
-  z.record(gatewaySlugSchema, z.record(routeNodeIdSchema, requestOutcomeSchema)),
+  z.record(modelAliasSchema, z.record(routeNodeIdSchema, requestOutcomeSchema)),
 );
 
 export type GatewayTraffic = z.infer<typeof gatewayTrafficSchema>;

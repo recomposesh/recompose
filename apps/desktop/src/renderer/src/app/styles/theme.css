@@ -49,6 +49,10 @@
   --color-api-key: light-dark(var(--yellow-800), var(--yellow-500));
   --color-aggregator: light-dark(var(--purple-600), var(--purple-500));
   --color-local: light-dark(var(--coral-700), var(--coral-400));
+  --color-subscription-ink: light-dark(var(--blue-700), var(--blue-400));
+  --color-api-key-ink: light-dark(var(--yellow-800), var(--yellow-500));
+  --color-aggregator-ink: light-dark(var(--purple-700), var(--purple-400));
+  --color-local-ink: light-dark(var(--coral-700), var(--coral-400));
   --color-running: light-dark(var(--green-700), var(--green-500));
   --color-running-ink: light-dark(var(--green-900), var(--green-500));
   --color-stopped: light-dark(var(--red-700), var(--red-500));
@@ -137,8 +141,10 @@
   --spacing-node-dash-gap: 3px;
   --spacing-cable-stroke: 2.6px;
   --spacing-cable-stroke-selected: 3.6px;
-  /* React Flow elevates a selected node to z-index 1000; an open error reading must clear it. */
-  --z-cable-reading: 1001;
+  /* React Flow elevates a selected node and its cables to z-index 1000; furniture must clear
+     both, and an open reading must clear the furniture beside it. */
+  --z-cable-furniture: 1001;
+  --z-cable-reading: 1002;
   --spacing-cable-pulse-stroke: 5.4px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
@@ -671,6 +677,7 @@
 
   &:hover,
   &[data-hovered],
+  &[data-landing],
   &:focus-visible {
     --node-card-line: var(--node-card-emphasis);
     --node-card-fill: color-mix(in srgb, var(--node-card-emphasis) 8%, var(--color-surface-card));
@@ -936,6 +943,10 @@
     translate: -28px 0;
     opacity: 0;
   }
+}
+
+@utility z-cable-furniture {
+  z-index: var(--z-cable-furniture);
 }
 
 @utility z-cable-reading {

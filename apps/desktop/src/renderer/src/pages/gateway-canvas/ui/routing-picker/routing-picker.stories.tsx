@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { inTheDrawersColumn, pickerArgs } from '../../testing/routing-picker-args';
+import { inTheDrawersColumn, pickerArgs, unjudged } from '../../testing/routing-picker-args';
 import { RoutingPicker } from './routing-picker';
 
 const meta = preview.meta({
@@ -44,9 +44,24 @@ export const DetailUnderTheName = meta.story({
   },
 });
 
-/** A router answers the whole question, so the step says what happens next instead of listing. */
-export const RoutingThroughARouter = meta.story({
+/**
+ * Answering with a router asks which kind, on a step of its own, before anything else.
+ *
+ * @summary It stands where the provider list stands on the other branch of the ask: the mode
+ * decides what the draft still owes, so it is asked first and each row carries its own cost.
+ */
+export const PickingTheRoutingMode = meta.story({
   args: { bindsThrough: 'router' },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the routing mode')).toBeVisible();
+    await expect(await canvas.findByRole('radio', { name: 'Failover' })).not.toBeChecked();
+    await expect(await canvas.findByRole('radio', { name: 'Conditional' })).toBeVisible();
+  },
+});
+
+/** A spreading router answers the whole question, so the step says what happens next. */
+export const RoutingThroughARouter = meta.story({
+  args: { bindsThrough: 'router', routerMode: 'failover' },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Routes through a router')).toBeVisible();
     await expect(await canvas.findByText(/drag a cable/)).toBeVisible();
@@ -75,5 +90,75 @@ export const NothingConnected = meta.story({
   },
 });
 
+const judged = {
+  bindsThrough: 'router' as const,
+  routerMode: 'conditional' as const,
+};
+
+const judgeReading = {
+  ...unjudged,
+  binding: { accountId: 'k2', providerModel: 'gpt-5-mini' },
+  name: 'personal',
+  models: ['gpt-5-mini'],
+};
+
+const judgeBound = { ...judged, judge: judgeReading };
+
+const fallenBack = {
+  ...judgeBound,
+  target: 'k1',
+  targetName: 'work',
+  providerModel: 'claude-sonnet-5',
+};
+
+/** Choosing conditional walks straight on, because the mode needs something to read the requests. */
+export const ConditionalAsksForItsJudge = meta.story({
+  args: judged,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the judge')).toBeVisible();
+    await expect(await canvas.findByText(/Fast, cheap models judge best/)).toBeVisible();
+  },
+});
+
+/** A judge with an account but no model yet reads its own list, named by whose it is. */
+export const ConditionalPicksTheJudgesModel = meta.story({
+  args: {
+    ...judged,
+    judge: {
+      ...unjudged,
+      binding: { accountId: 'k2', providerModel: '' },
+      name: 'personal',
+      models: ['gpt-5-mini', 'gpt-5'],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Models personal judges with')).toBeVisible();
+  },
+});
+
+/** Once the judge stands whole the step asks where everything no rule placed goes. */
+export const ConditionalAsksWhatItFallsBackTo = meta.story({
+  args: judgeBound,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the else branch')).toBeVisible();
+    await expect(await canvas.findByText('work')).toBeVisible();
+  },
+});
+
+/** Every answer given, so the picker rests back on the name and reads its mode and judge back. */
+export const ConditionalRestsOnItsMode = meta.story({
+  args: fallenBack,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Conditional')).toBeVisible();
+    await expect(await canvas.findByText('personal · gpt-5-mini')).toBeVisible();
+  },
+});
+
 /** The ask in the dark scheme, where both kind glyphs have to hold against the box. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/** The conditional flow in the dark scheme, where the judge summary sits on the box. */
+export const ConditionalDarkScheme = meta.story({
+  args: fallenBack,
+  globals: { theme: 'dark' },
+});

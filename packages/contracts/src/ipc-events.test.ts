@@ -8,6 +8,9 @@ describe('the lifecycle push', () => {
   const eventNames: IpcEvent[] = [
     'engine:state',
     'engine:traffic',
+    'engine:pins',
+    'engine:cooldowns',
+    'engine:judging',
     'engine:logs',
     'accounts:changed',
     'canvas:command',
@@ -19,7 +22,7 @@ describe('the lifecycle push', () => {
     'subscriptions:launch-refused',
   ];
 
-  test('exactly the state, traffic, logs, account-change, command, settings, devtools, and launch-refused pushes exist', () => {
+  test('exactly the state, traffic, pin, cooldown, judging, logs, account-change, command, settings, devtools, and launch-refused pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
@@ -111,6 +114,68 @@ describe('the traffic push', () => {
 
   test('it rides beside the invoke surface, so no window asks for traffic', () => {
     expect(Object.keys(ipcChannels)).not.toContain('engine:traffic');
+  });
+});
+
+describe('the pin push', () => {
+  const pinned = { personal: { fast: { ladder: { coder: 2 } } } };
+
+  test('it carries every router of every gateway, so a missed push heals on the next', () => {
+    expect(ipcEvents['engine:pins'].payload.parse(pinned)).toEqual(pinned);
+  });
+
+  test('it refuses one router alone, which a subscriber would have to merge', () => {
+    expect(() =>
+      ipcEvents['engine:pins'].payload.parse({
+        slug: 'personal',
+        virtualModel: 'fast',
+        routeNode: 'ladder',
+        pinned: { coder: 2 },
+      }),
+    ).toThrow();
+  });
+
+  test('it refuses the conversation behind a count, so no fingerprint reaches a window', () => {
+    expect(() =>
+      ipcEvents['engine:pins'].payload.parse({
+        personal: { fast: { ladder: { coder: ['abc'] } } },
+      }),
+    ).toThrow();
+  });
+
+  test('it rides beside the invoke surface, so no window asks for pins', () => {
+    expect(Object.keys(ipcChannels)).not.toContain('engine:pins');
+  });
+});
+
+describe('the cooldown push', () => {
+  const cooling = { personal: { fast: { j1: 1_700_000_060_000 } } };
+
+  test('it carries every node of every gateway, so a missed push heals on the next', () => {
+    expect(ipcEvents['engine:cooldowns'].payload.parse(cooling)).toEqual(cooling);
+  });
+
+  test('it refuses one node alone, which a subscriber would have to merge', () => {
+    expect(() =>
+      ipcEvents['engine:cooldowns'].payload.parse({
+        slug: 'personal',
+        virtualModel: 'fast',
+        routeNode: 'j1',
+        coolUntilMs: 1_700_000_060_000,
+      }),
+    ).toThrow();
+  });
+
+  test('it refuses why a node stood down, so no provider body reaches a window', () => {
+    expect(() =>
+      ipcEvents['engine:cooldowns'].payload.parse({
+        personal: { fast: { j1: { coolUntilMs: 1, detail: 'rate limited' } } },
+      }),
+    ).toThrow();
+  });
+
+  test('it rides beside the invoke surface, so no window asks when a judge is back', () => {
+    expect(Object.keys(ipcChannels)).not.toContain('engine:cooldowns');
   });
 });
 

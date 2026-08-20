@@ -5,6 +5,7 @@ import { Handle, Position, ReactFlow } from '@xyflow/react';
 import { expect, waitFor } from 'storybook/test';
 
 import type { CableFailure, CableStanding } from '../lib/node-graph';
+import type { BranchSeat } from '../lib/route-graph';
 
 import { BindingCable } from '../ui/binding-cable/binding-cable';
 
@@ -59,22 +60,28 @@ export const cableSeats = {
   targetY: 228,
 };
 
-function cardsWiredBy(carried: Record<string, unknown> | undefined): ReactElement {
+function cardsWiredBy(
+  carried: Record<string, unknown> | undefined,
+  id = 'cable:fast',
+  chosenCard?: string,
+  liftsChosenCables = false,
+): ReactElement {
   return (
     <div className="h-96 w-160 bg-surface-content dot-grid">
       <ReactFlow
         defaultEdges={[
           {
-            id: 'cable:fast',
+            id,
             type: 'binding',
             source: 'model:fast',
             target: 'target:work',
             ...(carried === undefined ? {} : { data: carried }),
           },
         ]}
-        defaultNodes={seats}
+        defaultNodes={seats.map((seat) => ({ ...seat, selected: seat.id === chosenCard }))}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         edgeTypes={cables}
+        elevateEdgesOnSelect={liftsChosenCables}
         nodeTypes={cards}
         nodesDraggable={false}
       />
@@ -91,6 +98,61 @@ function cardsWiredBy(carried: Record<string, unknown> | undefined): ReactElemen
  */
 export function cabledFlow(standing: CableStanding, failure?: CableFailure): ReactElement {
   return cardsWiredBy({ standing, failure });
+}
+
+/**
+ * The same two cards with a cable a conditional router decides, carrying the branch it draws.
+ *
+ * @summary Reach for it in any story about the furniture a judged cable stands, so the rule pill
+ * and the failure chip are measured against one another on the very path they both ride.
+ */
+export function judgedFlow(
+  seat: BranchSeat,
+  standing: CableStanding = 'resting',
+  failure?: CableFailure,
+): ReactElement {
+  return cardsWiredBy({ standing, failure, branch: seat });
+}
+
+/**
+ * The same judged cable while the card at its far end stands selected.
+ *
+ * @summary Reach for it to ask whether a cable's furniture still rides the line once a neighbor is
+ * picked. Selection is the state that moves a card's own paint, so it is the state where furniture
+ * anchored off anything but the drawn path drifts away from it.
+ */
+export function judgedFlowBesideAChosenCard(seat: BranchSeat): ReactElement {
+  return cardsWiredBy({ standing: 'resting', branch: seat }, 'cable:fast', 'target:work');
+}
+
+/**
+ * The same judged cable on a pane that lifts a chosen card's cables, the way the canvas does.
+ *
+ * @summary The page sets `elevateEdgesOnSelect`, which raises a chosen card's cables into a layer
+ * above the one a cable's furniture rides in. That lift is the whole of what puts a stroke across
+ * a pill, so a pane without it cannot be asked whether the label still reads.
+ */
+export function judgedFlowUnderALiftedCable(
+  seat: BranchSeat,
+  standing: CableStanding = 'resting',
+  failure?: CableFailure,
+): ReactElement {
+  return cardsWiredBy({ standing, failure, branch: seat }, 'cable:fast', 'target:work', true);
+}
+
+/**
+ * The same two cards joined by the dotted tie a router hangs its judge from.
+ *
+ * @summary Reach for it to ask how a tie draws beside a binding, since the whole claim the tie
+ * makes is that it does not look like one.
+ */
+export function tiedFlow(): ReactElement {
+  return cardsWiredBy({ standing: 'resting' }, 'tie:fast:advisor');
+}
+
+/** The same tie while the router it leaves is waiting on the judge at its other end. */
+export function tiedFlowWhileJudging(): ReactElement {
+  return cardsWiredBy({ standing: 'resting', judging: true }, 'tie:fast:advisor');
 }
 
 /**

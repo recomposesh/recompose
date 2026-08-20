@@ -4,13 +4,12 @@ import { mintRouteNodeId, modelAliasFromName } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
 import type { BoundKind } from './binding-kinds';
-import type { RouterMode } from './routing-edits';
+import type { JudgeBinding } from './conditional-draft';
+import type { RouterMode, SpreadingMode } from './routing-edits';
 
-import { IpcResultError, refusalSentence } from '../../../shared/api';
+import { judgeAnswered } from './conditional-draft';
+import { gatewayDefiningJudged } from './routing-births-conditional';
 import { routedThroughARouter } from './routing-edits';
-
-const MALFORMED_DEFINITION_REFUSAL =
-  "recompose can't store this virtual model. Check the name and the id, then try again.";
 
 /**
  * The id a name derives to, kept in step with the name until a person edits the id by hand.
@@ -34,6 +33,8 @@ export type SettledDefinition = {
   bindsThrough?: BoundKind | undefined;
   /** How the router spreads, or nothing while the draft has yet to answer with a router at all. */
   routerMode?: RouterMode | undefined;
+  /** What reads the requests a conditional router spreads, which no other mode asks for. */
+  judge?: JudgeBinding | undefined;
   /** What a person called the router, which is empty while it answers to its mode. */
   routerName?: string | undefined;
   /** The account the model reaches. */
@@ -47,10 +48,22 @@ export function emptyDefinition(): SettledDefinition {
   return { displayName: '', id: '', accountId: '', providerModel: '' };
 }
 
+function targetAnswered(definition: SettledDefinition): boolean {
+  return definition.accountId !== '' && definition.providerModel !== '';
+}
+
 function routingAnswered(definition: SettledDefinition): boolean {
-  return definition.bindsThrough === 'router'
-    ? true
-    : definition.accountId !== '' && definition.providerModel !== '';
+  if (definition.bindsThrough !== 'router') {
+    return targetAnswered(definition);
+  }
+
+  if (definition.routerMode === undefined) {
+    return false;
+  }
+
+  return definition.routerMode === 'conditional'
+    ? judgeAnswered(definition.judge) && targetAnswered(definition)
+    : true;
 }
 
 /**
@@ -61,8 +74,12 @@ function routingAnswered(definition: SettledDefinition): boolean {
  * an id this gateway already serves cannot see it, and a button that refuses to press would leave
  * them guessing, so that refusal waits for the press and speaks under the field it refuses.
  *
- * A router counts as a whole answer on its own, because one is born holding no child and fills by
- * cable afterwards. Its own name never counts, because a router with no name answers to its mode.
+ * A router counts as a whole answer once it says how it spreads, because one is born holding no
+ * child and fills by cable afterwards. The mode is asked on a step of its own, so a draft that has
+ * yet to answer it holds the save shut rather than storing the mode a default would have picked.
+ * Its own name never counts, because a router with no name answers to its mode. A conditional
+ * router owes two answers more: it is born naming a judge and an else child, so the save waits on
+ * both rather than offering a press the stored shape would refuse.
  */
 export function draftFilledIn(definition: SettledDefinition): boolean {
   return (
@@ -79,7 +96,7 @@ export function draftFilledIn(definition: SettledDefinition): boolean {
  * child answers and the rest stand in. Round-robin trades the prompt cache for spread, which is a
  * choice worth making on purpose in the inspector rather than one to inherit from a drop.
  */
-export const BORN_ROUTER_MODE: RouterMode = 'failover';
+export const BORN_ROUTER_MODE: SpreadingMode = 'failover';
 
 function boundThroughOneNode(target: RouteTarget): Routing {
   const entry = mintRouteNodeId();
@@ -119,7 +136,7 @@ export type NamedDefinition = { id: string; displayName: string };
 export function gatewayDefiningRouted(
   gateway: GatewayConfig,
   named: NamedDefinition,
-  mode: RouterMode,
+  mode: SpreadingMode,
   routerName?: string,
 ): GatewayConfig {
   return {
@@ -159,10 +176,18 @@ export function gatewayDefiningDraft(
     return gatewayDefining(gateway, settled);
   }
 
-  return gatewayDefiningRouted(
+  const named = { id: settled.id, displayName: settled.displayName };
+  const mode = settled.routerMode ?? BORN_ROUTER_MODE;
+
+  if (mode !== 'conditional') {
+    return gatewayDefiningRouted(gateway, named, mode, routerNamed(settled.routerName));
+  }
+
+  return gatewayDefiningJudged(
     gateway,
-    { id: settled.id, displayName: settled.displayName },
-    settled.routerMode ?? BORN_ROUTER_MODE,
+    named,
+    settled.judge ?? { accountId: '', providerModel: '' },
+    { kind: 'target', accountId: settled.accountId, providerModel: settled.providerModel },
     routerNamed(settled.routerName),
   );
 }
@@ -253,20 +278,4 @@ export function modelListReading(answer: ProviderModelList | undefined): ModelLi
   return answer.standing === 'listed'
     ? { offered: answer.modelIds, refusal: undefined }
     : { offered: [], refusal: answer.refusal };
-}
-
-/**
- * The sentence a refused save reads as, in words about the virtual model a person was defining.
- *
- * @summary A schema refusal trades its words, because the schema writes for a developer and names
- * a path inside a document nobody typed. Everything else travels as main wrote it: a gateway the
- * rewrite could not find and a port the move lane owns are both already sentences a person can act
- * on, and rewriting them here would only put this module's guess in front of main's fact.
- */
-export function refusalFromMain(failure: unknown): string {
-  if (!(failure instanceof IpcResultError)) {
-    return refusalSentence(failure);
-  }
-
-  return failure.code === 'validation-failed' ? MALFORMED_DEFINITION_REFUSAL : failure.message;
 }

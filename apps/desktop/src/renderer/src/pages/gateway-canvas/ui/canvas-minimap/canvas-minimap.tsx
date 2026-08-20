@@ -9,11 +9,13 @@ import type { AccountKind } from '../../../../entities/account';
 import type { CanvasNodeKind } from '../../lib/node-graph';
 
 import { accountKindNodeTint } from '../../lib/account-kind-paint';
+import { drawnAsATie, TIE_DASH } from '../../lib/cable-standing';
 
 const roleFills: Record<string, string> = {
   gateway: 'minimap-node node-tint-gateway',
   'virtual-model': 'minimap-node node-tint-virtual-model',
   router: 'minimap-node node-tint-router',
+  judge: 'minimap-node node-tint-router',
   'draft-model': 'minimap-node-dim node-tint-virtual-model',
   'ghost-target': 'minimap-node-dim node-tint-danger',
   'pending-target': 'minimap-node-dim node-tint-ink-tertiary',
@@ -82,8 +84,10 @@ function wirePaths(wires: MapWire[]): ReactNode {
     <g className="stroke-cable-resting" fill="none">
       {wires.map((wire) => (
         <path
+          className={drawnAsATie(wire.id) ? 'stroke-router' : undefined}
           d={`M${String(wire.from.x)},${String(wire.from.y)} L${String(wire.to.x)},${String(wire.to.y)}`}
           key={wire.id}
+          style={drawnAsATie(wire.id) ? { strokeDasharray: TIE_DASH } : undefined}
           vectorEffect="non-scaling-stroke"
         />
       ))}
@@ -98,9 +102,11 @@ function wirePaths(wires: MapWire[]): ReactNode {
  * a person with nothing to place themselves by. Every card draws in the tint its role already
  * carries on the canvas, one that is not real yet reads dimmed, and the wash marks what the
  * viewport left behind. Target cards take the tint of their account kind rather than sharing one
- * generic target color. The map's own component draws nodes alone, so the cables portal into its
- * svg in flow coordinates, and their stroke refuses the viewBox scaling to stay one hairline at
- * any zoom. Dragging the map moves the viewport it pictures, and a scroll over it zooms.
+ * generic target color. A judge draws in its router's tint on a tie that breaks into dashes, so
+ * the map answers a glance with the same composition the canvas does rather than an orphan mark.
+ * The map's own component draws nodes alone, so the cables portal into its svg in flow coordinates,
+ * and their stroke refuses the viewBox scaling to stay one hairline at any zoom. Dragging the map
+ * moves the viewport it pictures, and a scroll over it zooms.
  */
 export function CanvasMinimap() {
   const wires = useStore(mapWiresOf);

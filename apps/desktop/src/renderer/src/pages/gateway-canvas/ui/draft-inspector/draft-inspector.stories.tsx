@@ -1,4 +1,4 @@
-import { expect } from 'storybook/test';
+import { expect, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -53,6 +53,32 @@ export const TheSaveWaitsForTheName = meta.story({
   },
 });
 
+type RoutingCanvas = {
+  findByRole: (role: string, options: { name: RegExp | string }) => Promise<HTMLElement>;
+};
+
+/** Names a draft and answers the binding ask with a router, where every router reading starts. */
+async function namedThenRouted(canvas: RoutingCanvas): Promise<void> {
+  await userEvent.type(await canvas.findByRole('textbox', { name: 'Name' }), 'Spread');
+  await userEvent.click(await canvas.findByRole('button', { name: /^Router Picks among/ }));
+}
+
+/**
+ * Answering with a router asks which kind before the save opens, and no mode arrives chosen.
+ *
+ * @summary The mode decides what the draft still owes, so it is asked rather than defaulted: a
+ * save open on this step would store a router nobody picked the spreading of.
+ */
+export const ARouterIsAskedHowItSpreads = meta.story({
+  play: async ({ canvas }) => {
+    await namedThenRouted(canvas);
+
+    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
+    await expect(await canvas.findByRole('radio', { name: 'Failover' })).not.toBeChecked();
+    await expect(await canvas.findByRole('button', { name: 'Add virtual model' })).toBeDisabled();
+  },
+});
+
 /**
  * A router answers the routing on its own, so a named draft can save with no provider picked.
  *
@@ -60,11 +86,10 @@ export const TheSaveWaitsForTheName = meta.story({
  * step says under the fields rather than leaving a person to wonder what the save will leave.
  */
 export const ARouterNeedsNoProvider = meta.story({
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.type(await canvas.findByRole('textbox', { name: 'Name' }), 'Spread');
-    await userEvent.click(await canvas.findByRole('button', { name: /^Router Picks among/ }));
+  play: async ({ canvas, userEvent: pressed }) => {
+    await namedThenRouted(canvas);
+    await pressed.click(await canvas.findByRole('radio', { name: 'Failover' }));
 
-    await expect(await canvas.findByRole('radiogroup', { name: 'Routing mode' })).toBeVisible();
     await expect(await canvas.findByPlaceholderText('Failover')).toHaveValue('');
     await expect(await canvas.findByRole('button', { name: 'Add virtual model' })).toBeEnabled();
   },

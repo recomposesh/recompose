@@ -32,6 +32,18 @@ mac:
 dmg:
   artifactName: ${productName}-${version}-${arch}.${ext}
   icon: build/volume.icns
+  background: build/background.tiff
+  window:
+    width: 540
+    height: 380
+  contents:
+    - x: 130
+      y: 150
+      type: file
+    - x: 410
+      y: 150
+      type: link
+      path: /Applications
 linux:
   executableName: recompose
   icon: build/icons

@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 import type { RouterServing, SpendGrantFor, SubscriptionRuntime } from './gateway-proxy';
 import type { RoutingMemory } from './gateway-routing-memory';
 import type { NoteTraffic, ServeWatched } from './gateway-traffic';
+import type { NoteAttempt } from './gateway-traffic-watch';
 import type { ProxyDialect } from './gateway-wire';
 import type { PluginHost } from './plugin-host';
 import type { ProviderLogStore } from './provider/provider-log-store';
@@ -33,6 +34,18 @@ export type { SpendGrantFor } from './gateway-proxy';
 
 const generateContentSuffix = ':generateContent';
 const streamGenerateContentSuffix = ':streamGenerateContent';
+
+const HELLO_PROBE = '/api/hello';
+
+/**
+ * What the probe answers, which is what the real endpoint answers and nothing of this gateway's own.
+ *
+ * @summary A client points its base URL here and health-checks it by reading this path before it
+ * sends anything, so the answer has to be the one it would have read upstream: a gateway that
+ * described itself instead would fail a check that never looks at the words. It is a serving-surface
+ * route rather than a model route, so it resolves no custody, picks no dialect, and leaves no row.
+ */
+const HELLO_ANSWER = { message: 'hello' };
 
 function chosenAIStudioRelay(relay?: AIStudioRelay): AIStudioRelay {
   return relay ?? aiStudioRelayRuntime();
@@ -71,11 +84,24 @@ function defaultDialectForPath(path: string): ProxyDialect {
 type ModelServing = {
   gateway: EngineGateway;
   memory: RoutingMemory;
+  spendGrantFor: SpendGrantFor;
   subscriptions: SubscriptionRuntime;
   fetchLike: typeof fetch;
   relay: AIStudioRelay;
   plugins?: PluginHost | undefined;
 };
+
+/**
+ * How one request routes, with the two custody lanes it may spend on told apart.
+ *
+ * @summary The watched lane paints a cable the moment it is asked, because asking is how a child
+ * announces it is about to carry the request. A judge is asked about the same table and carries
+ * nothing, so its custody rides the unwatched lane and the canvas keeps showing what actually
+ * served.
+ */
+function servingOf(model: ModelServing, noteAttempt: NoteAttempt): RouterServing {
+  return { memory: model.memory, noteAttempt, judgeGrantFor: model.spendGrantFor };
+}
 
 function registerModelRoutes(app: Hono, watched: ServeWatched, model: ModelServing): void {
   for (const [path, dialect] of MODEL_ROUTES) {
@@ -87,7 +113,7 @@ function registerModelRoutes(app: Hono, watched: ServeWatched, model: ModelServi
           model.gateway,
           grantFor,
           model.fetchLike,
-          { memory: model.memory, noteAttempt },
+          servingOf(model, noteAttempt),
           model.subscriptions,
           model.relay,
           model.plugins,
@@ -102,13 +128,7 @@ function registerModelRoutes(app: Hono, watched: ServeWatched, model: ModelServi
 function registerGeminiModelRoutes(app: Hono, watched: ServeWatched, model: ModelServing): void {
   app.post(GEMINI_MODEL_ROUTE, async (c) =>
     watched(async (grantFor, noteAttempt) =>
-      proxyGeminiAction(
-        c,
-        c.req.param('action'),
-        grantFor,
-        { memory: model.memory, noteAttempt },
-        model,
-      ),
+      proxyGeminiAction(c, c.req.param('action'), grantFor, servingOf(model, noteAttempt), model),
     ),
   );
 }
@@ -182,6 +202,9 @@ function guardAndReport(app: Hono, gateway: EngineGateway): void {
   app.on(['GET', 'HEAD'], '/healthz', (c) =>
     c.req.method === 'HEAD' ? c.body(null, 200) : c.json({ status: 'ok' }),
   );
+  app.on(['GET', 'HEAD'], HELLO_PROBE, (c) =>
+    c.req.method === 'HEAD' ? c.body(null, 200) : c.json(HELLO_ANSWER),
+  );
 }
 
 export function createGatewayApp(
@@ -216,6 +239,7 @@ export function createGatewayApp(
   registerModelRoutes(app, watched, {
     gateway,
     memory: routingMemory(),
+    spendGrantFor,
     subscriptions: subscriptionServing,
     fetchLike,
     relay,

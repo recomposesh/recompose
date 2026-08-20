@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { DEFAULT_COOLDOWN_MS } from './cooldown-signal';
-import { classify } from './outcome-classification';
+import { classify, classifyJudge } from './outcome-classification';
 
 const NOW = 1_700_000_000_000;
 
@@ -213,6 +213,30 @@ describe('a stand-down a provider never promised stays the walk own guess', () =
       coolUntilMs: reopening,
       reason: { because: 'stream-error', status: 503 },
     });
+  });
+});
+
+describe('the judge readings that route a request rather than refuse it', () => {
+  test('a judge that answered a label hands the walk that label to follow', () => {
+    expect(classifyJudge({ heard: 'answer', label: 'code' })).toEqual({
+      verdict: 'answered',
+      label: 'code',
+    });
+  });
+
+  test('a judge that wrote nothing still counts as an answer the branches can read', () => {
+    expect(classifyJudge({ heard: 'answer', label: '' })).toEqual({
+      verdict: 'answered',
+      label: '',
+    });
+  });
+
+  test('a judge refusal sends the request to the else branch instead of refusing the caller', () => {
+    expect(classifyJudge({ heard: 'refusal' })).toEqual({ verdict: 'to-else' });
+  });
+
+  test('a judge past its timeout budget sends the request to the else branch', () => {
+    expect(classifyJudge({ heard: 'timeout' })).toEqual({ verdict: 'to-else' });
   });
 });
 

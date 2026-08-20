@@ -80,6 +80,24 @@ export const CancelKeepsTheName = meta.story({
   },
 });
 
+/**
+ * A nameless conditional router answers to its mode, the same way the other two do.
+ *
+ * @summary The placeholder and the clearing hint both read the mode's own name, so the third mode
+ * needed no new wording here: what it needed was for neither to say a word the contracts don't.
+ */
+export const NamedByTheConditionalMode = meta.story({
+  args: { mode: 'conditional' as const },
+  play: async ({ canvas, userEvent }) => {
+    await expect(await canvas.findByText('Conditional', { exact: true })).toBeVisible();
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Edit' }));
+
+    await expect(await canvas.findByPlaceholderText('Conditional')).toBeVisible();
+    await expect(await canvas.findByText(/answers to Conditional again/)).toBeVisible();
+  },
+});
+
 /** The box in the dark scheme, where the field has to separate from the panel behind it. */
 export const DarkScheme = meta.story({
   args: { displayName: 'Ladder' },

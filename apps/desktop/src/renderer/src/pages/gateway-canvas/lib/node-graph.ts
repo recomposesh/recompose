@@ -7,38 +7,34 @@ import type {
   VirtualModel,
 } from '@recompose/contracts';
 
-import type { CableFailure, CableStanding, CarriedTraffic } from './cable-traffic';
+import type { CarriedTraffic } from './cable-traffic';
+import type { CanvasEdge } from './canvas-cables';
 import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
+import type { EngineReadings, LiveReadings, SeatedCard } from './card-standing';
 
+import { latestAcrossNodes, outcomesThroughRouters } from './cable-traffic';
 import {
-  carriedBy,
-  failureCarried,
-  latestAcrossNodes,
-  outcomesThroughRouters,
-  standingCarried,
-} from './cable-traffic';
+  cableInto,
+  GATEWAY_NODE_ID,
+  modelNodeId,
+  outcomeInto,
+  structuralWire,
+  tieOnto,
+} from './canvas-cables';
 import { routeCard } from './canvas-cards';
+import { cardStanding, readingsFor } from './card-standing';
+import { heldAt } from './held-at';
 import { addressName } from './route-addresses';
 import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
 export type { CableFailure, CableStanding } from './cable-traffic';
+export type { CanvasEdge } from './canvas-cables';
 export type { CanvasNode, CanvasNodeKind } from './canvas-cards';
-
-const GATEWAY_NODE_ID = 'gateway';
 
 export const DRAFT_NODE_ID = 'draft';
 
 const PENDING_NODE_ID = 'pending';
-
-/** A cable drawn between two cards standing on the canvas. */
-export type CanvasEdge = {
-  id: string;
-  source: string;
-  target: string;
-  standing: CableStanding;
-  failure: CableFailure | undefined;
-};
 
 /** A definition a person began and has not finished, holding the seat its card stands at. */
 export type DraftStanding = { modelId: string; displayName: string; seat: XY };
@@ -55,65 +51,7 @@ export type CanvasOverlay = {
 /** Every card and cable the canvas draws, in the order they seat. */
 export type CanvasGraph = { nodes: readonly CanvasNode[]; edges: readonly CanvasEdge[] };
 
-function modelNodeId(modelId: string): string {
-  return `model:${modelId}`;
-}
-
-/**
- * What the last request through one route node says about the cable feeding its card.
- *
- * @summary Traffic names the route node an attempt went through, so each cable of a ladder paints
- * from its own node: the child a router moved on from reads failed beside the child that answered,
- * where one reading spread over every cable would say both failed. A cable onto a card whose
- * account left the registry carries nothing at all, because it cannot serve the next request and
- * stale green would say it could.
- */
-function outcomeInto(
-  carried: CarriedTraffic,
-  card: CanvasNode,
-  placed: PlacedRouteNode,
-): RequestOutcome | undefined {
-  if (card.kind === 'ghost-target') {
-    return undefined;
-  }
-
-  return carried[placed.modelId]?.[placed.walked.routeNodeId];
-}
-
-function cableInto(
-  placed: PlacedRouteNode,
-  card: CanvasNode,
-  carried: RequestOutcome | undefined,
-  entry: string,
-): CanvasEdge {
-  const { modelId, walked } = placed;
-  const unserved: CableStanding = card.kind === 'ghost-target' ? 'broken' : 'resting';
-
-  return {
-    id: `cable:${placed.name}`,
-    source:
-      walked.parent === undefined
-        ? modelNodeId(modelId)
-        : `route:${addressName(modelId, walked.parent, entry)}`,
-    target: card.id,
-    standing: standingCarried(carried) ?? unserved,
-    failure: walked.node.kind === 'router' ? undefined : failureCarried(carried),
-  };
-}
-
-function structuralWire(servedNodeId: string, carried: RequestOutcome | undefined): CanvasEdge {
-  return {
-    id: `wire:${servedNodeId}`,
-    source: GATEWAY_NODE_ID,
-    target: servedNodeId,
-    standing: standingCarried(carried) ?? 'structural',
-    failure: undefined,
-  };
-}
-
 type RoutedCards = { nodes: CanvasNode[]; edges: CanvasEdge[]; flowed: RequestOutcome | undefined };
-
-type SeatedCard = { placed: PlacedRouteNode; card: CanvasNode };
 
 function seatedCards(model: VirtualModel, registry: Registry): readonly SeatedCard[] {
   const { entry } = model.routing;
@@ -122,10 +60,12 @@ function seatedCards(model: VirtualModel, registry: Registry): readonly SeatedCa
     const placed = {
       modelId: model.id,
       name: addressName(model.id, walked.routeNodeId, entry),
+      parentName:
+        walked.parent === undefined ? undefined : addressName(model.id, walked.parent, entry),
       walked,
     };
 
-    return { placed, card: routeCard(placed, registry) };
+    return { placed, card: routeCard(placed, { routing: model.routing, registry }) };
   });
 }
 
@@ -156,23 +96,48 @@ function outcomeOnto(
     : painted[placed.walked.routeNodeId];
 }
 
+/**
+ * Whether the router this judge advises is waiting on it right now.
+ *
+ * @summary The count is read under the router rather than the judge, because a judge two routers
+ * share would otherwise light both ties when only one of them asked.
+ */
+function judgingTheTieDraws(
+  placed: PlacedRouteNode,
+  readings: EngineReadings,
+  model: string,
+): boolean {
+  const advises = placed.walked.advises;
+
+  return advises === undefined
+    ? false
+    : (heldAt(heldAt(readings.judging, model), advises) ?? 0) > 0;
+}
+
 function routedCards(
   model: VirtualModel,
   registry: Registry,
-  carried: CarriedTraffic,
+  readings: EngineReadings,
 ): RoutedCards {
   const seated = seatedCards(model, registry);
-  const painted = paintedOnto(seated, carried);
+  const painted = paintedOnto(seated, readings.carried);
   const throughRouters = outcomesThroughRouters(
     seated.map((held) => held.placed.walked),
     painted,
   );
   const edges = seated.map(({ placed, card }) =>
-    cableInto(placed, card, outcomeOnto(placed, painted, throughRouters), model.routing.entry),
+    placed.walked.advises === undefined
+      ? cableInto(placed, card, outcomeOnto(placed, painted, throughRouters))
+      : tieOnto(
+          placed,
+          card,
+          painted[placed.walked.routeNodeId],
+          judgingTheTieDraws(placed, readings, model.id),
+        ),
   );
 
   return {
-    nodes: seated.map((held) => held.card),
+    nodes: seated.map((held) => cardStanding(held, painted, readings)),
     edges,
     flowed: latestAcrossNodes(painted),
   };
@@ -191,7 +156,7 @@ function modelCard(model: VirtualModel): CanvasNode {
 function servedGraph(
   gateway: GatewayConfig,
   registry: Registry,
-  carried: CarriedTraffic,
+  readings: EngineReadings,
 ): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
   const nodes: CanvasNode[] = [
     {
@@ -204,7 +169,7 @@ function servedGraph(
   const edges: CanvasEdge[] = [];
 
   for (const model of gateway.virtualModels) {
-    const routed = routedCards(model, registry, carried);
+    const routed = routedCards(model, registry, readings);
 
     nodes.push(modelCard(model), ...routed.nodes);
     edges.push(structuralWire(modelNodeId(model.id), routed.flowed), ...routed.edges);
@@ -243,11 +208,12 @@ export function canvasGraph(
   traffic: GatewayTraffic = {},
   subscriptions: readonly SubscriptionAccountView[] = [],
   now: number = Date.now(),
+  live: LiveReadings = {},
 ): CanvasGraph {
   const { nodes, edges } = servedGraph(
     gateway,
     { accounts, subscriptions },
-    carriedBy(gateway, traffic, now),
+    readingsFor(gateway, traffic, now, live),
   );
 
   appendDraftCard(nodes, edges, overlay.draft);

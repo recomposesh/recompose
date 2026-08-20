@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "recompose-web",
+  "compatibility_date": "2026-08-13",
+  "assets": {
+    "directory": ".output/public",
+    "not_found_handling": "404-page",
+  },
+  "routes": [{ "pattern": "recompose.sh", "custom_domain": true }],
+  "workers_dev": false,
+}

@@ -5,12 +5,14 @@ import type { RefObject } from 'react';
 import type { useDefineVirtualModel } from '../../../../shared/api';
 import type { BindingOutcome } from '../../lib/cable-announcements';
 import type { NodePositions, XY } from '../../lib/canvas-positions';
+import type { JudgeBinding } from '../../lib/conditional-draft';
 import type { CanvasGraph, CanvasOverlay } from '../../lib/node-graph';
 import type { HeldDraft } from '../../lib/use-held-draft';
 
+import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { heldOver } from '../../lib/canvas-positions';
-import { refusalFromMain } from '../../lib/model-draft';
-import { tidyPositions } from '../../lib/tidy-layout';
+import { refusalFromMain } from '../../lib/draft-refusals';
+import { satellitesFollowTheirRouters, tidyPositions } from '../../lib/tidy-layout';
 
 /**
  * A binding ask hanging off a card that already stands, which is where a cable was let go.
@@ -26,13 +28,32 @@ type AnchoredAsk = {
   replacing?: string | undefined;
 };
 
+/** An ask standing on its own pending card, which is where the cable that opened it was let go. */
+export type DroppedAsk = { from: string; at: XY; origin: PickerOrigin };
+
+/**
+ * What a nested conditional router has been told so far, held until the whole of it can store.
+ *
+ * @summary The stored shape refuses a conditional router missing a judge or an else child, so the
+ * walk gathers both before it writes anything, exactly as a drawer draft does. The account stands
+ * apart from the judge because a walk mid-model-pick has named one and bound neither.
+ */
+export type BornConditional = {
+  /** What will read the requests, or nothing while the judge steps still stand. */
+  judge: JudgeBinding | undefined;
+  /** The account the step standing has settled on, which is empty while that step asks for one. */
+  accountId: string;
+};
+
 /** Where the binding ask stands: on a pending card, or anchored to a stored target. */
 export type PickerStanding =
-  | { step: 'kind'; from: string; at: XY; origin: PickerOrigin }
-  | { step: 'account'; from: string; at: XY; origin: PickerOrigin }
   | ({ step: 'account' } & AnchoredAsk)
-  | { step: 'provider-model'; from: string; accountId: string; at: XY; origin: PickerOrigin }
-  | ({ step: 'provider-model'; accountId: string } & AnchoredAsk);
+  | ({ step: 'account' } & DroppedAsk)
+  | ({ step: 'kind' } & DroppedAsk)
+  | ({ step: 'nesting'; born: BornConditional } & DroppedAsk)
+  | ({ step: 'provider-model'; accountId: string } & AnchoredAsk)
+  | ({ step: 'provider-model'; accountId: string } & DroppedAsk)
+  | ({ step: 'router-mode' } & DroppedAsk);
 
 /** What opened the picker: a cable let go by hand, or an ask answered with the keyboard. */
 type PickerOrigin = 'drop' | 'ask';
@@ -169,8 +190,27 @@ export function escapeSettling(holders: EscapeHolders): EscapeSettling {
   return holders.dragging || holders.editing || holders.dialogOpen ? 'nobody' : 'canvas';
 }
 
+/**
+ * Turns the canvas to one subject, which is the selection and the drawer moving together.
+ *
+ * @summary Every gesture that answers "look at this" reads here, so a card press, a cable press,
+ * and a birth all leave a person in the same place. An inspector already open stays open rather
+ * than toggling shut under a person who just asked to see something.
+ */
+export function revealOn(standings: CanvasStandings, subject: string): void {
+  standings.select(subject);
+
+  if (!inspectorOpen()) {
+    toggleInspector();
+  }
+}
+
 /** The account whose models the picker asks for, or none while it is asking something else. */
 export function pickedAccountId(picker: PickerStanding | undefined): string {
+  if (picker?.step === 'nesting') {
+    return picker.born.accountId;
+  }
+
   return picker?.step === 'provider-model' ? picker.accountId : '';
 }
 
@@ -198,7 +238,11 @@ export function overlayOf(
  *
  * @summary The tidy arrangement decides which cards stand at all, the written arrangement moves
  * the ones a person dragged, and the overlay cards always sit exactly where their standing says,
- * because a draft and a pending card were each placed by the gesture that made them.
+ * because a draft and a pending card were each placed by the gesture that made them. A judge seats
+ * last, off whichever seat its router actually took, so dragging a router carries its advisor
+ * along instead of leaving the tie stretched across the canvas. Its own move is read from the
+ * written arrangement rather than from the seats, because a satellite is remembered by the distance
+ * a person left it at and the tidy arrangement it is laid over holds no such distance.
  */
 export function seatsOf(
   graph: CanvasGraph,
@@ -215,5 +259,9 @@ export function seatsOf(
     held['pending'] = overlay.pending.at;
   }
 
-  return heldOver(tidyPositions(graph.nodes), held);
+  return satellitesFollowTheirRouters(
+    graph.nodes,
+    heldOver(tidyPositions(graph.nodes), held),
+    stored,
+  );
 }

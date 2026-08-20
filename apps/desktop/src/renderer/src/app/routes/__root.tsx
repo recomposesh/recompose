@@ -20,6 +20,9 @@ import { AddProviderAct } from '../../pages/providers';
 import {
   accountsQueryOptions,
   bindAccountChangesToCache,
+  bindEngineBranchPinsToCache,
+  bindEngineCooldownsToCache,
+  bindEngineJudgingToCache,
   bindEngineLogsToCache,
   bindEngineStatesToCache,
   bindEngineTrafficToCache,
@@ -110,6 +113,9 @@ function useWindowBand(sidebarAway: boolean): void {
 function usePushedCaches(queryClient: QueryClient): void {
   useEffect(() => bindEngineStatesToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineTrafficToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineBranchPinsToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineCooldownsToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineJudgingToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineLogsToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
   useEffect(() => bindSettingsToCache(queryClient), [queryClient]);
@@ -130,6 +136,19 @@ function useDevtoolsAsked(): boolean {
   return asked;
 }
 
+/**
+ * Whether the surface a route paints scrolls, or sizes itself to the box the shell gives it.
+ *
+ * @summary A canvas owns its own wheel: it pans and zooms inside its box and never grows past it,
+ * so a scroller above it can only ever be a bug, and the bug it makes is the worst kind to read.
+ * The traffic strip slides up off the window's floor and an empty band opens under it, which says
+ * the app came apart rather than that a page scrolled. Every other route reads as a document and
+ * is sized by its own content, so the band is what scrolls it.
+ */
+function surfaceScroll(slug: string | undefined): string {
+  return slug === undefined ? 'overflow-y-auto' : 'overflow-hidden';
+}
+
 function surfaceMain(
   slug: string | undefined,
   usageSearch: UsageSearch | undefined,
@@ -142,7 +161,7 @@ function surfaceMain(
         slug={slug}
         trailing={surfaceAct(usageSearch, providerKind)}
       />
-      <div className="relative flex-1 overflow-y-auto">
+      <div className={`relative flex-1 ${surfaceScroll(slug)}`}>
         <Outlet />
       </div>
     </main>

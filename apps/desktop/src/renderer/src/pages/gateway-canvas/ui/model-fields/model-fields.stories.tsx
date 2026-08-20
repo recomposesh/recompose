@@ -61,7 +61,7 @@ export const PickingAProvider = meta.story({
  * it through a router does not lose the name they typed.
  */
 export const RoutingThroughARouter = meta.story({
-  args: { bindsThrough: 'router', name: 'Fast', id: 'fast' },
+  args: { bindsThrough: 'router', routerMode: 'failover', name: 'Fast', id: 'fast' },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Routes through a router')).toBeVisible();
     await expect(await canvas.findByRole('textbox', { name: 'Name' })).toHaveValue('Fast');
@@ -138,6 +138,14 @@ export const ModelListRefused = meta.story({
   },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('alert')).toHaveTextContent("couldn't read");
+  },
+});
+
+/** A conditional draft walks past the mode, because it is born naming what reads its requests. */
+export const ConditionalWalksOnForItsJudge = meta.story({
+  args: { name: 'Fast', bindsThrough: 'router' as const, routerMode: 'conditional' as const },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the judge')).toBeVisible();
   },
 });
 

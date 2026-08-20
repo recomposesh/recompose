@@ -139,6 +139,18 @@ test("a child rebind answered after its pool left the gateway moves nobody's bin
   });
 });
 
+/**
+ * The ask stands open over the canvas while this runs, so the card is reached through its own
+ * handler rather than through the pointer: a panel a scenario needs open is a panel in the way.
+ */
+function pressedThrough(card: Element): void {
+  card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+  if (card instanceof HTMLElement) {
+    card.focus();
+  }
+}
+
 test('a pick answered after its draft left refuses out loud and stores nothing', async () => {
   const screen = await canvasPageOn();
   const spot = paneSpot(screen.container, { x: 520, y: 420 });
@@ -151,7 +163,7 @@ test('a pick answered after its draft left refuses out loud and stores nothing',
   await pickedTheTarget(screen);
   await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 
-  await userEvent.click(screen.getByRole('button', { name: /Steady/ }));
+  pressedThrough(screen.getByRole('button', { name: /Steady/ }).element());
   await userEvent.keyboard('{Delete}');
 
   await expect.element(screen.getByText(/Delete the virtual model "Steady"/)).toBeVisible();

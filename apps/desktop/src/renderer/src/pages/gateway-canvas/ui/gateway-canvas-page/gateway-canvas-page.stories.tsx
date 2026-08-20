@@ -4,15 +4,13 @@ import preview from '#.storybook/preview';
 import { withShellSurface } from '#.storybook/shell-surface';
 
 import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
-import { dropCanvasPositions } from '../../lib/canvas-position-store';
-import { leaveDrafting } from '../../lib/use-held-draft';
+import { forgetCanvasArrangement } from '../../testing/canvas-story.testkit';
 import { servingBridgeWorld } from '../../testing/gateway-canvas.testkit';
 import { pooledGateway } from '../../testing/routed-gateways.testkit';
 import { GatewayCanvasPage } from './gateway-canvas-page';
 
 function freshCanvas() {
-  dropCanvasPositions('my-gateway');
-  leaveDrafting('my-gateway');
+  forgetCanvasArrangement('my-gateway');
 
   if (!inspectorOpen()) {
     toggleInspector();

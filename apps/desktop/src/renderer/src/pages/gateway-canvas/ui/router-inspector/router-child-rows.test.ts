@@ -118,3 +118,82 @@ test('the rows read in the order the stored ladder declares them', () => {
 
   expect(rows.map((row) => row.name)).toEqual(['spare', 'work']);
 });
+
+const judging: Routing = {
+  entry: 'r1',
+  nodes: {
+    r1: {
+      kind: 'router',
+      policy: {
+        mode: 'conditional',
+        judge: 'j1',
+        branches: [{ label: 'code', rule: 'questions about source code', child: 't1' }],
+        elseChild: 't2',
+        judgeBoundMs: 3000,
+        rejudgeEveryRequest: false,
+      },
+      children: ['t1', 't2'],
+    },
+    t1: { kind: 'target', accountId: 'k1', providerModel: 'claude-sonnet-5' },
+    t2: { kind: 'target', accountId: 'k2', providerModel: 'claude-sonnet-5' },
+    j1: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-5' },
+  },
+};
+
+function judgingPolicy() {
+  const node = judging.nodes['r1'];
+
+  if (node?.kind !== 'router' || node.policy.mode !== 'conditional') {
+    throw new Error('the judging table holds no conditional router');
+  }
+
+  return node.policy;
+}
+
+function judgedRows(pins?: ReadonlyMap<string, number>) {
+  return routerChildRows('fast', judging, ['t1', 't2'], [workKey, spareKey], {
+    policy: judgingPolicy(),
+    pins,
+  });
+}
+
+test('a branch row carries the word the judge answers with for it', () => {
+  expect(judgedRows()[0]).toMatchObject({ label: 'code' });
+});
+
+test('a branch row previews its rule, which the sheet holds whole', () => {
+  expect(judgedRows()[0]).toMatchObject({ rule: 'questions about source code' });
+});
+
+test('the else row wears the word it answers to rather than a rule it does not have', () => {
+  expect(judgedRows()[1]?.label).toBe('Else');
+  expect(judgedRows()[1]?.rule).toBeUndefined();
+});
+
+test('the else row says why it cannot move or leave, rather than going missing without a word', () => {
+  expect(judgedRows()[1]?.inertReason ?? '').toContain('else');
+});
+
+test('a branch row counts the conversations it currently holds', () => {
+  expect(judgedRows(new Map([['t1', 3]]))[0]).toMatchObject({ pins: 3 });
+});
+
+test('a branch nobody is pinned to counts nothing rather than counting zero', () => {
+  expect(judgedRows(new Map())[0]?.pins).toBeUndefined();
+});
+
+test('a child of a conditional router holding no branch yet wears no label and no rule', () => {
+  const rows = routerChildRows('fast', judging, ['t2', 't1'], [workKey, spareKey], {
+    policy: { ...judgingPolicy(), branches: [], elseChild: 't2' },
+  });
+
+  expect(rows[1]?.label).toBeUndefined();
+  expect(rows[1]?.rule).toBeUndefined();
+  expect(rows[1]?.inertReason).toBeUndefined();
+});
+
+test('a router that spreads some other way gives its rows no branch facts at all', () => {
+  const rows = routerChildRows('fast', pooled, ['t1', 't2'], [workKey, spareKey]);
+
+  expect(rows.every((row) => row.label === undefined && row.rule === undefined)).toBe(true);
+});

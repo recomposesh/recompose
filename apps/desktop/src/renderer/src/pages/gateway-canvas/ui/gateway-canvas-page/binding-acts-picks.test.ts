@@ -8,6 +8,7 @@ import type { PickerStanding } from './canvas-standings';
 
 import { closeInspector } from '../../../../shared/lib';
 import { canvasPositions } from '../../lib/canvas-position-store';
+import { columnStep, nodeOfKind } from '../../lib/tidy-layout.testkit';
 import { committedPick } from './binding-acts';
 import { gateway } from './canvas-wiring.testkit';
 import {
@@ -107,15 +108,19 @@ describe('the cards a completed pick leaves exactly where they stand', () => {
 
     expect(canvasPositions(SLUG)).toStrictEqual({});
   });
+});
 
-  test('an ask answered on a card rather than by a drop names no spot at all', () => {
+describe('a card born from an ask that named no spot of its own', () => {
+  test('stands beyond the card the ask came from, rather than anywhere the walk puts it', () => {
     const { world } = worldWhereWritesLand(gateway, {
+      graph: { nodes: [nodeOfKind.router('route:pooled')], edges: [] },
       picker: askAnchoredTo('route:pooled', 'target:pooled:t1'),
+      seats: { 'route:pooled': { x: 2 * columnStep(), y: 0 } },
     });
 
     committedPick(world, 'target:steady', gateway, () => {});
 
-    expect(canvasPositions(SLUG)).toStrictEqual({});
+    expect(canvasPositions(SLUG)['target:steady']?.x).toBe(3 * columnStep());
   });
 });
 

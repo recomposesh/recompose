@@ -1,3 +1,4 @@
+import type { XY } from '../../lib/canvas-positions';
 import type { CanvasFlowWiring } from '../gateway-stage/gateway-stage';
 import type { CanvasWorld } from './canvas-standings';
 
@@ -6,9 +7,28 @@ import {
   keepCanvasPositions,
   setNodePosition,
 } from '../../lib/canvas-position-store';
-import { tidyPositions } from '../../lib/tidy-layout';
+import { satelliteOffset, satelliteOffsetKey, tidyPositions } from '../../lib/tidy-layout';
 import { moveDraftSeat } from '../../lib/use-held-draft';
 import { movedSeats } from './canvas-wiring';
+
+/**
+ * What the arrangement remembers one card by, which for a judge is a distance rather than a point.
+ *
+ * @summary A satellite stands off the router it advises, so remembering where it landed on the
+ * canvas would strand it the moment that router moved. The distance survives the router's own
+ * drags, and it is written under a name of its own so the tidy arrangement drops it and the
+ * satellite returns to its shoulder.
+ */
+function rememberedMove(world: CanvasWorld, moved: { id: string; to: XY }): [string, XY] {
+  const judge = world.graph.nodes.find((node) => node.id === moved.id);
+  const router = judge?.kind === 'judge' ? world.seats[judge.advises] : undefined;
+
+  if (router === undefined) {
+    return [moved.id, moved.to];
+  }
+
+  return [satelliteOffsetKey(moved.id), satelliteOffset(router, moved.to)];
+}
 
 /**
  * Moves each dragged card's seat to where the drag says, writing the arrangement once it settles.
@@ -24,7 +44,9 @@ export function appliedSeatMoves(world: CanvasWorld): CanvasFlowWiring['onNodesC
       } else if (moved.id === 'pending') {
         world.standings.movePendingTo(moved.to);
       } else {
-        setNodePosition(world.slug, moved.id, moved.to);
+        const [remembers, at] = rememberedMove(world, moved);
+
+        setNodePosition(world.slug, remembers, at);
 
         if (moved.settled) {
           keepCanvasPositions(world.slug);

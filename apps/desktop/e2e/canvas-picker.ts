@@ -24,6 +24,20 @@ export function accountPicker(page: Page): Locator {
   return page.getByRole('dialog', { name: 'Connected providers' });
 }
 
+/**
+ * Answers the mode step a nested router opens on, which stands between the ask and the write.
+ *
+ * @summary A router nested from another router's port is composed rather than copied, so it says
+ * how it spreads before anything stores. Failover is what a scenario about the nesting itself
+ * means, because it is the one mode that owes nothing further and lands the child in one press.
+ */
+export async function pickTheNestedRouterMode(page: Page, mode: string): Promise<void> {
+  await page
+    .getByRole('dialog', { name: 'Pick the routing mode' })
+    .getByRole('radio', { name: mode })
+    .click();
+}
+
 /** The stage of the picker that asks which model the chosen account serves. */
 export function providerModelPicker(page: Page): Locator {
   return page.getByRole('dialog', { name: /^Models .+ serves$/ });

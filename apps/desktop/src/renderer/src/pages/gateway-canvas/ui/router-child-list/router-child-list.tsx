@@ -1,30 +1,16 @@
-import type { RefObject } from 'react';
-import type { ReactElement } from 'react';
+import type { ReactElement, RefObject } from 'react';
 
-import { ContextMenu } from '@base-ui/react/context-menu';
 import { useRef, useState } from 'react';
 
 import type { RouterMode } from '../../lib/routing-edits';
-import type { RowLeadFace } from '../row-lead/row-lead';
+import type { LadderActs, OpenChild, RouterChild } from './router-child';
 
-import { Icon } from '../../../../shared/ui';
-import { RowLead } from '../row-lead/row-lead';
-import { spokenRank } from './spoken-rank';
+import { ChildFace } from '../child-face/child-face';
+import { ChildRow } from '../child-row/child-row';
+import { rowShell } from './router-child';
+import { spokenRank, spokenSubject } from './spoken-rank';
 
-/** One child of a router, read as the row a person orders it by. */
-export type RouterChild = RowLeadFace & {
-  /** The id the stored table holds this child under, which is what a move names. */
-  routeNodeId: string;
-  /** The card this child stands as on the canvas, which is what opening the row reaches. */
-  cardId: string;
-  /** What the child answers to, which is the account behind it or the router it is. */
-  name: string;
-  /** A quieter fact under the name, which is the real model a target serves. */
-  detail?: string | undefined;
-};
-
-/** Which way a move carries a row. */
-type Toward = 'up' | 'down';
+export type { RouterChild };
 
 type RouterChildListProps = {
   /** How the router spreads its requests, which is what decides whether the order means anything. */
@@ -35,153 +21,29 @@ type RouterChildListProps = {
   onMove: (from: number, to: number) => void;
   /** Receives the child a person opened, which selects its card and turns the drawer to it. */
   onOpen: OpenChild;
+  /** Receives the branch whose rule a person asked to edit, where the mode has branches at all. */
+  onEditRule?: OpenChild | undefined;
+  /** Receives the branch a person asked to delete, before anything is written. */
+  onDeleteBranch?: OpenChild | undefined;
 };
-
-type LadderActs = {
-  onMove: (toward: Toward) => void;
-  onDragStart: () => void;
-  onDrop: () => void;
-};
-
-type LadderRow = { child: RouterChild; rank: number; total: number } & LadderActs;
-
-type OpenChild = (child: RouterChild) => void;
-
-const rowShell =
-  'group flex items-center gap-2.5 border-t border-line-faint px-3 py-1.5 first:border-t-0 row-hover';
-
-const moveButtonFace =
-  'flex size-hit-target shrink-0 items-center justify-center rounded-control opacity-0 focus-ring text-ink-secondary group-hover:opacity-100 focus-visible:opacity-100 aria-disabled:text-ink-tertiary';
-
-/**
- * What one child answers to, with the binding it stands for under it.
- *
- * @summary The two read as two lines rather than one, because the account and the real model it
- * serves are both long and side by side each one truncates the other away. Stacked, the name a
- * person scans down the ladder starts in one column and the binding they check reads whole.
- */
-function childFace(child: RouterChild, onOpen: (child: RouterChild) => void): ReactElement {
-  return (
-    <button
-      className="flex min-h-hit-target min-w-0 flex-1 items-center gap-2.5 rounded-control focus-ring text-start"
-      onClick={() => {
-        onOpen(child);
-      }}
-      type="button"
-    >
-      <RowLead glyph={child.glyph} glyphTint={child.glyphTint} mark={child.mark} />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-control font-medium text-ink" data-child-name="">
-          {child.name}
-        </span>{' '}
-        {child.detail === undefined ? null : (
-          <span className="truncate font-mono text-mono-value text-ink-secondary">
-            {child.detail}
-          </span>
-        )}
-      </span>
-    </button>
-  );
-}
-
-/**
- * One move control, which stays reachable at the end of the ladder rather than dropping out.
- *
- * @summary A button at the top or the bottom says `aria-disabled` rather than `disabled`, because
- * a browser blurs a control the moment it disables one: a row moved to rank one would throw focus
- * to the page and leave a person hunting for where their child went.
- */
-function moveButton(row: LadderRow, toward: Toward): ReactElement {
-  const held = toward === 'up' ? row.rank === 1 : row.rank === row.total;
-
-  return (
-    <button
-      aria-disabled={held || undefined}
-      aria-label={`Move ${row.child.name} ${toward}`}
-      className={moveButtonFace}
-      onClick={() => {
-        row.onMove(toward);
-      }}
-      type="button"
-    >
-      <Icon className={`size-3.5 ${toward === 'up' ? 'rotate-180' : ''}`} name="chevron" />
-    </button>
-  );
-}
-
-function rowMenu(row: LadderRow): ReactElement {
-  return (
-    <ContextMenu.Portal>
-      <ContextMenu.Positioner>
-        <ContextMenu.Popup className="menu-surface">
-          <ContextMenu.Item
-            className="menu-action"
-            onClick={() => {
-              row.onMove('up');
-            }}
-          >
-            Move up
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            className="menu-action"
-            onClick={() => {
-              row.onMove('down');
-            }}
-          >
-            Move down
-          </ContextMenu.Item>
-        </ContextMenu.Popup>
-      </ContextMenu.Positioner>
-    </ContextMenu.Portal>
-  );
-}
-
-function ladderRow(row: LadderRow, onOpen: OpenChild): ReactElement {
-  const { child, rank, onDrop, onDragStart } = row;
-
-  return (
-    <ContextMenu.Root key={child.routeNodeId}>
-      <ContextMenu.Trigger
-        className={rowShell}
-        onDragOver={(event) => {
-          event.preventDefault();
-        }}
-        onDrop={onDrop}
-        render={<li />}
-      >
-        <span
-          className="w-4 shrink-0 text-center text-control font-medium text-ink-secondary"
-          data-rank=""
-        >
-          {rank}
-        </span>
-        {childFace(child, onOpen)}
-        {moveButton(row, 'up')}
-        {moveButton(row, 'down')}
-        <span
-          aria-hidden
-          className="flex size-hit-target shrink-0 cursor-grab items-center justify-center text-ink-tertiary group-hover:text-ink-secondary"
-          data-drag-handle=""
-          draggable
-          onDragStart={onDragStart}
-        >
-          <Icon className="size-4" name="grip" />
-        </span>
-      </ContextMenu.Trigger>
-      {rowMenu(row)}
-    </ContextMenu.Root>
-  );
-}
 
 function unorderedList(rows: readonly RouterChild[], onOpen: OpenChild): ReactElement {
   return (
     <ul aria-label="Children" className="field-box p-px">
       {rows.map((child) => (
         <li className={rowShell} key={child.routeNodeId}>
-          {childFace(child, onOpen)}
+          <ChildFace child={child} onOpen={onOpen} />
         </li>
       ))}
     </ul>
+  );
+}
+
+function holdsNoChildYet(): ReactElement {
+  return (
+    <p className="field-box px-3 py-2.5 text-detail text-ink-secondary">
+      This router holds no child yet. Drag a cable from its port to bind one.
+    </p>
   );
 }
 
@@ -210,6 +72,31 @@ function ladderActs(
 }
 
 /**
+ * What the row can be asked about its branch, which is nothing where the caller offers nothing.
+ *
+ * @summary Both acts arrive together or not at all, because a menu offering a delete with no way
+ * to edit the rule beside it would read as the row's only act rather than its last resort.
+ */
+function branchActsFor(
+  child: RouterChild,
+  onEditRule: OpenChild | undefined,
+  onDeleteBranch: OpenChild | undefined,
+): Partial<LadderActs> {
+  if (onEditRule === undefined || onDeleteBranch === undefined) {
+    return {};
+  }
+
+  return {
+    onEditRule: () => {
+      onEditRule(child);
+    },
+    onDelete: () => {
+      onDeleteBranch(child);
+    },
+  };
+}
+
+/**
  * The children a router holds, as a ladder under failover and as a plain list under round-robin.
  *
  * @summary Reach for it in the router inspector, which is the one place this canvas hosts the
@@ -221,7 +108,14 @@ function ladderActs(
  * person pressed keeps the focus it had. Under round-robin no end of the list wins, so it carries
  * no rank and no way to order it, because an affordance for an order nothing reads would be a lie.
  */
-export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListProps) {
+export function RouterChildList({
+  mode,
+  rows,
+  onMove,
+  onOpen,
+  onEditRule,
+  onDeleteBranch,
+}: RouterChildListProps) {
   const grabbed = useRef<number | undefined>(undefined);
   const [said, setSaid] = useState<string | undefined>(undefined);
 
@@ -233,15 +127,11 @@ export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListP
     }
 
     onMove(from, to);
-    setSaid(`${held.name} is now ${spokenRank(to + 1, rows.length)}.`);
+    setSaid(`${spokenSubject(held)} is now ${spokenRank(to + 1, rows.length)}.`);
   };
 
   if (rows.length === 0) {
-    return (
-      <p className="field-box px-3 py-2.5 text-detail text-ink-secondary">
-        This router holds no child yet. Drag a cable from its port to bind one.
-      </p>
-    );
+    return holdsNoChildYet();
   }
 
   if (mode === 'round-robin') {
@@ -251,17 +141,19 @@ export function RouterChildList({ mode, rows, onMove, onOpen }: RouterChildListP
   return (
     <>
       <ol aria-label="Children" className="field-box p-px">
-        {rows.map((child, index) =>
-          ladderRow(
-            {
+        {rows.map((child, index) => (
+          <ChildRow
+            key={child.routeNodeId}
+            onOpen={onOpen}
+            row={{
               child,
               rank: index + 1,
               total: rows.length,
               ...ladderActs(index, grabbed, carried),
-            },
-            onOpen,
-          ),
-        )}
+              ...branchActsFor(child, onEditRule, onDeleteBranch),
+            }}
+          />
+        ))}
       </ol>
       <p className="sr-only" role="status">
         {said}

@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 
 import { bindingKindAsk } from '../canvas-picker';
 import { Given, Then } from '../fixtures';
+import { aJudgedModelStands, CHAT_BRANCH, CODE_BRANCH } from '../judged-gateway';
 import {
   aRoutedModelStands,
   FIRST_TARGET,
@@ -32,6 +33,29 @@ Given(
       mode: modeNamed(mode),
       targets: [FIRST_TARGET, SECOND_TARGET],
     });
+  },
+);
+
+/**
+ * @summary Four of the conditional feature files open on this very sentence, so the arrangement
+ * stands here beside the spreading modes' own rather than in whichever file happened to graduate
+ * first. The scenario names its two branches, and the rules and children they carry are the shared
+ * ones, so a scenario that renames a branch renames what the judge is offered.
+ */
+Given(
+  'a virtual model {string} bound to a conditional router with a {string} branch, a {string} branch, and an else branch',
+  async ({ judge, page, scriptedProvider }, model: string, code: string, chat: string) => {
+    await aJudgedModelStands(
+      page,
+      { judge, provider: scriptedProvider },
+      {
+        model,
+        branches: [
+          { ...CODE_BRANCH, label: code },
+          { ...CHAT_BRANCH, label: chat },
+        ],
+      },
+    );
   },
 );
 

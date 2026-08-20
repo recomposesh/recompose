@@ -14,7 +14,6 @@ import {
   accountDropped,
   draftNobodyBound,
   droppedAt,
-  entryOf,
   groupsRead,
   kindDropped,
   modelDropped,
@@ -48,7 +47,7 @@ describe('the stage the picker draws', () => {
   test('an ask that settled the kind stands on the account list', () => {
     const { world } = worldWhereWritesHang(gateway, { picker: accountDropped });
 
-    expect(pickerStanding(world, modelsOffered).stage).toEqual({ step: 'account' });
+    expect(pickerStanding(world, modelsOffered).stage).toEqual({ step: 'account', asks: 'target' });
   });
 
   test('an ask that settled the account carries it on to the model list', () => {
@@ -57,6 +56,7 @@ describe('the stage the picker draws', () => {
     expect(pickerStanding(world, modelsOffered).stage).toEqual({
       step: 'provider-model',
       accountId: 'k1',
+      asks: 'target',
     });
   });
 });
@@ -148,19 +148,17 @@ describe('answering what kind to bind', () => {
     ]);
   });
 
-  test('picking the router finishes the ask, on a router that holds nothing yet', () => {
+  test('picking the router carries the ask on to the mode, rather than finishing it', () => {
     draftHeld(gateway.slug, draftNobodyBound);
 
     const { world, record } = worldWhereWritesLand(gateway, { picker: kindDropped });
 
     pickerStanding(world, modelsOffered).onPickKind('router');
 
-    expect(entryOf(record.written.at(0), 'steady')).toEqual({
-      kind: 'router',
-      policy: { mode: 'failover' },
-      children: [],
-    });
-    expect(record.pickers).toEqual([undefined]);
+    expect(record.written).toEqual([]);
+    expect(record.pickers).toEqual([
+      { step: 'router-mode', from: 'draft', at: droppedAt, origin: 'drop' },
+    ]);
   });
 
   test('a kind arriving once the account list already stands changes nothing', () => {

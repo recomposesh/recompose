@@ -5,7 +5,7 @@ import type { OptionGroup } from '../ui/option-list/option-list';
 /** The args every picker story opens on, named once so the two picker stories cannot drift. */
 export function pickerMetaArgs(accounts: readonly OptionGroup[]) {
   return {
-    stage: { step: 'account' as const },
+    stage: { step: 'account' as const, asks: 'target' as const },
     groups: accounts,
     refusal: undefined,
     pickedName: undefined,
@@ -13,6 +13,7 @@ export function pickerMetaArgs(accounts: readonly OptionGroup[]) {
     onPickAccount: fn(),
     onPickKind: fn(),
     onPickProviderModel: fn(),
+    onPickRouterMode: fn(),
     onStepBack: fn(),
   };
 }

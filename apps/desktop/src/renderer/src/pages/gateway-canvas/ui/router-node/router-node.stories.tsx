@@ -7,24 +7,27 @@ import type { RouterNodeData } from './router-node';
 import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { cardOnCanvas, inScheme } from '../../testing/canvas-flow.testkit';
 import { RouterNode } from './router-node';
+import { judgingRouter, rotatingRouter, spreadingRouter } from './router-node.testkit';
 
-const spreading: RouterNodeData = {
-  id: 'route:fast:r1',
-  kind: 'router',
-  modelId: 'fast',
-  routeNodeId: 'r1',
-  depth: 0,
-  mode: 'failover',
-  displayName: undefined,
-  childCount: 2,
-  onAddChild: () => {},
-};
+const spreading = spreadingRouter;
+
+const rotating = rotatingRouter;
+
+const judging = judgingRouter;
 
 const named: RouterNodeData = { ...spreading, displayName: 'Ladder' };
 
 const empty: RouterNodeData = { ...spreading, childCount: 0 };
 
-const rotating: RouterNodeData = { ...spreading, mode: 'round-robin', childCount: 3 };
+const unjudged: RouterNodeData = {
+  ...judging,
+  judged: { branches: 2, judge: undefined, judgeAnswers: false },
+};
+
+const judgeLost: RouterNodeData = {
+  ...judging,
+  judged: { branches: 2, judge: 'advisor', judgeAnswers: false },
+};
 
 const CARD_WIDTH = 184;
 const CARD_HEIGHT = 88;
@@ -162,6 +165,73 @@ export const ADerivedNameSpendsTheMonoLineOnTheChildCount = meta.story({
   },
 });
 
+/**
+ * A router the judge decides wears its mode as a pill, behind a glyph the word never carries.
+ *
+ * @summary The pill is where a person reads that this router asks a question, and the glyph stays
+ * decoration so the same word reaches the inspector and a refusal unchanged.
+ */
+export const AJudgedRouterWearsItsModeAsAPill = meta.story({
+  args: { data: judging },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+
+    await expect(card).toHaveTextContent('Conditional');
+    await expect(card).toHaveTextContent('2 branches, one judge');
+    await expect(canvas.queryByRole('button', { name: /\?/u })).toBeNull();
+  },
+});
+
+/**
+ * The shoulder the tie leaves by wears the router's own line, never the cable's.
+ *
+ * @summary The dot at each end of a tie belongs to the tie rather than to the cables around it, and
+ * the tie already draws in the router tint: a blue dot on an indigo dashed line would read as one
+ * more binding a request could travel down.
+ */
+export const TheJudgeShoulderWearsTheRouterTint = meta.story({
+  args: { data: judging },
+  play: async ({ canvasElement }) => {
+    const shoulder = canvasElement.querySelector('.react-flow__handle-top .port-dot');
+    const indigo = inScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)');
+
+    await expect(paintedStyle(shoulder).borderTopColor).toBe(indigo);
+    await expect(paintedStyle(shoulder).backgroundColor).toBe(indigo);
+  },
+});
+
+/** The shoulder joins the tint this card's own binding ports already wear, so nothing else moved. */
+export const TheShoulderMatchesTheCardsOwnPorts = meta.story({
+  args: { data: judging },
+  play: async ({ canvasElement }) => {
+    const shoulder = canvasElement.querySelector('.react-flow__handle-top .port-dot');
+    const binding = canvasElement.querySelector('.react-flow__handle-left .port-dot');
+
+    await expect(paintedStyle(shoulder).borderTopColor).toBe(paintedStyle(binding).borderTopColor);
+  },
+});
+
+/** A judge no table holds reads as absent, because every request then lands on else. */
+export const AJudgedRouterMissingItsJudgeSaysSo = meta.story({
+  args: { data: unjudged },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+
+    await expect(card).toHaveTextContent('2 branches, no judge');
+  },
+});
+
+/** The two shipped modes keep the card they always had, with no pill riding the kicker row. */
+export const TheOtherModesWearNoPill = meta.story({
+  args: { data: rotating },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Round-robin/ });
+
+    await expect(card).toHaveTextContent('3 children');
+    await expect(card).not.toHaveTextContent('Conditional');
+  },
+});
+
 /** A router holding no child wears the dashed ghost treatment a removed target already wears. */
 export const AnIncompleteRouterWearsTheGhostTreatment = meta.story({
   args: { data: empty },
@@ -172,6 +242,30 @@ export const AnIncompleteRouterWearsTheGhostTreatment = meta.story({
     await expect(card).toHaveTextContent('no child');
     await expect(paintedStyle(outer).strokeDasharray).not.toBe('none');
     await expect(paintedStyle(inner).strokeDasharray).not.toBe('none');
+  },
+});
+
+/** A conditional router whose judge lost its account dashes, and its caption agrees with it. */
+export const AJudgeThatCannotAnswerDraftsTheRouter = meta.story({
+  args: { data: judgeLost },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+    const [outer, inner] = framePaths(card);
+
+    await expect(card).toHaveTextContent('2 branches, judge cannot answer');
+    await expect(paintedStyle(outer).strokeDasharray).not.toBe('none');
+    await expect(paintedStyle(inner).strokeDasharray).not.toBe('none');
+  },
+});
+
+/** A conditional router whose judge answers keeps the solid frame its children earned. */
+export const AJudgeThatAnswersLeavesTheRouterSolid = meta.story({
+  args: { data: judging },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+    const [outer] = framePaths(card);
+
+    await expect(paintedStyle(outer).strokeDasharray).toBe('none');
   },
 });
 

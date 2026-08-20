@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 
 import { controlPlaneBodyFor } from './control-plane-stub';
 import { bindToAFreePort } from './loopback-ports';
+import { bodyOf } from './stub-request';
 
 const MODELS_PATH = '/v1/models';
 
@@ -94,20 +95,6 @@ function messagesTurnAnswerBody(model: string): string {
     stop_reason: 'end_turn',
     stop_sequence: null,
     usage: { input_tokens: 3, output_tokens: 4 },
-  });
-}
-
-async function bodyOf(request: IncomingMessage): Promise<string> {
-  return new Promise<string>((settle) => {
-    let text = '';
-
-    request.setEncoding('utf8');
-    request.on('data', (chunk: string) => {
-      text += chunk;
-    });
-    request.on('end', () => {
-      settle(text);
-    });
   });
 }
 

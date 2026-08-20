@@ -5,8 +5,8 @@ import { useState } from 'react';
 import type { SettledDefinition } from '../../lib/model-draft';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
-import { idRefusal } from '../../lib/draft-refusals';
-import { gatewayDefiningDraft, refusalFromMain } from '../../lib/model-draft';
+import { idRefusal, refusalFromMain } from '../../lib/draft-refusals';
+import { gatewayDefiningDraft } from '../../lib/model-draft';
 
 /**
  * The one act the draft inspector's foot carries out, and everything the foot reads off it.

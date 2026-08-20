@@ -122,7 +122,7 @@ export const AStageNothingStandsBehindWearsNoChevron = meta.story({
 /** The account settled, the picker asks the account's own list for the model that serves. */
 export const TheSecondStageAsksForTheProviderModel = meta.story({
   args: {
-    stage: { step: 'provider-model', accountId: 'key-work' },
+    stage: { step: 'provider-model', asks: 'target', accountId: 'key-work' },
     groups: models,
   },
   play: async ({ canvas }) => {
@@ -148,7 +148,7 @@ export const ThePickerStandsOnItsPendingCard = meta.story({
 /** An account whose models cannot be read says why, instead of offering an empty silence. */
 export const ARefusalStandsForTheList = meta.story({
   args: {
-    stage: { step: 'provider-model', accountId: 'key-work' },
+    stage: { step: 'provider-model', asks: 'target', accountId: 'key-work' },
     groups: [],
     refusal: "recompose couldn't read this account's model list.",
   },
@@ -164,7 +164,10 @@ export const ARefusalStandsForTheList = meta.story({
 
 /** A long list caps its height and scrolls, so the picker never runs off the canvas. */
 export const ALongListCapsItsHeightAndScrolls = meta.story({
-  args: { stage: { step: 'provider-model', accountId: 'key-work' }, groups: manyModels },
+  args: {
+    stage: { step: 'provider-model', asks: 'target', accountId: 'key-work' },
+    groups: manyModels,
+  },
   play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByRole('button', { name: 'claude-model-0' })).toBeVisible();
 
@@ -177,8 +180,66 @@ export const ALongListCapsItsHeightAndScrolls = meta.story({
 
 /** A list long enough to lose track of offers its search, which is the shipped list's own doing. */
 export const ALongListOffersItsSearch = meta.story({
-  args: { stage: { step: 'provider-model', accountId: 'key-work' }, groups: manyModels },
+  args: {
+    stage: { step: 'provider-model', asks: 'target', accountId: 'key-work' },
+    groups: manyModels,
+  },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('searchbox', { name: 'Search models' })).toBeVisible();
   },
+});
+
+/**
+ * A router nested here says how it spreads, on the same rows the drawer stacks for that question.
+ *
+ * @summary Three sentences of cost have nowhere to stand side by side in this column either, so
+ * the canvas reads the choice exactly as the drawer does rather than shortening it into a strip.
+ */
+export const NestingARouterAsksHowItSpreads = meta.story({
+  args: { stage: { step: 'router-mode' }, groups: [] },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the routing mode')).toBeVisible();
+    await expect(await canvas.findByRole('radio', { name: 'Conditional' })).not.toBeChecked();
+    await expect(await canvas.findByText(/topmost healthy provider/)).toBeVisible();
+  },
+});
+
+/** Conditional walks on to the judge, and the heading says which of the two lists this one is. */
+export const ANestedConditionalAsksForItsJudge = meta.story({
+  args: { stage: { step: 'account', asks: 'judge' }, groups: accounts },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the judge')).toBeVisible();
+    await expect(
+      await canvas.findByRole('button', { name: 'Choose a different routing mode' }),
+    ).toBeVisible();
+  },
+});
+
+/** The judge's own model list reads as the list it judges with, never as the list it serves. */
+export const ANestedJudgeReadsTheModelsItJudgesWith = meta.story({
+  args: {
+    stage: { step: 'provider-model', asks: 'judge', accountId: 'key-work' },
+    groups: models,
+    pickedName: 'work key',
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Models work key judges with')).toBeVisible();
+  },
+});
+
+/** The judge whole, the same account list asks where everything no rule placed goes instead. */
+export const ANestedConditionalAsksForItsElseBranch = meta.story({
+  args: { stage: { step: 'account', asks: 'else' }, groups: accounts },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Pick the else branch')).toBeVisible();
+    await expect(
+      await canvas.findByRole('button', { name: 'Select a different judge' }),
+    ).toBeVisible();
+  },
+});
+
+/** The mode rows in the dark scheme, where each row's ring has to hold against the menu surface. */
+export const NestedModeDarkScheme = meta.story({
+  args: { stage: { step: 'router-mode' }, groups: [] },
+  globals: { theme: 'dark' },
 });

@@ -16,8 +16,6 @@ recompose runs on macOS 12 Monterey or later, on Apple Silicon and Intel.
 2. Open the dmg and drag Recompose into Applications.
 3. Open Recompose. macOS asks once about an app downloaded from the internet: click **Open**.
 
-Every build carries a Developer ID signature and Apple's notary ticket, so that stays the only prompt.
-
 ### Homebrew
 
 ```sh
@@ -33,14 +31,6 @@ recompose runs on 64-bit Windows 10 or later. Download the [installer](/download
 ### If Windows warns you
 
 Windows shows "Windows protected your PC" the first time you run the installer. Click **More info**, then **Run anyway**.
-
-The warning is about reputation, not about a problem Windows found. SmartScreen trusts an installer once enough people have run it, and a fresh release from a small project starts with no history. A signed installer through the SignPath Foundation is on the way and removes the warning for everyone.
-
-Rather than taking anyone's word for it, verify that your download came from the public build of a tagged commit on [GitHub](https://github.com/recomposesh/recompose):
-
-```sh
-gh attestation verify Recompose-*-setup.exe --repo recomposesh/recompose
-```
 
 ## Linux
 

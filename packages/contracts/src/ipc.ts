@@ -6,6 +6,9 @@ import {
   credentialedAccountKindSchema,
 } from './accounts';
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
+import { gatewayBranchPinsSchema } from './engine-branch-pins';
+import { gatewayCooldownsSchema } from './engine-cooldowns';
+import { gatewayJudgingSchema } from './engine-judging';
 import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
@@ -242,6 +245,9 @@ export type RecomposeIpc = {
 export const ipcEvents = {
   'engine:state': { payload: engineStatesSchema },
   'engine:traffic': { payload: gatewayTrafficSchema },
+  'engine:pins': { payload: gatewayBranchPinsSchema },
+  'engine:cooldowns': { payload: gatewayCooldownsSchema },
+  'engine:judging': { payload: gatewayJudgingSchema },
   'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': {

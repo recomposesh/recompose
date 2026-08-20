@@ -6,10 +6,12 @@
   "sideEffects": false,
   "scripts": {
     "build": "vite build",
+    "deploy": "wrangler deploy",
     "dev": "vite dev",
     "preview": "vite preview",
     "test": "vitest run",
     "test:browser": "vitest run --project browser",
+    "test:output": "node scripts/check-output.mts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
     "@types/mdx": "2.0.14",
+    "@types/node": "24.10.9",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.4",
@@ -39,6 +42,7 @@
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "8.1.5",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "4.123.0"
   }
 }

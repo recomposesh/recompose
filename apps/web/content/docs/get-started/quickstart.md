@@ -4,7 +4,7 @@ icon: Rocket
 description: 'Create a gateway, wire one provider, and send the first request.'
 ---
 
-By the end of this page, Claude Code answers through a gateway running on your machine, and the request lands in the gateway's log. Budget five minutes.
+By the end of this page, Claude Code answers through a gateway running on your machine, and the request lands in the gateway's log.
 
 > Claude Code is the example here, not a requirement. Every client that speaks the Anthropic, OpenAI, or Gemini dialect points at a gateway the same way: see [Connect a client](/docs/connect).
 
@@ -19,8 +19,6 @@ The canvas opens with the gateway's card, and the address pill in the toolbar al
 ## Connect a provider
 
 In the sidebar under **Providers**, click **API keys**. In the toolbar, click **Add provider** and pick **Anthropic API**. Give the key a name, paste it into **Key**, and click **Connect**.
-
-The key appears as a row with the name you gave it and the key's masked tail.
 
 ## Compose a virtual model
 
@@ -55,8 +53,6 @@ explain what a local gateway does, in one sentence
 ```
 
 The status line at the foot of the connect sheet turns green as the log takes its first request. For the detail, click **Request log** in the toolbar: a row shows the journey `claude-fast → claude-sonnet-4-5`, the provider, your key's name, a green `200`, and the duration.
-
-In the sidebar, the Get started checklist marks its last step and bows out with confetti.
 
 ## What you built
 

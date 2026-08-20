@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest';
 import type { CableStanding } from './node-graph';
 
 import {
+  branchIn,
   CABLE_GRAB_SPAN,
   failureIn,
+  pointAlongCable,
   pulseForStanding,
+  BRANCH_PILL_ANCHOR,
   strokeForRelease,
   strokeForStanding,
   tintForStanding,
@@ -19,6 +22,7 @@ const everyStanding: readonly CableStanding[] = [
   'broken',
   'draft',
   'pending',
+  'cooling',
 ];
 
 describe('what a cable paints for its standing', () => {
@@ -31,6 +35,7 @@ describe('what a cable paints for its standing', () => {
       'stroke-cable-broken',
       'stroke-cable-draft',
       'stroke-cable-pending',
+      'stroke-attention',
     ]);
   });
 
@@ -43,6 +48,7 @@ describe('what a cable paints for its standing', () => {
       'node-tint-cable-broken',
       'node-tint-cable-draft',
       'node-tint-cable-pending',
+      'node-tint-attention',
     ]);
   });
 
@@ -114,6 +120,59 @@ describe('what a cable in flight paints for the release under the pointer', () =
 
   it('reads pending over open canvas, where the release opens the picker instead', () => {
     expect(strokeForRelease(null)).toBe('stroke-cable-pending');
+  });
+});
+
+describe('where furniture rides along a cable', () => {
+  const bowed = 'M0,0 C60,0 140,100 200,100';
+
+  it('leaves the midpoint free, so the branch label and the failure chip never stack', () => {
+    expect(BRANCH_PILL_ANCHOR).toBeGreaterThan(0);
+    expect(BRANCH_PILL_ANCHOR).toBeLessThan(0.5);
+  });
+
+  it('reads a point off the curve itself rather than off the line between the two ends', () => {
+    const rode = pointAlongCable(bowed, 0.5);
+
+    expect(rode).toEqual({ x: 100, y: 50 });
+  });
+
+  it('rides earlier along the cable than the midpoint the failure chip holds', () => {
+    const early = pointAlongCable(bowed, BRANCH_PILL_ANCHOR);
+
+    expect(early?.x).toBeLessThan(100);
+    expect(early?.y).toBeLessThan(50);
+  });
+
+  it('reads nothing off a path this canvas never drew as one curve', () => {
+    expect(pointAlongCable('M0,0 L200,100', 0.35)).toBeUndefined();
+    expect(pointAlongCable('', 0.35)).toBeUndefined();
+  });
+});
+
+describe('the branch a cable carries', () => {
+  it('hands over the label and the rule the judge reads this cable by', () => {
+    expect(branchIn({ kind: 'rule', label: 'code', rule: 'It writes code.' })).toEqual({
+      kind: 'rule',
+      label: 'code',
+      rule: 'It writes code.',
+    });
+  });
+
+  it('hands over the fallback seat, which carries no rule anybody wrote', () => {
+    expect(branchIn({ kind: 'else' })).toEqual({ kind: 'else' });
+  });
+
+  it('reads no branch off a cable carrying none, which is every unjudged binding', () => {
+    expect(branchIn(undefined)).toBeUndefined();
+    expect(branchIn('code')).toBeUndefined();
+    expect(branchIn({ kind: 'rotation' })).toBeUndefined();
+  });
+
+  it('refuses half a branch, so no pill stands offering a rule it cannot finish saying', () => {
+    expect(branchIn({ kind: 'rule', label: 'code' })).toBeUndefined();
+    expect(branchIn({ kind: 'rule', rule: 'It writes code.' })).toBeUndefined();
+    expect(branchIn({ kind: 'rule', label: 7, rule: 'It writes code.' })).toBeUndefined();
   });
 });
 

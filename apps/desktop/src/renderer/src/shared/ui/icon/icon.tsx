@@ -23,6 +23,12 @@ const glyphs = {
       <path d="m15.5 15.5 4.2 4.2" />
     </>
   ),
+  brain: (
+    <>
+      <path d="M12 3.9a4.2 4.2 0 0 0-7.1 2.8 3.9 3.9 0 0 0-2.4 6.1 4 4 0 0 0 2.1 5.6 3.9 3.9 0 0 0 4.2 2.6A3.9 3.9 0 0 0 12 20.1Z" />
+      <path d="M12 3.9a4.2 4.2 0 0 1 7.1 2.8 3.9 3.9 0 0 1 2.4 6.1 4 4 0 0 1-2.1 5.6 3.9 3.9 0 0 1-4.2 2.6A3.9 3.9 0 0 1 12 20.1Z" />
+    </>
+  ),
   target: (
     <>
       <circle cx="12" cy="12" r="7.5" />
@@ -84,6 +90,13 @@ const glyphs = {
     <>
       <circle cx="7.6" cy="16.4" r="3.6" />
       <path d="M10.2 13.8 19.5 4.5M16.4 7.6l2.2 2.2M13.8 10.2l2.2 2.2" />
+    </>
+  ),
+  stack: (
+    <>
+      <path d="M12 3.4 20.6 7.6 12 11.8 3.4 7.6 12 3.4Z" />
+      <path d="M3.4 12 12 16.2 20.6 12" />
+      <path d="M3.4 16.4 12 20.6 20.6 16.4" />
     </>
   ),
   cube: (
@@ -179,13 +192,15 @@ type IconProps = {
  *
  * @summary Reach for it beside a label or inside a control that names itself. Every glyph is
  * decorative, so it stays out of the accessibility tree and the control keeps the name it
- * already had.
+ * already had. Which mark was drawn is left on the element, since a glyph that says nothing to a
+ * reader still has to be nameable by whoever is looking at the markup.
  */
 export function Icon({ name, className = 'size-4' }: IconProps) {
   return (
     <svg
       aria-hidden
       className={`shrink-0 ${className}`}
+      data-glyph={name}
       fill="none"
       stroke="currentColor"
       strokeLinecap="round"

@@ -1,7 +1,12 @@
 import { fc, test as propertyTest } from '@fast-check/vitest';
 import { describe, expect, test } from 'vitest';
 
-import { nextFailoverChild, nextRoundRobinChild } from './policies';
+import {
+  childTheLabelNames,
+  nextConditionalChild,
+  nextFailoverChild,
+  nextRoundRobinChild,
+} from './policies';
 
 const everyChildEligible = () => true;
 
@@ -69,6 +74,83 @@ describe('the child a failover ladder offers next', () => {
     expect(nextFailoverChild(['first', 'middle', 'last'], eligible)).toBe('first');
     expect(nextFailoverChild(['middle', 'first', 'last'], eligible)).toBe('first');
     expect(nextFailoverChild(['middle', 'last'], eligible)).toBe('last');
+  });
+});
+
+describe('the child the label a judge answered names', () => {
+  const branches = [
+    { label: 'code', rule: 'asks to write or change code', child: 'coder' },
+    { label: 'chat', rule: 'small talk and questions', child: 'talker' },
+  ];
+
+  test('a clean label hands the request to the child behind that branch', () => {
+    expect(childTheLabelNames(branches, 'catchall', 'code')).toBe('coder');
+  });
+
+  test('a second clean label hands the request to its own branch', () => {
+    expect(childTheLabelNames(branches, 'catchall', 'chat')).toBe('talker');
+  });
+
+  test('a label no branch wears lands the request on the else child', () => {
+    expect(childTheLabelNames(branches, 'catchall', 'weather')).toBe('catchall');
+  });
+
+  test('the word else lands the request on the else child rather than a branch', () => {
+    expect(childTheLabelNames(branches, 'catchall', 'else')).toBe('catchall');
+  });
+
+  test('two labels answered at once land the request on the else child', () => {
+    expect(childTheLabelNames(branches, 'catchall', 'code chat')).toBe('catchall');
+  });
+
+  test('an answer carrying no text at all lands the request on the else child', () => {
+    expect(childTheLabelNames(branches, 'catchall', '')).toBe('catchall');
+  });
+
+  test('a judge that answered nothing lands the request on the else child', () => {
+    expect(childTheLabelNames(branches, 'catchall', undefined)).toBe('catchall');
+  });
+
+  test('a router holding no branch lands every answer on the else child', () => {
+    expect(childTheLabelNames([], 'catchall', 'code')).toBe('catchall');
+  });
+
+  test('a stored label padded with spaces still wears the word the judge answers with', () => {
+    const padded = [{ label: '  code  ', rule: 'asks to write or change code', child: 'coder' }];
+
+    expect(childTheLabelNames(padded, 'catchall', 'code')).toBe('coder');
+  });
+
+  test('the padding is trimmed rather than ignored, so the padded word names no branch', () => {
+    const padded = [{ label: '  code  ', rule: 'asks to write or change code', child: 'coder' }];
+
+    expect(childTheLabelNames(padded, 'catchall', '  code  ')).toBe('catchall');
+  });
+});
+
+describe('the child a conditional router offers next', () => {
+  const judged = { decided: 'coder', elseChild: 'catchall' };
+
+  test('a decided branch whose subtree can serve is the child offered', () => {
+    expect(nextConditionalChild(judged, everyChildEligible)).toBe('coder');
+  });
+
+  test('a decided branch whose subtree cannot serve hands the request to the else child', () => {
+    expect(nextConditionalChild(judged, (child) => child !== 'coder')).toBe('catchall');
+  });
+
+  test('a router whose else child cannot serve either offers no child', () => {
+    expect(nextConditionalChild(judged, () => false)).toBeUndefined();
+  });
+
+  test('a decision that already landed on else offers the else child', () => {
+    const landed = { decided: 'catchall', elseChild: 'catchall' };
+
+    expect(nextConditionalChild(landed, everyChildEligible)).toBe('catchall');
+  });
+
+  test('a router that reached no branch at all offers no child', () => {
+    expect(nextConditionalChild(undefined, everyChildEligible)).toBeUndefined();
   });
 });
 

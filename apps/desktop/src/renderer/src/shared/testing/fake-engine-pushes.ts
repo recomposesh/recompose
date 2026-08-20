@@ -1,4 +1,12 @@
-import type { EngineStates, GatewayTraffic, LogBatch, LogRow } from '@recompose/contracts';
+import type {
+  EngineStates,
+  GatewayBranchPins,
+  GatewayCooldowns,
+  GatewayJudging,
+  GatewayTraffic,
+  LogBatch,
+  LogRow,
+} from '@recompose/contracts';
 
 type PushLine<Payload> = {
   forget: () => void;
@@ -76,6 +84,50 @@ export function emitEngineTraffic(traffic: GatewayTraffic): void {
   engineTrafficLine.emit(traffic);
 }
 
+const engineBranchPinsLine = aPushLine<GatewayBranchPins>();
+
+export function forgetEngineBranchPinListeners(): void {
+  engineBranchPinsLine.forget();
+}
+
+export function listenForEngineBranchPins(
+  listener: (pinned: GatewayBranchPins) => void,
+): () => void {
+  return engineBranchPinsLine.listen(listener);
+}
+
+/**
+ * Pushes a pin snapshot at everything listening, the way the main process would.
+ *
+ * @summary Reach for it in a story or a spec that has to show branch rows counting conversations
+ * nobody on screen started.
+ */
+export function emitEngineBranchPins(pinned: GatewayBranchPins): void {
+  engineBranchPinsLine.emit(pinned);
+}
+
+const engineCooldownsLine = aPushLine<GatewayCooldowns>();
+
+export function forgetEngineCooldownListeners(): void {
+  engineCooldownsLine.forget();
+}
+
+export function listenForEngineCooldowns(
+  listener: (cooling: GatewayCooldowns) => void,
+): () => void {
+  return engineCooldownsLine.listen(listener);
+}
+
+/**
+ * Pushes a cooldown snapshot at everything listening, the way the main process would.
+ *
+ * @summary Reach for it in a story or a spec that has to stand a judge down without a provider
+ * refusing anything.
+ */
+export function emitEngineCooldowns(cooling: GatewayCooldowns): void {
+  engineCooldownsLine.emit(cooling);
+}
+
 const servedRows: LogRow[] = [];
 
 /**
@@ -117,4 +169,14 @@ export function replayEngineLogs(): void {
   }
 
   engineLogsLine.emit({ kind: 'backfill', rows: [...servedRows] });
+}
+
+const engineJudgingLine = aPushLine<GatewayJudging>();
+
+export function forgetEngineJudgingListeners(): void {
+  engineJudgingLine.forget();
+}
+
+export function listenForEngineJudging(listener: (judging: GatewayJudging) => void): () => void {
+  return engineJudgingLine.listen(listener);
 }

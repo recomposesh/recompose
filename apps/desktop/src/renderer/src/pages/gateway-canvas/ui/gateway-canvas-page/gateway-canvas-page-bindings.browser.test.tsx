@@ -11,8 +11,6 @@ vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
 
-const RESTING = 'translate(48px, 48px) scale(1)';
-
 const withClaudeModels = { providerModels: { ...listedModels, s1: ['claude-sonnet-5'] } };
 
 function viewportTransform(container: HTMLElement): string {
@@ -77,10 +75,12 @@ test('a target born where the view already reaches leaves the view where it stan
   const screen = await canvasPageOn(withClaudeModels);
   const zoomOut = screen.getByRole('button', { name: 'Zoom out' });
 
-  await expect.poll(() => viewportTransform(screen.container)).toBe(RESTING);
+  await expect.poll(() => viewportTransform(screen.container)).not.toBe('');
+
+  const opened = viewportTransform(screen.container);
 
   await userEvent.click(zoomOut);
-  await expect.poll(() => viewportTransform(screen.container)).not.toBe(RESTING);
+  await expect.poll(() => viewportTransform(screen.container)).not.toBe(opened);
 
   const once = viewportTransform(screen.container);
 

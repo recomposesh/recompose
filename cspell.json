@@ -35,5 +35,15 @@
     "cspell-words.txt"
   ],
   "useGitignore": true,
-  "words": ["Qwen", "cymatics", "elif", "nohup"]
+  "words": [
+    "Komoot",
+    "Portkey",
+    "Qwen",
+    "cymatics",
+    "elif",
+    "nohup",
+    "prerenderer",
+    "unworded",
+    "workerd"
+  ]
 }

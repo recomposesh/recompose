@@ -11,8 +11,8 @@ import { accountLabeled } from './served-gateway';
 import { theGatewayAScenarioActsOn } from './stored-target-accounts';
 import { seedVirtualModels } from './stored-virtual-models';
 
-/** Either mode a router ships with, named the way a scenario names it. */
-export type RouterMode = RouterPolicy['mode'];
+/** Either mode a scenario builds a router with, named the way a scenario names it. */
+export type RouterMode = Exclude<RouterPolicy['mode'], 'conditional'>;
 
 /**
  * One child a routers scenario names.
@@ -42,7 +42,8 @@ const PROVIDER = 'anthropic';
 /** Plainly nobody's, since a routers scenario stores an account rather than proving a key. */
 const KEY_NOBODY_HOLDS = 'sk-ant-api03-not-a-real-key-7f2c';
 
-async function accountStandsStored(page: Page, label: string): Promise<string> {
+/** One key account a routed child is paid for by, stored through the lane the catalog writes on. */
+export async function accountStandsStored(page: Page, label: string): Promise<string> {
   const stored = await page.evaluate(async (asked) => window.recompose['accounts:connect'](asked), {
     provider: PROVIDER,
     kind: 'api-key' as const,
@@ -124,6 +125,38 @@ export async function aRoutedModelStands(
 }
 
 /**
+ * Every child the router this scenario acts on holds, named by the real model each one serves.
+ *
+ * @summary The walk descends children and nothing else, so reading the entry router's own list is
+ * what a refusal enumerating "each child" actually means. A judge is a node of the same table but
+ * never one of these, which is exactly why reading the list rather than the nodes keeps it out.
+ */
+export async function theChildrenServing(page: Page): Promise<string[]> {
+  const { routing } = await theRoutedModel(page);
+  const entry = routing.nodes[routing.entry];
+
+  if (entry?.kind !== 'router') {
+    throw new Error('the model this scenario acts on stands over no router');
+  }
+
+  return entry.children.flatMap((child) => {
+    const node = routing.nodes[child];
+
+    return node?.kind === 'target' ? [node.providerModel] : [];
+  });
+}
+
+async function theRoutedModel(page: Page): Promise<VirtualModel> {
+  const [only] = (await storedGateway(page, focusedGateway(page))).virtualModels;
+
+  if (only === undefined) {
+    throw new Error('the gateway this scenario acts on holds no virtual model');
+  }
+
+  return only;
+}
+
+/**
  * The name the routed model this scenario acts on answers to.
  *
  * @summary A step that has to send a request needs the name, and the scenario handed it to the
@@ -131,11 +164,5 @@ export async function aRoutedModelStands(
  * keeps a step from writing a name of its own, which would pass while the seeded name drifted.
  */
 export async function theRoutedModelName(page: Page): Promise<string> {
-  const [only] = (await storedGateway(page, focusedGateway(page))).virtualModels;
-
-  if (only === undefined) {
-    throw new Error('the gateway this scenario acts on holds no virtual model');
-  }
-
-  return only.id;
+  return (await theRoutedModel(page)).id;
 }

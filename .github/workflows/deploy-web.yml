@@ -1,0 +1,70 @@
+name: deploy-web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/deploy-web.yml'
+      - 'pnpm-lock.yaml'
+  workflow_call:
+    secrets:
+      CF_API_TOKEN:
+        required: true
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - shell: bash
+        run: |
+          [ -n "$CF_API_TOKEN" ] || { echo "site deploy halted: secret CF_API_TOKEN is empty; widen the existing token with the account-level Edit Cloudflare Workers template next to its Single Redirect scope"; exit 1; }
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile --trust-lockfile
+      - id: latest-release
+        shell: bash
+        run: |
+          if release=$(gh api "repos/${REPO}/releases/latest" 2>&1); then
+            echo "version=$(jq -r '.tag_name | ltrimstr("v")' <<<"$release")" >> "$GITHUB_OUTPUT"
+            echo "date=$(jq -r '.published_at | split("T")[0]' <<<"$release")" >> "$GITHUB_OUTPUT"
+          elif grep -q "HTTP 404" <<<"$release"; then
+            echo "no published release yet; the release pill stays empty"
+            echo "version=" >> "$GITHUB_OUTPUT"
+            echo "date=" >> "$GITHUB_OUTPUT"
+          else
+            echo "site deploy halted: the latest-release lookup failed: ${release}"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+      - run: pnpm --filter @recompose/web run build
+        env:
+          VITE_RELEASE_VERSION: ${{ steps.latest-release.outputs.version }}
+          VITE_RELEASE_DATE: ${{ steps.latest-release.outputs.date }}
+      - run: pnpm --filter @recompose/web run test:output
+      - uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: apps/web
+          packageManager: pnpm

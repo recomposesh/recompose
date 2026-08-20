@@ -11,6 +11,10 @@ describe('a router names itself from its mode until a person renames it', () => 
     expect(nameOfRouter('round-robin')).toBe('Round-robin');
   });
 
+  test('reads a conditional router by its mode', () => {
+    expect(nameOfRouter('conditional')).toBe('Conditional');
+  });
+
   test('reads the name a person wrote over the mode it runs', () => {
     expect(nameOfRouter('failover', 'Ladder')).toBe('Ladder');
   });
@@ -27,6 +31,14 @@ describe('the mode control offers the same words a nameless router wears', () =>
 
   test('names round-robin exactly as a nameless round-robin router reads', () => {
     expect(nameOfRouterMode('round-robin')).toBe(nameOfRouter('round-robin'));
+  });
+
+  test('names conditional exactly as a nameless conditional router reads', () => {
+    expect(nameOfRouterMode('conditional')).toBe(nameOfRouter('conditional'));
+  });
+
+  test('spells conditional as a person reads it', () => {
+    expect(nameOfRouterMode('conditional')).toBe('Conditional');
   });
 
   test('spells the two modes as a person reads them', () => {

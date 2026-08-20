@@ -1,0 +1,295 @@
+import type { SpendGrant } from '@recompose/contracts';
+
+import type { Crossing, JsonObject, ProxyDialect } from '../gateway-wire';
+import type {
+  AttemptReading,
+  AttemptVerdict,
+  JudgeReading,
+} from '../routing/outcome-classification';
+import type { BranchRule } from '../routing/policies';
+
+import { dialectFor } from '../gateway-provider-dialect';
+import { coolUntilTheProviderNames, DEFAULT_COOLDOWN_MS } from '../routing/cooldown-signal';
+import { classify } from '../routing/outcome-classification';
+import { credentialedRequestHeaders } from './credentialed-headers';
+import { credentialedRequestBody, credentialedRequestUrl } from './credentialed-target';
+import { judgeRequestBody, labelTheJudgeWrote } from './judge-request';
+
+export type JudgeCooling = { coolUntilMs: number; retryAtMs?: number };
+
+type Spendable = Extract<SpendGrant, { verdict: 'resolved' }>;
+
+type SubscriptionReach = (grant: Spendable, body: JsonObject) => Promise<Response>;
+
+/**
+ * What one classification call is worth writing down, which is never what it asked or answered.
+ *
+ * @summary A person watching a conditional router needs to see the judge working: which model was
+ * asked, how it answered, and how long it took. None of the three is content. The tail stays out
+ * because it is the caller's own words, and the label stays out because a row naming the branch
+ * would put the classification itself in a log a person copies out of.
+ */
+export type JudgeNote = {
+  provider: string;
+  providerModel: string;
+  accountId?: string | undefined;
+  status: number;
+  durationMs: number;
+  failure?: string | undefined;
+};
+
+export type JudgeAsk = {
+  grant: SpendGrant;
+  providerModel: string;
+  sourceDialect: ProxyDialect;
+  gatewayName: string;
+  virtualModel: string;
+  branches: readonly BranchRule[];
+  directive?: string | undefined;
+  raw: JsonObject;
+  boundMs: number;
+  fetchLike: typeof fetch;
+  reachSubscription: SubscriptionReach;
+  noteJudged: (judged: JudgeNote) => void;
+  now: () => number;
+  cool: (cooling: JudgeCooling) => void;
+};
+
+type JudgeAnswer =
+  | { answered: Response; bound: AbortSignal }
+  | { silent: 'timeout' | 'unreachable' };
+
+type JudgeBody = { read: unknown } | { unread: true };
+
+/**
+ * Whether a judge binding can be spent on a classification at all.
+ *
+ * @summary Only a binding nothing resolved spends nothing. A plan channel was read as spending nothing
+ * once, on the belief that it had nowhere to put a schema, and that belief was wrong: it posts the
+ * same body to the same origin a keyed account does, and its dialect closes the answer the same way.
+ * Refusing it here made a person who bound their own plan watch every request land on else with
+ * nothing on screen saying why, which is the one arrangement this must never be.
+ */
+function spendableCustody(grant: SpendGrant): Spendable | undefined {
+  return grant.verdict === 'resolved' ? grant : undefined;
+}
+
+function crossingOfTheAsk(ask: JudgeAsk, grant: Spendable, body: JsonObject): Crossing {
+  return {
+    dialect: dialectFor(grant, ask.sourceDialect),
+    raw: body,
+    gatewayName: ask.gatewayName,
+    virtualModel: ask.virtualModel,
+    providerModel: ask.providerModel,
+  };
+}
+
+async function cutOffAt(bound: AbortSignal): Promise<never> {
+  return new Promise((_settle, fail) => {
+    bound.addEventListener('abort', () => {
+      fail(new Error('the judge call ran past its budget'));
+    });
+  });
+}
+
+/**
+ * The classification put on the wire its own custody owns.
+ *
+ * @summary A plan channel is reached through the same transport a served turn takes, because that
+ * transport is what holds the credential, renews it, and spells the wire a plan expects. It takes no
+ * signal, so the budget is imposed from out here instead: the race ends the wait on time even though
+ * the request itself goes on, which is the honest half of the promise this can keep on that channel.
+ */
+async function sentToTheJudge(
+  ask: JudgeAsk,
+  grant: Spendable,
+  crossing: Crossing,
+  body: JsonObject,
+  bound: AbortSignal,
+): Promise<Response> {
+  if (grant.spend.custody === 'subscription') {
+    return Promise.race([ask.reachSubscription(grant, body), cutOffAt(bound)]);
+  }
+
+  return ask.fetchLike(credentialedRequestUrl(grant, crossing), {
+    method: 'POST',
+    headers: credentialedRequestHeaders(grant.spend, crossing),
+    body: JSON.stringify(credentialedRequestBody(grant, crossing, body)),
+    signal: bound,
+  });
+}
+
+/**
+ * One classification call, cut off the moment its budget runs out.
+ *
+ * @summary The clock starts here rather than around the await, so the wait for a first byte counts
+ * against the budget and the connection is actually severed when it runs out. A judge left holding a
+ * socket open would otherwise keep spending on a request the walk already sent down else. The signal
+ * itself tells a silence apart from a dead connection, which is more honest than reading an error
+ * name that every fetch implementation spells its own way.
+ */
+async function answerTheJudgeGave(
+  ask: JudgeAsk,
+  grant: Spendable,
+  crossing: Crossing,
+  body: JsonObject,
+): Promise<JudgeAnswer> {
+  const bound = AbortSignal.timeout(ask.boundMs);
+
+  try {
+    return { answered: await sentToTheJudge(ask, grant, crossing, body, bound), bound };
+  } catch {
+    return { silent: bound.aborted ? 'timeout' : 'unreachable' };
+  }
+}
+
+function readingOfARefusal(answer: Response, now: number): AttemptReading<Response> {
+  const cooling = coolUntilTheProviderNames(answer.headers, now);
+
+  return {
+    kind: 'refused',
+    status: answer.status,
+    answer,
+    ...(cooling === undefined ? {} : { cooling }),
+  };
+}
+
+/**
+ * The refusal reading a judge earns, stood down so the next request spends no call on it.
+ *
+ * @summary Nothing a judge answered ever reaches the caller, whatever its status: a 400 about a
+ * schema and a 401 about a key are both this gateway's own trouble, and handing either back would
+ * answer a person's request with a sentence about routing. Every one of them is a stand-down instead,
+ * because a judge that refused once refuses the next request for the same reason, and the else branch
+ * carries the traffic meanwhile.
+ */
+function standDownOf(verdict: AttemptVerdict<Response>, now: number): JudgeCooling {
+  if (verdict.verdict !== 'move-on') return { coolUntilMs: now + DEFAULT_COOLDOWN_MS };
+
+  return verdict.retryAtMs === undefined
+    ? { coolUntilMs: verdict.coolUntilMs }
+    : { coolUntilMs: verdict.coolUntilMs, retryAtMs: verdict.retryAtMs };
+}
+
+function refusalTheJudgeEarns(ask: JudgeAsk, reading: AttemptReading<Response>): JudgeReading {
+  ask.cool(standDownOf(classify(reading, ask.now()), ask.now()));
+
+  return { heard: 'refusal' };
+}
+
+async function bodyTheAnswerCarried(answer: Response): Promise<JudgeBody> {
+  try {
+    return { read: await answer.json() };
+  } catch {
+    return { unread: true };
+  }
+}
+
+/**
+ * What one judge's own answer says, once the status line has let it through.
+ *
+ * @summary A body nothing can parse is not an empty answer, however much the two look alike once a
+ * label is read off them: an empty answer is a judge that classified and named no branch, which
+ * earns the second ask, while an unparsable body is a judge that never classified at all. Reading
+ * the second as the first spends a call to learn nothing and leaves a broken judge standing, since
+ * only a refusal stands one down. A body the budget severed mid-flight is the same silence as one
+ * that never began, so it reads as a timeout and the judge keeps its seat.
+ */
+async function readingTheAnswerGives(
+  ask: JudgeAsk,
+  answer: Response,
+  bound: AbortSignal,
+): Promise<JudgeReading> {
+  if (!answer.ok) return refusalTheJudgeEarns(ask, readingOfARefusal(answer, ask.now()));
+
+  const body = await bodyTheAnswerCarried(answer);
+
+  if (!('unread' in body)) return { heard: 'answer', label: labelTheJudgeWrote(body.read) };
+
+  return bound.aborted
+    ? { heard: 'timeout' }
+    : refusalTheJudgeEarns(ask, { kind: 'transport-failure' });
+}
+
+const JUDGE_SILENT_STATUS = 504;
+
+const JUDGE_UNREACHABLE_STATUS = 502;
+
+const SILENT_FAILURE = 'The judge did not answer inside its budget.';
+
+const UNREACHABLE_FAILURE = 'The judge could not be reached.';
+
+function accountThatPaid(grant: Spendable): string | undefined {
+  return grant.spend.custody === 'open' ? undefined : grant.spend.accountId;
+}
+
+function providerThatAnswered(grant: Spendable): string {
+  return grant.spend.custody === 'open' ? 'open' : grant.spend.provider;
+}
+
+function standingOfTheAnswer(answer: JudgeAnswer): { status: number; failure?: string } {
+  if ('answered' in answer) return { status: answer.answered.status };
+
+  return answer.silent === 'timeout'
+    ? { status: JUDGE_SILENT_STATUS, failure: SILENT_FAILURE }
+    : { status: JUDGE_UNREACHABLE_STATUS, failure: UNREACHABLE_FAILURE };
+}
+
+/**
+ * The one row a classification call leaves behind, so judging is something a person can watch.
+ *
+ * @summary A silence gets a row too, spelled as the gateway's own timeout rather than a provider's,
+ * because a judge that answered nothing is exactly the trouble a person opens the drawer to find and
+ * a missing row reads as a judge that never ran. A binding nothing resolved never reaches here: no
+ * call left the machine, and a row for it would claim one did.
+ */
+function noteTheCallLeaves(
+  ask: JudgeAsk,
+  grant: Spendable,
+  answer: JudgeAnswer,
+  startedAt: number,
+): void {
+  const standing = standingOfTheAnswer(answer);
+
+  ask.noteJudged({
+    provider: providerThatAnswered(grant),
+    providerModel: ask.providerModel,
+    accountId: accountThatPaid(grant),
+    status: standing.status,
+    durationMs: Math.max(0, ask.now() - startedAt),
+    ...(standing.failure === undefined ? {} : { failure: standing.failure }),
+  });
+}
+
+/**
+ * What one judge made of one request, in the three words the branches know how to read.
+ *
+ * @summary Everything that can go wrong here is a reading rather than a throw, because the walk
+ * treats a judge as advice and never as a child: a silence, a refusal, and a binding that resolves to
+ * nothing all leave the request whole and send it down the else branch. The caller's own words reach
+ * the provider and reach nothing else, so no traffic row and no log line ever carries a second copy
+ * of them.
+ */
+export async function readingOfTheJudge(ask: JudgeAsk): Promise<JudgeReading> {
+  const grant = spendableCustody(ask.grant);
+
+  if (grant === undefined) return refusalTheJudgeEarns(ask, { kind: 'grant-missing-credential' });
+
+  const body = judgeRequestBody({
+    dialect: dialectFor(grant, ask.sourceDialect),
+    providerModel: ask.providerModel,
+    branches: ask.branches,
+    directive: ask.directive,
+    raw: ask.raw,
+  });
+  const startedAt = ask.now();
+  const answer = await answerTheJudgeGave(ask, grant, crossingOfTheAsk(ask, grant, body), body);
+
+  noteTheCallLeaves(ask, grant, answer, startedAt);
+
+  if ('answered' in answer) return readingTheAnswerGives(ask, answer.answered, answer.bound);
+
+  if (answer.silent === 'timeout') return { heard: 'timeout' };
+
+  return refusalTheJudgeEarns(ask, { kind: 'transport-failure' });
+}

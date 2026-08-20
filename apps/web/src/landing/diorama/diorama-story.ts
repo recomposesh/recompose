@@ -42,9 +42,61 @@ function scrimOut(story: Story, at: number) {
   story.to('[data-diorama-scrim]', { opacity: 0, duration: 0.06, ease: 'none' }, at);
 }
 
+interface TrafficCounters {
+  clients: number;
+  latencyMs: number;
+  reqMin: number;
+  tokMin: number;
+}
+
+const restingCounters: TrafficCounters = { clients: 0, latencyMs: 0, reqMin: 0, tokMin: 0 };
+
+function tokensLabel(tokMin: number): string {
+  return tokMin >= 1000 ? `${(tokMin / 1000).toFixed(1)}k` : String(Math.round(tokMin));
+}
+
+function writeStat(stat: string, text: string) {
+  for (const element of gsap.utils.toArray<HTMLElement>(`[data-status-stat="${stat}"]`)) {
+    element.textContent = text;
+  }
+}
+
+function writeCounters(counters: TrafficCounters) {
+  writeStat('req-min', String(Math.round(counters.reqMin)));
+  writeStat('latency', `${Math.round(counters.latencyMs)}ms`);
+  writeStat('clients', String(Math.round(counters.clients)));
+  writeStat('tok-min', tokensLabel(counters.tokMin));
+}
+
+function playTrafficCounters(story: Story) {
+  const counters: TrafficCounters = { ...restingCounters };
+  const write = () => {
+    writeCounters(counters);
+  };
+
+  story.to(counters, { clients: 1, duration: 0.01, ease: 'none', onUpdate: write }, 0.155);
+  story.to(
+    counters,
+    { reqMin: 38, latencyMs: 412, tokMin: 9200, duration: 0.09, ease: 'none', onUpdate: write },
+    0.21,
+  );
+  story.to(
+    counters,
+    { reqMin: 61, latencyMs: 386, tokMin: 15400, duration: 0.16, ease: 'none', onUpdate: write },
+    0.3,
+  );
+  story.to(counters, { clients: 2, duration: 0.01, ease: 'none', onUpdate: write }, 0.695);
+  story.to(
+    counters,
+    { reqMin: 84, latencyMs: 428, tokMin: 21700, duration: 0.12, ease: 'none', onUpdate: write },
+    0.74,
+  );
+}
+
 export function hideStoryProps() {
   gsap.set('[data-typed-char], [data-story-prop], [data-narration-char]', { opacity: 0 });
   gsap.set('[data-story-prop="codex-window"]', { y: 14, scale: 0.96 });
+  writeCounters(restingCounters);
 }
 
 function playClaudeSetup(story: Story) {
@@ -113,6 +165,7 @@ export function playExitFade(story: Story) {
 export function playStory(story: Story) {
   playClaudeSetup(story);
   playFastRequest(story);
+  playTrafficCounters(story);
   playClaudeNarration(story);
   playCodexAct(story);
   playCodexNarration(story);

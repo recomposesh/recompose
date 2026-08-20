@@ -1,5 +1,5 @@
 import type { GatewayConfig } from '@recompose/contracts';
-import type { Connection, Edge, Node, NodeChange } from '@xyflow/react';
+import type { Edge, Node, NodeChange } from '@xyflow/react';
 
 import { targetTheEntryNames } from '@recompose/contracts';
 
@@ -8,7 +8,14 @@ import type { CanvasEdge, CanvasGraph, CanvasNode } from '../../lib/node-graph';
 import type { RouteAddress } from '../../lib/route-addresses';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { routeNodeIn, addressUnder, addressWritten } from '../../lib/route-addresses';
+import { addressUnder, routeNodeIn } from '../../lib/route-addresses';
+import {
+  CARD_MEASURE,
+  columnBeyond,
+  SATELLITE_MEASURE,
+  seatBesideAsker,
+  seatForNewNode,
+} from '../../lib/tidy-layout';
 
 /** The two asks a card can hang off its port, which the page answers. */
 export type CanvasAsks = {
@@ -21,7 +28,26 @@ export type CanvasAsks = {
 /** One seat a position change moved, and whether the drag settled there. */
 export type MovedSeat = { id: string; to: XY; settled: boolean };
 
-export const CARD_MEASURE = { width: 184, height: 88 };
+/**
+ * Where a card bound from another one stands, which is the asking card's row one column beyond.
+ *
+ * @summary A request travels left to right, so what a card binds stands beyond it however the
+ * binding was asked for: a plus, a cable let go on open canvas, and a cable let go on a stored
+ * target all grow the composition the same direction. The column counts out of the asking card's
+ * own depth rather than off the binding column, because a child of a router two deep would
+ * otherwise land back beside the virtual model with its cable running the wrong way. The row is
+ * the asker's own, so the cable between the two runs flat rather than bending across a row to
+ * reach a card standing beside it. A card whose seat nobody knows falls back to the free row,
+ * since a row that cannot be read cannot be shared.
+ */
+export function seatBeyond(nodes: readonly CanvasNode[], seats: NodePositions, from: string): XY {
+  const column = columnBeyond(nodes.find((node) => node.id === from));
+  const asker = seats[from];
+
+  return asker === undefined
+    ? seatForNewNode(column, seats)
+    : seatBesideAsker(column, asker, seats);
+}
 
 /** The definition id inside a model card's node id, or nothing for any other card. */
 export function modelIdOf(nodeId: string): string | undefined {
@@ -33,7 +59,11 @@ export function targetModelIdOf(nodeId: string): string | undefined {
   return addressUnder(['target:', 'ghost:'], nodeId)?.modelId;
 }
 
-function accountBoundTo(gateway: GatewayConfig, modelId: string | undefined): string | undefined {
+/** The account one definition answers through today, or nothing where it answers through none. */
+export function accountBoundTo(
+  gateway: GatewayConfig,
+  modelId: string | undefined,
+): string | undefined {
   const held = gateway.virtualModels.find((model) => model.id === modelId);
 
   return held === undefined ? undefined : targetTheEntryNames(held.routing)?.accountId;
@@ -99,73 +129,27 @@ export function movedSeats(changes: readonly NodeChange[]): readonly MovedSeat[]
 }
 
 /**
- * Whether a router may take the card a cable points at as one more child of its ladder.
+ * The landing question one card answers about the cable in flight, or nothing where it takes none.
  *
- * @summary A router's children are the whole of what it decides, so a cable leaving its port
- * binds one where the plus already does. A card the ladder already holds refuses, because a second
- * cable between the same pair would say the one-cable rule out loud and then break it, and a card
- * standing under another definition is always a fresh child rather than a duplicate.
+ * @summary Only a card a cable can actually land on carries it, so the card itself needs no rule
+ * and no gateway to know whether to light: a card that answers nothing is a card that never lights.
  */
-function targetAddressIn(gateway: GatewayConfig, nodeId: string): RouteAddress | undefined {
-  const address = addressUnder(['target:', 'ghost:'], nodeId);
-
-  return routeNodeIn(gateway, address)?.kind === 'target' ? address : undefined;
-}
-
-function laddersOnto(gateway: GatewayConfig, parent: RouteAddress, targetId: string): boolean {
-  const router = routeNodeIn(gateway, parent);
-  const landing = targetAddressIn(gateway, targetId);
-
-  if (router?.kind !== 'router' || landing === undefined) {
-    return false;
+function landingAsk(
+  node: CanvasNode,
+  takesCable: (from: string, onto: string) => boolean,
+): Record<string, unknown> {
+  if (node.kind !== 'target' && node.kind !== 'ghost-target') {
+    return {};
   }
 
-  const standing = addressWritten(landing);
-
-  return !router.children.some(
-    (child) => addressWritten({ modelId: parent.modelId, routeNodeId: child }) === standing,
-  );
+  return { takesCableFrom: (from: string) => takesCable(from, node.id) };
 }
 
-/**
- * Whether a cable in flight may land where it points, which is the binding rule during a drag.
- *
- * @summary A cable leaves a virtual model, a draft, or a router, and lands on a stored target.
- * A model dropping onto the very account it already answers through refuses, because a second
- * cable to one target would say the rule out loud and then break it; any other account is a rebind,
- * which is one cable ending somewhere new. A router card takes no cable at all: every route node
- * already stands under exactly one parent, so a cable meeting one could only move it, and moving a
- * node is not a binding.
- */
-export function oneTargetRule(gateway: GatewayConfig) {
-  return (connection: Edge | Connection): boolean => {
-    const parent = routerAddressOf(connection.source);
-
-    if (parent !== undefined) {
-      return laddersOnto(gateway, parent, connection.target);
-    }
-
-    const accountId = targetAccountIdIn(gateway, connection.target);
-
-    if (accountId === undefined) {
-      return false;
-    }
-
-    if (connection.source === 'draft') {
-      return true;
-    }
-
-    const modelId = modelIdOf(connection.source);
-
-    if (modelId === undefined) {
-      return false;
-    }
-
-    return accountBoundTo(gateway, modelId) !== accountId;
-  };
-}
-
-function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> {
+function askedData(
+  node: CanvasNode,
+  asks: CanvasAsks,
+  takesCable: (from: string, onto: string) => boolean,
+): Record<string, unknown> {
   if (node.kind === 'gateway') {
     return { ...node, onAddVirtualModel: asks.onAddVirtualModel };
   }
@@ -188,7 +172,7 @@ function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> 
     };
   }
 
-  return { ...node };
+  return { ...node, ...landingAsk(node, takesCable) };
 }
 
 /**
@@ -196,21 +180,25 @@ function askedData(node: CanvasNode, asks: CanvasAsks): Record<string, unknown> 
  *
  * @summary Each node declares the card's own measure, so edges draw on first paint instead of
  * waiting for a layout pass, and each carries its ask beside its facts, because the card is where
- * the plus lives and the page is what answers it.
+ * the plus lives and the page is what answers it. A card a cable could land on carries the landing
+ * question too, so a drag in flight lights every card that would take it rather than only the one
+ * a pointer already found.
  */
 export function flowNodesOf(
   graph: CanvasGraph,
   seats: NodePositions,
   selection: string | undefined,
   asks: CanvasAsks,
+  takesCable: (from: string, onto: string) => boolean,
 ): Node[] {
   return graph.nodes.map((node) => ({
     id: node.id,
     type: node.kind,
     position: seats[node.id] ?? { x: 0, y: 0 },
-    data: askedData(node, asks),
+    data: askedData(node, asks, takesCable),
     selected: node.id === selection,
-    ...CARD_MEASURE,
+    draggable: true,
+    ...(node.kind === 'judge' ? SATELLITE_MEASURE : CARD_MEASURE),
   }));
 }
 
@@ -230,7 +218,14 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
     source: edge.source,
     target: edge.target,
     type: 'cable',
-    data: { standing: edge.standing, failure: edge.failure },
+    sourceHandle: edge.sourceHandle ?? null,
+    data: {
+      standing: edge.standing,
+      failure: edge.failure,
+      branch: edge.branch,
+      wording: edge.wording,
+      judging: edge.judging,
+    },
     selected: edge.id === selection,
     ...(bindingCableId(edge.id) === undefined
       ? { selectable: false, reconnectable: false, focusable: false, interactionWidth: 0 }

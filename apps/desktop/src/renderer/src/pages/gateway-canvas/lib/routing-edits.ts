@@ -8,8 +8,14 @@ import type {
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
-/** Which of the two shipped ways a router spreads the requests reaching it. */
+import { conditionalIn, namedByAPolicyAbove } from './conditional-policy';
+import { beneath, judgeStillAsked, standingUnder, tableWithout } from './routing-subtrees';
+
+/** Which of the shipped ways a router spreads the requests reaching it. */
 export type RouterMode = RouterPolicy['mode'];
+
+/** A mode whose whole policy is the mode, which is every mode a canvas edit builds a router with. */
+export type SpreadingMode = Exclude<RouterMode, 'conditional'>;
 
 /**
  * A route table reaching one fresh router, which holds no child until a person binds one.
@@ -23,7 +29,7 @@ export type RouterMode = RouterPolicy['mode'];
  * The name is absent wherever nobody wrote one, never empty, because a router falls back to its
  * mode only while it holds no name at all.
  */
-export function routedThroughARouter(mode: RouterMode, displayName?: string): Routing {
+export function routedThroughARouter(mode: SpreadingMode, displayName?: string): Routing {
   const entry = mintRouteNodeId();
   const router: RouteNode = { kind: 'router', policy: { mode }, children: [] };
 
@@ -33,7 +39,7 @@ export function routedThroughARouter(mode: RouterMode, displayName?: string): Ro
   };
 }
 
-function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) => Routing) {
+export function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) => Routing) {
   return {
     ...gateway,
     virtualModels: gateway.virtualModels.map((model) =>
@@ -42,7 +48,7 @@ function routedBy(gateway: GatewayConfig, modelId: string, edit: (was: Routing) 
   };
 }
 
-function routerEdited(
+export function routerEdited(
   routing: Routing,
   routerId: string,
   edit: (was: Extract<RouteNode, { kind: 'router' }>) => RouteNode,
@@ -67,7 +73,7 @@ function routerEdited(
 export function gatewayRoutingThrough(
   gateway: GatewayConfig,
   modelId: string,
-  mode: RouterMode,
+  mode: SpreadingMode,
 ): GatewayConfig {
   return routedBy(gateway, modelId, (was) => {
     const entry = mintRouteNodeId();
@@ -111,28 +117,6 @@ export function gatewayBindingChild(
   });
 }
 
-function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
-  const reached = new Set<string>();
-  const walk = [nodeId];
-  let held = walk.pop();
-
-  while (held !== undefined) {
-    const node = routing.nodes[held];
-
-    if (node !== undefined && !reached.has(held)) {
-      reached.add(held);
-
-      if (node.kind === 'router') {
-        walk.push(...node.children);
-      }
-    }
-
-    held = walk.pop();
-  }
-
-  return reached;
-}
-
 /**
  * The gateway once one route node and everything standing under it leaves the table.
  *
@@ -141,41 +125,21 @@ function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
  * stored walk refuses at parse. The entry is never dropped here, because a routing binds something
  * by construction, so releasing the whole definition is what a person deleting the entry asked for.
  * A node the table never held drops nothing, which falls out of the walk rather than needing a
- * guard of its own.
+ * guard of its own. The else child and the judge are refused outright, because a conditional policy
+ * names both by id and a refusal at the edit beats a schema message about a document nobody typed.
+ * A conditional router standing anywhere inside the ladder leaves with its own judge, since the
+ * policy naming it goes too and nothing else in the table would reach it.
  */
-function tableWithout(routing: Routing, gone: ReadonlySet<string>): Routing {
-  const kept: Record<string, RouteNode> = {};
-
-  for (const [id, node] of Object.entries(routing.nodes)) {
-    if (gone.has(id)) {
-      continue;
-    }
-
-    kept[id] =
-      node.kind === 'router'
-        ? { ...node, children: node.children.filter((child) => !gone.has(child)) }
-        : node;
-  }
-
-  return { entry: routing.entry, nodes: kept };
-}
-
 export function gatewayDroppingNode(
   gateway: GatewayConfig,
   modelId: string,
   nodeId: string,
 ): GatewayConfig {
   return routedBy(gateway, modelId, (was) =>
-    nodeId === was.entry ? was : tableWithout(was, standingUnder(was, nodeId)),
+    nodeId === was.entry || namedByAPolicyAbove(Object.values(was.nodes), nodeId)
+      ? was
+      : tableWithout(was, standingUnder(was, nodeId)),
   );
-}
-
-function beneath(routing: Routing, nodeId: string): ReadonlySet<string> {
-  const reached = new Set(standingUnder(routing, nodeId));
-
-  reached.delete(nodeId);
-
-  return reached;
 }
 
 /**
@@ -265,14 +229,23 @@ export function gatewayNamingRouter(
  *
  * @summary The mode is the whole of what a router decides, so switching it leaves the children and
  * their order exactly as they stood: a person trying the other mode is not rebuilding the ladder.
+ * A router leaving conditional loses its wording, and its judge only where no router is left
+ * asking for one: a target no reference reaches is a table the stored shape refuses, and so is a
+ * policy naming a node that has gone, so either mistake bounces the write and the mode never moves
+ * at all. A subtree removal weighs the same judge the same way.
  */
 export function gatewaySwitching(
   gateway: GatewayConfig,
   modelId: string,
   routerId: string,
-  mode: RouterMode,
+  mode: SpreadingMode,
 ): GatewayConfig {
-  return routedBy(gateway, modelId, (was) =>
-    routerEdited(was, routerId, (router) => ({ ...router, policy: { mode } })),
-  );
+  return routedBy(gateway, modelId, (was) => {
+    const advisor = conditionalIn(was.nodes[routerId])?.judge;
+    const spread = routerEdited(was, routerId, (router) => ({ ...router, policy: { mode } }));
+
+    return advisor === undefined || judgeStillAsked(spread, advisor)
+      ? spread
+      : tableWithout(spread, new Set([advisor]));
+  });
 }

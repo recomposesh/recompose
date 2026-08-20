@@ -4,14 +4,23 @@ import type { ReactElement, ReactNode } from 'react';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 
 import type { CableFailure } from '../../lib/node-graph';
+import type { BranchSeat } from '../../lib/route-graph';
 
+import { wordingIn } from '../../lib/cable-standing';
 import {
+  branchIn,
   CABLE_GRAB_SPAN,
+  drawnAsATie,
   failureIn,
+  pointAlongCable,
   pulseForStanding,
+  BRANCH_PILL_ANCHOR,
   strokeForStanding,
+  TIE_DASH,
   tintForStanding,
 } from '../../lib/cable-standing';
+import { wordBranch } from '../../lib/use-branch-wording';
+import { CableBranchPill } from '../cable-branch-pill/cable-branch-pill';
 import { CableFailureChip } from '../cable-failure-chip/cable-failure-chip';
 
 function grabEnd(x: number, y: number, tint: string): ReactElement {
@@ -41,10 +50,15 @@ function grabEnds(cable: EdgeProps, tint: string): ReactNode {
   );
 }
 
-function cableClasses(carried: unknown, chosen: boolean): string {
+function cableClasses(carried: unknown, chosen: boolean, edgeId: string): string {
   const width = chosen ? 'binding-cable-selected' : 'binding-cable';
+  const stroke = drawnAsATie(edgeId) ? 'stroke-router' : strokeForStanding(carried);
 
-  return `${width} ${strokeForStanding(carried)}`;
+  return `${width} ${stroke}`;
+}
+
+function tieDashing(edgeId: string): { strokeDasharray: string } | undefined {
+  return drawnAsATie(edgeId) ? { strokeDasharray: TIE_DASH } : undefined;
 }
 
 function halo(drawn: string, stroke: string): ReactNode {
@@ -56,31 +70,95 @@ function halo(drawn: string, stroke: string): ReactNode {
   );
 }
 
+/**
+ * The tint a pulse paints in, which on a tie is the router's own rather than a standing's.
+ *
+ * @summary A tie carries no request, so a standing color there would claim one traveled it. The
+ * tint stays the one the tie already draws in, and the pulse reads as the same cable moving.
+ */
+function pulseStrokeOf(carried: unknown, edgeId: string): string {
+  return drawnAsATie(edgeId) ? 'stroke-router' : strokeForStanding(carried);
+}
+
+/**
+ * Whether this cable pulses, which a tie answers from its router rather than from any traffic.
+ *
+ * @summary A tie pulses for exactly as long as the router it leaves is waiting on its judge, which
+ * is the one thing on this canvas that says a decision is being made rather than a request carried.
+ * Nothing about the classification reaches here: the cable is told a boolean and paints it.
+ */
+function pulseTraveling(held: Record<string, unknown>, edgeId: string, carried: unknown): string {
+  if (!drawnAsATie(edgeId)) return pulseForStanding(carried);
+
+  return held['judging'] === true ? 'cable-pulse' : '';
+}
+
 function pulse(drawn: string, stroke: string, traveling: string): ReactNode {
   return traveling === '' ? null : (
     <path className={`${traveling} ${stroke}`} d={drawn} pathLength={1} />
   );
 }
 
-function lastError(failure: CableFailure | undefined, x: number, y: number): ReactNode {
-  if (failure === undefined) {
-    return null;
-  }
-
+/**
+ * One piece of furniture standing at a point on the cable, in the flow's own coordinates.
+ *
+ * @summary Everything a cable carries rides the same way, so the anchoring, the pointer claim, and
+ * the two lifts are written once rather than once per chip. The furniture rides above every cable
+ * at rest, because choosing a card lifts the cables it holds over the layer these ride in, and a
+ * stroke drawn across a pill strikes a line through the word the judge answers with. A reading
+ * lifts once more when it opens, so the pill beside it never covers the answer it was asked for.
+ */
+function riding(at: { x: number; y: number }, furniture: ReactNode): ReactNode {
   return (
     <EdgeLabelRenderer>
       <div
-        className="pointer-events-auto absolute has-aria-expanded:z-cable-reading"
+        className="pointer-events-auto absolute z-cable-furniture has-aria-expanded:z-cable-reading"
         onClick={(event) => {
           event.stopPropagation();
         }}
         role="presentation"
-        style={{ transform: `translate(-50%, -50%) translate(${String(x)}px, ${String(y)}px)` }}
+        style={{
+          transform: `translate(-50%, -50%) translate(${String(at.x)}px, ${String(at.y)}px)`,
+        }}
       >
-        <CableFailureChip detail={failure.detail} status={failure.status} />
+        {furniture}
       </div>
     </EdgeLabelRenderer>
   );
+}
+
+function lastError(failure: CableFailure | undefined, at: { x: number; y: number }): ReactNode {
+  if (failure === undefined) {
+    return null;
+  }
+
+  return riding(at, <CableFailureChip detail={failure.detail} status={failure.status} />);
+}
+
+function branchDrawn(
+  held: Readonly<Record<string, unknown>>,
+  drawn: string,
+  midpoint: { x: number; y: number },
+): ReactNode {
+  const seat = branchIn(held['branch']);
+  const wording = wordingIn(held['wording']);
+
+  if (seat === undefined) {
+    return null;
+  }
+
+  const rides = pointAlongCable(drawn, BRANCH_PILL_ANCHOR) ?? midpoint;
+  const word = (): void => {
+    if (wording !== undefined) {
+      wordBranch({ ...wording, ...wordsAlready(seat) });
+    }
+  };
+
+  return riding(rides, <CableBranchPill onWord={word} seat={seat} />);
+}
+
+function wordsAlready(seat: BranchSeat): { label: string; rule: string } {
+  return seat.kind === 'rule' ? { label: seat.label, rule: seat.rule } : { label: '', rule: '' };
 }
 
 /**
@@ -89,8 +167,11 @@ function lastError(failure: CableFailure | undefined, x: number, y: number): Rea
  * @summary Register it as the canvas edge type, so every binding reads at a glance: at rest, live,
  * served, failed, broken where its account left, or one of the two the overlay draws. A live
  * binding sends a pulse down its line, and a failed one stands its last error on the path, for the
- * person who wants the reason rather than the color. Every line stays whole either way, because a
+ * person who wants the reason rather than the color. A cable a judge decides carries its branch
+ * earlier along the same path, so the rule and the error each keep a place of their own rather than
+ * stacking on the midpoint. Every line carrying a request stays whole either way, because a
  * break in the drawing would claim a break in the wire, so the pulse is the only thing that moves.
+ * The one line that does break is the tie to a judge, which carries no request at all and says so.
  * A selected cable widens and takes the halo the selected node card wears, a crisp ring inside a
  * soft bloom, so selection reads the same whichever a person pressed, and the halo never pulses,
  * because a bloom in motion says nothing the cable inside it has not said already. Both ends then
@@ -108,18 +189,21 @@ export function BindingCable(cable: EdgeProps): ReactElement {
   });
   const carried = held['standing'];
   const chosen = cable.selected === true;
+  const midpoint = { x: labelX, y: labelY };
 
   return (
     <>
       {chosen ? halo(drawn, strokeForStanding(carried)) : null}
       <BaseEdge
-        className={cableClasses(carried, chosen)}
+        className={cableClasses(carried, chosen, cable.id)}
         interactionWidth={cable.interactionWidth ?? CABLE_GRAB_SPAN}
         path={drawn}
+        style={tieDashing(cable.id)}
       />
-      {pulse(drawn, strokeForStanding(carried), pulseForStanding(carried))}
+      {pulse(drawn, pulseStrokeOf(carried, cable.id), pulseTraveling(held, cable.id, carried))}
       {chosen ? grabEnds(cable, tintForStanding(carried)) : null}
-      {lastError(failureIn(held['failure']), labelX, labelY)}
+      {branchDrawn(held, drawn, midpoint)}
+      {lastError(failureIn(held['failure']), midpoint)}
     </>
   );
 }

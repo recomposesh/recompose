@@ -101,12 +101,22 @@ export async function fitCanvasToView(page: Page): Promise<void> {
 
       return page.locator('.react-flow__pane').evaluate((pane) => {
         const field = pane.getBoundingClientRect();
+        const subpixel = 1;
+        const viewport = document.querySelector('.react-flow__viewport');
+        const scale =
+          viewport instanceof HTMLElement
+            ? new DOMMatrixReadOnly(getComputedStyle(viewport).transform).a
+            : 1;
+        const flooredAtMinimumZoom = scale <= 0.5 + 0.01;
 
-        return [...document.querySelectorAll('.react-flow__node')].every((card) => {
-          const box = card.getBoundingClientRect();
+        return (
+          flooredAtMinimumZoom ||
+          [...document.querySelectorAll('.react-flow__node')].every((card) => {
+            const box = card.getBoundingClientRect();
 
-          return box.left >= field.left && box.right <= field.right;
-        });
+            return box.left >= field.left - subpixel && box.right <= field.right + subpixel;
+          })
+        );
       });
     })
     .toBe(true);

@@ -10,14 +10,20 @@ import {
 import { randomUUID } from 'node:crypto';
 
 import type { Waiter } from './directive-waiters';
+import type { EngineDesks } from './engine-host-desks';
 import type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 import type { EngineLooks } from './engine-looks';
 import type { SpendGrantFor } from './engine-spend';
-import type { LogsDesk } from './logs-ledger';
-import type { TrafficDesk } from './traffic-ledger';
 
 import { refuseEveryWaiter } from './directive-waiters';
 import { persistRefreshedCredential } from './engine-host-credential-update';
+import {
+  aDeskHeardIt,
+  desksForget,
+  desksInterrupted,
+  desksServing,
+  openEngineDesks,
+} from './engine-host-desks';
 import {
   answerLook,
   foldEveryLook,
@@ -30,8 +36,6 @@ import {
 import { answerSpendRequest } from './engine-spend';
 import { allStopped, foldEngineReport } from './engine-state-ledger';
 import { createGatewayOrder } from './gateway-order';
-import { openLogsDesk } from './logs-ledger';
-import { openTrafficDesk } from './traffic-ledger';
 
 export const DIRECTIVE_TIMEOUT_MS = 5000;
 
@@ -49,8 +53,7 @@ type Resident = {
   subscribers: Set<StateListener>;
   awaitingReport: Map<string, Waiter>;
   looks: EngineLooks;
-  traffic: TrafficDesk;
-  logs: LogsDesk;
+  desks: EngineDesks;
 };
 
 function publish(resident: Resident, next: EngineStates): void {
@@ -75,8 +78,7 @@ function answerState(resident: Resident, report: Extract<EngineReport, { kind: '
   resident.awaitingReport.delete(report.answers);
 
   if (report.state.status === 'stopped') {
-    resident.traffic.interrupt(report.slug);
-    resident.logs.interrupt(report.slug);
+    desksInterrupted(resident.desks, report.slug);
   }
 
   publish(resident, foldEngineReport(resident.states, report));
@@ -93,12 +95,8 @@ function routeReport(resident: Resident, report: EngineReport): void {
   answerLook(resident.looks, report);
 }
 
-function aDeskHeardIt(resident: Resident, message: unknown): boolean {
-  return resident.traffic.hears(message) || resident.logs.hears(message);
-}
-
 function receiveMessage(resident: Resident, child: EngineChild, message: unknown): void {
-  if (aDeskHeardIt(resident, message)) {
+  if (aDeskHeardIt(resident.desks, message)) {
     return;
   }
 
@@ -133,8 +131,7 @@ function receiveExit(resident: Resident, code: number): void {
   console.error(death.message);
 
   for (const slug of Object.keys(resident.states)) {
-    resident.traffic.interrupt(slug);
-    resident.logs.interrupt(slug);
+    desksInterrupted(resident.desks, slug);
   }
 
   resident.child = null;
@@ -175,9 +172,7 @@ async function sendDirective(
   const slug = gatewayOf(directive);
 
   if (directive.kind === 'start') {
-    resident.traffic.keepOnly(directive.gateway);
-    resident.logs.resume(directive.gateway.slug);
-    resident.logs.backfill();
+    desksServing(resident.desks, directive.gateway);
   }
 
   return new Promise<GatewayEngineState>((answer, refuse) => {
@@ -237,8 +232,7 @@ function residentFor(deps: EngineHostDeps): Resident {
     subscribers: new Set(),
     awaitingReport: new Map(),
     looks: openEngineLooks(),
-    traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
-    logs: openLogsDesk(deps.onLogs ?? (() => undefined), deps.onSettledRow),
+    desks: openEngineDesks(deps),
   };
 }
 
@@ -267,13 +261,12 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     claudeAddress: async (accessToken) =>
       (await claudeAddressThroughTheChild(resident.looks, child, accessToken)).address,
     states: () => resident.states,
-    retainedLogRows: () => resident.logs.retainedRows(),
+    retainedLogRows: () => resident.desks.logs.retainedRows(),
     replayLogs: () => {
-      resident.logs.backfill();
+      resident.desks.logs.backfill();
     },
     forget: (slug) => {
-      resident.traffic.forget(slug);
-      resident.logs.forget(slug);
+      desksForget(resident.desks, slug);
 
       if (resident.states[slug] !== undefined) {
         const remaining = { ...resident.states };

@@ -1,6 +1,9 @@
 import {
   type EngineDirective,
+  engineBranchPinReportSchema,
+  engineCooldownReportSchema,
   engineDirectiveSchema,
+  engineJudgingReportSchema,
   engineLogReportSchema,
   engineReportSchema,
   engineTrafficReportSchema,
@@ -13,6 +16,9 @@ import type { PluginHost } from './plugin-host';
 
 import { openCredentialUpdateLane, openSpendLane } from './engine-child-lanes';
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
+import { subscribeToBranchPinTallies } from './gateway-branch-pins-watch';
+import { subscribeToCooldowns } from './gateway-cooldowns-watch';
+import { subscribeToJudging } from './gateway-judging-watch';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { loopbackOverrideOrNull } from './loopback-override';
@@ -160,6 +166,75 @@ function notingTraffic(parentPort: ParentPort): NoteTraffic {
   };
 }
 
+function tellingTheParentEveryLogRow(parentPort: ParentPort): void {
+  subscribeToLogRows((row) => {
+    try {
+      parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
+    } catch (failure) {
+      console.error(`The engine child dropped a log row for "${row.gateway}".`, failure);
+    }
+  });
+}
+
+/**
+ * Tells the parent what one router is holding, the moment a conversation earns or loses a branch.
+ *
+ * @summary The address the store counts under is the address the report files under, so the parent
+ * places a tally without knowing anything about how a branch is decided. A tally the parent cannot
+ * be told is written down and dropped, because the request that moved it is owed its answer either
+ * way and a count is only ever the newest word.
+ */
+function tellingTheParentEveryBranchTally(parentPort: ParentPort): void {
+  subscribeToBranchPinTallies(({ address, pinned }) => {
+    try {
+      parentPort.postMessage(
+        engineBranchPinReportSchema.parse({ kind: 'branch-pins', ...address, pinned }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a branch tally for "${address.slug}".`, failure);
+    }
+  });
+}
+
+/**
+ * Tells the parent while one router waits on its judge, so a tie can pulse for exactly that long.
+ *
+ * @summary The report carries a count and a place and nothing else, which is what lets it cross a
+ * lane a screen reads without ever carrying a caller's words. A dropped report only costs one frame
+ * of a pulse, so it is logged and stepped over rather than failing the request that raised it.
+ */
+function tellingTheParentEveryJudging(parentPort: ParentPort): void {
+  subscribeToJudging(({ address, judging }) => {
+    try {
+      parentPort.postMessage(
+        engineJudgingReportSchema.parse({ kind: 'judging', ...address, judging }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a judging signal for "${address.slug}".`, failure);
+    }
+  });
+}
+
+/**
+ * Tells the parent when one route node stands back up, the moment it is told to stand down.
+ *
+ * @summary The address the store cools under is the address the report files under, so the parent
+ * places a stand-down without knowing anything about what refused the call. A moment the parent
+ * cannot be told is written down and dropped, because the request that earned the stand-down is
+ * owed its answer either way and the next refusal will say the window again.
+ */
+function tellingTheParentEveryCooldown(parentPort: ParentPort): void {
+  subscribeToCooldowns(({ address, coolUntilMs }) => {
+    try {
+      parentPort.postMessage(
+        engineCooldownReportSchema.parse({ kind: 'cooldown', ...address, coolUntilMs }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a cooldown for "${address.slug}".`, failure);
+    }
+  });
+}
+
 export function attachEngineChild(
   parentPort: ParentPort,
   openListeners: OpenListeners,
@@ -181,13 +256,10 @@ export function attachEngineChild(
     notingTraffic(parentPort),
   );
 
-  subscribeToLogRows((row) => {
-    try {
-      parentPort.postMessage(engineLogReportSchema.parse({ kind: 'log', row }));
-    } catch (failure) {
-      console.error(`The engine child dropped a log row for "${row.gateway}".`, failure);
-    }
-  });
+  tellingTheParentEveryLogRow(parentPort);
+  tellingTheParentEveryBranchTally(parentPort);
+  tellingTheParentEveryCooldown(parentPort);
+  tellingTheParentEveryJudging(parentPort);
 
   parentPort.on('message', (messageEvent) => {
     if (spendLane.settle(messageEvent.data) || credentialLane.settle(messageEvent.data)) {

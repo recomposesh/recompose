@@ -100,8 +100,52 @@ export function targetCard(id: string): CanvasNode {
   };
 }
 
-/** A gateway whose definition routes through a router standing under another router. */
-export function gatewayOfNestedRouters(): GatewayConfig {
+/** A gateway whose definition routes through a router a judge decides the branches of. */
+export function gatewayOfAJudgedRouter(): GatewayConfig {
+  return gatewaySeed({
+    slug: CANVAS,
+    displayName: 'My Gateway',
+    port: 8397,
+    virtualModels: [
+      {
+        id: 'judged',
+        displayName: 'Judged',
+        routing: {
+          entry: 'r1',
+          nodes: {
+            r1: {
+              kind: 'router',
+              policy: {
+                mode: 'conditional',
+                judge: 'advisor',
+                branches: [{ label: 'code', rule: 'It writes code.', child: 'c1' }],
+                elseChild: 'c2',
+                judgeBoundMs: 3000,
+                rejudgeEveryRequest: false,
+              },
+              children: ['c1', 'c2'],
+            },
+            c1: { kind: 'target', accountId: 'k1', providerModel: 'claude-sonnet-5' },
+            c2: { kind: 'target', accountId: 'k1', providerModel: 'claude-opus-5' },
+            advisor: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
+          },
+        },
+      },
+    ],
+  });
+}
+
+/**
+ * A definition routing through a chain of failover routers, each holding the next and nothing else.
+ *
+ * @summary Depth is the only thing the nesting scenarios differ by: one wants a router below the
+ * entry to nest under, another wants the chain standing exactly at the four the stored walk allows,
+ * where one more router is the table the schema refuses. Naming the depth rather than spelling each
+ * table out keeps the two from drifting apart.
+ */
+export function gatewayOfNestedRouters(levels = 2): GatewayConfig {
+  const rungs = [...Array.from({ length: levels }).keys()].map((place) => `r${String(place + 1)}`);
+
   return gatewaySeed({
     slug: CANVAS,
     displayName: 'My Gateway',
@@ -112,10 +156,16 @@ export function gatewayOfNestedRouters(): GatewayConfig {
         displayName: 'Deep',
         routing: {
           entry: 'r1',
-          nodes: {
-            r1: { kind: 'router', policy: { mode: 'failover' }, children: ['r2'] },
-            r2: { kind: 'router', policy: { mode: 'failover' }, children: [] },
-          },
+          nodes: Object.fromEntries(
+            rungs.map((rung, place) => [
+              rung,
+              {
+                kind: 'router',
+                policy: { mode: 'failover' },
+                children: rungs.slice(place + 1, place + 2),
+              },
+            ]),
+          ),
         },
       },
     ],

@@ -17,7 +17,7 @@ export function AppToolbar() {
         <PanelLeft className="size-4 text-win-ink2" />
       </ToolButton>
       <ToolButton>
-        <span className="size-3.5 bg-down" style={{ borderRadius: 3 }} />
+        <span className="size-2.25 bg-down" style={{ borderRadius: 2 }} />
       </ToolButton>
       <ToolButton>
         <BookOpen className="size-4 text-win-ink2" />

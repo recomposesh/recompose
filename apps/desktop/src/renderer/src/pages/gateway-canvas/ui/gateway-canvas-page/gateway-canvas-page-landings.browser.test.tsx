@@ -1,131 +1,63 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
-import type { XY } from '../../lib/canvas-positions';
-
-import { toggleInspector } from '../../../../shared/lib';
-import {
-  draggedCable,
-  pulledCable,
-  reconnectAnchorOf,
-  releasedAt,
-  sourceAnchorOf,
-  sourcePortOf,
-  storedBindingOf,
-  storedModels,
-  targetPortOf,
-} from '../../testing/canvas-gestures.testkit';
-import { canvasPageOn, freshCanvasRun, pickedTheTarget } from '../../testing/canvas-page.testkit';
+import { pulledCable, releasedAt, sourcePortOf } from '../../testing/canvas-gestures.testkit';
+import { canvasPageOn, freshCanvasRun } from '../../testing/canvas-page.testkit';
 
 vi.setConfig({ testTimeout: 40_000 });
 
 beforeEach(freshCanvasRun);
 
-const POSITIONS_KEY = 'recompose.canvas.positions.my-gateway';
+const OPEN_CANVAS = { x: 420, y: 300 };
 
-function seatedInsideThePane(): void {
-  localStorage.setItem(POSITIONS_KEY, JSON.stringify({ 'target:fast': { x: 560, y: 280 } }));
+function litCards(container: HTMLElement): readonly string[] {
+  return [...container.querySelectorAll('.react-flow__node')]
+    .filter((card) => card.querySelector('[data-landing]') !== null)
+    .map((card) => card.getAttribute('data-id') ?? '');
 }
 
-function paneSpot(container: HTMLElement, from: XY): XY {
-  const box = container.querySelector('.react-flow')?.getBoundingClientRect() ?? new DOMRect();
-
-  return { x: box.left + from.x, y: box.top + from.y };
+async function cablePulledOffAFreshDraft(container: HTMLElement): Promise<void> {
+  await pulledCable(await sourcePortOf(container, 'draft'), OPEN_CANVAS);
 }
 
-test('a fresh cable landed on a stored target opens the pick on that very target', async () => {
-  seatedInsideThePane();
-
-  const screen = await canvasPageOn();
-
+async function aDraftStanding(screen: Awaited<ReturnType<typeof canvasPageOn>>): Promise<void> {
   screen.getByLabelText('Add a virtual model').element().focus();
   await userEvent.keyboard('{Enter}');
-  await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
-  await draggedCable(
-    await sourcePortOf(screen.container, 'draft'),
-    await targetPortOf(screen.container, 'target:fast'),
-  );
+}
 
-  await expect.element(screen.getByText(/^Models .+ serves$/)).toBeVisible();
+test('a cable in flight lights every card it could land on, and nothing else', async () => {
+  const screen = await canvasPageOn();
 
-  await userEvent.click(
-    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
-  );
+  await aDraftStanding(screen);
 
-  await expect
-    .poll(async () => storedBindingOf('steady'))
-    .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
+  expect(litCards(screen.container)).toEqual([]);
+
+  await cablePulledOffAFreshDraft(screen.container);
+
+  await vi.waitFor(() => {
+    expect(litCards(screen.container).length).toBeGreaterThan(0);
+  });
+
+  const lit = litCards(screen.container);
+
+  expect(lit.every((card) => card.startsWith('target:') || card.startsWith('ghost:'))).toBe(true);
+
+  releasedAt(OPEN_CANVAS);
 });
 
-test('a cable taken back up at its model end and dropped on the draft rebinds nothing', async () => {
-  localStorage.setItem(POSITIONS_KEY, JSON.stringify({ 'model:creative': { x: 600, y: 430 } }));
-
+test('the lights go out the moment the cable is let go', async () => {
   const screen = await canvasPageOn();
-  const before = await storedModels();
 
-  screen.getByLabelText('Add a virtual model').element().focus();
-  await userEvent.keyboard('{Enter}');
-  await expect.element(screen.getByRole('textbox', { name: 'Name' })).toBeVisible();
-  await draggedCable(
-    await sourceAnchorOf(screen.container, 'cable:creative'),
-    await sourcePortOf(screen.container, 'draft'),
-  );
+  await aDraftStanding(screen);
+  await cablePulledOffAFreshDraft(screen.container);
 
-  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
-  expect(await storedModels()).toEqual(before);
-});
+  await vi.waitFor(() => {
+    expect(litCards(screen.container).length).toBeGreaterThan(0);
+  });
 
-test('a cable end let go on open canvas opens the rebind pick where it landed', async () => {
-  seatedInsideThePane();
+  releasedAt(OPEN_CANVAS);
 
-  const screen = await canvasPageOn();
-  const spot = paneSpot(screen.container, { x: 520, y: 470 });
-
-  await pulledCable(await reconnectAnchorOf(screen.container, 'cable:creative'), spot);
-  releasedAt(spot);
-  await pickedTheTarget(screen);
-
-  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
-
-  await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'work' }));
-  await userEvent.click(
-    screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
-  );
-
-  await expect
-    .poll(async () => storedBindingOf('creative'))
-    .toEqual({ accountId: 'k1', providerModel: 'claude-sonnet-5' });
-});
-
-test('Delete on the pending card removes nothing and the pick keeps standing', async () => {
-  const screen = await canvasPageOn();
-  const before = await storedModels();
-  const spot = paneSpot(screen.container, { x: 520, y: 420 });
-
-  screen.getByLabelText('Add a virtual model').element().focus();
-  await userEvent.keyboard('{Enter}');
-  await pulledCable(await sourcePortOf(screen.container, 'draft'), spot);
-  releasedAt(spot);
-  await pickedTheTarget(screen);
-  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
-
-  toggleInspector();
-
-  await expect
-    .poll(() => {
-      const pendingCard = screen.container.querySelector<HTMLElement>(
-        '.react-flow__node[data-id="pending"] button[aria-pressed]',
-      );
-
-      pendingCard?.focus();
-
-      return pendingCard?.getAttribute('aria-pressed');
-    })
-    .toBe('true');
-  await userEvent.keyboard('{Delete}');
-
-  await expect.element(screen.getByText(/Delete the/)).not.toBeInTheDocument();
-  await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
-  expect(screen.container.querySelector('[data-id="pending"]')).not.toBeNull();
-  expect(await storedModels()).toEqual(before);
+  await vi.waitFor(() => {
+    expect(litCards(screen.container)).toEqual([]);
+  });
 });

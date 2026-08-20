@@ -78,6 +78,12 @@ describe('the traffic snapshot the whole app reads', () => {
     expect(gatewayTrafficSchema.parse({ personal: {} })).toEqual({ personal: {} });
   });
 
+  test('a model wearing the dots a real model name carries has a key to file under', () => {
+    const snapshot = { personal: { 'claude-5.6-sol': { only: served } } };
+
+    expect(gatewayTrafficSchema.parse(snapshot)).toEqual(snapshot);
+  });
+
   test('a snapshot keyed by something no gateway could be named is refused', () => {
     expect(() => gatewayTrafficSchema.parse({ Personal: { fast: { only: served } } })).toThrow();
   });

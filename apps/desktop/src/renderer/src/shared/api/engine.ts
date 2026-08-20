@@ -1,5 +1,8 @@
 import type {
   EngineStates,
+  GatewayBranchPins,
+  GatewayCooldowns,
+  GatewayJudging,
   GatewayEngineState,
   GatewayTraffic,
   IpcRequest,
@@ -14,6 +17,12 @@ import { unwrapIpcResult, withRefusal } from './ipc-result';
 const STOPPED: GatewayEngineState = { status: 'stopped' };
 
 const NOTHING_HAS_FLOWED: GatewayTraffic = {};
+
+const NOTHING_IS_PINNED: GatewayBranchPins = {};
+
+const NOTHING_STANDS_DOWN: GatewayCooldowns = {};
+
+const NOBODY_IS_JUDGING: GatewayJudging = {};
 
 export const engineStatesQueryOptions = queryOptions({
   queryKey: ['engine-states'],
@@ -66,6 +75,87 @@ export function bindEngineTrafficToCache(
 ): () => void {
   return subscribe((traffic) => {
     queryClient.setQueryData(engineTrafficQueryOptions.queryKey, traffic);
+  });
+}
+
+/**
+ * How many conversations each conditional router is holding, per branch.
+ *
+ * @summary The counts reach the renderer only by push, so the query starts on an empty snapshot and
+ * a router nothing has judged through yet reads as nothing rather than as loading. They are held
+ * apart from traffic because a cable and a branch count move on entirely different occasions, and
+ * one snapshot carrying both would repaint each at the other's pace.
+ */
+export const engineBranchPinsQueryOptions = queryOptions({
+  queryKey: ['engine-branch-pins'],
+  queryFn: skipToken,
+  initialData: NOTHING_IS_PINNED,
+});
+
+/**
+ * Points the pin push at the query cache and hands back the way to stop listening.
+ *
+ * @summary Every push carries the whole snapshot, so writing it straight into the cache leaves
+ * nothing to reconcile and no ordering rule to get wrong.
+ */
+export function bindEngineBranchPinsToCache(
+  queryClient: QueryClient,
+  subscribe: RecomposeIpcEvents['engine:pins'] = window.recomposeEvents['engine:pins'],
+): () => void {
+  return subscribe((pinning) => {
+    queryClient.setQueryData(engineBranchPinsQueryOptions.queryKey, pinning);
+  });
+}
+
+/**
+ * When each route node standing down is ready again.
+ *
+ * @summary The moments reach the renderer only by push, so the query starts on an empty snapshot
+ * and a gateway nothing has refused reads as nothing rather than as loading. They are held apart
+ * from traffic and from the pins because a stand-down moves on a provider's refusal rather than on
+ * a request answering, and one snapshot carrying all three would repaint each at the others' pace.
+ */
+export const engineCooldownsQueryOptions = queryOptions({
+  queryKey: ['engine-cooldowns'],
+  queryFn: skipToken,
+  initialData: NOTHING_STANDS_DOWN,
+});
+
+/**
+ * Points the cooldown push at the query cache and hands back the way to stop listening.
+ *
+ * @summary Every push carries the whole snapshot, so writing it straight into the cache leaves
+ * nothing to reconcile and no ordering rule to get wrong.
+ */
+export function bindEngineCooldownsToCache(
+  queryClient: QueryClient,
+  subscribe: RecomposeIpcEvents['engine:cooldowns'] = window.recomposeEvents['engine:cooldowns'],
+): () => void {
+  return subscribe((cooling) => {
+    queryClient.setQueryData(engineCooldownsQueryOptions.queryKey, cooling);
+  });
+}
+
+/**
+ * How many classifications each conditional router is waiting on right now.
+ *
+ * @summary Held apart from the cooldowns and the pins because it moves on a judge call opening and
+ * closing rather than on anything being stored, and a snapshot carrying all three would repaint
+ * each at the others' pace. It starts empty, so a canvas nothing is judging on reads as still.
+ */
+export const engineJudgingQueryOptions = queryOptions({
+  queryKey: ['engine-judging'],
+  queryFn: skipToken,
+  initialData: NOBODY_IS_JUDGING,
+});
+
+/** Points the judging push at the query cache and hands back the way to stop listening. */
+export function bindEngineJudgingToCache(
+  queryClient: QueryClient,
+  subscribe: RecomposeIpcEvents['engine:judging'] = window.recomposeEvents['engine:judging'],
+): () => void {
+  return subscribe((judging) => {
+    queryClient.setQueryData(engineJudgingQueryOptions.queryKey, judging);
   });
 }
 

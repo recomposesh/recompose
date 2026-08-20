@@ -2,6 +2,7 @@ import type { EngineRouting, RequestOutcome } from '@recompose/contracts';
 
 import type { RouterAttempt } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
+import type { OffBranchReason } from './routing/walk-notes';
 
 export type WalkNote = WalkResult<never>['notes'][number];
 
@@ -32,22 +33,28 @@ type UnansweredReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stre
  *
  * @summary A child whose account left the registry is told apart from one whose account is still
  * there without a credential, because the two ask a person for different repairs. A child that stood
- * cooling reads as such rather than as a failure of this request, because it never carried one.
+ * cooling reads as such rather than as a failure of this request, because it never carried one, and
+ * a child a branch decision walked past reads as ready rather than as anything at all wrong with it.
+ * Where no judgment placed the request, the sentence names the judge instead of the branch, because
+ * saying a request was judged onto a branch nothing judged sends a person reading it to the wrong
+ * repair. The words sit in a record the compiler holds to the reasons, so a reason added later fails
+ * the build here rather than quietly printing somebody else's sentence.
  */
-function whyNothingAnswered(because: UnansweredReason): string {
-  if (because === 'missing-credential') return 'has no credential';
-
-  if (because === 'missing-target') return 'has no target';
-
-  return because === 'transport-failure' ? 'could not be reached' : 'stands cooling';
-}
+const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
+  'missing-credential': 'has no credential',
+  'missing-target': 'has no target',
+  'transport-failure': 'could not be reached',
+  cooling: 'stands cooling',
+  'off-branch': 'stands ready off the branch this request was judged onto',
+  unjudged: 'stands ready while the judge named no branch and the request fell to the else child',
+};
 
 /**
  * Why one child could not take the request, in the words a refusal hands a person.
  *
  * @summary The walk records facts and no copy at all, so the sentence a person reads is written here
  * and only here. A status appears only where a provider answered with one, so the two reasons that
- * carry one are split from the four that were never answered at all.
+ * carry one are split from every reason nothing ever answered for.
  */
 function whyOf(note: WalkNote): string {
   const reason = note.reason;
@@ -56,7 +63,7 @@ function whyOf(note: WalkNote): string {
 
   return reason.because === 'stream-error'
     ? `failed mid-stream with ${String(reason.status)}`
-    : whyNothingAnswered(reason.because);
+    : WHY_NOTHING_ANSWERED[reason.because];
 }
 
 function statusOf(note: WalkNote): number {
@@ -81,14 +88,23 @@ export function attemptsRecorded(
   return notes.map((note) => ({ child: childNameOf(routing, note.routeNode), why: whyOf(note) }));
 }
 
+const CARRIED_NO_REQUEST = {
+  cooling: true,
+  'off-branch': true,
+  unjudged: true,
+} as const satisfies Record<OffBranchReason['because'] | 'cooling', true>;
+
 /**
  * The notes standing for a request that actually left the machine.
  *
  * @summary A cooling child is named in the refusal and left out of traffic, because a cable paints
- * what the last request came to and a child never tried carried no request to come to anything.
+ * what the last request came to and a child never tried carried no request to come to anything. A
+ * child standing off a branch is left out for the same reason, and more plainly: nothing ever asked
+ * it, so a red cable over it would blame a target that did nothing wrong, whether a judgment sent
+ * the request elsewhere or no judgment placed it at all.
  */
 export function notesThatCarriedARequest(notes: readonly WalkNote[]): readonly WalkNote[] {
-  return notes.filter((note) => note.reason.because !== 'cooling');
+  return notes.filter((note) => !Object.hasOwn(CARRIED_NO_REQUEST, note.reason.because));
 }
 
 /**

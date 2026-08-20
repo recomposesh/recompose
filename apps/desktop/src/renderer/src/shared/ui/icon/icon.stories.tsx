@@ -17,6 +17,10 @@ const sprite: IconName[] = [
   'gauge',
   'gear',
   'terminal',
+  'brain',
+  'branch',
+  'renew',
+  'stack',
 ];
 
 const meta = preview.meta({
@@ -24,10 +28,10 @@ const meta = preview.meta({
   args: { name: 'plus' },
 });
 
-/** Every glyph the sprite carries, which is every glyph this build draws. */
+/** A run of the sprite wide enough to read the drawing conventions off. */
 export const Sprite = meta.story({
   render: () => (
-    <ul className="flex list-none gap-4 p-0">
+    <ul className="flex list-none flex-wrap gap-4 p-0">
       {sprite.map((name) => (
         <li className="text-ink" key={name}>
           <Icon name={name} />
@@ -43,6 +47,7 @@ export const Sprite = meta.story({
     for (const glyph of drawn) {
       await expect(glyph.getBoundingClientRect().width).toBe(16);
       await expect(glyph).toHaveAttribute('aria-hidden');
+      await expect(glyph.childElementCount).toBeGreaterThan(0);
     }
   },
 });

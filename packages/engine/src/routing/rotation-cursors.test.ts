@@ -42,3 +42,26 @@ describe('the turn a round-robin router remembers between requests', () => {
     expect(cursors.cursorAt({ slug: 'main', virtualModel: 'fast', routeNode: 'inner' })).toBe(0);
   });
 });
+
+describe('the turn a descent that carried nothing hands back', () => {
+  test('a router nobody touched since stands where it stood before the turn', () => {
+    const cursors = createRotationCursors();
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'ladder' };
+
+    cursors.advanceTo(address, 3);
+    cursors.handBack(address, { was: 2, cursor: 3 });
+
+    expect(cursors.cursorAt(address)).toBe(2);
+  });
+
+  test('a router another walk has spun since keeps the turn that walk took', () => {
+    const cursors = createRotationCursors();
+    const address = { slug: 'main', virtualModel: 'fast', routeNode: 'ladder' };
+
+    cursors.advanceTo(address, 3);
+    cursors.advanceTo(address, 4);
+    cursors.handBack(address, { was: 2, cursor: 3 });
+
+    expect(cursors.cursorAt(address)).toBe(4);
+  });
+});

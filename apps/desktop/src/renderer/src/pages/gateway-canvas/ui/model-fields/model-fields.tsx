@@ -116,12 +116,14 @@ export function ModelFields(props: ModelFieldsProps) {
       </div>
       <RoutingPicker
         bindsThrough={props.bindsThrough}
+        judge={props.judge}
         modelRefusal={props.modelRefusal}
         models={props.models}
         onPickKind={props.onPickKind}
         onPickModel={props.onPickModel}
         onPickTarget={props.onPickTarget}
         onReopenKind={props.onReopenKind}
+        onReopenRouterMode={props.onReopenRouterMode}
         onRouterModeChange={props.onRouterModeChange}
         onRouterNameChange={props.onRouterNameChange}
         onSelectDifferentProvider={props.onSelectDifferentProvider}

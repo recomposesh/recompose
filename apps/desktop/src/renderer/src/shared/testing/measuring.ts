@@ -26,6 +26,18 @@ export function paintedBox(element: Element | null | undefined): DOMRect {
 }
 
 /**
+ * The middle of the box the browser laid out for an element a story looked up.
+ *
+ * @summary Reach for it when a scenario compares where two things sit rather than how big they
+ * are: an edge moves with a hit target's padding, and the middle is what the design actually fixes.
+ */
+export function paintedCentre(element: Element | null | undefined): { x: number; y: number } {
+  const box = paintedBox(element);
+
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+/**
  * Sizes a story's pane to the width a scenario narrows it to.
  *
  * @summary Reach for it in a play function that walks a surface down the widths a small window
