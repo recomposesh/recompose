@@ -26,6 +26,15 @@ function textInside(value: unknown): string {
   return typeof text === 'string' ? text : '';
 }
 
+/**
+ * The fields that carry standing instructions rather than anything a caller said this turn.
+ *
+ * @summary A Gemini instruction wears the very shape of a turn, parts and all, and this gateway's
+ * own subscription path stamps role user onto it, so nothing inside the object tells it apart from
+ * a turn. The field name is the only honest signal, and both spellings reach the wire.
+ */
+const INSTRUCTION_FIELDS = new Set(['systemInstruction', 'system_instruction']);
+
 function isCallerTurn(value: JsonObject): boolean {
   return value['role'] === 'user' || (value['role'] === undefined && 'parts' in value);
 }
@@ -51,7 +60,9 @@ function spokenInObject(value: JsonObject, spoken: string[]): void {
     return;
   }
 
-  for (const held of Object.values(value)) spokenIn(held, spoken);
+  for (const [field, held] of Object.entries(value)) {
+    if (!INSTRUCTION_FIELDS.has(field)) spokenIn(held, spoken);
+  }
 }
 
 /**
@@ -62,7 +73,9 @@ function spokenInObject(value: JsonObject, spoken: string[]): void {
  * conversation a pin recognizes may depend on which one a client happened to open with. Only turns
  * the caller spoke are collected: a system prompt carries per-turn stamps in the field, so a
  * fingerprint taken over it would name a fresh conversation every turn, and a judge reading it would
- * classify the tool rather than the request.
+ * classify the tool rather than the request. Which of those two goes wrong is decided by nothing
+ * better than the order a client serialized its fields in, so the instruction is passed over by
+ * name rather than by anything read off the object it holds.
  */
 export function userTurnsOf(raw: JsonObject): readonly string[] {
   const spoken: string[] = [];

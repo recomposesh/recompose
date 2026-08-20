@@ -57,6 +57,66 @@ describe('the turns a gemini-shaped request carries', () => {
   });
 });
 
+describe('the system instruction a gemini-shaped request carries beside its turns', () => {
+  test('an instruction standing before the turns is no turn of its own', () => {
+    const raw = {
+      systemInstruction: { parts: [{ text: 'you are a helpful assistant' }] },
+      contents: [{ role: 'user', parts: [{ text: 'draw a cat' }] }],
+    };
+
+    expect(userTurnsOf(raw)).toEqual(['draw a cat']);
+  });
+
+  test('an instruction standing after the turns is no turn of its own either', () => {
+    const raw = {
+      contents: [{ role: 'user', parts: [{ text: 'draw a cat' }] }],
+      systemInstruction: { parts: [{ text: 'you are a helpful assistant' }] },
+    };
+
+    expect(userTurnsOf(raw)).toEqual(['draw a cat']);
+  });
+
+  test('the underscored spelling is passed over in either order', () => {
+    const before = {
+      system_instruction: { parts: [{ text: 'you are a helpful assistant' }] },
+      contents: [{ parts: [{ text: 'draw a cat' }] }],
+    };
+    const after = {
+      contents: [{ parts: [{ text: 'draw a cat' }] }],
+      system_instruction: { parts: [{ text: 'you are a helpful assistant' }] },
+    };
+
+    expect(userTurnsOf(before)).toEqual(['draw a cat']);
+    expect(userTurnsOf(after)).toEqual(['draw a cat']);
+  });
+
+  test('an instruction wearing the caller role is still no turn the caller spoke', () => {
+    const raw = {
+      systemInstruction: { role: 'user', parts: [{ text: 'you are a helpful assistant' }] },
+      contents: [{ role: 'user', parts: [{ text: 'draw a cat' }] }],
+    };
+
+    expect(userTurnsOf(raw)).toEqual(['draw a cat']);
+  });
+
+  test('an instruction nested inside a wrapped request is passed over as well', () => {
+    const raw = {
+      request: {
+        system_instruction: { role: 'user', parts: [{ text: 'you are a helpful assistant' }] },
+        contents: [{ role: 'user', parts: [{ text: 'draw a cat' }] }],
+      },
+    };
+
+    expect(userTurnsOf(raw)).toEqual(['draw a cat']);
+  });
+
+  test('a request carrying only an instruction reads as no turns at all', () => {
+    const raw = { systemInstruction: { parts: [{ text: 'you are a helpful assistant' }] } };
+
+    expect(userTurnsOf(raw)).toEqual([]);
+  });
+});
+
 describe('what never reads as a turn the caller spoke', () => {
   test('the system prompt and the assistant are both left out', () => {
     const raw = {
