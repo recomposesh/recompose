@@ -2,7 +2,7 @@ import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
 import type { Judging } from './judge-decision';
-import type { RotationCursors } from './rotation-cursors';
+import type { RotationCursors, TurnTaken } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
 import type { WalkNote } from './walk-notes';
@@ -68,9 +68,9 @@ function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string
   return node.children.some((child) => subtreeCanServe(walking, child, passed));
 }
 
-type TurnHeld = { address: RouteNodeAddress; cursor: number };
+type TurnHeld = { address: RouteNodeAddress } & TurnTaken;
 
-/** One descent from the entry: where it has been, and the turns it would hand on if it lands. */
+/** One descent from the entry: where it has been, and the turns it took on the way down. */
 type Descending = { walking: Walking; path: Set<string>; turns: TurnHeld[] };
 
 async function childTheRouterOffers(
@@ -88,7 +88,8 @@ async function childTheRouterOffers(
     turn: {
       cursor: () => walking.cursors.cursorAt(address),
       advanceTo: (cursor) => {
-        turns.push({ address, cursor });
+        turns.push({ address, was: walking.cursors.cursorAt(address), cursor });
+        walking.cursors.advanceTo(address, cursor);
       },
     },
     branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
@@ -148,16 +149,17 @@ function stepPastARouterOfferingNothing(
 }
 
 /**
- * Hands on every turn this descent held, which it does only once the descent has arrived.
+ * Hands back every turn this descent took, wherever the router still stands where it left it.
  *
- * @summary A round-robin router spends a turn only on a subtree that took the request. A descent
- * that came up empty and starts over returns without passing here at all, so the rotation stands
- * exactly where it did and the child that would have been next is still next rather than skipped
- * for a subtree that carried nothing.
+ * @summary A round-robin router spends a turn only on a subtree that took the request, so a descent
+ * that came up empty gives its turns back and the child that would have been next is still next
+ * rather than skipped for a subtree that carried nothing. The turn is taken at the pick rather than
+ * held until the descent lands, because a judge call parks a walk mid-descent and a walk arriving
+ * beside it would read a cursor nobody had moved and pick the very child the first one is carrying.
  */
-function turnsHandedOn(descending: Descending): void {
+function turnsHandedBack(descending: Descending): void {
   for (const turn of descending.turns) {
-    descending.walking.cursors.advanceTo(turn.address, turn.cursor);
+    descending.walking.cursors.handBack(turn.address, turn);
   }
 }
 
@@ -171,15 +173,13 @@ export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> 
 
     const descent = descentAt(walking, routeNode);
 
-    if ('step' in descent) {
-      turnsHandedOn(descending);
-
-      return descent.step;
-    }
+    if ('step' in descent) return descent.step;
 
     const offered = await childTheRouterOffers(descending, routeNode, descent.router);
 
     if (offered === undefined) {
+      turnsHandedBack(descending);
+
       return stepPastARouterOfferingNothing(walking, routeNode, descent.router);
     }
 

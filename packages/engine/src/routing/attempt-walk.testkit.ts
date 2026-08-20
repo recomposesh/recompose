@@ -93,6 +93,57 @@ export function aJudgeAnswering(...readings: readonly JudgeReading[]): AskedJudg
   };
 }
 
+export type HeldJudge = {
+  asked: Promise<void>;
+  release: () => void;
+  classifyBranch: BranchClassifier;
+};
+
+async function aReadingHeldBy(
+  waiting: (() => void)[],
+  reading: JudgeReading,
+): Promise<JudgeReading> {
+  return new Promise<JudgeReading>((resolve) => {
+    waiting.push(() => {
+      resolve(reading);
+    });
+  });
+}
+
+/**
+ * A judge that answers nobody until it is released, so two walks can sit inside one classification.
+ *
+ * @summary A gateway serves many requests at once, and a judge call is the longest await a walk
+ * takes, so whatever a walk writes on its way down is either visible to the walk beside it or it is
+ * not. Holding the answer open is the only way a spec can stand two walks in that window at once.
+ * An ask arriving after the release answers straight away, so a walk that never reached the judge
+ * cannot hang the spec.
+ */
+export function aJudgeHeldOpen(reading: JudgeReading): HeldJudge {
+  const waiting: (() => void)[] = [];
+  let released = false;
+  let noticeAsked = () => {
+    return;
+  };
+  const asked = new Promise<void>((resolve) => {
+    noticeAsked = resolve;
+  });
+
+  return {
+    asked,
+    release: () => {
+      released = true;
+
+      for (const letGo of waiting.splice(0)) letGo();
+    },
+    classifyBranch: async () => {
+      noticeAsked();
+
+      return released ? reading : aReadingHeldBy(waiting, reading);
+    },
+  };
+}
+
 export type JudgedRouter = {
   branches: Readonly<Record<string, string>>;
   elseChild: string;

@@ -1,7 +1,16 @@
 import { describe, expect, test } from 'vitest';
 
-import { aGatewayServing, aRotationOver } from './attempt-walk.testkit';
+import type { HeldJudge } from './attempt-walk.testkit';
+
+import {
+  aGatewayServing,
+  aJudgeHeldOpen,
+  aRotationBesideAJudgedRouter,
+  aRotationOver,
+} from './attempt-walk.testkit';
 import { aRateLimit } from './routing.testkit';
+
+const A_LONG_STAND_DOWN = 600_000;
 
 describe('the children a round-robin router spreads its requests over', () => {
   test('two requests reach two different children', async () => {
@@ -31,5 +40,41 @@ describe('the children a round-robin router spreads its requests over', () => {
     const next = await gateway.send();
 
     expect(next.attempted).toEqual(['left']);
+  });
+});
+
+async function bothWalksOf(gateway: ReturnType<typeof aGatewayServing>, judge: HeldJudge) {
+  const walks = [gateway.send(), gateway.send()];
+
+  await judge.asked;
+  judge.release();
+
+  return Promise.all(walks);
+}
+
+describe('the children a rotation spreads over while one walk waits on a judge', () => {
+  test('the walk arriving second takes the next child rather than the one already picked', async () => {
+    const judge = aJudgeHeldOpen({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aRotationBesideAJudgedRouter('alpha'), {
+      classifyBranch: judge.classifyBranch,
+    });
+
+    const walks = await bothWalksOf(gateway, judge);
+
+    expect(walks.flatMap((walk) => walk.attempted)).toEqual(['coder', 'alpha']);
+  });
+
+  test('a walk that came up empty leaves the turn the walk beside it took standing', async () => {
+    const judge = aJudgeHeldOpen({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aRotationBesideAJudgedRouter('alpha', 'beta'), {
+      classifyBranch: judge.classifyBranch,
+    });
+
+    gateway.standDown('coder', A_LONG_STAND_DOWN);
+    gateway.standDown('catchall', A_LONG_STAND_DOWN);
+    await bothWalksOf(gateway, judge);
+    const next = await gateway.send();
+
+    expect(next.attempted).toEqual(['beta']);
   });
 });
