@@ -15,6 +15,7 @@ const meta = preview.meta({
     onPicking: () => {},
     offered: { offered: ['gpt-5-mini', 'gpt-5'], refusal: undefined },
     onBindJudge: () => {},
+    routesEverythingToElse: false,
   },
   decorators: [framedAsDrawerBox],
 });
@@ -24,6 +25,7 @@ export const Basic = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('claude-haiku-4-5')).toBeVisible();
     await expect(await canvas.findByText(/Fast, cheap models judge best/)).toBeVisible();
+    await expect(canvas.queryByRole('status')).toBeNull();
   },
 });
 
@@ -82,6 +84,26 @@ export const AnAccountThatLeftTheRegistry = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Account left the registry')).toBeVisible();
     await expect(canvas.queryByText('k9')).toBeNull();
+  },
+});
+
+/**
+ * A judge that cannot answer says what the router does about it, beside the way to bind another.
+ *
+ * @summary The card is dashed for this and the section is where the repair lives, so the reason
+ * stands next to the Edit that opens the picker rather than leaving a person to guess that a
+ * departed account is what is holding the whole router open.
+ */
+export const AJudgeThatCannotAnswerSaysWhereRequestsLand = meta.story({
+  args: {
+    bound: { accountId: 'k9', providerModel: 'claude-haiku-4-5' },
+    routesEverythingToElse: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('status')).toHaveTextContent(
+      /routes nothing by rule.+lands on else until a judge binds/u,
+    );
+    await expect(await canvas.findByRole('button', { name: 'Edit' })).toBeVisible();
   },
 });
 

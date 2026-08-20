@@ -29,7 +29,7 @@ import { RejudgeToggle } from '../rejudge-toggle/rejudge-toggle';
 import { RouterGeneralInfo } from '../router-general-info/router-general-info';
 import { sectionHeading } from '../subject-shell/subject-shell';
 import { SwitchDefinition } from '../switch-definition/switch-definition';
-import { judgeBoundIn } from './judge-binding';
+import { judgeAnswers, judgeBoundIn } from './judge-binding';
 import { routerChildRows } from './router-child-rows';
 
 /** What a router node the inspector speaks for stands as, which is the stored router arm. */
@@ -63,6 +63,7 @@ type StoredView = {
 function judgingBody(view: StoredView, policy: ConditionalPolicy): ReactNode {
   const { gateway, model, routeNodeId, accounts } = view.props;
   const { onPicking, onRewrite } = view;
+  const bound = judgeBoundIn(model, policy);
 
   return (
     <>
@@ -74,7 +75,7 @@ function judgingBody(view: StoredView, policy: ConditionalPolicy): ReactNode {
       />
       <JudgeSection
         accounts={accounts}
-        bound={judgeBoundIn(model, policy)}
+        bound={bound}
         offered={view.offered}
         onBindJudge={(bound) => {
           onRewrite(
@@ -86,6 +87,7 @@ function judgingBody(view: StoredView, policy: ConditionalPolicy): ReactNode {
         }}
         onPicking={onPicking}
         picking={view.picking}
+        routesEverythingToElse={!judgeAnswers(bound, accounts)}
       />
     </>
   );

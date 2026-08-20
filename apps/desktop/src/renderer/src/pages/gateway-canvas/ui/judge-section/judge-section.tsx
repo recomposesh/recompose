@@ -30,7 +30,18 @@ export type JudgeSectionProps = {
   offered: ModelListReading;
   /** Receives the whole judge the person settled on, which is what lands the rebinding. */
   onBindJudge: (judge: JudgeBinding) => void;
+  /**
+   * Whether the router this judge advises is sending every request it takes to its else child.
+   *
+   * @summary A stored conditional router says this and a switch being defined never does, because
+   * the router under a definition still spreads by the mode it was stored with and has no else to
+   * land on. The definition's own foot says what that switch still owes instead.
+   */
+  routesEverythingToElse: boolean;
 };
+
+const ROUTES_NOTHING_BY_RULE =
+  'This router routes nothing by rule. Every request lands on else until a judge binds.';
 
 /**
  * What the bound account reads as, or the standing of one the registry no longer holds.
@@ -146,6 +157,11 @@ export function JudgeSection(props: JudgeSectionProps) {
         props.onPicking('');
       })}
       {picking === undefined ? restingJudge(props) : editingJudge(props, picking)}
+      {props.routesEverythingToElse ? (
+        <p className="mt-2 px-1 text-caption text-ink-secondary" role="status">
+          {ROUTES_NOTHING_BY_RULE}
+        </p>
+      ) : null}
       <p className="mt-2 px-1 text-caption text-ink-secondary">{JUDGE_ADVICE}</p>
     </>
   );

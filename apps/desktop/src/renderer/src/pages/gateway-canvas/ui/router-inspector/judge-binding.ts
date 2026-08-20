@@ -1,4 +1,4 @@
-import type { VirtualModel } from '@recompose/contracts';
+import type { Account, VirtualModel } from '@recompose/contracts';
 
 import type { JudgeBinding } from '../../lib/conditional-draft';
 import type { ConditionalPolicy } from '../../lib/conditional-policy';
@@ -15,4 +15,15 @@ export function judgeBoundIn(model: VirtualModel, policy: ConditionalPolicy): Ju
   const node = model.routing.nodes[policy.judge];
 
   return node?.kind === 'target' ? node : NO_JUDGE;
+}
+
+/**
+ * Whether the bound judge can still be reached, which is the whole of what lets a router route.
+ *
+ * @summary The canvas card reads the same rule off the raw table to dash the frame, and the two
+ * have to agree: a person looking at a dashed card and then at its panel is looking for one
+ * trouble, not two readings of it.
+ */
+export function judgeAnswers(bound: JudgeBinding, accounts: readonly Account[]): boolean {
+  return accounts.some((held) => held.id === bound.accountId);
 }

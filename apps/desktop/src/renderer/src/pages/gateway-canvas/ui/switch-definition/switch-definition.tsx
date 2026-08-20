@@ -70,6 +70,7 @@ function judgeSection(props: SwitchDefinitionProps) {
       }}
       onPicking={onPicking}
       picking={props.picking}
+      routesEverythingToElse={false}
     />
   );
 }

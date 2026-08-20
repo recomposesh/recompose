@@ -5,7 +5,11 @@ import preview from '#.storybook/preview';
 import type { StoredRouter } from './router-inspector';
 
 import { pushingPins } from '../../testing/engine-pushes.testkit';
-import { servingBridgeWorld, storedAccounts } from '../../testing/gateway-canvas.testkit';
+import {
+  accountsWithout,
+  servingBridgeWorld,
+  storedAccounts,
+} from '../../testing/gateway-canvas.testkit';
 import {
   judgedRouter,
   pooledFailover,
@@ -95,6 +99,26 @@ export const ConditionalKeepsTheBranchItEarned = meta.story({
       await canvas.findByRole('switch', { name: 'Re-judge every request' }),
     ).not.toBeChecked();
     await expect(await canvas.findByText(/stays on the branch it first earned/)).toBeVisible();
+  },
+});
+
+/**
+ * A judge whose account left the registry says the router is finished routing by rule.
+ *
+ * @summary The card outside is already dashed for this, and until now the panel gave a person
+ * nothing to read it against, so the reason stands in the Judge section beside the Edit that
+ * binds another one.
+ */
+export const AJudgeThatCannotAnswerHoldsTheRouterOpen = meta.story({
+  args: {
+    accounts: accountsWithout('k1').accounts,
+    model: pooledModel(judging, true),
+    router: judging,
+  },
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByText(/routes nothing by rule.+lands on else until a judge binds/u),
+    ).toBeVisible();
   },
 });
 
