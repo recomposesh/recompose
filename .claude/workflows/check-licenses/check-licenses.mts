@@ -71,8 +71,23 @@ function auditLicenses(report: string): LicenseAudit {
   return { distinctLicenses: entries.length, offenders };
 }
 
+/**
+ * @summary The gate guards what a release installs, so it reads the desktop app's own production
+ * graph. The trailing dots pull `@recompose/engine` and `@recompose/contracts` in with their
+ * dependencies; without them pnpm stops at the workspace link and misses `hono` and `js-tiktoken`.
+ * A root-wide read would drag the public site's dependencies into a gate no installer answers for.
+ */
+const desktopProductionGraph = [
+  '--filter',
+  '@recompose/desktop...',
+  'licenses',
+  'list',
+  '--prod',
+  '--json',
+];
+
 const { distinctLicenses, offenders } = auditLicenses(
-  execFileSync('pnpm', ['licenses', 'list', '--prod', '--json'], {
+  execFileSync('pnpm', desktopProductionGraph, {
     encoding: 'utf8',
     shell: process.platform === 'win32',
   }),
