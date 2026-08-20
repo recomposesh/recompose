@@ -229,3 +229,5 @@ missing state rather than a missing string.
 - [x] 15.3 The branch label matches the judge's answer trimmed, the same way it travels
 - [x] 15.4 The spent-router re-step never advances a rotation cursor for a child never offered,
       and a healthy target a decided branch made unreachable earns its note in the walk's account
+- [ ] 14.3 Switching a router away from conditional keeps a judge another surviving router still
+      asks, the same rule the subtree removal learned
