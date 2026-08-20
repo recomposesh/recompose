@@ -3,6 +3,7 @@ import type { GatewayBranchPins } from '@recompose/contracts';
 import { useQuery } from '@tanstack/react-query';
 
 import { engineBranchPinsQueryOptions } from '../../../shared/api';
+import { heldAt } from './held-at';
 
 /** The one router a branch count belongs to: the gateway, the virtual model, and the node itself. */
 export type RouterPlace = {
@@ -27,7 +28,7 @@ export function branchPinsAt(
   pinning: GatewayBranchPins,
   place: RouterPlace,
 ): ReadonlyMap<string, number> {
-  const counted = pinning[place.slug]?.[place.virtualModel]?.[place.routeNode];
+  const counted = heldAt(heldAt(heldAt(pinning, place.slug), place.virtualModel), place.routeNode);
 
   return counted === undefined ? HOLDING_NOTHING : new Map(Object.entries(counted));
 }

@@ -45,4 +45,10 @@ describe('how many conversations a branch of one router is holding', () => {
   test('a branch that let its last conversation go stops answering a count', () => {
     expect(branchPinsAt(holding, AT).get('writer')).toBeUndefined();
   });
+
+  test('a place named after the prototype chain holds nothing rather than a phantom', () => {
+    expect([
+      ...branchPinsAt({}, { slug: 'constructor', virtualModel: 'name', routeNode: '0' }),
+    ]).toEqual([]);
+  });
 });

@@ -3,6 +3,7 @@ import type { GatewayCooldowns } from '@recompose/contracts';
 import { useQuery } from '@tanstack/react-query';
 
 import { engineCooldownsQueryOptions } from '../../../shared/api';
+import { heldAt } from './held-at';
 
 /** The one node a stand-down belongs to: the gateway, the virtual model, and the node itself. */
 export type NodePlace = { slug: string; virtualModel: string; routeNode: string };
@@ -14,20 +15,6 @@ const backUpClock = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
   hour12: false,
 });
-
-/**
- * What the snapshot itself holds under a key, never what every object holds under it.
- *
- * @summary A gateway slug, a model id, and a route node id are all a person's own words, so a
- * snapshot read by a bare index would answer for `constructor` as readily as for a judge and stand
- * a node down that nothing ever refused.
- */
-function heldAt<Value>(
-  record: Readonly<Record<string, Value>> | undefined,
-  key: string,
-): Value | undefined {
-  return record !== undefined && Object.hasOwn(record, key) ? record[key] : undefined;
-}
 
 /** The moment one node is ready again, or nothing where nothing stood it down. */
 export function standsDownAt(cooling: GatewayCooldowns, place: NodePlace): number | undefined {
