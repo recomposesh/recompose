@@ -202,7 +202,7 @@ missing state rather than a missing string.
       leaves
 - [ ] 13.4 The satellite wears a brain mark instead of the magnifier
 - [ ] 13.5 The mode rows carry an icon beside each title
-- [ ] 13.6 The classification prompt preview names its filling slots with placeholders, and an
+- [x] 13.6 The classification prompt preview names its filling slots with placeholders, and an
       empty branch list says it holds nothing yet
 - [ ] 13.7 The router kicker never truncates: beside a mode pill it keeps its glyph and yields
       the word
