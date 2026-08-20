@@ -58,7 +58,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" > /dev/null
           security list-keychain -d user -s "$keychain"
 
-          CSC_LINK='' CSC_KEYCHAIN="$keychain" APPLE_API_KEY="$key_file" \
+          env -u CSC_LINK CSC_KEYCHAIN="$keychain" APPLE_API_KEY="$key_file" \
             pnpm --filter @recompose/desktop run build:mac
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}

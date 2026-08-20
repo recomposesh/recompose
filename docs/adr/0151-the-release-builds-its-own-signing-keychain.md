@@ -26,8 +26,11 @@ GitHub publishes for signing on its own runners: decode the certificate, `securi
 is the line that matters. It records which tools may reach the key, so `codesign` takes it without
 asking.
 
-**electron-builder receives the keychain instead of the certificate.** `CSC_KEYCHAIN` names it and
-`CSC_LINK` empties for the build, so nothing creates a second keychain behind the first. The step
+**electron-builder receives the keychain instead of the certificate.** `CSC_KEYCHAIN` names it, and
+`env -u CSC_LINK` drops the certificate variable for the build so nothing creates a second keychain
+behind the first. Emptying that variable isn't enough. electron-builder reads a defined
+`CSC_LINK` as a path and resolves the empty string against the project directory, then refuses
+`apps/desktop` as "not a file" before it reaches signing. The step
 still halts when any signing secret is empty, and it now also halts when `CSC_LINK` holds something
 that isn't the base64 of a p12.
 
