@@ -154,3 +154,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0146](0146-the-site-deploys-from-ci-on-two-triggers.md)                        | The site deploys from CI on two triggers                                            | Accepted   | 2026-08-20 |
 | [0147](0147-the-license-gate-reads-what-a-release-installs.md)                  | The license gate reads what a release installs                                      | Accepted   | 2026-08-20 |
 | [0148](0148-the-docs-and-its-search-answer-from-the-build.md)                   | The docs and its search answer from the build                                       | Accepted   | 2026-08-20 |
+| [0149](0149-the-ruleset-file-holds-the-checks-that-can-report.md)               | The ruleset file holds the checks that can report                                   | Accepted   | 2026-08-20 |
