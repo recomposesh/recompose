@@ -50,6 +50,8 @@ export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
     },
     cooling: (routeNode: string) =>
       ledger.coolingAt({ slug: 'main', virtualModel: 'fast', routeNode }),
+    turnAt: (routeNode: string) =>
+      cursors.cursorAt({ slug: 'main', virtualModel: 'fast', routeNode }),
     standDown: (routeNode: string, span: number) => {
       ledger.cool({ slug: 'main', virtualModel: 'fast', routeNode }, { coolUntilMs: clock + span });
     },
@@ -133,6 +135,24 @@ export function aJudgedRouterOver(wiring: Partial<JudgedRouter> = {}): EngineRou
   for (const child of children) nodes[child] = aBoundTarget();
 
   return aTableEnteredAt('ladder', nodes);
+}
+
+/**
+ * A round-robin router holding a judged router beside plain children of its own.
+ *
+ * @summary The judged router looks alive from above, because one of its branch children is healthy,
+ * so the rotation offers it a turn and only the judge's own answer reveals that the branch it named
+ * cannot serve. That is the one shape where a turn is offered to a subtree that takes no request.
+ */
+export function aRotationBesideAJudgedRouter(...spares: readonly string[]): EngineRouting {
+  const nodes: Record<string, EngineRouteNode> = {
+    ...aJudgedRouterOver().nodes,
+    top: aRoundRobinOver('ladder', ...spares),
+  };
+
+  for (const spare of spares) nodes[spare] = aBoundTarget();
+
+  return aTableEnteredAt('top', nodes);
 }
 
 export function aLadderOver(...children: readonly string[]): EngineRouting {

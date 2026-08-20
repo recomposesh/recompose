@@ -3,13 +3,14 @@ import type { EngineRouting } from '@recompose/contracts';
 import type { CooldownLedger } from './cooldown-ledger';
 import type { JudgedRequest, Judging } from './judge-decision';
 import type { AttemptReading } from './outcome-classification';
+import type { BranchChoice } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { EngineRouter } from './route-table';
 import type { Walking, WalkStep } from './walk-descent';
 import type { WalkNote } from './walk-notes';
 
 import { classify } from './outcome-classification';
-import { childlessRouterTheTableHolds, targetsInDeclaredOrder } from './route-table';
+import { childlessRouterTheTableHolds, targetsInDeclaredOrder, targetsUnder } from './route-table';
 import { addressOf, stepTheWalkTakesNext } from './walk-descent';
 import { noteOf, retryTimeEveryNotePromised } from './walk-notes';
 
@@ -61,16 +62,93 @@ function noteForTarget(walking: Walking, routeNode: string): WalkNote | undefine
     : noteOf(routeNode, { because: 'cooling' }, cooling.retryAtMs);
 }
 
-function notesOfTheWalk(walking: Walking): readonly WalkNote[] {
+function notesOverTheTable(
+  walking: Walking,
+  noteFor: (routeNode: string) => WalkNote | undefined,
+): readonly WalkNote[] {
   const notes: WalkNote[] = [];
 
   for (const target of targetsInDeclaredOrder(walking.routing)) {
-    const note = noteForTarget(walking, target.routeNode);
+    const note = noteFor(target.routeNode);
 
     if (note !== undefined) notes.push(note);
   }
 
   return notes;
+}
+
+function notesOfTheWalk(walking: Walking): readonly WalkNote[] {
+  return notesOverTheTable(walking, (routeNode) => noteForTarget(walking, routeNode));
+}
+
+function targetsNamedUnder(walking: Walking, routeNode: string): readonly string[] {
+  return targetsUnder(walking.routing, routeNode).map((target) => target.routeNode);
+}
+
+/**
+ * Every target one conditional router's own decision walked past, however healthy it stood.
+ *
+ * @summary The router narrowed itself to the branch its judge named and the else beneath it, so
+ * everything it holds outside those two is out of this request's reach for reasons that have
+ * nothing to do with the child. Read from what the walk decided rather than from the policy,
+ * because the policy alone cannot say which branch this particular request took.
+ */
+function targetsOneDecisionWalkedPast(
+  walking: Walking,
+  routeNode: string,
+  choice: BranchChoice,
+): readonly string[] {
+  const inReach = new Set([
+    ...targetsNamedUnder(walking, choice.decided),
+    ...targetsNamedUnder(walking, choice.elseChild),
+  ]);
+
+  return targetsNamedUnder(walking, routeNode).filter((target) => !inReach.has(target));
+}
+
+function targetsTheDecisionsWalkedPast(walking: Walking): ReadonlySet<string> {
+  const walkedPast = new Set<string>();
+
+  for (const [routeNode, choice] of walking.judging.decided) {
+    for (const target of targetsOneDecisionWalkedPast(walking, routeNode, choice)) {
+      walkedPast.add(target);
+    }
+  }
+
+  return walkedPast;
+}
+
+function noteForTargetWalkedPast(
+  walking: Walking,
+  routeNode: string,
+  walkedPast: ReadonlySet<string>,
+): WalkNote | undefined {
+  const attemptedOrCooling = noteForTarget(walking, routeNode);
+
+  if (attemptedOrCooling !== undefined) return attemptedOrCooling;
+
+  return walkedPast.has(routeNode)
+    ? noteOf(routeNode, { because: 'off-branch' }, undefined)
+    : undefined;
+}
+
+/**
+ * The account a walk that served nobody owes, which names the children a decision walked past.
+ *
+ * @summary A walk that served owes no such account: the branches it did not take are the router
+ * working rather than children it failed to use. A walk that served nobody owes the whole picture,
+ * and the child standing off the decided branch promises nothing about when to come back, so a
+ * refusal built over it withholds the wait the children that did refuse named. Telling a caller to
+ * sit out thirty seconds while a target stands ready is a promise this gateway cannot keep. A child
+ * the walk simply ran out of attempts before reaching is named by nobody here, because the table
+ * still reaches it and the very next request will.
+ */
+function accountOfAWalkThatServedNobody(walking: Walking): readonly WalkNote[] {
+  const walkedPast = targetsTheDecisionsWalkedPast(walking);
+
+  return notesOverTheTable(walking, (routeNode) =>
+    noteForTargetWalkedPast(walking, routeNode, walkedPast),
+  );
 }
 
 function verdictWhenNoChildServed<TAnswer>(
@@ -162,7 +240,10 @@ export async function walkAttempts<TAnswer>(
     spent: new Set(),
   };
   const settled = await verdictTheWalkSettles(walking, request);
-  const notes = notesOfTheWalk(walking);
 
-  return { notes, verdict: settled ?? verdictWhenNoChildServed(walking, notes) };
+  if (settled !== undefined) return { notes: notesOfTheWalk(walking), verdict: settled };
+
+  const notes = accountOfAWalkThatServedNobody(walking);
+
+  return { notes, verdict: verdictWhenNoChildServed(walking, notes) };
 }

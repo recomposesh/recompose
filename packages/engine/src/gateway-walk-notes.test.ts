@@ -54,6 +54,12 @@ describe('the reason a refusal gives for each child it names', () => {
   it('says a child stands cooling, which is why it was never tried at all', () => {
     expect(whyOf(noteOf({ because: 'cooling' }))).toBe('stands cooling');
   });
+
+  it('says a child stands ready, when only the branch this request took left it out', () => {
+    expect(whyOf(noteOf({ because: 'off-branch' }))).toBe(
+      'stands ready off the branch this request was judged onto',
+    );
+  });
 });
 
 describe('the name a person reads a child by', () => {
@@ -93,6 +99,15 @@ describe('only a child that carried a request earns a cable', () => {
   it('drops a cooling child, because it never carried one', () => {
     const kept = notesThatCarriedARequest([
       noteOf({ because: 'cooling' }),
+      noteOf({ because: 'refused', status: 429 }, 'child-2'),
+    ]);
+
+    expect(kept).toEqual([{ routeNode: 'child-2', reason: { because: 'refused', status: 429 } }]);
+  });
+
+  it('drops a child a branch decision walked past, because nothing ever asked it', () => {
+    const kept = notesThatCarriedARequest([
+      noteOf({ because: 'off-branch' }),
       noteOf({ because: 'refused', status: 429 }, 'child-2'),
     ]);
 

@@ -58,6 +58,17 @@ export function targetsInDeclaredOrder(routing: EngineRouting): readonly Declare
 }
 
 /**
+ * Every target standing under one route node, in the order the routers beneath it declare them.
+ *
+ * @summary The same reader as the whole table's, entered lower down, so a subtree can never come
+ * to a different reading of itself than the table it belongs to. That matters for the account a
+ * refusal gives, which names children from both readings in one list.
+ */
+export function targetsUnder(routing: EngineRouting, routeNode: string): readonly DeclaredTarget[] {
+  return targetsInDeclaredOrder({ entry: routeNode, nodes: routing.nodes });
+}
+
+/**
  * The first target a table declares, which every path that can serve only one target resolves.
  *
  * @summary Counting tokens, drawing an image, and preparing a socket each need one account and one

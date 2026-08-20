@@ -68,12 +68,17 @@ function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string
   return node.children.some((child) => subtreeCanServe(walking, child, passed));
 }
 
+type TurnHeld = { address: RouteNodeAddress; cursor: number };
+
+/** One descent from the entry: where it has been, and the turns it would hand on if it lands. */
+type Descending = { walking: Walking; path: Set<string>; turns: TurnHeld[] };
+
 async function childTheRouterOffers(
-  walking: Walking,
+  descending: Descending,
   routeNode: string,
   router: EngineRouter,
-  path: ReadonlySet<string>,
 ): Promise<string | undefined> {
+  const { walking, path, turns } = descending;
   const address = addressOf(walking, routeNode);
   const policy = router.policy;
 
@@ -83,7 +88,7 @@ async function childTheRouterOffers(
     turn: {
       cursor: () => walking.cursors.cursorAt(address),
       advanceTo: (cursor) => {
-        walking.cursors.advanceTo(address, cursor);
+        turns.push({ address, cursor });
       },
     },
     branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
@@ -142,19 +147,37 @@ function stepPastARouterOfferingNothing(
   return { at: 'again' };
 }
 
+/**
+ * Hands on every turn this descent held, which it does only once the descent has arrived.
+ *
+ * @summary A round-robin router spends a turn only on a subtree that took the request. A descent
+ * that came up empty and starts over returns without passing here at all, so the rotation stands
+ * exactly where it did and the child that would have been next is still next rather than skipped
+ * for a subtree that carried nothing.
+ */
+function turnsHandedOn(descending: Descending): void {
+  for (const turn of descending.turns) {
+    descending.walking.cursors.advanceTo(turn.address, turn.cursor);
+  }
+}
+
 /** Where the walk arrives next, descending from the entry until a node settles the question. */
 export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> {
-  const path = new Set<string>();
+  const descending: Descending = { walking, path: new Set<string>(), turns: [] };
   let routeNode = walking.routing.entry;
 
   for (;;) {
-    path.add(routeNode);
+    descending.path.add(routeNode);
 
     const descent = descentAt(walking, routeNode);
 
-    if ('step' in descent) return descent.step;
+    if ('step' in descent) {
+      turnsHandedOn(descending);
 
-    const offered = await childTheRouterOffers(walking, routeNode, descent.router, path);
+      return descent.step;
+    }
+
+    const offered = await childTheRouterOffers(descending, routeNode, descent.router);
 
     if (offered === undefined) {
       return stepPastARouterOfferingNothing(walking, routeNode, descent.router);

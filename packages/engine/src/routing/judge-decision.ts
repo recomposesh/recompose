@@ -31,7 +31,7 @@ export type Judging = {
   pinnedBranchAt: (routeNode: string) => string | undefined;
   pinBranchAt: (routeNode: string, child: string) => void;
   resumesServerState: boolean;
-  decided: Map<string, string>;
+  decided: Map<string, BranchChoice>;
 };
 
 type BranchQuestion = {
@@ -175,6 +175,10 @@ function questionOf(
  * routers, each owed its own single decision. A router of any other mode answers nothing here, which
  * is what keeps failover and round-robin from ever reaching a judge.
  *
+ * The whole choice is remembered rather than the branch alone, so a later reader learns which two
+ * children this router narrowed itself to without going back to the policy to work out what the
+ * else child was. A walk accounting for the children it never reached is exactly such a reader.
+ *
  * The conversation is pinned here and only here, the moment a judgment settles, so the branch a
  * request earned outlives the walk that earned it while the branch trouble picked never does.
  */
@@ -187,15 +191,16 @@ export async function branchTheWalkFollows(
 
   const held = judging.decided.get(routeNode);
 
-  if (held !== undefined) return { decided: held, elseChild: policy.elseChild };
+  if (held !== undefined) return held;
 
   const decided = await childTheJudgeDecides(questionOf(routeNode, policy, judging));
+  const choice = { decided: decided.child, elseChild: policy.elseChild };
 
-  judging.decided.set(routeNode, decided.child);
+  judging.decided.set(routeNode, choice);
 
   if (decided.earnsAPin) judging.pinBranchAt(routeNode, decided.child);
 
-  return { decided: decided.child, elseChild: policy.elseChild };
+  return choice;
 }
 
 /**

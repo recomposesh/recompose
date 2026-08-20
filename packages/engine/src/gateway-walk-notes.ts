@@ -32,15 +32,18 @@ type UnansweredReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stre
  *
  * @summary A child whose account left the registry is told apart from one whose account is still
  * there without a credential, because the two ask a person for different repairs. A child that stood
- * cooling reads as such rather than as a failure of this request, because it never carried one.
+ * cooling reads as such rather than as a failure of this request, because it never carried one, and
+ * a child a branch decision walked past reads as ready rather than as anything at all wrong with it.
+ * The words sit in a record the compiler holds to the reasons, so a reason added later fails the
+ * build here rather than quietly printing somebody else's sentence.
  */
-function whyNothingAnswered(because: UnansweredReason): string {
-  if (because === 'missing-credential') return 'has no credential';
-
-  if (because === 'missing-target') return 'has no target';
-
-  return because === 'transport-failure' ? 'could not be reached' : 'stands cooling';
-}
+const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
+  'missing-credential': 'has no credential',
+  'missing-target': 'has no target',
+  'transport-failure': 'could not be reached',
+  cooling: 'stands cooling',
+  'off-branch': 'stands ready off the branch this request was judged onto',
+};
 
 /**
  * Why one child could not take the request, in the words a refusal hands a person.
@@ -56,7 +59,7 @@ function whyOf(note: WalkNote): string {
 
   return reason.because === 'stream-error'
     ? `failed mid-stream with ${String(reason.status)}`
-    : whyNothingAnswered(reason.because);
+    : WHY_NOTHING_ANSWERED[reason.because];
 }
 
 function statusOf(note: WalkNote): number {
@@ -81,14 +84,18 @@ export function attemptsRecorded(
   return notes.map((note) => ({ child: childNameOf(routing, note.routeNode), why: whyOf(note) }));
 }
 
+const CARRIED_NO_REQUEST = { cooling: true, 'off-branch': true } as const;
+
 /**
  * The notes standing for a request that actually left the machine.
  *
  * @summary A cooling child is named in the refusal and left out of traffic, because a cable paints
- * what the last request came to and a child never tried carried no request to come to anything.
+ * what the last request came to and a child never tried carried no request to come to anything. A
+ * child a branch decision walked past is left out for the same reason, and more plainly: nothing
+ * ever asked it, so a red cable over it would blame a target that did nothing wrong.
  */
 export function notesThatCarriedARequest(notes: readonly WalkNote[]): readonly WalkNote[] {
-  return notes.filter((note) => note.reason.because !== 'cooling');
+  return notes.filter((note) => !Object.hasOwn(CARRIED_NO_REQUEST, note.reason.because));
 }
 
 /**

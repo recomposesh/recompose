@@ -1,7 +1,14 @@
 import type { AttemptReason } from './outcome-classification';
 
-/** Why one child of a route table did not serve a request, whether it was tried or stood cooling. */
-export type NoteReason = AttemptReason | { because: 'cooling' };
+/**
+ * Why one child of a route table did not serve a request.
+ *
+ * @summary Three ways, not two: it was tried and refused, it stood cooling from an earlier
+ * refusal, or a branch this request was judged onto left it out of reach while it stood perfectly
+ * ready. The third is the only one that promises nothing about when to come back, because the next
+ * request may well be judged straight onto it.
+ */
+export type NoteReason = AttemptReason | { because: 'cooling' } | { because: 'off-branch' };
 
 /** What a walk records about one child it could not use, and when that child may serve again. */
 export type WalkNote = { routeNode: string; reason: NoteReason; retryAtMs?: number };
