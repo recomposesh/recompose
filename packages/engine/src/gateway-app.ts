@@ -35,6 +35,18 @@ export type { SpendGrantFor } from './gateway-proxy';
 const generateContentSuffix = ':generateContent';
 const streamGenerateContentSuffix = ':streamGenerateContent';
 
+const HELLO_PROBE = '/api/hello';
+
+/**
+ * What the probe answers, which is what the real endpoint answers and nothing of this gateway's own.
+ *
+ * @summary A client points its base URL here and health-checks it by reading this path before it
+ * sends anything, so the answer has to be the one it would have read upstream: a gateway that
+ * described itself instead would fail a check that never looks at the words. It is a serving-surface
+ * route rather than a model route, so it resolves no custody, picks no dialect, and leaves no row.
+ */
+const HELLO_ANSWER = { message: 'hello' };
+
 function chosenAIStudioRelay(relay?: AIStudioRelay): AIStudioRelay {
   return relay ?? aiStudioRelayRuntime();
 }
@@ -189,6 +201,9 @@ function guardAndReport(app: Hono, gateway: EngineGateway): void {
   app.get('/health', (c) => c.json({ gateway: gateway.displayName }));
   app.on(['GET', 'HEAD'], '/healthz', (c) =>
     c.req.method === 'HEAD' ? c.body(null, 200) : c.json({ status: 'ok' }),
+  );
+  app.on(['GET', 'HEAD'], HELLO_PROBE, (c) =>
+    c.req.method === 'HEAD' ? c.body(null, 200) : c.json(HELLO_ANSWER),
   );
 }
 

@@ -262,5 +262,5 @@ rather than a missing string, and section 14 built it, so judge graduated too.
       never the request tail, so a person can watch judging happen
 - [ ] 18.5 The cable dragged from a draft virtual model asks the routing mode too: every path
       that births a router walks the same mode rows, and no path assumes failover
-- [ ] 18.6 The gateway answers the Anthropic hello probe: /api/hello answers what the real
+- [x] 18.6 The gateway answers the Anthropic hello probe: /api/hello answers what the real
       endpoint answers instead of a 404, so a client's health check passes

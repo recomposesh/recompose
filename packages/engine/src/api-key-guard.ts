@@ -6,7 +6,7 @@ import { turnedAway } from './gateway-turned-away';
 import { presentedCredentials } from './presented-credential';
 import { apiKeyRequired } from './refusals';
 
-const OPEN_PATHS = new Set(['/health', '/healthz']);
+const OPEN_PATHS = new Set(['/health', '/healthz', '/api/hello']);
 
 /**
  * Whether a value a caller presented is the key the gateway holds.
@@ -40,7 +40,8 @@ function matches(presented: string, held: Buffer): boolean {
  * holds a key at all.
  *
  * The health paths stay open. A health path that needs a credential cannot do the one job it exists
- * for.
+ * for, and the hello probe is one of them: a client reads it to decide whether this base URL is
+ * reachable at all, which it asks before it has any reason to have sent a key.
  */
 export function guardApiKey(displayName: string, apiKey: string): MiddlewareHandler {
   const held = Buffer.from(apiKey);

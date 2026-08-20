@@ -157,6 +157,12 @@ describe('what a gateway answers whether or not it requires a key', () => {
     expect(answer.status).toBe(200);
   });
 
+  test('the hello probe answers, because a client reads it before it has sent anything', async () => {
+    const answer = await askGuarded('/api/hello');
+
+    expect(answer.status).toBe(200);
+  });
+
   test('the health answer is the one an open gateway gives', async () => {
     const guardedAnswer = await askGuarded('/health');
     const openAnswer = await askOpen('/health');
