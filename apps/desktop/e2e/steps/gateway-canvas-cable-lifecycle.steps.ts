@@ -41,7 +41,6 @@ const SERVED_MODEL = 'claude-sonnet-5';
 /** The definition that stands an account on the canvas, since only a binding seats a target card. */
 const COMPANION = 'steady';
 
-/** An account id no registry holds, which is what leaves a binding standing on a ghost. */
 /** The inspector while one subject holds it, which reads under that subject's own heading. */
 function inspectorOn(page: Page, heading: string): Locator {
   return page
