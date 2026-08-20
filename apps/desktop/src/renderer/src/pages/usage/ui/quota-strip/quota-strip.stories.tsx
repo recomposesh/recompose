@@ -61,7 +61,9 @@ export const BurningTowardTheRecord = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('region', { name: 'Quota windows' })).toBeVisible();
 
-    const gauge = await canvas.findByRole('meter', { name: 'Claude Max 5-hour window burn' });
+    const gauge = await canvas.findByRole('meter', {
+      name: 'Claude · Claude Max 5-hour window burn',
+    });
 
     await expect(gauge).toHaveAttribute('aria-valuenow', '0.48');
     await expect(await canvas.findByText('Record 2.0M on Aug 3')).toBeVisible();
@@ -103,7 +105,9 @@ export const TheBusiestOnRecord = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Busiest window on record')).toBeVisible();
 
-    const gauge = await canvas.findByRole('meter', { name: 'Claude Max 5-hour window burn' });
+    const gauge = await canvas.findByRole('meter', {
+      name: 'Claude · Claude Max 5-hour window burn',
+    });
 
     await expect(Number(gauge.getAttribute('aria-valuenow'))).toBeLessThan(1);
   },
@@ -126,6 +130,50 @@ export const NothingOnRecordYet = meta.story({
   },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('No window on record yet')).toBeVisible();
+  },
+});
+
+/** Two plans on one address, told apart by the plan product each card heads with. */
+export const TwoPlansOneAddress = meta.story({
+  parameters: {
+    bridge: {
+      accounts: {
+        schemaVersion: ACCOUNTS_VERSION,
+        accounts: [
+          {
+            id: 'work',
+            kind: 'subscription',
+            provider: 'anthropic',
+            label: 'dev@example.com',
+            provenance: 'sign-in',
+          },
+          {
+            id: 'codex-work',
+            kind: 'subscription',
+            provider: 'openai',
+            label: 'dev@example.com',
+            provenance: 'sign-in',
+          },
+        ],
+      } satisfies AccountsDocument,
+      quotaWindows: [
+        ...openWindows,
+        {
+          accountId: 'codex-work',
+          provider: 'openai',
+          length: '5h',
+          openedAt: NOW - AN_HOUR,
+          closesAt: NOW + AN_HOUR,
+          burnTokens: 300_000,
+          record: { burnTokens: 500_000, openedAt: AUGUST_THIRD },
+        },
+      ] satisfies readonly QuotaWindow[],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Claude', { exact: true })).toBeVisible();
+    await expect(await canvas.findByText('Codex', { exact: true })).toBeVisible();
+    await expect(await canvas.findAllByText('dev@example.com')).toHaveLength(2);
   },
 });
 

@@ -81,6 +81,28 @@ export const subscriptionPlanNames: Record<SubscriptionProviderId, string> = {
   copilot: 'GitHub Copilot',
 };
 
+const subscriptionProductNames: Record<SubscriptionProviderId, string> = {
+  anthropic: 'Claude',
+  openai: 'Codex',
+  antigravity: 'Gemini',
+  kimi: 'Kimi Code',
+  copilot: 'GitHub Copilot',
+};
+
+/**
+ * The plan product a stored subscription reads as on screen.
+ *
+ * @summary Two name tables stand apart on purpose: `subscriptionPlanNames` names the sign-in a
+ * person runs, which for a tool-backed plan is the tool, while this one names the product a person
+ * bought, which is what every stored row reads as. A provider outside the vocabulary reads as the
+ * identity it was stored under, so a row that predates the vocabulary never stands nameless.
+ */
+export function subscriptionProductNameOf(provider: string): string {
+  const parsed = subscriptionProviderIdSchema.safeParse(provider);
+
+  return parsed.success ? subscriptionProductNames[parsed.data] : provider;
+}
+
 /**
  * Whether a tool on the machine owns this plan's sign-in, which decides who runs it.
  *

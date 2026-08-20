@@ -117,6 +117,15 @@ test('two accounts keep their own cards rather than sharing one', () => {
   expect(folded.map((account) => account.accountId)).toEqual(['work', 'personal']);
 });
 
+test('each card carries the provider its windows named, so the strip can say whose plan burns', () => {
+  const folded = quotaGaugesOf(
+    [openWindow(), openWindow({ accountId: 'personal', provider: 'openai' })],
+    NOW,
+  );
+
+  expect(folded.map((account) => account.provider)).toEqual(['anthropic', 'openai']);
+});
+
 test('a record that burned nothing counts as nothing on record, never as a window matched', () => {
   const gauge = onlyGauge(
     openWindow({ burnTokens: 0, record: { burnTokens: 0, openedAt: AUGUST_THIRD } }),
