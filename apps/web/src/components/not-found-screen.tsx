@@ -11,7 +11,9 @@ export function NotFoundScreen() {
         <SiteNav />
 
         <div className="mx-auto flex max-w-360 flex-col items-center px-5 pt-14 pb-24 text-center md:px-10 lg:px-16 lg:pb-32">
-          <h1 className="text-hero leading-display font-medium text-fd-foreground">404</h1>
+          <h1 className="font-serif text-billboard leading-display font-medium text-fd-foreground">
+            404
+          </h1>
           <FallenNotes className="mt-4 w-full max-w-105 text-fd-foreground" />
           <h2 className="mt-8 text-headline leading-display font-medium text-fd-foreground">
             this page wandered off the score
