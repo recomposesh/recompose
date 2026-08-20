@@ -1,13 +1,13 @@
 import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
-import type { JudgedRequest, Judging } from './judge-decision';
+import type { JudgedChoice, JudgedRequest, Judging } from './judge-decision';
 import type { AttemptReading } from './outcome-classification';
 import type { BranchChoice } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { EngineRouter } from './route-table';
 import type { Walking, WalkStep } from './walk-descent';
-import type { WalkNote } from './walk-notes';
+import type { NoteReason, WalkNote } from './walk-notes';
 
 import { classify } from './outcome-classification';
 import { childlessRouterTheTableHolds, targetsInDeclaredOrder, targetsUnder } from './route-table';
@@ -106,12 +106,24 @@ function targetsOneDecisionWalkedPast(
   return targetsNamedUnder(walking, routeNode).filter((target) => !inReach.has(target));
 }
 
-function targetsTheDecisionsWalkedPast(walking: Walking): ReadonlySet<string> {
-  const walkedPast = new Set<string>();
+/**
+ * What one decision leaves the children it walked past reading as.
+ *
+ * @summary A judgment naming a branch left them off it, and the router is working. A judge that
+ * named nothing sent every one of them to the else child, and the trouble is the judge's rather than
+ * the branches', so a refusal that read the two the same way would send a person hunting a target
+ * that never had anything wrong with it.
+ */
+function reasonOneDecisionLeaves(choice: JudgedChoice): NoteReason {
+  return choice.judged ? { because: 'off-branch' } : { because: 'unjudged' };
+}
+
+function reasonsTheDecisionsLeave(walking: Walking): ReadonlyMap<string, NoteReason> {
+  const walkedPast = new Map<string, NoteReason>();
 
   for (const [routeNode, choice] of walking.judging.decided) {
     for (const target of targetsOneDecisionWalkedPast(walking, routeNode, choice)) {
-      walkedPast.add(target);
+      walkedPast.set(target, reasonOneDecisionLeaves(choice));
     }
   }
 
@@ -121,15 +133,15 @@ function targetsTheDecisionsWalkedPast(walking: Walking): ReadonlySet<string> {
 function noteForTargetWalkedPast(
   walking: Walking,
   routeNode: string,
-  walkedPast: ReadonlySet<string>,
+  walkedPast: ReadonlyMap<string, NoteReason>,
 ): WalkNote | undefined {
   const attemptedOrCooling = noteForTarget(walking, routeNode);
 
   if (attemptedOrCooling !== undefined) return attemptedOrCooling;
 
-  return walkedPast.has(routeNode)
-    ? noteOf(routeNode, { because: 'off-branch' }, undefined)
-    : undefined;
+  const stoodOff = walkedPast.get(routeNode);
+
+  return stoodOff === undefined ? undefined : noteOf(routeNode, stoodOff, undefined);
 }
 
 /**
@@ -144,7 +156,7 @@ function noteForTargetWalkedPast(
  * very next request will.
  */
 function accountOfAWalkThatServedNobody(walking: Walking): readonly WalkNote[] {
-  const walkedPast = targetsTheDecisionsWalkedPast(walking);
+  const walkedPast = reasonsTheDecisionsLeave(walking);
 
   return notesOverTheTable(walking, (routeNode) =>
     noteForTargetWalkedPast(walking, routeNode, walkedPast),

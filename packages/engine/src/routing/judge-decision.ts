@@ -25,13 +25,23 @@ export type JudgedRequest = {
   pinBranchAt: (routeNode: string, child: string) => void;
 };
 
+/**
+ * The branch one router settled on, and whether any judgment at all placed the request there.
+ *
+ * @summary A request the judge could not classify lands on the else child exactly as a judgment
+ * naming no branch does, so the child alone cannot tell a router working from a judge in trouble.
+ * The account a refusal owes turns on precisely that, and nothing downstream of the pick reads it,
+ * which is why the fact rides beside the choice rather than inside the mode's own picking.
+ */
+export type JudgedChoice = BranchChoice & { judged: boolean };
+
 export type Judging = {
   classify: BranchClassifier | undefined;
   judgeStandsCooling: (judge: string) => boolean;
   pinnedBranchAt: (routeNode: string) => string | undefined;
   pinBranchAt: (routeNode: string, child: string) => void;
   resumesServerState: boolean;
-  decided: Map<string, BranchChoice>;
+  decided: Map<string, JudgedChoice>;
 };
 
 type BranchQuestion = {
@@ -49,19 +59,35 @@ type BranchQuestion = {
 type Asking = { question: BranchQuestion; classify: BranchClassifier };
 
 /**
- * The child a conditional router settles on, and whether a judge's own word placed it there.
+ * The child a conditional router settles on, and the two things anyone asks about how it got there.
  *
  * @summary Only a branch a judge actually named is worth remembering for the rest of a conversation.
  * A child the else branch caught is what trouble left behind, so pinning it would let one bad minute
- * from a judge park a whole conversation on the fallback long after the judge came back. Whether to
- * pin is the whole of what anyone asks about how a child was settled, so it is the whole of what is
- * carried: a richer account of who settled it would be a field nothing reads and nothing keeps true.
+ * from a judge park a whole conversation on the fallback long after the judge came back. Whether a
+ * judgment placed the child at all is a second question, because the else child catches a judge that
+ * answered a word no branch wears and a judge that never answered alike, and only the first of those
+ * is the router doing what it was drawn to do.
  */
-type Decided = { child: string; earnsAPin: boolean };
+type Decided = { child: string; earnsAPin: boolean; judged: boolean };
 
-/** A child the walk follows without writing a pin, because no fresh judgment placed it there. */
+/** The branch a judge's own word named, which the conversation keeps for the turns after it. */
+function judgedOntoABranch(child: string): Decided {
+  return { child, earnsAPin: true, judged: true };
+}
+
+/**
+ * A child a judgment placed that writes no fresh pin of its own.
+ *
+ * @summary Two ways in: the pin a conversation already earned, and the else child a judge's own
+ * answer fell to. Both were placed by a judgment, and neither has anything new worth writing down.
+ */
 function settledWithoutAPin(child: string): Decided {
-  return { child, earnsAPin: false };
+  return { child, earnsAPin: false, judged: true };
+}
+
+/** The else child a request reaches with no judgment of any kind behind it. */
+function fellToElseUnjudged(elseChild: string): Decided {
+  return { child: elseChild, earnsAPin: false, judged: false };
 }
 
 async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
@@ -94,7 +120,7 @@ async function childASecondAskEarns(asking: Asking): Promise<Decided> {
   const child = childOneReadingNames(question.branches, question.elseChild, reading);
 
   return labelABranchWears(question, reading)
-    ? { child, earnsAPin: true }
+    ? judgedOntoABranch(child)
     : settledWithoutAPin(child);
 }
 
@@ -102,11 +128,11 @@ async function childTheJudgeAnswers(asking: Asking): Promise<Decided> {
   const reading = await readingOneAskEarns(asking);
   const named = branchWearingTheLabel(asking.question.branches, labelOneReadingCarries(reading));
 
-  if (named !== undefined) return { child: named.child, earnsAPin: true };
+  if (named !== undefined) return judgedOntoABranch(named.child);
 
   return classifyJudge(reading).verdict === 'answered'
     ? childASecondAskEarns(asking)
-    : settledWithoutAPin(asking.question.elseChild);
+    : fellToElseUnjudged(asking.question.elseChild);
 }
 
 function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
@@ -116,12 +142,12 @@ function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
 }
 
 async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
-  if (question.resumesServerState) return settledWithoutAPin(question.elseChild);
+  if (question.resumesServerState) return fellToElseUnjudged(question.elseChild);
 
   const classify = question.judgeStandsCooling ? undefined : question.classify;
 
   return classify === undefined
-    ? settledWithoutAPin(question.elseChild)
+    ? fellToElseUnjudged(question.elseChild)
     : childTheJudgeAnswers({ question, classify });
 }
 
@@ -176,8 +202,9 @@ function questionOf(
  * is what keeps failover and round-robin from ever reaching a judge.
  *
  * The whole choice is remembered rather than the branch alone, so a later reader learns which two
- * children this router narrowed itself to without going back to the policy to work out what the
- * else child was. A walk accounting for the children it never reached is exactly such a reader.
+ * children this router narrowed itself to, and whether a judgment placed the request there at all,
+ * without going back to a policy that cannot say either. A walk accounting for the children it never
+ * reached is exactly such a reader.
  *
  * The conversation is pinned here and only here, the moment a judgment settles, so the branch a
  * request earned outlives the walk that earned it while the branch trouble picked never does.
@@ -186,7 +213,7 @@ export async function branchTheWalkFollows(
   routeNode: string,
   policy: RouterPolicy,
   judging: Judging,
-): Promise<BranchChoice | undefined> {
+): Promise<JudgedChoice | undefined> {
   if (policy.mode !== 'conditional') return undefined;
 
   const held = judging.decided.get(routeNode);
@@ -194,7 +221,11 @@ export async function branchTheWalkFollows(
   if (held !== undefined) return held;
 
   const decided = await childTheJudgeDecides(questionOf(routeNode, policy, judging));
-  const choice = { decided: decided.child, elseChild: policy.elseChild };
+  const choice = {
+    decided: decided.child,
+    elseChild: policy.elseChild,
+    judged: decided.judged,
+  };
 
   judging.decided.set(routeNode, choice);
 

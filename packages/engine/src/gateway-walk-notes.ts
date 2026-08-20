@@ -2,6 +2,7 @@ import type { EngineRouting, RequestOutcome } from '@recompose/contracts';
 
 import type { RouterAttempt } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
+import type { OffBranchReason } from './routing/walk-notes';
 
 export type WalkNote = WalkResult<never>['notes'][number];
 
@@ -34,8 +35,10 @@ type UnansweredReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stre
  * there without a credential, because the two ask a person for different repairs. A child that stood
  * cooling reads as such rather than as a failure of this request, because it never carried one, and
  * a child a branch decision walked past reads as ready rather than as anything at all wrong with it.
- * The words sit in a record the compiler holds to the reasons, so a reason added later fails the
- * build here rather than quietly printing somebody else's sentence.
+ * Where no judgment placed the request, the sentence names the judge instead of the branch, because
+ * saying a request was judged onto a branch nothing judged sends a person reading it to the wrong
+ * repair. The words sit in a record the compiler holds to the reasons, so a reason added later fails
+ * the build here rather than quietly printing somebody else's sentence.
  */
 const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
   'missing-credential': 'has no credential',
@@ -43,6 +46,7 @@ const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
   'transport-failure': 'could not be reached',
   cooling: 'stands cooling',
   'off-branch': 'stands ready off the branch this request was judged onto',
+  unjudged: 'stands ready while the judge named no branch and the request fell to the else child',
 };
 
 /**
@@ -84,15 +88,20 @@ export function attemptsRecorded(
   return notes.map((note) => ({ child: childNameOf(routing, note.routeNode), why: whyOf(note) }));
 }
 
-const CARRIED_NO_REQUEST = { cooling: true, 'off-branch': true } as const;
+const CARRIED_NO_REQUEST = {
+  cooling: true,
+  'off-branch': true,
+  unjudged: true,
+} as const satisfies Record<OffBranchReason['because'] | 'cooling', true>;
 
 /**
  * The notes standing for a request that actually left the machine.
  *
  * @summary A cooling child is named in the refusal and left out of traffic, because a cable paints
  * what the last request came to and a child never tried carried no request to come to anything. A
- * child a branch decision walked past is left out for the same reason, and more plainly: nothing
- * ever asked it, so a red cable over it would blame a target that did nothing wrong.
+ * child standing off a branch is left out for the same reason, and more plainly: nothing ever asked
+ * it, so a red cable over it would blame a target that did nothing wrong, whether a judgment sent
+ * the request elsewhere or no judgment placed it at all.
  */
 export function notesThatCarriedARequest(notes: readonly WalkNote[]): readonly WalkNote[] {
   return notes.filter((note) => !Object.hasOwn(CARRIED_NO_REQUEST, note.reason.because));
