@@ -13,7 +13,14 @@ import {
 } from './conditional-draft';
 import { gatewayRoutingThrough, gatewaySwitching } from './routing-edits';
 import { gatewaySwitchingToConditional } from './routing-edits-conditional';
-import { childrenOf, codex, ladderOfThree, policyOf, routingOf } from './routing-edits.testkit';
+import {
+  childrenOf,
+  codex,
+  ladderOfThree,
+  policyOf,
+  routingOf,
+  sharingOneJudge,
+} from './routing-edits.testkit';
 
 function conditionalPolicyOf(gateway: GatewayConfig, routerId: string) {
   const policy = policyOf(routingOf(gateway), routerId);
@@ -167,4 +174,25 @@ test('a router switched away from conditional stands as a table the stored shape
   const spread = gatewaySwitching(switched, 'fast', routerId, 'failover');
 
   expect(routingSchema.safeParse(routingOf(spread)).success).toBe(true);
+});
+
+test('a judge a surviving router still asks stays behind when one of them switches away', () => {
+  const shared = sharingOneJudge();
+  const spread = gatewaySwitching(shared, 'fast', 'r1', 'failover');
+
+  expect(routingOf(spread).nodes['j1']).toEqual(routingOf(shared).nodes['j1']);
+});
+
+test('the router left asking the shared judge stands as a table the stored shape will serve', () => {
+  const spread = gatewaySwitching(sharingOneJudge(), 'fast', 'r1', 'failover');
+
+  expect(routingSchema.safeParse(routingOf(spread)).success).toBe(true);
+});
+
+test('the shared judge leaves once the second router asking it switches away too', () => {
+  const once = gatewaySwitching(sharingOneJudge(), 'fast', 'r1', 'failover');
+  const both = gatewaySwitching(once, 'fast', 'r2', 'failover');
+
+  expect(routingOf(both).nodes['j1']).toBeUndefined();
+  expect(routingSchema.safeParse(routingOf(both)).success).toBe(true);
 });

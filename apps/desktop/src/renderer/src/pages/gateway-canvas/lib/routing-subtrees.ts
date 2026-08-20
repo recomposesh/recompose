@@ -57,6 +57,18 @@ function judgesTheRestOfTheTableAsks(
 }
 
 /**
+ * Whether any conditional router in this table still asks the judge standing under this id.
+ *
+ * @summary An edit that takes a judge out reads this first, whichever way it moves the router that
+ * asked for one: a judge is held by every router naming it, so the last of them to let go is the
+ * one that carries it out. Any earlier removal would strand a survivor's policy on a node the
+ * table no longer holds and bounce the whole write.
+ */
+export function judgeStillAsked(routing: Routing, judgeId: string): boolean {
+  return judgesTheRestOfTheTableAsks(routing, new Set()).has(judgeId);
+}
+
+/**
  * Every node one id takes with it, itself included, following what each node along the way names.
  *
  * @summary Two conditional routers may lawfully ask the same judge, so a judge is held by the

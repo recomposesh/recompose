@@ -9,7 +9,7 @@ import type {
 import { mintRouteNodeId } from '@recompose/contracts';
 
 import { conditionalIn, namedByAPolicyAbove } from './conditional-policy';
-import { beneath, standingUnder, tableWithout } from './routing-subtrees';
+import { beneath, judgeStillAsked, standingUnder, tableWithout } from './routing-subtrees';
 
 /** Which of the shipped ways a router spreads the requests reaching it. */
 export type RouterMode = RouterPolicy['mode'];
@@ -229,9 +229,10 @@ export function gatewayNamingRouter(
  *
  * @summary The mode is the whole of what a router decides, so switching it leaves the children and
  * their order exactly as they stood: a person trying the other mode is not rebuilding the ladder.
- * A router leaving conditional loses its judge as well as its wording, because the policy was the
- * only thing naming that node and a target no reference reaches is a table the stored shape
- * refuses: left behind, the whole write bounces and the mode never moves at all.
+ * A router leaving conditional loses its wording, and its judge only where no router is left
+ * asking for one: a target no reference reaches is a table the stored shape refuses, and so is a
+ * policy naming a node that has gone, so either mistake bounces the write and the mode never moves
+ * at all. A subtree removal weighs the same judge the same way.
  */
 export function gatewaySwitching(
   gateway: GatewayConfig,
@@ -243,6 +244,8 @@ export function gatewaySwitching(
     const advisor = conditionalIn(was.nodes[routerId])?.judge;
     const spread = routerEdited(was, routerId, (router) => ({ ...router, policy: { mode } }));
 
-    return advisor === undefined ? spread : tableWithout(spread, new Set([advisor]));
+    return advisor === undefined || judgeStillAsked(spread, advisor)
+      ? spread
+      : tableWithout(spread, new Set([advisor]));
   });
 }
