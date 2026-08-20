@@ -71,5 +71,19 @@ export const AModelListThatAnsweredNothing = meta.story({
   },
 });
 
+/**
+ * A judge whose account left the registry says so where the provider would have stood.
+ *
+ * @summary The stored id is the only thing left of a departed account, and printing it would hand
+ * a person a string they have never seen in place of a name they would recognize.
+ */
+export const AnAccountThatLeftTheRegistry = meta.story({
+  args: { bound: { accountId: 'k9', providerModel: 'claude-haiku-4-5' } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Account left the registry')).toBeVisible();
+    await expect(canvas.queryByText('k9')).toBeNull();
+  },
+});
+
 /** The judge at rest in the dark scheme, where the fact rows sit on the drawer panel. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });

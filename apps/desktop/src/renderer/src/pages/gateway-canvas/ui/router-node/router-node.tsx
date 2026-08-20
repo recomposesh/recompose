@@ -66,7 +66,7 @@ function monoLine(data: RouterNodeData): string {
   const { judged, displayName, childCount, mode } = data;
 
   if (judged !== undefined) {
-    return branchTally(judged.branches, judged.judge);
+    return branchTally(judged.branches, judged);
   }
 
   return displayName === undefined ? childTally(childCount) : mode;

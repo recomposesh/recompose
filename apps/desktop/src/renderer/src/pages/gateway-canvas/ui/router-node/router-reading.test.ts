@@ -14,17 +14,25 @@ describe('how many children a router says it holds', () => {
 });
 
 describe('what a router the judge decides says it holds', () => {
+  const answering = { judge: 'advisor', judgeAnswers: true };
+
   test('the count says branches, because every child a rule names is one', () => {
-    expect(branchTally(2, 'advisor')).toBe('2 branches, one judge');
-    expect(branchTally(1, 'advisor')).toBe('1 branch, one judge');
+    expect(branchTally(2, answering)).toBe('2 branches, one judge');
+    expect(branchTally(1, answering)).toBe('1 branch, one judge');
   });
 
   test('a router holding no rule yet says so in words rather than counting to zero', () => {
-    expect(branchTally(0, 'advisor')).toBe('no branch, one judge');
+    expect(branchTally(0, answering)).toBe('no branch, one judge');
   });
 
   test('a judge no table holds reads as absent, because every request then lands on else', () => {
-    expect(branchTally(2, undefined)).toBe('2 branches, no judge');
+    expect(branchTally(2, { judge: undefined, judgeAnswers: false })).toBe('2 branches, no judge');
+  });
+
+  test('a judge that cannot answer is never counted as one, since the card is dashed for it', () => {
+    expect(branchTally(2, { judge: 'advisor', judgeAnswers: false })).toBe(
+      '2 branches, judge cannot answer',
+    );
   });
 });
 

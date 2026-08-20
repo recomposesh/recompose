@@ -5,6 +5,7 @@ import type { JudgeBinding } from '../../lib/conditional-draft';
 import type { ModelListReading } from '../../lib/model-draft';
 
 import { accountName } from '../../../../entities/account';
+import { StatusChip } from '../../../../shared/ui';
 import { JUDGE_ADVICE } from '../../lib/router-modes';
 import { targetGroups } from '../../lib/target-groups';
 import { OptionList } from '../option-list/option-list';
@@ -31,17 +32,28 @@ export type JudgeSectionProps = {
   onBindJudge: (judge: JudgeBinding) => void;
 };
 
-/** What the bound account reads as, keeping its id where the registry no longer holds it. */
-function boundName(accounts: readonly Account[], accountId: string): string {
+/**
+ * What the bound account reads as, or the standing of one the registry no longer holds.
+ *
+ * @summary A stored id is not a name: nobody chose it and nobody has seen it, so printing it where
+ * a provider belongs reads as a name a person simply does not recognize rather than as the trouble
+ * it is. The judge card already says this in these words, and one wording is what lets a person
+ * match the row to the card.
+ */
+function boundProvider(accounts: readonly Account[], accountId: string): ReactNode {
   const held = accounts.find((account) => account.id === accountId);
 
-  return held === undefined ? accountId : accountName(held);
+  return held === undefined ? (
+    <StatusChip tone="danger" word="Account left the registry" />
+  ) : (
+    accountName(held)
+  );
 }
 
 function restingJudge(props: JudgeSectionProps): ReactNode {
   return (
     <div className="field-box">
-      {factRow('Provider', boundName(props.accounts, props.bound.accountId))}
+      {factRow('Provider', boundProvider(props.accounts, props.bound.accountId))}
       {factRow('Model', props.bound.providerModel)}
     </div>
   );

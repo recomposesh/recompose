@@ -259,13 +259,14 @@ export const AnIncompleteRouterWearsTheGhostTreatment = meta.story({
   },
 });
 
-/** A conditional router whose judge lost its account dashes, however many children it holds. */
+/** A conditional router whose judge lost its account dashes, and its caption agrees with it. */
 export const AJudgeThatCannotAnswerDraftsTheRouter = meta.story({
   args: { data: judgeLost },
   play: async ({ canvas }) => {
     const card = await canvas.findByRole('button', { name: /Conditional/ });
     const [outer, inner] = framePaths(card);
 
+    await expect(card).toHaveTextContent('2 branches, judge cannot answer');
     await expect(paintedStyle(outer).strokeDasharray).not.toBe('none');
     await expect(paintedStyle(inner).strokeDasharray).not.toBe('none');
   },

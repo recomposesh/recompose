@@ -21,19 +21,30 @@ function branchCount(count: number): string {
   return count === 1 ? '1 branch' : `${String(count)} branches`;
 }
 
+type JudgedReading = { branches: number; judge: string | undefined; judgeAnswers: boolean };
+
+/** How the judge half of the line reads: absent, unable to answer, or standing. */
+function judgeStanding(reading: Omit<JudgedReading, 'branches'>): string {
+  if (reading.judge === undefined) {
+    return 'no judge';
+  }
+
+  return reading.judgeAnswers ? 'one judge' : 'judge cannot answer';
+}
+
 /**
  * What a router the judge decides says on its mono line, in the words the child count already uses.
  *
  * @summary The count says branches rather than children, because a person reading "3 children"
  * under a judge would go looking for a third rule and find the else child instead. The judge rides
  * the same line: until one stands in the table every request the router takes lands on else, which
- * is the fact a person needs before they read a single rule.
+ * is the fact a person needs before they read a single rule. A judge that cannot answer is counted
+ * as none of one, because the card is already dashed for it and a caption saying one judge beside a
+ * dashed frame would leave a person hunting for the trouble the frame is about.
  */
-export function branchTally(count: number, judge: string | undefined): string {
-  return `${branchCount(count)}, ${judge === undefined ? 'no judge' : 'one judge'}`;
+export function branchTally(count: number, reading: Omit<JudgedReading, 'branches'>): string {
+  return `${branchCount(count)}, ${judgeStanding(reading)}`;
 }
-
-type JudgedReading = { branches: number; judge: string | undefined; judgeAnswers: boolean };
 
 /**
  * Whether a router's card says the composition around it is unfinished.
