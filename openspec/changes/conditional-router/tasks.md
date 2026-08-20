@@ -224,7 +224,7 @@ missing state rather than a missing string.
 - [x] 15.1 The virtual model id reads as its own alias shape on every lane: the engine directive,
       the spend request, the traffic report, and the stored traffic snapshot, proved end to end
       with a dotted id
-- [ ] 15.2 A subtree removal carries a judge out only when no surviving conditional router still
+- [x] 15.2 A subtree removal carries a judge out only when no surviving conditional router still
       names it
 - [ ] 15.3 The branch label matches the judge's answer trimmed, the same way it travels
 - [ ] 15.4 The spent-router re-step never advances a rotation cursor for a child never offered,

@@ -20,8 +20,7 @@ function referencedBy(node: RouteNode): readonly string[] {
   return advisor === undefined ? node.children : [...node.children, advisor];
 }
 
-/** Every node one id holds, itself included, following what each node along the way names. */
-export function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
+function everythingReachedFrom(routing: Routing, nodeId: string): Set<string> {
   const reached = new Set<string>();
   const walk = [nodeId];
   let held = walk.pop();
@@ -38,6 +37,39 @@ export function standingUnder(routing: Routing, nodeId: string): ReadonlySet<str
   }
 
   return reached;
+}
+
+function judgesTheRestOfTheTableAsks(
+  routing: Routing,
+  leaving: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const asked = new Set<string>();
+
+  for (const [id, node] of Object.entries(routing.nodes)) {
+    const advisor = leaving.has(id) ? undefined : conditionalIn(node)?.judge;
+
+    if (advisor !== undefined) {
+      asked.add(advisor);
+    }
+  }
+
+  return asked;
+}
+
+/**
+ * Every node one id takes with it, itself included, following what each node along the way names.
+ *
+ * @summary Two conditional routers may lawfully ask the same judge, so a judge is held by the
+ * router naming it rather than owned by it: carrying one out with the first router to leave would
+ * strand the survivor's policy on a node the table no longer holds and bounce the whole write. The
+ * node a person dropped always leaves, however many routers name it, because the caller refuses
+ * that case before asking rather than here.
+ */
+export function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
+  const reached = everythingReachedFrom(routing, nodeId);
+  const outliving = judgesTheRestOfTheTableAsks(routing, reached);
+
+  return new Set([...reached].filter((held) => held === nodeId || !outliving.has(held)));
 }
 
 /** Every node one id holds apart from itself, which is what a node keeping its seat gives up. */
