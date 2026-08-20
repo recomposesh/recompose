@@ -1,9 +1,7 @@
 import { expect } from '@playwright/test';
-import { z } from 'zod';
-
-import type { JudgeStub } from '../judge-stub';
 
 import { Given, Then, When } from '../fixtures';
+import { labelsOffered, theOnlyClassificationCall } from '../judged-classification';
 import {
   CHAT_BRANCH,
   childBehindTheBranch,
@@ -35,17 +33,6 @@ const BROKEN_ANSWERS: Record<string, string> = {
   'the word "else"': 'else',
 };
 
-/** The labels a chat-completions judge is closed to, which is the offer the call actually carries. */
-const labelsTheCallOffers = z.object({
-  response_format: z.object({
-    json_schema: z.object({
-      schema: z.object({
-        properties: z.object({ branch: z.object({ enum: z.array(z.string()) }) }),
-      }),
-    }),
-  }),
-});
-
 function brokenAnswerNamed(said: string): string {
   const written = BROKEN_ANSWERS[said];
 
@@ -54,16 +41,6 @@ function brokenAnswerNamed(said: string): string {
   }
 
   return written;
-}
-
-function theOnlyClassificationCall(judge: JudgeStub): string {
-  const [first] = judge.classificationsAsked();
-
-  if (first === undefined) {
-    throw new Error('the judge received no classification call at all');
-  }
-
-  return first;
 }
 
 Given(
@@ -123,12 +100,7 @@ Then("the classification call carries each branch's label beside its rule text",
 });
 
 Then('else stands nowhere among the offered labels', ({ judge }) => {
-  const offered = labelsTheCallOffers.parse(JSON.parse(theOnlyClassificationCall(judge)));
-
-  expect(offered.response_format.json_schema.schema.properties.branch.enum).toEqual([
-    CODE_BRANCH.label,
-    CHAT_BRANCH.label,
-  ]);
+  expect(labelsOffered(judge)).toEqual([CODE_BRANCH.label, CHAT_BRANCH.label]);
 });
 
 Then('the judge receives exactly two classification calls', ({ judge }) => {

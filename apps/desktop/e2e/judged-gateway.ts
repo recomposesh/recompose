@@ -7,6 +7,7 @@ import type { JudgeStub } from './judge-stub';
 import type { RoutedTarget } from './routed-gateway';
 import type { ScriptedProvider } from './scripted-provider';
 
+import { storedGateway } from './gateway-screen';
 import { accountStandsStored, FIRST_TARGET, SECOND_TARGET, THIRD_TARGET } from './routed-gateway';
 import { focusedGateway } from './scenario-memory';
 import { accountLabeled } from './served-gateway';
@@ -33,6 +34,12 @@ export const ELSE_TARGET = THIRD_TARGET;
 
 /** The judge's own binding, standing apart from every child in both account and model. */
 export const JUDGE_TARGET: RoutedTarget = { account: 'referee', providerModel: 'qwen3-4b' };
+
+/** The child a branch nobody has worded yet is wired to, which no rule and no label reaches. */
+export const FRESH_BRANCH_TARGET: RoutedTarget = {
+  account: 'bench',
+  providerModel: 'claude-sonnet-4',
+};
 
 /** Every child a judged router holds, so a step can arm or refuse one by the model it serves. */
 export const JUDGED_CHILDREN: readonly RoutedTarget[] = [
@@ -226,4 +233,47 @@ export async function aJudgedModelStands(
   const wiring = await wiringOf(page, stands, arrangement);
 
   await seedVirtualModels(page, focusedGateway(page), [judgedBinding(arrangement, wiring)]);
+}
+
+function holdingAlso(model: VirtualModel, child: BoundChild): VirtualModel {
+  const router = model.routing.nodes[model.routing.entry];
+
+  if (router?.kind !== 'router') {
+    throw new Error('the model this scenario acts on stands over no router');
+  }
+
+  return {
+    ...model,
+    routing: {
+      ...model.routing,
+      nodes: {
+        ...model.routing.nodes,
+        [model.routing.entry]: { ...router, children: [...router.children, child.id] },
+        ...targetNodes([child]),
+      },
+    },
+  };
+}
+
+/**
+ * Wires one more child under the router, which no branch names and no rule reaches.
+ *
+ * @summary That is the whole of what a draft branch is in the stored shape: the policy lists the
+ * branches a judge may answer with, and a child standing outside that list is a wire a person has
+ * dropped but not yet worded. The document takes it, because a conditional router is refused only
+ * for a branch or an else child that names nobody, never for a child no branch names.
+ */
+export async function aFreshBranchStandsWired(
+  page: Page,
+  provider: ScriptedProvider,
+): Promise<void> {
+  const gateway = focusedGateway(page);
+  const child = await childStandsStored(page, provider, FRESH_BRANCH_TARGET);
+  const { virtualModels } = await storedGateway(page, gateway);
+
+  await seedVirtualModels(
+    page,
+    gateway,
+    virtualModels.map((model) => holdingAlso(model, child)),
+  );
 }
