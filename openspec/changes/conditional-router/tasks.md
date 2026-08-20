@@ -233,3 +233,9 @@ rather than a missing string, and section 14 built it, so judge graduated too.
       and a healthy target a decided branch made unreachable earns its note in the walk's account
 - [x] 14.3 Switching a router away from conditional keeps a judge another surviving router still
       asks, the same rule the subtree removal learned
+
+## 16. The fifth testing pass (replan, approved 2026-08-20 midday)
+
+- [ ] 16.1 The conditional definition asks for the judge first and the else target second
+- [ ] 16.2 Nesting a router under any router asks the routing mode instead of assuming failover,
+      and a nested conditional walks the same judge and else steps
