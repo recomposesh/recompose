@@ -8,6 +8,7 @@ import type { Crossing } from './gateway-wire';
 import { judgedRouting } from './gateway-judging';
 import { requestUrlOf } from './gateway-router.testkit';
 import { routingMemory } from './gateway-routing-memory';
+import { subscriptionRuntime } from './subscription/reach';
 
 const JUDGE = 'judge';
 
@@ -90,6 +91,7 @@ function judging(routing: EngineRouting, answer: () => Response, grant = A_KEYED
 
         return Promise.resolve(answer());
       },
+      subscriptions: subscriptionRuntime(),
       memory: routingMemory(),
     },
   };

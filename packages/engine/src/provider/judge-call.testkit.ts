@@ -1,5 +1,6 @@
 import type { SpendGrant } from '@recompose/contracts';
 
+import type { JsonObject } from '../gateway-wire';
 import type { BranchRule } from '../routing/policies';
 import type { JudgeAsk, JudgeCooling } from './judge-call';
 
@@ -18,6 +19,25 @@ const A_KEYED_JUDGE: SpendGrant = {
   providerOrigin: 'http://judge.test',
   spend: { custody: 'credentialed', provider: 'openai', credential: 'sk-live-40d1' },
 };
+
+/** A judge bound to a person's own plan, which spends no key and posts on the plan's own channel. */
+export const A_PLAN_JUDGE: SpendGrant = {
+  verdict: 'resolved',
+  providerOrigin: 'https://api.anthropic.com',
+  spend: {
+    custody: 'subscription',
+    provider: 'anthropic',
+    accountId: 'plan-1',
+    credential: '{}',
+    renewal: 'app',
+  },
+};
+
+function planChannelOf(spending: SpendGrant): string {
+  return spending.verdict === 'resolved' && spending.spend.custody === 'subscription'
+    ? `${spending.spend.provider}:${spending.spend.accountId}`
+    : 'no plan at all';
+}
 
 /** One ask, with everything it sent and everything it stood down, watched from outside. */
 export type Watched = {
@@ -59,6 +79,13 @@ export function answering(
     });
   };
 
+  const reachSubscription = async (spending: SpendGrant, body: JsonObject): Promise<Response> => {
+    sentTo.push(planChannelOf(spending));
+    bodies.push(JSON.stringify(body));
+
+    return answer(undefined);
+  };
+
   return {
     sentTo,
     bodies,
@@ -66,6 +93,7 @@ export function answering(
     aborted: () => cut,
     ask: {
       grant,
+      reachSubscription,
       providerModel: 'gpt-5-mini',
       sourceDialect: 'chat-completions',
       gatewayName: 'Codex',

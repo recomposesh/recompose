@@ -132,6 +132,7 @@ function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): JudgedRe
     crossing: deps.crossing,
     spendGrantFor: serving.judgeGrantFor,
     fetchLike: deps.fetchLike,
+    subscriptions: deps.subscriptions,
     memory: serving.memory,
   });
 }

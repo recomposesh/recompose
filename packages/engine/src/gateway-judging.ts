@@ -5,9 +5,11 @@ import type { SpendGrantFor } from './gateway-spend';
 import type { Crossing } from './gateway-wire';
 import type { BranchClassifier, JudgedRequest } from './routing/judge-decision';
 import type { RouteNodeAddress } from './routing/route-node-key';
+import type { SubscriptionRuntime } from './subscription/reach';
 
 import { conversationFingerprint } from './gateway-conversation-key';
 import { readingOfTheJudge } from './provider/judge-call';
+import { reachSubscription } from './subscription/reach';
 
 export type JudgingScene = {
   routing: EngineRouting;
@@ -16,6 +18,7 @@ export type JudgingScene = {
   crossing: Crossing;
   spendGrantFor: SpendGrantFor;
   fetchLike: typeof fetch;
+  subscriptions: SubscriptionRuntime;
   memory: RoutingMemory;
 };
 
@@ -93,6 +96,8 @@ function classifierFor(scene: JudgingScene): BranchClassifier {
       raw: scene.crossing.raw,
       boundMs: seat.boundMs,
       fetchLike: scene.fetchLike,
+      reachSubscription: async (spending, asked) =>
+        reachSubscription(spending, asked, scene.subscriptions),
       now: scene.memory.now,
       cool: (cooling) => {
         scene.memory.ledger.cool(addressOf(scene, judge), cooling);

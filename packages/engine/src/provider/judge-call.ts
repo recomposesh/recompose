@@ -17,6 +17,10 @@ import { judgeRequestBody, labelTheJudgeWrote } from './judge-request';
 
 export type JudgeCooling = { coolUntilMs: number; retryAtMs?: number };
 
+type Spendable = Extract<SpendGrant, { verdict: 'resolved' }>;
+
+type SubscriptionReach = (grant: Spendable, body: JsonObject) => Promise<Response>;
+
 export type JudgeAsk = {
   grant: SpendGrant;
   providerModel: string;
@@ -28,11 +32,10 @@ export type JudgeAsk = {
   raw: JsonObject;
   boundMs: number;
   fetchLike: typeof fetch;
+  reachSubscription: SubscriptionReach;
   now: () => number;
   cool: (cooling: JudgeCooling) => void;
 };
-
-type Spendable = Extract<SpendGrant, { verdict: 'resolved' }>;
 
 type JudgeAnswer =
   | { answered: Response; bound: AbortSignal }
@@ -43,15 +46,14 @@ type JudgeBody = { read: unknown } | { unread: true };
 /**
  * Whether a judge binding can be spent on a classification at all.
  *
- * @summary A plan wire carries a person's own conversation and nothing else: it has no place to put
- * a schema, no origin to post one to, and spending a subscription turn on routing would bill a quota
- * a person opened for their own work. A keyed account and a runtime a person addressed themselves
- * both post ordinary JSON to an origin, so both classify.
+ * @summary Only a binding nothing resolved is unspendable. A plan channel was read as unspendable
+ * once, on the belief that it had nowhere to put a schema, and that belief was wrong: it posts the
+ * same body to the same origin a keyed account does, and its dialect closes the answer the same way.
+ * Refusing it here made a person who bound their own plan watch every request land on else with
+ * nothing on screen saying why, which is the one arrangement this must never be.
  */
 function spendableCustody(grant: SpendGrant): Spendable | undefined {
-  if (grant.verdict !== 'resolved' || grant.spend.custody === 'subscription') return undefined;
-
-  return grant;
+  return grant.verdict === 'resolved' ? grant : undefined;
 }
 
 function crossingOfTheAsk(ask: JudgeAsk, grant: Spendable, body: JsonObject): Crossing {
@@ -62,6 +64,41 @@ function crossingOfTheAsk(ask: JudgeAsk, grant: Spendable, body: JsonObject): Cr
     virtualModel: ask.virtualModel,
     providerModel: ask.providerModel,
   };
+}
+
+async function cutOffAt(bound: AbortSignal): Promise<never> {
+  return new Promise((_settle, fail) => {
+    bound.addEventListener('abort', () => {
+      fail(new Error('the judge call ran past its budget'));
+    });
+  });
+}
+
+/**
+ * The classification put on the wire its own custody owns.
+ *
+ * @summary A plan channel is reached through the same transport a served turn takes, because that
+ * transport is what holds the credential, renews it, and spells the wire a plan expects. It takes no
+ * signal, so the budget is imposed from out here instead: the race ends the wait on time even though
+ * the request itself goes on, which is the honest half of the promise this can keep on that channel.
+ */
+async function sentToTheJudge(
+  ask: JudgeAsk,
+  grant: Spendable,
+  crossing: Crossing,
+  body: JsonObject,
+  bound: AbortSignal,
+): Promise<Response> {
+  if (grant.spend.custody === 'subscription') {
+    return Promise.race([ask.reachSubscription(grant, body), cutOffAt(bound)]);
+  }
+
+  return ask.fetchLike(credentialedRequestUrl(grant, crossing), {
+    method: 'POST',
+    headers: credentialedRequestHeaders(grant.spend, crossing),
+    body: JSON.stringify(credentialedRequestBody(grant, crossing, body)),
+    signal: bound,
+  });
 }
 
 /**
@@ -82,14 +119,7 @@ async function answerTheJudgeGave(
   const bound = AbortSignal.timeout(ask.boundMs);
 
   try {
-    const answered = await ask.fetchLike(credentialedRequestUrl(grant, crossing), {
-      method: 'POST',
-      headers: credentialedRequestHeaders(grant.spend, crossing),
-      body: JSON.stringify(credentialedRequestBody(grant, crossing, body)),
-      signal: bound,
-    });
-
-    return { answered, bound };
+    return { answered: await sentToTheJudge(ask, grant, crossing, body, bound), bound };
   } catch {
     return { silent: bound.aborted ? 'timeout' : 'unreachable' };
   }
