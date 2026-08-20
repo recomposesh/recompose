@@ -107,6 +107,10 @@
     "zod": "4.4.3"
   },
   "optionalDependencies": {
+    "@koromix/koffi-darwin-arm64": "3.1.4",
+    "@koromix/koffi-darwin-x64": "3.1.4",
+    "@koromix/koffi-linux-x64": "3.1.4",
+    "@koromix/koffi-win32-x64": "3.1.4",
     "@node-wreq/darwin-arm64": "3.1.0",
     "@node-wreq/darwin-x64": "3.1.0",
     "@node-wreq/linux-arm64-gnu": "3.1.0",

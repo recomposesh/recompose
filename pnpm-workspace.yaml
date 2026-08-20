@@ -12,6 +12,15 @@ allowBuilds:
   koffi: true
   workerd: false
 
+supportedArchitectures:
+  os:
+    - darwin
+    - win32
+    - linux
+  cpu:
+    - x64
+    - arm64
+
 minimumReleaseAge: 4320
 
 minimumReleaseAgeExclude:
