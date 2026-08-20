@@ -83,6 +83,45 @@ export const LeavingTheEdit = meta.story({
   },
 });
 
+/**
+ * The tail of the prompt, where the slot a request fills is named rather than left bare.
+ *
+ * @summary A person reading the panel is reading a template, and a template that trailed off into
+ * markers with nothing between them reads as a prompt that forgot its ending.
+ */
+export const TheRequestSlotIsNamed = meta.story({
+  play: async ({ canvas }) => {
+    const prompt = await canvas.findByRole('textbox', { name: 'Classification prompt' });
+
+    await expect(promptRead(prompt)).toContain('{REQUEST}');
+    await expect(promptRead(prompt).trimEnd().endsWith('{REQUEST}')).toBe(true);
+  },
+});
+
+/**
+ * A router nobody has written a branch for yet, whose list says so instead of printing a gap.
+ *
+ * @summary An empty heading followed by a blank line reads as a broken panel rather than as work
+ * still to do, and the person looking at it is exactly the person who has not done that work.
+ */
+export const ARouterHoldingNoBranchYet = meta.story({
+  args: { branches: [] },
+  play: async ({ canvas }) => {
+    const prompt = await canvas.findByRole('textbox', { name: 'Classification prompt' });
+
+    await expect(promptRead(prompt)).toContain('Branches:\n{BRANCHES}');
+  },
+});
+
+/** A router that holds branches reads them, and never the placeholder standing in for none. */
+export const BranchesCrowdOutThePlaceholder = meta.story({
+  play: async ({ canvas }) => {
+    const prompt = await canvas.findByRole('textbox', { name: 'Classification prompt' });
+
+    await expect(promptRead(prompt)).not.toContain('{BRANCHES}');
+  },
+});
+
 /** The directive and its prompt in the dark scheme, where inert prose has to stay readable. */
 export const DarkScheme = meta.story({
   args: { directive: DIRECTIVE },

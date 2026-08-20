@@ -1,7 +1,7 @@
 import type { GatewayConfig, JudgeBranchWording } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { compiledJudgePrompt } from '@recompose/contracts';
+import { previewedJudgePrompt } from '@recompose/contracts';
 import { useState } from 'react';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
@@ -61,7 +61,9 @@ function restingDirective(directive: string | undefined): ReactNode {
  * stays read-only because the label set, the branch order, and the markers around the request are
  * the injection posture: a prompt a person could rewrite whole is a prompt a crafted request could
  * talk its way out of. The directive is the one part that is theirs, and it counts as a semantic
- * edit exactly the way a rule does, because the next request is classified under it.
+ * edit exactly the way a rule does, because the next request is classified under it. What the panel
+ * adds over the wire is naming alone: a slot the gateway fills per request reads as a brace name, so
+ * nothing here can be mistaken for a section the prompt left empty.
  */
 export function JudgeDirective(props: JudgeDirectiveProps) {
   const { gateway, modelId, routerId, branches, directive } = props;
@@ -98,7 +100,7 @@ export function JudgeDirective(props: JudgeDirectiveProps) {
             },
             undefined,
           )}
-      {promptSection(compiledJudgePrompt({ branches, directive: shown }))}
+      {promptSection(previewedJudgePrompt({ branches, directive: shown }))}
     </>
   );
 }
