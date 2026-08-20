@@ -171,3 +171,23 @@ missing state rather than a missing string.
 - [x] 11.3 The judge inspector prints the remaining cooldown window as a still reading, and the
       satellite keeps the single word
 - [x] 11.4 A conditional router whose judge lost its account wears the draft treatment on its card
+
+## 12. The verification round (adversarial review, rules review, mutation survivors)
+
+- [ ] 12.1 Dropping or rebinding a subtree carries out the judges of every conditional router
+      inside it, so no judge stands unreachable
+- [ ] 12.2 The walk backtracks when a judged router offers nothing: the parent tries its next
+      sibling, and no request exhausts while a healthy child stands
+- [ ] 12.3 A system instruction never reads as a caller turn, in either Gemini key order
+- [ ] 12.4 A judge answer whose body fails to parse routes as a refusal that cools, never as an
+      empty label earning a second ask
+- [ ] 12.5 The pin and cooldown report schemas type the virtual model by its own alias shape
+- [ ] 12.6 An unnamed judge earns its own reading instead of wearing a timeout
+- [ ] 12.7 The walk request takes one judged object instead of three optional fields
+- [ ] 12.8 The two cache-cohabitation specs assert behavior, and the judge-model spec asserts the
+      model
+- [ ] 12.9 The eleven empty trailing comments leave, and the formatter wraps on its own
+- [ ] 12.10 The surviving mutants in the judge prompt, request, and decision files die to better
+      tests
+- [ ] 12.11 A departed judge's row names the account by its stored name, and the card caption
+      stops counting a judge it can't reach
