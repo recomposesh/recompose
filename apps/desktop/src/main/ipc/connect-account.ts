@@ -54,6 +54,7 @@ async function storeConnectedAccount(
     label: request.label,
     credentialRef,
     ...(tail === undefined ? {} : { keyTail: tail }),
+    ...(request.endpoint === undefined ? {} : { endpoint: request.endpoint }),
   };
 
   await saveVaultFile(
