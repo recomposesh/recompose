@@ -206,7 +206,7 @@ missing state rather than a missing string.
       empty branch list says it holds nothing yet
 - [x] 13.7 The router kicker never truncates: beside a mode pill it keeps its glyph and yields
       the word
-- [ ] 13.8 The app shell never scrolls: the canvas swallows its own wheel, and the bottom bar
+- [x] 13.8 The app shell never scrolls: the canvas swallows its own wheel, and the bottom bar
       stays glued to the window edge
 
 ## 14. The judge completion gate (replan, approved 2026-08-20: the maintainer chose the build)
