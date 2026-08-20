@@ -58,15 +58,22 @@ const CROSSING: Crossing = {
   providerModel: 'gpt-5',
 };
 
-type Watched = { scene: JudgingScene; sentTo: string[]; askedFor: string[] };
+type Watched = {
+  scene: JudgingScene;
+  sentTo: string[];
+  askedFor: string[];
+  asked: unknown[];
+};
 
 function judging(routing: EngineRouting, answer: () => Response, grant = A_KEYED_JUDGE): Watched {
   const sentTo: string[] = [];
   const askedFor: string[] = [];
+  const asked: unknown[] = [];
 
   return {
     sentTo,
     askedFor,
+    asked,
     scene: {
       routing,
       slug: 'codex',
@@ -77,8 +84,9 @@ function judging(routing: EngineRouting, answer: () => Response, grant = A_KEYED
 
         return Promise.resolve(grant);
       },
-      fetchLike: async (input) => {
+      fetchLike: async (input, init) => {
         sentTo.push(requestUrlOf(input));
+        asked.push(typeof init?.body === 'string' ? JSON.parse(init.body) : undefined);
 
         return Promise.resolve(answer());
       },
@@ -114,7 +122,17 @@ describe('the judge a serving gateway hands the walk', () => {
 
     await judgedRouting(watched.scene).classifyBranch(JUDGE, BRANCHES);
 
-    expect(watched.sentTo).toHaveLength(1);
+    expect(watched.asked.at(0)).toMatchObject({ model: 'gpt-5-nano' });
+  });
+
+  test('the model the request named never stands in for the judge’s own', async () => {
+    const watched = judging(aJudgedTable(aBoundTarget('gpt-5-nano')), () =>
+      Response.json({ choices: [{ message: { content: 'code' } }] }),
+    );
+
+    await judgedRouting(watched.scene).classifyBranch(JUDGE, BRANCHES);
+
+    expect(watched.asked.at(0)).not.toMatchObject({ model: CROSSING.providerModel });
   });
 });
 

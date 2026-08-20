@@ -184,7 +184,7 @@ missing state rather than a missing string.
 - [x] 12.5 The pin and cooldown report schemas type the virtual model by its own alias shape
 - [x] 12.6 An unnamed judge earns its own reading instead of wearing a timeout
 - [x] 12.7 The walk request takes one judged object instead of three optional fields
-- [ ] 12.8 The two cache-cohabitation specs assert behavior, and the judge-model spec asserts the
+- [x] 12.8 The two cache-cohabitation specs assert behavior, and the judge-model spec asserts the
       model
 - [ ] 12.9 The eleven empty trailing comments leave, and the formatter wraps on its own
 - [ ] 12.10 The surviving mutants in the judge prompt, request, and decision files die to better

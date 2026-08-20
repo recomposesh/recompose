@@ -1,10 +1,15 @@
-import type { GatewayCooldowns, RecomposeIpcEvents } from '@recompose/contracts';
+import type { GatewayBranchPins, GatewayCooldowns, RecomposeIpcEvents } from '@recompose/contracts';
 
 import { gatewayCooldownsSchema } from '@recompose/contracts';
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, test } from 'vitest';
 
-import { bindEngineCooldownsToCache, engineCooldownsQueryOptions } from './engine';
+import {
+  bindEngineBranchPinsToCache,
+  bindEngineCooldownsToCache,
+  engineBranchPinsQueryOptions,
+  engineCooldownsQueryOptions,
+} from './engine';
 
 function aCooldownLine(): {
   subscribe: RecomposeIpcEvents['engine:cooldowns'];
@@ -29,6 +34,30 @@ function aCooldownLine(): {
     listening: () => listeners.size,
   };
 }
+
+function aBranchPinLine(): {
+  subscribe: RecomposeIpcEvents['engine:pins'];
+  push: (pinning: GatewayBranchPins) => void;
+} {
+  const listeners = new Set<(pinning: GatewayBranchPins) => void>();
+
+  return {
+    subscribe: (listener) => {
+      listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    push: (pinning) => {
+      for (const listener of listeners) {
+        listener(pinning);
+      }
+    },
+  };
+}
+
+const pinned: GatewayBranchPins = { codex: { fast: { ladder: { coder: 2 } } } };
 
 const standingDown: GatewayCooldowns = { codex: { fast: { j1: 1_700_000_060_000 } } };
 
@@ -81,8 +110,18 @@ describe('what the inspector reads about a node standing down', () => {
     expect(line.listening()).toBe(0);
   });
 
-  test('cooling is held apart from the pins, so neither push clears the other', () => {
-    expect(engineCooldownsQueryOptions.queryKey).not.toEqual(['engine-branch-pins']);
+  test('a pin push leaves the cooling standing, so neither lane clears the other', () => {
+    const queryClient = new QueryClient();
+    const cooldowns = aCooldownLine();
+    const pins = aBranchPinLine();
+
+    bindEngineCooldownsToCache(queryClient, cooldowns.subscribe);
+    bindEngineBranchPinsToCache(queryClient, pins.subscribe);
+    cooldowns.push(standingDown);
+    pins.push(pinned);
+
+    expect(heldCooling(queryClient)).toEqual(standingDown);
+    expect(queryClient.getQueryData(engineBranchPinsQueryOptions.queryKey)).toEqual(pinned);
   });
 
   test('a virtual model whose alias carries a dot reaches the inspector under that alias', () => {

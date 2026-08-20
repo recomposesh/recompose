@@ -1,10 +1,15 @@
-import type { GatewayBranchPins, RecomposeIpcEvents } from '@recompose/contracts';
+import type { GatewayBranchPins, GatewayTraffic, RecomposeIpcEvents } from '@recompose/contracts';
 
 import { gatewayBranchPinsSchema } from '@recompose/contracts';
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, test } from 'vitest';
 
-import { bindEngineBranchPinsToCache, engineBranchPinsQueryOptions } from './engine';
+import {
+  bindEngineBranchPinsToCache,
+  bindEngineTrafficToCache,
+  engineBranchPinsQueryOptions,
+  engineTrafficQueryOptions,
+} from './engine';
 
 function aBranchPinLine(): {
   subscribe: RecomposeIpcEvents['engine:pins'];
@@ -29,6 +34,32 @@ function aBranchPinLine(): {
     listening: () => listeners.size,
   };
 }
+
+function aTrafficLine(): {
+  subscribe: RecomposeIpcEvents['engine:traffic'];
+  push: (traffic: GatewayTraffic) => void;
+} {
+  const listeners = new Set<(traffic: GatewayTraffic) => void>();
+
+  return {
+    subscribe: (listener) => {
+      listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    push: (traffic) => {
+      for (const listener of listeners) {
+        listener(traffic);
+      }
+    },
+  };
+}
+
+const flowed: GatewayTraffic = {
+  codex: { fast: { only: { outcome: 'served', at: 1_754_600_000_000 } } },
+};
 
 const holding: GatewayBranchPins = { codex: { fast: { ladder: { coder: 2 } } } };
 
@@ -81,8 +112,18 @@ describe('what the inspector reads about pinned conversations', () => {
     expect(line.listening()).toBe(0);
   });
 
-  test('pins are held apart from traffic, so neither push clears the other', () => {
-    expect(engineBranchPinsQueryOptions.queryKey).not.toEqual(['engine-traffic']);
+  test('a traffic push leaves the pins standing, so neither lane clears the other', () => {
+    const queryClient = new QueryClient();
+    const pins = aBranchPinLine();
+    const traffic = aTrafficLine();
+
+    bindEngineBranchPinsToCache(queryClient, pins.subscribe);
+    bindEngineTrafficToCache(queryClient, traffic.subscribe);
+    pins.push(holding);
+    traffic.push(flowed);
+
+    expect(heldPins(queryClient)).toEqual(holding);
+    expect(queryClient.getQueryData(engineTrafficQueryOptions.queryKey)).toEqual(flowed);
   });
 
   test('a virtual model whose alias carries a dot reaches the inspector under that alias', () => {
