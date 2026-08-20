@@ -9,10 +9,11 @@ describe('a string carrying padding around its words', () => {
 });
 
 describe('a string holding nothing but whitespace', () => {
-  test('refuses as blank', () => {
+  test('refuses as blank, saying so', () => {
     const read = nonBlankString.safeParse('   ');
 
     expect(read.success).toBe(false);
+    expect(read.error?.issues[0]?.message).toBe('must not be blank');
   });
 });
 
