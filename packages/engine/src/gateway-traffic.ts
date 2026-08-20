@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from 'hono';
 
 import type { SpendGrantFor } from './gateway-spend';
 import type { NoteTraffic, ServeWatched } from './gateway-traffic-watch';
+import type { JudgeNote } from './provider/judge-call';
 import type { ServingTurn } from './provider/serving-turn';
 import type { ProviderAttempt } from './provider/telemetry-feed';
 
@@ -17,6 +18,8 @@ export type { NoteTraffic, ServeWatched } from './gateway-traffic-watch';
 export type LogRowListener = (row: LogRow) => void;
 
 const UNREADABLE_REQUEST_STATUS = 400;
+
+const JUDGE_ALIAS = 'judge';
 
 function fieldOf(holder: unknown, name: string): unknown {
   if (typeof holder !== 'object' || holder === null) return undefined;
@@ -195,6 +198,37 @@ export function noteGatewayRow(status: number, failure: string, at: number = Dat
   if (turn === undefined) return;
 
   publishRow(raisedRow(turn, status, at, failure));
+}
+
+/**
+ * Leaves the row for one classification call, so judging is something a person can watch happen.
+ *
+ * @summary The row stands where the virtual model would, reading `judge` and then the model the
+ * judge was asked on, because the drawer already prints that pair as a journey and a person scanning
+ * the column sees judging without a column of its own. It is deliberately not an attempt: an attempt
+ * paints a cable, and the judge carries no request for a cable to stand for. Leaving `rowPublished`
+ * alone follows from the same thing, since the turn still owes a row for how it actually ended.
+ */
+export function noteJudgeRow(judged: JudgeNote, at: number = Date.now()): void {
+  const turn = servingTurn();
+
+  if (turn === undefined) return;
+
+  publishRow({
+    id: crypto.randomUUID(),
+    at,
+    gateway: turn.gateway,
+    virtualModel: JUDGE_ALIAS,
+    origin: 'provider',
+    method: turn.method,
+    provider: named(judged.provider),
+    accountId: named(judged.accountId),
+    providerModel: named(judged.providerModel),
+    status: judged.status,
+    durationMs: judged.durationMs,
+    clientKey: turn.clientKey,
+    ...(judged.failure === undefined ? {} : { failure: judged.failure }),
+  });
 }
 
 function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: number): void {

@@ -8,6 +8,7 @@ import type { RouteNodeAddress } from './routing/route-node-key';
 import type { SubscriptionRuntime } from './subscription/reach';
 
 import { conversationFingerprint } from './gateway-conversation-key';
+import { noteJudgeRow } from './gateway-traffic';
 import { readingOfTheJudge } from './provider/judge-call';
 import { reachSubscription } from './subscription/reach';
 
@@ -98,6 +99,7 @@ function classifierFor(scene: JudgingScene): BranchClassifier {
       fetchLike: scene.fetchLike,
       reachSubscription: async (spending, asked) =>
         reachSubscription(spending, asked, scene.subscriptions),
+      noteJudged: noteJudgeRow,
       now: scene.memory.now,
       cool: (cooling) => {
         scene.memory.ledger.cool(addressOf(scene, judge), cooling);

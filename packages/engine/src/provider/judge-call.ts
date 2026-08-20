@@ -21,6 +21,23 @@ type Spendable = Extract<SpendGrant, { verdict: 'resolved' }>;
 
 type SubscriptionReach = (grant: Spendable, body: JsonObject) => Promise<Response>;
 
+/**
+ * What one classification call is worth writing down, which is never what it asked or answered.
+ *
+ * @summary A person watching a conditional router needs to see the judge working: which model was
+ * asked, how it answered, and how long it took. None of the three is content. The tail stays out
+ * because it is the caller's own words, and the label stays out because a row naming the branch
+ * would put the classification itself in a log a person copies out of.
+ */
+export type JudgeNote = {
+  provider: string;
+  providerModel: string;
+  accountId?: string | undefined;
+  status: number;
+  durationMs: number;
+  failure?: string | undefined;
+};
+
 export type JudgeAsk = {
   grant: SpendGrant;
   providerModel: string;
@@ -33,6 +50,7 @@ export type JudgeAsk = {
   boundMs: number;
   fetchLike: typeof fetch;
   reachSubscription: SubscriptionReach;
+  noteJudged: (judged: JudgeNote) => void;
   now: () => number;
   cool: (cooling: JudgeCooling) => void;
 };
@@ -193,6 +211,56 @@ async function readingTheAnswerGives(
     : refusalTheJudgeEarns(ask, { kind: 'transport-failure' });
 }
 
+const JUDGE_SILENT_STATUS = 504;
+
+const JUDGE_UNREACHABLE_STATUS = 502;
+
+const SILENT_FAILURE = 'The judge did not answer inside its budget.';
+
+const UNREACHABLE_FAILURE = 'The judge could not be reached.';
+
+function accountThatPaid(grant: Spendable): string | undefined {
+  return grant.spend.custody === 'open' ? undefined : grant.spend.accountId;
+}
+
+function providerThatAnswered(grant: Spendable): string {
+  return grant.spend.custody === 'open' ? 'open' : grant.spend.provider;
+}
+
+function standingOfTheAnswer(answer: JudgeAnswer): { status: number; failure?: string } {
+  if ('answered' in answer) return { status: answer.answered.status };
+
+  return answer.silent === 'timeout'
+    ? { status: JUDGE_SILENT_STATUS, failure: SILENT_FAILURE }
+    : { status: JUDGE_UNREACHABLE_STATUS, failure: UNREACHABLE_FAILURE };
+}
+
+/**
+ * The one row a classification call leaves behind, so judging is something a person can watch.
+ *
+ * @summary A silence gets a row too, spelled as the gateway's own timeout rather than a provider's,
+ * because a judge that answered nothing is exactly the trouble a person opens the drawer to find and
+ * a missing row reads as a judge that never ran. A binding nothing resolved never reaches here: no
+ * call left the machine, and a row for it would claim one did.
+ */
+function noteTheCallLeaves(
+  ask: JudgeAsk,
+  grant: Spendable,
+  answer: JudgeAnswer,
+  startedAt: number,
+): void {
+  const standing = standingOfTheAnswer(answer);
+
+  ask.noteJudged({
+    provider: providerThatAnswered(grant),
+    providerModel: ask.providerModel,
+    accountId: accountThatPaid(grant),
+    status: standing.status,
+    durationMs: Math.max(0, ask.now() - startedAt),
+    ...(standing.failure === undefined ? {} : { failure: standing.failure }),
+  });
+}
+
 /**
  * What one judge made of one request, in the three words the branches know how to read.
  *
@@ -214,7 +282,10 @@ export async function readingOfTheJudge(ask: JudgeAsk): Promise<JudgeReading> {
     directive: ask.directive,
     raw: ask.raw,
   });
+  const startedAt = ask.now();
   const answer = await answerTheJudgeGave(ask, grant, crossingOfTheAsk(ask, grant, body), body);
+
+  noteTheCallLeaves(ask, grant, answer, startedAt);
 
   if ('answered' in answer) return readingTheAnswerGives(ask, answer.answered, answer.bound);
 
