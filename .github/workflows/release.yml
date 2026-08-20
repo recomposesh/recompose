@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [macos-26, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 120
     permissions:
       contents: read
       id-token: write
@@ -62,19 +62,16 @@ jobs:
           defaults write com.apple.security.revocation CRLStyle None
 
           (
-            sleep 300
-            echo "signing watchdog: the step is still running, here is every process it owns"
-            ps -Ao pid,ppid,stat,etime,command | head -60
-            for stuck in $(pgrep -f 'electron-builder|osx-sign|codesign' || true); do
-              echo "signing watchdog: sampling $stuck"
-              sample "$stuck" 3 -mayDie 2>&1 | sed -n '1,80p' || true
+            while sleep 300; do
+              echo "release heartbeat: electron-builder is still working"
+              pgrep -fl 'codesign|notarytool|xcrun|electron-builder' || echo "release heartbeat: no signer or notary process alive"
             done
           ) &
-          watchdog=$!
+          heartbeat=$!
 
           env -u CSC_LINK CSC_KEYCHAIN="$keychain" APPLE_API_KEY="$key_file" \
             pnpm --filter @recompose/desktop run build:mac
-          kill "$watchdog" 2>/dev/null || true
+          kill "$heartbeat" 2>/dev/null || true
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
