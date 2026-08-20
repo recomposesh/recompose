@@ -1,5 +1,6 @@
-import type { EngineRouteNode } from '@recompose/contracts';
+import type { EngineRouteNode, EngineRouting } from '@recompose/contracts';
 
+import { fc, test as propertyTest } from '@fast-check/vitest';
 import { describe, expect, test } from 'vitest';
 
 import { ATTEMPT_LIMIT } from './attempt-walk';
@@ -101,10 +102,10 @@ describe('the account a walk gives for a healthy child its branch decision could
     ]);
   });
 
-  test('the refusal promises no retry time while that child stands ready to serve', async () => {
+  test('the refusal still promises the soonest wait the two it tried named', async () => {
     const walk = await aJudgedRouterWhoseBranchAndElseBothRefuse().send();
 
-    expect(walk.verdict).toStrictEqual({ outcome: 'exhausted' });
+    expect(walk.verdict).toStrictEqual({ outcome: 'exhausted', retryAtMs: NOW + 20_000 });
   });
 
   test('a child the decided branch did reach earns no such note when one of them answered', async () => {
@@ -130,6 +131,47 @@ describe('the account a walk gives for a healthy child its branch decision could
 
     expect(walk.verdict).toStrictEqual({ outcome: 'exhausted', retryAtMs: NOW + 20_000 });
   });
+});
+
+function aJudgedRouterOverReadyBranches(spares: number): EngineRouting {
+  const branches: Record<string, string> = { code: 'coder' };
+
+  for (let spare = 0; spare < spares; spare += 1) {
+    branches[`spare-${String(spare)}`] = `ready-${String(spare)}`;
+  }
+
+  return aJudgedRouterOver({ branches });
+}
+
+async function aWalkTryingTwoThatRefuse(spares: number, seconds: number) {
+  const gateway = aGatewayServing(aJudgedRouterOverReadyBranches(spares), {
+    classifyBranch: aJudgeAnswering({ heard: 'answer', label: 'code' }).classifyBranch,
+  });
+
+  return gateway.send({
+    coder: aRateLimit(NOW + seconds * 1_000),
+    catchall: aRateLimit(NOW + seconds * 2_000),
+  });
+}
+
+describe('the wait a refusal promises while healthy children stand off the branch', () => {
+  test('the two children it tried promise a wait the ready ones cannot withhold', async () => {
+    const walk = await aWalkTryingTwoThatRefuse(2, 30);
+
+    expect(walk.verdict).toStrictEqual({ outcome: 'exhausted', retryAtMs: NOW + 30_000 });
+  });
+
+  propertyTest.prop([fc.integer({ min: 1, max: 4 }), fc.integer({ min: 1, max: 90 })])(
+    'however many children stand off the branch, the wait is the soonest a tried one named',
+    async (spares, seconds) => {
+      const walk = await aWalkTryingTwoThatRefuse(spares, seconds);
+
+      expect(walk.verdict).toStrictEqual({
+        outcome: 'exhausted',
+        retryAtMs: NOW + seconds * 1_000,
+      });
+    },
+  );
 });
 
 const CROWD = Array.from({ length: 12 }, (_, at) => `crowd-${String(at)}`);

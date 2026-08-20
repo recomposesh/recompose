@@ -12,7 +12,7 @@ import type { WalkNote } from './walk-notes';
 import { classify } from './outcome-classification';
 import { childlessRouterTheTableHolds, targetsInDeclaredOrder, targetsUnder } from './route-table';
 import { addressOf, stepTheWalkTakesNext } from './walk-descent';
-import { noteOf, retryTimeEveryNotePromised } from './walk-notes';
+import { noteOf, retryTimeEveryTriedChildPromised } from './walk-notes';
 
 export const ATTEMPT_LIMIT = 8;
 
@@ -136,12 +136,12 @@ function noteForTargetWalkedPast(
  * The account a walk that served nobody owes, which names the children a decision walked past.
  *
  * @summary A walk that served owes no such account: the branches it did not take are the router
- * working rather than children it failed to use. A walk that served nobody owes the whole picture,
- * and the child standing off the decided branch promises nothing about when to come back, so a
- * refusal built over it withholds the wait the children that did refuse named. Telling a caller to
- * sit out thirty seconds while a target stands ready is a promise this gateway cannot keep. A child
- * the walk simply ran out of attempts before reaching is named by nobody here, because the table
- * still reaches it and the very next request will.
+ * working rather than children it failed to use. A walk that served nobody owes the whole picture, so
+ * the child standing off the decided branch is named here even though nothing ever asked it and it
+ * promises nothing about when to come back. Naming it costs the caller no wait, because the time a
+ * refusal carries is read off the children the walk actually tried. A child the walk simply ran out
+ * of attempts before reaching is named by nobody here, because the table still reaches it and the
+ * very next request will.
  */
 function accountOfAWalkThatServedNobody(walking: Walking): readonly WalkNote[] {
   const walkedPast = targetsTheDecisionsWalkedPast(walking);
@@ -164,7 +164,7 @@ function verdictWhenNoChildServed<TAnswer>(
     return { outcome: 'empty-router', routeNode: childless.routeNode, router: childless.router };
   }
 
-  const retryAtMs = retryTimeEveryNotePromised(notes);
+  const retryAtMs = retryTimeEveryTriedChildPromised(notes);
 
   return retryAtMs === undefined ? { outcome: 'exhausted' } : { outcome: 'exhausted', retryAtMs };
 }

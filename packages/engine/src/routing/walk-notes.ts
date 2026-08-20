@@ -5,8 +5,9 @@ import type { AttemptReason } from './outcome-classification';
  *
  * @summary Three ways, not two: it was tried and refused, it stood cooling from an earlier
  * refusal, or a branch this request was judged onto left it out of reach while it stood perfectly
- * ready. The third is the only one that promises nothing about when to come back, because the next
- * request may well be judged straight onto it.
+ * ready. The third promises nothing about when to come back, because the next request may well be
+ * judged straight onto it, and it withholds nothing either: no request ever reached it, so it has
+ * no say in the wait the children the walk did try named.
  */
 export type NoteReason = AttemptReason | { because: 'cooling' } | { because: 'off-branch' };
 
@@ -22,17 +23,24 @@ export function noteOf(
   return retryAtMs === undefined ? { routeNode, reason } : { routeNode, reason, retryAtMs };
 }
 
+/** Whether the walk put one child to the test, by reaching it or by finding it already cooling. */
+function theWalkTried(note: WalkNote): boolean {
+  return note.reason.because !== 'off-branch';
+}
+
 /**
- * The soonest a whole set of notes promises anything, or nothing if any note promised nothing.
+ * The soonest the children a walk tried promise anything, or nothing where one of them promised none.
  *
- * @summary A refusal tells a caller when to come back only when every child it walked past named a
- * time, because the one child that named none could recover at any moment and a promise built
- * around the rest would be a guess wearing a number.
+ * @summary A refusal tells a caller when to come back only when every child it actually put to the
+ * test named a time, because the one that named none could recover at any moment and a promise built
+ * around the rest would be a guess wearing a number. A child standing off the branch never carried a
+ * request, so it has no say here: letting it withhold the wait would strip the retry off a rate limit
+ * every child the walk reached had promised, and hand the caller a bare failure it cannot time.
  */
-export function retryTimeEveryNotePromised(notes: readonly WalkNote[]): number | undefined {
+export function retryTimeEveryTriedChildPromised(notes: readonly WalkNote[]): number | undefined {
   const promised: number[] = [];
 
-  for (const note of notes) {
+  for (const note of notes.filter(theWalkTried)) {
     if (note.retryAtMs === undefined) return undefined;
 
     promised.push(note.retryAtMs);
