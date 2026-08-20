@@ -5,13 +5,13 @@ import CursorMono from '@lobehub/icons/es/Cursor/components/Mono';
 import GeminiColor from '@lobehub/icons/es/Gemini/components/Color';
 import OpenCodeMono from '@lobehub/icons/es/OpenCode/components/Mono';
 
-import { NoteMark } from './note-mark';
+import { RecomposeMark } from './recompose-mark';
 import { ZedMark } from './zed-mark';
 
 const TILES: Record<string, { background: string; glyph: React.ReactNode }> = {
   recompose: {
-    background: 'bg-gradient-to-b from-note-tile-start to-note-tile-end',
-    glyph: <NoteMark className="w-auto text-white" style={{ height: '46%' }} />,
+    background: 'bg-transparent',
+    glyph: <RecomposeMark className="size-full" />,
   },
   'claude code': {
     background: 'bg-claude',
@@ -19,7 +19,7 @@ const TILES: Record<string, { background: string; glyph: React.ReactNode }> = {
   },
   codex: {
     background: 'border border-stage-line bg-white',
-    glyph: <CodexMono className="text-black" size="55%" />,
+    glyph: <CodexMono className="text-black" size="62%" />,
   },
   cursor: {
     background: 'bg-tile',
