@@ -49,7 +49,8 @@ job, one secret pair, and one halt message.
 **Bad**: a visit to a missing path hydrates the served 404 document under an address the router
 can't match. The browser console prints a hydration warning while the identical screen
 re-renders. Accepted until TanStack Start carries a first-class static not-found document. The
-workflow needs `CLOUDFLARE_API_TOKEN` with Workers edit scope and `CLOUDFLARE_ACCOUNT_ID`, and
-halts while either is empty, naming the missing secret. The apex custom domain can't attach
-while the placeholder DNS record stands, so the maintainer deletes that record once before the
-first deploy.
+workflow reuses `CF_API_TOKEN` and needs it widened with the account-level Edit Cloudflare
+Workers template, and it halts while the secret is empty, naming the fix. Wrangler reads the
+account from the token, so a token that sees more than one account needs `account_id` pinned in
+`wrangler.jsonc`. The apex custom domain can't attach while the placeholder DNS record stands,
+so the maintainer deletes that record once before the first deploy.
