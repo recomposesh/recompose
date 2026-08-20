@@ -115,7 +115,9 @@ export function servingJudged(
 
       sent.push({ url, body: typeof init?.body === 'string' ? init.body : '' });
 
-      return Promise.resolve(url.startsWith(JUDGE_ORIGIN) ? judgeAnswers() : childAnswers());
+      return Promise.resolve(
+        new URL(url).origin === JUDGE_ORIGIN ? judgeAnswers() : childAnswers(),
+      );
     },
     undefined,
     undefined,
@@ -127,7 +129,7 @@ export function servingJudged(
   return {
     sent,
     traffic: watched.traffic,
-    askedJudge: () => sent.filter((one) => one.url.startsWith(JUDGE_ORIGIN)),
+    askedJudge: () => sent.filter((one) => new URL(one.url).origin === JUDGE_ORIGIN),
     reached: () => sent.flatMap((one) => childReached(one.url) ?? []),
     ask: async (body: unknown = CODE_ASK) =>
       app.request(`${ORIGIN}/v1/messages`, { method: 'POST', body: JSON.stringify(body) }),
