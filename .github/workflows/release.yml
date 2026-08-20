@@ -42,9 +42,24 @@ jobs:
             [ -n "${!name}" ] || { echo "mac release halted: secret $name is empty"; exit 1; }
           done
           key_file="$RUNNER_TEMP/apple-api-key.p8"
-          trap 'rm -f "$key_file"' EXIT
+          certificate="$RUNNER_TEMP/certificate.p12"
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          trap 'rm -f "$key_file" "$certificate"; security delete-keychain "$keychain" 2>/dev/null || true' EXIT
           (umask 077 && printf '%s' "$APPLE_API_KEY" > "$key_file")
-          APPLE_API_KEY="$key_file" pnpm --filter @recompose/desktop run build:mac
+
+          (umask 077 && printf '%s' "$CSC_LINK" | base64 --decode -o "$certificate")
+          [ -s "$certificate" ] || { echo "mac release halted: CSC_LINK did not decode to a certificate; it holds the base64 of the p12"; exit 1; }
+
+          keychain_password=$(uuidgen)
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$certificate" -P "$CSC_KEY_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" > /dev/null
+          security list-keychain -d user -s "$keychain"
+
+          CSC_LINK='' CSC_KEYCHAIN="$keychain" APPLE_API_KEY="$key_file" \
+            pnpm --filter @recompose/desktop run build:mac
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
