@@ -7,6 +7,7 @@ import type { NodePositions } from '../../lib/canvas-positions';
 
 import { closeInspector, inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { canvasGraph } from '../../lib/node-graph';
+import { rowStep } from '../../lib/tidy-layout.testkit';
 import { heldDraft } from '../../lib/use-held-draft';
 import { flowWiring } from './canvas-gestures';
 import { gateway } from './canvas-wiring.testkit';
@@ -19,9 +20,11 @@ import {
 
 const STEADY = { displayName: 'Steady', id: 'steady', accountId: '', providerModel: '' };
 const ASKED_AT = { x: 448, y: 348 };
+const LOWEST_MODEL_ROW = 150;
+
 const MODELS_STANDING = {
   'model:fast': { x: 320, y: 0 },
-  'model:creative': { x: 320, y: 150 },
+  'model:creative': { x: 320, y: LOWEST_MODEL_ROW },
 };
 
 class PressedControl extends EventTarget {
@@ -159,7 +162,7 @@ describe('the asks a card hangs off its own port', () => {
 
     askedOn(flowWiring(world).nodes, 'gateway', 'onAddVirtualModel')();
 
-    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: 326 });
+    expect(heldDraft(gateway.slug)?.seat).toEqual({ x: 320, y: LOWEST_MODEL_ROW + rowStep() });
   });
 
   test("pressing the gateway's plus again never walks the draft up the column", () => {

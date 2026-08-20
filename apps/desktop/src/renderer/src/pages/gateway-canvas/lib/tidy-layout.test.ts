@@ -18,6 +18,7 @@ import {
   canvasOf,
   columnRank,
   columnStep,
+  rowStep,
   nodeOfKind,
   oneRouterDeep,
   seatAt,
@@ -118,10 +119,10 @@ test('a gateway holding no router seats each model on its own row, its target be
 
   expect(tidyPositions(graph.nodes)).toEqual({
     gateway: { x: 0, y: 0 },
-    'model:fast': { x: 320, y: 0 },
-    'target:fast': { x: 640, y: 0 },
-    'model:slow': { x: 320, y: 176 },
-    'target:slow': { x: 640, y: 176 },
+    'model:fast': { x: columnStep(), y: 0 },
+    'target:fast': { x: columnStep() * 2, y: 0 },
+    'model:slow': { x: columnStep(), y: rowStep() },
+    'target:slow': { x: columnStep() * 2, y: rowStep() },
   });
 });
 

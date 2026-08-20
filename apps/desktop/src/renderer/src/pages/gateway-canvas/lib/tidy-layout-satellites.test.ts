@@ -63,6 +63,19 @@ test("a satellite seats clear above its router's top edge, never over the card i
   expect(judge.y + SATELLITE_MEASURE.height).toBeLessThan(router.y);
 });
 
+/**
+ * The tie is the only thing saying a judge advises rather than answers, and it says it by being
+ * dashed. A gap of a few pixels draws one dash, which reads as a join rather than as a broken line,
+ * so the clearance has to leave room for the rhythm to repeat.
+ */
+test('the tie between a judge and its router has the length to read as a dotted line', () => {
+  const seats = tidyPositions(judgedCanvas());
+  const judge = seatAt(seats, 'judge:fast:advisor');
+  const router = seatAt(seats, LADDER);
+
+  expect(router.y - (judge.y + SATELLITE_MEASURE.height)).toBeGreaterThanOrEqual(24);
+});
+
 test('a satellite takes no row from the column its router stands in', () => {
   const withJudge = tidyPositions(judgedCanvas());
   const withoutJudge = tidyPositions(judgedCanvas().filter((node) => node.kind !== 'judge'));

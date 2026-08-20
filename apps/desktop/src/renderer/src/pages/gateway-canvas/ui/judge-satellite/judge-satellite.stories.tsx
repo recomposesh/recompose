@@ -25,13 +25,10 @@ const meta = preview.meta({
   render: ({ data, selected }) => cardOnCanvas('judge', JudgeSatellite, data, selected),
 });
 
-/** The judge as it stands above its router: round, quiet, and named by what it judges with. */
+/** The judge as it stands above its router: round, quiet, and nothing but the mark it wears. */
 export const Basic = meta.story({
   play: async ({ canvas }) => {
-    const node = await canvas.findByRole('button', { name: 'Judge' });
-
-    await expect(node).toBeVisible();
-    await expect(canvas.getByTitle('claude-haiku-5')).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Judge' })).toBeVisible();
   },
 });
 
@@ -130,24 +127,51 @@ export const ASelectedJudgeRings = meta.story({
 });
 
 /**
- * A judge standing out of a cooldown says so in a word, and never counts the seconds down.
+ * Nothing reads under the silhouette, which is the whole of what the node is.
+ *
+ * @summary A caption doubles the node's height for a string a person can only use once they are
+ * already looking at the judge, and it hangs into the room the tie needs to read as dashed. The
+ * model it classifies with stands in the inspector, which is where somebody goes to change it.
+ */
+export const NothingReadsUnderTheSilhouette = meta.story({
+  play: async ({ canvas }) => {
+    const node = await canvas.findByRole('button', { name: 'Judge' });
+    const satellite = node.parentElement?.parentElement;
+
+    await expect(canvas.queryByTitle('claude-haiku-5')).toBeNull();
+    await expect(canvas.queryByText('claude-haiku-5')).toBeNull();
+    await expect(Math.round(paintedBox(satellite).height - paintedBox(node).height)).toBe(0);
+  },
+});
+
+/**
+ * A judge standing out of a cooldown says so on the silhouette, and never counts the seconds down.
  *
  * @summary A number ticking on the canvas would pull the eye off the composition every second, so
- * the remaining window is a thing a person reads once, in the inspector.
+ * the remaining window is a thing a person reads once, in the inspector. The standing rides the
+ * outline rather than a word under the node, because a word there would put back the caption the
+ * node just shed and take the tie's room with it.
  */
-export const ACoolingJudgeSaysSoWithoutACountdown = meta.story({
+export const ACoolingJudgeSaysSoOnItsOutline = meta.story({
   args: { data: { ...advising, standing: 'cooling' } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('Cooling')).toBeVisible();
+    const node = await canvas.findByRole('button', { name: 'Judge' });
+
+    await expect(paintedStyle(node).borderTopColor).not.toBe(
+      inScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)'),
+    );
     await expect(canvas.queryByText(/\d+\s*s/u)).toBeNull();
   },
 });
 
-/** A judge nothing is wrong with spends its caption on the model it classifies with. */
-export const ARestingJudgeNamesItsModelInstead = meta.story({
+/** A judge nothing is wrong with keeps the router's own line, so cooling reads as the exception. */
+export const ARestingJudgeKeepsTheRouterLine = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByTitle('claude-haiku-5')).toBeVisible();
-    await expect(canvas.queryByText('Cooling')).toBeNull();
+    const node = await canvas.findByRole('button', { name: 'Judge' });
+
+    await expect(paintedStyle(node).borderTopColor).toBe(
+      inScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)'),
+    );
   },
 });
 
