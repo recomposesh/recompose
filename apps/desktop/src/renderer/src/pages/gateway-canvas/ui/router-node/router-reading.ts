@@ -32,3 +32,17 @@ function branchCount(count: number): string {
 export function branchTally(count: number, judge: string | undefined): string {
   return `${branchCount(count)}, ${judge === undefined ? 'no judge' : 'one judge'}`;
 }
+
+type JudgedReading = { branches: number; judge: string | undefined; judgeAnswers: boolean };
+
+/**
+ * Whether a router's card says the composition around it is unfinished.
+ *
+ * @summary A router with nowhere to send a request is the plain case. A conditional router adds
+ * one: its judge decides every request it takes, so a judge that cannot answer leaves the router
+ * sending everything to else however many children stand under it. The canvas says so at compose
+ * time rather than waiting for a request to prove it.
+ */
+export function standsIncomplete(childCount: number, judged: JudgedReading | undefined): boolean {
+  return childCount === 0 || (judged !== undefined && !judged.judgeAnswers);
+}

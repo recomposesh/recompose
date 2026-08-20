@@ -171,4 +171,4 @@ Each of the three needs a change to renderer or engine source, which graduation 
       and the schema stays non-blank
 - [x] 11.3 The judge inspector prints the remaining cooldown window as a still reading, and the
       satellite keeps the single word
-- [ ] 11.4 A conditional router whose judge lost its account wears the draft treatment on its card
+- [x] 11.4 A conditional router whose judge lost its account wears the draft treatment on its card

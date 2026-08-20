@@ -7,7 +7,7 @@ import type { CanvasNode } from '../../lib/node-graph';
 
 import { JUDGE_SHOULDER_PORT } from '../../lib/canvas-cables';
 import { NodeCard } from '../node-card/node-card';
-import { branchTally, childTally } from './router-reading';
+import { branchTally, childTally, standsIncomplete } from './router-reading';
 
 /** What a router card reads itself off, the stored router plus the one ask it carries. */
 export type RouterNodeData = Extract<CanvasNode, { kind: 'router' }> & {
@@ -22,17 +22,6 @@ type RouterNodeProps = {
   selected: boolean;
 };
 
-/**
- * Where a request spreads across several targets, drawn as the one node that is not a rectangle.
- *
- * @summary Reach for it as the canvas card for a route node holding children. The chamfered frame
- * says at a glance that this is not a thing a person stored, and its points are where the cables
- * meet, so a ladder reads as one line rather than as cards abutting flat sides. The card spends
- * its two lines on two facts: a router a person named keeps the mode on the mono line, and one
- * wearing its derived name carries the child count there instead, so no card prints one word twice.
- * A router holding no child dashes the way a removed target does, because the canvas says
- * incomplete at compose time rather than waiting for a request to refuse.
- */
 /**
  * The port the judge's tie leaves a conditional router by, which is its shoulder.
  *
@@ -83,9 +72,22 @@ function monoLine(data: RouterNodeData): string {
   return displayName === undefined ? childTally(childCount) : mode;
 }
 
+/**
+ * Where a request spreads across several targets, drawn as the one node that is not a rectangle.
+ *
+ * @summary Reach for it as the canvas card for a route node holding children. The chamfered frame
+ * says at a glance that this is not a thing a person stored, and its points are where the cables
+ * meet, so a ladder reads as one line rather than as cards abutting flat sides. The card spends
+ * its two lines on two facts: a router a person named keeps the mode on the mono line, and one
+ * wearing its derived name carries the child count there instead, so no card prints one word twice.
+ * A router holding no child dashes the way a removed target does, because the canvas says
+ * incomplete at compose time rather than waiting for a request to refuse. A conditional router
+ * whose judge cannot answer dashes for the same reason: nothing it holds is reachable while every
+ * request it takes falls to else.
+ */
 export function RouterNode({ data, selected }: RouterNodeProps) {
-  const { mode, displayName, childCount, onAddChild } = data;
-  const incomplete = childCount === 0;
+  const { mode, displayName, childCount, judged, onAddChild } = data;
+  const incomplete = standsIncomplete(childCount, judged);
 
   return (
     <>

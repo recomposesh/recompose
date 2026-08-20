@@ -2,6 +2,7 @@ import type {
   Account,
   RouterPolicy,
   RouteTarget,
+  Routing,
   SubscriptionAccountView,
 } from '@recompose/contracts';
 
@@ -11,7 +12,14 @@ import type { BranchSeat, WalkedRouteNode } from './route-graph';
 import { accountDetail } from '../../../entities/account';
 
 /** What a router the judge decides carries beyond its mode: its rules, and the judge behind them. */
-type JudgedReading = { branches: number; judge: string | undefined };
+/**
+ * What a conditional router's card reads about the judge standing above it.
+ *
+ * @summary Whether the judge answers is carried beside its id rather than derived from it, because
+ * a judge the table holds can still be unable to answer: the account paying for its calls may have
+ * left the registry, and from then on every request the router takes lands on else.
+ */
+type JudgedReading = { branches: number; judge: string | undefined; judgeAnswers: boolean };
 
 /** A card standing on the canvas, which is either engine truth or one of the two overlay cards. */
 export type CanvasNode =
@@ -86,6 +94,16 @@ export type Registry = {
   subscriptions: readonly SubscriptionAccountView[];
 };
 
+/**
+ * Everything outside one route node that its card still has to read.
+ *
+ * @summary A router card reads the table as well as the registry, because the judge it names is a
+ * node somewhere else in that table and whether the judge can answer is a fact about the account
+ * behind it. Reading both here keeps the card and the judge's own body from disagreeing about
+ * whether a judge stands.
+ */
+export type CardWorld = { routing: Routing; registry: Registry };
+
 type RouterNode = Extract<WalkedRouteNode['node'], { kind: 'router' }>;
 
 function ghostCard(placed: PlacedRouteNode, bound: RouteTarget): CanvasNode {
@@ -122,13 +140,29 @@ function targetCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Regis
   };
 }
 
-function judgedReading(placed: PlacedRouteNode, node: RouterNode): JudgedReading | undefined {
-  return node.policy.mode === 'conditional'
-    ? { branches: node.policy.branches.length, judge: placed.walked.judgedBy }
-    : undefined;
+function judgeAnswers(routing: Routing, judgeId: string, registry: Registry): boolean {
+  const judge = routing.nodes[judgeId];
+
+  return judge?.kind === 'target' && registry.accounts.some((held) => held.id === judge.accountId);
 }
 
-function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
+function judgedReading(
+  placed: PlacedRouteNode,
+  node: RouterNode,
+  seen: CardWorld,
+): JudgedReading | undefined {
+  if (node.policy.mode !== 'conditional') {
+    return undefined;
+  }
+
+  return {
+    branches: node.policy.branches.length,
+    judge: placed.walked.judgedBy,
+    judgeAnswers: judgeAnswers(seen.routing, node.policy.judge, seen.registry),
+  };
+}
+
+function routerCard(placed: PlacedRouteNode, node: RouterNode, seen: CardWorld): CanvasNode {
   return {
     id: `route:${placed.name}`,
     kind: 'router',
@@ -139,7 +173,7 @@ function routerCard(placed: PlacedRouteNode, node: RouterNode): CanvasNode {
     displayName: node.displayName,
     childCount: node.children.length,
     branch: placed.walked.branch,
-    judged: judgedReading(placed, node),
+    judged: judgedReading(placed, node, seen),
   };
 }
 
@@ -176,8 +210,8 @@ function boundCard(placed: PlacedRouteNode, bound: RouteTarget, registry: Regist
  * judge stands as its own kind of card rather than as one more target, because it takes no request
  * and a card that looked like a target would say a person could route to it.
  */
-export function routeCard(placed: PlacedRouteNode, registry: Registry): CanvasNode {
+export function routeCard(placed: PlacedRouteNode, seen: CardWorld): CanvasNode {
   return placed.walked.node.kind === 'router'
-    ? routerCard(placed, placed.walked.node)
-    : boundCard(placed, placed.walked.node, registry);
+    ? routerCard(placed, placed.walked.node, seen)
+    : boundCard(placed, placed.walked.node, seen.registry);
 }

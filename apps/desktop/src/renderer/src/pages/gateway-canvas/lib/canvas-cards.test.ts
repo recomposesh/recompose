@@ -57,7 +57,7 @@ function placed(routing: Routing, routeNodeId: string): PlacedRouteNode {
 }
 
 function cardFor(routeNodeId: string) {
-  return routeCard(placed(judged, routeNodeId), registry);
+  return routeCard(placed(judged, routeNodeId), { routing: judged, registry });
 }
 
 test('a target card carries the branch whose rule sends requests to it', () => {

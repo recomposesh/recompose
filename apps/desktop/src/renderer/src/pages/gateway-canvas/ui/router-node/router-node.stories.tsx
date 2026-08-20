@@ -30,10 +30,18 @@ const judging: RouterNodeData = {
   ...spreading,
   mode: 'conditional',
   childCount: 3,
-  judged: { branches: 2, judge: 'advisor' },
+  judged: { branches: 2, judge: 'advisor', judgeAnswers: true },
 };
 
-const unjudged: RouterNodeData = { ...judging, judged: { branches: 2, judge: undefined } };
+const unjudged: RouterNodeData = {
+  ...judging,
+  judged: { branches: 2, judge: undefined, judgeAnswers: false },
+};
+
+const judgeLost: RouterNodeData = {
+  ...judging,
+  judged: { branches: 2, judge: 'advisor', judgeAnswers: false },
+};
 
 const CARD_WIDTH = 184;
 const CARD_HEIGHT = 88;
@@ -248,6 +256,29 @@ export const AnIncompleteRouterWearsTheGhostTreatment = meta.story({
     await expect(card).toHaveTextContent('no child');
     await expect(paintedStyle(outer).strokeDasharray).not.toBe('none');
     await expect(paintedStyle(inner).strokeDasharray).not.toBe('none');
+  },
+});
+
+/** A conditional router whose judge lost its account dashes, however many children it holds. */
+export const AJudgeThatCannotAnswerDraftsTheRouter = meta.story({
+  args: { data: judgeLost },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+    const [outer, inner] = framePaths(card);
+
+    await expect(paintedStyle(outer).strokeDasharray).not.toBe('none');
+    await expect(paintedStyle(inner).strokeDasharray).not.toBe('none');
+  },
+});
+
+/** A conditional router whose judge answers keeps the solid frame its children earned. */
+export const AJudgeThatAnswersLeavesTheRouterSolid = meta.story({
+  args: { data: judging },
+  play: async ({ canvas }) => {
+    const card = await canvas.findByRole('button', { name: /Conditional/ });
+    const [outer] = framePaths(card);
+
+    await expect(paintedStyle(outer).strokeDasharray).toBe('none');
   },
 });
 

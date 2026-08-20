@@ -65,7 +65,7 @@ function seatedCards(model: VirtualModel, registry: Registry): readonly SeatedCa
       walked,
     };
 
-    return { placed, card: routeCard(placed, registry) };
+    return { placed, card: routeCard(placed, { routing: model.routing, registry }) };
   });
 }
 
