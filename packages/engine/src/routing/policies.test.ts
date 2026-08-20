@@ -114,6 +114,18 @@ describe('the child the label a judge answered names', () => {
   test('a router holding no branch lands every answer on the else child', () => {
     expect(childTheLabelNames([], 'catchall', 'code')).toBe('catchall');
   });
+
+  test('a stored label padded with spaces still wears the word the judge answers with', () => {
+    const padded = [{ label: '  code  ', rule: 'asks to write or change code', child: 'coder' }];
+
+    expect(childTheLabelNames(padded, 'catchall', 'code')).toBe('coder');
+  });
+
+  test('the padding is trimmed rather than ignored, so the padded word names no branch', () => {
+    const padded = [{ label: '  code  ', rule: 'asks to write or change code', child: 'coder' }];
+
+    expect(childTheLabelNames(padded, 'catchall', '  code  ')).toBe('catchall');
+  });
 });
 
 describe('the child a conditional router offers next', () => {

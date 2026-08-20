@@ -226,6 +226,6 @@ missing state rather than a missing string.
       with a dotted id
 - [x] 15.2 A subtree removal carries a judge out only when no surviving conditional router still
       names it
-- [ ] 15.3 The branch label matches the judge's answer trimmed, the same way it travels
+- [x] 15.3 The branch label matches the judge's answer trimmed, the same way it travels
 - [ ] 15.4 The spent-router re-step never advances a rotation cursor for a child never offered,
       and a healthy target a decided branch made unreachable earns its note in the walk's account

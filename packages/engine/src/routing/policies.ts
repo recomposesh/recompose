@@ -8,11 +8,20 @@ export type BranchRule = ConditionalPolicy['branches'][number];
 
 export type BranchChoice = { decided: string; elseChild: string };
 
+/**
+ * The branch answering to one word a judge wrote, or nothing where no branch wears it.
+ *
+ * @summary The stored label is trimmed on the way in, because it was already trimmed on every leg
+ * of the way out: the prompt prints it trimmed, the answer schema closes on the trimmed set, the
+ * uniqueness rule reads it trimmed, and the answer comes back trimmed. A stored label carrying
+ * padding would otherwise miss the very word it was sent as, and the miss reads as an answer no
+ * branch wears, which buys a second judge call before the request falls to else.
+ */
 export function branchWearingTheLabel(
   branches: readonly BranchRule[],
   label: string | undefined,
 ): BranchRule | undefined {
-  return branches.find((branch) => branch.label === label);
+  return branches.find((branch) => branch.label.trim() === label);
 }
 
 /**

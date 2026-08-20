@@ -13,7 +13,21 @@ const BRANCHES: readonly BranchRule[] = [
   { label: 'chat', rule: 'small talk and questions', child: 'talker' },
 ];
 
-const labelsArb = fc.uniqueArray(fc.string({ minLength: 1, maxLength: 5 }), { maxLength: 4 });
+/**
+ * Branch labels drawn the way a stored router may hold them, padding and all.
+ *
+ * @summary Two branches are told apart by the word they are sent under rather than by the raw
+ * string, because the stored shape refuses a label a sibling already wears once both are trimmed
+ * and a judge handed one word twice could not name either branch apart.
+ */
+const labelsArb = fc.uniqueArray(fc.string({ minLength: 1, maxLength: 5 }), {
+  maxLength: 4,
+  selector: (label) => label.trim(),
+});
+
+function wordItIsSentUnder(label: string): string {
+  return label.trim();
+}
 
 const readingArb: fc.Arbitrary<JudgeReading> = fc.oneof(
   fc.string().map((label) => ({ heard: 'answer' as const, label })),
@@ -36,6 +50,17 @@ describe('the child one judge reading names', () => {
     const reading: JudgeReading = { heard: 'answer', label: 'weather' };
 
     expect(childOneReadingNames(BRANCHES, ELSE_CHILD, reading)).toBe(ELSE_CHILD);
+  });
+
+  test('a padded branch answers to the word it was sent under and to nothing else', () => {
+    const padded = branchesWearing(['  code  ', 'chat']);
+
+    expect(childOneReadingNames(padded, ELSE_CHILD, { heard: 'answer', label: 'code' })).toBe(
+      'behind-  code  ',
+    );
+    expect(childOneReadingNames(padded, ELSE_CHILD, { heard: 'answer', label: '  code  ' })).toBe(
+      ELSE_CHILD,
+    );
   });
 
   test('every reading a judge can give names one child this router already holds', () => {
@@ -69,12 +94,15 @@ describe('the law every reading of a judge obeys', () => {
   );
 
   propertyTest.prop([labelsArb])(
-    'a label a branch wears always names the child behind that branch',
+    'the word a branch is sent under always names the child behind that branch',
     (labels) => {
       const branches = branchesWearing(labels);
 
       for (const branch of branches) {
-        const reading: JudgeReading = { heard: 'answer', label: branch.label };
+        const reading: JudgeReading = {
+          heard: 'answer',
+          label: wordItIsSentUnder(branch.label),
+        };
 
         expect(childOneReadingNames(branches, ELSE_CHILD, reading)).toBe(branch.child);
       }
@@ -82,9 +110,9 @@ describe('the law every reading of a judge obeys', () => {
   );
 
   propertyTest.prop([labelsArb, fc.string()])(
-    'a label no branch wears always names the else child',
+    'a word no branch is sent under always names the else child',
     (labels, answered) => {
-      fc.pre(!labels.includes(answered));
+      fc.pre(!labels.map(wordItIsSentUnder).includes(answered));
 
       const reading: JudgeReading = { heard: 'answer', label: answered };
 
