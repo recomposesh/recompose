@@ -27,21 +27,28 @@ export function openSpendLane(parentPort: ParentPort): SpendLane {
   const pending = new Map<string, (grant: SpendGrant) => void>();
 
   return {
-    grantFor: async (slug, virtualModel, routeNode) =>
-      new Promise((resolve) => {
-        const id = crypto.randomUUID();
+    grantFor: async (slug, virtualModel, routeNode) => {
+      const ask = engineSpendRequestSchema.safeParse({
+        kind: 'spend-request',
+        id: crypto.randomUUID(),
+        slug,
+        virtualModel,
+        routeNode,
+      });
 
-        pending.set(id, resolve);
-        parentPort.postMessage(
-          engineSpendRequestSchema.parse({
-            kind: 'spend-request',
-            id,
-            slug,
-            virtualModel,
-            routeNode,
-          }),
+      if (!ask.success) {
+        console.error(
+          `The spend lane could not word its ask for ${slug}/${virtualModel} at ${routeNode}: ${ask.error.message}`,
         );
-      }),
+
+        return { verdict: 'missing-target' };
+      }
+
+      return new Promise((resolve) => {
+        pending.set(ask.data.id, resolve);
+        parentPort.postMessage(ask.data);
+      });
+    },
     settle: (data) => {
       const answer = engineSpendGrantSchema.safeParse(data);
 

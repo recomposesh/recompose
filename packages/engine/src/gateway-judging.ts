@@ -151,6 +151,8 @@ export function judgedRouting(scene: JudgingScene): JudgedRequest {
 
   return {
     classifyBranch: classifierFor(scene),
+    judgeStandsCooling: (judge) =>
+      scene.memory.ledger.coolingAt(addressOf(scene, judge)) !== undefined,
     pinnedBranchAt: (routeNode) =>
       scene.memory.pins.pinnedAt(addressOf(scene, routeNode), fingerprint()),
     pinBranchAt: (routeNode, child) => {

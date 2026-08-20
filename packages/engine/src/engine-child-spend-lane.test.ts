@@ -2,6 +2,7 @@ import { engineSpendRequestSchema } from '@recompose/contracts';
 import { describe, expect, test, vi } from 'vitest';
 
 import { attachEngineChild } from './engine-child';
+import { openSpendLane } from './engine-child-lanes';
 import { aLoopbackHolding, aParent, reportsReach } from './engine-child.testkit';
 import {
   aGatewayHolding,
@@ -151,6 +152,25 @@ describe('a grant answering an open request', () => {
       await answering;
 
       expect(complaints).not.toHaveBeenCalled();
+    } finally {
+      complaints.mockRestore();
+    }
+  });
+});
+
+describe('an ask whose own words the wire refuses', () => {
+  test('settles as a missing target without crossing the port', async () => {
+    const complaints = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      const parent = aParent();
+      const lane = openSpendLane(parent.port);
+
+      const grant = await lane.grantFor('', 'fast', 'target:work');
+
+      expect(grant).toEqual({ verdict: 'missing-target' });
+      expect(parent.reports).toEqual([]);
+      expect(complaints).toHaveBeenCalledWith(expect.stringContaining('fast'));
     } finally {
       complaints.mockRestore();
     }

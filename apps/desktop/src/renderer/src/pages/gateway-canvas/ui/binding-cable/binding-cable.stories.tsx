@@ -8,6 +8,7 @@ import { paintedBox, paintedCentre, paintedStyle } from '../../../../shared/test
 import {
   barelyCabledFlow,
   cabledFlow,
+  cabledFlowThatLiftsChosenCables,
   cableSeats,
   cablesDrawn,
   drawnCables,
@@ -250,8 +251,9 @@ export const AGrabHandleTakesTheCableTint = meta.story({
   },
 });
 
-/** The pointer reaches the handle on the side the card it stands against does not cover. */
+/** The pointer reaches the handle at either end, because selection lifts the cable over its cards. */
 export const TheGrabHandleTakesThePointer = meta.story({
+  render: () => cabledFlowThatLiftsChosenCables('resting'),
   play: async ({ canvasElement, userEvent }) => {
     await pressTheCable(canvasElement, userEvent.click);
     await waitFor(async () => expect(grabEnds(canvasElement)).toHaveLength(2));
@@ -264,7 +266,7 @@ export const TheGrabHandleTakesThePointer = meta.story({
       );
 
       await expect(paintedStyle(end).pointerEvents).toBe('auto');
-      await expect(clear).toHaveLength(1);
+      await expect(clear).toHaveLength(2);
     }
   },
 });

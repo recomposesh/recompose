@@ -48,6 +48,7 @@ function keyRow(id: string, request: IpcRequest<'accounts:connect'>): Account {
     label: request.label,
     credentialRef: `c-${id}`,
     ...(tail === undefined ? {} : { keyTail: tail }),
+    ...(request.endpoint === undefined ? {} : { endpoint: request.endpoint }),
   };
 }
 

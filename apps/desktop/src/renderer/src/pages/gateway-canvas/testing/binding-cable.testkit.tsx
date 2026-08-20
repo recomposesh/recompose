@@ -7,6 +7,7 @@ import { expect, waitFor } from 'storybook/test';
 import type { CableFailure, CableStanding } from '../lib/node-graph';
 import type { BranchSeat } from '../lib/route-graph';
 
+import { CABLE_GRAB_SPAN } from '../lib/cable-standing';
 import { BindingCable } from '../ui/binding-cable/binding-cable';
 
 /** A failure a cable carries in a story, which every scenario reads the same sentence off. */
@@ -81,9 +82,11 @@ function cardsWiredBy(
         defaultNodes={seats.map((seat) => ({ ...seat, selected: seat.id === chosenCard }))}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         edgeTypes={cables}
+        edgesReconnectable={liftsChosenCables}
         elevateEdgesOnSelect={liftsChosenCables}
         nodeTypes={cards}
         nodesDraggable={false}
+        reconnectRadius={CABLE_GRAB_SPAN}
       />
     </div>
   );
@@ -123,6 +126,18 @@ export function judgedFlow(
  */
 export function judgedFlowBesideAChosenCard(seat: BranchSeat): ReactElement {
   return cardsWiredBy({ standing: 'resting', branch: seat }, 'cable:fast', 'target:work');
+}
+
+/**
+ * One cable at rest on a pane wired the way the page wires selection: the lift and the
+ * reconnectable ends alike.
+ *
+ * @summary Reach for it in any story about what a selected cable itself offers the pointer, because
+ * selecting a cable on the page lifts its svg over the cards and stands reconnect ends on it, and a
+ * pane without either answers `elementFromPoint` from a layering the page never shows.
+ */
+export function cabledFlowThatLiftsChosenCables(standing: CableStanding): ReactElement {
+  return cardsWiredBy({ standing }, 'cable:fast', undefined, true);
 }
 
 /**

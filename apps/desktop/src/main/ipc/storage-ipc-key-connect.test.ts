@@ -122,6 +122,38 @@ describe('storage ipc handlers: the scope of the name guard', () => {
   });
 });
 
+describe('storage ipc handlers: the stored row carries the endpoint it was addressed at', () => {
+  test('a connect naming its own endpoint stores it on the row', async () => {
+    const handlers = createStorageIpcHandlers(await freshContext());
+
+    const connected = await handlers['accounts:connect']({
+      ...keyRequest('my-vendor', 'own box'),
+      kind: 'aggregator',
+      endpoint: { origin: 'https://llm.example.com', dialect: 'chat-completions' },
+    });
+
+    if (!connected.ok) {
+      throw new Error('expected success');
+    }
+
+    expect(connected.value.accounts[0]).toMatchObject({
+      endpoint: { origin: 'https://llm.example.com', dialect: 'chat-completions' },
+    });
+  });
+
+  test('a connect naming no endpoint stores a row without one', async () => {
+    const handlers = createStorageIpcHandlers(await freshContext());
+
+    const connected = await handlers['accounts:connect'](keyRequest('anthropic', 'build'));
+
+    if (!connected.ok) {
+      throw new Error('expected success');
+    }
+
+    expect(connected.value.accounts[0]).not.toHaveProperty('endpoint');
+  });
+});
+
 describe('storage ipc handlers: the stored row carries the tail', () => {
   test('a connect that stands mints the tail from the trimmed key', async () => {
     const handlers = createStorageIpcHandlers(await freshContext());

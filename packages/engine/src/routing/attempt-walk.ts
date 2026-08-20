@@ -37,15 +37,12 @@ export type WalkRequest<TAnswer> = {
 };
 
 function judgingOf<TAnswer>(request: WalkRequest<TAnswer>): Judging {
-  const { slug, virtualModel } = request;
-
   return {
     classify: request.judged.classifyBranch,
     resumesServerState: request.resumesServerState,
     pinnedBranchAt: request.judged.pinnedBranchAt,
     pinBranchAt: request.judged.pinBranchAt,
-    judgeStandsCooling: (judge) =>
-      request.ledger.coolingAt({ slug, virtualModel, routeNode: judge }) !== undefined,
+    judgeStandsCooling: request.judged.judgeStandsCooling,
     decided: new Map(),
   };
 }
