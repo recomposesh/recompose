@@ -152,3 +152,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0144](0144-a-gateway-binds-the-address-the-settings-hold.md)                   | A gateway binds the address the settings hold                                       | Accepted   | 2026-08-18 |
 | [0145](0145-the-row-and-the-caller-read-one-sentence.md)                        | The row and the caller read one sentence                                            | Accepted   | 2026-08-18 |
 | [0146](0146-the-site-deploys-from-ci-on-two-triggers.md)                        | The site deploys from CI on two triggers                                            | Accepted   | 2026-08-20 |
+| [0147](0147-the-license-gate-reads-what-a-release-installs.md)                  | The license gate reads what a release installs                                      | Accepted   | 2026-08-20 |
