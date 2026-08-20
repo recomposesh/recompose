@@ -77,38 +77,37 @@
 
 - [x] 6.1 The shared end-to-end surface lands alone and first, carrying no feature file
 - [ ] 6.2 Each feature file graduates with its own step definitions in one commit, five units in
-      parallel. Conditional and else have landed. Branches, judge, and sticky conversations wait on
-      the three gaps recorded below, each of which needs a source change outside the graduation.
-- [ ] 6.3 The outer loop goes green on mock traffic. Green over the two graduated files, and to be
-      run again once the remaining three land.
+      parallel. Conditional, else, branches, and sticky conversations have landed. Judge waits on
+      the gap recorded below, which asks for a renderer change outside the graduation.
+- [x] 6.3 The outer loop goes green on mock traffic. Green over the four graduated files: 341
+      passed, 5 skipped, 1 failed, 3 flaky. Every red and every flake reran clean on its own, so
+      each belongs to the ten-way local worker count rather than to a scenario. None of the 13 new
+      scenarios stood among them. The loop runs again once judge lands.
 - [x] 6.4 Visual baselines regenerate on the runners when the canvas changes what they see. No
       canvas baseline exists, so the row pitch changed nothing any visual spec sees. The four
       standing visual failures reproduce unchanged at the commit before this graduation, so they
       belong to an earlier pass rather than to it.
 
-### What the last three feature files wait on
+### What the judge file waits on
 
-Each of the three needs a change to renderer or engine source, which graduation itself may not make.
+Section 11 closed three of the four gaps this section first recorded. The environment names the pin
+window, a blank label fills from its rule, and the judge inspector prints the cooldown window.
+Branches and sticky conversations graduated on those fixes. One gap stays open, and it names a
+missing state rather than a missing string.
 
-- **Sticky conversations: nothing outside the engine can age a pin.** `PIN_IDLE_MS` in
-  `packages/engine/src/gateway-routing-memory.ts` is ten minutes on the engine child's own
-  `Date.now`, and that child reads no clock override from its environment. The scenario "A pin
-  expires with the idle conversation" therefore has no honest arrangement inside a thirty-second
-  scenario budget. Restarting the gateway also forgets a pin, but it proves a different rule.
-- **Branches: no label is ever drawn from a rule.** `branchSchema` makes both the label and the
-  rule non-blank, so nothing can store the Given of "An empty label derives from the rule text."
-  `CableBranchPill` prints either the stored label or the words "Name this branch" and never reads
-  the rule. `bornConditionalPolicy` states the opposite policy on purpose: a branch arrives blank
-  rather than carrying a word nobody wrote. The proposal promised the derivation and nothing
-  built it.
-- **Judge: the inspector prints no remaining cooldown window.** `judgeHealth` in `judge-body.tsx`
-  prints "Bound" or "Account left the registry" and says the cooldown reading belongs to the
-  satellite, while the satellite prints the word "Cooling" and declines to count seconds down.
-  Nothing prints the window itself.
-- **Judge: no card wears a draft treatment for a missing judge.** `RouterNode` decides its dashed
-  frame on child count alone, so a router holding a branch and an else branch never wears one. The
-  second half of that scenario does hold: `switchWhole` and `judgeAnswered` withhold the
-  "Switch to conditional" button, and `draftFilledIn` withholds the "Add virtual model" one.
+- **Judge: the two halves of "stays a draft" never stand together.** The scenario "A conditional
+  router without a judge stays a draft" asks one Given to show both. `standsIncomplete` in
+  `router-node/router-reading.ts` reads the stored policy, so only a stored conditional router
+  whose judge names a departed account wears the dashed frame. The withheld button and its reason
+  live in `switch-definition.tsx`. That surface mounts only while a switch stands held, and
+  `modePicking` opens one on a press the Conditional row never takes once conditional is already
+  the stored mode. A run against the built app pinned both readings apart. The stored router whose
+  judge account left wears `node-card-drafted` and offers no withheld control, while the failover
+  router mid-switch offers the withheld button and wears no dashed frame. The schema refuses a
+  conditional policy carrying no judge, so no third state joins the two. Closing this asks for a
+  renderer change rather than a step. The same run turned up two findings worth folding into it:
+  the router inspector prints the raw account id where a departed judge's account name belongs,
+  and the card caption still reads "one judge" beside the dashed frame.
 
 ## 7. The mode switch and the mode rows (replan, approved at the gate of 2026-08-19)
 
