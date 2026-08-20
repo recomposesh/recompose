@@ -12,6 +12,19 @@ export type BranchClassifier = (
   directive?: string,
 ) => Promise<JudgeReading>;
 
+/**
+ * What a caller brings to a walk about judging: who classifies, and where a branch is kept.
+ *
+ * @summary The three travel together or not at all, because a classifier with nowhere to write the
+ * branch it earned would re-judge every turn of a conversation and a pin nobody wrote is a pin
+ * nobody reads. Taking them as one object is what stops a caller from wiring two of the three.
+ */
+export type JudgedRequest = {
+  classifyBranch: BranchClassifier;
+  pinnedBranchAt: (routeNode: string) => string | undefined;
+  pinBranchAt: (routeNode: string, child: string) => void;
+};
+
 export type Judging = {
   classify: BranchClassifier | undefined;
   judgeStandsCooling: (judge: string) => boolean;

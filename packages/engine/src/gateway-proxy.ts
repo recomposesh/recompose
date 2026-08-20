@@ -2,7 +2,6 @@ import type { EngineGateway, EngineRouting } from '@recompose/contracts';
 import type { Context } from 'hono';
 
 import type { AttemptDeps } from './gateway-attempt';
-import type { Judged } from './gateway-judging';
 import type { RoutingMemory } from './gateway-routing-memory';
 import type { SpendGrantFor } from './gateway-spend';
 import type { NoteAttempt } from './gateway-traffic-watch';
@@ -14,6 +13,7 @@ import type { AIStudioRelay } from './provider/ai-studio-relay';
 import type { TranslationRefusal } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
 import type { CooldownLedger } from './routing/cooldown-ledger';
+import type { JudgedRequest } from './routing/judge-decision';
 import type { AttemptReading } from './routing/outcome-classification';
 import type { DeclaredTarget } from './routing/route-table';
 import type { SubscriptionRuntime } from './subscription/reach';
@@ -124,7 +124,7 @@ function notesOwedACable(
  * canvas now shows. Its custody rides the lane that paints no cable: asking for a child's grant is
  * how that child announces it is about to carry the request, and the judge carries none.
  */
-function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): Judged {
+function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): JudgedRequest {
   return judgedRouting({
     routing: deps.virtualModel.routing,
     slug: deps.gateway.slug,
@@ -154,9 +154,7 @@ async function walkedAnswer(
     cursors: serving.memory.cursors,
     resumesServerState: turnResumesServerState(deps.crossing.raw),
     now: serving.memory.now,
-    classifyBranch: judged.classifyBranch,
-    pinnedBranchAt: judged.pinnedBranchAt,
-    pinBranchAt: judged.pinBranchAt,
+    judged,
     attempt: async (routeNode) => {
       const reading = await readingAtNode(deps, routeNode);
 

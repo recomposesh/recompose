@@ -183,7 +183,7 @@ missing state rather than a missing string.
       empty label earning a second ask
 - [x] 12.5 The pin and cooldown report schemas type the virtual model by its own alias shape
 - [x] 12.6 An unnamed judge earns its own reading instead of wearing a timeout
-- [ ] 12.7 The walk request takes one judged object instead of three optional fields
+- [x] 12.7 The walk request takes one judged object instead of three optional fields
 - [ ] 12.8 The two cache-cohabitation specs assert behavior, and the judge-model spec asserts the
       model
 - [ ] 12.9 The eleven empty trailing comments leave, and the formatter wraps on its own

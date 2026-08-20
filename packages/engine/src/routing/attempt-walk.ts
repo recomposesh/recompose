@@ -1,7 +1,7 @@
 import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
-import type { BranchClassifier, Judging } from './judge-decision';
+import type { JudgedRequest, Judging } from './judge-decision';
 import type { AttemptReading } from './outcome-classification';
 import type { RotationCursors } from './rotation-cursors';
 import type { EngineRouter } from './route-table';
@@ -31,9 +31,7 @@ export type WalkRequest<TAnswer> = {
   cursors: RotationCursors;
   resumesServerState: boolean;
   now: () => number;
-  classifyBranch?: BranchClassifier;
-  pinnedBranchAt?: (routeNode: string) => string | undefined;
-  pinBranchAt?: (routeNode: string, child: string) => void;
+  judged: JudgedRequest;
   attempt: (routeNode: string) => Promise<AttemptReading<TAnswer>>;
 };
 
@@ -41,10 +39,10 @@ function judgingOf<TAnswer>(request: WalkRequest<TAnswer>): Judging {
   const { slug, virtualModel } = request;
 
   return {
-    classify: request.classifyBranch,
+    classify: request.judged.classifyBranch,
     resumesServerState: request.resumesServerState,
-    pinnedBranchAt: (routeNode) => request.pinnedBranchAt?.(routeNode),
-    pinBranchAt: (routeNode, child) => request.pinBranchAt?.(routeNode, child),
+    pinnedBranchAt: request.judged.pinnedBranchAt,
+    pinBranchAt: request.judged.pinBranchAt,
     judgeStandsCooling: (judge) =>
       request.ledger.coolingAt({ slug, virtualModel, routeNode: judge }) !== undefined,
     decided: new Map(),

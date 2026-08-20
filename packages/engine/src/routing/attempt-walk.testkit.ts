@@ -1,6 +1,6 @@
 import type { EngineRouteNode, EngineRouting } from '@recompose/contracts';
 
-import type { BranchClassifier } from './judge-decision';
+import type { BranchClassifier, JudgedRequest } from './judge-decision';
 import type { AttemptReading, JudgeReading } from './outcome-classification';
 
 import { walkAttempts } from './attempt-walk';
@@ -21,6 +21,24 @@ export type Scene = {
   pinBranchAt?: (routeNode: string, child: string) => void;
 };
 
+/**
+ * The judging a scene that named none stands under: nobody classifies and no branch is kept.
+ *
+ * @summary A refusal rather than an absent classifier, because the two settle a walk the same way
+ * and one shape means the walk never has to ask whether anybody is judging at all.
+ */
+function judgingNobodyWired(scene: Scene): JudgedRequest {
+  return {
+    classifyBranch: scene.classifyBranch ?? (async () => Promise.resolve({ heard: 'refusal' })),
+    pinnedBranchAt: scene.pinnedBranchAt ?? (() => undefined),
+    pinBranchAt:
+      scene.pinBranchAt ??
+      (() => {
+        return;
+      }),
+  };
+}
+
 export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
   let clock = NOW;
   const ledger = createCooldownLedger(() => clock);
@@ -38,12 +56,12 @@ export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
     send: async (replies: Replies = {}) => {
       const attempted: string[] = [];
       const walk = await walkAttempts<string>({
-        ...scene,
         routing,
         slug: 'main',
         virtualModel: 'fast',
         ledger,
         cursors,
+        judged: judgingNobodyWired(scene),
         resumesServerState: scene.resumesServerState ?? false,
         now: () => clock,
         attempt: async (routeNode) => {

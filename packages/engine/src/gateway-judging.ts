@@ -3,7 +3,7 @@ import type { EngineRouteNode, EngineRouting, SpendGrant } from '@recompose/cont
 import type { RoutingMemory } from './gateway-routing-memory';
 import type { SpendGrantFor } from './gateway-spend';
 import type { Crossing } from './gateway-wire';
-import type { BranchClassifier } from './routing/judge-decision';
+import type { BranchClassifier, JudgedRequest } from './routing/judge-decision';
 import type { RouteNodeAddress } from './routing/route-node-key';
 
 import { conversationFingerprint } from './gateway-conversation-key';
@@ -17,12 +17,6 @@ export type JudgingScene = {
   spendGrantFor: SpendGrantFor;
   fetchLike: typeof fetch;
   memory: RoutingMemory;
-};
-
-export type Judged = {
-  classifyBranch: BranchClassifier;
-  pinnedBranchAt: (routeNode: string) => string | undefined;
-  pinBranchAt: (routeNode: string, child: string) => void;
 };
 
 type JudgeSeat = { providerModel: string; grant: SpendGrant; boundMs: number };
@@ -114,7 +108,7 @@ function classifierFor(scene: JudgingScene): BranchClassifier {
  * beside the attempt and both close over this one request. The conversation is recognized lazily,
  * because a table with no conditional router in it never asks and must pay nothing for the answer.
  */
-export function judgedRouting(scene: JudgingScene): Judged {
+export function judgedRouting(scene: JudgingScene): JudgedRequest {
   let marked: string | undefined;
 
   const fingerprint = (): string => {
