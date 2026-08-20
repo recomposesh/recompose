@@ -187,7 +187,7 @@ missing state rather than a missing string.
 - [x] 12.8 The two cache-cohabitation specs assert behavior, and the judge-model spec asserts the
       model
 - [x] 12.9 The eleven empty trailing comments leave, and the formatter wraps on its own
-- [ ] 12.10 The surviving mutants in the judge prompt, request, and decision files die to better
+- [x] 12.10 The surviving mutants in the judge prompt, request, and decision files die to better
       tests
 - [x] 12.11 A departed judge's row names the account by its stored name, and the card caption
       stops counting a judge it can't reach

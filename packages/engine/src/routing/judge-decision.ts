@@ -49,13 +49,20 @@ type BranchQuestion = {
 type Asking = { question: BranchQuestion; classify: BranchClassifier };
 
 /**
- * The child a conditional router settles on, and who settled it.
+ * The child a conditional router settles on, and whether a judge's own word placed it there.
  *
  * @summary Only a branch a judge actually named is worth remembering for the rest of a conversation.
  * A child the else branch caught is what trouble left behind, so pinning it would let one bad minute
- * from a judge park a whole conversation on the fallback long after the judge came back.
+ * from a judge park a whole conversation on the fallback long after the judge came back. Whether to
+ * pin is the whole of what anyone asks about how a child was settled, so it is the whole of what is
+ * carried: a richer account of who settled it would be a field nothing reads and nothing keeps true.
  */
-type Decided = { child: string; from: 'label' | 'trouble' | 'pin' };
+type Decided = { child: string; earnsAPin: boolean };
+
+/** A child the walk follows without writing a pin, because no fresh judgment placed it there. */
+function settledWithoutAPin(child: string): Decided {
+  return { child, earnsAPin: false };
+}
 
 async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
   return asking.classify(
@@ -65,33 +72,41 @@ async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
   );
 }
 
-function labelABranchWears(question: BranchQuestion, reading: JudgeReading): boolean {
+/**
+ * The word a judge answered with, or nothing where the reading carried no answer at all.
+ *
+ * @summary The one place a reading is narrowed to its word, so the label table and the pin question
+ * are answered from a single reading of the verdict rather than classifying the same answer twice.
+ */
+function labelOneReadingCarries(reading: JudgeReading): string | undefined {
   const verdict = classifyJudge(reading);
 
-  return (
-    verdict.verdict === 'answered' &&
-    branchWearingTheLabel(question.branches, verdict.label) !== undefined
-  );
+  return verdict.verdict === 'answered' ? verdict.label : undefined;
+}
+
+function labelABranchWears(question: BranchQuestion, reading: JudgeReading): boolean {
+  return branchWearingTheLabel(question.branches, labelOneReadingCarries(reading)) !== undefined;
 }
 
 async function childASecondAskEarns(asking: Asking): Promise<Decided> {
   const reading = await readingOneAskEarns(asking);
   const question = asking.question;
+  const child = childOneReadingNames(question.branches, question.elseChild, reading);
 
-  return {
-    child: childOneReadingNames(question.branches, question.elseChild, reading),
-    from: labelABranchWears(question, reading) ? 'label' : 'trouble',
-  };
+  return labelABranchWears(question, reading)
+    ? { child, earnsAPin: true }
+    : settledWithoutAPin(child);
 }
 
 async function childTheJudgeAnswers(asking: Asking): Promise<Decided> {
-  const verdict = classifyJudge(await readingOneAskEarns(asking));
+  const reading = await readingOneAskEarns(asking);
+  const named = branchWearingTheLabel(asking.question.branches, labelOneReadingCarries(reading));
 
-  if (verdict.verdict === 'to-else') return { child: asking.question.elseChild, from: 'trouble' };
+  if (named !== undefined) return { child: named.child, earnsAPin: true };
 
-  const named = branchWearingTheLabel(asking.question.branches, verdict.label);
-
-  return named === undefined ? childASecondAskEarns(asking) : { child: named.child, from: 'label' };
+  return classifyJudge(reading).verdict === 'answered'
+    ? childASecondAskEarns(asking)
+    : settledWithoutAPin(asking.question.elseChild);
 }
 
 function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
@@ -101,12 +116,12 @@ function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
 }
 
 async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
-  if (question.resumesServerState) return { child: question.elseChild, from: 'trouble' };
+  if (question.resumesServerState) return settledWithoutAPin(question.elseChild);
 
   const classify = question.judgeStandsCooling ? undefined : question.classify;
 
   return classify === undefined
-    ? { child: question.elseChild, from: 'trouble' }
+    ? settledWithoutAPin(question.elseChild)
     : childTheJudgeAnswers({ question, classify });
 }
 
@@ -130,7 +145,7 @@ async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
 async function childTheJudgeDecides(question: BranchQuestion): Promise<Decided> {
   const pinned = pinTheTurnKeeps(question);
 
-  return pinned === undefined ? childNoPinNames(question) : { child: pinned, from: 'pin' };
+  return pinned === undefined ? childNoPinNames(question) : settledWithoutAPin(pinned);
 }
 
 function questionOf(
@@ -178,7 +193,7 @@ export async function branchTheWalkFollows(
 
   judging.decided.set(routeNode, decided.child);
 
-  if (decided.from === 'label') judging.pinBranchAt(routeNode, decided.child);
+  if (decided.earnsAPin) judging.pinBranchAt(routeNode, decided.child);
 
   return { decided: decided.child, elseChild: policy.elseChild };
 }
@@ -196,9 +211,5 @@ export function childOneReadingNames(
   elseChild: string,
   reading: JudgeReading,
 ): string {
-  const verdict = classifyJudge(reading);
-
-  return verdict.verdict === 'answered'
-    ? childTheLabelNames(branches, elseChild, verdict.label)
-    : elseChild;
+  return childTheLabelNames(branches, elseChild, labelOneReadingCarries(reading));
 }

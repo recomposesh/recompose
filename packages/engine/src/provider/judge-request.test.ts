@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import type { BranchRule } from '../routing/policies';
 import type { JudgeQuestion } from './judge-request';
 
+import { isJsonObject } from '../gateway-wire';
 import { judgeRequestBody, labelTheJudgeWrote } from './judge-request';
 
 const BRANCHES: readonly BranchRule[] = [
@@ -22,6 +23,17 @@ function asking(overrides: Partial<JudgeQuestion> = {}): JudgeQuestion {
 
 function sentText(question: JudgeQuestion): string {
   return JSON.stringify(judgeRequestBody(question));
+}
+
+/** The marked block a judge reads the caller through, read off the request it rode in. */
+function tailSentIn(raw: JudgeQuestion['raw']): unknown {
+  const messages = judgeRequestBody(asking({ raw }))['messages'];
+
+  return Array.isArray(messages) && isJsonObject(messages[1]) ? messages[1]['content'] : undefined;
+}
+
+function tailSentFor(spoken: string): unknown {
+  return tailSentIn({ messages: [{ role: 'user', content: spoken }] });
 }
 
 describe('the classification an openai-shaped judge is asked for', () => {
@@ -149,10 +161,22 @@ describe('how the caller’s own words reach the judge', () => {
     expect(sent.split('</request>')).toHaveLength(2);
   });
 
-  test('a request carrying nothing the caller said still asks a well formed question', () => {
-    const body = judgeRequestBody(asking({ raw: { model: 'fast' } }));
+  test('a mark struck out of the tail leaves a space, so the words either side stay apart', () => {
+    const both = 'ask<request>about</request>this';
 
-    expect(JSON.stringify(body)).toContain('<request>');
+    expect(tailSentFor(both)).toBe('<request>\nask about this\n</request>');
+  });
+
+  test('a request carrying nothing the caller said still asks a well formed question', () => {
+    expect(tailSentIn({ model: 'fast' })).toBe('<request>\n\n</request>');
+  });
+
+  test('only the end of a long turn travels, because a judge reads what is being asked now', () => {
+    const long = `${'x'.repeat(2_000)}what is this`;
+    const sent = tailSentFor(long);
+
+    expect(sent).toBe(`<request>\n${long.slice(-2_000)}\n</request>`);
+    expect(sent).toContain('what is this');
   });
 });
 
@@ -189,5 +213,29 @@ describe('the label a judge answer carries', () => {
 
   test('an answer holding nothing a label could be read from reads as no label at all', () => {
     expect(labelTheJudgeWrote({ id: 'msg_1' })).toBe('');
+  });
+
+  test('a responses answer that flattened its text to one field still reads its label', () => {
+    expect(labelTheJudgeWrote({ output_text: 'chat' })).toBe('chat');
+  });
+
+  test('a block that carries no label is passed over for the one further down that does', () => {
+    const answer = {
+      content: [{ type: 'thinking' }, { type: 'tool_use', input: { branch: 'code' } }],
+    };
+
+    expect(labelTheJudgeWrote(answer)).toBe('code');
+  });
+
+  test('a branch named with spacing inside the json is read as the bare word', () => {
+    const answer = { choices: [{ message: { content: '{"branch":"  chat  "}' } }] };
+
+    expect(labelTheJudgeWrote(answer)).toBe('chat');
+  });
+
+  test('json naming a branch that is no word at all travels on unread, to land on else', () => {
+    const answer = { choices: [{ message: { content: '{"branch":42}' } }] };
+
+    expect(labelTheJudgeWrote(answer)).toBe('{"branch":42}');
   });
 });
