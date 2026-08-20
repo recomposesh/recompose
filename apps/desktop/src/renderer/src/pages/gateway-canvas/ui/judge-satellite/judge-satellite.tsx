@@ -24,10 +24,11 @@ const anchor = 'z-1 flex size-hit-target items-center justify-center bg-transpar
 /**
  * What the caption under the silhouette says, which is what the judge answers with right now.
  *
- * @summary A judge standing out of a cooldown says so in a word rather than counting seconds down:
- * a number ticking on the canvas would pull the eye off the composition every second, and the
- * window that remains is a thing a person reads once, in the inspector. Every other moment the
- * caption spends itself on the model the judge classifies with, which is what tells two apart.
+ * @summary A judge standing out of a cooldown says so in a word and no more: a number ticking on
+ * the canvas would pull the eye off the composition every second, so the clock it is back by prints
+ * once in the inspector, which is where a person goes when the word is not enough. Both read the
+ * same moment the engine pushed, so neither can say a thing the other contradicts. Every other
+ * moment the caption spends itself on the model the judge classifies with, which tells two apart.
  */
 function caption(data: JudgeSatelliteData): ReactNode {
   if (data.standing === 'cooling') {

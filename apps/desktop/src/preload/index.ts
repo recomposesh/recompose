@@ -79,6 +79,7 @@ const recomposeEvents: RecomposeIpcEvents = Object.freeze({
   'engine:state': eventEntry('engine:state'),
   'engine:traffic': eventEntry('engine:traffic'),
   'engine:pins': eventEntry('engine:pins'),
+  'engine:cooldowns': eventEntry('engine:cooldowns'),
   'engine:logs': eventEntry('engine:logs'),
   'accounts:changed': eventEntry('accounts:changed'),
   'canvas:command': eventEntry('canvas:command'),

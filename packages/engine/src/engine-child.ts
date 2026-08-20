@@ -1,6 +1,7 @@
 import {
   type EngineDirective,
   engineBranchPinReportSchema,
+  engineCooldownReportSchema,
   engineDirectiveSchema,
   engineLogReportSchema,
   engineReportSchema,
@@ -15,6 +16,7 @@ import type { PluginHost } from './plugin-host';
 import { openCredentialUpdateLane, openSpendLane } from './engine-child-lanes';
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
 import { subscribeToBranchPinTallies } from './gateway-branch-pins-watch';
+import { subscribeToCooldowns } from './gateway-cooldowns-watch';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { loopbackOverrideOrNull } from './loopback-override';
@@ -192,6 +194,26 @@ function tellingTheParentEveryBranchTally(parentPort: ParentPort): void {
   });
 }
 
+/**
+ * Tells the parent when one route node stands back up, the moment it is told to stand down.
+ *
+ * @summary The address the store cools under is the address the report files under, so the parent
+ * places a stand-down without knowing anything about what refused the call. A moment the parent
+ * cannot be told is written down and dropped, because the request that earned the stand-down is
+ * owed its answer either way and the next refusal will say the window again.
+ */
+function tellingTheParentEveryCooldown(parentPort: ParentPort): void {
+  subscribeToCooldowns(({ address, coolUntilMs }) => {
+    try {
+      parentPort.postMessage(
+        engineCooldownReportSchema.parse({ kind: 'cooldown', ...address, coolUntilMs }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a cooldown for "${address.slug}".`, failure);
+    }
+  });
+}
+
 export function attachEngineChild(
   parentPort: ParentPort,
   openListeners: OpenListeners,
@@ -215,6 +237,7 @@ export function attachEngineChild(
 
   tellingTheParentEveryLogRow(parentPort);
   tellingTheParentEveryBranchTally(parentPort);
+  tellingTheParentEveryCooldown(parentPort);
 
   parentPort.on('message', (messageEvent) => {
     if (spendLane.settle(messageEvent.data) || credentialLane.settle(messageEvent.data)) {

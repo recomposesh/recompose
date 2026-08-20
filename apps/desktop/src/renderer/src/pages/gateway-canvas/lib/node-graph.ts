@@ -1,6 +1,7 @@
 import type {
   Account,
   GatewayConfig,
+  GatewayCooldowns,
   GatewayTraffic,
   RequestOutcome,
   SubscriptionAccountView,
@@ -11,13 +12,9 @@ import type { CarriedTraffic } from './cable-traffic';
 import type { CanvasEdge } from './canvas-cables';
 import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
+import type { EngineReadings, SeatedCard } from './card-standing';
 
-import {
-  carriedBy,
-  latestAcrossNodes,
-  outcomesThroughRouters,
-  standingCarried,
-} from './cable-traffic';
+import { latestAcrossNodes, outcomesThroughRouters } from './cable-traffic';
 import {
   cableInto,
   GATEWAY_NODE_ID,
@@ -27,6 +24,7 @@ import {
   tieOnto,
 } from './canvas-cables';
 import { routeCard } from './canvas-cards';
+import { cardStanding, readingsFor } from './card-standing';
 import { addressName } from './route-addresses';
 import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
@@ -54,8 +52,6 @@ export type CanvasOverlay = {
 export type CanvasGraph = { nodes: readonly CanvasNode[]; edges: readonly CanvasEdge[] };
 
 type RoutedCards = { nodes: CanvasNode[]; edges: CanvasEdge[]; flowed: RequestOutcome | undefined };
-
-type SeatedCard = { placed: PlacedRouteNode; card: CanvasNode };
 
 function seatedCards(model: VirtualModel, registry: Registry): readonly SeatedCard[] {
   const { entry } = model.routing;
@@ -100,31 +96,13 @@ function outcomeOnto(
     : painted[placed.walked.routeNodeId];
 }
 
-/**
- * The judge card as it stands right now, which is the one card a reading paints rather than a cable.
- *
- * @summary A person asks the judge one question, so what the judge is doing has no cable of its own
- * to light: the tie says which router it belongs to rather than where a request went. The card
- * therefore carries the standing, which is what lets a cooling judge say so where a person is
- * already looking rather than in a badge counting seconds down.
- */
-function cardStanding(seated: SeatedCard, painted: Readonly<Record<string, RequestOutcome>>) {
-  const { placed, card } = seated;
-
-  if (card.kind !== 'judge') {
-    return card;
-  }
-
-  return { ...card, standing: standingCarried(painted[placed.walked.routeNodeId]) ?? 'resting' };
-}
-
 function routedCards(
   model: VirtualModel,
   registry: Registry,
-  carried: CarriedTraffic,
+  readings: EngineReadings,
 ): RoutedCards {
   const seated = seatedCards(model, registry);
-  const painted = paintedOnto(seated, carried);
+  const painted = paintedOnto(seated, readings.carried);
   const throughRouters = outcomesThroughRouters(
     seated.map((held) => held.placed.walked),
     painted,
@@ -136,7 +114,7 @@ function routedCards(
   );
 
   return {
-    nodes: seated.map((held) => cardStanding(held, painted)),
+    nodes: seated.map((held) => cardStanding(held, painted, readings)),
     edges,
     flowed: latestAcrossNodes(painted),
   };
@@ -155,7 +133,7 @@ function modelCard(model: VirtualModel): CanvasNode {
 function servedGraph(
   gateway: GatewayConfig,
   registry: Registry,
-  carried: CarriedTraffic,
+  readings: EngineReadings,
 ): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
   const nodes: CanvasNode[] = [
     {
@@ -168,7 +146,7 @@ function servedGraph(
   const edges: CanvasEdge[] = [];
 
   for (const model of gateway.virtualModels) {
-    const routed = routedCards(model, registry, carried);
+    const routed = routedCards(model, registry, readings);
 
     nodes.push(modelCard(model), ...routed.nodes);
     edges.push(structuralWire(modelNodeId(model.id), routed.flowed), ...routed.edges);
@@ -207,11 +185,12 @@ export function canvasGraph(
   traffic: GatewayTraffic = {},
   subscriptions: readonly SubscriptionAccountView[] = [],
   now: number = Date.now(),
+  cooling: GatewayCooldowns = {},
 ): CanvasGraph {
   const { nodes, edges } = servedGraph(
     gateway,
     { accounts, subscriptions },
-    carriedBy(gateway, traffic, now),
+    readingsFor(gateway, traffic, now, cooling),
   );
 
   appendDraftCard(nodes, edges, overlay.draft);

@@ -169,6 +169,6 @@ Each of the three needs a change to renderer or engine source, which graduation 
       age a pin at the process boundary
 - [x] 11.2 Saving a branch whose label is empty derives the label from the rule text at the write,
       and the schema stays non-blank
-- [ ] 11.3 The judge inspector prints the remaining cooldown window as a still reading, and the
+- [x] 11.3 The judge inspector prints the remaining cooldown window as a still reading, and the
       satellite keeps the single word
 - [ ] 11.4 A conditional router whose judge lost its account wears the draft treatment on its card

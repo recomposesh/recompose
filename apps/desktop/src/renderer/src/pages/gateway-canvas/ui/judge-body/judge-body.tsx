@@ -8,14 +8,15 @@ import type { ReactNode } from 'react';
 
 import { nameOfRouter } from '@recompose/contracts';
 
+import type { NodePlace } from '../../lib/judge-cooldown';
 import type { WalkedRouteNode } from '../../lib/route-graph';
 import type { JudgeDirectiveProps } from '../judge-directive/judge-directive';
 
 import { accountProductName } from '../../../../entities/account';
-import { StatusChip } from '../../../../shared/ui';
 import { conditionalIn } from '../../lib/conditional-policy';
 import { walkedRouteNodes } from '../../lib/route-graph';
 import { JudgeDirective } from '../judge-directive/judge-directive';
+import { JudgeStanding } from '../judge-standing/judge-standing';
 import { targetFacts } from '../subject-bodies/subject-bodies';
 import { factRow, glyph, sectionHeading, subjectShell } from '../subject-shell/subject-shell';
 
@@ -31,25 +32,12 @@ export type JudgeBinding = {
   advises: string;
   /** The router it advises, its branches, and the directive it hands the judge. */
   directing: JudgeDirectiveProps;
+  /** Where this judge stands: the gateway serving it, the model holding it, and the node. */
+  place: NodePlace;
 };
 
 const JUDGE_NOTE =
   'Every request this router takes is classified here first. A refusal, a timeout, or a cooling judge sends the request down the else branch instead.';
-
-/**
- * How the judge stands, which is the one health a canvas away from the engine can honestly read.
- *
- * @summary An account that left the registry is a judge that cannot answer, and the request it
- * would have decided lands on else from the first call, so a person needs to find it. Whether the
- * judge stands out of a cooldown is the engine's own reading and rides the satellite instead.
- */
-function judgeHealth(account: Account | undefined): ReactNode {
-  return account === undefined ? (
-    <StatusChip tone="danger" word="Account left the registry" />
-  ) : (
-    <StatusChip tone="positive" word="Bound" />
-  );
-}
 
 /**
  * The judge subject's body: what it classifies with, and the router whose branches it decides.
@@ -61,7 +49,7 @@ export function judgeBody(
   judge: JudgeBinding,
   subscriptions: readonly SubscriptionAccountView[],
 ): ReactNode {
-  const { account, accountId, providerModel, advises, directing } = judge;
+  const { account, accountId, providerModel, advises, directing, place } = judge;
 
   return subjectShell(
     {
@@ -76,7 +64,7 @@ export function judgeBody(
         {account === undefined ? null : targetFacts(account, subscriptions)}
         {factRow('Model', providerModel)}
         {factRow('Advises', advises)}
-        {factRow('Standing', judgeHealth(account))}
+        <JudgeStanding account={account} place={place} />
       </div>
       <p className="mt-3.5 field-box px-3 py-2.5 text-detail text-ink-secondary">{JUDGE_NOTE}</p>
       <JudgeDirective
@@ -148,7 +136,9 @@ function bindingOf(
   const { accountId, providerModel } = walked.node;
   const account = accounts.find((held) => held.id === accountId);
 
-  return { account, accountId, providerModel, advises, directing };
+  const place = { slug: gateway.slug, virtualModel: model.id, routeNode: walked.routeNodeId };
+
+  return { account, accountId, providerModel, advises, directing, place };
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 } from './accounts';
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
 import { gatewayBranchPinsSchema } from './engine-branch-pins';
+import { gatewayCooldownsSchema } from './engine-cooldowns';
 import { logBatchSchema } from './engine-logs';
 import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
@@ -244,6 +245,7 @@ export const ipcEvents = {
   'engine:state': { payload: engineStatesSchema },
   'engine:traffic': { payload: gatewayTrafficSchema },
   'engine:pins': { payload: gatewayBranchPinsSchema },
+  'engine:cooldowns': { payload: gatewayCooldownsSchema },
   'engine:logs': { payload: logBatchSchema },
   'accounts:changed': { payload: z.literal('changed') },
   'canvas:command': {

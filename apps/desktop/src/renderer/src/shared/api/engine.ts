@@ -1,6 +1,7 @@
 import type {
   EngineStates,
   GatewayBranchPins,
+  GatewayCooldowns,
   GatewayEngineState,
   GatewayTraffic,
   IpcRequest,
@@ -17,6 +18,8 @@ const STOPPED: GatewayEngineState = { status: 'stopped' };
 const NOTHING_HAS_FLOWED: GatewayTraffic = {};
 
 const NOTHING_IS_PINNED: GatewayBranchPins = {};
+
+const NOTHING_STANDS_DOWN: GatewayCooldowns = {};
 
 export const engineStatesQueryOptions = queryOptions({
   queryKey: ['engine-states'],
@@ -98,6 +101,35 @@ export function bindEngineBranchPinsToCache(
 ): () => void {
   return subscribe((pinning) => {
     queryClient.setQueryData(engineBranchPinsQueryOptions.queryKey, pinning);
+  });
+}
+
+/**
+ * When each route node standing down is ready again.
+ *
+ * @summary The moments reach the renderer only by push, so the query starts on an empty snapshot
+ * and a gateway nothing has refused reads as nothing rather than as loading. They are held apart
+ * from traffic and from the pins because a stand-down moves on a provider's refusal rather than on
+ * a request answering, and one snapshot carrying all three would repaint each at the others' pace.
+ */
+export const engineCooldownsQueryOptions = queryOptions({
+  queryKey: ['engine-cooldowns'],
+  queryFn: skipToken,
+  initialData: NOTHING_STANDS_DOWN,
+});
+
+/**
+ * Points the cooldown push at the query cache and hands back the way to stop listening.
+ *
+ * @summary Every push carries the whole snapshot, so writing it straight into the cache leaves
+ * nothing to reconcile and no ordering rule to get wrong.
+ */
+export function bindEngineCooldownsToCache(
+  queryClient: QueryClient,
+  subscribe: RecomposeIpcEvents['engine:cooldowns'] = window.recomposeEvents['engine:cooldowns'],
+): () => void {
+  return subscribe((cooling) => {
+    queryClient.setQueryData(engineCooldownsQueryOptions.queryKey, cooling);
   });
 }
 

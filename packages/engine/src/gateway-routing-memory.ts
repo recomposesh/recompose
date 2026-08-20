@@ -5,6 +5,7 @@ import type { RotationCursors } from './routing/rotation-cursors';
 import type { RouteNodeAddress } from './routing/route-node-key';
 
 import { publishBranchPinTally } from './gateway-branch-pins-watch';
+import { publishCooldown } from './gateway-cooldowns-watch';
 import { createCooldownLedger } from './routing/cooldown-ledger';
 import { createRotationCursors } from './routing/rotation-cursors';
 import { routeNodeKey } from './routing/route-node-key';
@@ -183,7 +184,7 @@ export type RoutingMemory = {
  */
 export function routingMemory(): RoutingMemory {
   return {
-    ledger: createCooldownLedger(Date.now),
+    ledger: createCooldownLedger(Date.now, publishCooldown),
     cursors: createRotationCursors(),
     pins: createBranchPins(Date.now, publishBranchPinTally, pinIdleWindow()),
     now: Date.now,

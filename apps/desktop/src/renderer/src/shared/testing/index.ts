@@ -3,6 +3,7 @@ export { installFakeBridge } from './fake-bridge';
 export type { BridgeParameters } from './fake-bridge';
 export {
   emitEngineBranchPins,
+  emitEngineCooldowns,
   emitEngineLogs,
   emitEngineStates,
   emitEngineTraffic,

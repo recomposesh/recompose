@@ -13,6 +13,7 @@ import type { PickerOnCanvas } from './picker-on-canvas';
 import type { RemovalAsked } from './removal-flow';
 
 import {
+  engineCooldownsQueryOptions,
   engineTrafficQueryOptions,
   subscriptionsQueryOptions,
   useDefineVirtualModel,
@@ -130,6 +131,7 @@ export function useGatewayCanvas(
   const define = useDefineVirtualModel();
   const pickerModels = usePickerModels(standings.picker);
   const { data: traffic } = useQuery(engineTrafficQueryOptions);
+  const { data: cooling } = useQuery(engineCooldownsQueryOptions);
   const { data: subscriptions = [] } = useQuery(subscriptionsQueryOptions);
   const now = useDisplayTick(CANVAS_CLOCK_TICK_MS);
   const dragging = useRef<DragWatch>({ inFlight: false, escaped: false });
@@ -144,7 +146,7 @@ export function useGatewayCanvas(
   }
 
   const overlay = overlayOf(draft, standings.picker);
-  const graph = canvasGraph(gateway, accounts, overlay, traffic, subscriptions, now);
+  const graph = canvasGraph(gateway, accounts, overlay, traffic, subscriptions, now, cooling);
   const seats = seatsOf(graph, stored, overlay);
   const world: CanvasWorld = {
     slug,

@@ -30,6 +30,7 @@ const bound: JudgeBinding = {
   providerModel: 'claude-haiku-4-5',
   advises: 'Conditional',
   directing,
+  place: { slug: servingGateway.slug, virtualModel: 'fast', routeNode: 'j1' },
 };
 
 const directed: JudgeBinding = {

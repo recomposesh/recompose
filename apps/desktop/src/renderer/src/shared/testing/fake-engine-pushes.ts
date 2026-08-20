@@ -1,6 +1,7 @@
 import type {
   EngineStates,
   GatewayBranchPins,
+  GatewayCooldowns,
   GatewayTraffic,
   LogBatch,
   LogRow,
@@ -102,6 +103,28 @@ export function listenForEngineBranchPins(
  */
 export function emitEngineBranchPins(pinned: GatewayBranchPins): void {
   engineBranchPinsLine.emit(pinned);
+}
+
+const engineCooldownsLine = aPushLine<GatewayCooldowns>();
+
+export function forgetEngineCooldownListeners(): void {
+  engineCooldownsLine.forget();
+}
+
+export function listenForEngineCooldowns(
+  listener: (cooling: GatewayCooldowns) => void,
+): () => void {
+  return engineCooldownsLine.listen(listener);
+}
+
+/**
+ * Pushes a cooldown snapshot at everything listening, the way the main process would.
+ *
+ * @summary Reach for it in a story or a spec that has to stand a judge down without a provider
+ * refusing anything.
+ */
+export function emitEngineCooldowns(cooling: GatewayCooldowns): void {
+  engineCooldownsLine.emit(cooling);
 }
 
 const servedRows: LogRow[] = [];
