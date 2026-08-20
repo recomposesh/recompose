@@ -35,8 +35,19 @@ function isBinding(value: unknown): boolean {
   return value === undefined || value === 'router' || value === 'target';
 }
 
+/**
+ * @summary Every mode a draft can hold reads back, conditional included. A draft answers the mode
+ * long before it answers the name, so one left standing mid-composition is exactly the draft a next
+ * session has to find, and a mode missing from this list discards the whole draft rather than the
+ * one field it did not recognize.
+ */
 function isRouterMode(value: unknown): boolean {
-  return value === undefined || value === 'failover' || value === 'round-robin';
+  return (
+    value === undefined ||
+    value === 'failover' ||
+    value === 'round-robin' ||
+    value === 'conditional'
+  );
 }
 
 function isDefinition(value: unknown): value is SettledDefinition {

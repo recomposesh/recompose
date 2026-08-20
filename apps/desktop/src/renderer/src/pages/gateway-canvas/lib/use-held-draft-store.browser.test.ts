@@ -41,3 +41,17 @@ test('a scrambled writing answers no draft rather than a broken one', () => {
 
   expect(heldDraft('scrambled-gw')).toBeUndefined();
 });
+
+const midConditional = {
+  ...emptyDefinition(),
+  displayName: 'Fast',
+  id: 'fast',
+  bindsThrough: 'router' as const,
+  routerMode: 'conditional' as const,
+};
+
+test('a draft mid-conditional stands again, because a mode is answered long before a name is', () => {
+  localStorage.setItem(keyFor('judging-gw'), JSON.stringify({ definition: midConditional, seat }));
+
+  expect(heldDraft('judging-gw')).toEqual({ definition: midConditional, seat });
+});
