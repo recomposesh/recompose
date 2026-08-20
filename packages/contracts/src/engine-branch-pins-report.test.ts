@@ -38,6 +38,12 @@ describe('what the child tells the parent about the branches one router holds', 
     expect(() => engineBranchPinReportSchema.parse({ ...counted, prompt: 'hello' })).toThrow();
   });
 
+  test('a tally names its virtual model by the alias a client sends, dots and all', () => {
+    const dotted = { ...counted, virtualModel: 'claude-5.6-sol' };
+
+    expect(engineBranchPinReportSchema.parse(dotted)).toEqual(dotted);
+  });
+
   test('a tally naming no router is refused, because no ladder would own the counts', () => {
     const { routeNode, ...withoutTheRouter } = counted;
 

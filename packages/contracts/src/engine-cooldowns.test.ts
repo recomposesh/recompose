@@ -28,6 +28,12 @@ describe('the moment one route node stands back up', () => {
   test('a report carrying why the node stood down is refused, so no provider body crosses', () => {
     expect(() => engineCooldownReportSchema.parse({ ...report, detail: 'rate limited' })).toThrow();
   });
+
+  test('a report names its virtual model by the alias a client sends, dots and all', () => {
+    const dotted = { ...report, virtualModel: 'claude-5.6-sol' };
+
+    expect(engineCooldownReportSchema.parse(dotted)).toEqual(dotted);
+  });
 });
 
 describe('every route node of every gateway that stands down', () => {
@@ -47,5 +53,17 @@ describe('every route node of every gateway that stands down', () => {
 
   test('a snapshot naming no node between the model and the moment is refused', () => {
     expect(() => gatewayCooldownsSchema.parse({ personal: { fast: LIFTS_AT } })).toThrow();
+  });
+
+  test('a virtual model whose alias carries a dot files under that alias unchanged', () => {
+    const dotted = { personal: { 'claude-5.6-sol': { j1: LIFTS_AT } } };
+
+    expect(gatewayCooldownsSchema.parse(dotted)).toEqual(dotted);
+  });
+
+  test('a gateway slug carrying a dot is still refused, since a slug is no alias', () => {
+    expect(() =>
+      gatewayCooldownsSchema.parse({ 'claude-5.6-sol': { fast: { j1: LIFTS_AT } } }),
+    ).toThrow();
   });
 });

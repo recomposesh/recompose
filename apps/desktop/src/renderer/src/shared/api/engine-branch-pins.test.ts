@@ -1,5 +1,6 @@
 import type { GatewayBranchPins, RecomposeIpcEvents } from '@recompose/contracts';
 
+import { gatewayBranchPinsSchema } from '@recompose/contracts';
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, test } from 'vitest';
 
@@ -32,6 +33,10 @@ function aBranchPinLine(): {
 const holding: GatewayBranchPins = { codex: { fast: { ladder: { coder: 2 } } } };
 
 const movedOn: GatewayBranchPins = { codex: { fast: { ladder: { coder: 1, talker: 2 } } } };
+
+const underADottedAlias = gatewayBranchPinsSchema.parse({
+  codex: { 'claude-5.6-sol': { ladder: { coder: 2 } } },
+});
 
 function heldPins(queryClient: QueryClient): GatewayBranchPins | undefined {
   return queryClient.getQueryData(engineBranchPinsQueryOptions.queryKey);
@@ -78,5 +83,15 @@ describe('what the inspector reads about pinned conversations', () => {
 
   test('pins are held apart from traffic, so neither push clears the other', () => {
     expect(engineBranchPinsQueryOptions.queryKey).not.toEqual(['engine-traffic']);
+  });
+
+  test('a virtual model whose alias carries a dot reaches the inspector under that alias', () => {
+    const queryClient = new QueryClient();
+    const line = aBranchPinLine();
+
+    bindEngineBranchPinsToCache(queryClient, line.subscribe);
+    line.push(underADottedAlias);
+
+    expect(heldPins(queryClient)).toEqual(underADottedAlias);
   });
 });

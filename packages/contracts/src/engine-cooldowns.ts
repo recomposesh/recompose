@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { gatewaySlugSchema } from './gateway-config';
+import { gatewaySlugSchema, modelAliasSchema } from './gateway-config';
 import { routeNodeIdSchema } from './gateway-routing';
 
 /**
@@ -23,7 +23,7 @@ const coolUntilMsSchema = z.number().int().positive();
 export const engineCooldownReportSchema = z.strictObject({
   kind: z.literal('cooldown'),
   slug: gatewaySlugSchema,
-  virtualModel: gatewaySlugSchema,
+  virtualModel: modelAliasSchema,
   routeNode: routeNodeIdSchema,
   coolUntilMs: coolUntilMsSchema,
 });
@@ -33,14 +33,15 @@ export type EngineCooldownReport = z.infer<typeof engineCooldownReportSchema>;
 /**
  * Every route node standing down, under the virtual model and the gateway serving it.
  *
- * @summary Keyed exactly like traffic and the branch counts, so one gateway's nodes are dropped
- * whole when it stops and a node that never stood down is simply absent. A judge and a child that
- * both cooled are two entries rather than one reading about the router above them, because they
- * stand back up on their own clocks.
+ * @summary Keyed exactly like the branch counts, so one gateway's nodes are dropped whole when it
+ * stops and a node that never stood down is simply absent. A judge and a child that both cooled are
+ * two entries rather than one reading about the router above them, because they stand back up on
+ * their own clocks. The model level reads the alias vocabulary rather than the gateway's, since an
+ * alias keeps the dots a real model name carries.
  */
 export const gatewayCooldownsSchema = z.record(
   gatewaySlugSchema,
-  z.record(gatewaySlugSchema, z.record(routeNodeIdSchema, coolUntilMsSchema)),
+  z.record(modelAliasSchema, z.record(routeNodeIdSchema, coolUntilMsSchema)),
 );
 
 export type GatewayCooldowns = z.infer<typeof gatewayCooldownsSchema>;

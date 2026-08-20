@@ -50,4 +50,16 @@ describe('the branches every router of every gateway holds', () => {
   test('a snapshot naming no router between the model and its counts is refused', () => {
     expect(() => gatewayBranchPinsSchema.parse({ personal: { fast: tally } })).toThrow();
   });
+
+  test('a virtual model whose alias carries a dot files under that alias unchanged', () => {
+    const dotted = { personal: { 'claude-5.6-sol': { ladder: tally } } };
+
+    expect(gatewayBranchPinsSchema.parse(dotted)).toEqual(dotted);
+  });
+
+  test('a gateway slug carrying a dot is still refused, since a slug is no alias', () => {
+    expect(() =>
+      gatewayBranchPinsSchema.parse({ 'claude-5.6-sol': { fast: { ladder: tally } } }),
+    ).toThrow();
+  });
 });

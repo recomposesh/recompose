@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { gatewaySlugSchema } from './gateway-config';
+import { gatewaySlugSchema, modelAliasSchema } from './gateway-config';
 import { routeNodeIdSchema } from './gateway-routing';
 
 /**
@@ -33,7 +33,7 @@ export type BranchPinTally = z.infer<typeof branchPinTallySchema>;
 export const engineBranchPinReportSchema = z.strictObject({
   kind: z.literal('branch-pins'),
   slug: gatewaySlugSchema,
-  virtualModel: gatewaySlugSchema,
+  virtualModel: modelAliasSchema,
   routeNode: routeNodeIdSchema,
   pinned: branchPinTallySchema,
 });
@@ -43,14 +43,18 @@ export type EngineBranchPinReport = z.infer<typeof engineBranchPinReportSchema>;
 /**
  * Every conditional router's branch counts, under the virtual model and the gateway serving it.
  *
- * @summary Keyed exactly like traffic, so one gateway's routers can be dropped whole when it stops
- * and a router that never judged anything is simply absent rather than counted at nothing. The
- * router sits between the model and its counts because two routers under one model each hold their
- * own conversations, and flattening them would add two unrelated tallies into one wrong number.
+ * @summary Keyed by gateway first, so one gateway's routers can be dropped whole when it stops and
+ * a router that never judged anything is simply absent rather than counted at nothing. The router
+ * sits between the model and its counts because two routers under one model each hold their own
+ * conversations, and flattening them would add two unrelated tallies into one wrong number.
+ *
+ * The model level reads the alias vocabulary rather than the gateway's, the way a log row does: an
+ * alias keeps the dots a real model name carries, so a router under `claude-5.6-sol` has a key to
+ * file under at all.
  */
 export const gatewayBranchPinsSchema = z.record(
   gatewaySlugSchema,
-  z.record(gatewaySlugSchema, z.record(routeNodeIdSchema, branchPinTallySchema)),
+  z.record(modelAliasSchema, z.record(routeNodeIdSchema, branchPinTallySchema)),
 );
 
 export type GatewayBranchPins = z.infer<typeof gatewayBranchPinsSchema>;

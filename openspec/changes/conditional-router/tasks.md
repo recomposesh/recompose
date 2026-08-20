@@ -181,7 +181,7 @@ missing state rather than a missing string.
 - [x] 12.3 A system instruction never reads as a caller turn, in either Gemini key order
 - [x] 12.4 A judge answer whose body fails to parse routes as a refusal that cools, never as an
       empty label earning a second ask
-- [ ] 12.5 The pin and cooldown report schemas type the virtual model by its own alias shape
+- [x] 12.5 The pin and cooldown report schemas type the virtual model by its own alias shape
 - [ ] 12.6 An unnamed judge earns its own reading instead of wearing a timeout
 - [ ] 12.7 The walk request takes one judged object instead of three optional fields
 - [ ] 12.8 The two cache-cohabitation specs assert behavior, and the judge-model spec asserts the
