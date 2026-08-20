@@ -1,8 +1,13 @@
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
-import type { UsageBucket, UsageLedger, UsageMeasures } from '@recompose/contracts';
+import type {
+  AccountsDocument,
+  UsageBucket,
+  UsageLedger,
+  UsageMeasures,
+} from '@recompose/contracts';
 
 import { expect } from '@playwright/test';
-import { usageLedgerSchema } from '@recompose/contracts';
+import { ACCOUNTS_VERSION, loadAccountsDocument, usageLedgerSchema } from '@recompose/contracts';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -82,6 +87,83 @@ export async function seededUsageHistoryWritten(userDataDir: string): Promise<vo
     JSON.stringify(seededUsageLedger(Date.now())),
     'utf8',
   );
+}
+
+/** The one address both seeded plans signed in as. */
+export const SEEDED_SUBSCRIPTION_ADDRESS = 'dev@example.com';
+
+const SEEDED_PLAN_BURNS = [
+  {
+    accountId: 'seeded-claude',
+    provider: 'anthropic',
+    providerModel: 'claude-sonnet-5',
+    requests: 5,
+  },
+  { accountId: 'seeded-codex', provider: 'openai', providerModel: 'gpt-5', requests: 2 },
+] as const;
+
+function subscriptionBucketAt(
+  start: number,
+  burn: (typeof SEEDED_PLAN_BURNS)[number],
+): UsageBucket {
+  return {
+    start,
+    tuple: {
+      gateway: 'relay',
+      virtualModel: 'creative',
+      provider: burn.provider,
+      providerModel: burn.providerModel,
+      accountId: burn.accountId,
+      accountKind: 'subscription',
+    },
+    measures: measuresCounting(burn.requests),
+  };
+}
+
+function seededPlanRegistry(): AccountsDocument {
+  return {
+    schemaVersion: ACCOUNTS_VERSION,
+    accounts: SEEDED_PLAN_BURNS.map(({ accountId, provider }) => ({
+      id: accountId,
+      provider,
+      kind: 'subscription',
+      label: SEEDED_SUBSCRIPTION_ADDRESS,
+      provenance: 'sign-in',
+    })),
+  };
+}
+
+/**
+ * Writes a prior session's registry and ledger where two plans burned under one address.
+ *
+ * @summary Both documents are the app's own shapes at their own schema versions, written before
+ * the first launch, so the scenario proves the boot's read path, the quota fold in main, and the
+ * strip's reading of both, rather than teaching main a test-only lane.
+ */
+export async function seededSubscriptionBurnWritten(userDataDir: string): Promise<void> {
+  const openedAt = hourStart(Date.now() - 3 * HOUR_MS);
+  const ledger: UsageLedger = {
+    schemaVersion: 1,
+    accruedThrough: openedAt,
+    recentRowIds: [],
+    buckets: SEEDED_PLAN_BURNS.map((burn) => subscriptionBucketAt(openedAt, burn)),
+  };
+
+  await writeFile(join(userDataDir, 'accounts.json'), JSON.stringify(seededPlanRegistry()), 'utf8');
+  await writeFile(join(userDataDir, 'usage.json'), JSON.stringify(ledger), 'utf8');
+}
+
+/** The providers the seeded registry holds under the shared address, read straight from disk. */
+export async function seededPlansOnDisk(userDataDir: string): Promise<readonly string[]> {
+  const registry = loadAccountsDocument(
+    JSON.parse(await readFile(join(userDataDir, 'accounts.json'), 'utf8')),
+  );
+
+  return registry.accounts
+    .filter(
+      (account) => account.kind === 'subscription' && account.label === SEEDED_SUBSCRIPTION_ADDRESS,
+    )
+    .map((account) => account.provider);
 }
 
 /** The data folder the running app reads and writes, asked from the app itself. */

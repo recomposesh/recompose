@@ -27,7 +27,7 @@ import {
   type UpdateFeed,
   type UpdatesArrangement,
 } from './update-feed-stub';
-import { seededUsageHistoryWritten } from './usage-screen';
+import { seededSubscriptionBurnWritten, seededUsageHistoryWritten } from './usage-screen';
 
 const appRoot = join(__dirname, '..');
 
@@ -104,6 +104,10 @@ async function scenarioDataDirPrepared(testInfo: TestInfo, tags: string[]): Prom
 
   if (tags.includes('@seeded-usage-history')) {
     await seededUsageHistoryWritten(userDataDir);
+  }
+
+  if (tags.includes('@seeded-subscription-burn')) {
+    await seededSubscriptionBurnWritten(userDataDir);
   }
 
   return userDataDir;
