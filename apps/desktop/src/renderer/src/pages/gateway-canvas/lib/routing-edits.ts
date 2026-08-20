@@ -8,7 +8,8 @@ import type {
 
 import { mintRouteNodeId } from '@recompose/contracts';
 
-import { conditionalIn, namedByAPolicyAbove, nodeWithout } from './conditional-policy';
+import { conditionalIn, namedByAPolicyAbove } from './conditional-policy';
+import { beneath, standingUnder, tableWithout } from './routing-subtrees';
 
 /** Which of the shipped ways a router spreads the requests reaching it. */
 export type RouterMode = RouterPolicy['mode'];
@@ -116,40 +117,6 @@ export function gatewayBindingChild(
   });
 }
 
-function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
-  const reached = new Set<string>();
-  const walk = [nodeId];
-  let held = walk.pop();
-
-  while (held !== undefined) {
-    const node = routing.nodes[held];
-
-    if (node !== undefined && !reached.has(held)) {
-      reached.add(held);
-
-      if (node.kind === 'router') {
-        walk.push(...node.children);
-      }
-    }
-
-    held = walk.pop();
-  }
-
-  return reached;
-}
-
-function tableWithout(routing: Routing, gone: ReadonlySet<string>): Routing {
-  const kept: Record<string, RouteNode> = {};
-
-  for (const [id, node] of Object.entries(routing.nodes)) {
-    if (!gone.has(id)) {
-      kept[id] = nodeWithout(node, gone);
-    }
-  }
-
-  return { entry: routing.entry, nodes: kept };
-}
-
 /**
  * The gateway once one route node and everything standing under it leaves the table.
  *
@@ -160,6 +127,8 @@ function tableWithout(routing: Routing, gone: ReadonlySet<string>): Routing {
  * A node the table never held drops nothing, which falls out of the walk rather than needing a
  * guard of its own. The else child and the judge are refused outright, because a conditional policy
  * names both by id and a refusal at the edit beats a schema message about a document nobody typed.
+ * A conditional router standing anywhere inside the ladder leaves with its own judge, since the
+ * policy naming it goes too and nothing else in the table would reach it.
  */
 export function gatewayDroppingNode(
   gateway: GatewayConfig,
@@ -171,14 +140,6 @@ export function gatewayDroppingNode(
       ? was
       : tableWithout(was, standingUnder(was, nodeId)),
   );
-}
-
-function beneath(routing: Routing, nodeId: string): ReadonlySet<string> {
-  const reached = new Set(standingUnder(routing, nodeId));
-
-  reached.delete(nodeId);
-
-  return reached;
 }
 
 /**

@@ -174,7 +174,7 @@ missing state rather than a missing string.
 
 ## 12. The verification round (adversarial review, rules review, mutation survivors)
 
-- [ ] 12.1 Dropping or rebinding a subtree carries out the judges of every conditional router
+- [x] 12.1 Dropping or rebinding a subtree carries out the judges of every conditional router
       inside it, so no judge stands unreachable
 - [ ] 12.2 The walk backtracks when a judged router offers nothing: the parent tries its next
       sibling, and no request exhausts while a healthy child stands
