@@ -82,6 +82,13 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
 
+  site-redeploy:
+    needs: download-redirects
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-web.yml
+    secrets: inherit
+
   release-notes:
     runs-on: ubuntu-latest
     permissions:
