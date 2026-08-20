@@ -10,7 +10,7 @@ import {
   gatewayWritingBranch,
   routedThroughAConditionalRouter,
 } from './routing-edits-conditional';
-import { codex, judged, policyOf, routingOf } from './routing-edits.testkit';
+import { codex, judged, policyOf, routingOf, sharingOneJudge } from './routing-edits.testkit';
 
 const judge: RouteTarget = { kind: 'target', accountId: 'a9', providerModel: 'claude-haiku-5' };
 
@@ -83,6 +83,22 @@ test('binding a second judge leaves the branches and the else child exactly as t
     branches: [{ label: 'code', rule: 'questions about source code', child: 'c1' }],
     elseChild: 'c2',
   });
+});
+
+test('a judge a surviving router still asks stays behind when one of them rebinds', () => {
+  const shared = sharingOneJudge();
+  const bound = gatewayBindingJudge(shared, 'fast', 'r1', 'j2', judge);
+
+  expect(routingOf(bound).nodes['j1']).toEqual(routingOf(shared).nodes['j1']);
+  expect(routingSchema.safeParse(routingOf(bound)).success).toBe(true);
+});
+
+test('the shared judge leaves once the second router asking it rebinds too', () => {
+  const once = gatewayBindingJudge(sharingOneJudge(), 'fast', 'r1', 'j2', judge);
+  const both = gatewayBindingJudge(once, 'fast', 'r2', 'j3', judge);
+
+  expect(routingOf(both).nodes['j1']).toBeUndefined();
+  expect(routingSchema.safeParse(routingOf(both)).success).toBe(true);
 });
 
 test('binding a judge under an id a child already answers to leaves the gateway as it stood', () => {

@@ -8,6 +8,7 @@ import type { BranchWording, ConditionalPolicy } from './conditional-policy';
 import { switchWhole } from './conditional-draft';
 import { bornConditionalPolicy, branchesWriting, conditionalIn } from './conditional-policy';
 import { routedBy, routerEdited } from './routing-edits';
+import { judgeStillAsked, tableWithout } from './routing-subtrees';
 
 /**
  * A route table reaching one fresh conditional router, over the one child that catches everything.
@@ -150,8 +151,10 @@ export function gatewaySwitchingToConditional(
  * reason. A router spreading some other way has no judge to bind, so the ask leaves the table alone
  * rather than stranding a target nothing reaches.
  *
- * The judge it replaces leaves with it, because the policy was the only thing naming that node and
- * a target no reference reaches is a table the stored shape refuses.
+ * The judge it replaces leaves with it, because a target no reference reaches is a table the stored
+ * shape refuses. It stays where a second conditional router still asks it, the same rule a subtree
+ * removal and a mode switch already weigh: a judge is held by every router naming it, so the last
+ * of them to let go is the one that carries it out.
  */
 export function gatewayBindingJudge(
   gateway: GatewayConfig,
@@ -171,11 +174,11 @@ export function gatewayBindingJudge(
       ...router,
       policy: { ...policy, judge: judgeId },
     }));
-    const kept = Object.fromEntries(
-      Object.entries(pointed.nodes).filter(([id]) => id !== policy.judge),
-    );
+    const kept = judgeStillAsked(pointed, policy.judge)
+      ? pointed
+      : tableWithout(pointed, new Set([policy.judge]));
 
-    return { entry: pointed.entry, nodes: { ...kept, [judgeId]: judge } };
+    return { entry: kept.entry, nodes: { ...kept.nodes, [judgeId]: judge } };
   });
 }
 
