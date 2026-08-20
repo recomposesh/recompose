@@ -7,31 +7,17 @@ import type { RouterNodeData } from './router-node';
 import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { cardOnCanvas, inScheme } from '../../testing/canvas-flow.testkit';
 import { RouterNode } from './router-node';
+import { judgingRouter, rotatingRouter, spreadingRouter } from './router-node.testkit';
 
-const spreading: RouterNodeData = {
-  id: 'route:fast:r1',
-  kind: 'router',
-  modelId: 'fast',
-  routeNodeId: 'r1',
-  depth: 0,
-  mode: 'failover',
-  displayName: undefined,
-  childCount: 2,
-  onAddChild: () => {},
-};
+const spreading = spreadingRouter;
+
+const rotating = rotatingRouter;
+
+const judging = judgingRouter;
 
 const named: RouterNodeData = { ...spreading, displayName: 'Ladder' };
 
 const empty: RouterNodeData = { ...spreading, childCount: 0 };
-
-const rotating: RouterNodeData = { ...spreading, mode: 'round-robin', childCount: 3 };
-
-const judging: RouterNodeData = {
-  ...spreading,
-  mode: 'conditional',
-  childCount: 3,
-  judged: { branches: 2, judge: 'advisor', judgeAnswers: true },
-};
 
 const unjudged: RouterNodeData = {
   ...judging,

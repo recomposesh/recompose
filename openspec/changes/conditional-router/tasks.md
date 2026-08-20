@@ -204,7 +204,7 @@ missing state rather than a missing string.
 - [ ] 13.5 The mode rows carry an icon beside each title
 - [x] 13.6 The classification prompt preview names its filling slots with placeholders, and an
       empty branch list says it holds nothing yet
-- [ ] 13.7 The router kicker never truncates: beside a mode pill it keeps its glyph and yields
+- [x] 13.7 The router kicker never truncates: beside a mode pill it keeps its glyph and yields
       the word
 - [ ] 13.8 The app shell never scrolls: the canvas swallows its own wheel, and the bottom bar
       stays glued to the window edge

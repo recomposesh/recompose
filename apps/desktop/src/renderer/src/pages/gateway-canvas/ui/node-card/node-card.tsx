@@ -37,13 +37,20 @@ export type NodeCardProps = {
   chipGlyph: IconName;
   /** A vendor's own mark, drawn in the glyph's place wherever the vendor publishes one. */
   chipMark: ReactNode | undefined;
-  /** The uppercase word above the name, saying which kind of card this is. */
+  /**
+   * The uppercase word above the name, saying which kind of card this is.
+   *
+   * @summary It never truncates. Beside a badge it yields the row and reads to assistive tech
+   * alone, because a kicker cut to its first syllable names nothing while the silhouette and the
+   * badge between them already say what the word would have.
+   */
   kicker: string;
   /**
    * A pill riding the end of the kicker row, where one card has a standing the kicker can't say.
    *
    * @summary It shares the kicker's row rather than taking a line, because the two lines under it
-   * are the card's whole measure and a fourth line would push the mono line out of the frame.
+   * are the card's whole measure and a fourth line would push the mono line out of the frame. It
+   * is also what takes the row's room from the kicker word, so the two never compete for it.
    */
   badge?: ReactNode;
   /** The name the card answers to, cut short with its own tooltip when it runs long. */
@@ -100,7 +107,7 @@ const keyboardAsk =
 const cardFrame =
   'relative flex size-full flex-col justify-center gap-0.5 node-card text-start outline-none';
 
-const kickerLine = 'truncate text-footnote font-bold tracking-wider uppercase';
+const kickerLine = 'shrink-0 text-footnote font-bold tracking-wider uppercase';
 
 const CHAMFER_OUTER = 'M0.78 44 L12.57 0.75 L171.43 0.75 L183.22 44 L171.43 87.25 L12.57 87.25 Z';
 
@@ -198,6 +205,20 @@ function useCableInFlight(takesCableFrom: NodeCardProps['takesCableFrom']): {
   return { pulling: true, landing: takesCableFrom?.(pulledFrom) === true };
 }
 
+/**
+ * The kicker word, painted where the row has room for it and read aloud where it has not.
+ *
+ * @summary A badge on the row is a second naming, so the word steps back to assistive tech rather
+ * than truncating: a kicker cut to its first syllable names nothing a reader can use.
+ */
+function kickerWord(kicker: string, kickerTint: string, badge: ReactNode): ReactNode {
+  return (
+    <span className={badge === undefined ? `${kickerLine} ${kickerTint}` : 'sr-only'}>
+      {kicker}
+    </span>
+  );
+}
+
 function cardFace(props: NodeCardProps): ReactNode {
   const { chipTint, kickerTint, chipGlyph, chipMark, kicker, badge, name, nameInk } = props;
   const { subtitle, subtitleInk, subtitleFace = 'mono', footnote } = props;
@@ -211,7 +232,7 @@ function cardFace(props: NodeCardProps): ReactNode {
         >
           {chipMark ?? <Icon className="size-2.75" name={chipGlyph} />}
         </span>
-        <span className={`${kickerLine} ${kickerTint}`}>{kicker}</span>
+        {kickerWord(kicker, kickerTint, badge)}
         {badge}
       </span>
       <span className={`relative truncate text-card-title ${nameInk}`} title={name}>
