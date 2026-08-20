@@ -258,3 +258,5 @@ rather than a missing string, and section 14 built it, so judge graduated too.
       inspector says that channel can't judge before a person binds it
 - [ ] 18.2 The tie pulses while the judge decides, fed by a content-free judging signal
 - [ ] 18.3 The rule preview line in a branch row is itself a press target opening the sheet
+- [ ] 18.4 The judge call earns its own log row carrying the model, the status, and the wait,
+      never the request tail, so a person can watch judging happen
