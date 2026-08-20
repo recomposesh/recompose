@@ -64,6 +64,7 @@ function cardsWiredBy(
   carried: Record<string, unknown> | undefined,
   id = 'cable:fast',
   chosenCard?: string,
+  liftsChosenCables = false,
 ): ReactElement {
   return (
     <div className="h-96 w-160 bg-surface-content dot-grid">
@@ -80,6 +81,7 @@ function cardsWiredBy(
         defaultNodes={seats.map((seat) => ({ ...seat, selected: seat.id === chosenCard }))}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         edgeTypes={cables}
+        elevateEdgesOnSelect={liftsChosenCables}
         nodeTypes={cards}
         nodesDraggable={false}
       />
@@ -121,6 +123,21 @@ export function judgedFlow(
  */
 export function judgedFlowBesideAChosenCard(seat: BranchSeat): ReactElement {
   return cardsWiredBy({ standing: 'resting', branch: seat }, 'cable:fast', 'target:work');
+}
+
+/**
+ * The same judged cable on a pane that lifts a chosen card's cables, the way the canvas does.
+ *
+ * @summary The page sets `elevateEdgesOnSelect`, which raises a chosen card's cables into a layer
+ * above the one a cable's furniture rides in. That lift is the whole of what puts a stroke across
+ * a pill, so a pane without it cannot be asked whether the label still reads.
+ */
+export function judgedFlowUnderALiftedCable(
+  seat: BranchSeat,
+  standing: CableStanding = 'resting',
+  failure?: CableFailure,
+): ReactElement {
+  return cardsWiredBy({ standing, failure, branch: seat }, 'cable:fast', 'target:work', true);
 }
 
 /**

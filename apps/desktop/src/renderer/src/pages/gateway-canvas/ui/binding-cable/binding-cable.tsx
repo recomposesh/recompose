@@ -80,13 +80,16 @@ function pulse(drawn: string, stroke: string, traveling: string): ReactNode {
  * One piece of furniture standing at a point on the cable, in the flow's own coordinates.
  *
  * @summary Everything a cable carries rides the same way, so the anchoring, the pointer claim, and
- * the lift a reading takes when it opens are written once rather than once per chip.
+ * the two lifts are written once rather than once per chip. The furniture rides above every cable
+ * at rest, because choosing a card lifts the cables it holds over the layer these ride in, and a
+ * stroke drawn across a pill strikes a line through the word the judge answers with. A reading
+ * lifts once more when it opens, so the pill beside it never covers the answer it was asked for.
  */
 function riding(at: { x: number; y: number }, furniture: ReactNode): ReactNode {
   return (
     <EdgeLabelRenderer>
       <div
-        className="pointer-events-auto absolute has-aria-expanded:z-cable-reading"
+        className="pointer-events-auto absolute z-cable-furniture has-aria-expanded:z-cable-reading"
         onClick={(event) => {
           event.stopPropagation();
         }}

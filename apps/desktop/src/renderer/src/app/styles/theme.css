@@ -141,8 +141,10 @@
   --spacing-node-dash-gap: 3px;
   --spacing-cable-stroke: 2.6px;
   --spacing-cable-stroke-selected: 3.6px;
-  /* React Flow elevates a selected node to z-index 1000; an open error reading must clear it. */
-  --z-cable-reading: 1001;
+  /* React Flow elevates a selected node and its cables to z-index 1000; furniture must clear
+     both, and an open reading must clear the furniture beside it. */
+  --z-cable-furniture: 1001;
+  --z-cable-reading: 1002;
   --spacing-cable-pulse-stroke: 5.4px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
@@ -941,6 +943,10 @@
     translate: -28px 0;
     opacity: 0;
   }
+}
+
+@utility z-cable-furniture {
+  z-index: var(--z-cable-furniture);
 }
 
 @utility z-cable-reading {

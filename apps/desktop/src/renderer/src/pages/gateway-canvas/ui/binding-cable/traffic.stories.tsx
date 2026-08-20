@@ -113,7 +113,7 @@ export const AFailedBindingCarriesItsLastError = meta.story({
 
     const lifted = chip.closest('.react-flow__edgelabel-renderer > div');
 
-    await expect(getComputedStyle(lifted ?? chip).zIndex).toBe('1001');
+    await expect(getComputedStyle(lifted ?? chip).zIndex).toBe('1002');
   },
 });
 

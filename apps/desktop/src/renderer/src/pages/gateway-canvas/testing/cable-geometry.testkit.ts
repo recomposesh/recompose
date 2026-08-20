@@ -72,6 +72,21 @@ export function oneCableOn(canvasElement: HTMLElement): SVGPathElement {
   return drawn;
 }
 
+/**
+ * Whether a piece of cable furniture is the thing the screen actually shows at its own middle.
+ *
+ * @summary Reach for it wherever a cable and its furniture share a point. Presence measures
+ * nothing here: a pill a stroke paints across still has its box, still reads to the accessibility
+ * tree, and still has its word struck through on the screen. Only the topmost element at the pill's
+ * own middle says which of the two a person is looking at.
+ */
+export function readsAboveTheCable(furniture: Element): boolean {
+  const at = furniture.getBoundingClientRect();
+  const topmost = document.elementFromPoint(at.x + at.width / 2, at.y + at.height / 2);
+
+  return topmost !== null && furniture.contains(topmost);
+}
+
 /** How far off the nearest cable on the whole pane a pill is sitting. */
 export function sagOffEveryCable(
   pill: { x: number; y: number },

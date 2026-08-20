@@ -239,7 +239,7 @@ rather than a missing string, and section 14 built it, so judge graduated too.
 - [x] 16.1 The conditional definition asks for the judge first and the else target second
 - [x] 16.2 Nesting a router under any router asks the routing mode instead of assuming failover,
       and a nested conditional walks the same judge and else steps
-- [ ] 16.3 The branch label always paints above every cable, whatever stands selected
+- [x] 16.3 The branch label always paints above every cable, whatever stands selected
 
 ## 17. The triage round (maintainer-approved past the three-round cap)
 
