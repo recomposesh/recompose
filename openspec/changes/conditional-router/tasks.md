@@ -194,7 +194,7 @@ missing state rather than a missing string.
 
 ## 13. The fourth testing pass (replan, approved 2026-08-20 morning)
 
-- [ ] 13.1 A born gateway's camera fits its nodes, and opening a gateway never shows a half-cut
+- [x] 13.1 A born gateway's camera fits its nodes, and opening a gateway never shows a half-cut
       card
 - [x] 13.2 A router born from a virtual model seats on the model's own row, so the cable runs
       flat

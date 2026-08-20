@@ -13,8 +13,6 @@ import { bindEngineLogsToCache, bindEngineTrafficToCache } from '../../../shared
 import { closeInspector, closeLogsDrawer } from '../../../shared/lib';
 import { forgetEngineLogsListeners, installFakeBridge } from '../../../shared/testing';
 import { dropCanvasPositions } from '../lib/canvas-position-store';
-import { RESTING_VIEWPORT } from '../lib/canvas-viewport';
-import { keepCanvasViewport } from '../lib/canvas-viewport-store';
 import { leaveDrafting } from '../lib/use-held-draft';
 import { GatewayCanvasPage } from '../ui/gateway-canvas-page/gateway-canvas-page';
 import { servingBridgeWorld } from './gateway-canvas.testkit';
@@ -62,7 +60,6 @@ export function freshCanvasRun(): void {
   }
 
   localStorage.clear();
-  keepCanvasViewport('my-gateway', RESTING_VIEWPORT);
   dropCanvasPositions('my-gateway');
   leaveDrafting('my-gateway');
   closeLogsDrawer();

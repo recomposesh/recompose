@@ -12,7 +12,6 @@ import {
 } from '../../../../shared/api';
 import { forgetLookedAtGateway } from '../../../../shared/lib';
 import { dropCanvasPositions } from '../../lib/canvas-position-store';
-import { dropCanvasViewport } from '../../lib/canvas-viewport-store';
 import { emptyDefinition } from '../../lib/model-draft';
 import { heldDraft, leaveDrafting } from '../../lib/use-held-draft';
 import { removedDefinition, spokenNameOf, targetNameIn } from './binding-acts';
@@ -187,13 +186,12 @@ function withoutGateway<Carried>(
 /**
  * Everything this side held about one gateway, forgotten the moment the delete lands.
  *
- * @summary A landed delete drops the arrangement, the viewport, the draft, the last-looked-at
- * memory, and every cached reading held under the slug, because a gateway that no longer exists
- * must not greet its own ghost on the next visit.
+ * @summary A landed delete drops the arrangement, the draft, the last-looked-at memory, and every
+ * cached reading held under the slug, because a gateway that no longer exists must not greet its
+ * own ghost on the next visit.
  */
 export function forgottenEverywhere(queryClient: QueryClient, slug: string): void {
   dropCanvasPositions(slug);
-  dropCanvasViewport(slug);
   leaveDrafting(slug);
   forgetLookedAtGateway(slug);
   queryClient.removeQueries({ queryKey: engineLogsQueryOptions(slug).queryKey });

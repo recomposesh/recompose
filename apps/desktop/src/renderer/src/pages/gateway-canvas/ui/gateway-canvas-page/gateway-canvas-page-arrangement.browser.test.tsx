@@ -2,7 +2,6 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { canvasPositions } from '../../lib/canvas-position-store';
-import { keepCanvasViewport } from '../../lib/canvas-viewport-store';
 import { draggedCard } from '../../testing/canvas-gestures.testkit';
 import {
   canvasCommandLine,
@@ -18,21 +17,35 @@ beforeEach(freshCanvasRun);
 
 const POSITIONS_KEY = 'recompose.canvas.positions.my-gateway';
 
-const VIEWPORT_KEY = 'recompose.canvas.viewport.my-gateway';
-
 function viewportTransform(container: HTMLElement): string {
   return container.querySelector<HTMLElement>('.react-flow__viewport')?.style.transform ?? '';
 }
 
-function keptViewport(): unknown {
-  const kept: unknown = JSON.parse(localStorage.getItem(VIEWPORT_KEY) ?? '{}');
+/**
+ * Whether every card the canvas drew paints inside the pane rather than off one of its edges.
+ *
+ * @operation The reading comes from the painted boxes rather than from the viewport numbers, since
+ * what a person complains about is a card they cannot see, not a transform they cannot read. A pane
+ * the browser has not measured yet answers false, so a poll waits for the canvas instead of passing
+ * on a canvas that has not drawn.
+ */
+function everyCardStandsInThePane(container: HTMLElement): boolean {
+  const pane = container.querySelector('.react-flow')?.getBoundingClientRect();
+  const cards = [...container.querySelectorAll('.react-flow__node')];
 
-  return kept;
+  if (pane === undefined || pane.width === 0 || cards.length === 0) {
+    return false;
+  }
+
+  return cards.every((card) => {
+    const at = card.getBoundingClientRect();
+
+    return at.left >= pane.left && at.right <= pane.right;
+  });
 }
 
 test('a first visit centers the composition rather than pinning it to the corner', async () => {
   standCanvasBridge();
-  localStorage.removeItem(VIEWPORT_KEY);
 
   const screen = await renderCanvasPage();
 
@@ -42,25 +55,29 @@ test('a first visit centers the composition rather than pinning it to the corner
     .not.toBe('translate(48px, 48px) scale(1)');
 });
 
-test('the canvas opens where the person left its camera', async () => {
-  standCanvasBridge();
-  keepCanvasViewport('my-gateway', { x: -120, y: 32, zoom: 0.75 });
-
-  const screen = await renderCanvasPage();
-
-  await expect
-    .poll(() => viewportTransform(screen.container))
-    .toBe('translate(-120px, 32px) scale(0.75)');
-});
-
-test('a pan the person settles on is the camera the next visit opens with', async () => {
+/**
+ * A camera left somewhere is a camera a person can lose the composition behind. Panning far and
+ * closing the gateway used to strand the next visit on empty canvas with no way back, so opening
+ * one fits what it holds rather than restoring where anybody last happened to be looking.
+ */
+test('a pan a person leaves the canvas on is remembered nowhere', async () => {
   const screen = await canvasPageOn();
 
   screen.container
     .querySelector('.react-flow__pane')
     ?.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaX: 60, deltaY: 40 }));
 
-  await expect.poll(keptViewport).not.toEqual({ x: 48, y: 48, zoom: 1 });
+  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  expect(Object.keys(localStorage).filter((key) => key.includes('viewport'))).toEqual([]);
+});
+
+test('a born gateway opens with its one card whole in the pane, not half off the edge', async () => {
+  standCanvasBridge();
+
+  const screen = await renderCanvasPage();
+
+  await expect.element(screen.getByRole('button', { name: /My Gateway/ })).toBeVisible();
+  await expect.poll(() => everyCardStandsInThePane(screen.container)).toBe(true);
 });
 
 function cardWrapper(container: HTMLElement, nodeId: string): HTMLElement | null {

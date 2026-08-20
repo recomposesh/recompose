@@ -5,7 +5,6 @@ import { withShellSurface } from '#.storybook/shell-surface';
 
 import { inspectorOpen, toggleInspector } from '../../../../shared/lib';
 import { paintedCentre } from '../../../../shared/testing';
-import { dropCanvasViewport } from '../../lib/canvas-viewport-store';
 import { branchPillOn, sagOffEveryCable } from '../../testing/cable-geometry.testkit';
 import { forgetCanvasArrangement } from '../../testing/canvas-story.testkit';
 import { judgedWorld } from '../../testing/routed-gateways.testkit';
@@ -15,7 +14,6 @@ const A_HAIRS_BREADTH = 1.5;
 
 function judgedCanvasFresh() {
   forgetCanvasArrangement('my-gateway');
-  dropCanvasViewport('my-gateway');
 
   if (inspectorOpen()) {
     toggleInspector();

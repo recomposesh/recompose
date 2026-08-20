@@ -7,7 +7,6 @@ import {
   keepCanvasPositions,
   setNodePosition,
 } from '../../lib/canvas-position-store';
-import { canvasViewport, keepCanvasViewport } from '../../lib/canvas-viewport-store';
 import { heldDraft } from '../../lib/use-held-draft';
 import { clickedCable, draftCardOn, storedBindingOf } from '../../testing/canvas-gestures.testkit';
 import {
@@ -239,7 +238,6 @@ test('confirming the gateway deletion removes it from the store and hands the pe
   await screen.getByRole('textbox', { name: 'Name' }).fill('Forgotten');
   setNodePosition('my-gateway', 'gateway', { x: 12, y: 34 });
   keepCanvasPositions('my-gateway');
-  keepCanvasViewport('my-gateway', { x: 20, y: 30, zoom: 1.2 });
 
   await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
   await userEvent.keyboard('{Delete}');
@@ -252,7 +250,6 @@ test('confirming the gateway deletion removes it from the store and hands the pe
   expect(listed.ok && listed.value).toEqual([]);
   expect(heldDraft('my-gateway')).toBeUndefined();
   expect(canvasPositions('my-gateway')).toEqual({});
-  expect(canvasViewport('my-gateway')).toBeUndefined();
 });
 
 function dragSeparator(handle: Element, from: number, to: number) {
