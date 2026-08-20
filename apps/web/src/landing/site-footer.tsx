@@ -41,9 +41,6 @@ export function SiteFooter() {
               <a href={`${gitHubUrl}/blob/main/LICENSE`} className="footer-link">
                 license
               </a>
-              <a href={gitHubUrl} className="footer-link">
-                privacy
-              </a>
             </FooterColumn>
           </div>
         </div>
