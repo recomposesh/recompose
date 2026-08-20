@@ -191,3 +191,18 @@ missing state rather than a missing string.
       tests
 - [x] 12.11 A departed judge's row names the account by its stored name, and the card caption
       stops counting a judge it can't reach
+
+## 13. The fourth testing pass (replan, approved 2026-08-20 morning)
+
+- [ ] 13.1 A born gateway's camera fits its nodes, and opening a gateway never shows a half-cut
+      card
+- [ ] 13.2 A router born from a virtual model seats on the model's own row, so the cable runs
+      flat
+- [ ] 13.3 The satellite's tie gains reading room, and the model caption under the satellite
+      leaves
+- [ ] 13.4 The satellite wears a brain mark instead of the magnifier
+- [ ] 13.5 The mode rows carry an icon beside each title
+- [ ] 13.6 The classification prompt preview names its filling slots with placeholders, and an
+      empty branch list says it holds nothing yet
+- [ ] 13.7 The router kicker never truncates: beside a mode pill it keeps its glyph and yields
+      the word
