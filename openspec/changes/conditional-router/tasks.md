@@ -221,7 +221,7 @@ missing state rather than a missing string.
 
 ## 15. The third review round (final round; survivors go to human triage)
 
-- [ ] 15.1 The virtual model id reads as its own alias shape on every lane: the engine directive,
+- [x] 15.1 The virtual model id reads as its own alias shape on every lane: the engine directive,
       the spend request, the traffic report, and the stored traffic snapshot, proved end to end
       with a dotted id
 - [ ] 15.2 A subtree removal carries a judge out only when no surviving conditional router still

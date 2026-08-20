@@ -32,6 +32,12 @@ describe('what the child tells the parent about a finished request', () => {
     expect(engineTrafficReportSchema.parse(failed)).toEqual(failed);
   });
 
+  test('a request through a dotted virtual model files under the very id a client sent', () => {
+    const dotted = { ...served, virtualModel: 'claude-5.6-sol' };
+
+    expect(engineTrafficReportSchema.parse(dotted)).toEqual(dotted);
+  });
+
   test('a report answering a directive is refused, because nothing asked for it', () => {
     expect(() => engineTrafficReportSchema.parse({ ...served, answers: 'directive-1' })).toThrow();
   });

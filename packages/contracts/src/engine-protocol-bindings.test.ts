@@ -83,8 +83,16 @@ describe('what a binding refuses to carry', () => {
     }
   });
 
-  test('a virtual name outside the shipped slug grammar is refused', () => {
-    for (const id of ['Fast', 'fast model', 'fast--model', '-fast']) {
+  test('a virtual model wearing the dots a real model name carries crosses to the child', () => {
+    for (const id of ['claude-5.6-sol', 'gpt_5.6-sol', 'llama3.2']) {
+      const dotted = aGatewayBindingLike({ id });
+
+      expect(engineGatewaySchema.parse(dotted)).toEqual(dotted);
+    }
+  });
+
+  test('a virtual name outside the shipped alias grammar is refused', () => {
+    for (const id of ['Fast', 'fast model', '-fast', 'fast.', '_fast']) {
       expect(() => engineGatewaySchema.parse(aGatewayBindingLike({ id }))).toThrow();
     }
   });
