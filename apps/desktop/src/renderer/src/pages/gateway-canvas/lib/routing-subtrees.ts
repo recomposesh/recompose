@@ -61,15 +61,15 @@ function judgesTheRestOfTheTableAsks(
  *
  * @summary Two conditional routers may lawfully ask the same judge, so a judge is held by the
  * router naming it rather than owned by it: carrying one out with the first router to leave would
- * strand the survivor's policy on a node the table no longer holds and bounce the whole write. The
- * node a person dropped always leaves, however many routers name it, because the caller refuses
- * that case before asking rather than here.
+ * strand the survivor's policy on a node the table no longer holds and bounce the whole write. A
+ * judge is always a target, so a judge some surviving router still asks stays behind whether it is
+ * the node being dropped or one reached along the way, and either reading leaves the table whole.
  */
 export function standingUnder(routing: Routing, nodeId: string): ReadonlySet<string> {
   const reached = everythingReachedFrom(routing, nodeId);
   const outliving = judgesTheRestOfTheTableAsks(routing, reached);
 
-  return new Set([...reached].filter((held) => held === nodeId || !outliving.has(held)));
+  return new Set([...reached].filter((held) => !outliving.has(held)));
 }
 
 /** Every node one id holds apart from itself, which is what a node keeping its seat gives up. */
