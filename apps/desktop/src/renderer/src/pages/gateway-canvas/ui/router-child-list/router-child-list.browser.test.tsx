@@ -226,6 +226,13 @@ test('a branch still waiting for its words offers the same press target, saying 
   expect(preview).toHaveAccessibleName(NO_RULE_YET);
 });
 
+test('a branch whose rule is still blank names its press with the sentence it owes', async () => {
+  const screen = await renderBranchLadder({ rows: [{ ...aCodeBranch, label: '', rule: '' }] });
+  const preview = screen.container.querySelector('[data-rule-preview]');
+
+  expect(preview).toHaveAccessibleName(NO_RULE_YET);
+});
+
 test('a row no rule can reach keeps one face, so the ladder grows no press target it cannot use', async () => {
   const screen = await render(
     <RouterChildList

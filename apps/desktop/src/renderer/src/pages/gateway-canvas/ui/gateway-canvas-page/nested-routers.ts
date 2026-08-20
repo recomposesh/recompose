@@ -8,8 +8,8 @@ import type { PickerStage } from '../drop-picker/picker-stages';
 import type { BornConditional, CanvasWorld, DroppedAsk, PickerStanding } from './canvas-standings';
 
 import { addressWritten } from '../../lib/route-addresses';
+import { gatewayNestingAJudgedRouter } from '../../lib/routing-births-conditional';
 import { gatewayBindingChild } from '../../lib/routing-edits';
-import { gatewayNestingAJudgedRouter } from '../../lib/routing-edits-conditional';
 import { committedPick } from './binding-acts';
 import { routerAddressOf } from './canvas-wiring';
 import { parentRouterAt } from './route-parents';
@@ -17,7 +17,8 @@ import { parentRouterAt } from './route-parents';
 /** The ask standing while a nested conditional router gathers the two nodes its shape needs. */
 export type NestingAsk = Extract<PickerStanding, { step: 'nesting' }>;
 
-const NOTHING_NAMED: BornConditional = { judge: undefined, accountId: '' };
+/** A conditional birth before its walk has named anything, whichever shape opened the ask. */
+export const NOTHING_NAMED: BornConditional = { judge: undefined, accountId: '' };
 
 /** The router a child is joining, named the way the canvas already showed it. */
 type NestedParent = {
@@ -49,29 +50,6 @@ function parentTaking(world: CanvasWorld, address: RouteAddress): NestedParent |
     virtualModel: parent.model.displayName,
     parentRouter: nameOfRouter(node.policy.mode, node.displayName),
   };
-}
-
-/**
- * Asks how a nested router spreads, rather than nesting one in a mode nobody chose.
- *
- * @summary The drawer asks this of every router it composes, so the canvas asks it of every router
- * it nests: a person who reached a router's port meant to build a router, and which of the three it
- * becomes is theirs to say. The parent's own mode never decides it, because nesting is composing
- * rather than copying.
- */
-export function nestedUnderARouter(world: CanvasWorld, address: RouteAddress): void {
-  const asked = world.standings.picker;
-
-  if (asked === undefined || !('at' in asked) || parentTaking(world, address) === undefined) {
-    return;
-  }
-
-  world.standings.setPicker({
-    step: 'router-mode',
-    from: asked.from,
-    at: asked.at,
-    origin: asked.origin,
-  });
 }
 
 type NestedWrite = {
@@ -153,32 +131,14 @@ export function nestingAccountAnswered(
   world.standings.setPicker({ ...asked, born: { ...asked.born, accountId } });
 }
 
-/**
- * The walk once a real model completed the step standing, which is a judge or the whole nest.
- *
- * @summary Naming the judge leaves its account behind, because the else branch asks the same
- * question again and a list already narrowed would answer it for the person. Naming the else model
- * is the last answer the stored shape waits on, so the router, its judge, and its fallback all
- * reach the document in the single write that shape can take.
- */
-export function nestingModelAnswered(
+/** One conditional router nested under a stored router, over the two nodes its shape needs. */
+export function nestedJudgedRouterWritten(
   world: CanvasWorld,
-  asked: NestingAsk,
-  providerModel: string,
+  asked: DroppedAsk,
+  judge: RouteTarget,
+  elseChild: RouteTarget,
 ): void {
-  const { judge, accountId } = asked.born;
-
-  if (judge === undefined) {
-    world.standings.setPicker({
-      ...asked,
-      born: { judge: { accountId, providerModel }, accountId: '' },
-    });
-
-    return;
-  }
-
   const born = mintRouteNodeId();
-  const elseChild: RouteTarget = { kind: 'target', accountId, providerModel };
 
   nestedRouterWritten(world, asked, {
     born,
@@ -187,7 +147,7 @@ export function nestingModelAnswered(
       gatewayNestingAJudgedRouter(
         world.gateway,
         { modelId: parent.modelId, routerId: parent.routerId, bornId: born },
-        { kind: 'target', ...judge },
+        judge,
         elseChild,
       ),
   });

@@ -8,8 +8,8 @@ import type { JudgeBinding } from './conditional-draft';
 import type { RouterMode, SpreadingMode } from './routing-edits';
 
 import { judgeAnswered } from './conditional-draft';
+import { gatewayDefiningJudged } from './routing-births-conditional';
 import { routedThroughARouter } from './routing-edits';
-import { gatewayDefiningJudged } from './routing-edits-conditional';
 
 /**
  * The id a name derives to, kept in step with the name until a person edits the id by hand.

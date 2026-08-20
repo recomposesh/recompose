@@ -74,12 +74,19 @@ function elseReasonLine(reason: string): ReactElement {
   );
 }
 
+/**
+ * The sentence the rule line reads, which is never blank wherever the line can be pressed.
+ *
+ * @summary A branch mid-composition holds an empty rule rather than none, and a press named by an
+ * empty string is a button no reader can announce. Blank and absent mean the same thing to a person
+ * anyway: the judge is never offered this branch until words arrive.
+ */
 function ruleSpoken(child: RouterChild): string | undefined {
   if (child.label === undefined && child.rule === undefined) {
     return undefined;
   }
 
-  return child.rule ?? NO_RULE_YET;
+  return child.rule === undefined || child.rule.trim() === '' ? NO_RULE_YET : child.rule;
 }
 
 function ruleLine(child: RouterChild, onEditRule: (() => void) | undefined): ReactElement | null {

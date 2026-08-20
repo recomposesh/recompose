@@ -260,7 +260,7 @@ rather than a missing string, and section 14 built it, so judge graduated too.
 - [x] 18.3 The rule preview line in a branch row is itself a press target opening the sheet
 - [x] 18.4 The judge call earns its own log row carrying the model, the status, and the wait,
       never the request tail, so a person can watch judging happen
-- [ ] 18.5 The cable dragged from a draft virtual model asks the routing mode too: every path
+- [x] 18.5 The cable dragged from a draft virtual model asks the routing mode too: every path
       that births a router walks the same mode rows, and no path assumes failover
 - [x] 18.6 The gateway answers the Anthropic hello probe: /api/hello answers what the real
       endpoint answers instead of a 404, so a client's health check passes

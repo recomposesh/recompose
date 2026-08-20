@@ -11,14 +11,9 @@ import { completedDraftPick, completedRebindPick } from './binding-acts';
 import { pickedAccountId } from './canvas-standings';
 import { routerAddressOf } from './canvas-wiring';
 import { completedChildPick, completedChildRebindPick } from './ladder-acts';
-import {
-  nestedRouterModeAnswered,
-  nestingAccountAnswered,
-  nestingModelAnswered,
-  nestingStage,
-  nestingSteppedBack,
-} from './nested-routers';
+import { nestingAccountAnswered, nestingStage, nestingSteppedBack } from './nested-routers';
 import { boundThroughARouter } from './router-acts';
+import { judgedRouterModelAnswered, routerModeAnswered } from './router-births';
 
 /** The picker as the page anchors it onto the canvas, ready to stand on the card it names. */
 export type PickerOnCanvas = {
@@ -230,7 +225,7 @@ export function pickerOnCanvas(
     onPickKind: answeredKind(world, picker),
     onPickRouterMode: (mode) => {
       if (picker.step === 'router-mode') {
-        nestedRouterModeAnswered(world, picker, mode);
+        routerModeAnswered(world, picker, mode);
       }
     },
     onPickAccount: (accountId) => {
@@ -246,7 +241,7 @@ export function pickerOnCanvas(
     },
     onPickProviderModel: (providerModel) => {
       if (picker.step === 'nesting') {
-        nestingModelAnswered(world, picker, providerModel);
+        judgedRouterModelAnswered(world, picker, providerModel);
 
         return;
       }

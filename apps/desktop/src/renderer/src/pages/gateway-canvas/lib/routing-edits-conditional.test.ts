@@ -3,12 +3,12 @@ import type { RouteTarget } from '@recompose/contracts';
 import { routingSchema } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
+import { routedThroughAConditionalRouter } from './routing-births-conditional';
 import { gatewayBindingChild, gatewayDroppingNode } from './routing-edits';
 import {
   gatewayBindingJudge,
   gatewayJudgingEveryRequest,
   gatewayWritingBranch,
-  routedThroughAConditionalRouter,
 } from './routing-edits-conditional';
 import { codex, judged, policyOf, routingOf, sharingOneJudge } from './routing-edits.testkit';
 

@@ -14,7 +14,6 @@ import {
   accountDropped,
   draftNobodyBound,
   droppedAt,
-  entryOf,
   groupsRead,
   kindDropped,
   modelDropped,
@@ -149,19 +148,17 @@ describe('answering what kind to bind', () => {
     ]);
   });
 
-  test('picking the router finishes the ask, on a router that holds nothing yet', () => {
+  test('picking the router carries the ask on to the mode, rather than finishing it', () => {
     draftHeld(gateway.slug, draftNobodyBound);
 
     const { world, record } = worldWhereWritesLand(gateway, { picker: kindDropped });
 
     pickerStanding(world, modelsOffered).onPickKind('router');
 
-    expect(entryOf(record.written.at(0), 'steady')).toEqual({
-      kind: 'router',
-      policy: { mode: 'failover' },
-      children: [],
-    });
-    expect(record.pickers).toEqual([undefined]);
+    expect(record.written).toEqual([]);
+    expect(record.pickers).toEqual([
+      { step: 'router-mode', from: 'draft', at: droppedAt, origin: 'drop' },
+    ]);
   });
 
   test('a kind arriving once the account list already stands changes nothing', () => {

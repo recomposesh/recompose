@@ -1,8 +1,10 @@
-import type { VirtualModel } from '@recompose/contracts';
+import type { GatewayConfig, RouteTarget, VirtualModel } from '@recompose/contracts';
 
 import { nameOfRouter } from '@recompose/contracts';
 
+import type { JudgeBinding } from '../../lib/conditional-draft';
 import type { SettledDefinition } from '../../lib/model-draft';
+import type { RouterMode, SpreadingMode } from '../../lib/routing-edits';
 import type { CanvasWorld } from './canvas-standings';
 
 import { closeInspector, openInspector } from '../../../../shared/lib';
@@ -10,17 +12,15 @@ import {
   BORN_ROUTER_MODE,
   draftFilledIn,
   emptyDefinition,
-  gatewayDefiningRouted,
+  gatewayDefiningDraft,
 } from '../../lib/model-draft';
 import { DRAFT_NODE_ID } from '../../lib/node-graph';
+import { gatewayJudgingThrough } from '../../lib/routing-births-conditional';
 import { gatewayDroppingNode, gatewayRoutingThrough } from '../../lib/routing-edits';
 import { editDraft, heldDraft } from '../../lib/use-held-draft';
 import { committedPick, graduatedDraft, releasedWithNothingSelected } from './binding-acts';
 import { cardAddressOf, modelIdOf, routerAddressOf } from './canvas-wiring';
-import { nestedUnderARouter } from './nested-routers';
 import { modelHolding, parentRouterAt } from './route-parents';
-
-const BORN_ROUTER_NAME = nameOfRouter(BORN_ROUTER_MODE);
 
 /**
  * Answers the ask with a router on a draft nobody has named yet.
@@ -37,85 +37,142 @@ function routerHeldUntilTheDraftIsNamed(world: CanvasWorld, routed: SettledDefin
   openInspector();
 }
 
-function definedThroughARouter(world: CanvasWorld): void {
-  const held = heldDraft(world.slug);
-  const definition = held?.definition ?? emptyDefinition();
-  const routed: SettledDefinition = {
-    ...definition,
-    bindsThrough: 'router',
-    routerMode: BORN_ROUTER_MODE,
-  };
+function heldDefinition(world: CanvasWorld): SettledDefinition {
+  return heldDraft(world.slug)?.definition ?? emptyDefinition();
+}
 
-  if (held !== undefined && !draftFilledIn(routed)) {
+/**
+ * Finishes the held draft as a definition routing through the router the person just described.
+ *
+ * @summary The mode arrives answered rather than assumed, so a draft never reaches storage
+ * spreading a way nobody picked. A draft still missing its name is held with that answer stamped on
+ * it, which is what lets the drawer open on the step after the one just answered instead of asking
+ * the same question twice.
+ */
+function draftFinished(world: CanvasWorld, routed: SettledDefinition): void {
+  if (heldDraft(world.slug) !== undefined && !draftFilledIn(routed)) {
     routerHeldUntilTheDraftIsNamed(world, routed);
 
     return;
   }
 
-  const named = { id: definition.id, displayName: definition.displayName };
+  const named = { id: routed.id, displayName: routed.displayName };
 
-  committedPick(
-    world,
-    `route:${named.id}`,
-    gatewayDefiningRouted(world.gateway, named, BORN_ROUTER_MODE),
-    () => {
-      graduatedDraft(world, named, BORN_ROUTER_NAME);
-    },
-  );
+  committedPick(world, `route:${named.id}`, gatewayDefiningDraft(world.gateway, routed), () => {
+    graduatedDraft(world, named, nameOfRouter(routed.routerMode ?? BORN_ROUTER_MODE));
+  });
 }
 
-function routedThroughANewRouter(world: CanvasWorld, modelId: string): void {
+/** Finishes the held draft through a router that spreads by rank or by turn. */
+export function definedThroughARouter(world: CanvasWorld, mode: SpreadingMode): void {
+  draftFinished(world, { ...heldDefinition(world), bindsThrough: 'router', routerMode: mode });
+}
+
+/** Finishes the held draft through a router that reads its requests, over the two nodes it needs. */
+export function definedThroughAJudgedRouter(
+  world: CanvasWorld,
+  judge: JudgeBinding,
+  elseChild: RouteTarget,
+): void {
+  draftFinished(world, {
+    ...heldDefinition(world),
+    bindsThrough: 'router',
+    routerMode: 'conditional',
+    judge,
+    accountId: elseChild.accountId,
+    providerModel: elseChild.providerModel,
+  });
+}
+
+function reboundOntoARouter(
+  world: CanvasWorld,
+  modelId: string,
+  mode: RouterMode,
+  written: GatewayConfig,
+): void {
   const model = modelHolding(world, modelId);
 
   if (model === undefined) {
     return;
   }
 
-  committedPick(
+  committedPick(world, `route:${modelId}`, written, () => {
+    world.standings.announce({
+      kind: 'rebound',
+      virtualModel: model.displayName,
+      target: nameOfRouter(mode),
+    });
+  });
+}
+
+/** Puts a fresh spreading router where a bound definition's binding stood, keeping what was there. */
+export function routedThroughANewRouter(
+  world: CanvasWorld,
+  modelId: string,
+  mode: SpreadingMode,
+): void {
+  reboundOntoARouter(world, modelId, mode, gatewayRoutingThrough(world.gateway, modelId, mode));
+}
+
+/** The same rebinding under the mode that reads its requests, over the two nodes that shape needs. */
+export function judgedThroughANewRouter(
+  world: CanvasWorld,
+  modelId: string,
+  judge: RouteTarget,
+  elseChild: RouteTarget,
+): void {
+  reboundOntoARouter(
     world,
-    `route:${modelId}`,
-    gatewayRoutingThrough(world.gateway, modelId, BORN_ROUTER_MODE),
-    () => {
-      world.standings.announce({
-        kind: 'rebound',
-        virtualModel: model.displayName,
-        target: BORN_ROUTER_NAME,
-      });
-    },
+    modelId,
+    'conditional',
+    gatewayJudgingThrough(world.gateway, modelId, judge, elseChild),
   );
+}
+
+/**
+ * Whether a router can be born where this cable was let go, which decides if the mode is worth asking.
+ *
+ * @summary Three shapes can take one: a draft that has bound nothing yet, a definition whose
+ * binding a router would stand in front of, and a router's own port. Anything else asks nothing,
+ * because a question whose every answer writes nothing is worse than no question.
+ */
+function aRouterCanStandAt(world: CanvasWorld, from: string): boolean {
+  const address = routerAddressOf(from);
+
+  if (address !== undefined) {
+    const parent = parentRouterAt(world, address);
+
+    return parent?.model.routing.nodes[parent.routeNodeId]?.kind === 'router';
+  }
+
+  const modelId = modelIdOf(from);
+
+  return modelId === undefined ? from === 'draft' : modelHolding(world, modelId) !== undefined;
 }
 
 /**
  * Answers the binding ask with a router, wherever the cable that opened it left from.
  *
- * @summary One ask serves three shapes of the same intent. A draft finishes as a definition
- * routing through a router, so a person composing top down never detours through a target they
- * did not want. A bound definition takes the router in its binding's place and keeps what stood
- * there as the router's first child, which is what dropping a router onto a bound model means. A
- * router's own port nests another, so one gesture reaches a nested router rather than two, and
- * that one alone asks how the router spreads before it writes: the two shapes above it are born
- * empty and fill by cable, while a nested conditional owes a judge and a fallback first.
+ * @summary One ask serves three shapes of the same intent, and every one of them asks how the
+ * router spreads before anything is written. A draft finishes as a definition routing through a
+ * router, a bound definition takes the router in its binding's place and keeps what stood there,
+ * and a router's own port nests another. Which of the three modes it becomes is the person's to
+ * say in all three: two of these shapes used to assume failover, so a person who wanted a judge
+ * watched one appear that they never chose and had to switch it afterwards.
  */
 export function boundThroughARouter(world: CanvasWorld, from: string): void {
-  const address = routerAddressOf(from);
+  const asked = world.standings.picker;
 
-  if (address !== undefined) {
-    nestedUnderARouter(world, address);
-
+  if (asked === undefined || !('at' in asked) || !aRouterCanStandAt(world, from)) {
     return;
   }
 
-  const modelId = modelIdOf(from);
-
-  if (modelId !== undefined) {
-    routedThroughANewRouter(world, modelId);
-
-    return;
-  }
-
-  if (from === 'draft') {
-    definedThroughARouter(world);
-  }
+  world.standings.setPicker({
+    step: 'router-mode',
+    from: asked.from,
+    at: asked.at,
+    origin: asked.origin,
+  });
 }
 
 const ELSE_STAYS_REFUSAL =

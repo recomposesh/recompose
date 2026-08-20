@@ -51,7 +51,7 @@ test('picking the target continues into the account pick that ships today', asyn
   await expect.element(screen.getByText('Connected providers', { exact: true })).toBeVisible();
 });
 
-test('picking the router stands a wired router holding no child', async () => {
+test('picking the router asks the mode, and the mode picked is the one that stands', async () => {
   const screen = await canvasPageOn();
 
   screen.getByLabelText('Add a virtual model').element().focus();
@@ -61,16 +61,18 @@ test('picking the router stands a wired router holding no child', async () => {
   await droppedOnOpenCanvas(screen.container, 'draft');
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: /Router/ }));
 
-  await expect
-    .element(screen.getByRole('button', { name: /Failover/ }))
-    .toHaveTextContent('no child');
+  const asked = screen.getByRole('dialog');
+
+  await expect.element(asked.getByText('Pick the routing mode')).toBeVisible();
+  await userEvent.click(asked.getByRole('radio', { name: /^Round-robin$/ }));
+
   await expect
     .poll(async () => {
       const routing = await routingOf('steady');
 
       return routing === undefined ? undefined : routing.nodes[routing.entry];
     })
-    .toMatchObject({ kind: 'router', policy: { mode: 'failover' }, children: [] });
+    .toMatchObject({ kind: 'router', policy: { mode: 'round-robin' }, children: [] });
 });
 
 test('a cable from a router lands on a stored target, which joins the ladder as one more child', async () => {
