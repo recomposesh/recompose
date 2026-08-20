@@ -167,7 +167,7 @@ Each of the three needs a change to renderer or engine source, which graduation 
 
 - [x] 11.1 The engine child honors a pin-window override from its environment, so a scenario can
       age a pin at the process boundary
-- [ ] 11.2 Saving a branch whose label is empty derives the label from the rule text at the write,
+- [x] 11.2 Saving a branch whose label is empty derives the label from the rule text at the write,
       and the schema stays non-blank
 - [ ] 11.3 The judge inspector prints the remaining cooldown window as a still reading, and the
       satellite keeps the single word

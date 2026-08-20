@@ -31,11 +31,31 @@ export const TheLabelSaysItIsTheJudgesWord = meta.story({
   },
 });
 
-/** A branch missing either half routes nothing, so the save stays shut until both stand. */
+/** A branch with no rule routes nothing and has nothing to name itself from, so the save stays shut. */
 export const AnEmptyRuleHoldsTheSaveShut = meta.story({
   args: { branch: { label: 'code', rule: '' } },
   play: async () => {
     await expect(await screen.findByRole('button', { name: 'Save branch' })).toBeDisabled();
+  },
+});
+
+/**
+ * A rule with no label of its own still saves, because the label fills itself from the rule.
+ *
+ * @summary The save is the one place that can write the word a person skipped, so holding it shut
+ * would send them back to a field the sheet was about to fill anyway.
+ */
+export const ARuleWithNoLabelStillSaves = meta.story({
+  args: { branch: { label: '', rule: 'questions about billing' } },
+  play: async () => {
+    await expect(await screen.findByRole('button', { name: 'Save branch' })).toBeEnabled();
+  },
+});
+
+/** The label field says what a blank one becomes, so nobody wonders where the word came from. */
+export const TheLabelFieldSaysABlankOneFillsItself = meta.story({
+  play: async () => {
+    await expect(await screen.findByText(/fills itself from the rule/)).toBeVisible();
   },
 });
 

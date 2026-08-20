@@ -9,7 +9,8 @@ import { FieldRow, Sheet, TextArea, TextField } from '../../../../shared/ui';
 const WHAT_A_RULE_IS =
   'The judge reads this rule beside the others and answers with one branch label.';
 
-const A_RENAME_IS_SEMANTIC = 'The judge answers with this word, so a rename changes what it reads.';
+const A_RENAME_IS_SEMANTIC =
+  'The judge answers with this word, so a rename changes what it reads. Left blank, it fills itself from the rule.';
 
 type BranchRuleSheetProps = {
   /** Whether this branch's rule stands open for editing. */
@@ -26,8 +27,15 @@ type BranchRuleSheetProps = {
   refusal?: string | undefined;
 };
 
+/**
+ * Whether the sheet holds enough to save, which is the rule and nothing else.
+ *
+ * @summary The label is the only field a save can fill on a person's behalf, because the rule it
+ * would be drawn from is right there. So the rule alone holds the save shut, and a person who wrote
+ * one and skipped the other is taken at their word rather than sent back to a field.
+ */
 function settled(wording: BranchWording): boolean {
-  return wording.label.trim() !== '' && wording.rule.trim() !== '';
+  return wording.rule.trim() !== '';
 }
 
 type SheetActs = { cancel: () => void; save: () => void };

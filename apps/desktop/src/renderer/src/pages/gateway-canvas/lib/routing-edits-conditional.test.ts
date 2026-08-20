@@ -154,14 +154,6 @@ test('a label another branch already wears is refused, so the judge never meets 
   ).toEqual(grown);
 });
 
-test('a branch holding no label routes nothing, so a blank one is refused', () => {
-  const held = judged();
-
-  expect(gatewayWritingBranch(held, 'fast', 'r1', 'c1', { label: '   ', rule: 'a rule' })).toEqual(
-    held,
-  );
-});
-
 test('a branch holding no rule routes nothing, so a blank one is refused', () => {
   const held = judged();
 

@@ -1,5 +1,7 @@
 import type { RouteNode, RouterPolicy } from '@recompose/contracts';
 
+import { derivedBranchLabel } from './derived-branch-label';
+
 /** What a conditional router decides by, which is the judge, the branches, and the else child. */
 export type ConditionalPolicy = Extract<RouterPolicy, { mode: 'conditional' }>;
 
@@ -56,12 +58,27 @@ function standsPermanently(policy: ConditionalPolicy, nodeId: string): boolean {
   return policy.elseChild === nodeId || policy.judge === nodeId;
 }
 
-function refusedWording(policy: ConditionalPolicy, written: Branch): boolean {
-  const clashes = policy.branches.some(
+function labelsBeside(policy: ConditionalPolicy, child: string): string[] {
+  return policy.branches.flatMap((branch) => (branch.child === child ? [] : [branch.label]));
+}
+
+function clashesWithASibling(policy: ConditionalPolicy, written: Branch): boolean {
+  return policy.branches.some(
     (branch) => branch.child !== written.child && branch.label.trim() === written.label,
   );
+}
 
-  return written.label === '' || written.rule === '' || clashes;
+/**
+ * The word this branch will answer to, which is the one a person typed or the one its rule draws.
+ *
+ * @summary A person who wrote the rule and left the label blank meant the rule, so the write fills
+ * the word rather than refusing a save they would not know how to satisfy. A word they typed is
+ * never drawn over, however well the rule would have read.
+ */
+function labelWritten(policy: ConditionalPolicy, child: string, wording: BranchWording): string {
+  const typed = wording.label.trim();
+
+  return typed === '' ? derivedBranchLabel(wording.rule, labelsBeside(policy, child)) : typed;
 }
 
 function outsideTheBranches(
@@ -82,10 +99,12 @@ function branchesCarrying(policy: ConditionalPolicy, written: Branch): Branch[] 
  * The branches a router holds once one child answers to a label and a rule, or nothing if it can't.
  *
  * @summary Nothing means the write is refused, and every refusal here is one the stored shape would
- * refuse anyway: a blank label or rule, a label a sibling branch already wears once both are
- * trimmed, the else child, and a child this router does not hold. Refusing at the edit keeps a save
- * from bouncing off the schema with a message written for a developer. The label reaches storage
- * trimmed, because the judge answers with the very word a person reads on the cable.
+ * refuse anyway: a blank rule, a label a sibling branch already wears once both are trimmed, the
+ * else child, and a child this router does not hold. Refusing at the edit keeps a save from
+ * bouncing off the schema with a message written for a developer. A blank label is filled from the
+ * rule instead of refused, because the rule is the whole of what a person meant and the stored
+ * shape only demands that some word stand there. The label reaches storage trimmed, because the
+ * judge answers with the very word a person reads on the cable.
  */
 export function branchesWriting(
   policy: ConditionalPolicy,
@@ -93,13 +112,15 @@ export function branchesWriting(
   child: string,
   wording: BranchWording,
 ): Branch[] | undefined {
-  const written = { label: wording.label.trim(), rule: wording.rule.trim(), child };
+  const rule = wording.rule.trim();
 
-  if (outsideTheBranches(policy, children, child)) {
+  if (rule === '' || outsideTheBranches(policy, children, child)) {
     return undefined;
   }
 
-  return refusedWording(policy, written) ? undefined : branchesCarrying(policy, written);
+  const written = { label: labelWritten(policy, child, wording), rule, child };
+
+  return clashesWithASibling(policy, written) ? undefined : branchesCarrying(policy, written);
 }
 
 /** The node once the ids named here have left the table, so no branch names a gone child. */
