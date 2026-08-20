@@ -27,9 +27,13 @@ export type Scene = {
  * @summary A refusal rather than an absent classifier, because the two settle a walk the same way
  * and one shape means the walk never has to ask whether anybody is judging at all.
  */
-function judgingNobodyWired(scene: Scene): JudgedRequest {
+function judgingNobodyWired(
+  scene: Scene,
+  judgeStandsCooling: (judge: string) => boolean,
+): JudgedRequest {
   return {
     classifyBranch: scene.classifyBranch ?? (async () => Promise.resolve({ heard: 'refusal' })),
+    judgeStandsCooling,
     pinnedBranchAt: scene.pinnedBranchAt ?? (() => undefined),
     pinBranchAt:
       scene.pinBranchAt ??
@@ -63,7 +67,12 @@ export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
         virtualModel: 'fast',
         ledger,
         cursors,
-        judged: judgingNobodyWired(scene),
+        judged: judgingNobodyWired(
+          scene,
+          (judge) =>
+            ledger.coolingAt({ slug: 'main', virtualModel: 'fast', routeNode: judge }) !==
+            undefined,
+        ),
         resumesServerState: scene.resumesServerState ?? false,
         now: () => clock,
         attempt: async (routeNode) => {

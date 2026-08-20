@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   aJudgedModel,
+  aJudgedModelOverElseAlone,
   childOverloaded,
   childServing,
   judgeNaming,
@@ -152,5 +153,17 @@ describe('the judge stays off the canvas the request paints', () => {
     expect(answer.status).toBe(502);
     expect(said).toContain('gpt-5-codex');
     expect(said).not.toContain('gpt-5-nano');
+  });
+});
+
+describe('a router holding only its else child keeps its judge standing down', () => {
+  it('spends no second call on the judge though no sibling target stands', async () => {
+    const scene = servingJudged(aJudgedModelOverElseAlone(), judgeRefusing(), childServing());
+
+    await scene.ask();
+    await scene.ask({ model: 'fast', messages: [{ role: 'user', content: 'how are you' }] });
+
+    expect(scene.askedJudge()).toHaveLength(1);
+    expect(scene.reached()).toEqual(['catchall', 'catchall']);
   });
 });

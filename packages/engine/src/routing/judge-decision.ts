@@ -22,14 +22,20 @@ export type BranchClassifier = (
 ) => Promise<JudgeReading>;
 
 /**
- * What a caller brings to a walk about judging: who classifies, and where a branch is kept.
+ * What a caller brings to a walk about judging: who classifies, where a branch is kept, and where
+ * the judge's own stand-down is remembered.
  *
- * @summary The three travel together or not at all, because a classifier with nowhere to write the
+ * @summary These travel together or not at all, because a classifier with nowhere to write the
  * branch it earned would re-judge every turn of a conversation and a pin nobody wrote is a pin
- * nobody reads. Taking them as one object is what stops a caller from wiring two of the three.
+ * nobody reads. The judge's cooling rides here rather than on the walk's own ledger, because that
+ * ledger forgets with the request on a table with no sibling target to steer toward, while the
+ * judge's stand-down is written to the gateway's memory and must be read from the store it was
+ * written to, or a judge that already refused is asked again on the very table least able to
+ * afford it.
  */
 export type JudgedRequest = {
   classifyBranch: BranchClassifier;
+  judgeStandsCooling: (judge: string) => boolean;
   pinnedBranchAt: (routeNode: string) => string | undefined;
   pinBranchAt: (routeNode: string, child: string) => void;
 };

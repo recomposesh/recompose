@@ -30,10 +30,14 @@ function aBoundTarget(providerModel: string): EngineRouteNode {
   return { kind: 'target', standing: { standing: 'bound', providerModel } };
 }
 
-export function aJudgedModel(
-  rejudgeEveryRequest = false,
-  judgeStanding: EngineRouteNode = aBoundTarget('gpt-5-nano'),
-): EngineVirtualModel {
+type JudgedTable = {
+  branches: { label: string; rule: string; child: string }[];
+  targets: Readonly<Record<string, EngineRouteNode>>;
+  rejudgeEveryRequest: boolean;
+  judgeStanding: EngineRouteNode;
+};
+
+function aModelJudgedOver(table: JudgedTable): EngineVirtualModel {
   return {
     id: 'fast',
     displayName: 'Fast',
@@ -45,23 +49,53 @@ export function aJudgedModel(
           policy: {
             mode: 'conditional',
             judge: JUDGE_NODE,
-            branches: [
-              { label: 'code', rule: 'asks to write or change code', child: 'coder' },
-              { label: 'chat', rule: 'small talk and questions', child: 'talker' },
-            ],
+            branches: table.branches,
             elseChild: 'catchall',
             judgeBoundMs: 2_000,
-            rejudgeEveryRequest,
+            rejudgeEveryRequest: table.rejudgeEveryRequest,
           },
-          children: ['coder', 'talker', 'catchall'],
+          children: Object.keys(table.targets),
         },
-        [JUDGE_NODE]: judgeStanding,
-        coder: aBoundTarget('gpt-5-codex'),
-        talker: aBoundTarget('gpt-5-mini'),
-        catchall: aBoundTarget('gpt-5'),
+        [JUDGE_NODE]: table.judgeStanding,
+        ...table.targets,
       },
     },
   };
+}
+
+export function aJudgedModel(
+  rejudgeEveryRequest = false,
+  judgeStanding: EngineRouteNode = aBoundTarget('gpt-5-nano'),
+): EngineVirtualModel {
+  return aModelJudgedOver({
+    branches: [
+      { label: 'code', rule: 'asks to write or change code', child: 'coder' },
+      { label: 'chat', rule: 'small talk and questions', child: 'talker' },
+    ],
+    targets: {
+      coder: aBoundTarget('gpt-5-codex'),
+      talker: aBoundTarget('gpt-5-mini'),
+      catchall: aBoundTarget('gpt-5'),
+    },
+    rejudgeEveryRequest,
+    judgeStanding,
+  });
+}
+
+/**
+ * A judged model whose router stands over nothing but its else child.
+ *
+ * @summary The table a person wires first: the router, the judge, and one catchall, before any
+ * branch child exists. One servable target is exactly the table whose walk reads cooling off a
+ * throwaway store, so this is the model that asks whether the judge's own stand-down survives it.
+ */
+export function aJudgedModelOverElseAlone(): EngineVirtualModel {
+  return aModelJudgedOver({
+    branches: [{ label: 'code', rule: 'asks to write or change code', child: 'catchall' }],
+    targets: { catchall: aBoundTarget('gpt-5') },
+    rejudgeEveryRequest: false,
+    judgeStanding: aBoundTarget('gpt-5-nano'),
+  });
 }
 
 type Sent = { url: string; body: string };
