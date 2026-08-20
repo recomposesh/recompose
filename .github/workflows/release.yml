@@ -58,8 +58,22 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" > /dev/null
           security list-keychain -d user -s "$keychain"
 
+          defaults write com.apple.security.revocation OCSPStyle None
+          defaults write com.apple.security.revocation CRLStyle None
+
+          (
+            sleep 420
+            echo "signing watchdog: still running, dumping what the signer waits on"
+            ps -Ao pid,stat,etime,command | grep -E 'codesign|ocspd|/usr/bin/security' | grep -v grep || true
+            for stuck in $(pgrep -x codesign || true); do
+              sample "$stuck" 3 -mayDie 2>&1 | head -60 || true
+            done
+          ) &
+          watchdog=$!
+
           env -u CSC_LINK CSC_KEYCHAIN="$keychain" APPLE_API_KEY="$key_file" \
             pnpm --filter @recompose/desktop run build:mac
+          kill "$watchdog" 2>/dev/null || true
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}

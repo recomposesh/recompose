@@ -157,3 +157,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0149](0149-the-ruleset-file-holds-the-checks-that-can-report.md)               | The ruleset file holds the checks that can report                                   | Accepted   | 2026-08-20 |
 | [0150](0150-the-release-build-signs-without-a-network-monitor.md)               | The release build signs without a network monitor                                   | Accepted   | 2026-08-20 |
 | [0151](0151-the-release-builds-its-own-signing-keychain.md)                     | The release builds its own signing keychain                                         | Accepted   | 2026-08-20 |
+| [0152](0152-signing-stops-waiting-on-a-revocation-answer.md)                    | Signing stops waiting on a revocation answer                                        | Accepted   | 2026-08-21 |
