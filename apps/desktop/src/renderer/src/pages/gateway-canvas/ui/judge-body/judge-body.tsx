@@ -53,7 +53,7 @@ export function judgeBody(
 
   return subjectShell(
     {
-      lead: glyph('search'),
+      lead: glyph('brain'),
       leadClasses: 'bg-router text-highlight-ink',
       kicker: 'Judge',
       name: account === undefined ? accountId : accountProductName(account),

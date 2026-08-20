@@ -51,7 +51,9 @@ function caption(data: JudgeSatelliteData): ReactNode {
  * @summary Reach for it as the canvas node for a router's judge. Round says advisor where every
  * other card on this canvas is a rectangle or a chamfer, so nobody reads it as one more target a
  * request could land on, and the router's own tint says which router it belongs to. The mark stays
- * a single stroke, because anything finer is mud at the zoom a whole composition fits in, and the
+ * a single stroke, because anything finer is mud at the zoom a whole composition fits in, and it is
+ * drawn large inside the circle rather than at the standing glyph size, since a brain shrunk to
+ * sixteen pixels collapses into a disc with a line through it. The
  * model it judges with prints under the silhouette rather than inside it. The tie arrives on the
  * side facing the router below, so the line never crosses the cables running to the children.
  */
@@ -64,7 +66,7 @@ export function JudgeSatellite({ data, selected }: JudgeSatelliteProps) {
         </Handle>
         <button aria-pressed={selected} className={silhouette} type="button">
           <span className="sr-only">Judge</span>
-          <Icon className="size-4" name="search" />
+          <Icon className="size-6" name="brain" />
         </button>
       </span>
       {caption(data)}
