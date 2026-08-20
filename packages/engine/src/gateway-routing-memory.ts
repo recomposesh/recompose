@@ -12,7 +12,8 @@ import { routeNodeKey } from './routing/route-node-key';
 export const PINNED_CONVERSATION_LIMIT = 500;
 
 /**
- * How long a conversation may go quiet before its branch is forgotten.
+ * How long a conversation may go quiet before its branch is forgotten, unless the environment
+ * names a shorter window.
  *
  * @summary The pin exists to keep a provider's prompt cache warm and a conversation's behavior
  * steady, and every vendor cache it protects expires within minutes of silence. Holding a decision
@@ -20,6 +21,38 @@ export const PINNED_CONVERSATION_LIMIT = 500;
  * above the shortest cache lifetime rather than as long as memory would allow.
  */
 export const PIN_IDLE_MS = 600_000;
+
+function namedPinIdleWindow(): string | null {
+  const named = process.env['RECOMPOSE_PIN_IDLE_MS']?.trim();
+
+  return named === undefined || named === '' ? null : named;
+}
+
+/**
+ * The window this gateway ages its pins over: the environment's, or the ten-minute default.
+ *
+ * @summary A scenario proving that an idle conversation is re-judged cannot rest ten real minutes,
+ * and the pin ages on the engine child's own clock, which nothing outside that process can move. An
+ * environment variable is the one seam a scenario already owns, so the window opens there rather
+ * than through a directive a person could send at runtime. A window that is not a positive whole
+ * number of milliseconds is refused instead of clamped, so a typo cannot quietly age every
+ * conversation out from under a person.
+ */
+function pinIdleWindow(): number {
+  const named = namedPinIdleWindow();
+
+  if (named === null) return PIN_IDLE_MS;
+
+  const span = Number(named);
+
+  if (Number.isSafeInteger(span) && span > 0) return span;
+
+  console.error(
+    'The engine child ignored RECOMPOSE_PIN_IDLE_MS, because it does not name a positive whole number of milliseconds.',
+  );
+
+  return PIN_IDLE_MS;
+}
 
 type Pinned = { address: RouteNodeAddress; child: string; touchedAtMs: number };
 
@@ -97,6 +130,7 @@ function tellWhatTheyHold(
 export function createBranchPins(
   now: () => number,
   tallied: TallyBranchPins = () => undefined,
+  idleWindowMs: number = PIN_IDLE_MS,
 ): BranchPins {
   const held = new Map<string, Pinned>();
 
@@ -112,7 +146,7 @@ export function createBranchPins(
 
       if (pinned === undefined) return undefined;
 
-      if (now() - pinned.touchedAtMs > PIN_IDLE_MS) {
+      if (now() - pinned.touchedAtMs > idleWindowMs) {
         held.delete(key);
         tellWhatTheyHold(held, [address], tallied);
 
@@ -151,7 +185,7 @@ export function routingMemory(): RoutingMemory {
   return {
     ledger: createCooldownLedger(Date.now),
     cursors: createRotationCursors(),
-    pins: createBranchPins(Date.now, publishBranchPinTally),
+    pins: createBranchPins(Date.now, publishBranchPinTally, pinIdleWindow()),
     now: Date.now,
   };
 }
