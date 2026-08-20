@@ -520,6 +520,9 @@ importers:
       '@tanstack/react-start':
         specifier: 1.168.42
         version: 1.168.42(crossws@0.4.10(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@24.10.9)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
+      '@tanstack/start-static-server-functions':
+        specifier: 1.167.26
+        version: 1.167.26(@tanstack/react-start@1.168.42(crossws@0.4.10(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@24.10.9)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))
       fumadocs-core:
         specifier: 16.14.3
         version: 16.14.3(@mdx-js/mdx@3.1.1(supports-color@10.2.2))(@tanstack/react-router@1.170.25(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.31.0(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@10.2.2)(zod@4.4.3)
@@ -4855,6 +4858,18 @@ packages:
   '@tanstack/start-server-core@1.169.25':
     resolution: {integrity: sha512-k+sg4NjmDCspVvec9Yx1vR5xEo7TBu7Nc85tglXhGY3UVoY9iDa1LZhoJxZ9AtOm6Ba3ZUTdeggXO2nPWeFFmA==}
     engines: {node: '>=22.12.0'}
+
+  '@tanstack/start-static-server-functions@1.167.26':
+    resolution: {integrity: sha512-npPFmztxOKCTlTB0WHP7nPLs/vSlurPt19URi4ySartBTepoAMmVZ6MXfU3+yGXAqukx5EzAyieCJMHx3QxGNQ==}
+    engines: {node: '>=22.12.0'}
+    peerDependencies:
+      '@tanstack/react-start': ^1.168.42
+      '@tanstack/solid-start': ^1.168.41
+    peerDependenciesMeta:
+      '@tanstack/react-start':
+        optional: true
+      '@tanstack/solid-start':
+        optional: true
 
   '@tanstack/start-storage-context@1.167.23':
     resolution: {integrity: sha512-HGK2zSMADRQAGboaX7MczhCt+Iwym4mnhxuo0nkce+epQXKiIsFFKC1Cra7mJWFpxknXmk0sHR1oODvghMFYHw==}
@@ -13310,8 +13325,8 @@ snapshots:
     dependencies:
       '@tanstack/history': 1.162.0
       cookie-es: 3.1.1
-      seroval: 1.5.6
-      seroval-plugins: 1.5.6(seroval@1.5.6)
+      seroval: 1.6.2
+      seroval-plugins: 1.5.6(seroval@1.6.2)
 
   '@tanstack/router-core@1.171.21':
     dependencies:
@@ -13537,6 +13552,13 @@ snapshots:
       seroval: 1.6.2
     transitivePeerDependencies:
       - crossws
+
+  '@tanstack/start-static-server-functions@1.167.26(@tanstack/react-start@1.168.42(crossws@0.4.10(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@24.10.9)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))':
+    dependencies:
+      '@tanstack/start-client-core': 1.170.21
+      seroval: 1.6.2
+    optionalDependencies:
+      '@tanstack/react-start': 1.168.42(crossws@0.4.10(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@24.10.9)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
 
   '@tanstack/start-storage-context@1.167.23':
     dependencies:
@@ -17945,6 +17967,10 @@ snapshots:
   seroval-plugins@1.5.6(seroval@1.5.6):
     dependencies:
       seroval: 1.5.6
+
+  seroval-plugins@1.5.6(seroval@1.6.2):
+    dependencies:
+      seroval: 1.6.2
 
   seroval-plugins@1.6.2(seroval@1.6.2):
     dependencies:
