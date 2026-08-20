@@ -49,7 +49,7 @@ const restingFlow: CanvasFlowWiring = {
 
 const meta = preview.meta({
   component: GatewayStage,
-  args: { slug: 'my-gateway', flow: restingFlow, announced: undefined },
+  args: { flow: restingFlow, announced: undefined },
   decorators: [
     (Story) => (
       <div className="flex h-150 bg-surface-content">

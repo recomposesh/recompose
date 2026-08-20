@@ -158,7 +158,7 @@ function canvasColumn(standing: CanvasColumn): ReactNode {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col" data-canvas-column="">
-      <GatewayStage announced={canvas.announced} flow={canvas.flow} slug={slug}>
+      <GatewayStage announced={canvas.announced} flow={canvas.flow}>
         {anchoredPicker(canvas.picker)}
       </GatewayStage>
       <BranchWording gateway={gateway} />

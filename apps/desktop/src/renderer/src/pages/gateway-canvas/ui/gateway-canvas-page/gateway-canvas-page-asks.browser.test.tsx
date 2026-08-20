@@ -251,6 +251,10 @@ test('a draft born inside the pane leaves the view exactly where it stood', asyn
 
   await expect.poll(() => transformOf(screen.container, '.react-flow__viewport')).not.toBe('');
 
+  await userEvent.click(screen.getByRole('button', { name: 'Zoom out' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Zoom out' }));
+  await afterEveryLookHasRun();
+
   const resting = transformOf(screen.container, '.react-flow__viewport');
 
   screen.getByLabelText('Add a virtual model').element().focus();
