@@ -107,6 +107,44 @@ export const EveryModeOwnsAWholeRow = meta.story({
   },
 });
 
+/**
+ * Each row leads with its own mark, drawn from the marks the canvas already spends on routers.
+ *
+ * @summary Three names of similar length in one column are read by shape before they are read by
+ * word, so the marks are what let a person find the row they meant without parsing all three.
+ */
+export const EveryModeLeadsWithItsOwnMark = meta.story({
+  play: async ({ canvas, canvasElement }) => {
+    for (const name of ['Failover', 'Round-robin', 'Conditional']) {
+      const row = await canvas.findByRole('radio', { name });
+      const mark = row.querySelector('[data-glyph]');
+
+      await expect(mark).not.toBeNull();
+      await expect(paintedBox(mark).width).toBe(14);
+    }
+
+    const marks = canvasElement.querySelectorAll('[data-glyph]');
+    const named = new Set([...marks].map((mark) => mark.getAttribute('data-glyph')));
+
+    await expect(named.size).toBe(marks.length);
+  },
+});
+
+/** The marks line up down the column, so the names start on one edge rather than three. */
+export const TheMarksShareOneEdge = meta.story({
+  play: async ({ canvas }) => {
+    const lefts = [];
+
+    for (const name of ['Failover', 'Round-robin', 'Conditional']) {
+      const row = await canvas.findByRole('radio', { name });
+
+      lefts.push(Math.round(paintedBox(row.querySelector('[data-glyph]')).left));
+    }
+
+    await expect(new Set(lefts).size).toBe(1);
+  },
+});
+
 /** The rows in the dark scheme, where the selected ring has to hold against the drawer panel. */
 export const DarkScheme = meta.story({
   args: { value: 'conditional' },

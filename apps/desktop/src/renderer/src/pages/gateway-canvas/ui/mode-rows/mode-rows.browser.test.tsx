@@ -34,6 +34,28 @@ test('every mode stands as its own row, named by the word a person picks it by',
   }
 });
 
+test('each mode leads with a mark of its own, so the three tell apart before the words', async () => {
+  const screen = await render(<Choice />);
+  const markOn = (name: string) =>
+    screen
+      .getByRole('radio', { name, exact: true })
+      .element()
+      .querySelector('[data-glyph]')
+      ?.getAttribute('data-glyph');
+
+  expect(markOn('Failover')).toBe('stack');
+  expect(markOn('Round-robin')).toBe('renew');
+  expect(markOn('Conditional')).toBe('branch');
+});
+
+test('a mode mark says nothing out loud, since the row already names the mode it leads', async () => {
+  const screen = await render(<Choice />);
+
+  await expect
+    .element(screen.getByRole('radio', { name: 'Failover', exact: true }))
+    .toHaveAccessibleName('Failover');
+});
+
 test('a row carries what its mode costs, so the cost reads at the point of choice', async () => {
   const screen = await render(<Choice />);
 

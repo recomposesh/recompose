@@ -2,8 +2,10 @@ import { Radio } from '@base-ui/react/radio';
 import { RadioGroup } from '@base-ui/react/radio-group';
 import { useId } from 'react';
 
+import type { IconName } from '../../../../shared/ui';
 import type { RouterMode } from '../../lib/routing-edits';
 
+import { Icon } from '../../../../shared/ui';
 import { modeOptions, modeSentences } from '../../lib/router-modes';
 
 export type ModeRowsProps = {
@@ -50,7 +52,7 @@ function nameClass(inert: boolean): string {
  */
 function modeRow(
   rowId: string,
-  option: { value: RouterMode; label: string },
+  option: { value: RouterMode; label: string; glyph: IconName },
   inertReason: string | undefined,
 ) {
   const inert = inertReason !== undefined;
@@ -64,8 +66,11 @@ function modeRow(
       key={option.value}
       value={option.value}
     >
-      <span className={nameClass(inert)} id={`${rowId}-${option.value}`}>
-        {option.label}
+      <span className="flex items-center gap-1.5">
+        <Icon className="size-3.5 text-ink-secondary" name={option.glyph} />
+        <span className={nameClass(inert)} id={`${rowId}-${option.value}`}>
+          {option.label}
+        </span>
       </span>
       <span className="text-detail text-ink-secondary" id={`${rowId}-${option.value}-why`}>
         {modeSentences[option.value]}

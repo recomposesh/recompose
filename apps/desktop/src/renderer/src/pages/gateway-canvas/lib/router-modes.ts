@@ -1,5 +1,6 @@
 import { nameOfRouterMode } from '@recompose/contracts';
 
+import type { IconName } from '../../../shared/ui';
 import type { RouterMode } from './routing-edits';
 
 /**
@@ -20,11 +21,19 @@ export const modeSentences: Record<RouterMode, string> = {
     "A judge reads each request and names the branch it belongs to. Anything it can't place lands on the else branch.",
 };
 
+/**
+ * The mark each mode leads its row with, drawn from the marks the canvas already uses.
+ *
+ * @summary A stack says the children are ordered and the top one answers; a rotation says the turn
+ * moves on with every request; the branch is the router's own kicker mark, which is the one a person
+ * has already met on a conditional card. They are decoration rather than vocabulary: the row's name
+ * carries the mode, so a glyph that drifted would mislead the eye without ever reaching a reader.
+ */
 export const modeOptions = [
-  { value: 'failover', label: nameOfRouterMode('failover') },
-  { value: 'round-robin', label: nameOfRouterMode('round-robin') },
-  { value: 'conditional', label: nameOfRouterMode('conditional') },
-] as const satisfies readonly { value: RouterMode; label: string }[];
+  { value: 'failover', label: nameOfRouterMode('failover'), glyph: 'stack' },
+  { value: 'round-robin', label: nameOfRouterMode('round-robin'), glyph: 'renew' },
+  { value: 'conditional', label: nameOfRouterMode('conditional'), glyph: 'branch' },
+] as const satisfies readonly { value: RouterMode; label: string; glyph: IconName }[];
 
 /**
  * Why a small model makes the better judge, said wherever a person binds one.
