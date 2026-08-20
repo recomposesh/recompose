@@ -14,7 +14,7 @@ import type { SubscriptionTools } from './subscription-tools';
 
 import { fakeJudge } from './judge-stub';
 import { fakeKeyProbe } from './key-probe-stub';
-import { scenarioEnv } from './launch-environment';
+import { pinWindowFor, scenarioEnv } from './launch-environment';
 import { readLoginItem, restoreLoginItem } from './login-item-guard';
 import { theClipboardIsHeld } from './one-clipboard';
 import { portsHeldFromRecompose } from './port-squatter';
@@ -245,7 +245,7 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
           probeOrigin: keyProbe.origin,
           servingOrigin: servingOriginFor(testInfo, keyProbe, scriptedProvider),
           runtimeOrigin: localRuntime.origin,
-          launchEnv: updatesArrangement?.env ?? {},
+          launchEnv: { ...pinWindowFor(testInfo.file), ...updatesArrangement?.env },
         }),
       ),
     });

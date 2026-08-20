@@ -26,6 +26,13 @@ export type TurnAsked = {
   /** The key a client names its conversation by, where the scenario is about a conversation. */
   conversation?: string;
   /**
+   * The standing instruction a client sends ahead of its turns, where a scenario is about one.
+   *
+   * @summary A coding client stamps the clock and the working directory in here every turn, which
+   * makes it the one part of a request that moves while the conversation stays the same one.
+   */
+  system?: string;
+  /**
    * The turn a provider is asked to carry on from, which seals the request to one account.
    *
    * @summary A request naming an earlier response is opaque to every account but the one that minted
@@ -40,6 +47,7 @@ function bodyOf(model: string, asked: TurnAsked): unknown {
     model,
     max_tokens: 64,
     messages: [{ role: 'user', content: asked.opening ?? AN_ORDINARY_ASK }],
+    ...(asked.system === undefined ? {} : { system: asked.system }),
     ...(asked.resumes === undefined ? {} : { previous_response_id: asked.resumes }),
   };
 }

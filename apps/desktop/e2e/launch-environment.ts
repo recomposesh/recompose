@@ -1,3 +1,31 @@
+import { join } from 'node:path';
+
+/**
+ * How long a conversation may rest before the sticky-conversations file expects its branch gone.
+ *
+ * @summary A pin ages on the engine child's own clock, which nothing outside that process can
+ * move, so a scenario proving that an idle conversation is judged again has to shorten the window
+ * instead of waiting out the shipped ten minutes. It is long enough that every other scenario in
+ * that file takes its second turn well inside it, and short enough that resting past it costs one
+ * scenario a few seconds rather than its whole budget.
+ */
+export const PIN_RESTS_FOR_MS = 6_000;
+
+const STICKY_CONVERSATIONS = join('features', 'routers', 'sticky-conversations');
+
+/**
+ * The pin window one spec's app launches under, which is the shipped one unless it ages pins.
+ *
+ * @summary The file decides rather than a tag, because the scenarios arrive frozen from the change
+ * directory and graduation copies them unchanged, so nothing may be written into their text. The
+ * serving origin is already chosen the same way, for the same reason.
+ */
+export function pinWindowFor(specFile: string): Record<string, string> {
+  return specFile.includes(STICKY_CONVERSATIONS)
+    ? { RECOMPOSE_PIN_IDLE_MS: String(PIN_RESTS_FOR_MS) }
+    : {};
+}
+
 export function inheritedEnv(): Record<string, string> {
   return Object.fromEntries(
     Object.entries(process.env).filter(

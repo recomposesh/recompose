@@ -42,6 +42,23 @@ export const JUDGED_CHILDREN: readonly RoutedTarget[] = [
 ];
 
 /**
+ * The real model the child behind one named branch serves.
+ *
+ * @summary Every child reaches one origin under one dialect, so the model an attempt names is the
+ * only thing on the wire that says which branch a request actually went down. One reading serves
+ * every step that has to name a child by the branch above it.
+ */
+export function childBehindTheBranch(label: string): string {
+  const branch = [CODE_BRANCH, CHAT_BRANCH].find((named) => named.label === label);
+
+  if (branch === undefined) {
+    throw new Error(`these scenarios hold no branch labeled "${label}"`);
+  }
+
+  return branch.target.providerModel;
+}
+
+/**
  * Puts both stand-ins back where the arrangement left them, after a scenario's opening turns.
  *
  * @summary A scenario that has to cool something first pays for it in calls the stand-ins remember,

@@ -4,7 +4,13 @@ import { z } from 'zod';
 import type { JudgeStub } from '../judge-stub';
 
 import { Given, Then, When } from '../fixtures';
-import { CHAT_BRANCH, CODE_BRANCH, ELSE_TARGET, JUDGE_BUDGET_MS } from '../judged-gateway';
+import {
+  CHAT_BRANCH,
+  childBehindTheBranch,
+  CODE_BRANCH,
+  ELSE_TARGET,
+  JUDGE_BUDGET_MS,
+} from '../judged-gateway';
 import { theBranchesRuled } from '../judged-policy';
 import { aTurnArrives } from '../judged-traffic';
 
@@ -13,12 +19,6 @@ const LATER_THAN_THE_BUDGET_MS = JUDGE_BUDGET_MS + 600;
 
 /** How long a late answer is given to arrive before a scenario reads what it moved. */
 const LONG_ENOUGH_FOR_THE_LATE_ANSWER_MS = LATER_THAN_THE_BUDGET_MS + 600;
-
-/** The real model each named branch's child serves, which is how the wire says which one ran. */
-const CHILD_SERVING: Record<string, string> = {
-  code: CODE_BRANCH.target.providerModel,
-  chat: CHAT_BRANCH.target.providerModel,
-};
 
 /**
  * What the judge actually answers for each broken answer a scenario names.
@@ -107,7 +107,7 @@ When(
 Then(
   'the child behind the {string} branch receives the request',
   ({ scriptedProvider }, label: string) => {
-    expect(scriptedProvider.modelsAsked()).toEqual([CHILD_SERVING[label]]);
+    expect(scriptedProvider.modelsAsked()).toEqual([childBehindTheBranch(label)]);
   },
 );
 
