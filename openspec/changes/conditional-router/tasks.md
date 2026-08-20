@@ -76,26 +76,27 @@
 ## 6. Graduation and the outer loop (moved after 7 and 8 in the run order)
 
 - [x] 6.1 The shared end-to-end surface lands alone and first, carrying no feature file
-- [ ] 6.2 Each feature file graduates with its own step definitions in one commit, five units in
-      parallel. Conditional, else, branches, and sticky conversations have landed. Judge waits on
-      the gap recorded below, which asks for a renderer change outside the graduation.
-- [x] 6.3 The outer loop goes green on mock traffic. Green over the four graduated files: 341
-      passed, 5 skipped, 1 failed, 3 flaky. Every red and every flake reran clean on its own, so
-      each belongs to the ten-way local worker count rather than to a scenario. None of the 13 new
-      scenarios stood among them. The loop runs again once judge lands.
+- [x] 6.2 Each feature file graduates with its own step definitions in one commit, five units in
+      parallel. Five of five have landed: conditional, else, branches, and sticky conversations
+      first, and judge once section 14 built the state its draft scenario reads.
+- [x] 6.3 The outer loop goes green on mock traffic. Green over all five graduated files: 335
+      passed, 5 skipped, 0 failed, 13 flaky. Every flake reran clean on its own, so each belongs to
+      the ten-way local worker count rather than to a scenario. None of the 16 new scenarios stood
+      among them, and the three judge scenarios also held over five repeats on one worker.
 - [x] 6.4 Visual baselines regenerate on the runners when the canvas changes what they see. No
       canvas baseline exists, so the row pitch changed nothing any visual spec sees. The four
       standing visual failures reproduce unchanged at the commit before this graduation, so they
       belong to an earlier pass rather than to it.
 
-### What the judge file waits on
+### What the judge file waited on
 
 Section 11 closed three of the four gaps this section first recorded. The environment names the pin
 window, a blank label fills from its rule, and the judge inspector prints the cooldown window.
-Branches and sticky conversations graduated on those fixes. One gap stays open, and it names a
-missing state rather than a missing string.
+Branches and sticky conversations graduated on those fixes. The fourth gap named a missing state
+rather than a missing string, and section 14 built it, so judge graduated too.
 
-- **Judge: the two halves of "stays a draft" never stand together.** The scenario "A conditional
+- **Judge: the two halves of "stays a draft" never stand together.** Closed by 14.1. The scenario
+  "A conditional
   router without a judge stays a draft" asks one Given to show both. `standsIncomplete` in
   `router-node/router-reading.ts` reads the stored policy, so only a stored conditional router
   whose judge names a departed account wears the dashed frame. The withheld button and its reason
@@ -104,10 +105,11 @@ missing state rather than a missing string.
   the stored mode. A run against the built app pinned both readings apart. The stored router whose
   judge account left wears `node-card-drafted` and offers no withheld control, while the failover
   router mid-switch offers the withheld button and wears no dashed frame. The schema refuses a
-  conditional policy carrying no judge, so no third state joins the two. Closing this asks for a
-  renderer change rather than a step. The same run turned up two findings worth folding into it:
-  the router inspector prints the raw account id where a departed judge's account name belongs,
-  and the card caption still reads "one judge" beside the dashed frame.
+  conditional policy carrying no judge, so no third state joins the two. Closing this asked for a
+  renderer change rather than a step, and the Judge section now carries the reason beside the Edit
+  that binds another judge. The two findings the same run turned up were already answered: the
+  section prints a standing rather than the raw account id, and the card caption dropped "one
+  judge" for a reading that names the trouble the dashed frame is about.
 
 ## 7. The mode switch and the mode rows (replan, approved at the gate of 2026-08-19)
 
@@ -211,10 +213,10 @@ missing state rather than a missing string.
 
 ## 14. The judge completion gate (replan, approved 2026-08-20: the maintainer chose the build)
 
-- [ ] 14.1 A stored conditional router whose judge can't answer carries a completion reason in
+- [x] 14.1 A stored conditional router whose judge can't answer carries a completion reason in
       its inspector: the Judge section says the router routes nothing by rule until a judge
       binds, and the bind affordance leads there
-- [ ] 14.2 judge.feature graduates with its steps, and the outer loop runs green again
+- [x] 14.2 judge.feature graduates with its steps, and the outer loop runs green again
 - [x] 13.9 Withdrawn: neither the maintainer nor the harness could reproduce the sagging label.
       The five cable-geometry stories stay as regression locks, and the report returns if it
       shows again
@@ -229,5 +231,5 @@ missing state rather than a missing string.
 - [x] 15.3 The branch label matches the judge's answer trimmed, the same way it travels
 - [x] 15.4 The spent-router re-step never advances a rotation cursor for a child never offered,
       and a healthy target a decided branch made unreachable earns its note in the walk's account
-- [ ] 14.3 Switching a router away from conditional keeps a judge another surviving router still
+- [x] 14.3 Switching a router away from conditional keeps a judge another surviving router still
       asks, the same rule the subtree removal learned

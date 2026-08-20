@@ -99,10 +99,21 @@ export const JUDGE_BUDGET_MS = 2_000;
 /** One child of the router, wired and stored, holding the node id the policy names it by. */
 type BoundChild = { id: string; accountId: string; providerModel: string };
 
+/**
+ * An account id the registry never held, which is what leaves a stored judge unable to answer.
+ *
+ * @summary The stored shape refuses a conditional policy naming no judge, so a router that cannot
+ * route by rule is one whose judge stands on an account nobody connected. The table is lawful and
+ * the document lands in one write, exactly as a binding whose target left the registry does.
+ */
+export const AN_ACCOUNT_NOBODY_CONNECTED = 'nowhere';
+
 /** What a scenario asks a conditional router to stand as, where it differs from the plain one. */
 export type JudgedArrangement = {
   model: string;
   branches?: readonly JudgedBranch[];
+  /** The account the judge is paid for through, where a scenario means one the registry lacks. */
+  judgeAccountId?: string;
 };
 
 async function childStandsStored(
@@ -176,10 +187,19 @@ async function wiringOf(
     wired.push({ branch, child: await childStandsStored(page, stands.provider, branch.target) });
   }
 
+  const { judgeAccountId } = arrangement;
+
   return {
     wired,
     elseChild: await childStandsStored(page, stands.provider, ELSE_TARGET),
-    judge: await judgeStandsStored(page, stands.judge),
+    judge:
+      judgeAccountId === undefined
+        ? await judgeStandsStored(page, stands.judge)
+        : {
+            id: mintRouteNodeId(),
+            accountId: judgeAccountId,
+            providerModel: JUDGE_TARGET.providerModel,
+          },
   };
 }
 
