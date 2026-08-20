@@ -12,7 +12,7 @@ import type { NodePlace } from '../../lib/judge-cooldown';
 import type { WalkedRouteNode } from '../../lib/route-graph';
 import type { JudgeDirectiveProps } from '../judge-directive/judge-directive';
 
-import { accountProductName } from '../../../../entities/account';
+import { accountName } from '../../../../entities/account';
 import { conditionalIn } from '../../lib/conditional-policy';
 import { walkedRouteNodes } from '../../lib/route-graph';
 import { JudgeDirective } from '../judge-directive/judge-directive';
@@ -49,14 +49,14 @@ export function judgeBody(
   judge: JudgeBinding,
   subscriptions: readonly SubscriptionAccountView[],
 ): ReactNode {
-  const { account, accountId, providerModel, advises, directing, place } = judge;
+  const { account, providerModel, advises, directing, place } = judge;
 
   return subjectShell(
     {
       lead: glyph('brain'),
       leadClasses: 'bg-router text-highlight-ink',
       kicker: 'Judge',
-      name: account === undefined ? accountId : accountProductName(account),
+      name: account === undefined ? providerModel : accountName(account),
     },
     <>
       {sectionHeading('General info')}

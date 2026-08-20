@@ -60,6 +60,7 @@ const meta = preview.meta({
 /** The judge subject's body: what it classifies with, and the router whose branches it decides. */
 export const Basic = meta.story({
   play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('heading', { name: 'work' })).toBeVisible();
     await expect(await canvas.findByText('claude-haiku-4-5')).toBeVisible();
     await expect(await canvas.findByText('Conditional')).toBeVisible();
     await expect(await canvas.findByText('Bound')).toBeVisible();
@@ -82,7 +83,8 @@ export const ItSaysWhereTroubleLands = meta.story({
 export const AJudgeWhoseAccountLeft = meta.story({
   args: { judge: orphaned },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('heading', { name: 'gone' })).toBeVisible();
+    await expect(await canvas.findByRole('heading', { name: 'claude-haiku-4-5' })).toBeVisible();
+    await expect(canvas.queryByText('gone')).toBeNull();
     await expect(await canvas.findByText('Account left the registry')).toBeVisible();
   },
 });
