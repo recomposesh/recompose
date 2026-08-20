@@ -251,3 +251,10 @@ rather than a missing string, and section 14 built it, so judge graduated too.
       the same rule the removal and the switch learned
 - [x] 17.4 The off-branch sentence tells the truth when the judge never judged: trouble at the
       judge names the judge, not the branches
+
+## 18. The sixth testing pass (replan, approved 2026-08-20 afternoon)
+
+- [ ] 18.1 A subscription-bound judge classifies instead of landing everything on else, or the
+      inspector says that channel can't judge before a person binds it
+- [ ] 18.2 The tie pulses while the judge decides, fed by a content-free judging signal
+- [ ] 18.3 The rule preview line in a branch row is itself a press target opening the sheet
