@@ -126,7 +126,7 @@ function heldRow(child: RouterChild, onOpen: OpenChild): ReactElement {
 }
 
 export function ChildRow({ row, onOpen }: { row: LadderRow; onOpen: OpenChild }): ReactElement {
-  const { child, rank, onDrop, onDragStart } = row;
+  const { child, rank, onDrop, onDragStart, onEditRule } = row;
 
   if (child.inertReason !== undefined) {
     return heldRow(child, onOpen);
@@ -143,7 +143,7 @@ export function ChildRow({ row, onOpen }: { row: LadderRow; onOpen: OpenChild })
         render={<li />}
       >
         {rowLead(child, rank)}
-        <ChildFace child={child} onOpen={onOpen} />
+        <ChildFace child={child} onEditRule={onEditRule} onOpen={onOpen} />
         {moveButton(row, 'up')}
         {moveButton(row, 'down')}
         <span

@@ -257,7 +257,7 @@ rather than a missing string, and section 14 built it, so judge graduated too.
 - [x] 18.1 A subscription-bound judge classifies instead of landing everything on else, or the
       inspector says that channel can't judge before a person binds it
 - [ ] 18.2 The tie pulses while the judge decides, fed by a content-free judging signal
-- [ ] 18.3 The rule preview line in a branch row is itself a press target opening the sheet
+- [x] 18.3 The rule preview line in a branch row is itself a press target opening the sheet
 - [x] 18.4 The judge call earns its own log row carrying the model, the status, and the wait,
       never the request tail, so a person can watch judging happen
 - [ ] 18.5 The cable dragged from a draft virtual model asks the routing mode too: every path

@@ -11,6 +11,8 @@ import {
 } from '../../testing/router-child.testkit';
 import { ChildFace } from './child-face';
 
+const A_CODE_RULE = 'questions about source code, diffs, and build failures';
+
 const meta = preview.meta({
   component: ChildFace,
   args: { child: boundRow, onOpen: () => {} },
@@ -63,6 +65,31 @@ export const TheElseFaceCarriesItsReason = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText(/keeps an else branch/)).toBeVisible();
   },
+});
+
+/** Where a rule can be written, the rule line is the press that writes it. */
+export const TheRuleLineIsItsOwnPress = meta.story({
+  args: { child: branchRow, onEditRule: () => {} },
+  play: async ({ canvas }) => {
+    const preview = canvas.getByRole('button', { name: A_CODE_RULE });
+
+    await expect(preview).toBeVisible();
+    await expect(preview.tagName).toBe('BUTTON');
+  },
+});
+
+/** Without a way to write one, the rule stays a line to read rather than a press that goes nowhere. */
+export const AFaceThatCannotBeRuledOffersNoPress = meta.story({
+  args: { child: branchRow },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: A_CODE_RULE })).toBeNull();
+  },
+});
+
+/** The rule press in the dark scheme, where its focus ring and quiet ink both have to hold. */
+export const TheRuleLinePressInDarkScheme = meta.story({
+  args: { child: branchRow, onEditRule: () => {} },
+  globals: { theme: 'dark' },
 });
 
 /** A branch face in the dark scheme, where its word, its rule and its mark all have to hold. */

@@ -8,6 +8,13 @@ const AWAITING_ITS_WORDS = 'Needs a rule';
 
 const NO_RULE_YET = 'No rule yet, so the judge is never offered this branch.';
 
+const FACE_STACK =
+  'flex min-h-hit-target min-w-0 flex-1 flex-col items-start justify-center gap-0.5 py-0.5 text-start';
+
+const WHOLE_FACE = `${FACE_STACK} rounded-control focus-ring`;
+
+const LINE_FACE = 'flex w-full min-w-0 rounded-control focus-ring text-start';
+
 /**
  * The word the judge answers with for this row, and how many conversations it currently holds.
  *
@@ -44,6 +51,8 @@ function branchLine(child: RouterChild): ReactElement | null {
   );
 }
 
+const RULE_LINE_FACE = 'w-full truncate rounded-control text-start text-detail text-ink-secondary';
+
 /**
  * The rule this branch routes by, in one line, with the whole of it a press away in the sheet.
  *
@@ -51,24 +60,56 @@ function branchLine(child: RouterChild): ReactElement | null {
  * bound by cable and left unruled receives nothing and a blank row would read as a working branch.
  * The else row shows its reason here instead: it catches what no rule placed, so a rule is the one
  * thing it cannot have, and the reason reads where every other row explains itself.
+ *
+ * Where a rule can be written, the line is the press that writes it, sitting outside the face's own
+ * button rather than inside it: the sentence a person reads is the surest thing to aim at, and the
+ * row menu that carried the only way here was a gesture nothing on screen advertised. It names
+ * itself with that same sentence, so the target a pointer takes and the one a reader hears are one.
  */
-function ruleLine(child: RouterChild): ReactElement | null {
+function elseReasonLine(reason: string): ReactElement {
+  return (
+    <span className="w-full text-detail text-ink-secondary" data-else-reason="">
+      {reason}
+    </span>
+  );
+}
+
+function ruleSpoken(child: RouterChild): string | undefined {
+  if (child.label === undefined && child.rule === undefined) {
+    return undefined;
+  }
+
+  return child.rule ?? NO_RULE_YET;
+}
+
+function ruleLine(child: RouterChild, onEditRule: (() => void) | undefined): ReactElement | null {
   if (child.inertReason !== undefined) {
+    return elseReasonLine(child.inertReason);
+  }
+
+  const spoken = ruleSpoken(child);
+
+  if (spoken === undefined) {
+    return null;
+  }
+
+  if (onEditRule === undefined) {
     return (
-      <span className="w-full text-detail text-ink-secondary" data-else-reason="">
-        {child.inertReason}
+      <span className={RULE_LINE_FACE} data-rule-preview="">
+        {spoken}
       </span>
     );
   }
 
-  if (child.label === undefined && child.rule === undefined) {
-    return null;
-  }
-
   return (
-    <span className="w-full truncate text-detail text-ink-secondary" data-rule-preview="">
-      {child.rule ?? NO_RULE_YET}
-    </span>
+    <button
+      className={`${RULE_LINE_FACE} focus-ring`}
+      data-rule-preview=""
+      onClick={onEditRule}
+      type="button"
+    >
+      {spoken}
+    </button>
   );
 }
 
@@ -109,21 +150,35 @@ function destinationLine(child: RouterChild): ReactElement {
 export function ChildFace({
   child,
   onOpen,
+  onEditRule,
 }: {
   child: RouterChild;
   onOpen: OpenChild;
+  onEditRule?: (() => void) | undefined;
 }): ReactElement {
+  const opening = (): void => {
+    onOpen(child);
+  };
+
+  if (onEditRule === undefined) {
+    return (
+      <button className={WHOLE_FACE} onClick={opening} type="button">
+        {branchLine(child)}
+        {ruleLine(child, undefined)}
+        {destinationLine(child)}
+      </button>
+    );
+  }
+
   return (
-    <button
-      className="flex min-h-hit-target min-w-0 flex-1 flex-col items-start justify-center gap-0.5 rounded-control focus-ring py-0.5 text-start"
-      onClick={() => {
-        onOpen(child);
-      }}
-      type="button"
-    >
-      {branchLine(child)}
-      {ruleLine(child)}
-      {destinationLine(child)}
-    </button>
+    <span className={FACE_STACK}>
+      <button className={LINE_FACE} onClick={opening} type="button">
+        {branchLine(child)}
+      </button>
+      {ruleLine(child, onEditRule)}
+      <button className={LINE_FACE} onClick={opening} type="button">
+        {destinationLine(child)}
+      </button>
+    </span>
   );
 }

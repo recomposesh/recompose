@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import type { RouterMode } from '../../lib/routing-edits';
+import type { OpenChild } from './router-child';
 import type { RouterChild } from './router-child-list';
 
 import { RouterChildList } from './router-child-list';
@@ -155,4 +156,85 @@ test('a row context menu carries the same two commands the buttons do', async ()
 
   await expect.element(screen.getByRole('menuitem', { name: 'Move up' })).toBeVisible();
   await expect.element(screen.getByRole('menuitem', { name: 'Move down' })).toBeVisible();
+});
+
+const A_CODE_RULE = 'Questions about source code, diffs, and build failures';
+
+const NO_RULE_YET = 'No rule yet, so the judge is never offered this branch.';
+
+const aCodeBranch: RouterChild = {
+  routeNodeId: 'b1',
+  cardId: 'target:fast@b1',
+  name: 'Work key',
+  detail: 'gpt-5',
+  label: 'code',
+  rule: A_CODE_RULE,
+};
+
+type BranchActs = {
+  onEditRule?: OpenChild | undefined;
+  onOpen?: OpenChild | undefined;
+  rows?: readonly RouterChild[] | undefined;
+};
+
+const nothingHappens: OpenChild = () => {};
+
+async function renderBranchLadder(acts: BranchActs = {}) {
+  return render(
+    <RouterChildList
+      mode="conditional"
+      onDeleteBranch={nothingHappens}
+      onEditRule={acts.onEditRule ?? nothingHappens}
+      onMove={() => {}}
+      onOpen={acts.onOpen ?? nothingHappens}
+      rows={acts.rows ?? [aCodeBranch]}
+    />,
+  );
+}
+
+test('the rule a branch routes by is a press target of its own, named by the rule it shows', async () => {
+  const screen = await renderBranchLadder();
+  const preview = screen.container.querySelector('[data-rule-preview]');
+
+  expect(preview?.tagName).toBe('BUTTON');
+  expect(preview).toHaveAccessibleName(A_CODE_RULE);
+});
+
+test('pressing the rule preview asks for that branch’s rule rather than opening the child', async () => {
+  const worded: string[] = [];
+  const opened: string[] = [];
+  const screen = await renderBranchLadder({
+    onEditRule: (child) => {
+      worded.push(child.routeNodeId);
+    },
+    onOpen: (child) => {
+      opened.push(child.routeNodeId);
+    },
+  });
+
+  await userEvent.click(screen.getByRole('button', { name: A_CODE_RULE }));
+
+  expect(worded).toEqual(['b1']);
+  expect(opened).toEqual([]);
+});
+
+test('a branch still waiting for its words offers the same press target, saying it owes one', async () => {
+  const screen = await renderBranchLadder({ rows: [{ ...aCodeBranch, rule: undefined }] });
+  const preview = screen.container.querySelector('[data-rule-preview]');
+
+  expect(preview?.tagName).toBe('BUTTON');
+  expect(preview).toHaveAccessibleName(NO_RULE_YET);
+});
+
+test('a row no rule can reach keeps one face, so the ladder grows no press target it cannot use', async () => {
+  const screen = await render(
+    <RouterChildList
+      mode="failover"
+      onMove={() => {}}
+      onOpen={() => {}}
+      rows={[{ routeNodeId: 'n1', cardId: 'target:fast@n1', name: 'Work key', detail: 'gpt-5' }]}
+    />,
+  );
+
+  expect(screen.container.querySelectorAll('[data-rule-preview]')).toHaveLength(0);
 });
