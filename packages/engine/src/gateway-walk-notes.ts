@@ -54,7 +54,7 @@ const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
  *
  * @summary The walk records facts and no copy at all, so the sentence a person reads is written here
  * and only here. A status appears only where a provider answered with one, so the two reasons that
- * carry one are split from the four that were never answered at all.
+ * carry one are split from every reason nothing ever answered for.
  */
 function whyOf(note: WalkNote): string {
   const reason = note.reason;
