@@ -67,7 +67,7 @@ async function frameOf(card: Locator): Promise<{ style: string; color: string }>
   });
 }
 
-/** The colour one design token resolves to on this screen, so no reading hardcodes a value. */
+/** The color one design token resolves to on this screen, so no reading hardcodes a value. */
 async function tokenColor(page: Page, token: string): Promise<string> {
   return page.evaluate((named) => {
     const probe = document.createElement('span');
@@ -166,7 +166,7 @@ Then("it names the judge's account and provider model", async ({ judge, page }) 
 /**
  * @summary The satellite sheds its caption, so the ring is the whole of what the canvas says about
  * a cooling judge. It is measured against the attention token as the screen resolves it rather
- * than against a written colour, which would pass on a scheme that never painted it.
+ * than against a written color, which would pass on a scheme that never painted it.
  */
 Then('the judge node wears its cooling state', async ({ page }) => {
   const attention = await tokenColor(page, '--color-attention');

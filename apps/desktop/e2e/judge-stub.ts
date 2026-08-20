@@ -174,7 +174,7 @@ async function answerAsked(
  * @summary The path is never checked, because the judge's dialect decides where the engine posts and
  * a scenario is describing what the judge said rather than which vendor spelling carried it. Every
  * call is kept whole rather than parsed, so a scenario proving that the labels and their rules
- * travelled reads the very text that left the machine.
+ * traveled reads the very text that left the machine.
  */
 function judgeServer(desk: JudgeDesk): Server {
   return createServer((request, response) => {

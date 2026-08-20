@@ -180,7 +180,7 @@ export const ConditionalSaysWhatASwitchWouldNeed = meta.story({
 });
 
 /**
- * Choosing conditional on a childful router opens the definition over the children it holds.
+ * Choosing conditional on a router holding children opens the definition over the children it holds.
  *
  * @summary Nothing is stored by the choice itself, because the stored shape refuses a conditional
  * router missing a judge or a worded branch. The bindings a person already made arrive as draft

@@ -166,8 +166,8 @@ export type PickerWalk = {
  * Walks an ask the way a person does, standing the picker back up between every answer.
  *
  * @summary The page holds one standing at a time and each answer writes the next one, so a
- * scenario about a walk several answers long has to restand the picker between them exactly as the
- * page does. Threading that here keeps each scenario about the answers rather than the restanding.
+ * scenario about a walk several answers long has to stand the picker back up between them exactly as the
+ * page does. Threading that here keeps each scenario about the answers rather than the standing back up.
  * An answer that stood no new picker leaves the walk where it was, so a refusal reads as the ask
  * still standing rather than as the ask closing.
  */

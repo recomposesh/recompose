@@ -89,11 +89,11 @@ describe('a router that asks a judge which branch a request belongs to', () => {
 
 describe('a conditional router whose branches name what its children do not hold', () => {
   test('a router carrying no else at all is refused, and the refusal names the else', () => {
-    const elseless = conditionalPolicy();
+    const missingElse = conditionalPolicy();
 
-    delete elseless['elseChild'];
+    delete missingElse['elseChild'];
 
-    expect(refusalsFor(routingSortedBy(elseless)).map((refusal) => refusal.path)).toEqual([
+    expect(refusalsFor(routingSortedBy(missingElse)).map((refusal) => refusal.path)).toEqual([
       ['nodes', 'sorter', 'policy', 'elseChild'],
     ]);
   });

@@ -64,7 +64,7 @@ type JudgeBody = { read: unknown } | { unread: true };
 /**
  * Whether a judge binding can be spent on a classification at all.
  *
- * @summary Only a binding nothing resolved is unspendable. A plan channel was read as unspendable
+ * @summary Only a binding nothing resolved spends nothing. A plan channel was read as spending nothing
  * once, on the belief that it had nowhere to put a schema, and that belief was wrong: it posts the
  * same body to the same origin a keyed account does, and its dialect closes the answer the same way.
  * Refusing it here made a person who bound their own plan watch every request land on else with

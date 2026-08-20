@@ -73,7 +73,7 @@ function halo(drawn: string, stroke: string): ReactNode {
 /**
  * The tint a pulse paints in, which on a tie is the router's own rather than a standing's.
  *
- * @summary A tie carries no request, so a standing colour there would claim one travelled it. The
+ * @summary A tie carries no request, so a standing color there would claim one traveled it. The
  * tint stays the one the tie already draws in, and the pulse reads as the same cable moving.
  */
 function pulseStrokeOf(carried: unknown, edgeId: string): string {

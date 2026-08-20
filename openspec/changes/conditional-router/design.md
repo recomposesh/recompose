@@ -321,7 +321,7 @@ Tasks 2 and 3 run in sequence because task 3 consumes the signature task 2 hands
 - The union member is additive. Every stored gateway document parses unchanged, because discriminated unions ignore members they don't use.
 - No data migration runs. A document gains the variant only when a person switches a router to conditional.
 - Rollback before any router switches is free. After a switch, an older build refuses the document at parse, so the release notes name the one-way door.
-- The feature ships in the ordinary desktop release train behind no flag: an unswitched router behaves exactly as before.
+- The feature ships in the ordinary desktop release train behind no flag: a router nobody switched behaves exactly as before.
 
 ## Open questions
 

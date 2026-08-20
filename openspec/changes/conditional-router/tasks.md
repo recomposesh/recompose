@@ -116,7 +116,7 @@ rather than a missing string, and section 14 built it, so judge graduated too.
 - [x] 7.1 Specify the switch to conditional entering definition state: storable once a judge
       binds, every non-else child holds a label and a rule, and the last declared child stands
       as else
-- [x] 7.2 The inspector opens the switch definition on a childful router, and the childless
+- [x] 7.2 The inspector opens the switch definition on a router holding children, and the childless
       reason stays
 - [x] 7.3 Existing children arrive as draft branches, amber until labeled and ruled, following
       the fresh-switch screen
