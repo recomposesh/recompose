@@ -218,3 +218,18 @@ export function seatForNewNode(column: number, placed: NodePositions): XY {
 
   return { x, y: Math.max(...standing.map((seat) => seat.y)) + ROW_PITCH };
 }
+
+/**
+ * Where a card born from another card stands, which is the row the card that asked stands on.
+ *
+ * @summary A cable between two cards on one row runs flat, and that is the whole reason: a born
+ * card sent to its column's next free row lands above or below the card it answers to, and the
+ * cable draws a cramped S to cross back. The row gives way only when something already stands in
+ * it, because two cards in one seat is worse than a bent cable.
+ */
+export function seatBesideAsker(column: number, asker: XY, placed: NodePositions): XY {
+  const x = column * COLUMN_PITCH;
+  const taken = Object.values(placed).some((seat) => seat.x === x && seat.y === asker.y);
+
+  return taken ? seatForNewNode(column, placed) : { x, y: asker.y };
+}

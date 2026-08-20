@@ -51,19 +51,34 @@ describe('a child born under a router a cable was dropped from', () => {
     expect(bornSeats().map((seat) => seat.x)).toEqual([3 * columnStep()]);
   });
 
-  test('stands below whatever already stands in that column, rather than on top of it', () => {
+  test('gives up its router’s row rather than land on a card already standing there', () => {
     const { world } = worldWhereWritesLand(gatewayOfAJudgedRouter(), {
       graph: judgedCanvas(),
       picker: droppedOnAStoredChild,
       seats: {
         [LADDER]: { x: 2 * columnStep(), y: 0 },
-        'target:judged:c1': { x: 3 * columnStep(), y: 300 },
+        'target:judged:c1': { x: 3 * columnStep(), y: 0 },
       },
     });
 
     completedChildPick(world, JUDGED_ADDRESS, 'k1', 'claude-opus-5');
 
-    expect(bornSeats().every((seat) => seat.y > 300)).toBe(true);
+    expect(bornSeats().every((seat) => seat.y > 0)).toBe(true);
+  });
+
+  test("takes its router's own row while that row stands free, so the cable runs flat", () => {
+    const { world } = worldWhereWritesLand(gatewayOfAJudgedRouter(), {
+      graph: judgedCanvas(),
+      picker: droppedOnAStoredChild,
+      seats: {
+        [LADDER]: { x: 2 * columnStep(), y: 300 },
+        'target:judged:c1': { x: 3 * columnStep(), y: 900 },
+      },
+    });
+
+    completedChildPick(world, JUDGED_ADDRESS, 'k1', 'claude-opus-5');
+
+    expect(bornSeats().map((seat) => seat.y)).toEqual([300]);
   });
 });
 

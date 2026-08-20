@@ -13,6 +13,7 @@ import {
   CARD_MEASURE,
   columnBeyond,
   SATELLITE_MEASURE,
+  seatBesideAsker,
   seatForNewNode,
 } from '../../lib/tidy-layout';
 
@@ -28,16 +29,24 @@ export type CanvasAsks = {
 export type MovedSeat = { id: string; to: XY; settled: boolean };
 
 /**
- * Where a card bound from another one stands, which is the free row beyond the card that asked.
+ * Where a card bound from another one stands, which is the asking card's row one column beyond.
  *
  * @summary A request travels left to right, so what a card binds stands beyond it however the
  * binding was asked for: a plus, a cable let go on open canvas, and a cable let go on a stored
  * target all grow the composition the same direction. The column counts out of the asking card's
  * own depth rather than off the binding column, because a child of a router two deep would
- * otherwise land back beside the virtual model with its cable running the wrong way.
+ * otherwise land back beside the virtual model with its cable running the wrong way. The row is
+ * the asker's own, so the cable between the two runs flat rather than bending across a row to
+ * reach a card standing beside it. A card whose seat nobody knows falls back to the free row,
+ * since a row that cannot be read cannot be shared.
  */
 export function seatBeyond(nodes: readonly CanvasNode[], seats: NodePositions, from: string): XY {
-  return seatForNewNode(columnBeyond(nodes.find((node) => node.id === from)), seats);
+  const column = columnBeyond(nodes.find((node) => node.id === from));
+  const asker = seats[from];
+
+  return asker === undefined
+    ? seatForNewNode(column, seats)
+    : seatBesideAsker(column, asker, seats);
 }
 
 /** The definition id inside a model card's node id, or nothing for any other card. */

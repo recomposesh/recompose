@@ -196,7 +196,7 @@ missing state rather than a missing string.
 
 - [ ] 13.1 A born gateway's camera fits its nodes, and opening a gateway never shows a half-cut
       card
-- [ ] 13.2 A router born from a virtual model seats on the model's own row, so the cable runs
+- [x] 13.2 A router born from a virtual model seats on the model's own row, so the cable runs
       flat
 - [x] 13.3 The satellite's tie gains reading room, and the model caption under the satellite
       leaves
