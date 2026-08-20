@@ -208,3 +208,10 @@ missing state rather than a missing string.
       the word
 - [ ] 13.8 The app shell never scrolls: the canvas swallows its own wheel, and the bottom bar
       stays glued to the window edge
+
+## 14. The judge completion gate (replan, approved 2026-08-20: the maintainer chose the build)
+
+- [ ] 14.1 A stored conditional router whose judge can't answer carries a completion reason in
+      its inspector: the Judge section says the router routes nothing by rule until a judge
+      binds, and the bind affordance leads there
+- [ ] 14.2 judge.feature graduates with its steps, and the outer loop runs green again
