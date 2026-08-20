@@ -44,8 +44,9 @@ export const DeletingAsksAndNamesTheCost = meta.story({
   play: async ({ canvas }) => {
     await pickedFromTheRowMenu(await canvas.findByText('code'), 'Delete branch');
 
-    await expect(await screen.findByRole('heading', { name: 'Delete the code branch?' })) //
-      .toBeVisible();
+    const asking = await screen.findByRole('heading', { name: 'Delete the code branch?' });
+
+    await expect(asking).toBeVisible();
     await expect(await screen.findByText(/fall to else/)).toBeVisible();
   },
 });

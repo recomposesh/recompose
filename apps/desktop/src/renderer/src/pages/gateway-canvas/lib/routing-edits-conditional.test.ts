@@ -49,8 +49,9 @@ test('two fresh conditional routers stand under ids of their own, judges and all
   const one = routedThroughAConditionalRouter(judge, catchAll);
   const other = routedThroughAConditionalRouter(judge, catchAll);
 
-  expect(Object.keys(one.nodes).some((id) => Object.hasOwn(other.nodes, id))) //
-    .toBe(false);
+  const shared = Object.keys(one.nodes).filter((id) => Object.hasOwn(other.nodes, id));
+
+  expect(shared).toEqual([]);
 });
 
 test('binding a judge points the router at a target the table now holds', () => {

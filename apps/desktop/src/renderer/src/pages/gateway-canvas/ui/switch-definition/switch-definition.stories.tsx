@@ -55,8 +55,9 @@ const meta = preview.meta({
  */
 export const NothingWordedYet = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: 'Switch to conditional' })) //
-      .toBeDisabled();
+    const switching = await canvas.findByRole('button', { name: 'Switch to conditional' });
+
+    await expect(switching).toBeDisabled();
     await expect(await canvas.findByText(/Nothing is stored until/)).toBeVisible();
   },
 });
@@ -94,8 +95,9 @@ export const EveryBranchWorded = meta.story({
 export const AWholeDefinitionCanLand = meta.story({
   args: { held: worded },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: 'Switch to conditional' })) //
-      .toBeEnabled();
+    const switching = await canvas.findByRole('button', { name: 'Switch to conditional' });
+
+    await expect(switching).toBeEnabled();
     await expect(canvas.queryByText(/Nothing is stored until/)).toBeNull();
   },
 });

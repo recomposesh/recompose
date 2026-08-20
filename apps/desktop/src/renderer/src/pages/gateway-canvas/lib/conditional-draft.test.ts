@@ -86,8 +86,9 @@ test('ruling a branch writes those words on that child and leaves every sibling 
 test('ruling a child this switch does not hold leaves every branch exactly as it stood', () => {
   const held = ruledSwitch();
 
-  expect(switchRuling(held, 'c9', { label: 'nope', rule: 'nowhere' }).branches) //
-    .toEqual(held.branches);
+  const ruled = switchRuling(held, 'c9', { label: 'nope', rule: 'nowhere' });
+
+  expect(ruled.branches).toEqual(held.branches);
 });
 
 test('binding a judge leaves the branches exactly as they stood, since only the reader moved', () => {

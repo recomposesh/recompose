@@ -1,71 +1,31 @@
-import type { GatewayConfig, RouteNode, VirtualModel } from '@recompose/contracts';
-
 import { expect, screen } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import type { StoredRouter } from './router-inspector';
 
-import { gatewaySeed } from '../../../../shared/testing';
 import { pushingPins } from '../../testing/engine-pushes.testkit';
 import { servingBridgeWorld, storedAccounts } from '../../testing/gateway-canvas.testkit';
-import { judgedRouter } from '../../testing/routed-gateways.testkit';
+import {
+  judgedRouter,
+  pooledFailover,
+  pooledModel,
+  pooledOnlyGateway,
+  pooledRotating,
+} from '../../testing/routed-gateways.testkit';
 import { pickedFromTheRowMenu } from '../../testing/router-child.testkit';
 import { framedAsDrawerBox } from '../../testing/subject-shell.testkit';
 import { RouterInspector } from './router-inspector';
-
-const failover: StoredRouter = {
-  kind: 'router',
-  policy: { mode: 'failover' },
-  children: ['t1', 't2'],
-};
-
-const rotating: StoredRouter = { ...failover, policy: { mode: 'round-robin' } };
-
-const judgeNode: RouteNode = {
-  kind: 'target',
-  accountId: 'k1',
-  providerModel: 'claude-haiku-4-5',
-};
-
-/**
- * The virtual model every reading stands on, holding the judge only where a policy names one.
- *
- * @summary A judge node under a router that never reads its requests would be a node no reference
- * reaches, which is a table the stored shape refuses, so it arrives only with the mode that names it.
- */
-function pooled(router: StoredRouter, judged = false): VirtualModel {
-  return {
-    id: 'pooled',
-    displayName: 'Pooled',
-    routing: {
-      entry: 'r1',
-      nodes: {
-        r1: router,
-        t1: { kind: 'target', accountId: 'k1', providerModel: 'claude-haiku-4-5' },
-        t2: { kind: 'target', accountId: 'g1', providerModel: 'openai/gpt-5' },
-        ...(judged ? { j1: judgeNode } : {}),
-      },
-    },
-  };
-}
-
-const gateway: GatewayConfig = gatewaySeed({
-  slug: 'my-gateway',
-  displayName: 'My Gateway',
-  port: 8397,
-  virtualModels: [pooled(failover)],
-});
 
 const meta = preview.meta({
   component: RouterInspector,
   args: {
     accounts: storedAccounts.accounts,
-    gateway,
-    model: pooled(failover),
+    gateway: pooledOnlyGateway,
+    model: pooledModel(pooledFailover),
     onSelectNode: () => {},
     routeNodeId: 'r1',
-    router: failover,
+    router: pooledFailover,
   },
   decorators: [framedAsDrawerBox],
   parameters: { bridge: servingBridgeWorld },
@@ -86,7 +46,7 @@ export const FailoverSaysWhichEndWins = meta.story({
 
 /** Under round-robin the sentence names the prompt-cache cost, and no row carries a rank. */
 export const RoundRobinNamesThePromptCacheCost = meta.story({
-  args: { model: pooled(rotating), router: rotating },
+  args: { model: pooledModel(pooledRotating), router: pooledRotating },
   play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByText(/prompt cache/)).toBeVisible();
     await expect(canvasElement.querySelectorAll('[data-rank]')).toHaveLength(0);
@@ -105,7 +65,7 @@ const rejudging: StoredRouter = {
 
 /** A conditional router names the judge it reads through and says what shape of model suits it. */
 export const ConditionalNamesItsJudge = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Judge')).toBeVisible();
     await expect(await canvas.findByText(/Fast, cheap models judge best/)).toBeVisible();
@@ -119,7 +79,7 @@ export const ConditionalNamesItsJudge = meta.story({
  * heading they have to translate into one.
  */
 export const TheRhythmSectionNamesItsAct = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas }) => {
     await expect(
       await canvas.findByRole('heading', { name: 'Re-judge every request' }),
@@ -129,7 +89,7 @@ export const TheRhythmSectionNamesItsAct = meta.story({
 
 /** Resting, the sentence says a conversation stays on the branch it first earned. */
 export const ConditionalKeepsTheBranchItEarned = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas }) => {
     await expect(
       await canvas.findByRole('switch', { name: 'Re-judge every request' }),
@@ -140,18 +100,18 @@ export const ConditionalKeepsTheBranchItEarned = meta.story({
 
 /** Switched on, the sentence says the judge reads every request and names the one exception. */
 export const ConditionalRejudgingSaysWhatItDoes = meta.story({
-  args: { model: pooled(rejudging, true), router: rejudging },
+  args: { model: pooledModel(rejudging, true), router: rejudging },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText(/picks a branch for every request/)).toBeVisible();
     await expect(await canvas.findByText(/server-held state/)).toBeVisible();
   },
 });
 
-const childless = { ...failover, children: [] };
+const childless = { ...pooledFailover, children: [] };
 
 const emptyRouter = {
   model: {
-    ...pooled(failover),
+    ...pooledModel(pooledFailover),
     routing: { entry: 'r1', nodes: { r1: childless } },
   },
   router: childless,
@@ -164,7 +124,7 @@ const emptyRouter = {
  * judge leaves with it, so the press asks first and the rows snap back where they refuse.
  */
 export const LeavingConditionalAsksFirst = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(await canvas.findByRole('radio', { name: 'Failover' }));
 
@@ -206,10 +166,11 @@ export const ChoosingConditionalOpensTheDefinition = meta.story({
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(await canvas.findByRole('radio', { name: 'Conditional' }));
 
+    const switching = await canvas.findByRole('button', { name: 'Switch to conditional' });
+
     await expect(await canvas.findByText('Needs a rule')).toBeVisible();
     await expect(await canvas.findByText('Else')).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Switch to conditional' })) //
-      .toBeDisabled();
+    await expect(switching).toBeDisabled();
   },
 });
 
@@ -227,9 +188,10 @@ export const WordingOneBranchLeavesTheRestOwing = meta.story({
     await userEvent.type(await screen.findByLabelText('Rule'), 'questions about source code');
     await userEvent.click(await screen.findByRole('button', { name: 'Save branch' }));
 
+    const switching = await canvas.findByRole('button', { name: 'Switch to conditional' });
+
     await expect(await canvas.findByText('code')).toBeVisible();
-    await expect(await canvas.findByRole('button', { name: 'Switch to conditional' })) //
-      .toBeDisabled();
+    await expect(switching).toBeDisabled();
   },
 });
 
@@ -251,18 +213,19 @@ export const CancellingTheSwitchStoresNothing = meta.story({
  * fixing a typo never reads two buttons to find the safe one.
  */
 export const DeletingABranchNamesItsCost = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas }) => {
     await pickedFromTheRowMenu(await canvas.findByText('code'), 'Delete branch');
 
-    await expect(await screen.findByRole('heading', { name: 'Delete the code branch?' })) //
-      .toBeVisible();
+    const asking = await screen.findByRole('heading', { name: 'Delete the code branch?' });
+
+    await expect(asking).toBeVisible();
   },
 });
 
 /** Editing a rule opens the sheet on the branch a person asked about, holding its own words. */
 export const EditingARuleOpensTheSheet = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas }) => {
     await pickedFromTheRowMenu(await canvas.findByText('code'), 'Edit rule');
 
@@ -278,7 +241,7 @@ export const EditingARuleOpensTheSheet = meta.story({
  * inspector stands open moves the number under a person's eyes with nothing on screen polling.
  */
 export const BranchRowsCountTheirPinnedConversations = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   decorators: [pushingPins({ 'my-gateway': { pooled: { r1: { t1: 3 } } } })],
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('3 pinned')).toBeVisible();
@@ -287,7 +250,7 @@ export const BranchRowsCountTheirPinnedConversations = meta.story({
 
 /** The conditional inspector in the dark scheme, where the judge box sits on the drawer panel. */
 export const ConditionalDarkScheme = meta.story({
-  args: { model: pooled(judging, true), router: judging },
+  args: { model: pooledModel(judging, true), router: judging },
   globals: { theme: 'dark' },
 });
 

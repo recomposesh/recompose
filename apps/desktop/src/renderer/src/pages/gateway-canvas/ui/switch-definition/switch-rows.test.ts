@@ -24,8 +24,9 @@ const ruled = switchRuling(opened, 'c1', {
 });
 
 test('every existing child arrives as a row a person can still reach and open', () => {
-  expect(switchDefinitionRows(three, opened).map((row) => row.name)) //
-    .toEqual(['work', 'spare', 'Ollama']);
+  const named = switchDefinitionRows(three, opened).map((row) => row.name);
+
+  expect(named).toEqual(['work', 'spare', 'Ollama']);
 });
 
 test('a branch nobody has worded yet arrives blank, so no row claims a rule nobody wrote', () => {
@@ -59,14 +60,16 @@ test('a judge bound partway through changes no row, since only the reader moved'
 test('the rows read in the order the definition arranged them, so a move reads as it landed', () => {
   const moved = switchReordering(ruled, 0, 2);
 
-  expect(switchDefinitionRows(three, moved).map((row) => row.name)) //
-    .toEqual(['spare', 'Ollama', 'work']);
+  const named = switchDefinitionRows(three, moved).map((row) => row.name);
+
+  expect(named).toEqual(['spare', 'Ollama', 'work']);
   expect(switchDefinitionRows(three, moved).at(-1)?.label).toBe('Else');
 });
 
 test('a child the ladder no longer holds stands no row, since there is no binding to open', () => {
-  expect(switchDefinitionRows(three.slice(0, 2), opened).map((row) => row.name)) //
-    .toEqual(['work', 'spare']);
+  const named = switchDefinitionRows(three.slice(0, 2), opened).map((row) => row.name);
+
+  expect(named).toEqual(['work', 'spare']);
 });
 
 test('a router holding one child offers it as the else alone, with nothing left to word', () => {

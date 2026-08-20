@@ -102,6 +102,43 @@ export const judgedRouter = {
   children: ['t1', 't2'],
 } as const satisfies RouteNode;
 
+/** The pooled router in each spreading mode, which the inspector readings stand one of. */
+export const pooledFailover = {
+  kind: 'router',
+  policy: { mode: 'failover' },
+  children: ['t1', 't2'],
+} as const satisfies RouteNode;
+
+/** The same pool spreading round-robin, so a reading about the other mode changes nothing else. */
+export const pooledRotating = {
+  ...pooledFailover,
+  policy: { mode: 'round-robin' },
+} as const satisfies RouteNode;
+
+/**
+ * The model every inspector reading stands on, holding the judge only where a policy names one.
+ *
+ * @summary A judge node under a router that never reads its requests would be a node no reference
+ * reaches, which is a table the stored shape refuses, so it arrives only with the mode that names it.
+ */
+export function pooledModel(router: RouteNode, judged = false): VirtualModel {
+  return {
+    id: 'pooled',
+    displayName: 'Pooled',
+    routing: {
+      entry: 'r1',
+      nodes: { r1: router, t1: HAIKU, t2: GPT, ...(judged ? { j1: HAIKU } : {}) },
+    },
+  };
+}
+
+/** The pool standing alone as a gateway, for the readings that hold one router and nothing else. */
+export const pooledOnlyGateway: GatewayConfig = pooledSeed({
+  r1: pooledFailover,
+  t1: HAIKU,
+  t2: GPT,
+});
+
 /** A pool that judge decides, standing beside the judge target its policy names. */
 const judgedGateway: GatewayConfig = pooledSeed({
   r1: judgedRouter,
