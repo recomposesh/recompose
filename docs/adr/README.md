@@ -155,3 +155,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0147](0147-the-license-gate-reads-what-a-release-installs.md)                  | The license gate reads what a release installs                                      | Accepted   | 2026-08-20 |
 | [0148](0148-the-docs-and-its-search-answer-from-the-build.md)                   | The docs and its search answer from the build                                       | Accepted   | 2026-08-20 |
 | [0149](0149-the-ruleset-file-holds-the-checks-that-can-report.md)               | The ruleset file holds the checks that can report                                   | Accepted   | 2026-08-20 |
+| [0150](0150-the-release-build-signs-without-a-network-monitor.md)               | The release build signs without a network monitor                                   | Accepted   | 2026-08-20 |

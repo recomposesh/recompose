@@ -56,6 +56,7 @@ cliproxyapi
 Codechecks
 codegen
 coderabbit
+codesign
 collab
 Commvault
 componentwise
