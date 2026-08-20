@@ -21,6 +21,16 @@ test('no mode a person picks carries the pill glyph in the word it answers to', 
   }
 });
 
+test('every mode leads with a mark, and no two modes lead with the same one', () => {
+  const marks = modeOptions.map((option) => option.glyph);
+
+  expect(new Set(marks).size).toBe(modeOptions.length);
+});
+
+test('the conditional mode leads with the mark its own card already wears', () => {
+  expect(modeOptions.find((option) => option.value === 'conditional')?.glyph).toBe('branch');
+});
+
 test('the conditional sentence names the judge and where an unplaced request lands', () => {
   expect(modeSentences.conditional).toContain('judge');
   expect(modeSentences.conditional).toContain('else');

@@ -201,7 +201,7 @@ missing state rather than a missing string.
 - [ ] 13.3 The satellite's tie gains reading room, and the model caption under the satellite
       leaves
 - [x] 13.4 The satellite wears a brain mark instead of the magnifier
-- [ ] 13.5 The mode rows carry an icon beside each title
+- [x] 13.5 The mode rows carry an icon beside each title
 - [x] 13.6 The classification prompt preview names its filling slots with placeholders, and an
       empty branch list says it holds nothing yet
 - [x] 13.7 The router kicker never truncates: beside a mode pill it keeps its glyph and yields

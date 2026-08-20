@@ -18,6 +18,9 @@ const sprite: IconName[] = [
   'gear',
   'terminal',
   'brain',
+  'branch',
+  'renew',
+  'stack',
 ];
 
 const meta = preview.meta({
