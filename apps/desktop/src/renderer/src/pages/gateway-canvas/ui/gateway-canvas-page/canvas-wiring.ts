@@ -224,6 +224,7 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
       failure: edge.failure,
       branch: edge.branch,
       wording: edge.wording,
+      judging: edge.judging,
     },
     selected: edge.id === selection,
     ...(bindingCableId(edge.id) === undefined

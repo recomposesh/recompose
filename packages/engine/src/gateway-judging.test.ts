@@ -109,7 +109,7 @@ describe('the judge a serving gateway hands the walk', () => {
     );
     const judged = judgedRouting(watched.scene);
 
-    await expect(judged.classifyBranch(JUDGE, BRANCHES)).resolves.toEqual({
+    await expect(judged.classifyBranch(LADDER, JUDGE, BRANCHES)).resolves.toEqual({
       heard: 'answer',
       label: 'code',
     });
@@ -122,7 +122,7 @@ describe('the judge a serving gateway hands the walk', () => {
       Response.json({ choices: [{ message: { content: 'code' } }] }),
     );
 
-    await judgedRouting(watched.scene).classifyBranch(JUDGE, BRANCHES);
+    await judgedRouting(watched.scene).classifyBranch(LADDER, JUDGE, BRANCHES);
 
     expect(watched.asked.at(0)).toMatchObject({ model: 'gpt-5-nano' });
   });
@@ -132,7 +132,7 @@ describe('the judge a serving gateway hands the walk', () => {
       Response.json({ choices: [{ message: { content: 'code' } }] }),
     );
 
-    await judgedRouting(watched.scene).classifyBranch(JUDGE, BRANCHES);
+    await judgedRouting(watched.scene).classifyBranch(LADDER, JUDGE, BRANCHES);
 
     expect(watched.asked.at(0)).not.toMatchObject({ model: CROSSING.providerModel });
   });
@@ -145,7 +145,9 @@ describe('the judge a serving gateway cannot seat at all', () => {
       () => Response.json({}),
     );
 
-    await expect(judgedRouting(watched.scene).classifyBranch(JUDGE, BRANCHES)).resolves.toEqual({
+    await expect(
+      judgedRouting(watched.scene).classifyBranch(LADDER, JUDGE, BRANCHES),
+    ).resolves.toEqual({
       heard: 'refusal',
     });
     expect(watched.askedFor).toEqual([]);
@@ -156,7 +158,7 @@ describe('the judge a serving gateway cannot seat at all', () => {
     const watched = judging(aJudgedTable(), () => Response.json({}));
 
     await expect(
-      judgedRouting(watched.scene).classifyBranch('stranger', BRANCHES),
+      judgedRouting(watched.scene).classifyBranch(LADDER, 'stranger', BRANCHES),
     ).resolves.toEqual({ heard: 'refusal' });
     expect(watched.sentTo).toEqual([]);
   });
@@ -164,7 +166,7 @@ describe('the judge a serving gateway cannot seat at all', () => {
   test('a judge no router names costs neither a credential nor a stand-down', async () => {
     const watched = judging(aJudgedTable(), () => Response.json({}));
 
-    await judgedRouting(watched.scene).classifyBranch('stranger', BRANCHES);
+    await judgedRouting(watched.scene).classifyBranch(LADDER, 'stranger', BRANCHES);
 
     expect(watched.askedFor).toEqual([]);
     expect(
@@ -182,7 +184,7 @@ describe('the judge a serving gateway stands down', () => {
     const watched = judging(aJudgedTable(), () => new Response('{}', { status: 429 }));
     const judged = judgedRouting(watched.scene);
 
-    await judged.classifyBranch(JUDGE, BRANCHES);
+    await judged.classifyBranch(LADDER, JUDGE, BRANCHES);
 
     expect(
       watched.scene.memory.ledger.coolingAt({

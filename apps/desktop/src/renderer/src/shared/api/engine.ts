@@ -2,6 +2,7 @@ import type {
   EngineStates,
   GatewayBranchPins,
   GatewayCooldowns,
+  GatewayJudging,
   GatewayEngineState,
   GatewayTraffic,
   IpcRequest,
@@ -20,6 +21,8 @@ const NOTHING_HAS_FLOWED: GatewayTraffic = {};
 const NOTHING_IS_PINNED: GatewayBranchPins = {};
 
 const NOTHING_STANDS_DOWN: GatewayCooldowns = {};
+
+const NOBODY_IS_JUDGING: GatewayJudging = {};
 
 export const engineStatesQueryOptions = queryOptions({
   queryKey: ['engine-states'],
@@ -130,6 +133,29 @@ export function bindEngineCooldownsToCache(
 ): () => void {
   return subscribe((cooling) => {
     queryClient.setQueryData(engineCooldownsQueryOptions.queryKey, cooling);
+  });
+}
+
+/**
+ * How many classifications each conditional router is waiting on right now.
+ *
+ * @summary Held apart from the cooldowns and the pins because it moves on a judge call opening and
+ * closing rather than on anything being stored, and a snapshot carrying all three would repaint
+ * each at the others' pace. It starts empty, so a canvas nothing is judging on reads as still.
+ */
+export const engineJudgingQueryOptions = queryOptions({
+  queryKey: ['engine-judging'],
+  queryFn: skipToken,
+  initialData: NOBODY_IS_JUDGING,
+});
+
+/** Points the judging push at the query cache and hands back the way to stop listening. */
+export function bindEngineJudgingToCache(
+  queryClient: QueryClient,
+  subscribe: RecomposeIpcEvents['engine:judging'] = window.recomposeEvents['engine:judging'],
+): () => void {
+  return subscribe((judging) => {
+    queryClient.setQueryData(engineJudgingQueryOptions.queryKey, judging);
   });
 }
 

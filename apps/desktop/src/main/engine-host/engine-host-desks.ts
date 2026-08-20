@@ -3,11 +3,13 @@ import type { EngineGateway } from '@recompose/contracts';
 import type { BranchPinDesk } from './branch-pins-ledger';
 import type { CooldownDesk } from './cooldowns-ledger';
 import type { EngineHostDeps } from './engine-host-types';
+import type { JudgingDesk } from './judging-ledger';
 import type { LogsDesk } from './logs-ledger';
 import type { TrafficDesk } from './traffic-ledger';
 
 import { openBranchPinDesk } from './branch-pins-ledger';
 import { openCooldownDesk } from './cooldowns-ledger';
+import { openJudgingDesk } from './judging-ledger';
 import { openLogsDesk } from './logs-ledger';
 import { openTrafficDesk } from './traffic-ledger';
 
@@ -22,15 +24,22 @@ export type EngineDesks = {
   traffic: TrafficDesk;
   pins: BranchPinDesk;
   cooling: CooldownDesk;
+  judging: JudgingDesk;
   logs: LogsDesk;
 };
 
+/** The handler a desk pushes through, or one that pushes nowhere when the host wired none. */
+function pushingTo<Reading>(handler: ((reading: Reading) => void) | undefined) {
+  return handler ?? ((): void => undefined);
+}
+
 export function openEngineDesks(deps: EngineHostDeps): EngineDesks {
   return {
-    traffic: openTrafficDesk(deps.onTraffic ?? (() => undefined)),
-    pins: openBranchPinDesk(deps.onBranchPins ?? (() => undefined)),
-    cooling: openCooldownDesk(deps.onCooldowns ?? (() => undefined)),
-    logs: openLogsDesk(deps.onLogs ?? (() => undefined), deps.onSettledRow),
+    traffic: openTrafficDesk(pushingTo(deps.onTraffic)),
+    pins: openBranchPinDesk(pushingTo(deps.onBranchPins)),
+    cooling: openCooldownDesk(pushingTo(deps.onCooldowns)),
+    judging: openJudgingDesk(pushingTo(deps.onJudging)),
+    logs: openLogsDesk(pushingTo(deps.onLogs), deps.onSettledRow),
   };
 }
 
@@ -39,6 +48,7 @@ export function aDeskHeardIt(desks: EngineDesks, message: unknown): boolean {
     desks.traffic.hears(message) ||
     desks.pins.hears(message) ||
     desks.cooling.hears(message) ||
+    desks.judging.hears(message) ||
     desks.logs.hears(message)
   );
 }
@@ -55,6 +65,7 @@ export function desksInterrupted(desks: EngineDesks, slug: string): void {
   desks.traffic.interrupt(slug);
   desks.pins.forget(slug);
   desks.cooling.forget(slug);
+  desks.judging.forget(slug);
   desks.logs.interrupt(slug);
 }
 
@@ -62,6 +73,7 @@ export function desksForget(desks: EngineDesks, slug: string): void {
   desks.traffic.forget(slug);
   desks.pins.forget(slug);
   desks.cooling.forget(slug);
+  desks.judging.forget(slug);
   desks.logs.forget(slug);
 }
 

@@ -54,12 +54,13 @@ describe('the channel vocabulary', () => {
 });
 
 describe('the push vocabulary', () => {
-  test('the state, traffic, pin, cooldown, logs, account-change, and command pushes are the complete vocabulary', () => {
+  test('the state, traffic, pin, cooldown, judging, logs, account-change, and command pushes are the complete vocabulary', () => {
     expectTypeOf<IpcEvent>().toEqualTypeOf<
       | 'engine:state'
       | 'engine:traffic'
       | 'engine:pins'
       | 'engine:cooldowns'
+      | 'engine:judging'
       | 'engine:logs'
       | 'accounts:changed'
       | 'canvas:command'

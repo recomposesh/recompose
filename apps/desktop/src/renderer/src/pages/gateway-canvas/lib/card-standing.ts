@@ -1,6 +1,7 @@
 import type {
   GatewayConfig,
   GatewayCooldowns,
+  GatewayJudging,
   GatewayTraffic,
   RequestOutcome,
 } from '@recompose/contracts';
@@ -23,19 +24,33 @@ export type SeatedCard = { placed: PlacedRouteNode; card: CanvasNode };
 export type EngineReadings = {
   carried: CarriedTraffic;
   standingDown: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  judging: Readonly<Record<string, Readonly<Record<string, number>>>>;
   now: number;
 };
+
+/** What the engine says is happening now, which the cards and the ties read themselves against. */
+export type LiveReadings = {
+  cooling?: GatewayCooldowns | undefined;
+  judging?: GatewayJudging | undefined;
+};
+
+type PerRouteNode = Readonly<Record<string, Readonly<Record<string, number>>>>;
+
+function underGateway(held: Readonly<Record<string, PerRouteNode>> | undefined, slug: string) {
+  return held?.[slug] ?? {};
+}
 
 /** Everything live the cards of one gateway read themselves against, gathered once per draw. */
 export function readingsFor(
   gateway: GatewayConfig,
   traffic: GatewayTraffic,
   now: number,
-  cooling: GatewayCooldowns,
+  live: LiveReadings = {},
 ): EngineReadings {
   return {
     carried: carriedBy(gateway, traffic, now),
-    standingDown: cooling[gateway.slug] ?? {},
+    standingDown: underGateway(live.cooling, gateway.slug),
+    judging: underGateway(live.judging, gateway.slug),
     now,
   };
 }

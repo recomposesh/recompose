@@ -4,10 +4,12 @@ import type { RoutingMemory } from './gateway-routing-memory';
 import type { SpendGrantFor } from './gateway-spend';
 import type { Crossing } from './gateway-wire';
 import type { BranchClassifier, JudgedRequest } from './routing/judge-decision';
+import type { JudgeReading } from './routing/outcome-classification';
 import type { RouteNodeAddress } from './routing/route-node-key';
 import type { SubscriptionRuntime } from './subscription/reach';
 
 import { conversationFingerprint } from './gateway-conversation-key';
+import { judgingBegan } from './gateway-judging-watch';
 import { noteJudgeRow } from './gateway-traffic';
 import { readingOfTheJudge } from './provider/judge-call';
 import { reachSubscription } from './subscription/reach';
@@ -80,31 +82,54 @@ function addressOf(scene: JudgingScene, routeNode: string): RouteNodeAddress {
   return { slug: scene.slug, virtualModel: scene.virtualModel, routeNode };
 }
 
+/**
+ * One classification, with the router's own tie lit for exactly as long as it waits.
+ *
+ * @summary The signal begins after the seat resolves rather than before, because a table that seats
+ * no judge makes no call and a tie that pulsed for it would promise a person that something was
+ * being decided. It settles in a finally, so a judge that threw leaves no router pulsing forever.
+ */
+async function whileTheRouterWaits(
+  scene: JudgingScene,
+  routeNode: string,
+  asking: () => Promise<JudgeReading>,
+): Promise<JudgeReading> {
+  const settle = judgingBegan(addressOf(scene, routeNode));
+
+  try {
+    return await asking();
+  } finally {
+    settle();
+  }
+}
+
 function classifierFor(scene: JudgingScene): BranchClassifier {
-  return async (judge, branches, directive) => {
+  return async (routeNode, judge, branches, directive) => {
     const seat = await seatOfTheJudge(scene, judge);
 
     if (seat === undefined) return { heard: 'refusal' };
 
-    return readingOfTheJudge({
-      grant: seat.grant,
-      providerModel: seat.providerModel,
-      sourceDialect: scene.crossing.dialect,
-      gatewayName: scene.crossing.gatewayName,
-      virtualModel: scene.virtualModel,
-      branches,
-      directive,
-      raw: scene.crossing.raw,
-      boundMs: seat.boundMs,
-      fetchLike: scene.fetchLike,
-      reachSubscription: async (spending, asked) =>
-        reachSubscription(spending, asked, scene.subscriptions),
-      noteJudged: noteJudgeRow,
-      now: scene.memory.now,
-      cool: (cooling) => {
-        scene.memory.ledger.cool(addressOf(scene, judge), cooling);
-      },
-    });
+    return whileTheRouterWaits(scene, routeNode, async () =>
+      readingOfTheJudge({
+        grant: seat.grant,
+        providerModel: seat.providerModel,
+        sourceDialect: scene.crossing.dialect,
+        gatewayName: scene.crossing.gatewayName,
+        virtualModel: scene.virtualModel,
+        branches,
+        directive,
+        raw: scene.crossing.raw,
+        boundMs: seat.boundMs,
+        fetchLike: scene.fetchLike,
+        reachSubscription: async (spending, asked) =>
+          reachSubscription(spending, asked, scene.subscriptions),
+        noteJudged: noteJudgeRow,
+        now: scene.memory.now,
+        cool: (cooling) => {
+          scene.memory.ledger.cool(addressOf(scene, judge), cooling);
+        },
+      }),
+    );
   };
 }
 

@@ -30,6 +30,7 @@ export type CanvasEdge = {
   branch?: BranchSeat | undefined;
   wording?: CableWording | undefined;
   sourceHandle?: string | undefined;
+  judging?: boolean | undefined;
 };
 
 /** What names one virtual model's card apart from every other card on the canvas. */
@@ -131,6 +132,7 @@ export function tieOnto(
   placed: PlacedRouteNode,
   card: CanvasNode,
   carried: RequestOutcome | undefined,
+  judging = false,
 ): CanvasEdge {
   return {
     id: `tie:${placed.name}`,
@@ -139,6 +141,7 @@ export function tieOnto(
     target: card.id,
     standing: standingCarried(carried) ?? 'resting',
     failure: undefined,
+    judging,
   };
 }
 

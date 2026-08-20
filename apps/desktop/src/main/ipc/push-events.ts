@@ -2,6 +2,7 @@ import type {
   EngineStates,
   GatewayBranchPins,
   GatewayCooldowns,
+  GatewayJudging,
   GatewayTraffic,
   IpcEventPayload,
   LogBatch,
@@ -32,6 +33,12 @@ export function pushEngineBranchPins(pinning: GatewayBranchPins): void {
 export function pushEngineCooldowns(cooling: GatewayCooldowns): void {
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send('engine:cooldowns', cooling);
+  }
+}
+
+export function pushEngineJudging(judging: GatewayJudging): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('engine:judging', judging);
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Account, GatewayConfig, VirtualModel } from '@recompose/contracts';
+import type { Account, GatewayConfig, GatewayJudging, VirtualModel } from '@recompose/contracts';
 
 import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
@@ -50,8 +50,10 @@ const codex: GatewayConfig = {
   layout: { nodes: {} },
 };
 
-function graph(): CanvasGraph {
-  return canvasGraph(codex, [work], { draft: undefined, pending: undefined });
+function graph(judging: GatewayJudging = {}): CanvasGraph {
+  return canvasGraph(codex, [work], { draft: undefined, pending: undefined }, {}, [], Date.now(), {
+    judging,
+  });
 }
 
 function tieIn(edges: readonly CanvasEdge[]): CanvasEdge | undefined {
@@ -93,4 +95,26 @@ test('the judge takes no binding cable of its own, because no request is routed 
     'target:fast:first',
     'target:fast:second',
   ]);
+});
+
+test('the tie lights while the router it leaves is waiting on its judge', () => {
+  const tie = tieIn(graph({ codex: { fast: { ladder: 1 } } }).edges);
+
+  expect(tie?.judging).toBe(true);
+});
+
+test('the tie rests once the classification settles', () => {
+  const tie = tieIn(graph({ codex: { fast: { ladder: 0 } } }).edges);
+
+  expect(tie?.judging).toBe(false);
+});
+
+test('a count filed under the judge rather than the router lights nothing', () => {
+  const tie = tieIn(graph({ codex: { fast: { advisor: 1 } } }).edges);
+
+  expect(tie?.judging).toBe(false);
+});
+
+test('a tie whose gateway is judging nothing rests', () => {
+  expect(tieIn(graph().edges)?.judging).toBe(false);
 });

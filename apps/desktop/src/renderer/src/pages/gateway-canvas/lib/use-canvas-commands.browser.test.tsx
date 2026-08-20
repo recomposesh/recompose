@@ -25,6 +25,7 @@ beforeEach(() => {
     'engine:traffic': () => () => undefined,
     'engine:pins': () => () => undefined,
     'engine:cooldowns': () => () => undefined,
+    'engine:judging': () => () => undefined,
     'engine:logs': () => () => undefined,
     'accounts:changed': () => () => undefined,
     'settings:changed': () => () => undefined,

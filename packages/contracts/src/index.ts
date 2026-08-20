@@ -12,6 +12,7 @@ export * from './engine-state';
 export * from './engine-traffic';
 export * from './engine-branch-pins';
 export * from './engine-cooldowns';
+export * from './engine-judging';
 export * from './engine-logs';
 export * from './file-browser';
 export * from './usage';

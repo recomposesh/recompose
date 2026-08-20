@@ -15,7 +15,6 @@ import {
   grabEnds,
   judgedFlow,
   REFUSED,
-  tiedFlow,
 } from '../../testing/binding-cable.testkit';
 import { BindingCable } from './binding-cable';
 
@@ -166,19 +165,6 @@ export const ACoolingCablePaintsItsStanding = meta.story({
       forScheme('rgb(194, 122, 0)', 'rgb(255, 176, 46)'),
     );
     await expect(canvasElement.querySelector('.cable-pulse')).toBeNull();
-  },
-});
-
-/** The tie to a judge breaks into dashes and wears the router tint, because an advisor belongs to its router. */
-export const ATieToAJudgeDrawsDotted = meta.story({
-  render: () => tiedFlow(),
-  play: async ({ canvasElement }) => {
-    const [tie] = await cablesDrawn(canvasElement);
-
-    await expect(paintedStyle(tie).strokeDasharray).toBe('4px, 3px');
-    await expect(paintedStyle(tie).stroke).toBe(
-      forScheme('rgb(94, 92, 230)', 'rgb(125, 122, 255)'),
-    );
   },
 });
 

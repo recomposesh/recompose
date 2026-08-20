@@ -22,6 +22,7 @@ import {
   bindAccountChangesToCache,
   bindEngineBranchPinsToCache,
   bindEngineCooldownsToCache,
+  bindEngineJudgingToCache,
   bindEngineLogsToCache,
   bindEngineStatesToCache,
   bindEngineTrafficToCache,
@@ -114,6 +115,7 @@ function usePushedCaches(queryClient: QueryClient): void {
   useEffect(() => bindEngineTrafficToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineBranchPinsToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineCooldownsToCache(queryClient), [queryClient]);
+  useEffect(() => bindEngineJudgingToCache(queryClient), [queryClient]);
   useEffect(() => bindEngineLogsToCache(queryClient), [queryClient]);
   useEffect(() => bindAccountChangesToCache(queryClient), [queryClient]);
   useEffect(() => bindSettingsToCache(queryClient), [queryClient]);

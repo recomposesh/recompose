@@ -2,6 +2,7 @@ import type {
   EngineStates,
   GatewayBranchPins,
   GatewayCooldowns,
+  GatewayJudging,
   GatewayTraffic,
   LogBatch,
   LogRow,
@@ -168,4 +169,14 @@ export function replayEngineLogs(): void {
   }
 
   engineLogsLine.emit({ kind: 'backfill', rows: [...servedRows] });
+}
+
+const engineJudgingLine = aPushLine<GatewayJudging>();
+
+export function forgetEngineJudgingListeners(): void {
+  engineJudgingLine.forget();
+}
+
+export function listenForEngineJudging(listener: (judging: GatewayJudging) => void): () => void {
+  return engineJudgingLine.listen(listener);
 }

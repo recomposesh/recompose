@@ -22,11 +22,13 @@ import { accountHandlers } from './fake-accounts';
 import {
   forgetEngineBranchPinListeners,
   forgetEngineCooldownListeners,
+  forgetEngineJudgingListeners,
   forgetEngineLogsListeners,
   forgetEngineStateListeners,
   forgetEngineTrafficListeners,
   listenForEngineBranchPins,
   listenForEngineCooldowns,
+  listenForEngineJudging,
   listenForEngineLogs,
   listenForEngineStates,
   listenForEngineTraffic,
@@ -126,6 +128,7 @@ function eventBridge(): RecomposeIpcEvents {
     'engine:traffic': (listener) => listenForEngineTraffic(listener),
     'engine:pins': (listener) => listenForEngineBranchPins(listener),
     'engine:cooldowns': (listener) => listenForEngineCooldowns(listener),
+    'engine:judging': (listener) => listenForEngineJudging(listener),
     'engine:logs': (listener) => listenForEngineLogs(listener),
     'accounts:changed': () => () => undefined,
     'canvas:command': () => () => undefined,
@@ -212,6 +215,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   forgetEngineTrafficListeners();
   forgetEngineBranchPinListeners();
   forgetEngineCooldownListeners();
+  forgetEngineJudgingListeners();
   forgetEngineLogsListeners();
   forgetUsageCommandListeners();
   forgetViewCommandListeners();

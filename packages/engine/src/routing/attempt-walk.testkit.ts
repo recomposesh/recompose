@@ -85,7 +85,7 @@ export function aJudgeAnswering(...readings: readonly JudgeReading[]): AskedJudg
 
   return {
     asked,
-    classifyBranch: async (judge) => {
+    classifyBranch: async (_routeNode, judge) => {
       asked.push(judge);
 
       return Promise.resolve(readings[asked.length - 1] ?? readings.at(-1) ?? { heard: 'timeout' });

@@ -150,6 +150,11 @@ export function tiedFlow(): ReactElement {
   return cardsWiredBy({ standing: 'resting' }, 'tie:fast:advisor');
 }
 
+/** The same tie while the router it leaves is waiting on the judge at its other end. */
+export function tiedFlowWhileJudging(): ReactElement {
+  return cardsWiredBy({ standing: 'resting', judging: true }, 'tie:fast:advisor');
+}
+
 /**
  * The same two cards with a cable handed nothing to carry at all.
  *

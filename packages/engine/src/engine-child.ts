@@ -3,6 +3,7 @@ import {
   engineBranchPinReportSchema,
   engineCooldownReportSchema,
   engineDirectiveSchema,
+  engineJudgingReportSchema,
   engineLogReportSchema,
   engineReportSchema,
   engineTrafficReportSchema,
@@ -17,6 +18,7 @@ import { openCredentialUpdateLane, openSpendLane } from './engine-child-lanes';
 import { createEngineRuntime, type EngineRuntime, type OpenListeners } from './engine-runtime';
 import { subscribeToBranchPinTallies } from './gateway-branch-pins-watch';
 import { subscribeToCooldowns } from './gateway-cooldowns-watch';
+import { subscribeToJudging } from './gateway-judging-watch';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { loopbackOverrideOrNull } from './loopback-override';
@@ -195,6 +197,25 @@ function tellingTheParentEveryBranchTally(parentPort: ParentPort): void {
 }
 
 /**
+ * Tells the parent while one router waits on its judge, so a tie can pulse for exactly that long.
+ *
+ * @summary The report carries a count and a place and nothing else, which is what lets it cross a
+ * lane a screen reads without ever carrying a caller's words. A dropped report only costs one frame
+ * of a pulse, so it is logged and stepped over rather than failing the request that raised it.
+ */
+function tellingTheParentEveryJudging(parentPort: ParentPort): void {
+  subscribeToJudging(({ address, judging }) => {
+    try {
+      parentPort.postMessage(
+        engineJudgingReportSchema.parse({ kind: 'judging', ...address, judging }),
+      );
+    } catch (failure) {
+      console.error(`The engine child dropped a judging signal for "${address.slug}".`, failure);
+    }
+  });
+}
+
+/**
  * Tells the parent when one route node stands back up, the moment it is told to stand down.
  *
  * @summary The address the store cools under is the address the report files under, so the parent
@@ -238,6 +259,7 @@ export function attachEngineChild(
   tellingTheParentEveryLogRow(parentPort);
   tellingTheParentEveryBranchTally(parentPort);
   tellingTheParentEveryCooldown(parentPort);
+  tellingTheParentEveryJudging(parentPort);
 
   parentPort.on('message', (messageEvent) => {
     if (spendLane.settle(messageEvent.data) || credentialLane.settle(messageEvent.data)) {

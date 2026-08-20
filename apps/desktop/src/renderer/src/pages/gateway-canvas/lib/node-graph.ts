@@ -1,7 +1,6 @@
 import type {
   Account,
   GatewayConfig,
-  GatewayCooldowns,
   GatewayTraffic,
   RequestOutcome,
   SubscriptionAccountView,
@@ -12,7 +11,7 @@ import type { CarriedTraffic } from './cable-traffic';
 import type { CanvasEdge } from './canvas-cables';
 import type { CanvasNode, PlacedRouteNode, Registry } from './canvas-cards';
 import type { XY } from './canvas-positions';
-import type { EngineReadings, SeatedCard } from './card-standing';
+import type { EngineReadings, LiveReadings, SeatedCard } from './card-standing';
 
 import { latestAcrossNodes, outcomesThroughRouters } from './cable-traffic';
 import {
@@ -25,6 +24,7 @@ import {
 } from './canvas-cables';
 import { routeCard } from './canvas-cards';
 import { cardStanding, readingsFor } from './card-standing';
+import { heldAt } from './held-at';
 import { addressName } from './route-addresses';
 import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
@@ -96,6 +96,24 @@ function outcomeOnto(
     : painted[placed.walked.routeNodeId];
 }
 
+/**
+ * Whether the router this judge advises is waiting on it right now.
+ *
+ * @summary The count is read under the router rather than the judge, because a judge two routers
+ * share would otherwise light both ties when only one of them asked.
+ */
+function judgingTheTieDraws(
+  placed: PlacedRouteNode,
+  readings: EngineReadings,
+  model: string,
+): boolean {
+  const advises = placed.walked.advises;
+
+  return advises === undefined
+    ? false
+    : (heldAt(heldAt(readings.judging, model), advises) ?? 0) > 0;
+}
+
 function routedCards(
   model: VirtualModel,
   registry: Registry,
@@ -110,7 +128,12 @@ function routedCards(
   const edges = seated.map(({ placed, card }) =>
     placed.walked.advises === undefined
       ? cableInto(placed, card, outcomeOnto(placed, painted, throughRouters))
-      : tieOnto(placed, card, painted[placed.walked.routeNodeId]),
+      : tieOnto(
+          placed,
+          card,
+          painted[placed.walked.routeNodeId],
+          judgingTheTieDraws(placed, readings, model.id),
+        ),
   );
 
   return {
@@ -185,12 +208,12 @@ export function canvasGraph(
   traffic: GatewayTraffic = {},
   subscriptions: readonly SubscriptionAccountView[] = [],
   now: number = Date.now(),
-  cooling: GatewayCooldowns = {},
+  live: LiveReadings = {},
 ): CanvasGraph {
   const { nodes, edges } = servedGraph(
     gateway,
     { accounts, subscriptions },
-    readingsFor(gateway, traffic, now, cooling),
+    readingsFor(gateway, traffic, now, live),
   );
 
   appendDraftCard(nodes, edges, overlay.draft);

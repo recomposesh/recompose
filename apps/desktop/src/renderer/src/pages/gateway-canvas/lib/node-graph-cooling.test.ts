@@ -56,7 +56,7 @@ const FIVE_PAST = NOON + 300_000;
 function judgeIn(cooling: GatewayCooldowns, now = NOON): CanvasNode | undefined {
   const nothingOverlaid = { draft: undefined, pending: undefined };
 
-  return canvasGraph(codex, [work], nothingOverlaid, {}, [], now, cooling).nodes.find(
+  return canvasGraph(codex, [work], nothingOverlaid, {}, [], now, { cooling }).nodes.find(
     (node) => node.kind === 'judge',
   );
 }

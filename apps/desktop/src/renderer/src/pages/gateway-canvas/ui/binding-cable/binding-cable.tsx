@@ -70,6 +70,29 @@ function halo(drawn: string, stroke: string): ReactNode {
   );
 }
 
+/**
+ * The tint a pulse paints in, which on a tie is the router's own rather than a standing's.
+ *
+ * @summary A tie carries no request, so a standing colour there would claim one travelled it. The
+ * tint stays the one the tie already draws in, and the pulse reads as the same cable moving.
+ */
+function pulseStrokeOf(carried: unknown, edgeId: string): string {
+  return drawnAsATie(edgeId) ? 'stroke-router' : strokeForStanding(carried);
+}
+
+/**
+ * Whether this cable pulses, which a tie answers from its router rather than from any traffic.
+ *
+ * @summary A tie pulses for exactly as long as the router it leaves is waiting on its judge, which
+ * is the one thing on this canvas that says a decision is being made rather than a request carried.
+ * Nothing about the classification reaches here: the cable is told a boolean and paints it.
+ */
+function pulseTraveling(held: Record<string, unknown>, edgeId: string, carried: unknown): string {
+  if (!drawnAsATie(edgeId)) return pulseForStanding(carried);
+
+  return held['judging'] === true ? 'cable-pulse' : '';
+}
+
 function pulse(drawn: string, stroke: string, traveling: string): ReactNode {
   return traveling === '' ? null : (
     <path className={`${traveling} ${stroke}`} d={drawn} pathLength={1} />
@@ -177,7 +200,7 @@ export function BindingCable(cable: EdgeProps): ReactElement {
         path={drawn}
         style={tieDashing(cable.id)}
       />
-      {pulse(drawn, strokeForStanding(carried), pulseForStanding(carried))}
+      {pulse(drawn, pulseStrokeOf(carried, cable.id), pulseTraveling(held, cable.id, carried))}
       {chosen ? grabEnds(cable, tintForStanding(carried)) : null}
       {branchDrawn(held, drawn, midpoint)}
       {lastError(failureIn(held['failure']), midpoint)}

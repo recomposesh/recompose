@@ -6,7 +6,16 @@ import type { BranchChoice, BranchRule, ConditionalPolicy } from './policies';
 import { classifyJudge } from './outcome-classification';
 import { branchWearingTheLabel, childTheLabelNames } from './policies';
 
+/**
+ * How one router asks its judge, naming itself as well as the judge it asks.
+ *
+ * @summary The router rides along because a person watching the canvas watches the router's own
+ * tie, and one judge two routers share would otherwise light a cable that is not waiting on it.
+ * Nothing here is content: the branches and the directive are the router's own words, never the
+ * caller's.
+ */
 export type BranchClassifier = (
+  routeNode: string,
   judge: string,
   branches: readonly BranchRule[],
   directive?: string,
@@ -45,6 +54,7 @@ export type Judging = {
 };
 
 type BranchQuestion = {
+  routeNode: string;
   judge: string;
   branches: readonly BranchRule[];
   directive: string | undefined;
@@ -92,6 +102,7 @@ function fellToElseUnjudged(elseChild: string): Decided {
 
 async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
   return asking.classify(
+    asking.question.routeNode,
     asking.question.judge,
     asking.question.branches,
     asking.question.directive,
@@ -180,6 +191,7 @@ function questionOf(
   judging: Judging,
 ): BranchQuestion {
   return {
+    routeNode,
     judge: policy.judge,
     branches: policy.branches,
     directive: policy.directive,

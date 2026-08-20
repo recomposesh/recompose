@@ -10,6 +10,7 @@ describe('the lifecycle push', () => {
     'engine:traffic',
     'engine:pins',
     'engine:cooldowns',
+    'engine:judging',
     'engine:logs',
     'accounts:changed',
     'canvas:command',
@@ -21,7 +22,7 @@ describe('the lifecycle push', () => {
     'subscriptions:launch-refused',
   ];
 
-  test('exactly the state, traffic, pin, cooldown, logs, account-change, command, settings, devtools, and launch-refused pushes exist', () => {
+  test('exactly the state, traffic, pin, cooldown, judging, logs, account-change, command, settings, devtools, and launch-refused pushes exist', () => {
     expect(Object.keys(ipcEvents)).toEqual(eventNames);
   });
 
