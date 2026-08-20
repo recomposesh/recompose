@@ -240,3 +240,14 @@ rather than a missing string, and section 14 built it, so judge graduated too.
 - [ ] 16.2 Nesting a router under any router asks the routing mode instead of assuming failover,
       and a nested conditional walks the same judge and else steps
 - [ ] 16.3 The branch label always paints above every cable, whatever stands selected
+
+## 17. The triage round (maintainer-approved past the three-round cap)
+
+- [ ] 17.1 An off-branch note never suppresses the retry promise: the wait comes from the
+      children the walk tried, so a rate-limit exhaustion keeps its 429 and its retry-after
+- [ ] 17.2 Round-robin keeps spreading under concurrency: a turn commits at the pick, and a
+      descent that lands nowhere hands the turn back
+- [ ] 17.3 Rebinding a judge keeps the old judge while another surviving router still asks it,
+      the same rule the removal and the switch learned
+- [ ] 17.4 The off-branch sentence tells the truth when the judge never judged: trouble at the
+      judge names the judge, not the branches
