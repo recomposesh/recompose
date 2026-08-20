@@ -2,21 +2,18 @@ import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
 import type { BranchClassifier, Judging } from './judge-decision';
-import type { AttemptReading, AttemptReason } from './outcome-classification';
+import type { AttemptReading } from './outcome-classification';
 import type { RotationCursors } from './rotation-cursors';
-import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
+import type { Walking, WalkStep } from './walk-descent';
+import type { WalkNote } from './walk-notes';
 
-import { branchTheWalkFollows } from './judge-decision';
 import { classify } from './outcome-classification';
-import { childTheModeOffers } from './policies';
 import { childlessRouterTheTableHolds, targetsInDeclaredOrder } from './route-table';
+import { addressOf, stepTheWalkTakesNext } from './walk-descent';
+import { noteOf, retryTimeEveryNotePromised } from './walk-notes';
 
 export const ATTEMPT_LIMIT = 8;
-
-type NoteReason = AttemptReason | { because: 'cooling' };
-
-type WalkNote = { routeNode: string; reason: NoteReason; retryAtMs?: number };
 
 type WalkVerdict<TAnswer> =
   | { outcome: 'answered'; routeNode: string; answer: TAnswer }
@@ -40,47 +37,6 @@ export type WalkRequest<TAnswer> = {
   attempt: (routeNode: string) => Promise<AttemptReading<TAnswer>>;
 };
 
-type Walking = {
-  routing: EngineRouting;
-  slug: string;
-  virtualModel: string;
-  ledger: CooldownLedger;
-  cursors: RotationCursors;
-  resumesServerState: boolean;
-  attempted: Map<string, WalkNote>;
-  judging: Judging;
-};
-
-type WalkStep =
-  | { at: 'target'; routeNode: string }
-  | { at: 'rotation'; routeNode: string; router: EngineRouter }
-  | { at: 'nowhere' };
-
-function addressOf(walking: Walking, routeNode: string): RouteNodeAddress {
-  return { slug: walking.slug, virtualModel: walking.virtualModel, routeNode };
-}
-
-function canAttempt(walking: Walking, routeNode: string): boolean {
-  return (
-    !walking.attempted.has(routeNode) &&
-    walking.ledger.coolingAt(addressOf(walking, routeNode)) === undefined
-  );
-}
-
-function subtreeCanServe(walking: Walking, routeNode: string, passed: Set<string>): boolean {
-  if (passed.has(routeNode)) return false;
-
-  passed.add(routeNode);
-
-  const node = walking.routing.nodes[routeNode];
-
-  if (node === undefined) return false;
-
-  if (node.kind === 'target') return canAttempt(walking, routeNode);
-
-  return node.children.some((child) => subtreeCanServe(walking, child, passed));
-}
-
 function judgingOf<TAnswer>(request: WalkRequest<TAnswer>): Judging {
   const { slug, virtualModel } = request;
 
@@ -93,70 +49,6 @@ function judgingOf<TAnswer>(request: WalkRequest<TAnswer>): Judging {
       request.ledger.coolingAt({ slug, virtualModel, routeNode: judge }) !== undefined,
     decided: new Map(),
   };
-}
-
-async function childTheRouterOffers(
-  walking: Walking,
-  routeNode: string,
-  router: EngineRouter,
-  path: ReadonlySet<string>,
-): Promise<string | undefined> {
-  const address = addressOf(walking, routeNode);
-  const policy = router.policy;
-
-  return childTheModeOffers(policy.mode, {
-    children: router.children,
-    canServe: (child) => subtreeCanServe(walking, child, new Set(path)),
-    turn: {
-      cursor: () => walking.cursors.cursorAt(address),
-      advanceTo: (cursor) => {
-        walking.cursors.advanceTo(address, cursor);
-      },
-    },
-    branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
-  });
-}
-
-function stepAtTarget(walking: Walking, routeNode: string): WalkStep {
-  return canAttempt(walking, routeNode) ? { at: 'target', routeNode } : { at: 'nowhere' };
-}
-
-function wouldRotate(walking: Walking, router: EngineRouter): boolean {
-  return walking.resumesServerState && router.policy.mode === 'round-robin';
-}
-
-/**
- * Where the walk arrives next: a child to try, a router it must not spread, or nowhere left.
- *
- * @summary A turn resuming state one account holds is refused at the router that would have spread
- * it, whichever depth that router stands at, because routers chain and only the router about to
- * rotate knows it is about to. Asking the entry alone would let a ladder below it hand a second
- * account a token it cannot read. The question is asked before the router picks, so a spreading
- * router holding no child still refuses the chain rather than reporting itself empty.
- */
-async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> {
-  const path = new Set<string>();
-  let routeNode: string | undefined = walking.routing.entry;
-
-  while (routeNode !== undefined) {
-    path.add(routeNode);
-
-    const node = walking.routing.nodes[routeNode];
-
-    if (node === undefined) return { at: 'nowhere' };
-
-    if (node.kind === 'target') return stepAtTarget(walking, routeNode);
-
-    if (wouldRotate(walking, node)) return { at: 'rotation', routeNode, router: node };
-
-    routeNode = await childTheRouterOffers(walking, routeNode, node, path);
-  }
-
-  return { at: 'nowhere' };
-}
-
-function noteOf(routeNode: string, reason: NoteReason, retryAtMs: number | undefined): WalkNote {
-  return retryAtMs === undefined ? { routeNode, reason } : { routeNode, reason, retryAtMs };
 }
 
 function noteForTarget(walking: Walking, routeNode: string): WalkNote | undefined {
@@ -181,18 +73,6 @@ function notesOfTheWalk(walking: Walking): readonly WalkNote[] {
   }
 
   return notes;
-}
-
-function retryTimeEveryNotePromised(notes: readonly WalkNote[]): number | undefined {
-  const promised: number[] = [];
-
-  for (const note of notes) {
-    if (note.retryAtMs === undefined) return undefined;
-
-    promised.push(note.retryAtMs);
-  }
-
-  return promised.length === 0 ? undefined : Math.min(...promised);
 }
 
 function verdictWhenNoChildServed<TAnswer>(
@@ -230,6 +110,20 @@ async function verdictOneChildSettled<TAnswer>(
   return undefined;
 }
 
+async function verdictOneStepSettles<TAnswer>(
+  walking: Walking,
+  request: WalkRequest<TAnswer>,
+  step: WalkStep,
+): Promise<WalkVerdict<TAnswer> | undefined> {
+  if (step.at === 'rotation') {
+    return { outcome: 'chained-turn', routeNode: step.routeNode, router: step.router };
+  }
+
+  return step.at === 'target'
+    ? verdictOneChildSettled(walking, request, step.routeNode)
+    : undefined;
+}
+
 async function verdictTheWalkSettles<TAnswer>(
   walking: Walking,
   request: WalkRequest<TAnswer>,
@@ -239,11 +133,7 @@ async function verdictTheWalkSettles<TAnswer>(
 
     if (step.at === 'nowhere') return undefined;
 
-    if (step.at === 'rotation') {
-      return { outcome: 'chained-turn', routeNode: step.routeNode, router: step.router };
-    }
-
-    const settled = await verdictOneChildSettled(walking, request, step.routeNode);
+    const settled = await verdictOneStepSettles(walking, request, step);
 
     if (settled !== undefined) return settled;
   }
@@ -258,14 +148,21 @@ async function verdictTheWalkSettles<TAnswer>(
  * attempt and the branch classification both arrive injected and the answer crosses back untouched.
  * Termination is structural rather
  * than counted: a child attempted once is never eligible again, so the attempted set only grows and
- * the recorded cap bounds it against a table too wide to walk. Every child the walk could not use
+ * the recorded cap bounds it against a table too wide to walk. A descent reaching no child at all
+ * starts over at most once per conditional router, since the router is written down as spent before
+ * the restart, so the two growing sets together bound the loop. Every child the walk could not use
  * earns a note in the table's declared order, whichever order the policies actually tried them, so
  * the account a refusal gives reads the same as the canvas that drew it.
  */
 export async function walkAttempts<TAnswer>(
   request: WalkRequest<TAnswer>,
 ): Promise<WalkResult<TAnswer>> {
-  const walking: Walking = { ...request, attempted: new Map(), judging: judgingOf(request) };
+  const walking: Walking = {
+    ...request,
+    attempted: new Map(),
+    judging: judgingOf(request),
+    spent: new Set(),
+  };
   const settled = await verdictTheWalkSettles(walking, request);
   const notes = notesOfTheWalk(walking);
 

@@ -176,7 +176,7 @@ missing state rather than a missing string.
 
 - [x] 12.1 Dropping or rebinding a subtree carries out the judges of every conditional router
       inside it, so no judge stands unreachable
-- [ ] 12.2 The walk backtracks when a judged router offers nothing: the parent tries its next
+- [x] 12.2 The walk backtracks when a judged router offers nothing: the parent tries its next
       sibling, and no request exhausts while a healthy child stands
 - [ ] 12.3 A system instruction never reads as a caller turn, in either Gemini key order
 - [ ] 12.4 A judge answer whose body fails to parse routes as a refusal that cools, never as an
