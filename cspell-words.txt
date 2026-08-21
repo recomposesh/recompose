@@ -218,6 +218,7 @@ notarytool
 notbase
 notehead
 nsis
+NSURL
 Ocsp
 Ollama
 Ollama's
@@ -290,6 +291,7 @@ riscv
 rsae
 rsvg
 safemode
+samuelmeuli
 scanline
 screencapture
 Scriptable
