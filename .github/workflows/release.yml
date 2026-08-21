@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - os: macos-26
-            timeout: 120
+            timeout: 360
           - os: windows-latest
             timeout: 45
           - os: ubuntu-latest

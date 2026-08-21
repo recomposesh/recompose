@@ -10,6 +10,7 @@
     "apps/desktop": {
       "entry": [
         "build/after-pack.cjs",
+        "build/notarize.cjs",
         "e2e/fixtures.ts",
         "e2e/global-setup.ts",
         "e2e/visual.css",
