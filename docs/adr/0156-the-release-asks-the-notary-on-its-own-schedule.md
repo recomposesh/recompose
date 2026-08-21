@@ -42,10 +42,14 @@ again costs a minute, and a queue that swallowed one ticket has answered a secon
 submission that comes back anything other than `Accepted` or `In Progress` fails the build with the
 notary log attached, because that reads as a verdict rather than a delay.
 
-**The mac leg waits as long as GitHub allows.** Its limit moves to 350 minutes, near the six hour
-ceiling every hosted job shares, and the hook gives up after five hours still `In Progress`. Public
-repositories bill nothing for hosted runners, so a long wait costs a slot rather than money. A
-release that finishes unattended beats one somebody has to re-cut.
+**The mac leg waits as long as GitHub allows.** Its limit becomes 360 minutes, the ceiling every
+hosted job shares and the most a workflow can ask for. Public repositories bill nothing for hosted
+runners, so the wait costs a slot rather than money, and a release that finishes unattended beats
+one somebody has to re-cut.
+
+**Each architecture gets half the budget.** The hook gives up on a submission set after 150
+minutes, because the leg notarizes twice and a first wait that swallowed the whole job would leave
+the second nothing. Two waits of that length plus the build fit inside the ceiling.
 
 The hook prints the submission id, so the log lines up with `notarytool history`, and it prints the
 notary log when a submission comes back anything other than `Accepted`.

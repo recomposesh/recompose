@@ -8,7 +8,7 @@ const run = promisify(execFile);
 
 const ASK_EVERY_MS = 30_000;
 const SUBMIT_AGAIN_AFTER_MS = 30 * 60 * 1000;
-const GIVE_UP_AFTER_MS = 5 * 60 * 60 * 1000;
+const GIVE_UP_AFTER_MS = 150 * 60 * 1000;
 
 function credentialsFromEnvironment() {
   const secrets = {
@@ -100,7 +100,7 @@ async function acceptedTicketFor(archive, credentials) {
   }
 
   throw new Error(
-    `notarization: none of ${outstanding.join(', ')} left In Progress within five hours`,
+    `notarization: none of ${outstanding.join(', ')} left In Progress within two and a half hours`,
   );
 }
 
