@@ -1,6 +1,6 @@
 # 0156: The release asks the notary on its own schedule
 
-**Status**: Accepted
+**Status**: Superseded by [0157](0157-the-mac-leg-goes-back-to-the-standard-flow.md)
 **Date**: 2026-08-21
 
 ## Context

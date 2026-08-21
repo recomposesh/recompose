@@ -156,9 +156,10 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0148](0148-the-docs-and-its-search-answer-from-the-build.md)                   | The docs and its search answer from the build                                       | Accepted   | 2026-08-20 |
 | [0149](0149-the-ruleset-file-holds-the-checks-that-can-report.md)               | The ruleset file holds the checks that can report                                   | Accepted   | 2026-08-20 |
 | [0150](0150-the-release-build-signs-without-a-network-monitor.md)               | The release build signs without a network monitor                                   | Accepted   | 2026-08-20 |
-| [0151](0151-the-release-builds-its-own-signing-keychain.md)                     | The release builds its own signing keychain                                         | Accepted   | 2026-08-20 |
-| [0152](0152-signing-stops-waiting-on-a-revocation-answer.md)                    | Signing stops waiting on a revocation answer                                        | Accepted   | 2026-08-21 |
+| [0151](0151-the-release-builds-its-own-signing-keychain.md)                     | The release builds its own signing keychain                                         | Superseded | 2026-08-20 |
+| [0152](0152-signing-stops-waiting-on-a-revocation-answer.md)                    | Signing stops waiting on a revocation answer                                        | Superseded | 2026-08-21 |
 | [0153](0153-the-workspace-installs-every-architecture-a-release-ships.md)       | The workspace installs every architecture a release ships                           | Accepted   | 2026-08-21 |
 | [0154](0154-the-mac-leg-waits-for-apples-notary.md)                             | The mac leg waits for Apple's notary                                                | Accepted   | 2026-08-21 |
 | [0155](0155-the-browser-install-follows-the-tests-that-need-it.md)              | The browser install follows the tests that need it                                  | Accepted   | 2026-08-21 |
-| [0156](0156-the-release-asks-the-notary-on-its-own-schedule.md)                 | The release asks the notary on its own schedule                                     | Accepted   | 2026-08-21 |
+| [0156](0156-the-release-asks-the-notary-on-its-own-schedule.md)                 | The release asks the notary on its own schedule                                     | Superseded | 2026-08-21 |
+| [0157](0157-the-mac-leg-goes-back-to-the-standard-flow.md)                      | The mac leg goes back to the standard flow                                          | Accepted   | 2026-08-21 |

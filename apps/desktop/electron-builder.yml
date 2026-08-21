@@ -3,7 +3,6 @@ productName: Recompose
 directories:
   buildResources: build
 afterPack: ./build/after-pack.cjs
-afterSign: ./build/notarize.cjs
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -25,7 +24,7 @@ nsis:
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
-  notarize: false
+  notarize: true
   icon: build/icon.icon
   target:
     - dmg
