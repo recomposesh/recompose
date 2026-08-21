@@ -10,7 +10,7 @@ const DOWNLOAD_CTA_STAGE_INK = 'max-md:bg-white max-md:text-neutral-900';
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-svh overflow-hidden">
+    <section data-spot-stage className="relative min-h-svh overflow-hidden">
       <HeroCanvas />
 
       <SiteNav tone="stage" />

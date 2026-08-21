@@ -167,7 +167,8 @@ function litBySpot(mark: HTMLElement, box: DOMRect, ink: Head) {
 }
 
 function trackSpot(canvas: HTMLCanvasElement) {
-  const marks = [...(canvas.parentElement?.querySelectorAll<HTMLElement>('[data-spot]') ?? [])];
+  const stage = canvas.closest('[data-spot-stage]');
+  const marks = [...(stage?.querySelectorAll<HTMLElement>('[data-spot]') ?? [])];
 
   let boxes = marks.map((mark) => mark.getBoundingClientRect());
   let ink: Head | null = null;
