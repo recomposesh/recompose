@@ -31,11 +31,16 @@ with no retry around it, so a link held open for most of an hour has to survive 
 
 ## Decision
 
-**The build submits once and asks for the verdict itself.** `mac.notarize` turns off and an
-`afterSign` hook takes over: `ditto` into a zip, `notarytool submit --no-wait` for a submission id,
-`notarytool info` every thirty seconds until Apple answers, then `stapler staple`. A question that
-fails is a question to ask again, because Apple holds the submission whether the runner hears the
-reply or not.
+**The build asks for the verdict itself.** `mac.notarize` turns off and an `afterSign` hook takes
+over: `ditto` into a zip, `notarytool submit --no-wait` for a submission id, `notarytool info` every
+thirty seconds, then `stapler staple` on the first `Accepted`. A question that fails is a question
+to ask again, because Apple holds the submission whether the runner hears the reply or not.
+
+**Half an hour of silence buys a second ticket.** The hook submits the same archive again every
+thirty minutes and watches every submission it holds, taking whichever answers first. Uploading
+again costs a minute, and a queue that swallowed one ticket has answered a second before. A
+submission that comes back anything other than `Accepted` or `In Progress` fails the build with the
+notary log attached, because that reads as a verdict rather than a delay.
 
 **The mac leg waits as long as GitHub allows.** Its limit moves to 350 minutes, near the six hour
 ceiling every hosted job shares, and the hook gives up after five hours still `In Progress`. Public
