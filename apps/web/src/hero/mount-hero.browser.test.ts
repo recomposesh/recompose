@@ -195,22 +195,42 @@ describe('the hero gives its graphics memory back', () => {
   });
 });
 
+const stageWithMark = () => {
+  const stage = document.createElement('section');
+  const layer = document.createElement('div');
+  const canvas = document.createElement('canvas');
+  const mark = document.createElement('p');
+
+  stage.dataset['spotStage'] = '';
+  mark.dataset['spot'] = 'text';
+  mark.textContent = 'every model';
+  layer.append(canvas);
+  stage.append(layer, mark);
+  document.body.append(stage);
+
+  return { canvas, mark, stage };
+};
+
 describe('the hero keeps the spotlight over the words it lights', () => {
+  it('lights the words beside the canvas, not only the ones sharing its layer', async () => {
+    const { canvas, mark } = stageWithMark();
+
+    disposers.push(mountHero(canvas, { poster: POSTER, loop: LOOP }));
+
+    dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 200 }));
+
+    expect(await settledSpot(mark)).not.toBe('');
+  });
+
   it('re-reads where the words sit after the page scrolls under them', async () => {
-    const canvas = document.createElement('canvas');
-    const mark = document.createElement('p');
+    const { canvas, mark } = stageWithMark();
     const tail = document.createElement('div');
 
-    mark.dataset['spot'] = 'text';
-    mark.textContent = 'every model';
     mark.style.cssText = 'margin-top:1200px';
     tail.style.cssText = 'height:3000px';
+    document.body.append(tail);
 
-    document.body.append(canvas, mark, tail);
-
-    const dispose = mountHero(canvas, { poster: POSTER, loop: LOOP });
-
-    disposers.push(dispose);
+    disposers.push(mountHero(canvas, { poster: POSTER, loop: LOOP }));
 
     dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 200 }));
 

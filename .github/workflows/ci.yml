@@ -19,6 +19,7 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
       desktop: ${{ steps.filter.outputs.desktop }}
+      web: ${{ steps.filter.outputs.web }}
       workflows: ${{ steps.filter.outputs.workflows }}
       prose: ${{ steps.filter.outputs.prose }}
     steps:
@@ -40,6 +41,8 @@ jobs:
               - '!**/*.md'
             desktop:
               - '{apps/desktop/**,packages/**,pnpm-lock.yaml,package.json,pnpm-workspace.yaml,turbo.json,vitest.shared.ts,tsconfig*.json}'
+            web:
+              - 'apps/web/**'
             workflows:
               - '.github/workflows/**'
             prose:
@@ -69,6 +72,8 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - if: needs.changes.outputs.desktop == 'true'
         run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
+      - if: needs.changes.outputs.desktop != 'true' && needs.changes.outputs.web == 'true'
+        run: pnpm --filter @recompose/web exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
       - if: github.event_name == 'pull_request'
         run: pnpm exec turbo run lint typecheck build test --concurrency=1 --affected
