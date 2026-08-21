@@ -1,6 +1,6 @@
 # 0152: Signing stops waiting on a revocation answer
 
-**Status**: Accepted
+**Status**: Superseded by [0157](0157-the-mac-leg-goes-back-to-the-standard-flow.md)
 **Date**: 2026-08-21
 
 ## Context

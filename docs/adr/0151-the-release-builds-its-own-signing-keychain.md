@@ -1,6 +1,6 @@
 # 0151: The release builds its own signing keychain
 
-**Status**: Accepted
+**Status**: Superseded by [0157](0157-the-mac-leg-goes-back-to-the-standard-flow.md)
 **Date**: 2026-08-20
 
 ## Context
