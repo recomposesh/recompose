@@ -16,9 +16,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-26, windows-latest, ubuntu-latest]
+        include:
+          - os: macos-26
+            timeout: 120
+          - os: windows-latest
+            timeout: 45
+          - os: ubuntu-latest
+            timeout: 45
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    timeout-minutes: ${{ matrix.timeout }}
     permissions:
       contents: read
       id-token: write
@@ -44,7 +50,7 @@ jobs:
           key_file="$RUNNER_TEMP/apple-api-key.p8"
           certificate="$RUNNER_TEMP/certificate.p12"
           keychain="$RUNNER_TEMP/signing.keychain-db"
-          trap 'rm -f "$key_file" "$certificate"; security delete-keychain "$keychain" 2>/dev/null || true' EXIT
+          trap 'kill "${heartbeat:-}" 2>/dev/null || true; rm -f "$key_file" "$certificate"; security delete-keychain "$keychain" 2>/dev/null || true' EXIT
           (umask 077 && printf '%s' "$APPLE_API_KEY" > "$key_file")
 
           (umask 077 && printf '%s' "$CSC_LINK" | base64 --decode -o "$certificate")
@@ -71,7 +77,6 @@ jobs:
 
           env -u CSC_LINK CSC_KEYCHAIN="$keychain" APPLE_API_KEY="$key_file" \
             pnpm --filter @recompose/desktop run build:mac
-          kill "$heartbeat" 2>/dev/null || true
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}

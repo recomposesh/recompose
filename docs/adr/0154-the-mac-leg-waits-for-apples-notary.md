@@ -13,10 +13,10 @@ Three records read that silence as a fault in signing.
 [0152](0152-signing-stops-waiting-on-a-revocation-answer.md) turned off the revocation check. None
 of them changed the silence.
 
-The sixth tag ran to the 45 minute limit instead of a cancel, and the last line of the log named
+The sixth tag ran to the 45-minute limit instead of a cancel, and the last line of the log named
 what nobody had seen:
 
-```
+```text
 Cleaning up orphan processes
 Terminate orphan process: pid (26808) (notarytool)
 ```
