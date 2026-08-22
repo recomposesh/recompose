@@ -64,6 +64,7 @@ const unsupportedNames = [
   'enumTitles',
   'prefill',
   'deprecated',
+  'encrypted',
 ] as const;
 
 function refReplacement(schema: JsonObject): JsonObject | null {

@@ -134,6 +134,16 @@ describe('preserving property names while removing unsupported metadata', () => 
     expect(cleaned).not.toHaveProperty('properties.value.x-extra');
   });
 
+  test('a marker naming how a value is stored never reaches the tool schema', () => {
+    const cleaned = cleanAntigravityToolSchema({
+      type: 'object',
+      properties: { token: { type: 'string', encrypted: true } },
+    });
+
+    expect(cleaned).not.toHaveProperty('properties.token.encrypted');
+    expect(cleaned).toHaveProperty('properties.token.type', 'string');
+  });
+
   test('empty objects get the VALIDATED-mode reason placeholder', () => {
     expect(cleanAntigravityToolSchema({ type: 'object' })).toMatchObject({
       properties: { reason: { type: 'string' } },
