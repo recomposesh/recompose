@@ -42,7 +42,22 @@ document.head.append(footing);
 
 const escaped: unknown[] = [];
 
+/**
+ * Whether an error the page raised is the browser saying it deferred a resize round.
+ *
+ * @summary `ResizeObserver loop completed with undelivered notifications` is the loop guard doing
+ * its job: the callback changed a size, so the browser moved the rest of that round to the next
+ * frame rather than spin. Nothing is lost and nothing broke, but it reaches `window.onerror` with a
+ * null `error`, so a page watching for escapes reads a benign frame boundary as a scenario that
+ * failed. Any observer in the tree can raise it, and the canvas holds several.
+ */
+function deferredResizeRound(event: ErrorEvent): boolean {
+  return event.error === null && event.message.includes('ResizeObserver loop');
+}
+
 window.addEventListener('error', (event) => {
+  if (deferredResizeRound(event)) return;
+
   escaped.push(event.error);
 });
 window.addEventListener('unhandledrejection', (event) => {

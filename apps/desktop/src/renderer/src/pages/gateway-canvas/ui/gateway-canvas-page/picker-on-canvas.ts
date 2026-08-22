@@ -203,6 +203,21 @@ function steppedBack(world: CanvasWorld, picker: PickerStanding): (() => void) |
  * itself holds no topology: the first stage narrows to an account, the second commits the pick,
  * and a dismissal only takes the standing away.
  */
+/**
+ * Where the picker hangs, which is its card's seat until that card has one.
+ *
+ * @summary A card born by the ask has no seat for a frame or two, and a picker that opened at the
+ * canvas corner meanwhile would fly across the pane the moment the seat arrived. Falling back on
+ * the point the ask itself named keeps it still.
+ */
+function anchorSeatOf(world: CanvasWorld, picker: PickerStanding, anchorId: string): XY {
+  const seated = world.seats[anchorId];
+
+  if (seated !== undefined) return seated;
+
+  return 'at' in picker ? picker.at : { x: 0, y: 0 };
+}
+
 export function pickerOnCanvas(
   world: CanvasWorld,
   models: ModelListReading,
@@ -221,7 +236,7 @@ export function pickerOnCanvas(
     groups: pickerGroups(world, stage, models.offered),
     refusal: stage.step === 'provider-model' ? models.refusal : undefined,
     pickedName: pickedProviderName(world, picker),
-    anchorSeat: world.seats[anchorId] ?? { x: 0, y: 0 },
+    anchorSeat: anchorSeatOf(world, picker, anchorId),
     onPickKind: answeredKind(world, picker),
     onPickRouterMode: (mode) => {
       if (picker.step === 'router-mode') {
