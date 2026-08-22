@@ -50,6 +50,11 @@ This covers every way a request reaches a conditional router with no judgment be
 a turn resuming server-side state that nobody pinned. Splitting that case out would keep exactly the
 silence this record exists to end.
 
+It also covers the second ask. An answer no branch wears buys one retry, and that retry settles the
+request however it reads. Reading is the word that matters. A second answer naming no branch is a
+judge that read the request twice and placed it nowhere, which is the else child's whole job. A
+second ask that refuses or runs out of budget judged nothing, and refuses like any other.
+
 **The refusal stops the whole walk, not just the router.** A failover router above a conditional one
 doesn't try its siblings. A sibling is no more the branch the judge would have named than the else
 child is, so serving from one repeats the substitution under a different name.

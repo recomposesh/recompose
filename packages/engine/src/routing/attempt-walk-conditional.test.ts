@@ -175,3 +175,36 @@ describe('the one classification a walk spends, however many children it tries',
     expect(judge.asked).toEqual([JUDGE, JUDGE]);
   });
 });
+
+describe('the second ask a conditional router spends is the one that settles it', () => {
+  test('a second answer naming no branch settles on else, since the judge did classify', async () => {
+    const judge = aJudgeAnswering(
+      { heard: 'answer', label: 'weather' },
+      { heard: 'answer', label: 'weather' },
+    );
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    const walk = await gateway.send();
+
+    expect(walk.attempted).toEqual(['catchall']);
+  });
+
+  test('a second ask the judge never answers refuses, rather than settling on else', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'weather' }, { heard: 'timeout' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    const walk = await gateway.send();
+
+    expect(judge.asked).toEqual([JUDGE, JUDGE]);
+    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', routeNode: 'ladder' });
+  });
+
+  test('a second ask the judge refuses reads the same way, with nothing served', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'weather' }, { heard: 'refusal' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    const walk = await gateway.send();
+
+    expect(walk.attempted).toEqual([]);
+  });
+});

@@ -121,15 +121,16 @@ A router in `conditional` mode MUST carry a judge binding, an ordered list of la
 
 A conditional router MUST hold a permanent else branch that no edit removes. The else branch MUST carry only the requests its judge classified without naming a branch.
 
-Five cases reach a conditional router with no judgment behind them:
+Six cases reach a conditional router with no judgment behind them:
 
 - a judge refusal
 - a judge standing cooling
 - an answer past the timeout budget
 - a judge binding resolving to no usable custody
 - a server-state turn no pin covers
+- a second ask that refuses or runs out of budget
 
-Each of those five MUST refuse the request with a 503. The refusal MUST name the router, the virtual model, and the else child the router declined to use. A conditional router MUST NOT hand a request to any child when no judgment placed it there. A router above it MUST NOT offer that request to a sibling instead.
+Each of those six MUST refuse the request with a 503. The refusal MUST name the router, the virtual model, and the else child the router declined to use. A conditional router MUST NOT hand a request to any child when no judgment placed it there. A router above it MUST NOT offer that request to a sibling instead.
 
 #### Scenario: a cooling judge refuses without a classification call
 
@@ -138,6 +139,13 @@ Each of those five MUST refuse the request with a 503. The refusal MUST name the
 - Then no classification call leaves the machine
 - And no child of the router receives the request
 - And the caller reads a 503 naming the router and its judge
+
+#### Scenario: a second ask that never answers refuses, though the first ask did answer
+
+- Given a conditional router whose judge answers a word no branch wears, then answers nothing at all
+- When a request arrives under the virtual model's name
+- Then the judge receives exactly two classification calls
+- And no child of the router receives the request
 
 #### Scenario: a judge past its timeout budget refuses rather than falling to else
 

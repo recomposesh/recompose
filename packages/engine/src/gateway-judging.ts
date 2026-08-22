@@ -60,7 +60,7 @@ function budgetTheTableAsksOf(routing: EngineRouting, judge: string): number | u
  * reading to give rather than one per fault: the node is gone, the node stands unbound, or no
  * conditional router in this table names it. A node the table already stands unbound is never asked
  * about, so a judge whose account left costs no round trip to the parent and no cooling entry
- * either: the walk lands on else every time until a person rebinds it, and standing a broken binding
+ * either: the router refuses every request until a person rebinds it, and standing a broken binding
  * down would only pretend the trouble was a provider's. The budget is read here rather than beside
  * the call so that a judge nobody named cannot reach the call at all.
  */

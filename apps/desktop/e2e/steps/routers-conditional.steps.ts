@@ -70,6 +70,10 @@ Given(
   },
 );
 
+Given('the judge answers with text matching no branch label, then nothing at all', ({ judge }) => {
+  judge.namesThenSaysNothing(brokenAnswerNamed('text matching no branch label'));
+});
+
 Given("the judge doesn't answer within the timeout budget", ({ judge }) => {
   judge.saysNothing();
 });

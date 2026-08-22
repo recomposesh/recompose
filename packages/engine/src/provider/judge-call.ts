@@ -52,8 +52,9 @@ type JudgeBody = { read: unknown } | { unread: true };
  * @summary Only a binding nothing resolved spends nothing. A plan channel was read as spending nothing
  * once, on the belief that it had nowhere to put a schema, and that belief was wrong: it posts the
  * same body to the same origin a keyed account does, and its dialect closes the answer the same way.
- * Refusing it here made a person who bound their own plan watch every request land on else with
- * nothing on screen saying why, which is the one arrangement this must never be.
+ * Refusing it here made a person who bound their own plan watch every request route as though no
+ * judge stood there at all, with nothing on screen saying why, which is the one arrangement this
+ * must never be.
  */
 function spendableCustody(grant: SpendGrant): Spendable | undefined {
   return grant.verdict === 'resolved' ? grant : undefined;
@@ -111,7 +112,7 @@ async function sentToTheJudge(
  *
  * @summary The clock starts here rather than around the await, so the wait for a first byte counts
  * against the budget and the connection is actually severed when it runs out. A judge left holding a
- * socket open would otherwise keep spending on a request the walk already sent down else. The signal
+ * socket open would otherwise keep spending on a request the walk has already given up on. The signal
  * itself tells a silence apart from a dead connection, which is more honest than reading an error
  * name that every fetch implementation spells its own way.
  */
@@ -147,8 +148,8 @@ function readingOfARefusal(answer: Response, now: number): AttemptReading<Respon
  * @summary Nothing a judge answered ever reaches the caller, whatever its status: a 400 about a
  * schema and a 401 about a key are both this gateway's own trouble, and handing either back would
  * answer a person's request with a sentence about routing. Every one of them is a stand-down instead,
- * because a judge that refused once refuses the next request for the same reason, and the else branch
- * carries the traffic meanwhile.
+ * because a judge that refused once refuses the next request for the same reason, and a call nobody
+ * makes is a call nobody waits on.
  */
 function standDownOf(verdict: AttemptVerdict<Response>, now: number): JudgeCooling {
   if (verdict.verdict !== 'move-on') return { coolUntilMs: now + DEFAULT_COOLDOWN_MS };
@@ -203,7 +204,7 @@ async function readingTheAnswerGives(
  *
  * @summary Everything that can go wrong here is a reading rather than a throw, because the walk
  * treats a judge as advice and never as a child: a silence, a refusal, and a binding that resolves to
- * nothing all leave the request whole and send it down the else branch. The caller's own words reach
+ * nothing all leave the request whole for its router to answer for. The caller's own words reach
  * the provider and reach nothing else, so no traffic row and no log line ever carries a second copy
  * of them.
  */
