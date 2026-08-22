@@ -8,13 +8,12 @@ import {
   clickedCable,
   clickedNodeFrame,
   draftCardOn,
-  draggedCable,
   draggedCableOver,
   draggedCard,
   pulledCable,
+  anchorsAtTheEndItLeaves,
   reconnectAnchorOf,
   releasedAt,
-  sourceAnchorOf,
   sourcePortOf,
   storedModels,
   targetPortOf,
@@ -272,15 +271,10 @@ test('Esc during a cable-endpoint drag rebinds nothing', async () => {
   expect(await storedModels()).toEqual(before);
 });
 
-test('dragging a cable source endpoint onto another virtual model binds nothing', async () => {
+test('a binding cable offers a grab handle only at the end it lands on', async () => {
   const screen = await canvasPageOn();
-  const before = await storedModels();
 
-  await draggedCable(
-    await sourceAnchorOf(screen.container, 'cable:creative'),
-    await sourcePortOf(screen.container, 'model:fast'),
-  );
+  await reconnectAnchorOf(screen.container, 'cable:creative');
 
-  await expect.element(screen.getByText(/^Models .+ serves$/)).not.toBeInTheDocument();
-  expect(await storedModels()).toEqual(before);
+  expect(anchorsAtTheEndItLeaves(screen.container, 'cable:creative')).toBe(0);
 });
