@@ -7,16 +7,27 @@ assumption that similarly named code is equivalent.
 
 ## Authority and scope
 
-- Upstream: CLIProxyAPI v7.2.125-6-ga6825fe9
-- Commit: `a6825fe9`
-- Completed parity checkpoint: v7.2.125 / `2e6b1d83`
-- Local comparison date: 2026-08-09
+- Upstream: CLIProxyAPI v7.2.139-4-g0a14eb70
+- Commit: `0a14eb70`
+- Completed parity checkpoint: v7.2.139 / `0a14eb70`
+- Local comparison date: 2026-08-22
 - Full inventory audit baseline: v7.2.121 / `8392b180ce3789eba9fd06ebc812b4fc237876e1`
   (2026-08-07), carried forward by the delta section below
 - Upstream internal tests at the audit baseline: 329 files, 2,926 `Test*` functions, 16 benchmarks
 - Upstream translator tests at the audit baseline: 767 `Test*` functions
 - Upstream Interactions translator tests at the audit baseline: 136 `Test*` functions
-- Current Recompose engine gate: 544 test files, 4,432 passing tests (2026-08-09)
+- Current Recompose engine gate: 643 test files, 5,235 passing tests (2026-08-22)
+
+## Delta v7.2.125 → v7.2.139
+
+Two resync registers carry this window row by row: `cliproxyapi-parity/RESYNC-v7.2.131.md` for the
+first half and `cliproxyapi-parity/RESYNC-v7.2.139.md` for the second. The later register reads all
+sixty-two commits of its window, and every one of the thirty-seven that carry engine behavior has a
+verdict there: ten gaps closed, nine already carried, two decided differently on record, and the
+rest out of scope for a process this project runs itself rather than ports.
+
+The pin above moves to `0a14eb70` because no behavior commit in that window is left unread. It says
+nothing about the families this project does not carry, which the registers name individually.
 
 ## Delta v7.2.121 → v7.2.125
 
