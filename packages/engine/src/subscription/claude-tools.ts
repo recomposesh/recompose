@@ -5,6 +5,8 @@ import type { JsonObject } from '../gateway-wire';
 import { isJsonObject } from '../gateway-wire';
 
 const SERVER_TOOL_PREFIXES = [
+  'advisor_',
+  'agent_toolset_',
   'bash_',
   'code_execution_',
   'computer_',

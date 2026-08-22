@@ -9,6 +9,7 @@ import { normalizeAntigravityFunctionHistory } from './antigravity-function-hist
 import { cleanAntigravityRequestSchemas } from './antigravity-request-schemas';
 import { obfuscateAntigravitySystemInstruction } from './antigravity-sensitive-words';
 import { sanitizeAntigravitySignatures } from './antigravity-signatures';
+import { antigravityToolImagesNested } from './antigravity-tool-images';
 import { normalizeAntigravityTools } from './antigravity-tools';
 import { antigravityRequestUserAgent } from './antigravity-version';
 import {
@@ -173,7 +174,9 @@ export function antigravityProviderRequest(
 ): ProviderRequest {
   const project = requiredProject(credential);
   const model = modelOf(body);
-  const request = nestedRequest(body, model, configuredWords(sensitiveWords));
+  const request = antigravityToolImagesNested(
+    nestedRequest(body, model, configuredWords(sensitiveWords)),
+  );
 
   injectRequestedCredits(request, body);
 

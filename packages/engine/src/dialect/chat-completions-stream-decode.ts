@@ -1,11 +1,13 @@
 import type {
   ChatChunkChoice,
+  ChatChunkDelta,
   ChatCompletionChunk,
   ChatStreamError,
   ChatStreamFrame,
 } from './chat-completions-wire';
 import type { HubStopReason, HubStreamEvent, HubUsage } from './hub';
 
+import { spokenThought } from './chat-completions-reasoning';
 import { hubStopFrom } from './chat-completions-stops';
 import {
   applyToolCalls,
@@ -21,6 +23,7 @@ type DecodeState = ChatToolDecodeState & {
   nextIndex: number;
   currentOpen: number | undefined;
   textIndex: number | undefined;
+  thinkingIndex: number | undefined;
   stopReason: HubStopReason;
   usage: HubUsage;
 };
@@ -29,6 +32,7 @@ function initialDecodeState(responsesTarget: boolean): DecodeState {
   return {
     begun: false,
     nextIndex: 0,
+    thinkingIndex: undefined,
     nextUnindexedTool: 0,
     responseId: undefined,
     responsesTarget,
@@ -68,6 +72,34 @@ function openText(state: DecodeState, events: HubStreamEvent[]): number {
   events.push({ type: 'block-open', index, opening: { kind: 'text' } });
 
   return index;
+}
+
+function openThinking(state: DecodeState, events: HubStreamEvent[]): number {
+  if (state.thinkingIndex !== undefined) {
+    return state.thinkingIndex;
+  }
+
+  closeCurrent(state, events);
+
+  const index = state.nextIndex++;
+
+  state.thinkingIndex = index;
+  state.currentOpen = index;
+  events.push({ type: 'block-open', index, opening: { kind: 'thinking' } });
+
+  return index;
+}
+
+function applyThought(state: DecodeState, delta: ChatChunkDelta, events: HubStreamEvent[]): void {
+  const thought = spokenThought(delta.reasoning_content, delta.reasoning);
+
+  if (thought === undefined) {
+    return;
+  }
+
+  const index = openThinking(state, events);
+
+  events.push({ type: 'block-delta', index, delta: { kind: 'thinking', text: thought } });
 }
 
 function applyContent(
@@ -113,6 +145,7 @@ function ensureBegun(
 }
 
 function applyChoice(state: DecodeState, choice: ChatChunkChoice, events: HubStreamEvent[]): void {
+  applyThought(state, choice.delta, events);
   applyContent(state, choice.delta.content, events);
 
   const close = (): void => {

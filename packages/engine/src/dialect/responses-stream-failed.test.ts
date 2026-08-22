@@ -65,7 +65,9 @@ describe('encodeStream: the failed response holds what the stream produced', () 
           {
             type: 'message',
             role: 'assistant',
-            content: [{ type: 'output_text', text: 'half an answer' }],
+            content: [
+              { type: 'output_text', text: 'half an answer', annotations: [], logprobs: [] },
+            ],
           },
         ],
         error: { type: 'overloaded_error', message: 'slow down' },

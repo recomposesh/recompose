@@ -210,7 +210,7 @@ describe('encodeStream: text block terminal payloads', () => {
       output_index: 0,
       item_id: 'msg_stream_0',
       content_index: 0,
-      part: { type: 'output_text', text: 'hello world' },
+      part: { type: 'output_text', text: 'hello world', annotations: [], logprobs: [] },
     });
     expect(events).toContainEqual({
       type: 'response.output_item.done',
@@ -219,7 +219,7 @@ describe('encodeStream: text block terminal payloads', () => {
         type: 'message',
         id: 'msg_stream_0',
         role: 'assistant',
-        content: [{ type: 'output_text', text: 'hello world' }],
+        content: [{ type: 'output_text', text: 'hello world', annotations: [], logprobs: [] }],
       },
     });
   });

@@ -159,6 +159,7 @@ export type ChatResponseMessage = {
   role: 'assistant';
   content: string | null;
   reasoning_content?: string;
+  reasoning?: string;
   tool_calls?: readonly ChatToolCall[];
   images?: readonly ChatResponseImage[];
 };
@@ -184,9 +185,11 @@ export type ChatToolCallDelta = {
   function?: { name?: unknown; arguments?: string };
 };
 
-type ChatChunkDelta = {
+export type ChatChunkDelta = {
   role?: 'assistant';
   content?: string | null;
+  reasoning_content?: string | null;
+  reasoning?: string | null;
   tool_calls?: readonly ChatToolCallDelta[];
   images?: readonly { type: 'image_url'; image_url: { url: string } }[];
 };
