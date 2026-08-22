@@ -30,6 +30,7 @@ recompose reads none of these. Each connect block fills them with your gateway's
 | `ANTHROPIC_AUTH_TOKEN`                       | Claude Code                                                    | The key, sent as `Authorization: Bearer` |
 | `ANTHROPIC_MODEL`                            | Claude Code                                                    | A virtual model id                       |
 | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | Claude Code                                                    | `1`, so it lists your virtual models     |
+| `ANTHROPIC_CUSTOM_MODEL_OPTION`              | Claude Code                                                    | An id its picker would otherwise skip    |
 | `GOOGLE_GEMINI_BASE_URL`                     | Gemini CLI                                                     | The bare origin                          |
 | `GEMINI_API_KEY`                             | Gemini CLI                                                     | The key                                  |
 

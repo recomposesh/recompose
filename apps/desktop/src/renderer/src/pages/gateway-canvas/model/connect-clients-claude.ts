@@ -1,6 +1,26 @@
-import type { ConnectClient } from './connect-facts';
+import { claudeCodeKeepsModelId } from '@recompose/contracts';
+
+import type { ConnectClient, ConnectFacts } from './connect-facts';
 
 import { addressFor, exportLine, presentedKey, presentedModel } from './connect-facts';
+
+const DISCOVERY_NOTE =
+  'The token rides in Authorization: Bearer. ANTHROPIC_API_KEY sends the same value as x-api-key instead, and this gateway reads either one. The discovery variable puts every model whose id carries claude or anthropic into the /model picker, labelled From gateway.';
+const ESCAPED_NOTE = `${DISCOVERY_NOTE} That picker skips this id, so the last variable adds it as a row of its own.`;
+
+/**
+ * The variable that puts a model id past the filter Claude Code's discovery reads ids through.
+ *
+ * @summary Discovery keeps only the ids carrying claude or anthropic, and this one names a model
+ * outright, skipping that filter and the validation behind it. It stands only where it is needed,
+ * because a person handed it beside an id discovery already surfaces would paste a second row of
+ * the model they can already pick.
+ */
+function pickerEscape(facts: ConnectFacts): readonly string[] {
+  const model = presentedModel(facts);
+
+  return claudeCodeKeepsModelId(model) ? [] : [exportLine('ANTHROPIC_CUSTOM_MODEL_OPTION', model)];
+}
 
 export const claudeCode: ConnectClient = {
   id: 'claude-code',
@@ -23,9 +43,10 @@ export const claudeCode: ConnectClient = {
         exportLine('ANTHROPIC_AUTH_TOKEN', presentedKey(facts)),
         exportLine('ANTHROPIC_MODEL', presentedModel(facts)),
         exportLine('CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY', '1'),
+        ...pickerEscape(facts),
         'claude',
       ],
-      note: 'The token rides in Authorization: Bearer. ANTHROPIC_API_KEY sends the same value as x-api-key instead, and this gateway reads either one. The last variable puts every model this gateway serves into the /model picker, labelled From gateway.',
+      note: claudeCodeKeepsModelId(presentedModel(facts)) ? DISCOVERY_NOTE : ESCAPED_NOTE,
     },
     {
       title: 'Or keep it in ~/.claude/settings.json',

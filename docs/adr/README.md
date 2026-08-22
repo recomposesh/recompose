@@ -164,3 +164,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0156](0156-the-release-asks-the-notary-on-its-own-schedule.md)                 | The release asks the notary on its own schedule                                     | Superseded | 2026-08-21 |
 | [0157](0157-the-mac-leg-goes-back-to-the-standard-flow.md)                      | The mac leg goes back to the standard flow                                          | Accepted   | 2026-08-21 |
 | [0158](0158-a-judge-that-reaches-no-verdict-refuses.md)                         | A judge that reaches no verdict refuses the request                                 | Accepted   | 2026-08-22 |
+| [0160](0160-a-model-id-reaches-claude-codes-picker-by-name.md)                  | A model id reaches Claude Code's picker by name                                     | Accepted   | 2026-08-22 |

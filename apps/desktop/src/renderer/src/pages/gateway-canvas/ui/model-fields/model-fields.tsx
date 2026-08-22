@@ -4,8 +4,8 @@ import { Field } from '@base-ui/react/field';
 
 import type { RoutingPickerProps } from '../routing-picker/routing-picker';
 
-import { CopyButton } from '../../../../shared/ui';
-import { discoveryHint } from '../../lib/draft-refusals';
+import { Button, CopyButton } from '../../../../shared/ui';
+import { discoveryHint, discoverySuggestion } from '../../lib/draft-refusals';
 import { RoutingPicker } from '../routing-picker/routing-picker';
 
 const MODEL_ID_HELP = 'Clients send this exact string as the model.';
@@ -55,22 +55,52 @@ function nameField(props: TypedFields): ReactNode {
   );
 }
 
-function modelIdBelow(id: string, refusal: string | undefined): ReactNode {
-  if (refusal !== undefined) {
+function shapedIdOffer(id: string, onIdChange: (typed: string) => void): ReactNode {
+  const suggestion = discoverySuggestion(id);
+
+  if (suggestion === undefined) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2">
+      <Button
+        onPress={() => {
+          onIdChange(suggestion);
+        }}
+      >
+        {`Use ${suggestion}`}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * What stands under the model id field: a refusal alone, or the help the hint and its offer join.
+ *
+ * @summary A refusal takes the whole line, because an id no gateway can serve is not one to nudge
+ * about a picker. Everything else reads as one description, and the offer stands as its own press
+ * under it rather than as a second sentence, so taking the hint costs a person no typing.
+ */
+function modelIdBelow(props: TypedFields): ReactNode {
+  if (props.idRefusal !== undefined) {
     return (
       <Field.Error className="mt-1.5 block text-caption text-danger-ink" match role="alert">
-        {refusal}
+        {props.idRefusal}
       </Field.Error>
     );
   }
 
-  const hint = id === '' ? undefined : discoveryHint(id);
+  const hint = discoveryHint(props.id);
 
   return (
-    <Field.Description className="mt-1.5 block text-footnote text-ink-secondary">
-      {MODEL_ID_HELP}
-      {hint === undefined ? null : ` · ${hint}`}
-    </Field.Description>
+    <>
+      <Field.Description className="mt-1.5 block text-footnote text-ink-secondary">
+        {MODEL_ID_HELP}
+        {hint === undefined ? null : ` · ${hint}`}
+      </Field.Description>
+      {shapedIdOffer(props.id, props.onIdChange)}
+    </>
   );
 }
 
@@ -92,7 +122,7 @@ function modelIdField(props: TypedFields): ReactNode {
           placeholder="fast"
           value={props.id}
         />
-        {modelIdBelow(props.id, props.idRefusal)}
+        {modelIdBelow(props)}
       </Field.Root>
     </div>
   );

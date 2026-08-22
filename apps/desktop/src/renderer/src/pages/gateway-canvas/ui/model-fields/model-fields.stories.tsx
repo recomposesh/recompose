@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { expect } from 'storybook/test';
+import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -96,18 +96,42 @@ export const Settled = meta.story({
   },
 });
 
-/** An id with a recognized prefix, which every caller's picker surfaces, so no hint stands. */
+/**
+ * The offer standing under a skipped id, which reshapes it in one press.
+ *
+ * @summary The offer names the id it would leave behind rather than describing the rule again, so
+ * a person reads what they are about to serve under before they take it.
+ */
+export const OfferingTheShapedId = meta.story({
+  args: {
+    name: 'Fast Sonnet',
+    id: 'fast-sonnet',
+    onIdChange: fn(),
+    target: 'k1',
+    targetName: 'work',
+    models: ['claude-sonnet-5'],
+  },
+  play: async ({ args, canvas }) => {
+    await expect(await canvas.findByText(/Claude Code lists only ids/)).toBeVisible();
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Use claude-fast-sonnet' }));
+
+    await expect(args.onIdChange).toHaveBeenCalledWith('claude-fast-sonnet');
+  },
+});
+
+/** An id carrying the word anywhere, which every caller's picker surfaces, so no hint stands. */
 export const NoHintNeeded = meta.story({
   args: {
-    name: 'Claude Fast',
-    id: 'claude-fast',
+    name: 'Fast Claude',
+    id: 'fast-claude',
     target: 'k1',
     targetName: 'work',
     models: ['claude-sonnet-5'],
   },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('textbox', { name: 'Model id' })).toHaveValue(
-      'claude-fast',
+      'fast-claude',
     );
     await expect(canvas.queryByText(/Claude Code/)).toBeNull();
   },

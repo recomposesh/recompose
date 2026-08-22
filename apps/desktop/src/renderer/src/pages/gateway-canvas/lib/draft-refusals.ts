@@ -1,6 +1,10 @@
 import type { VirtualModel } from '@recompose/contracts';
 
-import { modelAliasSchema } from '@recompose/contracts';
+import {
+  claudeCodeKeepsModelId,
+  claudeShapedModelId,
+  modelAliasSchema,
+} from '@recompose/contracts';
 
 import { IpcResultError, refusalSentence } from '../../../shared/api';
 
@@ -9,8 +13,7 @@ const MALFORMED_DEFINITION_REFUSAL =
 const MISSING_NAME_REFUSAL = 'Give the virtual model a name.';
 const UNSERVABLE_ID_REFUSAL =
   "recompose can't serve a virtual model under this id. Pick another one.";
-const SKIPPED_ID_HINT = 'Claude Code lists only ids starting with claude or anthropic.';
-const DISCOVERED_PREFIXES = ['claude', 'anthropic'];
+const SKIPPED_ID_HINT = 'Claude Code lists only ids carrying claude or anthropic.';
 
 /**
  * The sentence a refused save reads as, in words about the virtual model a person was defining.
@@ -52,12 +55,22 @@ export function idRefusal(id: string, held: readonly VirtualModel[]): string | u
 /**
  * The quiet word about which ids a caller's own picker will surface, where one applies.
  *
- * @summary Claude Code lists only the prefixes it recognizes, so an id outside them serves every
- * client that asks for it by name and appears in that one picker for nobody. The name stays free,
- * because the hint belongs beside the derived id rather than as a rule about what a person may type.
+ * @summary An id outside the words Claude Code reads for serves every client that asks for it by
+ * name and appears in that one picker for nobody. The name stays free, because the hint belongs
+ * beside the derived id rather than as a rule about what a person may type. An id with nothing in
+ * it says nothing, so a field a person has yet to fill does not open already carrying a word.
  */
 export function discoveryHint(wireId: string): string | undefined {
-  return DISCOVERED_PREFIXES.some((prefix) => wireId.startsWith(prefix))
-    ? undefined
-    : SKIPPED_ID_HINT;
+  return wireId === '' || claudeCodeKeepsModelId(wireId) ? undefined : SKIPPED_ID_HINT;
+}
+
+/**
+ * The id the hint offers in place of the one a person typed, where the hint applies at all.
+ *
+ * @summary The offer is the fix rather than a second sentence about it, so the hint hands over an
+ * id to take rather than asking a person to work one out. It stands only where the hint does,
+ * because an id already surfaced has nothing to take.
+ */
+export function discoverySuggestion(wireId: string): string | undefined {
+  return discoveryHint(wireId) === undefined ? undefined : claudeShapedModelId(wireId);
 }
