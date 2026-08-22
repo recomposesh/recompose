@@ -8,21 +8,28 @@ import type { Fate, TranslateResult, Translated } from './fates';
 import type { HubContentBlock, HubResponse } from './hub';
 
 import { foldAssistantBlocks, hubToolUseFromChatCall } from './chat-completions-blocks';
+import { spokenThought } from './chat-completions-reasoning';
 import { chatFinishFrom, hubStopFrom } from './chat-completions-stops';
 import { chatUsageFromHub, hubUsageFromChat } from './chat-completions-usage';
 
+function thinkingBlocks(message: ChatResponseMessage): readonly HubContentBlock[] {
+  const thought = spokenThought(message.reasoning_content, message.reasoning);
+
+  return thought === undefined ? [] : [{ type: 'thinking', text: thought, signature: '' }];
+}
+
+function textBlocks(message: ChatResponseMessage): readonly HubContentBlock[] {
+  return typeof message.content === 'string' && message.content !== ''
+    ? [{ type: 'text', text: message.content }]
+    : [];
+}
+
 function hubContentFromMessage(message: ChatResponseMessage): readonly HubContentBlock[] {
-  const blocks: HubContentBlock[] = [];
-
-  if (typeof message.content === 'string' && message.content !== '') {
-    blocks.push({ type: 'text', text: message.content });
-  }
-
-  for (const call of message.tool_calls ?? []) {
-    blocks.push(hubToolUseFromChatCall(call));
-  }
-
-  return blocks;
+  return [
+    ...thinkingBlocks(message),
+    ...textBlocks(message),
+    ...(message.tool_calls ?? []).map((call) => hubToolUseFromChatCall(call)),
+  ];
 }
 
 export function decodeResponse(response: ChatCompletionsResponse): Translated<HubResponse> {
