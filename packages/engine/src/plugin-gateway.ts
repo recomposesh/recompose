@@ -9,6 +9,7 @@ import { afterAuthPlugins } from './plugin-after-auth';
 import { pluginAccountId, pluginCredential } from './plugin-auth';
 import { notePluginExecution } from './plugin-execution-context';
 import { PluginExecutorAdapter, pluginExecutorForProvider } from './plugin-executor';
+import { providerObservability, providerRequestId } from './provider/provider-observability';
 
 type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 
@@ -227,6 +228,28 @@ function executorRequest(
   };
 }
 
+/**
+ * The span a plugin executor's turn is measured under, the same one every provider turn opens.
+ *
+ * @summary A plugin executor answers a whole turn, so it spends an account and produces tokens
+ * exactly as an upstream does. Without a span the turn stands in no traffic row and counts toward
+ * nothing, which reads on the usage screen as an account that was never asked.
+ */
+function executorSpan(
+  target: Extract<PluginGatewayTarget, { kind: 'executor' }>,
+  crossing: Crossing,
+  grant: ResolvedGrant,
+) {
+  return providerObservability().start({
+    provider: providerOf(grant) ?? '',
+    model: crossing.providerModel,
+    accountId: pluginAccountId(grant),
+    dialect: target.outputDialect,
+    method: 'POST',
+    requestId: providerRequestId(new Headers()),
+  });
+}
+
 export async function reachPluginExecutor(
   target: Extract<PluginGatewayTarget, { kind: 'executor' }>,
   crossing: Crossing,
@@ -248,13 +271,15 @@ export async function reachPluginExecutor(
     target.adapter.id(),
   );
 
+  const span = executorSpan(target, crossing, grant);
+
   if (prepared.stream) {
     const response = await target.adapter.executeStream(prepared);
 
-    return streamResponse(response.chunks, response.headers);
+    return span.observe(streamResponse(response.chunks, response.headers));
   }
 
   const response = await target.adapter.execute(prepared);
 
-  return directResponse(response.payload, response.headers);
+  return span.observe(directResponse(response.payload, response.headers));
 }
