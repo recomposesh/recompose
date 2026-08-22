@@ -23,10 +23,10 @@ const UNREACHED_STATUS = 502;
 /**
  * One subscription send, watched from the moment it leaves to the moment something settles it.
  *
- * @summary A send that throws settles the span before the failure travels on, because a span left
- * open shows a person a request still in flight for as long as the process lives. A cut-off call
- * takes exactly that path: the signal ends the request rather than answering it, so nothing here
- * ever reads a status off a response.
+ * @summary Only the send sits inside the catch, so a span is never settled twice: a throw from the
+ * send closes it and travels on, while everything after it belongs to an answer that did arrive. A
+ * span left open shows a person a request still in flight for as long as the process lives, and a
+ * cut-off call takes exactly that path, since the signal ends the request rather than answering it.
  */
 export async function sendObservedSubscription(
   provider: SubscriptionProviderId,
@@ -44,11 +44,15 @@ export async function sendObservedSubscription(
     requestId: providerRequestId(new Headers(request.headers)),
   });
 
+  let answer: Response;
+
   try {
-    return span.observe(await send(provider, request));
+    answer = await send(provider, request);
   } catch (failure) {
     span.failed(UNREACHED_STATUS);
 
     throw failure;
   }
+
+  return span.observe(answer);
 }
