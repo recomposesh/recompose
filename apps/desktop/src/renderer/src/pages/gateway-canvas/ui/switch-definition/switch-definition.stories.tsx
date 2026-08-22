@@ -79,7 +79,7 @@ export const TheLastRowStandsAsTheElse = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Else')).toBeVisible();
     await expect(
-      await canvas.findByText(/catches a request the judge read and could not place/),
+      await canvas.findByText(/catches a request the judge read but could not place/),
     ).toBeVisible();
   },
 });

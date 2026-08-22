@@ -19,7 +19,7 @@ export const ELSE = 'Else';
  * and one sentence rather than two keeps a person reading their own reason on either surface.
  */
 export const WHY_ELSE_STAYS =
-  'Every conditional router keeps an else branch. It catches a request the judge read and could not place. A judge that answers nothing refuses the request instead.';
+  'Every conditional router keeps an else branch. It catches a request the judge read but could not place.';
 
 /** How a conditional router reads its own children, which is what turns rows into branches. */
 export type BranchReading = {

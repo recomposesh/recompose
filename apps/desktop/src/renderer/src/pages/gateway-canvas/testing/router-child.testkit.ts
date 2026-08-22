@@ -35,7 +35,7 @@ export const chatRow: RouterChild = {
 };
 
 const WHY_ELSE_STAYS =
-  'Every conditional router keeps an else branch. It catches a request the judge read and could not place. A judge that answers nothing refuses the request instead.';
+  'Every conditional router keeps an else branch. It catches a request the judge read but could not place.';
 
 /** The branch no rule places, which every conditional router carries and no edit removes. */
 export const elseRow: RouterChild = {

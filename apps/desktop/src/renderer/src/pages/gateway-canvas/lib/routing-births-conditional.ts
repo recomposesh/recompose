@@ -43,7 +43,7 @@ export function routedThroughAConditionalRouter(
  * The gateway as it stands once it carries a definition routing through a conditional router.
  *
  * @summary The target the drawer already collected becomes the else child, because choosing this
- * mode is choosing what catches everything the judge cannot place, and a conditional router born
+ * mode is choosing what catches a request the judge reads but cannot place, and one born
  * without one is a table the stored shape refuses. The branches arrive later, one per cable, so the
  * router is born holding the judge, the fallback, and nothing else.
  */

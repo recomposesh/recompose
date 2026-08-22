@@ -181,6 +181,6 @@ Then('the else row offers no way to move or delete it', async ({ page }) => {
 
 Then('the row says why the else branch stays', async ({ page }) => {
   await expect(elseRow(page).locator('[data-else-reason]')).toHaveText(
-    'Every conditional router keeps an else branch. It catches a request the judge read and could not place. A judge that answers nothing refuses the request instead.',
+    'Every conditional router keeps an else branch. It catches a request the judge read but could not place.',
   );
 });

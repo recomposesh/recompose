@@ -48,7 +48,7 @@ export const PickingAProvider = meta.story({
  * The same step under conditional asks for the else branch instead.
  *
  * @summary One step, two questions: a person picking here under conditional is naming what catches
- * everything the judge cannot place rather than the one thing the model binds to.
+ * a request the judge reads but cannot place rather than the one thing the model binds to.
  */
 export const TheProviderStepRenamedUnderConditional = meta.story({
   args: {
