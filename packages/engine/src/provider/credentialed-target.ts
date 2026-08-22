@@ -9,6 +9,7 @@ import {
   geminiInteractionsBody,
   parseGeminiInteractionsCredential,
 } from './gemini-interactions-policy';
+import { geminiTurnsUpstreamWillTake } from './gemini-leading-turn';
 import { cappedGeminiOutput } from './gemini-model-limits';
 import { prepareKimiReplay } from './kimi-replay-runtime';
 import { kimiProviderBody } from './kimi-request';
@@ -111,15 +112,21 @@ function aiStudioBody(crossing: Crossing, body: JsonObject): JsonObject {
         )
       : generation;
 
-  return vertexProviderBody({ ...body, generationConfig: cleaned }, crossing);
+  return geminiTurnsUpstreamWillTake(
+    vertexProviderBody({ ...body, generationConfig: cleaned }, crossing),
+  );
 }
 
 const BODY_BUILDERS = new Map<string, BodyBuilder>([
   ['aistudio', aiStudioBody],
   ['anthropic', prepareClaudeReplay],
-  ['gemini', (crossing, body) => cappedGeminiOutput(body, crossing.providerModel)],
+  [
+    'gemini',
+    (crossing, body) =>
+      geminiTurnsUpstreamWillTake(cappedGeminiOutput(body, crossing.providerModel)),
+  ],
   ['xai', xaiBody],
-  ['vertex', (crossing, body) => vertexProviderBody(body, crossing)],
+  ['vertex', (crossing, body) => geminiTurnsUpstreamWillTake(vertexProviderBody(body, crossing))],
   [
     'kimi',
     (crossing, body) =>
