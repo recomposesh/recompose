@@ -62,11 +62,25 @@ export async function startDeviceSignIn(
     startedAtMs: port.nowMs(),
   });
 
+  await openTheAddress(port, asked.verificationUri);
+
   return {
     verdict: 'shown',
     userCode: asked.userCode,
     verificationUri: asked.verificationUri,
   };
+}
+
+/**
+ * @summary A browser that will not open is written down rather than refusing the sign-in: the code
+ * is already issued and the screen still prints the address, so a person can finish by hand.
+ */
+async function openTheAddress(port: DeviceSignInPort, verificationUri: string): Promise<void> {
+  try {
+    await port.openInBrowser(verificationUri);
+  } catch (error) {
+    console.error('recompose could not open the sign-in address in a browser.', error);
+  }
 }
 
 /**

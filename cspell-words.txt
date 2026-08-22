@@ -130,6 +130,7 @@ Gemini
 generativelanguage
 gguf
 gitdir
+githubcopilot
 gjson
 glassmorphism
 glsl

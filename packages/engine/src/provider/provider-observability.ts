@@ -110,6 +110,15 @@ export class ProviderObservationSpan {
     this.attempt = attempt;
   }
 
+  /**
+   * Watches one answer's body go past, and settles the span whichever way the body ends.
+   *
+   * @summary A body nobody reads is not a body that never ended. A walk that refuses one child and
+   * moves to the next drops the answer it refused, and a span settled only on a drained body would
+   * leave that attempt standing open: the row it opened reads as in flight for as long as the app
+   * runs, and the cable painting it never stops. So the abandoned body settles the span too, with
+   * whatever went past before it was dropped.
+   */
   public observe(response: Response): Response {
     const upstreamRequestIdHash = requestIdHash(
       firstHeader(response.headers, upstreamRequestIdHeaders),
@@ -126,6 +135,18 @@ export class ProviderObservationSpan {
     const decoder = new TextDecoder();
     const text: string[] = [];
     let ttft = 0;
+    let settled = false;
+    const settle = (): void => {
+      if (settled) return;
+
+      settled = true;
+      this.finish(
+        response.status,
+        upstreamRequestIdHash,
+        ttft,
+        providerUsageFrom(this.request.dialect, text.join('')),
+      );
+    };
     const observed = response.body.pipeThrough(
       new TransformStream<Uint8Array, Uint8Array>({
         transform: (chunk, controller) => {
@@ -135,13 +156,9 @@ export class ProviderObservationSpan {
         },
         flush: () => {
           text.push(decoder.decode());
-          this.finish(
-            response.status,
-            upstreamRequestIdHash,
-            ttft,
-            providerUsageFrom(this.request.dialect, text.join('')),
-          );
+          settle();
         },
+        cancel: settle,
       }),
     );
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
-import { engineDirectiveSchema, engineReportSchema, modelListingSchema } from './engine-protocol';
+import { modelListingSchema } from './engine-custody';
+import { engineDirectiveSchema, engineReportSchema } from './engine-protocol';
 
 const vendorKeyLook = {
   kind: 'list-models',

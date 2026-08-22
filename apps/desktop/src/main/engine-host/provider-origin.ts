@@ -67,10 +67,24 @@ function subscriptionOriginOf(account: Account): string | undefined {
   return standInOrigin() ?? subscriptionOrigins[account.provider];
 }
 
+const pluginScheme = 'plugin://';
+
+/**
+ * Whether a resolved origin names a plugin rather than an address anything can fetch.
+ *
+ * @summary A plugin serves its provider inside the engine, so nothing outside it can reach the
+ * address: a look that tried would be asking a scheme no client speaks.
+ */
+export function servedByAPlugin(origin: string): boolean {
+  return origin.startsWith(pluginScheme);
+}
+
 function keyedOriginOf(provider: string): string | undefined {
   const served = vendorEndpointOf(provider)?.origin;
 
   if (served !== undefined) return standInOrigin() ?? served;
 
-  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(provider) ? `plugin://${provider}` : undefined;
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(provider)
+    ? `${pluginScheme}${provider}`
+    : undefined;
 }

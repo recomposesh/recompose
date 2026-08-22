@@ -29,6 +29,7 @@ function portAnswering(answers: readonly Answer[]): DeviceSignInPort & { sent: S
     nowMs: () => 0,
     sleep: async () => Promise.resolve(),
     machine: { name: 'ada-machine', id: 'device-1', model: 'macOS arm64', version: '1.2.3' },
+    openInBrowser: async () => Promise.resolve(),
     fetchLike: async (input, init) => {
       const answer = answers[Math.min(turn, answers.length - 1)];
 

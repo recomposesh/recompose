@@ -7,7 +7,6 @@ import {
   engineLogReportSchema,
   engineReportSchema,
   engineTrafficReportSchema,
-  type KeyProviderId,
 } from '@recompose/contracts';
 
 import type { SubscriptionRuntime } from './gateway-proxy';
@@ -22,15 +21,15 @@ import { subscribeToJudging } from './gateway-judging-watch';
 import { subscriptionRuntime } from './gateway-proxy';
 import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { loopbackOverrideOrNull } from './loopback-override';
-import { firstPartyProbeOrigins, probeKey } from './provider/key-probe';
+import { probeKey } from './provider/key-probe';
 import { listProviderModels } from './provider/model-list';
 import { probeRuntime } from './provider/runtime-probe';
 import { claudeAddressBehind } from './subscription/claude-oauth-profile';
 
-function probeOriginFor(provider: KeyProviderId): string {
+function probeOriginFor(origin: string): string {
   return (
     loopbackOverrideOrNull('RECOMPOSE_PROBE_ORIGIN', process.env['RECOMPOSE_PROBE_ORIGIN']) ??
-    firstPartyProbeOrigins[provider]
+    origin
   );
 }
 
@@ -65,12 +64,7 @@ async function lookAnswerFor(fetchLike: typeof fetch, directive: LookDirective):
       return {
         kind: 'key-check',
         answers: directive.id,
-        ...(await probeKey(
-          fetchLike,
-          directive.provider,
-          directive.key,
-          probeOriginFor(directive.provider),
-        )),
+        ...(await probeKey(fetchLike, probeOriginFor(directive.origin), directive.custody)),
       };
     case 'probe-runtime':
       return {

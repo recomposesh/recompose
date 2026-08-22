@@ -1,11 +1,16 @@
-import type { KeyCheckReport, KeyProviderId } from '@recompose/contracts';
-
-import { keyProviderIdSchema } from '@recompose/contracts';
+import type {
+  Account,
+  CredentialedAccount,
+  KeyCheckReport,
+  KeyCustody,
+} from '@recompose/contracts';
 
 import type { SecretCodec } from '../storage/safe-storage-codec';
 import type { IpcHandlers } from './dispatch';
 import type { StoragePaths } from './storage-context';
 
+import { providerOriginOf, servedByAPlugin } from '../engine-host/provider-origin';
+import { keyCustodyFor } from '../engine-host/target-custody';
 import { loadAccountsFile } from '../storage/accounts-store';
 import { getSecret } from '../storage/vault';
 import { inVaultOrder } from '../storage/vault-order';
@@ -18,36 +23,50 @@ export type KeyCheckIpcContext = {
   homeFolder: string;
   getCodec: () => SecretCodec;
   onCorrupt: (quarantinedPath: string) => void;
-  probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport>;
+  probe: (origin: string, custody: KeyCustody) => Promise<KeyCheckReport>;
 };
 
 export function keyCheckReach(
   reach: Omit<KeyCheckIpcContext, 'probe'>,
-  engine: { probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport> },
+  engine: { probe: (origin: string, custody: KeyCustody) => Promise<KeyCheckReport> },
 ): KeyCheckIpcContext {
-  return { ...reach, probe: async (provider, key) => engine.probe(provider, key) };
+  return { ...reach, probe: async (origin, custody) => engine.probe(origin, custody) };
 }
 
 type KeyCheckIpcHandlers = Pick<IpcHandlers, 'accounts:check-key'>;
 
-async function checkableRow(ctx: KeyCheckIpcContext, paths: StoragePaths, id: string) {
-  const accounts = await loadAccountsFile(paths.accountsFile, ctx.onCorrupt);
-  const row = accounts.accounts.find((candidate) => candidate.id === id);
+/**
+ * The row a check runs against, and where its key is spent.
+ *
+ * @summary The check reaches the address the account is served at, so a key pasted for any vendor
+ * the directory names is checkable, and one pasted against an address a person typed is checked
+ * there. A provider recompose reaches nothing for, and one a plugin serves from inside the engine,
+ * both leave the check with nowhere to ask.
+ */
+function checkableAt(row: CredentialedAccount) {
+  const origin = providerOriginOf(row);
 
-  if (row === undefined || (row.kind !== 'api-key' && row.kind !== 'aggregator')) {
-    return ipcFailure('storage-failed', `no key account is held under ${id}.`);
-  }
-
-  const provider = keyProviderIdSchema.safeParse(row.provider);
-
-  if (!provider.success) {
+  if (origin === undefined || servedByAPlugin(origin)) {
     return ipcFailure(
       'validation-failed',
       `recompose has no key check for the provider "${row.provider}".`,
     );
   }
 
-  return { ok: true as const, provider: provider.data, credentialRef: row.credentialRef };
+  return { ok: true as const, account: row, origin };
+}
+
+function holdsAKey(row: Account | undefined): row is CredentialedAccount {
+  return row !== undefined && (row.kind === 'api-key' || row.kind === 'aggregator');
+}
+
+async function checkableRow(ctx: KeyCheckIpcContext, paths: StoragePaths, id: string) {
+  const accounts = await loadAccountsFile(paths.accountsFile, ctx.onCorrupt);
+  const row = accounts.accounts.find((candidate) => candidate.id === id);
+
+  return holdsAKey(row)
+    ? checkableAt(row)
+    : ipcFailure('storage-failed', `no key account is held under ${id}.`);
 }
 
 async function decryptedSecret(ctx: KeyCheckIpcContext, paths: StoragePaths, id: string) {
@@ -63,13 +82,13 @@ async function decryptedSecret(ctx: KeyCheckIpcContext, paths: StoragePaths, id:
     return opened;
   }
 
-  const secret = getSecret(opened.vault, ctx.getCodec(), row.credentialRef);
+  const secret = getSecret(opened.vault, ctx.getCodec(), row.account.credentialRef);
 
   if (secret === undefined) {
     return ipcFailure('storage-failed', 'the vault holds no secret for this account.');
   }
 
-  return { ok: true as const, provider: row.provider, secret };
+  return { ok: true as const, origin: row.origin, custody: keyCustodyFor(row.account, secret) };
 }
 
 export function createKeyCheckIpcHandlers(ctx: KeyCheckIpcContext): KeyCheckIpcHandlers {
@@ -90,7 +109,7 @@ export function createKeyCheckIpcHandlers(ctx: KeyCheckIpcContext): KeyCheckIpcH
       }
 
       try {
-        return { ok: true as const, value: await ctx.probe(gathered.provider, gathered.secret) };
+        return { ok: true as const, value: await ctx.probe(gathered.origin, gathered.custody) };
       } catch (error) {
         return storageFailure(error, ctx.homeFolder);
       }

@@ -87,13 +87,15 @@ const defaultExpirySeconds = 900;
  *
  * @summary The answer carries the pace the vendor wants to be asked at, so the wait never polls
  * faster than the server allows. An answer without a device code refuses, because showing a person
- * a verification address with nothing to type there wastes the trip.
+ * a verification address with nothing to type there wastes the trip. The address carrying the code
+ * is preferred over the bare one, because RFC 8628 leaves a bare page free to offer no way to type
+ * the code, and Kimi's answers `missing user_code parameter` to anyone who arrives without it.
  */
 function codeShownIn(body: Record<string, unknown>, name: string): DeviceCodeAsked {
   const deviceCode = textAt(body, 'device_code');
   const userCode = textAt(body, 'user_code');
   const verificationUri =
-    textAt(body, 'verification_uri') ?? textAt(body, 'verification_uri_complete');
+    textAt(body, 'verification_uri_complete') ?? textAt(body, 'verification_uri');
 
   if (deviceCode === undefined || userCode === undefined || verificationUri === undefined) {
     return refused(`${name} answered the device request without a code.`);

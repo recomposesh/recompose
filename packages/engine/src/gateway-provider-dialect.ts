@@ -4,12 +4,23 @@ import type { ProviderDialect, ProxyDialect } from './gateway-wire';
 
 import { credentialedDialect } from './provider/credentialed-target';
 
-function subscriptionDialect(provider: string): ProviderDialect {
-  return provider === 'anthropic'
-    ? 'anthropic'
-    : provider === 'antigravity'
-      ? 'gemini'
-      : 'responses';
+/**
+ * How a turn bought by a plan reads on the wire.
+ *
+ * @summary Each plan answers the dialect its own tool speaks, so the dialect follows the plan
+ * rather than the caller, with two exceptions. Kimi serves both dialects and follows the caller
+ * whether the credential is a plan token or a pasted key, so it answers from the one table that
+ * already knows that. Copilot serves the OpenAI-compatible dialect and only that, so it says so
+ * here rather than falling through to the Responses dialect Codex speaks.
+ */
+function subscriptionDialect(provider: string, sourceDialect: ProxyDialect): ProviderDialect {
+  if (provider === 'anthropic') return 'anthropic';
+
+  if (provider === 'antigravity') return 'gemini';
+
+  if (provider === 'kimi') return credentialedDialect(provider, sourceDialect);
+
+  return provider === 'copilot' ? 'chat-completions' : 'responses';
 }
 
 export function dialectFor(grant: SpendGrant, sourceDialect: ProxyDialect): ProviderDialect {
@@ -18,5 +29,5 @@ export function dialectFor(grant: SpendGrant, sourceDialect: ProxyDialect): Prov
 
   return grant.spend.custody === 'credentialed'
     ? credentialedDialect(grant.spend.provider, sourceDialect)
-    : subscriptionDialect(grant.spend.provider);
+    : subscriptionDialect(grant.spend.provider, sourceDialect);
 }

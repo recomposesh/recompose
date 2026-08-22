@@ -3,7 +3,13 @@ import type { MockInstance } from 'vitest';
 import { describe, expect, test, vi } from 'vitest';
 
 import { attachEngineChild } from './engine-child';
-import { aLoopbackHolding, aParent, fetchAnswering, reportsReach } from './engine-child.testkit';
+import {
+  aLoopbackHolding,
+  aParent,
+  aProbeOf,
+  fetchAnswering,
+  reportsReach,
+} from './engine-child.testkit';
 
 function spokenBy(complaints: MockInstance<typeof console.error>): string {
   return complaints.mock.calls.flat().map(String).join(' ');
@@ -24,13 +30,8 @@ describe('the origin a probe reaches', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
-      parent.send({
-        kind: 'probe',
-        id: 'd2',
-        provider: 'openai',
-        key: 'sk-proj-fake-openai-paste',
-      });
+      parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
+      parent.send(aProbeOf('d2', 'openai', 'sk-proj-fake-openai-paste'));
       await reportsReach(parent, 2);
 
       expect(urls).toEqual([
@@ -51,13 +52,8 @@ describe('the origin a probe reaches', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
-      parent.send({
-        kind: 'probe',
-        id: 'd2',
-        provider: 'openai',
-        key: 'sk-proj-fake-openai-paste',
-      });
+      parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
+      parent.send(aProbeOf('d2', 'openai', 'sk-proj-fake-openai-paste'));
       await reportsReach(parent, 2);
 
       expect(urls).toEqual(['http://127.0.0.1:8642/v1/models', 'http://127.0.0.1:8642/v1/models']);
@@ -164,7 +160,7 @@ describe('the names a loopback override may go by', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
+      parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
       await reportsReach(parent, 1);
 
       expect(urls).toEqual([`${origin}/v1/models`]);
@@ -184,7 +180,7 @@ describe('the override the child refuses to hear', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
+      parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
       await reportsReach(parent, 1);
 
       expect(urls).toEqual(['https://api.anthropic.com/v1/models']);
@@ -209,12 +205,7 @@ describe('the override the child refuses to hear', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), fetchLike);
-      parent.send({
-        kind: 'probe',
-        id: 'd1',
-        provider: 'openai',
-        key: 'sk-proj-fake-openai-paste',
-      });
+      parent.send(aProbeOf('d1', 'openai', 'sk-proj-fake-openai-paste'));
       await reportsReach(parent, 1);
 
       expect(urls).toEqual(['https://api.openai.com/v1/models']);

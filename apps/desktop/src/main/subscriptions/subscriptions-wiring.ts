@@ -157,6 +157,7 @@ function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcCont
       sleep: sleepFor,
       nowMs: () => Date.now(),
       machine: thisMachine(app.getVersion()),
+      openInBrowser: async (url) => shell.openExternal(url),
     },
     browserSignIn: {
       fetchLike: fetch,

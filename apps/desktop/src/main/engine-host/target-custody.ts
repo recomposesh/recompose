@@ -1,6 +1,7 @@
 import type {
   Account,
   CredentialedAccount,
+  KeyCustody,
   LookCustody,
   ProviderModelPolicy,
   SubscriptionAccount,
@@ -142,7 +143,14 @@ async function heldSecret(
   return getSecret(opened.vault, ctx.getCodec(), credentialRef);
 }
 
-function spelledFor(account: CredentialedAccount, credential: string): LookCustody {
+/**
+ * How one stored key is spelled on the wire, whichever vendor it was pasted for.
+ *
+ * @summary A handful of vendors read their key from a header of their own, and every other reads
+ * the OpenAI-compatible bearer. Serving a turn, listing models and checking a key all ask the same
+ * question, so they all ask it here rather than each keeping a list of vendors.
+ */
+export function keyCustodyFor(account: CredentialedAccount, credential: string): KeyCustody {
   const firstParty = keyProviderIdSchema.safeParse(account.provider);
 
   return firstParty.success
@@ -164,7 +172,7 @@ async function credentialedTarget(
     : {
         verdict: 'resolved',
         providerOrigin,
-        custody: spelledFor(account, credential),
+        custody: keyCustodyFor(account, credential),
         ...(modelPolicy === undefined ? {} : { modelPolicy }),
       };
 }

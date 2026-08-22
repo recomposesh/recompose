@@ -11,6 +11,7 @@ import type {
   EngineVirtualModel,
   GatewayEngineState,
   KeyCheckVerdict,
+  KeyCustody,
   KeyProviderId,
   LocalProviderId,
   LookCustody,
@@ -71,14 +72,24 @@ describe('the protocol the two processes speak', () => {
     expectTypeOf<EngineGateway>().not.toHaveProperty('requireApiKey');
   });
 
-  test('the probe is the one directive a key can travel in', () => {
-    expectTypeOf<ProbeDirective['key']>().toEqualTypeOf<string>();
+  test('the probe carries its key in the custody that spells it', () => {
+    expectTypeOf<ProbeDirective['custody']>().toEqualTypeOf<KeyCustody>();
+    expectTypeOf<ProbeDirective>().not.toHaveProperty('key');
     expectTypeOf<Extract<EngineDirective, { kind: 'start' }>>().not.toHaveProperty('key');
     expectTypeOf<Extract<EngineDirective, { kind: 'stop' }>>().not.toHaveProperty('key');
   });
 
-  test('a probe names one of the providers a dialect covers', () => {
-    expectTypeOf<ProbeDirective['provider']>().toEqualTypeOf<KeyProviderId>();
+  test('a probe names where the key is spent rather than the vendor it was pasted for', () => {
+    expectTypeOf<keyof ProbeDirective>().toEqualTypeOf<'kind' | 'id' | 'origin' | 'custody'>();
+    expectTypeOf<ProbeDirective['origin']>().toEqualTypeOf<string>();
+  });
+
+  test('a key custody is either a first-party header or the bearer every other vendor reads', () => {
+    expectTypeOf<KeyCustody['custody']>().toEqualTypeOf<'provider-key' | 'bearer'>();
+    expectTypeOf<
+      Extract<KeyCustody, { custody: 'provider-key' }>['provider']
+    >().toEqualTypeOf<KeyProviderId>();
+    expectTypeOf<Extract<KeyCustody, { custody: 'bearer' }>['provider']>().toEqualTypeOf<string>();
   });
 
   test('a runtime probe carries the address, the server it expects, and the id it answers', () => {

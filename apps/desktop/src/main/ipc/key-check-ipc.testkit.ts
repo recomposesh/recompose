@@ -53,7 +53,7 @@ export function checkHandlersOver(
       homeFolder: '/Users/ada',
       getCodec: () => codec,
       onCorrupt: () => undefined,
-      probe: async (provider, key) => host.probe(provider, key),
+      probe: async (origin, custody) => host.probe(origin, custody),
     }),
   };
 }

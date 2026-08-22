@@ -8,7 +8,11 @@ const ids = { sessionId: 'session-1', requestId: 'request-1' };
 function sentBody(origin: string) {
   const request = claudeProviderRequest(
     origin,
-    { model: 'claude-opus-5', messages: [{ role: 'user', content: 'hello' }] },
+    {
+      model: 'claude-opus-5',
+      thinking: { type: 'enabled' },
+      messages: [{ role: 'user', content: 'hello' }],
+    },
     'access-token',
     ids,
   );

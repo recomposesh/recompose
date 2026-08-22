@@ -21,6 +21,7 @@ import { pluginGatewayTarget, reachPluginExecutor } from './plugin-gateway';
 import { reachCredentialed } from './provider/credentialed-reach';
 import { coolUntilTheProviderNames } from './routing/cooldown-signal';
 import { parseSubscriptionCredential } from './subscription/credentials';
+import { planSpentAsAKey, reachPlanAsAKey } from './subscription/plan-as-key-reach';
 import { reachSubscription } from './subscription/reach';
 
 export type AttemptDeps = {
@@ -54,9 +55,14 @@ function coolingTheHeadersReport(headers: Headers, now: number): { cooling?: Coo
   return cooling === undefined ? {} : { cooling };
 }
 
+/**
+ * @summary A plan spent as a key carries a bearer rather than a credential document, so reading it
+ * as one would call every such turn unbound and refuse a request the account can serve.
+ */
 function hasMalformedSubscription(grant: SpendGrant): boolean {
+  if (grant.verdict !== 'resolved' || planSpentAsAKey(grant) !== undefined) return false;
+
   return (
-    grant.verdict === 'resolved' &&
     grant.spend.custody === 'subscription' &&
     parseSubscriptionCredential(grant.spend.provider, grant.spend.credential) === null
   );
@@ -87,6 +93,17 @@ async function sentUpstream(
   grant: Resolved,
   body: JsonObject,
 ): Promise<Response> {
+  const asKey = planSpentAsAKey(grant);
+
+  if (asKey !== undefined) {
+    return reachPlanAsAKey(crossing, grant, asKey, body, {
+      fetchLike: deps.fetchLike,
+      subscriptions: deps.subscriptions,
+      aiStudio: deps.aiStudio,
+      plugins: deps.plugins,
+    });
+  }
+
   if (grant.spend.custody === 'subscription') {
     return reachSubscription(
       grant,

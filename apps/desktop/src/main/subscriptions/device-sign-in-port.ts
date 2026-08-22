@@ -12,6 +12,14 @@ export type DeviceSignInPort = {
    * Every vendor that asks for none is handed it anyway rather than the port forking per plan.
    */
   machine: MachineIdentity;
+  /**
+   * Opens the address a person authorizes at, in whatever browser the machine calls its own.
+   *
+   * @summary A device flow shows an address rather than navigating to one, so without this a
+   * person has to retype it. The step still prints it, because a browser that will not open
+   * leaves the address the only way through.
+   */
+  openInBrowser: (url: string) => Promise<void>;
 };
 
 /** What the far end issued, and the address it says signed in, where it names one. */

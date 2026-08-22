@@ -85,9 +85,6 @@ describe('the request sent as Claude Code 2.1.220', () => {
       max_tokens: 256,
       messages: [],
       stream: true,
-      context_management: {
-        edits: [{ type: 'clear_thinking_20251015', keep: 'all' }],
-      },
     });
     expect(request.body).toMatch(/x-anthropic-billing-header:.*cch=[a-f\d]{5};/u);
     expect(request.body).toContain("You are Claude Code, Anthropic's official CLI for Claude.");
@@ -148,14 +145,15 @@ describe('Claude sampling compatibility', () => {
     ],
   ])('removes only the controls the native wire refuses', (input, expected) => {
     const request = requestFor({ model: 'claude-sonnet-4-5', messages: [], ...input });
+    const thinkingStays = 'thinking' in expected;
 
     expect(semanticBodyOf(request)).toEqual({
       model: 'claude-sonnet-4-5',
       messages: [],
       ...expected,
-      context_management: {
-        edits: [{ type: 'clear_thinking_20251015', keep: 'all' }],
-      },
+      ...(thinkingStays
+        ? { context_management: { edits: [{ type: 'clear_thinking_20251015', keep: 'all' }] } }
+        : {}),
     });
   });
 
@@ -168,13 +166,7 @@ describe('Claude sampling compatibility', () => {
       tool_choice,
     });
 
-    expect(semanticBodyOf(request)).toEqual({
-      model: 'claude-sonnet-4-5',
-      tool_choice,
-      context_management: {
-        edits: [{ type: 'clear_thinking_20251015', keep: 'all' }],
-      },
-    });
+    expect(semanticBodyOf(request)).toEqual({ model: 'claude-sonnet-4-5', tool_choice });
   });
 });
 

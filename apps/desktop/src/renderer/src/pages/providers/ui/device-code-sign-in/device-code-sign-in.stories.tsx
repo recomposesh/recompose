@@ -27,6 +27,33 @@ export const ShowsTheCodeAndWhereToEnterIt = meta.story({
 });
 
 /**
+ * Neither the code nor the address has to be retyped, wherever the browser did not come forward.
+ *
+ * @summary The main process opens the address as the code is issued, so this pair is the way
+ * through for a machine that opened nothing: the address is a link, and both it and the code sit
+ * beside a copy. A person reading a code off a screen and typing it into a phone gets it wrong.
+ */
+export const TheCodeAndAddressAreBothTakeable = meta.story({
+  play: async ({ canvas }) => {
+    const address = await canvas.findByRole('link', { name: 'https://github.com/login/device' });
+
+    await expect(address).toHaveAttribute('href', 'https://github.com/login/device');
+    await expect(address).toHaveAttribute('target', '_blank');
+    await expect(await canvas.findByRole('button', { name: 'Copy the code' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Copy the address' })).toBeVisible();
+  },
+});
+
+/** Copying the code puts exactly what the provider issued on the clipboard. */
+export const CopyingTheCodeTakesTheCodeItself = meta.story({
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Copy the code' }));
+
+    await expect(await navigator.clipboard.readText()).toBe('ABCD-1234');
+  },
+});
+
+/**
  * The act asks the provider rather than claiming the sign-in finished on its own.
  *
  * @summary The step never decides a sign-in landed. It presses, waits on the answer, and steps

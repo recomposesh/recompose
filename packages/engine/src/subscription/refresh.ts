@@ -1,17 +1,13 @@
 import type { AccountTransportPolicy, SubscriptionProviderId } from '@recompose/contracts';
 
 import type { ParsedSubscriptionCredential, RefreshedTokens } from './credentials';
+import type { RefreshRequest } from './refresh-request';
 
 import { isJsonObject } from '../gateway-wire';
 import { controlPlaneUrl } from '../loopback-override';
 import { parseSubscriptionCredential, refreshedCredentialBlob } from './credentials';
-
-type RefreshRequest = {
-  method: 'POST';
-  headers: [string, string][];
-  body: string;
-  signal?: AbortSignal;
-};
+import { KIMI_TOKEN_URL, kimiRefreshRequest } from './kimi-refresh';
+import { formRefreshRequest } from './refresh-request';
 
 export type RefreshFetch = (
   url: string,
@@ -47,20 +43,10 @@ export function credentialNeedsRefresh(
   return credential.expiresAt !== undefined && credential.expiresAt <= now + margin;
 }
 
-function formRefreshRequest(values: Record<string, string>): RefreshRequest {
-  return {
-    method: 'POST',
-    headers: [
-      ['Content-Type', 'application/x-www-form-urlencoded'],
-      ['Accept', 'application/json'],
-    ],
-    body: new URLSearchParams(values).toString(),
-  };
-}
-
 function refreshRequest(
   provider: SubscriptionProviderId,
   refreshToken: string,
+  deviceId: string | undefined,
 ): readonly [string, RefreshRequest] {
   if (provider === 'anthropic') {
     return [
@@ -94,6 +80,10 @@ function refreshRequest(
         scope: 'openid profile email',
       }),
     ];
+  }
+
+  if (provider === 'kimi') {
+    return [controlPlaneUrl(KIMI_TOKEN_URL), kimiRefreshRequest(refreshToken, deviceId)];
   }
 
   return [
@@ -206,8 +196,9 @@ async function refreshOnce(
   fetchLike: RefreshFetch,
   now: number,
   transportPolicy?: AccountTransportPolicy,
+  deviceId?: string,
 ): Promise<RefreshedTokens> {
-  const [url, init] = refreshRequest(provider, refreshToken);
+  const [url, init] = refreshRequest(provider, refreshToken, deviceId);
   const request = boundedRefreshRequest(provider, init);
   const response =
     transportPolicy === undefined
@@ -243,6 +234,23 @@ function assertRefreshAllowed(
   }
 }
 
+/**
+ * @summary A credential nothing can renew is refused before any lane opens for it, because a lane
+ * keyed on a token that is not there would settle against the next caller carrying none either.
+ */
+function renewableCredential(
+  provider: SubscriptionProviderId,
+  blob: string,
+): { refreshToken: string; deviceId: string | undefined } {
+  const credential = parseSubscriptionCredential(provider, blob);
+
+  if (credential?.refreshToken === undefined) {
+    throw new Error('subscription credential has no refresh token');
+  }
+
+  return { refreshToken: credential.refreshToken, deviceId: credential.deviceIds?.[0] };
+}
+
 export async function refreshSubscriptionCredential(
   provider: SubscriptionProviderId,
   blob: string,
@@ -250,12 +258,7 @@ export async function refreshSubscriptionCredential(
   now = Date.now(),
   transportPolicy?: AccountTransportPolicy,
 ): Promise<string> {
-  const credential = parseSubscriptionCredential(provider, blob);
-  const refreshToken = credential?.refreshToken;
-
-  if (refreshToken === undefined) {
-    throw new Error('subscription credential has no refresh token');
-  }
+  const { refreshToken, deviceId } = renewableCredential(provider, blob);
 
   const key = `${provider}:${refreshToken}`;
 
@@ -267,11 +270,16 @@ export async function refreshSubscriptionCredential(
     return refreshedCredentialBlob(provider, blob, await standing, now);
   }
 
-  const started = refreshOnce(provider, refreshToken, fetchLike, now, transportPolicy).finally(
-    () => {
-      refreshing.delete(key);
-    },
-  );
+  const started = refreshOnce(
+    provider,
+    refreshToken,
+    fetchLike,
+    now,
+    transportPolicy,
+    deviceId,
+  ).finally(() => {
+    refreshing.delete(key);
+  });
 
   refreshing.set(key, started);
 

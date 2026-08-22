@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { keyCheckVerdictSchema, keyProviderIdSchema } from './api-keys';
+import { keyCheckVerdictSchema } from './api-keys';
+import {
+  keyCustodySchema,
+  lookCustodySchema,
+  modelListingSchema,
+  subscriptionCustodySchema,
+} from './engine-custody';
 import { logRowSchema } from './engine-logs';
 import { engineRoutingSchema } from './engine-routing';
 import { gatewayEngineStateSchema } from './engine-state';
@@ -16,7 +22,6 @@ import { nonBlankString } from './non-blank';
 import { providerDialectSchema } from './provider-directory';
 import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
-import { accountTransportPolicySchema } from './transport-policy';
 
 /**
  * One virtual model as the child serves it: the id a client sends, and where the request goes.
@@ -54,66 +59,6 @@ export type EngineGateway = z.infer<typeof engineGatewaySchema>;
 
 export const directiveIdSchema = z.string().trim().min(1);
 
-/**
- * Who spends the refresh token when a subscription credential nears expiry.
- *
- * @summary Both vendors rotate the refresh token on every renewal and reject the one that went
- * before, so a second renewer signs the person out of their own tool. The parent resolves this from
- * the stored account and stamps it on the grant, and the child obeys the answer rather than
- * inferring one it has no way to know.
- */
-export const subscriptionRenewalOwnerSchema = z.enum(['app', 'owning-tool']);
-
-export type SubscriptionRenewalOwner = z.infer<typeof subscriptionRenewalOwnerSchema>;
-
-const subscriptionCustodyShape = {
-  custody: z.literal('subscription'),
-  provider: subscriptionProviderIdSchema,
-  accountId: nonBlankString,
-  credential: nonBlankString,
-  renewal: subscriptionRenewalOwnerSchema,
-  transportPolicy: accountTransportPolicySchema.optional(),
-};
-
-/**
- * How a look at a provider's model list spells the credential it was handed, or that it has none.
- *
- * @summary A first-party key rides the header its own vendor reads, which is why the arm names the
- * provider: Anthropic answers `x-api-key` beside its version and turns a bearer token away. Every
- * other credentialed account is an OpenAI-compatible bearer, and a runtime on this machine carries
- * nothing at all. Main resolves the arm from the stored account; the child spells the header.
- */
-export const lookCustodySchema = z.discriminatedUnion('custody', [
-  z.strictObject({
-    custody: z.literal('provider-key'),
-    provider: keyProviderIdSchema,
-    credential: nonBlankString,
-  }),
-  z.strictObject({
-    custody: z.literal('bearer'),
-    provider: nonBlankString,
-    credential: nonBlankString,
-  }),
-  z.strictObject(subscriptionCustodyShape),
-  z.strictObject({ custody: z.literal('open') }),
-]);
-
-export type LookCustody = z.infer<typeof lookCustodySchema>;
-
-/**
- * What one look at an account's model list read: the ids it serves, or that nothing could be read.
- *
- * @summary The unlisted arm carries no words, because a person reads the sentence the screen owns
- * rather than one the engine invented. An account that answered with no ids still stands as listed,
- * so a catalog that is genuinely empty never reads as a look that failed.
- */
-export const modelListingSchema = z.discriminatedUnion('standing', [
-  z.strictObject({ standing: z.literal('listed'), modelIds: z.array(nonBlankString) }),
-  z.strictObject({ standing: z.literal('unlisted') }),
-]);
-
-export type ModelListing = z.infer<typeof modelListingSchema>;
-
 export const engineDirectiveSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('start'),
@@ -124,8 +69,8 @@ export const engineDirectiveSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('probe'),
     id: directiveIdSchema,
-    provider: keyProviderIdSchema,
-    key: nonBlankString,
+    origin: nonBlankString,
+    custody: keyCustodySchema,
   }),
   z.strictObject({
     kind: z.literal('probe-runtime'),
@@ -247,7 +192,7 @@ const grantedSpendSchema = z.discriminatedUnion('custody', [
     isCompat: z.boolean().optional(),
     dialect: providerDialectSchema.optional(),
   }),
-  z.strictObject(subscriptionCustodyShape),
+  subscriptionCustodySchema,
   z.strictObject({ custody: z.literal('open') }),
 ]);
 

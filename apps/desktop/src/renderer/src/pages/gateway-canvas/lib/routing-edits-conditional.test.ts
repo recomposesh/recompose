@@ -26,7 +26,7 @@ test('a fresh conditional router stands over the one child that catches everythi
   const routing = routedThroughAConditionalRouter(judge, catchAll);
   const policy = policyOf(routing, routing.entry);
 
-  expect(policy).toMatchObject({ mode: 'conditional', branches: [], rejudgeEveryRequest: false });
+  expect(policy).toMatchObject({ mode: 'conditional', branches: [], rejudgeEveryRequest: true });
   expect(policy?.mode === 'conditional' ? routing.nodes[policy.elseChild] : undefined).toEqual(
     catchAll,
   );

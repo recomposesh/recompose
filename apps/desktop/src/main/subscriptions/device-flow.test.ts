@@ -125,7 +125,40 @@ describe('the code a person is shown, read out of the answer', () => {
       expiresInMs: 900_000,
     });
   });
+});
 
+describe('the address a person is sent to', () => {
+  test('an address carrying the code is shown over the bare one beside it', async () => {
+    const { fetchLike } = fetchAnswering([
+      {
+        status: 200,
+        body: {
+          ...aDeviceCode,
+          verification_uri: 'https://www.kimi.com/code/authorize_device',
+          verification_uri_complete:
+            'https://www.kimi.com/code/authorize_device?user_code=ABCD-1234',
+        },
+      },
+    ]);
+
+    const asked = await askForADeviceCode(fetchLike, copilotVendor);
+
+    expect(asked).toMatchObject({
+      verdict: 'shown',
+      verificationUri: 'https://www.kimi.com/code/authorize_device?user_code=ABCD-1234',
+    });
+  });
+
+  test('a vendor publishing only the bare address is shown that one', async () => {
+    const { fetchLike } = fetchAnswering([{ status: 200, body: aDeviceCode }]);
+
+    expect(await askForADeviceCode(fetchLike, copilotVendor)).toMatchObject({
+      verificationUri: 'https://github.com/login/device',
+    });
+  });
+});
+
+describe('what the ask refuses to show', () => {
   test('an answer missing the code refuses rather than showing a person nothing', async () => {
     const { fetchLike } = fetchAnswering([{ status: 200, body: { user_code: 'ABCD-1234' } }]);
 
