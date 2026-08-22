@@ -11,6 +11,7 @@ import {
 } from './gemini-interactions-policy';
 import { geminiTurnsUpstreamWillTake } from './gemini-leading-turn';
 import { cappedGeminiOutput } from './gemini-model-limits';
+import { geminiSignaturesUpstreamWillTake } from './gemini-response-signatures';
 import { prepareKimiReplay } from './kimi-replay-runtime';
 import { kimiProviderBody } from './kimi-request';
 import {
@@ -123,10 +124,18 @@ const BODY_BUILDERS = new Map<string, BodyBuilder>([
   [
     'gemini',
     (crossing, body) =>
-      geminiTurnsUpstreamWillTake(cappedGeminiOutput(body, crossing.providerModel)),
+      geminiSignaturesUpstreamWillTake(
+        geminiTurnsUpstreamWillTake(cappedGeminiOutput(body, crossing.providerModel)),
+      ),
   ],
   ['xai', xaiBody],
-  ['vertex', (crossing, body) => geminiTurnsUpstreamWillTake(vertexProviderBody(body, crossing))],
+  [
+    'vertex',
+    (crossing, body) =>
+      geminiSignaturesUpstreamWillTake(
+        geminiTurnsUpstreamWillTake(vertexProviderBody(body, crossing)),
+      ),
+  ],
   [
     'kimi',
     (crossing, body) =>
