@@ -112,6 +112,7 @@ describe('Vertex Responses tool history', () => {
 
     expect(bodySentIn(upstream.sent)).toMatchObject({
       contents: [
+        { role: 'user', parts: [{ text: '' }] },
         {
           parts: [{ functionCall: { name: 'lookup', args: { id: 9_007_199_254_740_992 } } }],
         },
