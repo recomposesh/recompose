@@ -58,7 +58,7 @@ describe('what a gateway says when one of its nodes stands down', () => {
   test('cooling a node tells every reader the moment that node stands back up', () => {
     const { heard, letGo } = readingsHeard();
 
-    routingMemory().ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
+    routingMemory('main').ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
     letGo();
 
     expect(heard).toEqual([{ address: JUDGE, coolUntilMs: LIFTS_AT }]);
@@ -67,7 +67,7 @@ describe('what a gateway says when one of its nodes stands down', () => {
   test('the moment a provider promised is never the one told, since only the window is watched', () => {
     const { heard, letGo } = readingsHeard();
 
-    routingMemory().ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT, retryAtMs: LIFTS_AT + 5000 });
+    routingMemory('main').ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT, retryAtMs: LIFTS_AT + 5000 });
     letGo();
 
     expect(heard).toEqual([{ address: JUDGE, coolUntilMs: LIFTS_AT }]);

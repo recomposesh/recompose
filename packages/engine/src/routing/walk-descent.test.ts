@@ -26,6 +26,7 @@ function aWalkOverExhausted(entry: EngineRouteNode): Walking {
     virtualModel: 'fast',
     ledger: createCooldownLedger(() => 0),
     cursors: createRotationCursors(),
+    rotationPins: { pinnedChildAt: () => undefined, pinChildAt: () => undefined },
     resumesServerState: false,
     attempted,
     judging: {

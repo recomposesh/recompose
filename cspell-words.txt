@@ -244,6 +244,8 @@ packfiles
 paeth
 pannable
 panresponder
+pathspec
+pathspecs
 pgid
 pierrec
 pipx

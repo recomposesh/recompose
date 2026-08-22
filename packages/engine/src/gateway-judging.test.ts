@@ -130,7 +130,7 @@ function judging(
         return Promise.resolve(answer());
       },
       subscriptions,
-      memory: routingMemory(),
+      memory: routingMemory('main'),
     },
   };
 }

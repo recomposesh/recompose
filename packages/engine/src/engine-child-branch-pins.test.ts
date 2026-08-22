@@ -31,7 +31,7 @@ describe('what the parent hears about the branches a gateway is holding', () => 
   test('a conversation earning a branch tells the parent what that router now holds', () => {
     const parent = anAttachedChild();
 
-    routingMemory().pins.pin(LADDER, 'session-1', 'coder');
+    routingMemory('main').pins.pin(LADDER, 'session-1', 'coder');
 
     expect(talliesIn(parent.reports)).toEqual([
       {
@@ -46,7 +46,7 @@ describe('what the parent hears about the branches a gateway is holding', () => 
 
   test('a conversation forgotten for going quiet tells the parent the branch let it go', () => {
     const parent = anAttachedChild();
-    const memory = routingMemory();
+    const memory = routingMemory('main');
 
     memory.pins.pin(LADDER, 'session-1', 'coder');
     memory.pins.pin(LADDER, 'session-1', 'talker');
@@ -57,7 +57,7 @@ describe('what the parent hears about the branches a gateway is holding', () => 
   test('the report carries no conversation, so no fingerprint reaches the parent', () => {
     const parent = anAttachedChild();
 
-    routingMemory().pins.pin(LADDER, 'a-recognizable-fingerprint', 'coder');
+    routingMemory('main').pins.pin(LADDER, 'a-recognizable-fingerprint', 'coder');
 
     expect(JSON.stringify(parent.reports)).not.toContain('a-recognizable-fingerprint');
   });
@@ -78,7 +78,7 @@ describe('what the parent hears about the branches a gateway is holding', () => 
     attachEngineChild(brokenPort, aLoopbackCapturing().openListeners);
 
     expect(() => {
-      routingMemory().pins.pin(LADDER, 'session-1', 'coder');
+      routingMemory('main').pins.pin(LADDER, 'session-1', 'coder');
     }).not.toThrow();
   });
 });

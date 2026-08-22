@@ -5,7 +5,11 @@ import { describe, expect, test } from 'vitest';
 
 import type { RouteNodeAddress } from './routing/route-node-key';
 
-import { createBranchPins, PIN_IDLE_MS, PINNED_CONVERSATION_LIMIT } from './gateway-routing-memory';
+import {
+  createConversationPins,
+  PIN_IDLE_MS,
+  PINNED_CONVERSATION_LIMIT,
+} from './gateway-routing-memory';
 
 const NOW = 1_700_000_000_000;
 
@@ -39,7 +43,7 @@ function aTallyLine(now: () => number = () => NOW) {
 
   return {
     heard,
-    pins: createBranchPins(now, (_address, pinned) => {
+    pins: createConversationPins(now, (_address, pinned) => {
       heard.push(pinned);
     }),
   };

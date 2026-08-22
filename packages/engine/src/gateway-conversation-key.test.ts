@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { Crossing, JsonObject } from './gateway-wire';
 
-import { conversationFingerprint } from './gateway-conversation-key';
+import { conversationFingerprint, conversationTellsItselfApart } from './gateway-conversation-key';
 
 function crossing(raw: JsonObject, sessionId?: string): Crossing {
   return {
@@ -76,5 +76,23 @@ describe('the mark a conversation carrying no key is known by', () => {
 
   test('a request carrying nothing the caller said still reads a mark', () => {
     expect(conversationFingerprint(crossing({ model: 'fast' }))).not.toBe('');
+  });
+});
+
+describe('whether a mark tells one conversation apart from the next', () => {
+  test('a client key always does', () => {
+    expect(conversationTellsItselfApart(crossing({ model: 'fast' }, 'session-1'))).toBe(true);
+  });
+
+  test('words the caller opened with do', () => {
+    expect(conversationTellsItselfApart(crossing(turns('hello')))).toBe(true);
+  });
+
+  test('a request that opened with nothing readable does not', () => {
+    expect(conversationTellsItselfApart(crossing({ model: 'fast' }))).toBe(false);
+  });
+
+  test('a request whose opening words are blank does not', () => {
+    expect(conversationTellsItselfApart(crossing(turns('   ')))).toBe(false);
   });
 });

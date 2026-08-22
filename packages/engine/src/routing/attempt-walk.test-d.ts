@@ -16,6 +16,7 @@ describe('what a walk asks its caller for about judging', () => {
       | 'ledger'
       | 'now'
       | 'resumesServerState'
+      | 'rotationPins'
       | 'routing'
       | 'slug'
       | 'virtualModel'

@@ -24,6 +24,7 @@ import { turnResumesServerState } from './gateway-chained-turn';
 import { judgedRouting } from './gateway-judging';
 import { beforeGatewayPlugins } from './gateway-plugin-before';
 import { gatewayRequestCrossing } from './gateway-request-crossing';
+import { rotationPins } from './gateway-rotation-pins';
 import { noteGatewayRow } from './gateway-traffic';
 import { answerTheWalkGives } from './gateway-walk-answer';
 import { failedOutcome, notesThatCarriedARequest, nothingAnsweredFor } from './gateway-walk-notes';
@@ -153,6 +154,12 @@ async function walkedAnswer(
     virtualModel: deps.virtualModel.id,
     ledger: ledgerTheTableUses(serving.memory, routing),
     cursors: serving.memory.cursors,
+    rotationPins: rotationPins({
+      crossing: deps.crossing,
+      slug: deps.gateway.slug,
+      virtualModel: deps.virtualModel.id,
+      memory: serving.memory,
+    }),
     resumesServerState: turnResumesServerState(deps.crossing.raw),
     now: serving.memory.now,
     judged,

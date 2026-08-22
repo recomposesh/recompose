@@ -28,3 +28,15 @@ export function conversationFingerprint(crossing: Crossing): string {
 
   return markOfTheOpening(userTurnsOf(crossing.raw).at(0) ?? '');
 }
+
+/**
+ * Whether this request's mark belongs to one conversation rather than to every anonymous one.
+ *
+ * @summary A request that opened with nothing readable still earns a mark, and every other such
+ * request earns the same one. That costs a judgment nothing, because two conversations landing on
+ * one branch is a route rather than a fault. It costs a spread conversation an account that never
+ * minted its state, so the caller that keeps children asks this first and keeps none.
+ */
+export function conversationTellsItselfApart(crossing: Crossing): boolean {
+  return crossing.sessionId !== undefined || (userTurnsOf(crossing.raw).at(0) ?? '').trim() !== '';
+}

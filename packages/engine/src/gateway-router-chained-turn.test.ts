@@ -27,6 +27,20 @@ const RESUMING = {
 
 const OPENING = { model: 'fast', messages: [{ role: 'user', content: 'hello' }] };
 
+const RESUMED = {
+  model: 'fast',
+  messages: [
+    { role: 'user', content: 'hello' },
+    {
+      role: 'assistant',
+      content: [{ type: 'thinking', thinking: 'weighing it', signature: 'ErUBCkYIB' }],
+    },
+    { role: 'user', content: 'and then?' },
+  ],
+};
+
+const ELSEWHERE = { model: 'fast', messages: [{ role: 'user', content: 'a different opening' }] };
+
 function aFailoverOverANested(
   policy: RouterPolicy,
   beside: Readonly<Record<string, EngineRouteNode>> = {},
@@ -107,6 +121,59 @@ describe('a chained turn refuses at the router that would rotate it, however dee
 
     expect(answer.status).toBe(503);
     expect(scene.sentTo).toEqual([]);
+  });
+});
+
+describe('the account a conversation keeps once a round-robin router has spread it', () => {
+  it('carries a resumed turn back to the account its opening turn spread to', async () => {
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
+
+    await (await scene.ask(OPENING)).text();
+    const answer = await scene.ask(RESUMED);
+
+    expect(answer.status).toBe(200);
+    expect(scene.sentTo).toEqual([
+      `${FIRST_CHILD}/v1/chat/completions`,
+      `${FIRST_CHILD}/v1/chat/completions`,
+    ]);
+  });
+
+  it('keeps spreading the conversations beside the one holding its account', async () => {
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
+
+    await (await scene.ask(OPENING)).text();
+    await (await scene.ask(ELSEWHERE)).text();
+    await (await scene.ask(RESUMED)).text();
+
+    expect(scene.sentTo).toEqual([
+      `${FIRST_CHILD}/v1/chat/completions`,
+      `${SECOND_CHILD}/v1/chat/completions`,
+      `${FIRST_CHILD}/v1/chat/completions`,
+    ]);
+  });
+});
+
+describe('what a spreading router keeps for a request wearing no conversation of its own', () => {
+  it('keeps no account for a request it cannot tell apart from the next one', async () => {
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
+    const blank = { model: 'fast', messages: [{ role: 'user', content: '   ' }] };
+    const resumedBlank = {
+      model: 'fast',
+      messages: [
+        { role: 'user', content: '   ' },
+        {
+          role: 'assistant',
+          content: [{ type: 'thinking', thinking: 'weighing it', signature: 'ErUBCkYIB' }],
+        },
+        { role: 'user', content: 'and then?' },
+      ],
+    };
+
+    await (await scene.ask(blank)).text();
+    const answer = await scene.ask(resumedBlank);
+
+    expect(answer.status).toBe(400);
+    expect(scene.sentTo).toHaveLength(1);
   });
 
   it('lets a turn that resumes nothing rotate across the nested round-robin', async () => {

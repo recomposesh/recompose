@@ -61,7 +61,7 @@ function sceneAnswering(answer: () => Response) {
       }),
     fetchLike: async () => Promise.resolve(answer()),
     subscriptions: subscriptionRuntime(),
-    memory: routingMemory(),
+    memory: routingMemory('main'),
   };
 }
 
