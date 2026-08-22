@@ -15,7 +15,7 @@ import {
   gatewayDefiningDraft,
 } from '../../lib/model-draft';
 import { DRAFT_NODE_ID } from '../../lib/node-graph';
-import { gatewayJudgingThrough } from '../../lib/routing-births-conditional';
+import { elseCardWritten, gatewayJudgingThrough } from '../../lib/routing-births-conditional';
 import { gatewayDroppingNode, gatewayRoutingThrough } from '../../lib/routing-edits';
 import { editDraft, heldDraft } from '../../lib/use-held-draft';
 import { committedPick, graduatedDraft, releasedWithNothingSelected } from './binding-acts';
@@ -57,10 +57,17 @@ function draftFinished(world: CanvasWorld, routed: SettledDefinition): void {
   }
 
   const named = { id: routed.id, displayName: routed.displayName };
+  const written = gatewayDefiningDraft(world.gateway, routed);
 
-  committedPick(world, `route:${named.id}`, gatewayDefiningDraft(world.gateway, routed), () => {
-    graduatedDraft(world, named, nameOfRouter(routed.routerMode ?? BORN_ROUTER_MODE));
-  });
+  committedPick(
+    world,
+    `route:${named.id}`,
+    written,
+    () => {
+      graduatedDraft(world, named, nameOfRouter(routed.routerMode ?? BORN_ROUTER_MODE));
+    },
+    elseCardWritten(written, named.id),
+  );
 }
 
 /** Finishes the held draft through a router that spreads by rank or by turn. */
@@ -96,13 +103,19 @@ function reboundOntoARouter(
     return;
   }
 
-  committedPick(world, `route:${modelId}`, written, () => {
-    world.standings.announce({
-      kind: 'rebound',
-      virtualModel: model.displayName,
-      target: nameOfRouter(mode),
-    });
-  });
+  committedPick(
+    world,
+    `route:${modelId}`,
+    written,
+    () => {
+      world.standings.announce({
+        kind: 'rebound',
+        virtualModel: model.displayName,
+        target: nameOfRouter(mode),
+      });
+    },
+    elseCardWritten(written, modelId),
+  );
 }
 
 /** Puts a fresh spreading router where a bound definition's binding stood, keeping what was there. */

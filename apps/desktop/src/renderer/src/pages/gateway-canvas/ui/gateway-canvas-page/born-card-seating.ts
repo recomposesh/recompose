@@ -2,6 +2,7 @@ import type { XY } from '../../lib/canvas-positions';
 import type { CanvasWorld, PickerStanding } from './canvas-standings';
 
 import { keepCanvasPositions, setNodePosition } from '../../lib/canvas-position-store';
+import { childSeatBeside } from '../../lib/tidy-layout';
 import { seatBeyond } from './canvas-wiring';
 
 /**
@@ -20,9 +21,16 @@ function seatForTheBornTarget(world: CanvasWorld, picker: PickerStanding): XY {
  * Hands back the seating a completed pick owes the target card it brings into being.
  *
  * @summary It seats nothing when the account already stands on the canvas, because a card a person
- * can see is one they placed rather than one this pick is making.
+ * can see is one they placed rather than one this pick is making. A conditional birth stores two
+ * nodes in the one write and can name only the router beforehand, so the branch that catches
+ * everything else arrives here as a second card and takes the seat beside it: left to the free row
+ * it would land at the foot of the canvas with its cable running the length of the pane.
  */
-export function seatedWhereItBelongs(world: CanvasWorld, bornTargetId: string): () => void {
+export function seatedWhereItBelongs(
+  world: CanvasWorld,
+  bornTargetId: string,
+  alsoBorn?: string,
+): () => void {
   const picker = world.standings.picker;
   const alreadyStanding = world.graph.nodes.some((node) => node.id === bornTargetId);
   const at = picker === undefined ? undefined : seatForTheBornTarget(world, picker);
@@ -33,6 +41,11 @@ export function seatedWhereItBelongs(world: CanvasWorld, bornTargetId: string): 
     }
 
     setNodePosition(world.slug, bornTargetId, at);
+
+    if (alsoBorn !== undefined) {
+      setNodePosition(world.slug, alsoBorn, childSeatBeside(at));
+    }
+
     keepCanvasPositions(world.slug);
   };
 }
