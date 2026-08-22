@@ -88,7 +88,7 @@ const subscriptionEntries: readonly CatalogEntry[] = [
     id: 'kimi',
     name: 'Kimi',
     lead: { mark: 'kimi' },
-    offers: [signsIn('Kimi Code', 'Moonshot plan, K2 in your tools')],
+    offers: [signsIn('Kimi Code', 'Moonshot plan, K3 in your tools')],
   },
   {
     id: 'antigravity',
