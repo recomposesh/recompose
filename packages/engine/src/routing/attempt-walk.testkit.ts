@@ -23,7 +23,6 @@ export type Scene = {
   pinChildAt?: (routeNode: string, child: string) => void;
 };
 
-/** One turn a scene sends: whether it resumes server-side state, and the conversation it belongs to. */
 export type Turn = { resumesServerState?: boolean; conversation?: string };
 
 /**
