@@ -22,7 +22,7 @@ import { switchDefinitionRows } from './switch-rows';
 const NOTHING_BOUND: JudgeBinding = { accountId: '', providerModel: '' };
 
 const WHAT_A_SWITCH_NEEDS =
-  'Give every branch a word and a rule, and bind the model that reads each request. The last child catches everything the judge cannot place.';
+  'Give every branch a word and a rule, and bind the model that reads each request. The last child catches a request the judge reads but cannot place.';
 
 const STILL_OWED =
   'Nothing is stored until every branch holds a word and a rule and a judge binds.';

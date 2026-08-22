@@ -3,6 +3,16 @@ import { describe, expect, test } from 'vitest';
 import { readingOfTheJudge } from './judge-call';
 import { A_PLAN_JUDGE, answering, NOW } from './judge-call.testkit';
 
+function aPlanJudgeThatNeverAnswers() {
+  return answering(
+    async () =>
+      new Promise<Response>(() => {
+        return;
+      }),
+    A_PLAN_JUDGE,
+  );
+}
+
 describe('a judge bound to a person’s own plan', () => {
   const namingABranch = () =>
     Response.json({
@@ -39,18 +49,20 @@ describe('a judge bound to a person’s own plan', () => {
     });
   });
 
-  test('a plan judge that never answers is still cut off at its budget', async () => {
-    const watched = answering(
-      async () =>
-        new Promise<Response>(() => {
-          return;
-        }),
-      A_PLAN_JUDGE,
-    );
+  test('a plan judge that never answers reads as a silence past the budget', async () => {
+    const watched = aPlanJudgeThatNeverAnswers();
 
     await expect(readingOfTheJudge({ ...watched.ask, boundMs: 20 })).resolves.toEqual({
       heard: 'timeout',
     });
+  });
+
+  test('the plan request itself is cut off, not merely stopped waiting for', async () => {
+    const watched = aPlanJudgeThatNeverAnswers();
+
+    await readingOfTheJudge({ ...watched.ask, boundMs: 20 });
+
+    expect(watched.aborted()).toBe(true);
   });
 
   test('a plan judge that refused stands down like any other refusal', async () => {

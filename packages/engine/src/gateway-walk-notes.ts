@@ -35,10 +35,8 @@ type UnansweredReason = Exclude<WalkNote['reason']['because'], 'refused' | 'stre
  * there without a credential, because the two ask a person for different repairs. A child that stood
  * cooling reads as such rather than as a failure of this request, because it never carried one, and
  * a child a branch decision walked past reads as ready rather than as anything at all wrong with it.
- * Where no judgment placed the request, the sentence names the judge instead of the branch, because
- * saying a request was judged onto a branch nothing judged sends a person reading it to the wrong
- * repair. The words sit in a record the compiler holds to the reasons, so a reason added later fails
- * the build here rather than quietly printing somebody else's sentence.
+ * The words sit in a record the compiler holds to the reasons, so a reason added later fails the
+ * build here rather than quietly printing somebody else's sentence.
  */
 const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
   'missing-credential': 'has no credential',
@@ -46,7 +44,6 @@ const WHY_NOTHING_ANSWERED: Record<UnansweredReason, string> = {
   'transport-failure': 'could not be reached',
   cooling: 'stands cooling',
   'off-branch': 'stands ready off the branch this request was judged onto',
-  unjudged: 'stands ready while the judge named no branch and the request fell to the else child',
 };
 
 /**
@@ -91,7 +88,6 @@ export function attemptsRecorded(
 const CARRIED_NO_REQUEST = {
   cooling: true,
   'off-branch': true,
-  unjudged: true,
 } as const satisfies Record<OffBranchReason['because'] | 'cooling', true>;
 
 /**

@@ -3,7 +3,6 @@ import type { EngineRouting } from '@recompose/contracts';
 import type { CooldownLedger } from './cooldown-ledger';
 import type { JudgedChoice, JudgedRequest, Judging } from './judge-decision';
 import type { AttemptReading } from './outcome-classification';
-import type { BranchChoice } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { EngineRouter } from './route-table';
 import type { Walking, WalkStep } from './walk-descent';
@@ -20,6 +19,7 @@ type WalkVerdict<TAnswer> =
   | { outcome: 'answered'; routeNode: string; answer: TAnswer }
   | { outcome: 'empty-router'; routeNode: string; router: EngineRouter }
   | { outcome: 'chained-turn'; routeNode: string; router: EngineRouter }
+  | { outcome: 'unjudged'; routeNode: string; router: EngineRouter }
   | { outcome: 'exhausted'; retryAtMs?: number };
 
 export type WalkResult<TAnswer> = { notes: readonly WalkNote[]; verdict: WalkVerdict<TAnswer> };
@@ -93,7 +93,7 @@ function targetsNamedUnder(walking: Walking, routeNode: string): readonly string
 function targetsOneDecisionWalkedPast(
   walking: Walking,
   routeNode: string,
-  choice: BranchChoice,
+  choice: JudgedChoice,
 ): readonly string[] {
   const inReach = new Set([
     ...targetsNamedUnder(walking, choice.decided),
@@ -104,23 +104,18 @@ function targetsOneDecisionWalkedPast(
 }
 
 /**
- * What one decision leaves the children it walked past reading as.
+ * The children every branch decision of this walk left standing off the branch it named.
  *
- * @summary A judgment naming a branch left them off it, and the router is working. A judge that
- * named nothing sent every one of them to the else child, and the trouble is the judge's rather than
- * the branches', so a refusal that read the two the same way would send a person hunting a target
- * that never had anything wrong with it.
+ * @summary Only a judgment ever reaches here. A router whose judge reached no verdict settles the
+ * whole walk where it stands, so no decision this map is built from can be an unjudged one and no
+ * child is ever named for a branch nothing chose.
  */
-function reasonOneDecisionLeaves(choice: JudgedChoice): NoteReason {
-  return choice.judged ? { because: 'off-branch' } : { because: 'unjudged' };
-}
-
 function reasonsTheDecisionsLeave(walking: Walking): ReadonlyMap<string, NoteReason> {
   const walkedPast = new Map<string, NoteReason>();
 
   for (const [routeNode, choice] of walking.judging.decided) {
     for (const target of targetsOneDecisionWalkedPast(walking, routeNode, choice)) {
-      walkedPast.set(target, reasonOneDecisionLeaves(choice));
+      walkedPast.set(target, { because: 'off-branch' });
     }
   }
 
@@ -202,6 +197,10 @@ async function verdictOneStepSettles<TAnswer>(
 ): Promise<WalkVerdict<TAnswer> | undefined> {
   if (step.at === 'rotation') {
     return { outcome: 'chained-turn', routeNode: step.routeNode, router: step.router };
+  }
+
+  if (step.at === 'unjudged') {
+    return { outcome: 'unjudged', routeNode: step.routeNode, router: step.router };
   }
 
   return step.at === 'target'

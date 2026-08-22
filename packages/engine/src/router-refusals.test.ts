@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { refusalResponse } from './gateway-wire';
-import { chainedTurn, emptyRouter, exhaustedRouter, renderRefusal } from './refusals';
+import {
+  chainedTurn,
+  emptyRouter,
+  exhaustedRouter,
+  renderRefusal,
+  unjudgedRequest,
+} from './refusals';
 
 const NOON = Date.parse('2026-08-14T12:00:00.000Z');
 
@@ -161,6 +167,35 @@ describe('a chained turn under round-robin refuses rather than rotating', () => 
     const rendered = renderRefusal('anthropic', chainedTurn('Codex', 'fast', 'Round-robin'));
 
     expect(rendered.body).toMatchObject({ error: { type: 'invalid_request_error' } });
+  });
+});
+
+describe('a conditional router whose judge reached no verdict refuses the request', () => {
+  it('answers 503 naming the router, the model, and the else child it declined to use', () => {
+    const rendered = renderRefusal('responses', unjudgedRequest('Codex', 'fast', 'Conditional'));
+
+    expect(rendered.status).toBe(503);
+    expect(rendered.body).toEqual({
+      error: {
+        message:
+          'The router "Conditional" in the gateway "Codex" got no verdict from its judge, so the virtual model "fast" refused this request rather than sending it to the else child. Check that the judge is bound to an account and a model that can answer.',
+        type: 'invalid_request_error',
+        code: 'unjudged_request',
+        param: null,
+      },
+    });
+  });
+
+  it('reads as a gateway fault in the Anthropic envelope, never as a caller mistake', () => {
+    const rendered = renderRefusal('anthropic', unjudgedRequest('Codex', 'fast', 'Conditional'));
+
+    expect(rendered.body).toMatchObject({ error: { type: 'api_error' } });
+  });
+
+  it('promises no wait, because nothing about a judge says when it comes back', () => {
+    const rendered = renderRefusal('anthropic', unjudgedRequest('Codex', 'fast', 'Conditional'));
+
+    expect(rendered.retryAfterSeconds).toBeUndefined();
   });
 });
 

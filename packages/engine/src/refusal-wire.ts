@@ -28,6 +28,7 @@ export type OpenAiCode =
   | 'empty_router'
   | 'exhausted_router'
   | 'chained_turn'
+  | 'unjudged_request'
   | 'invalid_json';
 
 export type RouterAttempt = { child: string; why: string };
@@ -52,6 +53,7 @@ export type TranslationRefusal =
       retryAtMs?: number;
     }
   | { reason: 'chained-turn'; displayName: string; model: string; routerName: string }
+  | { reason: 'unjudged-request'; displayName: string; model: string; routerName: string }
   | { reason: 'invalid-json'; message: string };
 
 export type RefusalFacts = {

@@ -148,6 +148,17 @@ export class ProviderObservationSpan {
     return new Response(observed, response);
   }
 
+  /**
+   * Settles one span for a call that never came back with a response at all.
+   *
+   * @summary Every other way out of a span reads an answer, so a send that threw would leave the row
+   * open and a person watching would read a request still in flight minutes after it died. The row
+   * carries no usage and no time to first token, because nothing ever arrived to measure.
+   */
+  public failed(status: number): void {
+    this.finish(status, undefined, 0, emptyProviderUsage());
+  }
+
   public complete(
     status: number,
     headers: Headers,

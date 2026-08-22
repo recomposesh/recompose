@@ -125,6 +125,7 @@ function requestOptions(
     body: request.body,
     retry: 0,
     throwHttpErrors: false,
+    ...(request.signal === undefined ? {} : { signal: request.signal }),
   };
 }
 

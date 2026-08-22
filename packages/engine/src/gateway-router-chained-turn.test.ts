@@ -101,12 +101,12 @@ describe('a chained turn refuses at the router that would rotate it, however dee
     expect(scene.sentTo).toEqual([`${FIRST_CHILD}/v1/chat/completions`]);
   });
 
-  it('never refuses that turn at a conditional router, carrying it down else instead', async () => {
+  it('refuses that turn at a conditional router for the judgment it could not earn', async () => {
     const scene = serving(aFailoverOverAJudged(), answeringInTurn(served));
     const answer = await scene.ask(RESUMING);
 
-    expect(answer.status).toBe(200);
-    expect(scene.sentTo).toEqual([`${SECOND_CHILD}/v1/chat/completions`]);
+    expect(answer.status).toBe(503);
+    expect(scene.sentTo).toEqual([]);
   });
 
   it('lets a turn that resumes nothing rotate across the nested round-robin', async () => {
