@@ -1,8 +1,9 @@
-import { useViewport } from '@xyflow/react';
+import { useStore, useViewport } from '@xyflow/react';
 
 import type { XY } from '../../lib/canvas-positions';
 import type { DropPickerProps } from '../drop-picker/drop-picker';
 
+import { pickerStandsAt } from '../../lib/picker-placement';
 import { DropPicker } from '../drop-picker/drop-picker';
 
 /** Everything the picker asks for, plus the card on the canvas it hangs off. */
@@ -18,7 +19,8 @@ export type AnchoredPickerProps = DropPickerProps & {
  * looking at. It stands in the pane's own coordinates rather than among the cards: the library
  * paints its corner furniture above every card there is, so a picker seated with the cards falls
  * under the map and the map takes the press meant for it. A question a gesture asked has to answer
- * a pointer wherever the gesture ended.
+ * a pointer wherever the gesture ended, which includes staying inside the pane: a card near the far
+ * edge would otherwise hang its list past where anyone can reach it.
  */
 export function AnchoredPicker({
   seat,
@@ -33,13 +35,15 @@ export function AnchoredPicker({
   onDismiss,
   pickedName,
 }: AnchoredPickerProps) {
-  const { x, y, zoom } = useViewport();
-  const stood = `translate(${String(x + seat.x * zoom)}px, ${String(y + seat.y * zoom)}px)`;
+  const viewport = useViewport();
+  const pane = useStore((flow) => ({ width: flow.width, height: flow.height }));
+  const stands = pickerStandsAt(seat, viewport, pane);
+  const stood = `translate(${String(stands.x)}px, ${String(stands.y)}px)`;
 
   return (
     <div
       className="pointer-events-auto absolute inset-s-0 top-0 z-20 h-22 w-46 origin-top-left"
-      style={{ transform: `${stood} scale(${String(zoom)})` }}
+      style={{ transform: `${stood} scale(${String(viewport.zoom)})` }}
     >
       <DropPicker
         groups={groups}
