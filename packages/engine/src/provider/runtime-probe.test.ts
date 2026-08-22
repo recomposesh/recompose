@@ -214,6 +214,24 @@ describe('the transport dying part way through a body', () => {
   );
 });
 
+describe('the version a runtime names with space around it', () => {
+  test('comes back with the space gone, because a version is read as a non-blank name', async () => {
+    const answering = fetchAnswering(200, JSON.stringify({ version: '  0.5.7  ' }));
+
+    const reading = await probeRuntime(answering.fetchLike, ollamaAddress, 'ollama');
+
+    expect(reading).toStrictEqual({ verdict: 'answers', version: '0.5.7' });
+  });
+
+  test('reads as a stranger where the space is all there was', async () => {
+    const answering = fetchAnswering(200, JSON.stringify({ version: '   ' }));
+
+    const reading = await probeRuntime(answering.fetchLike, ollamaAddress, 'ollama');
+
+    expect(reading).toStrictEqual({ verdict: 'unrecognized', status: 200 });
+  });
+});
+
 describe('the folding over every answer a port can give', () => {
   test('one verdict answers each outcome, and only an ok answer carrying a version answers', async () => {
     const withoutABodyOfTheirOwn = [204, 205, 304];
@@ -239,7 +257,7 @@ describe('the folding over every answer a port can give', () => {
         );
 
         if (status <= 299 && body.version !== null) {
-          expect(reading).toStrictEqual({ verdict: 'answers', version: body.version });
+          expect(reading).toStrictEqual({ verdict: 'answers', version: body.version.trim() });
 
           return;
         }
