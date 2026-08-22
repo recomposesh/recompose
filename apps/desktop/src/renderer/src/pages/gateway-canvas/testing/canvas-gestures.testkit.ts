@@ -139,8 +139,16 @@ export async function reconnectAnchorOf(container: HTMLElement, cableId: string)
 }
 
 /** The grab anchor at a cable's source end, which is the end the virtual model holds. */
-export async function sourceAnchorOf(container: HTMLElement, cableId: string): Promise<Element> {
-  return standingAnchor(container, cableId, 'source');
+/**
+ * The grab anchor at a cable's source end, which stands on no cable this canvas draws.
+ *
+ * @summary A handle on the card a cable leaves reads as a second cable coming out of a card that
+ * already holds one, and the drag it invites writes nothing, so binding cables declare
+ * `reconnectable: 'target'`. This reads the absence rather than waiting for it, because a scenario
+ * proving nothing stands there cannot wait for something to appear.
+ */
+export function sourceAnchorIn(container: HTMLElement, cableId: string): Element | null {
+  return container.querySelector(`[data-id="${cableId}"] .react-flow__edgeupdater-source`);
 }
 
 /** Takes hold of a card and drags it by an offset, the way a person rearranges the canvas. */
