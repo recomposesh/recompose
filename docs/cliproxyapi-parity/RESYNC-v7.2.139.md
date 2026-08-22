@@ -77,20 +77,24 @@ handling. Only its two-prefix half is answered here.
 | `1ecb7df` `7efe0a7` | silently keeps the last answer to a repeated tool call | refuses with `toolIdCollision`, since a silent drop hides a caller bug |
 | `42d8e74` `a8f9814` | scopes a Fable-only rate limit away from the account   | the earliest reset window already wins, so no long stand-down forms    |
 
-### Gaps left open on purpose
+### The three that cost more than a fix
 
-Three are real and cost more than a fix each. They are named here rather than claimed.
+Each of these needed a seam rather than a line, and each is closed here.
 
 - `85d2fad` carries `X-Claude-Code-Agent-Id`, `X-Claude-Code-Parent-Agent-Id`, the two
   `X-Claude-Remote-` headers, `X-Client-App` and `X-Anthropic-Additional-Protection` from the caller
-  to Anthropic. `Crossing` already holds `requestHeaders`, but the subscription chain drops them
-  five calls earlier, so the fix threads a field through `reachSubscription`, `SubscriptionScope`,
-  `claudeReachRequest`, `claudeProviderRequest` and `claudeWireHeaders`.
-- `1d5b761` reads token usage off a plugin executor's answer. Here a plugin executor answers through
-  `locallyAnswered`, which never meets `providerUsageFrom`, so those turns record no usage at all.
-  Moving them onto the observed path changes what the traffic rows carry.
-- `10afcc8` propagates `environment_id` and `agent_config` through the Interactions adapters. The
-  hub models neither, so carrying them widens the hub contract rather than fixing a translation.
+  to Anthropic, which reads them to place a subagent's request. `Crossing` already held
+  `requestHeaders`; the subscription chain now carries them through `SubscriptionScope` into
+  `claudeWireHeaders`. The list is closed rather than a prefix match, because everything else on
+  that wire is this app's own identity.
+- `1d5b761` reads token usage off a plugin executor's answer. Here such a turn opened no observation
+  span at all, so it stood in no traffic row and counted toward nothing, which reads on the usage
+  screen as an account nobody ever asked. `reachPluginExecutor` now opens the same span every
+  provider turn opens.
+- `10afcc8` propagates `environment_id` and `agent_config` through the Interactions adapters. They
+  place a request inside a running session rather than describe the turn, so they ride the hub as
+  `interactionsScope` next to `geminiGenerationConfig`, and every other crossing drops them as the
+  vendor-only facts they are.
 
 ### Out of scope
 

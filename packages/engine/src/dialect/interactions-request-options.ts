@@ -70,6 +70,15 @@ function serviceOption(request: InteractionsRequest): Pick<HubRequest, 'serviceT
   return request.service_tier === undefined ? {} : { serviceTier: request.service_tier };
 }
 
+function scopeOption(request: InteractionsRequest): Pick<HubRequest, 'interactionsScope'> | object {
+  const scope = {
+    ...(request.environment_id === undefined ? {} : { environmentId: request.environment_id }),
+    ...(request.agent_config === undefined ? {} : { agentConfig: request.agent_config }),
+  };
+
+  return Object.keys(scope).length === 0 ? {} : { interactionsScope: scope };
+}
+
 export function hubOptionsFromInteractions(request: InteractionsRequest): Partial<HubRequest> {
   return {
     ...previousOption(request),
@@ -77,6 +86,7 @@ export function hubOptionsFromInteractions(request: InteractionsRequest): Partia
     ...modalitiesOption(request),
     ...formatOption(request),
     ...serviceOption(request),
+    ...scopeOption(request),
     ...providerConfigFromInteractions(request),
   };
 }
@@ -120,8 +130,18 @@ function serviceInto(value: InteractionsRequest, request: HubRequest): void {
   if (request.serviceTier !== undefined) value.service_tier = request.serviceTier;
 }
 
+function scopeInto(value: InteractionsRequest, request: HubRequest): void {
+  const scope = request.interactionsScope;
+
+  if (scope === undefined) return;
+
+  if (scope.environmentId !== undefined) value.environment_id = scope.environmentId;
+  if (scope.agentConfig !== undefined) value.agent_config = scope.agentConfig;
+}
+
 export function interactionsOptionsInto(value: InteractionsRequest, request: HubRequest): void {
   previousInto(value, request);
+  scopeInto(value, request);
   reasoningInto(value, request);
   modalitiesInto(value, request);
   formatInto(value, request);
