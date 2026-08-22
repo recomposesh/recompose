@@ -133,6 +133,20 @@ export type HubToolChoice =
   | { type: 'tool'; name: string; family?: 'function' | 'custom' }
   | { type: 'web_search' };
 
+/**
+ * Where an Interactions caller is working, which only that dialect names and only it reads.
+ *
+ * @summary The environment and the agent configuration place a request inside a running session
+ * rather than describe the turn, so no other dialect has a field to carry them into. They ride the
+ * hub as their own reading so an Interactions caller reaching an Interactions upstream keeps the
+ * session it was already inside, and every other crossing drops them as the vendor-only facts they
+ * are.
+ */
+type HubInteractionsScope = {
+  environmentId?: string;
+  agentConfig?: unknown;
+};
+
 export type HubSampling = {
   maxOutputTokens?: number;
   temperature?: number;
@@ -160,6 +174,7 @@ export type HubRequest = {
   responseModalities?: readonly string[];
   responseFormat?: unknown;
   geminiGenerationConfig?: HubJsonObject;
+  interactionsScope?: HubInteractionsScope;
   sampling?: HubSampling;
 };
 
