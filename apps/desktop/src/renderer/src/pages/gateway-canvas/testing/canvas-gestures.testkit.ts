@@ -138,9 +138,15 @@ export async function reconnectAnchorOf(container: HTMLElement, cableId: string)
   return standingAnchor(container, cableId, 'target');
 }
 
-/** The grab anchor at a cable's source end, which is the end the virtual model holds. */
-export async function sourceAnchorOf(container: HTMLElement, cableId: string): Promise<Element> {
-  return standingAnchor(container, cableId, 'source');
+/**
+ * Whether a cable offers a grab anchor at the end it leaves, which a binding cable never does.
+ *
+ * @summary Read rather than waited for, because the claim is that nothing is there: a wait would
+ * pass by timing out and say the same for a handle that simply had not rendered yet.
+ */
+export function anchorsAtTheEndItLeaves(container: HTMLElement, cableId: string): number {
+  return container.querySelectorAll(`[data-id="${cableId}"] .react-flow__edgeupdater-source`)
+    .length;
 }
 
 /** Takes hold of a card and drags it by an offset, the way a person rearranges the canvas. */
