@@ -76,8 +76,9 @@ export function committedPick(
   bornTargetId: string,
   rewritten: GatewayConfig,
   landed: () => void,
+  alsoBorn?: string,
 ): void {
-  const seatTheTarget = seatedWhereItBelongs(world, bornTargetId);
+  const seatTheTarget = seatedWhereItBelongs(world, bornTargetId, alsoBorn);
   const bornAt = lookAfterTheBornTarget(world, bornTargetId);
 
   world.define.mutate(rewritten, {
