@@ -105,7 +105,7 @@ itself rather than ports.
 
 ### Still unread
 
-`556328c` adds namespace-aware Responses tool resolution across 694 lines. `616d1b1` centralizes
-tool-call id generation and hardens signature sanitization. `9d6b5cd` is half read: the dialect
-already treats `response.incomplete` as terminal, and whether the xAI WebSocket proxy should clear
-its pending turn on one is still open.
+Nothing. Every one of the thirty-seven behavior commits carries a verdict above, except that
+`9d6b5cd` is answered in part: the dialect already treats `response.incomplete` as terminal, and
+whether the xAI WebSocket proxy should clear its pending turn on one is a question this register
+leaves open rather than a gap it found.
