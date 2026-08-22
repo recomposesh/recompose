@@ -206,7 +206,11 @@ export function flowNodesOf(
  * The edge objects the flow renders, one binding cable each plus the wires and the overlay pair.
  *
  * @summary Only a binding cable answers anything: it keeps the wide grab band its reconnect drag
- * is sized by, and the keyboard can stop on it to read and release the binding. A wire and an
+ * is sized by, and the keyboard can stop on it to read and release the binding. It is grabbed at
+ * the end it lands on and nowhere else, because a handle on the card it leaves reads as a second
+ * cable coming out of a card that already holds one, and the drag it invites writes nothing: a
+ * reconnect that moves the source is a node changing parents rather than a binding being aimed.
+ * A wire and an
  * overlay cable answer no pointer and no keyboard at all, because they stand for the frame and
  * for work in flight rather than for stored bindings: with a band of their own they would swallow
  * every pane press along their corridor, and as tab stops they would stand one inert stop per
@@ -229,7 +233,7 @@ export function flowEdgesOf(edges: readonly CanvasEdge[], selection: string | un
     selected: edge.id === selection,
     ...(bindingCableId(edge.id) === undefined
       ? { selectable: false, reconnectable: false, focusable: false, interactionWidth: 0 }
-      : { interactionWidth: CABLE_GRAB_SPAN }),
+      : { interactionWidth: CABLE_GRAB_SPAN, reconnectable: 'target' }),
   }));
 }
 

@@ -4,7 +4,8 @@ import { mintRouteNodeId } from '@recompose/contracts';
 
 import type { JudgeBinding } from './conditional-draft';
 
-import { bornConditionalPolicy } from './conditional-policy';
+import { bornConditionalPolicy, conditionalIn } from './conditional-policy';
+import { addressWritten } from './route-addresses';
 import { gatewayBindingChild, routedBy } from './routing-edits';
 
 /**
@@ -133,4 +134,30 @@ export function gatewayNestingAJudgedRouter(
       ? was
       : { entry: was.entry, nodes: { ...was.nodes, [judgeId]: judge, [elseId]: elseChild } },
   );
+}
+
+/**
+ * The card the else branch of one written conditional router stands under, or nothing for any
+ * other shape.
+ *
+ * @summary Every conditional birth mints its else child inside the write, so no caller can name
+ * the card before the document exists. Reading it back off what was stored is what lets the canvas
+ * seat the fallback in the same breath as the router that holds it.
+ */
+export function elseCardWritten(
+  written: GatewayConfig,
+  modelId: string,
+  routerNodeId?: string,
+): string | undefined {
+  const routing = written.virtualModels.find((held) => held.id === modelId)?.routing;
+
+  if (routing === undefined) {
+    return undefined;
+  }
+
+  const policy = conditionalIn(routing.nodes[routerNodeId ?? routing.entry]);
+
+  return policy === undefined
+    ? undefined
+    : `target:${addressWritten({ modelId, routeNodeId: policy.elseChild })}`;
 }

@@ -8,7 +8,7 @@ import type { PickerStage } from '../drop-picker/picker-stages';
 import type { BornConditional, CanvasWorld, DroppedAsk, PickerStanding } from './canvas-standings';
 
 import { addressWritten } from '../../lib/route-addresses';
-import { gatewayNestingAJudgedRouter } from '../../lib/routing-births-conditional';
+import { elseCardWritten, gatewayNestingAJudgedRouter } from '../../lib/routing-births-conditional';
 import { gatewayBindingChild } from '../../lib/routing-edits';
 import { committedPick } from './binding-acts';
 import { routerAddressOf } from './canvas-wiring';
@@ -66,10 +66,12 @@ function nestedRouterWritten(world: CanvasWorld, asked: DroppedAsk, nesting: Nes
     return;
   }
 
+  const written = nesting.written(parent);
+
   committedPick(
     world,
     `route:${addressWritten({ modelId: address.modelId, routeNodeId: nesting.born })}`,
-    nesting.written(parent),
+    written,
     () => {
       world.standings.announce({
         kind: 'nested',
@@ -78,6 +80,7 @@ function nestedRouterWritten(world: CanvasWorld, asked: DroppedAsk, nesting: Nes
         target: nameOfRouter(nesting.mode),
       });
     },
+    elseCardWritten(written, address.modelId, nesting.born),
   );
 }
 
