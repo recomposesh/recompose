@@ -19,6 +19,7 @@ type ClaudeReachOptions = {
   systemPolicy: ClaudeSystemPolicy | undefined;
   payloadPolicy: ClaudePayloadPolicy | undefined;
   wireProfile: ClaudeDeviceProfile | undefined;
+  carriedHeaders?: readonly [string, string][] | undefined;
 };
 
 export function claudeReachRequest(options: ClaudeReachOptions): ProviderRequest {
@@ -26,7 +27,11 @@ export function claudeReachRequest(options: ClaudeReachOptions): ProviderRequest
     options.providerOrigin,
     options.body,
     options.credential.accessToken,
-    { sessionId: options.sessionId, requestId: options.requestId },
+    {
+      sessionId: options.sessionId,
+      requestId: options.requestId,
+      carriedHeaders: options.carriedHeaders ?? [],
+    },
     claudeIdentityOf(options.credential),
     options.now,
     'messages',
