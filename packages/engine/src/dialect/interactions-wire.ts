@@ -144,6 +144,8 @@ export type InteractionsRequest = {
   tool_choice?: InteractionsToolChoice;
   reasoning?: { effort?: string; summary?: string };
   previous_interaction_id?: string;
+  environment_id?: string;
+  agent_config?: unknown;
   stream?: boolean;
   response_modalities?: readonly string[];
   service_tier?: string;

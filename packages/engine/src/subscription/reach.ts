@@ -16,11 +16,13 @@ import type { CredentialRuntimePolicy } from './credential-runtime-policy';
 import type { ParsedSubscriptionCredential } from './credentials';
 import type { SubscriptionAttempt, SubscriptionPluginContext } from './intercepted-send';
 import type { RefreshFetch } from './refresh';
+import type { SubscriptionScope } from './subscription-scope';
 
 import { normalizeAntigravityError } from './antigravity-errors';
 import { antigravityPairingPreflight } from './antigravity-pairing';
 import { antigravityReachRequest } from './antigravity-reach-request';
 import { completeSubscriptionAttempt } from './attempt-completion';
+import { claudeHeadersCarriedFrom } from './claude-carried-headers';
 import { ClaudeDiagnostics, injectClaudeDiagnostics } from './claude-diagnostics';
 import { claudeReachRequest } from './claude-reach-request';
 import { hydrateCodexCompletionStream } from './codex-completion';
@@ -30,6 +32,7 @@ import { sendInterceptedSubscription } from './intercepted-send';
 import { readySubscriptionCredential, refreshedAndPersisted } from './reach-credential';
 import { observeSubscriptionAnswer, subscriptionDiagnosticsKey } from './reach-observation';
 import { readyClaudeIdentity } from './ready-claude-identity';
+import { subscriptionScope } from './subscription-scope';
 
 export { subscriptionRuntime } from './subscription-runtime';
 
@@ -66,12 +69,6 @@ export type SubscriptionRuntime = {
 
 export type ResolvedGrant = Extract<SpendGrant, { verdict: 'resolved' }>;
 type SubscriptionSpend = Extract<ResolvedGrant['spend'], { custody: 'subscription' }>;
-type SubscriptionScope = {
-  sessionId: string;
-  sourceDialect: ProxyDialect;
-  replayScopeId: string;
-  responsesLite: boolean;
-};
 type ReadyCredential = { blob: string; credential: ParsedSubscriptionCredential };
 
 async function normalizedSubscriptionAnswer(
@@ -133,6 +130,7 @@ function providerRequestFor(
       systemPolicy: runtime.claudeSystemPolicy,
       payloadPolicy: runtime.claudePayloadPolicy,
       wireProfile: runtime.claudeDeviceProfile,
+      carriedHeaders: claudeHeadersCarriedFrom(scope.callerHeaders),
     });
   }
 
@@ -193,7 +191,13 @@ export async function reachSubscription(
   responsesLite?: boolean,
   pluginContext?: SubscriptionPluginContext,
 ): Promise<Response> {
-  const scope = subscriptionScope(sessionId, sourceDialect, replayScopeId, responsesLite);
+  const scope = subscriptionScope(
+    sessionId,
+    sourceDialect,
+    replayScopeId,
+    responsesLite,
+    pluginContext,
+  );
   const spend = subscriptionSpendOf(grant);
   const preflight = antigravityPairingPreflight(
     spend,
@@ -215,6 +219,27 @@ export async function reachSubscription(
     pluginContext,
   );
 
+  return settledSubscriptionAnswer(
+    { attempt, grant, spend, body, identified, runtime, scope },
+    pluginContext,
+  );
+}
+
+type Settling = {
+  attempt: SubscriptionAttempt;
+  grant: ResolvedGrant;
+  spend: ReturnType<typeof subscriptionSpendOf>;
+  body: JsonObject;
+  identified: Awaited<ReturnType<typeof readyClaudeIdentity>>;
+  runtime: SubscriptionRuntime;
+  scope: SubscriptionScope;
+};
+
+async function settledSubscriptionAnswer(
+  settling: Settling,
+  pluginContext: SubscriptionPluginContext | undefined,
+): Promise<Response> {
+  const { attempt, grant, spend, body, identified, runtime, scope } = settling;
   const finalAttempt = await completeSubscriptionAttempt({
     attempt,
     provider: spend.provider,
@@ -234,20 +259,6 @@ export async function reachSubscription(
   );
 
   return observeSubscriptionAnswer(grant, body, normalized, runtime, scope);
-}
-
-function subscriptionScope(
-  sessionId: string,
-  sourceDialect: ProxyDialect,
-  replayScopeId: string | undefined,
-  responsesLite: boolean | undefined,
-): SubscriptionScope {
-  return {
-    sessionId,
-    sourceDialect,
-    replayScopeId: replayScopeId ?? sessionId,
-    responsesLite: responsesLite === true,
-  };
 }
 
 function subscriptionSpendOf(grant: ResolvedGrant): SubscriptionSpend {
