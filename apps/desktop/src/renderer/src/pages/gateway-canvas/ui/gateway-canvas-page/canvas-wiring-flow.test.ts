@@ -171,6 +171,12 @@ describe('what the flow hands each cable to answer gestures by', () => {
     expect(cable?.focusable).toBeUndefined();
   });
 
+  test('a binding cable is grabbed at the end it lands on, never at the card it leaves', () => {
+    const cable = flowEdgesOf(drawn, undefined).find((edge) => edge.id === 'cable:fast');
+
+    expect(cable).toMatchObject({ reconnectable: 'target' });
+  });
+
   test('a wire and an overlay cable answer no pointer and no keyboard, so the pane keeps both', () => {
     const inert = flowEdgesOf(drawn, undefined).filter((edge) => edge.id !== 'cable:fast');
 
