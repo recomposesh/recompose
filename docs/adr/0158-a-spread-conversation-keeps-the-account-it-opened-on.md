@@ -46,6 +46,21 @@ They stay separate instances because the canvas draws only the branch pins. One 
 rotation's accounts onto a conditional router's card, and would spend a single bound on two
 features.
 
+**The kept children outlive the process, and nothing else in routing memory does.**
+[0113](0113-a-router-walks-an-id-keyed-table.md) kept every piece of routing state in memory, and
+this record narrows that for one store. Cooling, a turn cursor and a decided branch each cost one
+ordinary request when a restart forgets them. A spread conversation costs a refusal, because the
+account holding its state is the only account that can read it. The app hands the engine child a
+directory through `RECOMPOSE_ROUTING_DIR`, beside the two it already hands over for logs and
+plugins. A child nobody hands one to keeps everything in memory, which is what every spec and every
+embedded run wants.
+
+**The file is a whole set written under a rename, never a log of writes.** The store already ages
+and bounds its conversations, so it hands the keeper everything it holds and the keeper writes
+exactly that. Writes coalesce over ten milliseconds, so a burst of turns costs one file. A line the
+reading can't make sense of gets dropped on its own, and one halted write costs one conversation
+rather than the whole file.
+
 ## Consequences
 
 A conversation spreads once, at its opening turn, and holds still after that. Requests still spread
@@ -55,10 +70,15 @@ provider seals its reasoning to the account that wrote it.
 Prompt caching gains from the same pin. A conversation returning to one account keeps that account's
 prefix warm, and issue #45 named the cache as its whole motivation.
 
-The store owes nothing to disk, so a restarted engine child forgets where it kept every live
-conversation. A sealed turn arriving after that restart refuses, and the person answers it by
-starting the conversation again. That's a louder failure than the alternative, which handed a second
-account a token it can't read.
+A restarted engine child opens on the conversations it was holding, so a sealed turn crossing a
+restart still reaches its account. The window and the bound run over the restored set exactly as
+they run over a live one. A conversation that went quiet for ten minutes therefore comes back to
+nothing, on disk as in memory.
+
+The file holds a conversation's mark beside the account it sits on. The mark is a client session id
+when a client sends one, and a hash of the opening turn otherwise, so no conversation text lands on
+disk. It sits in the app's own data directory, next to the provider logs that already record more
+than this does.
 
 A pinned conversation can't fail over. Once its account starts rate limiting, the turns that resume
 state refuse rather than moving, and only a fresh conversation reaches the healthy sibling.
@@ -73,4 +93,7 @@ state refuse rather than moving, and only a fresh conversation reaches the healt
   round-robin carries a sealed turn, rather than a fourth arm of the policy union.
 - Any tally, canvas cable, or window showing which account a conversation holds.
 - A window or bound of its own. The kept children age and evict on the numbers the branch pins
-  already use.
+  already use, on disk as in memory.
+- Persistence for anything else in routing memory. Cooling, the turn cursors and the decided
+  branches each cost one ordinary request after a restart.
+  [0113](0113-a-router-walks-an-id-keyed-table.md) is right about them.
