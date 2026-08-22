@@ -8,10 +8,12 @@ import { canvasNode, DRAFT_NODE, GATEWAY_NODE, openGatewayCanvas } from '../canv
 import { Given, Then, When } from '../fixtures';
 import {
   draftInspector,
+  draftModelIdField,
   draftNameField,
   inspectorModelOption,
   inspectorRefusal,
   pickTargetInInspector,
+  reshapedIdOffer,
   revealTheInspector,
   rowLines,
   servedRow,
@@ -65,6 +67,19 @@ When(
 When('the person picks that account as the target for a new virtual model', async ({ page }) => {
   await draftBornFromTheGatewayPlus(page);
   await pickTargetInInspector(page, KEY_ACCOUNT);
+});
+
+When('the person names a new virtual model {string}', async ({ page }, name: string) => {
+  await draftBornFromTheGatewayPlus(page);
+  await draftNameField(page).fill(name);
+});
+
+When('the person takes the reshaped id the inspector offers', async ({ page }) => {
+  await reshapedIdOffer(page).click();
+});
+
+Then('the Model id field reads {string}', async ({ page }, id: string) => {
+  await expect(draftModelIdField(page)).toHaveValue(id);
 });
 
 Then('the Models list holds {string} as one row', async ({ page }, name: string) => {

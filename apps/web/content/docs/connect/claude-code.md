@@ -23,7 +23,7 @@ export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
 claude
 ```
 
-The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same value as `x-api-key` instead, and a gateway reads either one. The last variable puts every model the gateway serves into the `/model` picker, labelled `From gateway`.
+The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same value as `x-api-key` instead, and a gateway reads either one. The last variable puts every model whose id carries `claude` or `anthropic` into the `/model` picker, labelled `From gateway`.
 
 ## Or use the settings file
 
@@ -39,11 +39,21 @@ The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same v
 
 `~/.claude/settings.json` reaches background agents as well, which a shell export doesn't. When both set the same variable, the settings file wins.
 
+## When the picker skips your id
+
+Discovery keeps an id only when it carries `claude` or `anthropic` anywhere in the string. An id outside those words serves every request that names it, and appears in that picker for nobody. The sheet adds one more variable to the block when your gateway's first model is such an id:
+
+```sh
+export ANTHROPIC_CUSTOM_MODEL_OPTION="fast-sonnet"
+```
+
+That names the model outright, so it joins the picker as a row of its own and skips the check discovery reads ids through. The other fix is to rename the id: the virtual model's inspector offers the reshaped id under the **Model id** field, one press away.
+
 ## Verify
 
 Run `/status` inside a session: it reads back the base URL in use. An error naming an unknown model still proves the URL and the credential work. On the gateway side, the request shows in the [request log](/docs/operate/request-log).
 
 ## Notes
 
-- Only ids starting with `claude` or `anthropic` appear in the `/model` picker. Any id still works when `ANTHROPIC_MODEL` names it directly.
+- Only ids carrying `claude` or `anthropic` appear in the `/model` picker. Any id still works when `ANTHROPIC_MODEL` or `ANTHROPIC_CUSTOM_MODEL_OPTION` names it directly.
 - Claude Code's own reference: [Anthropic's gateway guide](https://code.claude.com/docs/en/llm-gateway-connect).
