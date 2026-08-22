@@ -238,7 +238,7 @@ export function createGatewayApp(
   });
   registerModelRoutes(app, watched, {
     gateway,
-    memory: routingMemory(),
+    memory: routingMemory(gateway.slug),
     spendGrantFor,
     subscriptions: subscriptionServing,
     fetchLike,

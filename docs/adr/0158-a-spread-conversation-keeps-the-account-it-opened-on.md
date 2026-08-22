@@ -61,6 +61,12 @@ exactly that. Writes coalesce over ten milliseconds, so a burst of turns costs o
 reading can't make sense of gets dropped on its own, and one halted write costs one conversation
 rather than the whole file.
 
+**One writer stands over the directory, however many gateways keep conversations in it.** Every
+gateway in the process shares the directory the app hands over, and each holds a memory of its own.
+A writer per gateway would let whichever wrote last erase the others. So the writer holds each
+gateway's share against its slug, writes the union, and hands a gateway back only what that gateway
+wrote.
+
 ## Consequences
 
 A conversation spreads once, at its opening turn, and holds still after that. Requests still spread

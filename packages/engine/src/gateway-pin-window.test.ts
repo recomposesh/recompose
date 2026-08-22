@@ -13,7 +13,7 @@ function spokenBy(complaints: MockInstance<typeof console.error>): string {
 }
 
 function aPinnedConversation(): { restedFor: (span: number) => string | undefined } {
-  const memory = routingMemory();
+  const memory = routingMemory('main');
 
   memory.pins.pin(LADDER, 'session-1', 'coder');
 
@@ -61,7 +61,7 @@ describe('the window a pin rests through', () => {
   test('a window named after the gateway was built leaves that gateway on the window it opened with', () => {
     vi.useFakeTimers();
 
-    const memory = routingMemory();
+    const memory = routingMemory('main');
 
     memory.pins.pin(LADDER, 'session-1', 'coder');
     vi.stubEnv('RECOMPOSE_PIN_IDLE_MS', '1000');

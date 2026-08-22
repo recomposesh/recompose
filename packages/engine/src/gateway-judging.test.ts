@@ -92,7 +92,7 @@ function judging(routing: EngineRouting, answer: () => Response, grant = A_KEYED
         return Promise.resolve(answer());
       },
       subscriptions: subscriptionRuntime(),
-      memory: routingMemory(),
+      memory: routingMemory('main'),
     },
   };
 }

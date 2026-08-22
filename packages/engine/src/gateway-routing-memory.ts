@@ -38,10 +38,10 @@ function keptChildDirectory(): string | null {
   return named === undefined || named === '' ? null : named;
 }
 
-function pinKeeping(): PinKeeping | undefined {
+function pinKeeping(slug: string): PinKeeping | undefined {
   const directory = keptChildDirectory();
 
-  return directory === null ? undefined : keptChildFile(directory);
+  return directory === null ? undefined : keptChildFile(directory, slug);
 }
 
 function namedPinIdleWindow(): string | null {
@@ -268,12 +268,12 @@ export type RoutingMemory = {
  * a refusal instead, because the account holding its state is the only account that can read it, so
  * the child it was given is the one thing here written down.
  */
-export function routingMemory(): RoutingMemory {
+export function routingMemory(slug: string): RoutingMemory {
   return {
     ledger: createCooldownLedger(Date.now, publishCooldown),
     cursors: createRotationCursors(),
     pins: createConversationPins(Date.now, publishBranchPinTally, pinIdleWindow()),
-    rotationPins: createConversationPins(Date.now, undefined, pinIdleWindow(), pinKeeping()),
+    rotationPins: createConversationPins(Date.now, undefined, pinIdleWindow(), pinKeeping(slug)),
     now: Date.now,
   };
 }

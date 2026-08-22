@@ -83,23 +83,47 @@ function linesOf(path: string): readonly string[] {
   }
 }
 
+function recordsIn(path: string): readonly KeptChild[] {
+  return linesOf(path).flatMap((line) => {
+    const record = keptChildOf(line);
+
+    return record === undefined ? [] : [record];
+  });
+}
+
+type SharedFile = { forGateway: (slug: string) => PinKeeping };
+
 /**
- * The file one gateway keeps its spread conversations in, across a restart of the engine child.
+ * The one writer standing over a directory, however many gateways keep conversations in it.
  *
- * @summary A conversation resuming state one account minted can only travel to that account, so
- * forgetting where it was kept costs the person a refusal they can only answer by starting over.
- * That is what the cooling and the turn cursors never owed disk and this does. Writes coalesce and
- * land whole through a rename, because the store hands over its entire set every time and a person
- * killing the app mid-write must not open on half a file.
+ * @summary Every gateway in a process shares the directory the app hands the engine child, and each
+ * one holds its own conversations. One writer per directory is what keeps the last gateway to write
+ * from erasing the others, and it serializes the writes so no two land on the same file at once.
+ * A gateway reads back only what it wrote, because a conversation belongs to the gateway that spread
+ * it and the pin below never asks about anyone else's.
  */
-export function keptChildFile(directory: string): PinKeeping {
+function sharedFile(directory: string): SharedFile {
   const path = join(directory, KEPT_CHILD_FILE);
+  const held = new Map<string, readonly KeptChild[]>();
   let pending: ReturnType<typeof setTimeout> | undefined;
-  let latest: readonly KeptChild[] = [];
   let writing: Promise<void> = Promise.resolve();
+  let opened = false;
+
+  const openOnce = () => {
+    if (opened) return;
+
+    opened = true;
+
+    for (const record of recordsIn(path)) {
+      held.set(record.slug, [...(held.get(record.slug) ?? []), record]);
+    }
+  };
 
   const write = async (): Promise<void> => {
-    const written = latest.map((record) => JSON.stringify(record)).join('\n');
+    const written = [...held.values()]
+      .flat()
+      .map((record) => JSON.stringify(record))
+      .join('\n');
 
     try {
       await mkdir(directory, { recursive: true });
@@ -111,22 +135,39 @@ export function keptChildFile(directory: string): PinKeeping {
   };
 
   return {
-    restored: () =>
-      linesOf(path).flatMap((line) => {
-        const record = keptChildOf(line);
+    forGateway: (slug) => ({
+      restored: () => recordsIn(path).filter((record) => record.slug === slug),
+      keep: (records) => {
+        openOnce();
+        held.set(slug, records);
 
-        return record === undefined ? [] : [record];
-      }),
-    keep: (records) => {
-      latest = records;
+        if (pending !== undefined) return;
 
-      if (pending !== undefined) return;
-
-      pending = setTimeout(() => {
-        pending = undefined;
-        writing = writing.then(write);
-      }, WRITE_SETTLES_MS);
-      pending.unref();
-    },
+        pending = setTimeout(() => {
+          pending = undefined;
+          writing = writing.then(write);
+        }, WRITE_SETTLES_MS);
+        pending.unref();
+      },
+    }),
   };
+}
+
+const sharedFiles = new Map<string, SharedFile>();
+
+/**
+ * The file one gateway keeps its spread conversations in, across a restart of the engine child.
+ *
+ * @summary A conversation resuming state one account minted can only travel to that account, so
+ * forgetting where it was kept costs the person a refusal they can only answer by starting over.
+ * That is what the cooling and the turn cursors never owed disk and this does. Writes coalesce and
+ * land whole through a rename, because a gateway hands over its entire set every time and a person
+ * killing the app mid-write must not open on half a file.
+ */
+export function keptChildFile(directory: string, slug: string): PinKeeping {
+  const shared = sharedFiles.get(directory) ?? sharedFile(directory);
+
+  sharedFiles.set(directory, shared);
+
+  return shared.forGateway(slug);
 }

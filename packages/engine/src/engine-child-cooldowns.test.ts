@@ -33,7 +33,7 @@ describe('what the parent hears about a node standing down', () => {
   test('a judge told to stand down tells the parent when it stands back up', () => {
     const parent = anAttachedChild();
 
-    routingMemory().ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
+    routingMemory('main').ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
 
     expect(cooldownsIn(parent.reports)).toEqual([
       {
@@ -48,7 +48,7 @@ describe('what the parent hears about a node standing down', () => {
 
   test('a node cooled again tells the parent the later moment it now stands back up', () => {
     const parent = anAttachedChild();
-    const memory = routingMemory();
+    const memory = routingMemory('main');
 
     memory.ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
     memory.ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT + 30_000 });
@@ -72,7 +72,7 @@ describe('what the parent hears about a node standing down', () => {
     attachEngineChild(brokenPort, aLoopbackCapturing().openListeners);
 
     expect(() => {
-      routingMemory().ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
+      routingMemory('main').ledger.cool(JUDGE, { coolUntilMs: LIFTS_AT });
     }).not.toThrow();
   });
 });

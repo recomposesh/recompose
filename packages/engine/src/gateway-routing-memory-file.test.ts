@@ -19,10 +19,10 @@ describe('what a gateway told where to keep its conversations remembers across a
   it('opens the spread conversation on the account it was holding', async () => {
     vi.stubEnv('RECOMPOSE_ROUTING_DIR', await aWritableDirectory());
 
-    routingMemory().rotationPins.pin(LADDER, 'session-1', 'one');
+    routingMemory('main').rotationPins.pin(LADDER, 'session-1', 'one');
 
     const kept = await eventually(
-      () => routingMemory().rotationPins.pinnedAt(LADDER, 'session-1'),
+      () => routingMemory('main').rotationPins.pinnedAt(LADDER, 'session-1'),
       (child) => child !== undefined,
     );
 
@@ -32,18 +32,18 @@ describe('what a gateway told where to keep its conversations remembers across a
   it('leaves the branch a judge decided behind, which costs one fresh judgment', async () => {
     vi.stubEnv('RECOMPOSE_ROUTING_DIR', await aWritableDirectory());
 
-    routingMemory().pins.pin(LADDER, 'session-1', 'coder');
+    routingMemory('main').pins.pin(LADDER, 'session-1', 'coder');
     await quietFor(50);
 
-    expect(routingMemory().pins.pinnedAt(LADDER, 'session-1')).toBeUndefined();
+    expect(routingMemory('main').pins.pinnedAt(LADDER, 'session-1')).toBeUndefined();
   });
 
   it('keeps every conversation in memory alone where nobody named a directory', async () => {
     vi.stubEnv('RECOMPOSE_ROUTING_DIR', '');
 
-    routingMemory().rotationPins.pin(LADDER, 'session-1', 'one');
+    routingMemory('main').rotationPins.pin(LADDER, 'session-1', 'one');
     await quietFor(50);
 
-    expect(routingMemory().rotationPins.pinnedAt(LADDER, 'session-1')).toBeUndefined();
+    expect(routingMemory('main').rotationPins.pinnedAt(LADDER, 'session-1')).toBeUndefined();
   });
 });

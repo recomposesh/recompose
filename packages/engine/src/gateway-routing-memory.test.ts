@@ -258,7 +258,7 @@ describe('what a router says it is holding as conversations leave', () => {
 
 describe('the pins one gateway holds and no other', () => {
   test('a gateway remembers the branch a conversation earned across requests', () => {
-    const memory = routingMemory();
+    const memory = routingMemory('main');
 
     memory.pins.pin(LADDER, 'session-1', 'coder');
 
@@ -266,8 +266,8 @@ describe('the pins one gateway holds and no other', () => {
   });
 
   test('a second gateway never inherits the conversations the first pinned', () => {
-    const first = routingMemory();
-    const second = routingMemory();
+    const first = routingMemory('main');
+    const second = routingMemory('codex');
 
     first.pins.pin(LADDER, 'session-1', 'coder');
 
