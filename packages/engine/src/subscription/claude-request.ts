@@ -1,4 +1,5 @@
 import type { ClaudeIdentity } from './claude-identity';
+import type { ClaudeRequestIds } from './claude-wire-headers';
 
 import { isJsonObject } from '../gateway-wire';
 import { claudeBetas, requestedClaudeBetas } from './claude-betas';
@@ -19,7 +20,7 @@ import { sanitizeClaudeSignatures } from './claude-signatures';
 import { claudeCountTokensSystem, claudeMessagesSystem } from './claude-system';
 import { applyClaudeSystemPolicy, type ClaudeSystemPolicy } from './claude-system-policy';
 import { prepareClaudeTools } from './claude-tools';
-import { claudeWireHeaders } from './claude-wire-headers';
+import { claudeWireHeadersFor } from './claude-wire-headers';
 
 /**
  * One request on a subscription wire, and the signal that can take it back.
@@ -38,11 +39,6 @@ export type ProviderRequest = {
 };
 
 type JsonObject = Record<string, unknown>;
-
-type ClaudeRequestIds = {
-  sessionId: string;
-  requestId: string;
-};
 
 type CacheBlock = JsonObject & { cache_control?: unknown };
 
@@ -287,12 +283,6 @@ export function claudeProviderRequest(
     url: `${providerOrigin.replace(/\/+$/u, '')}/v1/messages?beta=true`,
     body: signedClaudeBody(prepared.body),
     ...(Object.keys(prepared.reverse).length === 0 ? {} : { reverseToolNames: prepared.reverse }),
-    headers: claudeWireHeaders(
-      accessToken,
-      ids.sessionId,
-      ids.requestId,
-      claudeBetas(body, requested),
-      wireProfile,
-    ),
+    headers: claudeWireHeadersFor(accessToken, ids, claudeBetas(body, requested), wireProfile),
   };
 }
