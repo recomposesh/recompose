@@ -78,7 +78,9 @@ export const AnUnwordedBranchSaysWhatItOwes = meta.story({
 export const TheLastRowStandsAsTheElse = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Else')).toBeVisible();
-    await expect(await canvas.findByText(/catches what the judge cannot place/)).toBeVisible();
+    await expect(
+      await canvas.findByText(/catches a request the judge read and could not place/),
+    ).toBeVisible();
   },
 });
 

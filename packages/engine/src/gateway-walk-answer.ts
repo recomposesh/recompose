@@ -3,12 +3,13 @@ import type { EngineGateway, EngineVirtualModel } from '@recompose/contracts';
 import { nameOfRouter } from '@recompose/contracts';
 
 import type { Crossing } from './gateway-wire';
+import type { TranslationRefusal } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
 
 import { unreachableTargetAnswer } from './gateway-answers';
 import { attemptsRecorded } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
-import { chainedTurn, emptyRouter, exhaustedRouter } from './refusals';
+import { chainedTurn, emptyRouter, exhaustedRouter, unjudgedRequest } from './refusals';
 import { routerTheEntryStands } from './router-entry';
 
 export type WalkScene = {
@@ -45,19 +46,28 @@ function exhaustedAnswer(
 
 type RouterStood = Extract<
   WalkResult<Response>['verdict'],
-  { outcome: 'empty-router' | 'chained-turn' }
+  { outcome: 'empty-router' | 'chained-turn' | 'unjudged' }
 >;
+
+function refusalTheRouterRaises(
+  verdict: RouterStood,
+  displayName: string,
+  model: string,
+  name: string,
+): TranslationRefusal {
+  if (verdict.outcome === 'empty-router') return emptyRouter(displayName, model, name);
+
+  return verdict.outcome === 'chained-turn'
+    ? chainedTurn(displayName, model, name)
+    : unjudgedRequest(displayName, model, name);
+}
 
 function routerAnswer(scene: WalkScene, verdict: RouterStood): Response {
   const name = nameOfRouter(verdict.router.policy.mode, verdict.router.displayName);
-  const displayName = scene.gateway.displayName;
-  const model = scene.virtualModel.id;
 
   return refusalResponse(
     scene.crossing.dialect,
-    verdict.outcome === 'empty-router'
-      ? emptyRouter(displayName, model, name)
-      : chainedTurn(displayName, model, name),
+    refusalTheRouterRaises(verdict, scene.gateway.displayName, scene.virtualModel.id, name),
   );
 }
 
@@ -68,9 +78,9 @@ function routerAnswer(scene: WalkScene, verdict: RouterStood): Response {
  * reaches the caller exactly as written and only a refusal recompose raised wears the recompose
  * shape. A ladder that ran out says so, naming every child it touched, while a lone target that ran
  * out was the whole ladder and keeps the answer it already gave, because there is no sibling for a
- * router refusal to speak about. The two refusals a router raises before trying anyone name the
- * router the walk actually stood at rather than the one the table opens with, because a ladder that
- * chains puts a different router in the way at each depth.
+ * router refusal to speak about. The refusals a router raises before trying anyone name the router
+ * the walk actually stood at rather than the one the table opens with, because a ladder that chains
+ * puts a different router in the way at each depth.
  */
 export function answerTheWalkGives(
   scene: WalkScene,
@@ -81,7 +91,11 @@ export function answerTheWalkGives(
 
   if (verdict.outcome === 'answered') return verdict.answer;
 
-  if (verdict.outcome === 'empty-router' || verdict.outcome === 'chained-turn') {
+  if (
+    verdict.outcome === 'empty-router' ||
+    verdict.outcome === 'chained-turn' ||
+    verdict.outcome === 'unjudged'
+  ) {
     return routerAnswer(scene, verdict);
   }
 

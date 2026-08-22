@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A virtual model binds a router in place of a single target, so several accounts can stand behind one name a client asks for. A router carries a mode and an ordered list of children, and a child is a target or another router, so routers chain. Failover offers its children in declared order and round-robin spreads across them, and a child that refuses in a way another child could cure passes the request on. Conditional hands each request's tail to a judge model that answers with one branch label. Everything the judge can't place lands on a permanent else child, so routing trouble never drops a request. Custody resolves per attempt, so what one child spends and what it refuses says nothing about any other. The first byte written downstream commits the child that wrote it: before it a request may move on, and after it the provider's own answer reaches the caller untouched. A router that can serve nobody refuses in words naming what stood in the way, rather than picking a child anyway.
+A virtual model binds a router in place of a single target, so several accounts can stand behind one name a client asks for. A router carries a mode and an ordered list of children, and a child is a target or another router, so routers chain. Failover offers its children in declared order and round-robin spreads across them, and a child that refuses in a way another child could cure passes the request on. Conditional hands each request's tail to a judge model that answers with one branch label. An answer the branches don't wear lands on a permanent else child, and a judge that reaches no verdict at all refuses the request rather than routing around itself. Custody resolves per attempt, so what one child spends and what it refuses says nothing about any other. The first byte written downstream commits the child that wrote it: before it a request may move on, and after it the provider's own answer reaches the caller untouched. A router that can serve nobody refuses in words naming what stood in the way, rather than picking a child anyway.
 
 ## Requirements
 
@@ -117,23 +117,45 @@ A router in `conditional` mode MUST carry a judge binding, an ordered list of la
 - Then the judge receives exactly two classification calls
 - And the child behind the else branch receives the request
 
-### Requirement: Routing trouble lands on else and never drops a request
+### Requirement: A judge that reaches no verdict refuses the request
 
-A conditional router MUST hold a permanent else branch that no edit removes. A judge refusal, a cooling judge, an answer past the timeout budget, and an answer matching no branch MUST each land the request on the else branch. A conditional router MUST NOT answer a routing refusal for trouble the else branch can absorb, and the else child MUST receive the request instead.
+A conditional router MUST hold a permanent else branch that no edit removes. The else branch MUST carry only the requests its judge classified without naming a branch.
 
-#### Scenario: a cooling judge sends the request down else without a classification call
+Five cases reach a conditional router with no judgment behind them:
+
+- a judge refusal
+- a judge standing cooling
+- an answer past the timeout budget
+- a judge binding resolving to no usable custody
+- a server-state turn no pin covers
+
+Each of those five MUST refuse the request with a 503. The refusal MUST name the router, the virtual model, and the else child the router declined to use. A conditional router MUST NOT hand a request to any child when no judgment placed it there. A router above it MUST NOT offer that request to a sibling instead.
+
+#### Scenario: a cooling judge refuses without a classification call
 
 - Given a conditional router whose judge stands cooling from an earlier rate limit
 - When a request arrives under the virtual model's name
 - Then no classification call leaves the machine
-- And the child behind the else branch receives the request
+- And no child of the router receives the request
+- And the caller reads a 503 naming the router and its judge
 
-#### Scenario: a judge past its timeout budget lands the request on else
+#### Scenario: a judge past its timeout budget refuses rather than falling to else
 
 - Given a conditional router whose judge doesn't answer within the timeout budget
 - When a request arrives under the virtual model's name
-- Then the child behind the else branch receives the request
-- And the answer travels back to the caller
+- Then the child behind the else branch receives nothing
+- And the caller reads a 503 naming the router and its judge
+
+### Requirement: A classification call ends when its budget does
+
+A conditional router's classification call MUST end when its timeout budget runs out. That holds on every custody a judge takes, a subscription channel included. The gateway MUST NOT leave a classification request open past the budget the walk stopped waiting on. The telemetry row that call opened MUST settle however the call ends, whether it answers, refuses, or runs out of budget.
+
+#### Scenario: a judge on a plan account releases its socket at the budget
+
+- Given a conditional router whose judge stands on a subscription account that never answers
+- When a request arrives under the virtual model's name
+- Then the classification request ends when the timeout budget runs out
+- And the telemetry row that call opened reads as finished rather than in flight
 
 ### Requirement: A conversation keeps the branch it first earned
 

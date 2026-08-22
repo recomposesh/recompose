@@ -18,6 +18,16 @@ function providerDialect(provider: SubscriptionProviderId): ProviderDialect {
   return 'responses';
 }
 
+const UNREACHED_STATUS = 502;
+
+/**
+ * One subscription send, watched from the moment it leaves to the moment something settles it.
+ *
+ * @summary A send that throws settles the span before the failure travels on, because a span left
+ * open shows a person a request still in flight for as long as the process lives. A cut-off call
+ * takes exactly that path: the signal ends the request rather than answering it, so nothing here
+ * ever reads a status off a response.
+ */
 export async function sendObservedSubscription(
   provider: SubscriptionProviderId,
   accountId: string,
@@ -34,5 +44,11 @@ export async function sendObservedSubscription(
     requestId: providerRequestId(new Headers(request.headers)),
   });
 
-  return span.observe(await send(provider, request));
+  try {
+    return span.observe(await send(provider, request));
+  } catch (failure) {
+    span.failed(UNREACHED_STATUS);
+
+    throw failure;
+  }
 }

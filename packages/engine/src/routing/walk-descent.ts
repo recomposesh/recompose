@@ -1,7 +1,7 @@
 import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
-import type { Judging } from './judge-decision';
+import type { JudgedChoice, Judging } from './judge-decision';
 import type { RotationCursors, TurnTaken } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
@@ -23,10 +23,14 @@ export type Walking = {
   spent: Set<string>;
 };
 
-/** Where one descent ends: a child to try, a router that must not spread, a retry, or nothing. */
+/**
+ * Where one descent ends: a child to try, a router that must not spread, a router no judgment
+ * reached, a retry, or nothing.
+ */
 export type WalkStep =
   | { at: 'target'; routeNode: string }
   | { at: 'rotation'; routeNode: string; router: EngineRouter }
+  | { at: 'unjudged'; routeNode: string; router: EngineRouter }
   | { at: 'again' }
   | { at: 'nowhere' };
 
@@ -77,12 +81,12 @@ async function childTheRouterOffers(
   descending: Descending,
   routeNode: string,
   router: EngineRouter,
+  branch: JudgedChoice | undefined,
 ): Promise<string | undefined> {
   const { walking, path, turns } = descending;
   const address = addressOf(walking, routeNode);
-  const policy = router.policy;
 
-  return childTheModeOffers(policy.mode, {
+  return childTheModeOffers(router.policy.mode, {
     children: router.children,
     canServe: (child) => subtreeCanServe(walking, child, new Set(path)),
     turn: {
@@ -92,7 +96,7 @@ async function childTheRouterOffers(
         walking.cursors.advanceTo(address, cursor);
       },
     },
-    branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
+    branch,
   });
 }
 
@@ -163,6 +167,16 @@ function turnsHandedBack(descending: Descending): void {
   }
 }
 
+/**
+ * Whether one router's own branch decision reached the request without any judgment behind it.
+ *
+ * @summary A router of any other mode decides nothing here, so it answers no and never stands in the
+ * way of a walk that never involved a judge.
+ */
+function nothingJudgedThisRequest(branch: JudgedChoice | undefined): boolean {
+  return branch !== undefined && !branch.judged;
+}
+
 /** Where the walk arrives next, descending from the entry until a node settles the question. */
 export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> {
   const descending: Descending = { walking, path: new Set<string>(), turns: [] };
@@ -175,12 +189,21 @@ export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> 
 
     if ('step' in descent) return descent.step;
 
-    const offered = await childTheRouterOffers(descending, routeNode, descent.router);
+    const router = descent.router;
+    const branch = await branchTheWalkFollows(routeNode, router.policy, walking.judging);
+
+    if (nothingJudgedThisRequest(branch)) {
+      turnsHandedBack(descending);
+
+      return { at: 'unjudged', routeNode, router };
+    }
+
+    const offered = await childTheRouterOffers(descending, routeNode, router, branch);
 
     if (offered === undefined) {
       turnsHandedBack(descending);
 
-      return stepPastARouterOfferingNothing(walking, routeNode, descent.router);
+      return stepPastARouterOfferingNothing(walking, routeNode, router);
     }
 
     routeNode = offered;

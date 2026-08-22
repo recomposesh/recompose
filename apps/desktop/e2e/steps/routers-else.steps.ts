@@ -19,8 +19,6 @@ import { aTurnArrives } from '../judged-traffic';
 import { elseRow, theRouterStandsInspected } from '../router-inspector';
 import { focusedGateway } from '../scenario-memory';
 
-const ANSWERED = 200;
-
 const RATE_LIMITED = 429;
 
 /** A judge whose key stopped working, which is the failure a caller must never be handed. */
@@ -136,10 +134,15 @@ Then('the judge receives exactly one classification call', ({ judge }) => {
   expect(judge.classificationsAsked()).toHaveLength(1);
 });
 
+/**
+ * @summary The router refuses in its own words now, so the claim is about whose refusal travels
+ * rather than about the caller getting an answer at all. A gateway that passed the judge's 401
+ * through would hand a person a sentence about a key they never bound to this request.
+ */
 Then("the caller never reads the judge's refusal", ({ page }) => {
   const answer = whatTheCallerGot(page);
 
-  expect(answer.status).toBe(ANSWERED);
+  expect(answer.status).not.toBe(CREDENTIAL_REFUSED);
   expect(answer.said).not.toContain(WORDS_ONLY_THE_JUDGE_SAYS);
   expect(answer.said).not.toContain(String(CREDENTIAL_REFUSED));
 });
@@ -178,6 +181,6 @@ Then('the else row offers no way to move or delete it', async ({ page }) => {
 
 Then('the row says why the else branch stays', async ({ page }) => {
   await expect(elseRow(page).locator('[data-else-reason]')).toHaveText(
-    'Every conditional router keeps an else branch. It catches what the judge cannot place.',
+    'Every conditional router keeps an else branch. It catches a request the judge read and could not place. A judge that answers nothing refuses the request instead.',
   );
 });

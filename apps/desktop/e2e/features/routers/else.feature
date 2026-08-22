@@ -1,18 +1,19 @@
-Feature: The permanent else absorbs routing trouble
+Feature: What the permanent else branch catches, and what it never does
 
-  Every conditional router carries an else branch no edit removes. A cooling
-  judge, a declined classification, an answer naming no branch, and a chosen
-  branch that cannot serve all land the request there, and the caller still
-  receives an answer.
+  Every conditional router carries an else branch no edit removes. It catches
+  a request its judge read and could not place, and a branch the judge named
+  that cannot serve. It never catches a judge that reached no verdict at all:
+  that request is refused, so no caller is served by a model nothing chose.
 
   Background:
     Given a virtual model "fast" bound to a conditional router with a "code" branch, a "chat" branch, and an else branch
 
-  Scenario: A cooling judge sends the request down else without a classification call
+  Scenario: A cooling judge refuses the request without a classification call
     Given the judge stands cooling from an earlier rate limit
     When a request arrives under "fast"
     Then no classification call leaves the machine
-    And the child behind the else branch receives the request
+    And no child of the router receives the request
+    And the caller reads a refusal saying the judge reached no verdict
 
   Scenario: A judge that declines to classify lands the request on else
     Given the judge declines to classify any request
@@ -23,7 +24,7 @@ Feature: The permanent else absorbs routing trouble
   Scenario: A judge's own failure never becomes the caller's answer
     Given the judge refuses every classification call with a credential failure
     When a request arrives under "fast"
-    Then the child behind the else branch receives the request
+    Then no child of the router receives the request
     And the caller never reads the judge's refusal
 
   Scenario: An instruction inside the request cannot invent a branch

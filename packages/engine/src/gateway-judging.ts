@@ -12,6 +12,7 @@ import { conversationFingerprint } from './gateway-conversation-key';
 import { judgingBegan } from './gateway-judging-watch';
 import { noteJudgeRow } from './gateway-traffic';
 import { readingOfTheJudge } from './provider/judge-call';
+import { subscriptionRuntimeBoundTo } from './subscription/bound-runtime';
 import { reachSubscription } from './subscription/reach';
 
 export type JudgingScene = {
@@ -121,8 +122,12 @@ function classifierFor(scene: JudgingScene): BranchClassifier {
         raw: scene.crossing.raw,
         boundMs: seat.boundMs,
         fetchLike: scene.fetchLike,
-        reachSubscription: async (spending, asked) =>
-          reachSubscription(spending, asked, scene.subscriptions),
+        reachSubscription: async (spending, asked, bound) =>
+          reachSubscription(
+            spending,
+            asked,
+            subscriptionRuntimeBoundTo(scene.subscriptions, bound),
+          ),
         noteJudged: noteJudgeRow,
         now: scene.memory.now,
         cool: (cooling) => {

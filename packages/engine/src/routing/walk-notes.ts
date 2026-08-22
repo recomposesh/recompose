@@ -1,24 +1,22 @@
 import type { AttemptReason } from './outcome-classification';
 
 /**
- * Why a child a request never reached stood outside its way, told apart by what put it there.
+ * Why a child a request never reached stood outside its way, healthy the whole time.
  *
- * @summary A judgment naming another branch and a judge that named no branch at all leave the same
- * healthy child unused, and a person reading the refusal is owed the difference: the first is the
- * router working exactly as it was drawn, while the second is trouble at the judge that sent every
- * branch child's traffic to the else. One reason for each, so nothing has to guess which happened.
+ * @summary Only a judgment ever puts a child here. A judge that reached no verdict refuses the
+ * request at its router instead of routing around it, so no child is ever left standing off a branch
+ * nothing chose.
  */
-export type OffBranchReason = { because: 'off-branch' } | { because: 'unjudged' };
+export type OffBranchReason = { because: 'off-branch' };
 
 /**
  * Why one child of a route table did not serve a request.
  *
- * @summary Four ways, not two: it was tried and refused, it stood cooling from an earlier refusal,
- * a branch this request was judged onto left it out of reach while it stood perfectly ready, or no
- * judgment placed the request at all and the else child took it. The last two promise nothing about
- * when to come back, because the next request may well be judged straight onto either, and they
- * withhold nothing either: no request ever reached them, so they have no say in the wait the
- * children the walk did try named.
+ * @summary Three ways, not one: it was tried and refused, it stood cooling from an earlier refusal,
+ * or a branch this request was judged onto left it out of reach while it stood perfectly ready. The
+ * last promises nothing about when to come back, because the next request may well be judged straight
+ * onto it, and it withholds nothing either: no request ever reached it, so it has no say in the wait
+ * the children the walk did try named.
  */
 export type NoteReason = AttemptReason | { because: 'cooling' } | OffBranchReason;
 
@@ -36,7 +34,6 @@ export function noteOf(
 
 const STOOD_OFF_A_BRANCH = {
   'off-branch': true,
-  unjudged: true,
 } as const satisfies Record<OffBranchReason['because'], true>;
 
 /** Whether the walk put one child to the test, by reaching it or by finding it already cooling. */

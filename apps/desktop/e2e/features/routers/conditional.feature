@@ -2,8 +2,8 @@ Feature: Conditional routes each request down the branch the judge names
 
   A conditional router asks its judge to read the request and answer with
   one branch label. The call carries every label beside its rule, a broken
-  answer earns a single retry, and a judge past its timeout budget lands
-  the request on else, so routing trouble never drops a request.
+  answer earns a single retry, and a judge that never answers at all refuses
+  the request rather than handing it to a child nothing chose.
 
   Background:
     Given a virtual model "fast" bound to a conditional router with a "code" branch, a "chat" branch, and an else branch
@@ -39,14 +39,14 @@ Feature: Conditional routes each request down the branch the judge names
     Then the judge receives exactly two classification calls
     And the child behind the "code" branch receives the request
 
-  Scenario: A judge past its timeout budget lands the request on else
+  Scenario: A judge past its timeout budget refuses rather than falling to else
     Given the judge doesn't answer within the timeout budget
     When a request arrives under "fast"
-    Then the child behind the else branch receives the request
-    And the answer travels back to the caller
+    Then no child of the router receives the request
+    And the caller reads a refusal saying the judge reached no verdict
 
   Scenario: The timeout clock covers the wait for the judge's first byte
     Given the judge sends its first byte only after the timeout budget
     When a request arrives under "fast"
-    Then the child behind the else branch receives the request
+    Then no child of the router receives the request
     And the judge's late answer moves no traffic

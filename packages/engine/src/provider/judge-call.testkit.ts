@@ -87,16 +87,24 @@ function keyedFetching(wrote: Wrote, answer: Answering): typeof fetch {
 /**
  * A plan channel that records the account it spent and hands back the scenario's answer.
  *
- * @summary It takes no signal, because the transport it stands for takes none either. A scenario
- * about a plan judge running past its budget is only honest if the fake can ignore the budget the
- * way the real channel does.
+ * @summary It answers to the bound the same way the keyed transport does, because the real channel
+ * now carries the signal down to the wire. A fake that ignored it could only tell a scenario that
+ * the wait ended, which is the very half of the promise that once left a plan judge holding a socket
+ * for ten minutes after the walk had moved on.
  */
 function planReaching(wrote: Wrote, answer: Answering) {
-  return async (spending: SpendGrant, body: JsonObject): Promise<Response> => {
+  return async (spending: SpendGrant, body: JsonObject, bound: AbortSignal): Promise<Response> => {
     wrote.sentTo.push(planChannelOf(spending));
     wrote.bodies.push(JSON.stringify(body));
 
-    return answer(undefined);
+    return new Promise<Response>((settle, fail) => {
+      bound.addEventListener('abort', () => {
+        wrote.cut = true;
+        fail(new Error('the judge call was cut off'));
+      });
+
+      Promise.resolve(answer(bound)).then(settle, fail);
+    });
   };
 }
 

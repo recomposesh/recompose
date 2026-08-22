@@ -17,7 +17,7 @@ describe('the branch a turn that resumes server-side state keeps', () => {
     expect(walk.attempted).toEqual(['talker']);
   });
 
-  test('a conversation nobody pinned takes the else branch with no call', async () => {
+  test('a conversation nobody pinned is refused with no call, never sent down else', async () => {
     const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
     const gateway = aGatewayServing(aJudgedRouterOver(), {
       classifyBranch: judge.classifyBranch,
@@ -27,7 +27,7 @@ describe('the branch a turn that resumes server-side state keeps', () => {
     const walk = await gateway.send();
 
     expect(judge.asked).toEqual([]);
-    expect(walk.attempted).toEqual(['catchall']);
+    expect(walk.attempted).toEqual([]);
   });
 
   test('re-judging every request still cannot move a sealed conversation off its pin', async () => {
@@ -44,16 +44,12 @@ describe('the branch a turn that resumes server-side state keeps', () => {
     expect(walk.attempted).toEqual(['talker']);
   });
 
-  test('a conditional router answers the turn a round-robin router refuses', async () => {
+  test('a conditional router refuses that turn for the judge it could not ask, not for spreading', async () => {
     const gateway = aGatewayServing(aJudgedRouterOver(), { resumesServerState: true });
 
     const walk = await gateway.send();
 
-    expect(walk.verdict).toEqual({
-      outcome: 'answered',
-      routeNode: 'catchall',
-      answer: 'catchall',
-    });
+    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', routeNode: 'ladder' });
   });
 });
 

@@ -21,11 +21,20 @@ import { applyClaudeSystemPolicy, type ClaudeSystemPolicy } from './claude-syste
 import { prepareClaudeTools } from './claude-tools';
 import { claudeWireHeaders } from './claude-wire-headers';
 
+/**
+ * One request on a subscription wire, and the signal that can take it back.
+ *
+ * @summary The signal is optional because a served turn is a stream a caller is waiting on and must
+ * run to the transport's own bounds. Only a call this gateway makes on its own account, which today
+ * is the judge, carries one: it holds a budget shorter than any bound the wire imposes, and without
+ * a signal the socket outlives the answer by minutes and the row it opened never settles.
+ */
 export type ProviderRequest = {
   url: string;
   headers: [string, string][];
   body: string;
   reverseToolNames?: Record<string, string>;
+  signal?: AbortSignal | undefined;
 };
 
 type JsonObject = Record<string, unknown>;

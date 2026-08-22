@@ -4,6 +4,8 @@ import { describe, expect, test } from 'vitest';
 
 import type { JudgingScene } from './gateway-judging';
 import type { Crossing } from './gateway-wire';
+import type { ProviderRequest } from './subscription/claude-request';
+import type { SubscriptionRuntime } from './subscription/reach';
 
 import { judgedRouting } from './gateway-judging';
 import { requestUrlOf } from './gateway-router.testkit';
@@ -18,6 +20,26 @@ const A_KEYED_JUDGE: SpendGrant = {
   verdict: 'resolved',
   providerOrigin: 'http://judge.test',
   spend: { custody: 'credentialed', provider: 'openai', credential: 'sk-live-40d1' },
+};
+
+const A_PLAN_JUDGE: SpendGrant = {
+  verdict: 'resolved',
+  providerOrigin: 'https://api.anthropic.com',
+  spend: {
+    custody: 'subscription',
+    provider: 'anthropic',
+    accountId: 'plan-1',
+    credential: JSON.stringify({
+      account_uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      claude_device_ids: ['0'.repeat(64)],
+      claudeAiOauth: {
+        accessToken: 'live-access',
+        refreshToken: 'live-refresh',
+        expiresAt: 4_000_000_000_000,
+      },
+    }),
+    renewal: 'app',
+  },
 };
 
 function aBoundTarget(providerModel: string): EngineRouteNode {
@@ -66,7 +88,23 @@ type Watched = {
   asked: unknown[];
 };
 
-function judging(routing: EngineRouting, answer: () => Response, grant = A_KEYED_JUDGE): Watched {
+function planRuntimeRecording(sent: ProviderRequest[]): SubscriptionRuntime {
+  return {
+    ...subscriptionRuntime(),
+    send: async (_provider, request) => {
+      sent.push(request);
+
+      return Promise.resolve(Response.json({ content: [] }));
+    },
+  };
+}
+
+function judging(
+  routing: EngineRouting,
+  answer: () => Response,
+  grant = A_KEYED_JUDGE,
+  subscriptions: SubscriptionRuntime = subscriptionRuntime(),
+): Watched {
   const sentTo: string[] = [];
   const askedFor: string[] = [];
   const asked: unknown[] = [];
@@ -91,7 +129,7 @@ function judging(routing: EngineRouting, answer: () => Response, grant = A_KEYED
 
         return Promise.resolve(answer());
       },
-      subscriptions: subscriptionRuntime(),
+      subscriptions,
       memory: routingMemory(),
     },
   };
@@ -125,6 +163,20 @@ describe('the judge a serving gateway hands the walk', () => {
     await judgedRouting(watched.scene).classifyBranch(LADDER, JUDGE, BRANCHES);
 
     expect(watched.asked.at(0)).toMatchObject({ model: 'gpt-5-nano' });
+  });
+
+  test('a plan judge’s classification reaches the wire under a signal its budget can sever', async () => {
+    const sent: ProviderRequest[] = [];
+    const watched = judging(
+      aJudgedTable(),
+      () => Response.json({}),
+      A_PLAN_JUDGE,
+      planRuntimeRecording(sent),
+    );
+
+    await judgedRouting(watched.scene).classifyBranch(LADDER, JUDGE, BRANCHES);
+
+    expect(sent.at(0)?.signal).toBeInstanceOf(AbortSignal);
   });
 
   test('the model the request named never stands in for the judge’s own', async () => {

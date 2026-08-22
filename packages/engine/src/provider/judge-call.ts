@@ -7,36 +7,25 @@ import type {
   JudgeReading,
 } from '../routing/outcome-classification';
 import type { BranchRule } from '../routing/policies';
+import type { JudgeAnswer, JudgeNote, Spendable } from './judge-call-row';
 
 import { dialectFor } from '../gateway-provider-dialect';
 import { coolUntilTheProviderNames, DEFAULT_COOLDOWN_MS } from '../routing/cooldown-signal';
 import { classify } from '../routing/outcome-classification';
 import { credentialedRequestHeaders } from './credentialed-headers';
 import { credentialedRequestBody, credentialedRequestUrl } from './credentialed-target';
+import { noteTheCallLeaves } from './judge-call-row';
 import { judgeRequestBody, labelTheJudgeWrote } from './judge-request';
+
+export type { JudgeNote } from './judge-call-row';
 
 export type JudgeCooling = { coolUntilMs: number; retryAtMs?: number };
 
-type Spendable = Extract<SpendGrant, { verdict: 'resolved' }>;
-
-type SubscriptionReach = (grant: Spendable, body: JsonObject) => Promise<Response>;
-
-/**
- * What one classification call is worth writing down, which is never what it asked or answered.
- *
- * @summary A person watching a conditional router needs to see the judge working: which model was
- * asked, how it answered, and how long it took. None of the three is content. The tail stays out
- * because it is the caller's own words, and the label stays out because a row naming the branch
- * would put the classification itself in a log a person copies out of.
- */
-export type JudgeNote = {
-  provider: string;
-  providerModel: string;
-  accountId?: string | undefined;
-  status: number;
-  durationMs: number;
-  failure?: string | undefined;
-};
+type SubscriptionReach = (
+  grant: Spendable,
+  body: JsonObject,
+  bound: AbortSignal,
+) => Promise<Response>;
 
 export type JudgeAsk = {
   grant: SpendGrant;
@@ -54,10 +43,6 @@ export type JudgeAsk = {
   now: () => number;
   cool: (cooling: JudgeCooling) => void;
 };
-
-type JudgeAnswer =
-  | { answered: Response; bound: AbortSignal }
-  | { silent: 'timeout' | 'unreachable' };
 
 type JudgeBody = { read: unknown } | { unread: true };
 
@@ -96,9 +81,11 @@ async function cutOffAt(bound: AbortSignal): Promise<never> {
  * The classification put on the wire its own custody owns.
  *
  * @summary A plan channel is reached through the same transport a served turn takes, because that
- * transport is what holds the credential, renews it, and spells the wire a plan expects. It takes no
- * signal, so the budget is imposed from out here instead: the race ends the wait on time even though
- * the request itself goes on, which is the honest half of the promise this can keep on that channel.
+ * transport is what holds the credential, renews it, and spells the wire a plan expects. The bound
+ * travels two ways down that channel and needs both: the signal severs the request, so the socket
+ * and the row it opened die with the budget rather than minutes later on the transport's own
+ * ceiling, while the race ends the wait even for a channel that spends the budget before the signal
+ * can reach a socket at all, which is what keeps a walk from ever parking on a judge.
  */
 async function sentToTheJudge(
   ask: JudgeAsk,
@@ -108,7 +95,7 @@ async function sentToTheJudge(
   bound: AbortSignal,
 ): Promise<Response> {
   if (grant.spend.custody === 'subscription') {
-    return Promise.race([ask.reachSubscription(grant, body), cutOffAt(bound)]);
+    return Promise.race([ask.reachSubscription(grant, body, bound), cutOffAt(bound)]);
   }
 
   return ask.fetchLike(credentialedRequestUrl(grant, crossing), {
@@ -209,56 +196,6 @@ async function readingTheAnswerGives(
   return bound.aborted
     ? { heard: 'timeout' }
     : refusalTheJudgeEarns(ask, { kind: 'transport-failure' });
-}
-
-const JUDGE_SILENT_STATUS = 504;
-
-const JUDGE_UNREACHABLE_STATUS = 502;
-
-const SILENT_FAILURE = 'The judge did not answer inside its budget.';
-
-const UNREACHABLE_FAILURE = 'The judge could not be reached.';
-
-function accountThatPaid(grant: Spendable): string | undefined {
-  return grant.spend.custody === 'open' ? undefined : grant.spend.accountId;
-}
-
-function providerThatAnswered(grant: Spendable): string {
-  return grant.spend.custody === 'open' ? 'open' : grant.spend.provider;
-}
-
-function standingOfTheAnswer(answer: JudgeAnswer): { status: number; failure?: string } {
-  if ('answered' in answer) return { status: answer.answered.status };
-
-  return answer.silent === 'timeout'
-    ? { status: JUDGE_SILENT_STATUS, failure: SILENT_FAILURE }
-    : { status: JUDGE_UNREACHABLE_STATUS, failure: UNREACHABLE_FAILURE };
-}
-
-/**
- * The one row a classification call leaves behind, so judging is something a person can watch.
- *
- * @summary A silence gets a row too, spelled as the gateway's own timeout rather than a provider's,
- * because a judge that answered nothing is exactly the trouble a person opens the drawer to find and
- * a missing row reads as a judge that never ran. A binding nothing resolved never reaches here: no
- * call left the machine, and a row for it would claim one did.
- */
-function noteTheCallLeaves(
-  ask: JudgeAsk,
-  grant: Spendable,
-  answer: JudgeAnswer,
-  startedAt: number,
-): void {
-  const standing = standingOfTheAnswer(answer);
-
-  ask.noteJudged({
-    provider: providerThatAnswered(grant),
-    providerModel: ask.providerModel,
-    accountId: accountThatPaid(grant),
-    status: standing.status,
-    durationMs: Math.max(0, ask.now() - startedAt),
-    ...(standing.failure === undefined ? {} : { failure: standing.failure }),
-  });
 }
 
 /**
