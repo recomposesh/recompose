@@ -162,6 +162,14 @@ export function chainedTurn(
   return { reason: 'chained-turn', displayName, model, routerName };
 }
 
+export function unjudgedRequest(
+  displayName: string,
+  model: string,
+  routerName: string,
+): TranslationRefusal {
+  return { reason: 'unjudged-request', displayName, model, routerName };
+}
+
 export function invalidJson(message: string): TranslationRefusal {
   return { reason: 'invalid-json', message };
 }

@@ -18,6 +18,16 @@ function providerDialect(provider: SubscriptionProviderId): ProviderDialect {
   return 'responses';
 }
 
+const UNREACHED_STATUS = 502;
+
+/**
+ * One subscription send, watched from the moment it leaves to the moment something settles it.
+ *
+ * @summary Only the send sits inside the catch, so a span is never settled twice: a throw from the
+ * send closes it and travels on, while everything after it belongs to an answer that did arrive. A
+ * span left open shows a person a request still in flight for as long as the process lives, and a
+ * cut-off call takes exactly that path, since the signal ends the request rather than answering it.
+ */
 export async function sendObservedSubscription(
   provider: SubscriptionProviderId,
   accountId: string,
@@ -34,5 +44,15 @@ export async function sendObservedSubscription(
     requestId: providerRequestId(new Headers(request.headers)),
   });
 
-  return span.observe(await send(provider, request));
+  let answer: Response;
+
+  try {
+    answer = await send(provider, request);
+  } catch (failure) {
+    span.failed(UNREACHED_STATUS);
+
+    throw failure;
+  }
+
+  return span.observe(answer);
 }

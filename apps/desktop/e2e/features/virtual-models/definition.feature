@@ -20,3 +20,9 @@ Feature: Defining a virtual model on a gateway
     When the person picks that account as the target for a new virtual model
     Then the inspector reads a typed refusal naming the failed look
     And no definition is stored
+
+  Scenario: The inspector reshapes an id one client's picker would skip
+    Given a gateway with a stored Anthropic key account
+    When the person names a new virtual model "Fast Sonnet"
+    And the person takes the reshaped id the inspector offers
+    Then the Model id field reads "claude-fast-sonnet"

@@ -50,13 +50,13 @@ describe('a conditional router serves the branch its judge named', () => {
   });
 });
 
-describe('a conditional router absorbs judge trouble on its else branch', () => {
-  it('sends a rate-limited judge’s request to the else child, and the caller sees an answer', async () => {
+describe('a conditional router refuses the request its judge could not classify', () => {
+  it('refuses a rate-limited judge’s request rather than sending it to the else child', async () => {
     const scene = servingJudged(aJudgedModel(), judgeRefusing(), childServing());
     const answer = await scene.ask();
 
-    expect(scene.reached()).toEqual(['catchall']);
-    expect(answer.status).toBe(200);
+    expect(scene.reached()).toEqual([]);
+    expect(answer.status).toBe(503);
   });
 
   it('spends no second call on a judge already standing down', async () => {
@@ -66,7 +66,7 @@ describe('a conditional router absorbs judge trouble on its else branch', () => 
     await scene.ask();
 
     expect(scene.askedJudge()).toHaveLength(1);
-    expect(scene.reached()).toEqual(['catchall', 'catchall']);
+    expect(scene.reached()).toEqual([]);
   });
 
   it('sends an answer naming no branch to else after exactly two asks', async () => {
@@ -164,6 +164,6 @@ describe('a router holding only its else child keeps its judge standing down', (
     await scene.ask({ model: 'fast', messages: [{ role: 'user', content: 'how are you' }] });
 
     expect(scene.askedJudge()).toHaveLength(1);
-    expect(scene.reached()).toEqual(['catchall', 'catchall']);
+    expect(scene.reached()).toEqual([]);
   });
 });

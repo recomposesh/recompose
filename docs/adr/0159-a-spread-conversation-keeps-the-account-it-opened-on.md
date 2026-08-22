@@ -1,4 +1,4 @@
-# 0158: A spread conversation keeps the account it opened on
+# 0159: A spread conversation keeps the account it opened on
 
 **Status**: Accepted
 **Date**: 2026-08-22

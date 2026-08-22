@@ -26,21 +26,21 @@ export type JudgeReading =
   | { heard: 'refusal' }
   | { heard: 'timeout' };
 
-export type JudgeVerdict = { verdict: 'answered'; label: string } | { verdict: 'to-else' };
+export type JudgeVerdict = { verdict: 'answered'; label: string } | { verdict: 'no-verdict' };
 
 /**
- * The verdict one judge reading earns: a label the branches can read, or the else branch.
+ * The verdict one judge reading earns: a label the branches can read, or no verdict at all.
  *
- * @summary Nothing a judge does refuses the caller. A refusal and a silence past the budget are
- * routing trouble the else branch absorbs, never a status the client ever sees, which is the whole
- * difference between this table and the one an attempt reading crosses. An answer carrying no text
- * still crosses as an answer, because a judge that wrote nothing is one the branches can decide
- * about and ask again, while a judge that refused is one worth asking a second time for nothing.
+ * @summary A refusal and a silence past the budget are one thing here, a judge that classified
+ * nothing, and neither reaches the caller wearing the status the judge itself answered. An answer
+ * carrying no text still crosses as an answer, because a judge that wrote nothing is one the
+ * branches can decide about and ask again, while a judge that refused is one worth asking a second
+ * time for nothing.
  */
 export function classifyJudge(reading: JudgeReading): JudgeVerdict {
   return reading.heard === 'answer'
     ? { verdict: 'answered', label: reading.label }
-    : { verdict: 'to-else' };
+    : { verdict: 'no-verdict' };
 }
 
 export type AttemptReason =

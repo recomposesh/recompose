@@ -4,7 +4,7 @@ import { GATEWAY_CONFIG_VERSION } from '@recompose/contracts';
 import { expect, test } from 'vitest';
 
 import { IpcResultError } from '../../../shared/api';
-import { discoveryHint, idRefusal, nameRefusal, refusalFromMain } from './draft-refusals';
+import { idRefusal, nameRefusal, refusalFromMain } from './draft-refusals';
 import {
   draftFilledIn,
   emptyDefinition,
@@ -105,15 +105,6 @@ test('a fresh draft opens on nothing said yet, so no field arrives already fille
     accountId: '',
     providerModel: '',
   });
-});
-
-test("an id Claude Code's picker skips carries the hint that says so", () => {
-  expect(discoveryHint('fast')).toContain('claude');
-});
-
-test("an id Claude Code's picker surfaces carries no hint", () => {
-  expect(discoveryHint('claude-fast')).toBeUndefined();
-  expect(discoveryHint('anthropic-fast')).toBeUndefined();
 });
 
 test('a settled draft reaches storage as the gateway carrying the id a person saw', () => {

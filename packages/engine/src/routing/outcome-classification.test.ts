@@ -231,12 +231,12 @@ describe('the judge readings that route a request rather than refuse it', () => 
     });
   });
 
-  test('a judge refusal sends the request to the else branch instead of refusing the caller', () => {
-    expect(classifyJudge({ heard: 'refusal' })).toEqual({ verdict: 'to-else' });
+  test('a judge refusal reads as no verdict rather than as a status the caller sees', () => {
+    expect(classifyJudge({ heard: 'refusal' })).toEqual({ verdict: 'no-verdict' });
   });
 
-  test('a judge past its timeout budget sends the request to the else branch', () => {
-    expect(classifyJudge({ heard: 'timeout' })).toEqual({ verdict: 'to-else' });
+  test('a judge past its timeout budget reads as no verdict either', () => {
+    expect(classifyJudge({ heard: 'timeout' })).toEqual({ verdict: 'no-verdict' });
   });
 });
 

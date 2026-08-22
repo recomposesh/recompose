@@ -131,6 +131,23 @@ test('Claude Code is pointed by the variables it reads at startup, quoted for th
   expect(copied).toContain('export ANTHROPIC_MODEL="creative"');
 });
 
+test("a model id Claude Code's picker would skip is handed the variable that adds it anyway", () => {
+  const copied = everythingCopied(clientNamed('claude-code'));
+
+  expect(copied).toContain('export ANTHROPIC_CUSTOM_MODEL_OPTION="creative"');
+  expect(copied).toContain('skips this id');
+});
+
+test('a model id that picker keeps is handed no such variable, because discovery finds it', () => {
+  const copied = everythingCopied(clientNamed('claude-code'), {
+    ...serving,
+    models: [{ id: 'claude-creative', displayName: 'Creative' }],
+  });
+
+  expect(copied).not.toContain('ANTHROPIC_CUSTOM_MODEL_OPTION');
+  expect(copied).not.toContain('skips this id');
+});
+
 test('Codex is pointed by a user-level provider block that speaks the Responses dialect', () => {
   const copied = everythingCopied(clientNamed('codex-cli'));
 

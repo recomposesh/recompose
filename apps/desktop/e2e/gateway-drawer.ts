@@ -74,6 +74,16 @@ export function draftNameField(page: Page): Locator {
   return draftInspector(page).getByRole('textbox', { name: 'Name' });
 }
 
+/** The field carrying the id a client sends, which the name derives until a person edits it. */
+export function draftModelIdField(page: Page): Locator {
+  return draftInspector(page).getByRole('textbox', { name: 'Model id' });
+}
+
+/** The press the inspector stands beside an id one client's picker would skip. */
+export function reshapedIdOffer(page: Page): Locator {
+  return draftInspector(page).getByRole('button', { name: /^Use / });
+}
+
 /** One model the inspector offers, which reads as the id a provider serves it under. */
 export function inspectorModelOption(page: Page, providerModel: string): Locator {
   return draftInspector(page).getByRole('button', { exact: true, name: providerModel });

@@ -82,9 +82,9 @@ export function nextRoundRobinChild(
  *
  * @summary A branch whose subtree cannot serve falls to else here rather than back at the judge,
  * because the branch was decided for the whole walk and only the health below it changed. Asking a
- * second time would spend another call to be told the same label about the same request. A router
- * that reached no branch at all offers nothing rather than guessing one, so the walk reports
- * exhaustion exactly as it does for a ladder whose children have all stood down.
+ * second time would spend another call to be told the same label about the same request. Only a
+ * judgment ever reaches this pick, because a request nothing judged is refused at the router above,
+ * so the else child offered here is always one a judge's own answer earned.
  */
 export function nextConditionalChild(
   branch: BranchChoice | undefined,

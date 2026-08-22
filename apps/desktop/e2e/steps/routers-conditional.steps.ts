@@ -1,6 +1,8 @@
 import { expect } from '@playwright/test';
 
 import { Given, Then, When } from '../fixtures';
+import { refusalSentence } from '../gateway-client';
+import { lastAnswerFrom } from '../gateway-exchanges';
 import { labelsOffered, theOnlyClassificationCall } from '../judged-classification';
 import {
   CHAT_BRANCH,
@@ -11,6 +13,10 @@ import {
 } from '../judged-gateway';
 import { theBranchesRuled } from '../judged-policy';
 import { aTurnArrives } from '../judged-traffic';
+import { focusedGateway } from '../scenario-memory';
+
+/** What a router answers when its judge reached no verdict, which no child ever carried. */
+const NO_VERDICT = 503;
 
 /** How long past the budget a late judge waits, so its first byte lands after the clock ran out. */
 const LATER_THAN_THE_BUDGET_MS = JUDGE_BUDGET_MS + 600;
@@ -64,6 +70,10 @@ Given(
   },
 );
 
+Given('the judge answers with text matching no branch label, then nothing at all', ({ judge }) => {
+  judge.namesThenSaysNothing(brokenAnswerNamed('text matching no branch label'));
+});
+
 Given("the judge doesn't answer within the timeout budget", ({ judge }) => {
   judge.saysNothing();
 });
@@ -92,6 +102,17 @@ Then('the child behind the else branch receives the request', ({ scriptedProvide
   expect(scriptedProvider.modelsAsked()).toEqual([ELSE_TARGET.providerModel]);
 });
 
+Then('no child of the router receives the request', ({ scriptedProvider }) => {
+  expect(scriptedProvider.modelsAsked()).toEqual([]);
+});
+
+Then('the caller reads a refusal saying the judge reached no verdict', ({ page }) => {
+  const answer = lastAnswerFrom(page, focusedGateway(page));
+
+  expect(answer.status).toBe(NO_VERDICT);
+  expect(refusalSentence(answer.body)).toContain('got no verdict from its judge');
+});
+
 Then("the classification call carries each branch's label beside its rule text", ({ judge }) => {
   const asked = theOnlyClassificationCall(judge);
 
@@ -109,11 +130,11 @@ Then('the judge receives exactly two classification calls', ({ judge }) => {
 
 /**
  * @summary The late answer is waited out rather than raced, because the whole claim is that nothing
- * changes once the walk has already gone down else. Reading the children straight away would pass
- * before the judge had even spoken, which proves nothing about what its answer moved.
+ * changes once the walk has already refused. Reading the children straight away would pass before
+ * the judge had even spoken, which proves nothing about what its answer moved.
  */
 Then("the judge's late answer moves no traffic", async ({ page, scriptedProvider }) => {
   await page.waitForTimeout(LONG_ENOUGH_FOR_THE_LATE_ANSWER_MS);
 
-  expect(scriptedProvider.modelsAsked()).toEqual([ELSE_TARGET.providerModel]);
+  expect(scriptedProvider.modelsAsked()).toEqual([]);
 });

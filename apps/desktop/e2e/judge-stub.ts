@@ -17,6 +17,7 @@ type JudgeConduct =
   | { answers: 'the branch the request demands' }
   | { answers: 'a refusal'; status: number; words: string }
   | { answers: 'nothing at all' }
+  | { answers: 'this label, then nothing'; label: string }
   | { answers: 'late'; label: string; afterMs: number };
 
 type JudgeDesk = {
@@ -54,6 +55,14 @@ export type JudgeStub = {
   refusesWith: (status: number, words: string) => void;
   /** Holds the connection open and never answers, which is the silence a budget is meant to cut off. */
   saysNothing: () => void;
+  /**
+   * Answers this once and then holds every later call open, which is a judge that fell over mid-request.
+   *
+   * @summary The one shape that reaches the retry and then leaves it unanswered. A judge that answers
+   * a word no branch wears buys a second ask, and only a stub that can go quiet between the two can
+   * say what the router does when that second ask never comes back.
+   */
+  namesThenSaysNothing: (label: string) => void;
   /** Answers, but only after this long, so the wait for a first byte outlasts the budget. */
   answersLate: (label: string, afterMs: number) => void;
   /** Every classification call this judge was sent, whole, in the order it was asked. */
@@ -133,11 +142,37 @@ function labelOfTheConduct(conduct: JudgeConduct, ask: string, asked: number): s
   return demandedBranch(ask);
 }
 
+function holdOpen(desk: JudgeDesk, response: ServerResponse): void {
+  desk.held.add(response);
+}
+
+/**
+ * Answers the opening call and holds every later one open.
+ *
+ * @summary The call already stands in `asked` by the time this runs, so the opening call reads as one
+ * ask rather than none.
+ */
+function answerOnceThenHold(desk: JudgeDesk, response: ServerResponse, label: string): void {
+  if (desk.asked.length > 1) {
+    holdOpen(desk, response);
+
+    return;
+  }
+
+  answerWith(response, ANSWERED, labelBody(label));
+}
+
 function answerTheConduct(desk: JudgeDesk, ask: string, response: ServerResponse): void {
   const conduct = desk.conduct;
 
   if (conduct.answers === 'nothing at all') {
-    desk.held.add(response);
+    holdOpen(desk, response);
+
+    return;
+  }
+
+  if (conduct.answers === 'this label, then nothing') {
+    answerOnceThenHold(desk, response, conduct.label);
 
     return;
   }
@@ -214,6 +249,9 @@ export async function fakeJudge(): Promise<JudgeStub> {
     },
     saysNothing: () => {
       desk.conduct = { answers: 'nothing at all' };
+    },
+    namesThenSaysNothing: (label) => {
+      desk.conduct = { answers: 'this label, then nothing', label };
     },
     answersLate: (label, afterMs) => {
       desk.conduct = { answers: 'late', label, afterMs };

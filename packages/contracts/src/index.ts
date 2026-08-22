@@ -1,5 +1,6 @@
 export * from './migration';
 export * from './model-policy';
+export * from './model-discovery';
 export * from './credential-policy';
 export * from './transport-policy';
 export * from './non-blank';

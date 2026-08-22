@@ -2,7 +2,7 @@ import type { RefusalFacts, RouterAttempt, TranslationRefusal } from './refusal-
 
 export type RouterRefusal = Extract<
   TranslationRefusal,
-  { reason: 'empty-router' | 'exhausted-router' | 'chained-turn' }
+  { reason: 'empty-router' | 'exhausted-router' | 'chained-turn' | 'unjudged-request' }
 >;
 
 type ExhaustedRouter = Extract<RouterRefusal, { reason: 'exhausted-router' }>;
@@ -11,14 +11,15 @@ const ROUTER_REASONS = {
   'empty-router': true,
   'exhausted-router': true,
   'chained-turn': true,
+  'unjudged-request': true,
 } as const satisfies Record<RouterRefusal['reason'], true>;
 
 /**
  * Whether one refusal is a router's to explain rather than the translation layer's.
  *
- * @summary The reasons are keys of a record the compiler holds to `RouterRefusal`, so a fourth arm
- * added to that union fails the build here rather than shipping a predicate that narrows to a shape
- * the refusal never had. A list would only catch a misspelling; a record catches the omission too.
+ * @summary The reasons are keys of a record the compiler holds to `RouterRefusal`, so an arm added
+ * to that union fails the build here rather than shipping a predicate that narrows to a shape the
+ * refusal never had. A list would only catch a misspelling; a record catches the omission too.
  */
 export function isRouterFault(refusal: TranslationRefusal): refusal is RouterRefusal {
   return Object.hasOwn(ROUTER_REASONS, refusal.reason);
@@ -85,15 +86,36 @@ function chainedFacts(refusal: RouterRefusal): RefusalFacts {
 }
 
 /**
- * The wire facts of the three refusals only a router can raise.
+ * What a conditional router whose judge reached no verdict tells the caller.
  *
- * @summary An empty ladder and an exhausted one are the gateway's own faults to report, so they wear
+ * @summary It is a stand-down rather than a fault the caller caused, so it wears the status a client
+ * already retries on. The else child is named because a person who drew one is owed the reason their
+ * request did not take it: the else branch answers a judge that classified and found no branch
+ * fitting, never a judge that could not classify at all, and routing every silence there would hand
+ * one model's traffic to another for as long as the judge stayed down without anything saying so.
+ */
+function unjudgedFacts(refusal: RouterRefusal): RefusalFacts {
+  return {
+    status: 503,
+    message: `${whereItStood(refusal)} got no verdict from its judge, so the virtual model "${refusal.model}" refused this request rather than sending it to the else child. Check that the judge is bound to an account and a model that can answer.`,
+    code: 'unjudged_request',
+    anthropicType: 'api_error',
+  };
+}
+
+/**
+ * The wire facts of the four refusals only a router can raise.
+ *
+ * @summary An empty router and an exhausted one are the gateway's own faults to report, so they wear
  * the config-fault shape beside a missing target. A chained turn is the caller's, because the request
- * asked for state one account holds and the ladder was told to spread, so it carries the two ways out
- * rather than a status alone.
+ * asked for state one account holds and the router was told to spread, so it carries the two ways out
+ * rather than a status alone. A request nothing judged is neither: the table is drawn correctly and
+ * the caller asked for nothing wrong, so it reads as a service standing down.
  */
 export function routerFaultFacts(refusal: RouterRefusal): RefusalFacts {
   if (refusal.reason === 'empty-router') return emptyFacts(refusal);
 
-  return refusal.reason === 'chained-turn' ? chainedFacts(refusal) : exhaustedFacts(refusal);
+  if (refusal.reason === 'chained-turn') return chainedFacts(refusal);
+
+  return refusal.reason === 'unjudged-request' ? unjudgedFacts(refusal) : exhaustedFacts(refusal);
 }

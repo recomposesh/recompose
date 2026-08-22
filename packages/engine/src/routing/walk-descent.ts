@@ -1,7 +1,7 @@
 import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
-import type { Judging } from './judge-decision';
+import type { JudgedChoice, Judging } from './judge-decision';
 import type { RotationCursors, TurnTaken } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
@@ -37,10 +37,14 @@ export type Walking = {
   spent: Set<string>;
 };
 
-/** Where one descent ends: a child to try, a router that must not spread, a retry, or nothing. */
+/**
+ * Where one descent ends: a child to try, a router that must not spread, a router no judgment
+ * reached, a retry, or nothing.
+ */
 export type WalkStep =
   | { at: 'target'; routeNode: string }
   | { at: 'rotation'; routeNode: string; router: EngineRouter }
+  | { at: 'unjudged'; routeNode: string; router: EngineRouter }
   | { at: 'again' }
   | { at: 'nowhere' };
 
@@ -91,12 +95,12 @@ async function childTheRouterOffers(
   descending: Descending,
   routeNode: string,
   router: EngineRouter,
+  branch: JudgedChoice | undefined,
 ): Promise<string | undefined> {
   const { walking, path, turns } = descending;
   const address = addressOf(walking, routeNode);
-  const policy = router.policy;
 
-  const offered = await childTheModeOffers(policy.mode, {
+  const offered = await childTheModeOffers(router.policy.mode, {
     children: router.children,
     canServe: (child) => subtreeCanServe(walking, child, new Set(path)),
     turn: {
@@ -106,10 +110,10 @@ async function childTheRouterOffers(
         walking.cursors.advanceTo(address, cursor);
       },
     },
-    branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
+    branch,
   });
 
-  if (offered !== undefined && policy.mode === 'round-robin') {
+  if (offered !== undefined && router.policy.mode === 'round-robin') {
     walking.rotationPins.pinChildAt(routeNode, offered);
   }
 
@@ -203,6 +207,47 @@ function turnsHandedBack(descending: Descending): void {
   }
 }
 
+/**
+ * Whether one router's own branch decision reached the request without any judgment behind it.
+ *
+ * @summary A router of any other mode decides nothing here, so it answers no and never stands in the
+ * way of a walk that never involved a judge.
+ */
+function nothingJudgedThisRequest(branch: JudgedChoice | undefined): boolean {
+  return branch !== undefined && !branch.judged;
+}
+
+type Asked = { step: WalkStep } | { descendTo: string };
+
+/**
+ * What one router hands the descent: the child to carry on at, or the step that ends the walk here.
+ *
+ * @summary A router that reached no judgment and a router that offered nothing both hand back turns
+ * before answering, because a turn spent on a subtree that took no request would skip the child that
+ * was next for the request that follows.
+ */
+async function askedOfTheRouter(
+  descending: Descending,
+  routeNode: string,
+  router: EngineRouter,
+): Promise<Asked> {
+  const branch = await branchTheWalkFollows(routeNode, router.policy, descending.walking.judging);
+
+  if (nothingJudgedThisRequest(branch)) {
+    turnsHandedBack(descending);
+
+    return { step: { at: 'unjudged', routeNode, router } };
+  }
+
+  const offered = await childTheRouterOffers(descending, routeNode, router, branch);
+
+  if (offered !== undefined) return { descendTo: offered };
+
+  turnsHandedBack(descending);
+
+  return { step: stepPastARouterOfferingNothing(descending.walking, routeNode, router) };
+}
+
 /** Where the walk arrives next, descending from the entry until a node settles the question. */
 export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> {
   const descending: Descending = { walking, path: new Set<string>(), turns: [] };
@@ -212,22 +257,11 @@ export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> 
     descending.path.add(routeNode);
 
     const descent = descentAt(descending, routeNode);
+    const asked =
+      'router' in descent ? await askedOfTheRouter(descending, routeNode, descent.router) : descent;
 
-    if ('step' in descent) return descent.step;
+    if ('step' in asked) return asked.step;
 
-    if ('descendTo' in descent) {
-      routeNode = descent.descendTo;
-      continue;
-    }
-
-    const offered = await childTheRouterOffers(descending, routeNode, descent.router);
-
-    if (offered === undefined) {
-      turnsHandedBack(descending);
-
-      return stepPastARouterOfferingNothing(walking, routeNode, descent.router);
-    }
-
-    routeNode = offered;
+    routeNode = asked.descendTo;
   }
 }

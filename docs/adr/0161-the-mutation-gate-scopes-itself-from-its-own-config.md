@@ -1,4 +1,4 @@
-# 0159: The mutation gate scopes itself from its own config
+# 0161: The mutation gate scopes itself from its own config
 
 **Status**: Accepted
 **Date**: 2026-08-22

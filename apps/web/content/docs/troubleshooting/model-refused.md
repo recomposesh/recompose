@@ -30,7 +30,7 @@ Each gateway owns its own virtual models. A client wired to port `8390` never se
 
 ## The client filters what it lists
 
-Claude Code lists only model ids starting with `claude` or `anthropic`, and the virtual model's inspector says so under other names. The model still works when sent explicitly, but it won't appear in that client's picker. Naming the virtual model inside the client's expected prefix is the comfortable fix.
+Claude Code lists only model ids carrying `claude` or `anthropic`, and the virtual model's inspector says so under other names. The model still works when sent explicitly, but it won't appear in that client's picker. The inspector offers the reshaped id under the **Model id** field, and the connect sheet hands you `ANTHROPIC_CUSTOM_MODEL_OPTION` when you'd rather keep the name you gave it.
 
 ## The provider refused its own model
 
