@@ -40,6 +40,13 @@ for the conversation nobody kept a child for.
 judgments.** A client-supplied session id wins, and the opening turn's hash stands in when no client
 sends one.
 
+**A request the gateway can't tell apart from the next one keeps no child at all.** A request that
+opened with nothing readable still earns a mark, and every other such request earns the same one.
+That costs a judgment nothing, because two conversations landing on one branch is a route rather
+than a fault. It costs a spread conversation an account that never minted its state. The caller
+reads that as the provider rejecting a token rather than as a gateway that lost track of them. So
+those requests meet the refusal, which is the answer they got before this record.
+
 **The kept children live in their own store, beside the branch pins rather than inside them.** Both
 answer the same question and share one implementation, so the store lost its branch-specific name.
 They stay separate instances because the canvas draws only the branch pins. One store would count a

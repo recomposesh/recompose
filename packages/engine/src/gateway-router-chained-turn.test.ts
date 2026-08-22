@@ -151,6 +151,30 @@ describe('the account a conversation keeps once a round-robin router has spread 
       `${FIRST_CHILD}/v1/chat/completions`,
     ]);
   });
+});
+
+describe('what a spreading router keeps for a request wearing no conversation of its own', () => {
+  it('keeps no account for a request it cannot tell apart from the next one', async () => {
+    const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
+    const blank = { model: 'fast', messages: [{ role: 'user', content: '   ' }] };
+    const resumedBlank = {
+      model: 'fast',
+      messages: [
+        { role: 'user', content: '   ' },
+        {
+          role: 'assistant',
+          content: [{ type: 'thinking', thinking: 'weighing it', signature: 'ErUBCkYIB' }],
+        },
+        { role: 'user', content: 'and then?' },
+      ],
+    };
+
+    await (await scene.ask(blank)).text();
+    const answer = await scene.ask(resumedBlank);
+
+    expect(answer.status).toBe(400);
+    expect(scene.sentTo).toHaveLength(1);
+  });
 
   it('lets a turn that resumes nothing rotate across the nested round-robin', async () => {
     const scene = serving(aFailoverOverANested({ mode: 'round-robin' }), answeringInTurn(served));
