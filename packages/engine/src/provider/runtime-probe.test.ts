@@ -242,7 +242,7 @@ describe('the folding over every answer a port can give', () => {
       fc
         .string({ minLength: 1 })
         .filter((version) => version.trim().length > 0)
-        .map((version) => ({ text: JSON.stringify({ version }), version })),
+        .map((version) => ({ text: JSON.stringify({ version }), version: version.trim() })),
       fc.integer().map((version) => ({ text: JSON.stringify({ version }), version: null })),
       fc.constant({ text: '{}', version: null }),
       fc.constant({ text: 'Ollama is running', version: null }),

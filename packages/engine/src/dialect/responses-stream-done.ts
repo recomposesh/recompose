@@ -53,8 +53,15 @@ export function completedResponsesOutput(block: ResponsesOpenBlock): ResponsesOu
   };
 }
 
+/**
+ * The two lists a Responses text part always names, whether or not it holds anything.
+ *
+ * @summary Clients reading a completed message index straight into `annotations` and `logprobs`,
+ * so a part that omits them where it has none reads as malformed rather than as empty. Naming both
+ * as empty lists costs the frame two tokens and is what the API's own answers look like.
+ */
 function annotationsOf(block: ResponsesOpenBlock) {
-  return block.annotations.length === 0 ? {} : { annotations: block.annotations };
+  return { annotations: block.annotations, logprobs: [] };
 }
 
 function completedThinking(block: ResponsesOpenBlock): ResponsesReasoningItem {
