@@ -163,3 +163,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0155](0155-the-browser-install-follows-the-tests-that-need-it.md)              | The browser install follows the tests that need it                                  | Accepted   | 2026-08-21 |
 | [0156](0156-the-release-asks-the-notary-on-its-own-schedule.md)                 | The release asks the notary on its own schedule                                     | Superseded | 2026-08-21 |
 | [0157](0157-the-mac-leg-goes-back-to-the-standard-flow.md)                      | The mac leg goes back to the standard flow                                          | Accepted   | 2026-08-21 |
+| [0158](0158-a-spread-conversation-keeps-the-account-it-opened-on.md)            | A spread conversation keeps the account it opened on                                | Accepted   | 2026-08-22 |

@@ -10,6 +10,19 @@ import type { WalkNote } from './walk-notes';
 import { branchTheWalkFollows } from './judge-decision';
 import { childTheModeOffers } from './policies';
 
+/**
+ * The child one conversation keeps at a spreading router, already bound to that conversation.
+ *
+ * @summary A round-robin router hands a turn to whichever child is next, and a turn resuming state
+ * one account minted can only be read by that account. The child it took is therefore written down
+ * when the conversation opens and followed on every sealed turn after it, which is what lets a
+ * ladder spread conversations without ever spreading one conversation.
+ */
+export type RotationPins = {
+  pinnedChildAt: (routeNode: string) => string | undefined;
+  pinChildAt: (routeNode: string, child: string) => void;
+};
+
 /** Everything one walk carries as it descends: the table, the state it reads, and what it learned. */
 export type Walking = {
   routing: EngineRouting;
@@ -17,6 +30,7 @@ export type Walking = {
   virtualModel: string;
   ledger: CooldownLedger;
   cursors: RotationCursors;
+  rotationPins: RotationPins;
   resumesServerState: boolean;
   attempted: Map<string, WalkNote>;
   judging: Judging;
@@ -30,7 +44,7 @@ export type WalkStep =
   | { at: 'again' }
   | { at: 'nowhere' };
 
-type Descent = { step: WalkStep } | { router: EngineRouter };
+type Descent = { step: WalkStep } | { router: EngineRouter } | { descendTo: string };
 
 /** Where one route node of this walk stands in the ledger and the cursors. */
 export function addressOf(walking: Walking, routeNode: string): RouteNodeAddress {
@@ -82,7 +96,7 @@ async function childTheRouterOffers(
   const address = addressOf(walking, routeNode);
   const policy = router.policy;
 
-  return childTheModeOffers(policy.mode, {
+  const offered = await childTheModeOffers(policy.mode, {
     children: router.children,
     canServe: (child) => subtreeCanServe(walking, child, new Set(path)),
     turn: {
@@ -94,6 +108,12 @@ async function childTheRouterOffers(
     },
     branch: await branchTheWalkFollows(routeNode, policy, walking.judging),
   });
+
+  if (offered !== undefined && policy.mode === 'round-robin') {
+    walking.rotationPins.pinChildAt(routeNode, offered);
+  }
+
+  return offered;
 }
 
 function stepAtTarget(walking: Walking, routeNode: string): WalkStep {
@@ -105,24 +125,44 @@ function wouldRotate(walking: Walking, router: EngineRouter): boolean {
 }
 
 /**
+ * The child a sealed turn returns to at one spreading router, where that child can still serve it.
+ *
+ * @summary A kept child standing cooling is worth no more than no child at all, because the seal
+ * travels to that one account or nowhere, so the walk refuses instead of reaching for the sibling
+ * the ladder would otherwise offer. Moving the turn is the one repair that cannot work.
+ */
+function childTheRotationKeeps(descending: Descending, routeNode: string): string | undefined {
+  const kept = descending.walking.rotationPins.pinnedChildAt(routeNode);
+
+  if (kept === undefined) return undefined;
+
+  return subtreeCanServe(descending.walking, kept, new Set(descending.path)) ? kept : undefined;
+}
+
+/**
  * What one route node settles for the descent, or the router the descent must ask.
  *
- * @summary A turn resuming state one account holds is refused at the router that would have spread
- * it, whichever depth that router stands at, because routers chain and only the router about to
- * rotate knows it is about to. Asking the entry alone would let a ladder below it hand a second
- * account a token it cannot read. The question is asked before the router picks, so a spreading
- * router holding no child still refuses the chain rather than reporting itself empty.
+ * @summary A turn resuming state one account holds never spreads: it follows the child its
+ * conversation already took, and refuses at the router that would have spread it when no such child
+ * can serve. The question is settled at whichever depth that router stands, because routers chain
+ * and only the router about to rotate knows it is about to. Asking the entry alone would let a
+ * ladder below it hand a second account a token it cannot read.
  */
-function descentAt(walking: Walking, routeNode: string): Descent {
+function descentAt(descending: Descending, routeNode: string): Descent {
+  const walking = descending.walking;
   const node = walking.routing.nodes[routeNode];
 
   if (node === undefined) return { step: { at: 'nowhere' } };
 
   if (node.kind === 'target') return { step: stepAtTarget(walking, routeNode) };
 
-  return wouldRotate(walking, node)
+  if (!wouldRotate(walking, node)) return { router: node };
+
+  const kept = childTheRotationKeeps(descending, routeNode);
+
+  return kept === undefined
     ? { step: { at: 'rotation', routeNode, router: node } }
-    : { router: node };
+    : { descendTo: kept };
 }
 
 /**
@@ -171,9 +211,14 @@ export async function stepTheWalkTakesNext(walking: Walking): Promise<WalkStep> 
   for (;;) {
     descending.path.add(routeNode);
 
-    const descent = descentAt(walking, routeNode);
+    const descent = descentAt(descending, routeNode);
 
     if ('step' in descent) return descent.step;
+
+    if ('descendTo' in descent) {
+      routeNode = descent.descendTo;
+      continue;
+    }
 
     const offered = await childTheRouterOffers(descending, routeNode, descent.router);
 

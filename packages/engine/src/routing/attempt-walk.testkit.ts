@@ -19,7 +19,34 @@ export type Scene = {
   classifyBranch?: BranchClassifier;
   pinnedBranchAt?: (routeNode: string) => string | undefined;
   pinBranchAt?: (routeNode: string, child: string) => void;
+  pinnedChildAt?: (routeNode: string) => string | undefined;
+  pinChildAt?: (routeNode: string, child: string) => void;
 };
+
+/** One turn a scene sends: whether it resumes server-side state, and the conversation it belongs to. */
+export type Turn = { resumesServerState?: boolean; conversation?: string };
+
+/**
+ * The child each conversation keeps at each spreading router, for the length of one scene.
+ *
+ * @summary The gateway binds the conversation before the walk ever sees the store, so the walk's own
+ * seam holds one conversation at a time. A scene sends several, which is why the mark rides the key
+ * here and rides nothing at all in the engine.
+ */
+function aKeptChildStore() {
+  const held = new Map<string, string>();
+  const key = (conversation: string, routeNode: string) =>
+    JSON.stringify([conversation, routeNode]);
+
+  return {
+    forOneConversation: (conversation: string) => ({
+      pinnedChildAt: (routeNode: string) => held.get(key(conversation, routeNode)),
+      pinChildAt: (routeNode: string, child: string) => {
+        held.set(key(conversation, routeNode), child);
+      },
+    }),
+  };
+}
 
 /**
  * The judging a scene that named none stands under: nobody classifies and no branch is kept.
@@ -43,10 +70,27 @@ function judgingNobodyWired(
   };
 }
 
+type KeptChildren = {
+  pinnedChildAt: (routeNode: string) => string | undefined;
+  pinChildAt: (routeNode: string, child: string) => void;
+};
+
+function rotationPinsOf(scene: Scene, held: KeptChildren): KeptChildren {
+  return {
+    pinnedChildAt: scene.pinnedChildAt ?? held.pinnedChildAt,
+    pinChildAt: scene.pinChildAt ?? held.pinChildAt,
+  };
+}
+
+function sealingOf(scene: Scene, turn: Turn): boolean {
+  return turn.resumesServerState ?? scene.resumesServerState ?? false;
+}
+
 export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
   let clock = NOW;
   const ledger = createCooldownLedger(() => clock);
   const cursors = createRotationCursors();
+  const kept = aKeptChildStore();
 
   return {
     tick: (span: number) => {
@@ -59,8 +103,10 @@ export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
     standDown: (routeNode: string, span: number) => {
       ledger.cool({ slug: 'main', virtualModel: 'fast', routeNode }, { coolUntilMs: clock + span });
     },
-    send: async (replies: Replies = {}) => {
+    send: async (replies: Replies = {}, turn: Turn = {}) => {
       const attempted: string[] = [];
+      const held = kept.forOneConversation(turn.conversation ?? 'one');
+      const rotationPins = rotationPinsOf(scene, held);
       const walk = await walkAttempts<string>({
         routing,
         slug: 'main',
@@ -73,7 +119,8 @@ export function aGatewayServing(routing: EngineRouting, scene: Scene = {}) {
             ledger.coolingAt({ slug: 'main', virtualModel: 'fast', routeNode: judge }) !==
             undefined,
         ),
-        resumesServerState: scene.resumesServerState ?? false,
+        resumesServerState: sealingOf(scene, turn),
+        rotationPins,
         now: () => clock,
         attempt: async (routeNode) => {
           attempted.push(routeNode);

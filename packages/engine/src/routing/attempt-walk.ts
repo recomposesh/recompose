@@ -6,7 +6,7 @@ import type { AttemptReading } from './outcome-classification';
 import type { BranchChoice } from './policies';
 import type { RotationCursors } from './rotation-cursors';
 import type { EngineRouter } from './route-table';
-import type { Walking, WalkStep } from './walk-descent';
+import type { RotationPins, Walking, WalkStep } from './walk-descent';
 import type { NoteReason, WalkNote } from './walk-notes';
 
 import { classify } from './outcome-classification';
@@ -30,6 +30,7 @@ export type WalkRequest<TAnswer> = {
   virtualModel: string;
   ledger: CooldownLedger;
   cursors: RotationCursors;
+  rotationPins: RotationPins;
   resumesServerState: boolean;
   now: () => number;
   judged: JudgedRequest;

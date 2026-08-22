@@ -57,9 +57,9 @@ function pinIdleWindow(): number {
 
 type Pinned = { address: RouteNodeAddress; child: string; touchedAtMs: number };
 
-export type TallyBranchPins = (address: RouteNodeAddress, pinned: BranchPinTally) => void;
+export type TallyPinnedChildren = (address: RouteNodeAddress, pinned: BranchPinTally) => void;
 
-export type BranchPins = {
+export type ConversationPins = {
   pinnedAt: (address: RouteNodeAddress, fingerprint: string) => string | undefined;
   pin: (address: RouteNodeAddress, fingerprint: string, child: string) => void;
 };
@@ -105,7 +105,7 @@ function tallyAt(held: Map<string, Pinned>, address: RouteNodeAddress): BranchPi
 function tellWhatTheyHold(
   held: Map<string, Pinned>,
   moved: readonly RouteNodeAddress[],
-  tallied: TallyBranchPins,
+  tallied: TallyPinnedChildren,
 ): void {
   const told = new Set<string>();
 
@@ -120,7 +120,7 @@ function tellWhatTheyHold(
 }
 
 /**
- * The branch each conversation earned, per router, for as long as it keeps talking.
+ * The child each conversation earned, per router, for as long as it keeps talking.
  *
  * @summary Two bounds hold it: a conversation that goes quiet is forgotten, and a gateway busier
  * than the store is wide forgets whichever conversation spoke longest ago. A desktop process runs
@@ -128,11 +128,11 @@ function tellWhatTheyHold(
  * decisions for conversations that ended months earlier. Reading a pin counts as talking, which is
  * what lets a long conversation outlive the window while an abandoned one falls out of it.
  */
-export function createBranchPins(
+export function createConversationPins(
   now: () => number,
-  tallied: TallyBranchPins = () => undefined,
+  tallied: TallyPinnedChildren = () => undefined,
   idleWindowMs: number = PIN_IDLE_MS,
-): BranchPins {
+): ConversationPins {
   const held = new Map<string, Pinned>();
 
   const keep = (key: string, address: RouteNodeAddress, child: string) => {
@@ -168,25 +168,29 @@ export function createBranchPins(
 export type RoutingMemory = {
   ledger: CooldownLedger;
   cursors: RotationCursors;
-  pins: BranchPins;
+  pins: ConversationPins;
+  rotationPins: ConversationPins;
   now: () => number;
 };
 
 /**
  * What one gateway remembers between requests: which children stand down, whose turn is next, and
- * which branch each conversation earned.
+ * which child each conversation earned at a router that decides or spreads.
  *
  * @summary The memory belongs to the gateway rather than to the process, so two gateways serving the
  * same accounts never inherit each other's cooling and a spec builds one gateway without disturbing
- * the next. It owes nothing to disk: the engine child restarting forgets every cooling child, one
- * uneven turn, and every pinned branch, which is the whole health model a person's metered accounts
- * deserve. A forgotten pin costs one fresh judgment, never a wrong answer.
+ * the next. A branch and a spread child are held in separate stores because only the branch is drawn
+ * on the canvas, and one store would count a rotation's accounts onto a conditional router's card.
+ * It owes nothing to disk: the engine child restarting forgets every cooling child, one uneven turn,
+ * and every pinned child. A forgotten branch costs one fresh judgment, and a forgotten spread child
+ * costs the sealed conversation resuming through it a refusal it can only answer by starting again.
  */
 export function routingMemory(): RoutingMemory {
   return {
     ledger: createCooldownLedger(Date.now, publishCooldown),
     cursors: createRotationCursors(),
-    pins: createBranchPins(Date.now, publishBranchPinTally, pinIdleWindow()),
+    pins: createConversationPins(Date.now, publishBranchPinTally, pinIdleWindow()),
+    rotationPins: createConversationPins(Date.now, undefined, pinIdleWindow()),
     now: Date.now,
   };
 }
