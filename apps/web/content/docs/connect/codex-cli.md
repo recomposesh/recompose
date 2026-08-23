@@ -28,7 +28,7 @@ env_key = "RECOMPOSE_MY_GATEWAY_API_KEY"
 wire_api = "responses"
 ```
 
-Codex ignores these keys in a project-local `.codex/config.toml`, so the block belongs in the user-level file. Anywhere else, Codex warns at startup and keeps talking to OpenAI.
+Codex ignores `model_provider` and `model_providers` in a project-local `.codex/config.toml`, so the block belongs in the user-level file. Anywhere else, Codex warns at startup and keeps talking to OpenAI. The provider id can be anything except `openai`, `ollama`, and `lmstudio`, which Codex reserves.
 
 ## Hand it the key and start it
 
@@ -37,7 +37,7 @@ export RECOMPOSE_MY_GATEWAY_API_KEY="unused"
 codex
 ```
 
-Codex reads the variable named by `env_key` and presents it as a bearer token, one of the four spellings a gateway accepts. The file names one model as the default: reach any other with `codex --model` and the id.
+Codex reads the variable named by `env_key` and presents it as a bearer token, one of the four spellings a gateway accepts. The file names one model as the default: reach any other with `codex --model` and the id, or its `-m` alias.
 
 ## Verify
 
@@ -46,4 +46,4 @@ Ask Codex something and watch the gateway's [request log](/docs/operate/request-
 ## Notes
 
 - The command line, the editor extension, and the desktop app all read the same user-level file, so one block serves all three.
-- Codex's own reference: [the Codex config reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+- Codex's own reference: [the Codex config reference](https://developers.openai.com/codex/config-reference).

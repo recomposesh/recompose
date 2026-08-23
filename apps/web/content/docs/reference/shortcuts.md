@@ -40,7 +40,7 @@ These apply on a gateway's detail page:
 | Actual Size        | Cmd+0            |
 | Zoom to Fit        | Shift+Cmd+0      |
 | Tidy Up            | Option+Cmd+T     |
-| Show Logs          | Cmd+Shift+L      |
+| Show Logs          | Control+`        |
 
 ## Usage
 
