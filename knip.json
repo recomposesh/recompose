@@ -2,10 +2,11 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["steiger.config.ts", "probity.config.ts"],
+      "entry": ["steiger.config.ts", "probity.config.ts", "vitest.config.ts"],
       "ignore": [".claude/workflows/**"],
       "ignoreDependencies": ["@playwright/mcp", "@steiger/toolkit", "@swc/core", "hig-mcp"],
-      "ignoreBinaries": ["mise"]
+      "ignoreBinaries": ["mise"],
+      "vitest": false
     },
     "apps/desktop": {
       "entry": [
