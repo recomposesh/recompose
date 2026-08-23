@@ -3,7 +3,13 @@ import { describe, expect, test, vi } from 'vitest';
 import type { OpenListeners } from './engine-runtime';
 
 import { attachEngineChild } from './engine-child';
-import { aLoopbackHolding, aParent, fetchAnswering, reportsReach } from './engine-child.testkit';
+import {
+  aLoopbackHolding,
+  aParent,
+  aProbeOf,
+  fetchAnswering,
+  reportsReach,
+} from './engine-child.testkit';
 
 const codex = { slug: 'codex', displayName: 'Codex', port: 8397, virtualModels: [] };
 
@@ -67,7 +73,7 @@ describe('a probe directive the parent sends', () => {
     const parent = aParent();
 
     attachEngineChild(parent.port, aLoopbackHolding([]), fetchAnswering(200).fetchLike);
-    parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
+    parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
     await reportsReach(parent, 1);
 
     expect(parent.reports).toEqual([
@@ -82,7 +88,7 @@ describe('a probe directive the parent sends', () => {
 
     try {
       attachEngineChild(parent.port, aLoopbackHolding([]), refusing);
-      parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
+      parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
       await reportsReach(parent, 1);
 
       expect(parent.reports).toEqual([
@@ -103,7 +109,7 @@ describe('a probe directive the parent sends', () => {
     const parent = aParent();
 
     attachEngineChild(parent.port, aLoopbackHolding([]), fetchAnswering(200).fetchLike);
-    parent.send({ kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' });
+    parent.send(aProbeOf('d1', 'anthropic', 'sk-ant-api03-9f2c'));
     await reportsReach(parent, 1);
 
     expect(JSON.stringify(parent.reports)).not.toContain('9f2c');
@@ -211,13 +217,7 @@ describe('the refusal log a malformed directive draws', () => {
     const complaints = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     attachEngineChild(parent.port, aLoopbackHolding([]));
-    parent.send({
-      kind: 'probe',
-      id: 'd1',
-      provider: 'anthropic',
-      key: 'sk-hidden-77aa',
-      'sk-marker-2b7e1a90': true,
-    });
+    parent.send({ ...aProbeOf('d1', 'anthropic', 'sk-hidden-77aa'), 'sk-marker-2b7e1a90': true });
     parent.send({ kind: 'start', id: 'd2', gateway: { ...codex, port: 'sk-hidden-77aa' } });
 
     const spoken = JSON.stringify(complaints.mock.calls);

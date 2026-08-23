@@ -24,8 +24,10 @@ const BORN_JUDGE_BOUND_MS = 3000;
  * The policy a conditional router is born under, which is a judge and somewhere to catch the rest.
  *
  * @summary It is born with no branch at all, because a branch arrives with the cable that binds its
- * child and cannot be written before there is a child to write it about. Re-judging stays off, so a
- * conversation keeps the branch it first earned and its prompt cache survives.
+ * child and cannot be written before there is a child to write it about. Re-judging is born on: a
+ * person routing by topic expects the topic to be read again when it changes, and a conversation
+ * pinned to the branch of its opening message routes the rest of itself by a question nobody asked
+ * twice. The toggle is there for whoever would rather keep the pin and its prompt cache.
  */
 export function bornConditionalPolicy(judge: string, elseChild: string): ConditionalPolicy {
   return {
@@ -34,7 +36,7 @@ export function bornConditionalPolicy(judge: string, elseChild: string): Conditi
     branches: [],
     elseChild,
     judgeBoundMs: BORN_JUDGE_BOUND_MS,
-    rejudgeEveryRequest: false,
+    rejudgeEveryRequest: true,
   };
 }
 

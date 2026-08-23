@@ -252,7 +252,7 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
       ),
     restart: async (gateway) =>
       inGatewayOrder(gateway.slug, async () => restartGateway(resident, gateway)),
-    probe: async (provider, key) => probeThroughTheChild(resident.looks, child, provider, key),
+    probe: async (origin, custody) => probeThroughTheChild(resident.looks, child, origin, custody),
     probeRuntime: async (address, provider) =>
       lookAtTheRuntimeThroughTheChild(resident.looks, child, address, provider),
     listModels: async (origin, custody) =>

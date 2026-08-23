@@ -2,6 +2,7 @@ import type { ProviderDialect, SpendGrant } from '@recompose/contracts';
 
 import type { Crossing } from '../gateway-wire';
 
+import { copilotHeaders } from './copilot-request';
 import { credentialedDialect } from './credentialed-target';
 import {
   geminiInteractionsHeaders as interactionsHeaders,
@@ -69,6 +70,7 @@ const HEADER_BUILDERS = new Map<string, HeaderBuilder>([
   ['gemini-interactions', geminiInteractionsHeaders],
   ['vertex', vertexCredentialHeaders],
   ['kimi', kimiHeaders],
+  ['copilot', (credential) => copilotHeaders(credential)],
   ['xai', xaiHeaders],
 ]);
 

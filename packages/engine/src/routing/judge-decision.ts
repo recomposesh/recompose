@@ -246,12 +246,24 @@ function questionOf(
  * The conversation is pinned here and only here, the moment a judgment settles, so the branch a
  * request earned outlives the walk that earned it while the branch trouble picked never does.
  */
+/**
+ * The branch one conditional router follows, judged where there is anything to judge.
+ *
+ * @summary A router carrying no branches has nothing to decide between, so the else child is the
+ * only answer a judge could ever come back with. Asking anyway spends a model call to learn that,
+ * and a judge with no labels to pick from returns no verdict, which refuses a request the router
+ * had exactly one place to send.
+ */
 export async function branchTheWalkFollows(
   routeNode: string,
   policy: RouterPolicy,
   judging: Judging,
 ): Promise<JudgedChoice | undefined> {
   if (policy.mode !== 'conditional') return undefined;
+
+  if (policy.branches.length === 0) {
+    return { decided: policy.elseChild, elseChild: policy.elseChild, judged: true };
+  }
 
   const held = judging.decided.get(routeNode);
 

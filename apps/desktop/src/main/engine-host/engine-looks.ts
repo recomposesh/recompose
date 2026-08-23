@@ -2,7 +2,7 @@ import type {
   EngineDirective,
   EngineReport,
   KeyCheckReport,
-  KeyProviderId,
+  KeyCustody,
   LocalProviderId,
   LookCustody,
   ModelListing,
@@ -226,12 +226,14 @@ export function foldEveryLook(looks: EngineLooks): void {
 export async function probeThroughTheChild(
   looks: EngineLooks,
   engineOf: () => LookPort,
-  provider: KeyProviderId,
-  key: string,
+  origin: string,
+  custody: KeyCustody,
 ): Promise<KeyCheckReport> {
+  const provider = custody.provider;
+
   return askTheChild(engineOf, {
     desk: looks.keyChecks,
-    directive: { kind: 'probe', id: randomUUID(), provider, key },
+    directive: { kind: 'probe', id: randomUUID(), origin, custody },
     subject: provider,
     fold: couldNotCheck,
     unanswered: `recompose could not check the ${provider} key within ${String(PROBE_TIMEOUT_MS)}ms.`,

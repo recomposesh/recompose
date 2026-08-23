@@ -138,6 +138,20 @@ function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): JudgedRe
   });
 }
 
+/**
+ * Closes an answer the walk went past, so the attempt it opened stops standing in flight.
+ *
+ * @summary A body nobody reads never ends, and a row is settled by the body ending: the child a
+ * ladder refused would otherwise be listed as still working for as long as the app runs, with the
+ * cable painting it alongside. The answer actually handed back is left alone, because the caller
+ * has yet to read it.
+ */
+function closeUnanswered(dropped: Response | undefined, given: Response): void {
+  if (dropped === undefined || dropped === given) return;
+
+  void dropped.body?.cancel().catch(() => undefined);
+}
+
 async function walkedAnswer(
   deps: AttemptDeps,
   scene: WalkScene,
@@ -165,8 +179,10 @@ async function walkedAnswer(
     judged,
     attempt: async (routeNode) => {
       const reading = await readingAtNode(deps, routeNode);
+      const answered = answerableOf(deps, reading);
 
-      answerable = answerableOf(deps, reading);
+      closeUnanswered(answerable, answered);
+      answerable = answered;
       lastTried = routeNode;
 
       return reading;
@@ -181,7 +197,11 @@ async function walkedAnswer(
     if (nothingAnsweredFor(note)) noteGatewayRow(outcome.status, outcome.detail);
   }
 
-  return answerTheWalkGives(scene, result, answerable);
+  const given = answerTheWalkGives(scene, result, answerable);
+
+  closeUnanswered(answerable, given);
+
+  return given;
 }
 
 /**

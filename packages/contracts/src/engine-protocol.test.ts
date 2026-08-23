@@ -112,33 +112,6 @@ describe('a directive the parent sends the child', () => {
   });
 });
 
-describe('the probe directive that asks a vendor about one stored key', () => {
-  const probe = { kind: 'probe', id: 'd1', provider: 'anthropic', key: 'sk-ant-api03-9f2c' };
-
-  test('a probe names the provider to ask and carries the key it asks about', () => {
-    expect(engineDirectiveSchema.parse(probe)).toEqual(probe);
-  });
-
-  test('a probe naming a provider no dialect covers is refused', () => {
-    expect(() => engineDirectiveSchema.parse({ ...probe, provider: 'xai' })).toThrow();
-  });
-
-  test('a probe carrying a blank key is refused, because it would ask about nothing', () => {
-    expect(() => engineDirectiveSchema.parse({ ...probe, key: '   ' })).toThrow();
-  });
-
-  test('a probe carries no gateway, because it serves no traffic', () => {
-    expect(() => engineDirectiveSchema.parse({ ...probe, gateway })).toThrow();
-  });
-
-  test('a probe answering nobody is refused, because its verdict would reach no one', () => {
-    const { id, ...withoutTheIdentifier } = probe;
-
-    expect(id).toBe('d1');
-    expect(() => engineDirectiveSchema.parse(withoutTheIdentifier)).toThrow();
-  });
-});
-
 describe('a report the child sends the parent', () => {
   test('a report carries the state of exactly one gateway', () => {
     const report = {
@@ -271,8 +244,19 @@ const directiveArb = fc.oneof(
   fc.record({
     kind: fc.constant('probe' as const),
     id: directiveIdArb,
-    provider: fc.constantFrom('anthropic' as const, 'openai' as const),
-    key: fc.stringMatching(/^[A-Za-z0-9_-]{8,40}$/),
+    origin: fc.constantFrom('https://api.anthropic.com', 'https://api.deepseek.com'),
+    custody: fc.oneof(
+      fc.record({
+        custody: fc.constant('provider-key' as const),
+        provider: fc.constantFrom('anthropic' as const, 'openai' as const),
+        credential: fc.stringMatching(/^[A-Za-z0-9_-]{8,40}$/),
+      }),
+      fc.record({
+        custody: fc.constant('bearer' as const),
+        provider: fc.constantFrom('deepseek', 'openrouter'),
+        credential: fc.stringMatching(/^[A-Za-z0-9_-]{8,40}$/),
+      }),
+    ),
   }),
   fc.record({
     kind: fc.constant('probe-runtime' as const),

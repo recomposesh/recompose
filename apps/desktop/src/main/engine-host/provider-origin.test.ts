@@ -2,7 +2,7 @@ import type { CredentialedAccount, LocalAccount, SubscriptionAccount } from '@re
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { providerOriginOf } from './provider-origin';
+import { providerOriginOf, servedByAPlugin } from './provider-origin';
 
 const SERVING_ORIGIN = 'RECOMPOSE_SERVING_ORIGIN';
 
@@ -163,5 +163,20 @@ describe('a provider named after something every object carries', () => {
 
   test('a provider beginning outside the plugin id alphabet is rejected', () => {
     expect(providerOriginOf(keyRow('__proto__'))).toBeUndefined();
+  });
+});
+
+describe('an origin only a plugin serves', () => {
+  test('a provider the directory never named reads as served by a plugin', () => {
+    expect(servedByAPlugin('plugin://a-vendor')).toBe(true);
+  });
+
+  test('an address anything can fetch does not', () => {
+    expect(servedByAPlugin('https://api.deepseek.com')).toBe(false);
+    expect(servedByAPlugin('http://127.0.0.1:11434')).toBe(false);
+  });
+
+  test('a scheme merely holding the word is not the plugin scheme', () => {
+    expect(servedByAPlugin('https://plugin.example/plugin://x')).toBe(false);
   });
 });

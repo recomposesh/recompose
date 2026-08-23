@@ -1,5 +1,10 @@
 import { fc, test } from '@fast-check/vitest';
-import { localRuntimes, runtimeLookBoundMs, type RuntimeReachability } from '@recompose/contracts';
+import {
+  localRuntimes,
+  runtimeLookBoundMs,
+  type KeyCustody,
+  type RuntimeReachability,
+} from '@recompose/contracts';
 import { afterEach, describe, expect, vi } from 'vitest';
 
 import { createEngineHost, PROBE_TIMEOUT_MS } from './engine-host';
@@ -7,6 +12,11 @@ import { grantsNothing, hostOver, nothing, scriptedChild } from './engine-host.t
 
 const ollama = localRuntimes.ollama.address;
 const key = 'sk-ant-api03-long-secret-7f2c';
+const anthropicKey: KeyCustody = {
+  custody: 'provider-key',
+  provider: 'anthropic',
+  credential: key,
+};
 const answering = (): RuntimeReachability => ({ verdict: 'answers', version: '0.5.1' });
 
 const anyReading = fc.oneof(
@@ -63,7 +73,7 @@ describe('a runtime look beside a key probe', () => {
     const { host } = hostOver(scripted);
 
     const [checked, looked] = await Promise.all([
-      host.probe('anthropic', key),
+      host.probe('https://api.anthropic.com', anthropicKey),
       host.probeRuntime(ollama, 'ollama'),
     ]);
 
@@ -108,7 +118,10 @@ describe('a runtime look standing when the child dies', () => {
     const scripted = scriptedChild(nothing);
     const { host } = hostOver(scripted);
 
-    const both = Promise.all([host.probe('anthropic', key), host.probeRuntime(ollama, 'ollama')]);
+    const both = Promise.all([
+      host.probe('https://api.anthropic.com', anthropicKey),
+      host.probeRuntime(ollama, 'ollama'),
+    ]);
 
     await Promise.resolve();
     scripted.exit(1);

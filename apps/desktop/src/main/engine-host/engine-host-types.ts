@@ -10,7 +10,7 @@ import type {
   GatewayEngineState,
   GatewayTraffic,
   KeyCheckReport,
-  KeyProviderId,
+  KeyCustody,
   LocalProviderId,
   LogBatch,
   LogRow,
@@ -52,7 +52,7 @@ export type EngineHost = {
   start: (gateway: EngineGateway) => Promise<GatewayEngineState>;
   stop: (slug: string) => Promise<GatewayEngineState>;
   restart: (gateway: EngineGateway) => Promise<GatewayEngineState>;
-  probe: (provider: KeyProviderId, key: string) => Promise<KeyCheckReport>;
+  probe: (origin: string, custody: KeyCustody) => Promise<KeyCheckReport>;
   probeRuntime: (address: string, provider: LocalProviderId) => Promise<RuntimeReachability>;
   listModels: (origin: string, custody: LookCustody) => Promise<ModelListing>;
   /**

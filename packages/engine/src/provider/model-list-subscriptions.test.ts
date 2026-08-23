@@ -37,7 +37,7 @@ describe('a subscription whose models recompose does not carry', () => {
 
     const listing = await listProviderModels(fetchLike, copilotOrigin, subscribedAs('copilot'));
 
-    expect(onlyRequestOf(sent).url).toBe('https://api.githubcopilot.com/v1/models');
+    expect(onlyRequestOf(sent).url).toBe('https://api.githubcopilot.com/models');
     expect(listing).toEqual({
       standing: 'listed',
       modelIds: ['gpt-4o-copilot', 'claude-sonnet-4-6'],

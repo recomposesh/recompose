@@ -1,15 +1,23 @@
-import type { KeyCheckVerdict } from '@recompose/contracts';
+import type { KeyCheckVerdict, KeyCustody } from '@recompose/contracts';
 
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
-import { authHeadersFor, probeKey } from './key-probe';
+import { probeKey } from './key-probe';
 
 const aKey = 'sk-ant-api03-1f2e3d4c';
 
-type StoredProviderProbe = { headersFor(provider: string, key: string): Record<string, string> };
-
 type SentRequest = { url: string; init: RequestInit };
+
+function firstPartyKey(
+  provider: 'anthropic' | 'openai' | 'gemini' | 'gemini-interactions',
+): KeyCustody {
+  return { custody: 'provider-key', provider, credential: aKey };
+}
+
+function pastedKeyFor(provider: string): KeyCustody {
+  return { custody: 'bearer', provider, credential: aKey };
+}
 
 function urlOf(input: Parameters<typeof fetch>[0]): string {
   if (typeof input === 'string') {
@@ -46,10 +54,10 @@ function onlyRequestOf(sent: SentRequest[]): SentRequest {
 }
 
 describe('the request the probe sends', () => {
-  test('an anthropic probe asks the models list at the first-party host under its own header', async () => {
+  test('an anthropic probe asks the models list at the given host under its own header', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'anthropic', aKey);
+    await probeKey(fetchLike, 'https://api.anthropic.com', firstPartyKey('anthropic'));
 
     const request = onlyRequestOf(sent);
     const headers = new Headers(request.init.headers);
@@ -61,10 +69,10 @@ describe('the request the probe sends', () => {
     expect(headers.get('authorization')).toBeNull();
   });
 
-  test('an openai probe asks the models list at the first-party host under the bearer header', async () => {
+  test('an openai probe asks the models list at the given host under the bearer header', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'openai', aKey);
+    await probeKey(fetchLike, 'https://api.openai.com', firstPartyKey('openai'));
 
     const request = onlyRequestOf(sent);
     const headers = new Headers(request.init.headers);
@@ -78,7 +86,7 @@ describe('the request the probe sends', () => {
   test('a Gemini probe uses the Generative Language catalog and Google key header', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'gemini', aKey);
+    await probeKey(fetchLike, 'https://generativelanguage.googleapis.com', firstPartyKey('gemini'));
 
     const request = onlyRequestOf(sent);
     const headers = new Headers(request.init.headers);
@@ -87,19 +95,51 @@ describe('the request the probe sends', () => {
     expect(headers.get('x-goog-api-key')).toBe(aKey);
     expect(headers.get('authorization')).toBeNull();
   });
+});
+
+describe('the vendors a probe reaches beyond the first-party four', () => {
+  test('a vendor with no header of its own is checked under the bearer header', async () => {
+    const { sent, fetchLike } = fetchAnswering(200);
+
+    await probeKey(fetchLike, 'https://api.deepseek.com', pastedKeyFor('deepseek'));
+
+    const request = onlyRequestOf(sent);
+    const headers = new Headers(request.init.headers);
+
+    expect(request.url).toBe('https://api.deepseek.com/v1/models');
+    expect(headers.get('authorization')).toBe(`Bearer ${aKey}`);
+  });
+
+  test('an address a person typed is asked where the turn it checks would land', async () => {
+    const { sent, fetchLike } = fetchAnswering(200);
+
+    await probeKey(fetchLike, 'https://gateway.example', pastedKeyFor('custom-endpoint'));
+
+    expect(onlyRequestOf(sent).url).toBe('https://gateway.example/v1/models');
+  });
+
+  test('the catalog path is appended whole, the way a served turn appends its own', async () => {
+    const { sent, fetchLike } = fetchAnswering(200);
+
+    await probeKey(fetchLike, 'https://gateway.example/openai', pastedKeyFor('custom-endpoint'));
+
+    expect(onlyRequestOf(sent).url).toBe('https://gateway.example/openai/v1/models');
+  });
 
   test('a given origin substitutes for the vendor host', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'anthropic', aKey, 'http://127.0.0.1:8642');
+    await probeKey(fetchLike, 'http://127.0.0.1:8642', firstPartyKey('anthropic'));
 
     expect(onlyRequestOf(sent).url).toBe('http://127.0.0.1:8642/v1/models');
   });
+});
 
+describe('how the probe words its call', () => {
   test('the call refuses redirects and rides an abort signal', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'openai', aKey);
+    await probeKey(fetchLike, 'https://api.openai.com', firstPartyKey('openai'));
 
     const request = onlyRequestOf(sent);
 
@@ -110,7 +150,11 @@ describe('the request the probe sends', () => {
   test('the key reaches the fetch exactly as the directive carried it, whitespace included', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'anthropic', 'sk-ant-legacy-tail\n');
+    await probeKey(fetchLike, 'https://api.anthropic.com', {
+      custody: 'provider-key',
+      provider: 'anthropic',
+      credential: 'sk-ant-legacy-tail\n',
+    });
 
     expect(JSON.stringify(onlyRequestOf(sent).init.headers)).toContain('sk-ant-legacy-tail\\n');
   });
@@ -120,29 +164,17 @@ describe('the Gemini Interactions probe', () => {
   test('shares the native catalog and key header', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'gemini-interactions', aKey);
+    await probeKey(
+      fetchLike,
+      'https://generativelanguage.googleapis.com',
+      firstPartyKey('gemini-interactions'),
+    );
 
     const request = onlyRequestOf(sent);
     const headers = new Headers(request.init.headers);
 
     expect(request.url).toBe('https://generativelanguage.googleapis.com/v1beta/models');
     expect(headers.get('x-goog-api-key')).toBe(aKey);
-  });
-});
-
-describe('a provider name the probe does not speak to', () => {
-  test('a stored provider name no vendor answers is refused by name', () => {
-    const stored: StoredProviderProbe = { headersFor: authHeadersFor };
-
-    expect(() => stored.headersFor('mistral', aKey)).toThrow(
-      'no probe speaks to the provider: mistral',
-    );
-  });
-
-  test('the refusal names the provider it was handed, whatever it was', () => {
-    const stored: StoredProviderProbe = { headersFor: authHeadersFor };
-
-    expect(() => stored.headersFor('anthropic-legacy', aKey)).toThrow('anthropic-legacy');
   });
 });
 
@@ -160,13 +192,23 @@ describe('the folding from vendor status to verdict', () => {
   ];
 
   test.each(foldingTable)('a %i from the vendor reads as %s', async (status, verdict) => {
-    const report = await probeKey(fetchAnswering(status).fetchLike, 'openai', aKey);
+    const report = await probeKey(
+      fetchAnswering(status).fetchLike,
+      'https://api.openai.com',
+      firstPartyKey('openai'),
+    );
 
     expect(report).toEqual({ verdict, status });
   });
+});
 
+describe('the folding when a vendor answers nothing at all', () => {
   test('a thrown fetch folds to could-not-check with no status at all', async () => {
-    const report = await probeKey(fetchRefusing(new TypeError('fetch failed')), 'anthropic', aKey);
+    const report = await probeKey(
+      fetchRefusing(new TypeError('fetch failed')),
+      'https://api.anthropic.com',
+      firstPartyKey('anthropic'),
+    );
 
     expect(report).toStrictEqual({ verdict: 'could-not-check' });
   });
@@ -174,17 +216,31 @@ describe('the folding from vendor status to verdict', () => {
   test('a refused redirect folds to could-not-check', async () => {
     const report = await probeKey(
       fetchRefusing(new TypeError('unexpected redirect')),
-      'openai',
-      aKey,
+      'https://api.openai.com',
+      firstPartyKey('openai'),
     );
 
     expect(report).toStrictEqual({ verdict: 'could-not-check' });
   });
 
+  test('a 401 from a vendor with no header of its own reads as not accepted', async () => {
+    const report = await probeKey(
+      fetchAnswering(401).fetchLike,
+      'https://api.deepseek.com',
+      pastedKeyFor('deepseek'),
+    );
+
+    expect(report).toStrictEqual({ verdict: 'not-accepted', status: 401 });
+  });
+
   test.prop([fc.integer({ min: 200, max: 599 })])(
     'every status folds to one verdict, and only a 2xx authenticates',
     async (status) => {
-      const report = await probeKey(fetchAnswering(status).fetchLike, 'anthropic', aKey);
+      const report = await probeKey(
+        fetchAnswering(status).fetchLike,
+        'https://api.anthropic.com',
+        firstPartyKey('anthropic'),
+      );
 
       expect(report.verdict === 'authenticates').toBe(status <= 299);
       expect(report.verdict === 'not-accepted').toBe(status === 401 || status === 403);

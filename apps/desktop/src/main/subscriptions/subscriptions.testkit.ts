@@ -142,6 +142,7 @@ export function quietAppSignIns() {
       sleep: async () => Promise.resolve(),
       nowMs: () => 0,
       machine: { name: 'ada-machine', id: 'device-1', model: 'macOS arm64', version: '0.0.0' },
+      openInBrowser: async () => Promise.resolve(),
     },
     browserSignIn: {
       fetchLike: async () => Promise.resolve(new Response('{}', { status: 500 })),

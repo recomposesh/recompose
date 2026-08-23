@@ -35,6 +35,24 @@ export function aParent(): Parent {
   };
 }
 
+const firstPartyHosts: Record<'anthropic' | 'openai', string> = {
+  anthropic: 'https://api.anthropic.com',
+  openai: 'https://api.openai.com',
+};
+
+/**
+ * @summary The parent resolves where a key is spent before the directive leaves it, so a scenario
+ * that only cares which host was reached says the vendor and lets the helper name the address.
+ */
+export function aProbeOf(id: string, provider: 'anthropic' | 'openai', key: string) {
+  return {
+    kind: 'probe',
+    id,
+    origin: firstPartyHosts[provider],
+    custody: { custody: 'provider-key', provider, credential: key },
+  };
+}
+
 export function aLoopbackHolding(heldPorts: readonly number[]): OpenListeners {
   return async (_app, port) =>
     Promise.resolve(

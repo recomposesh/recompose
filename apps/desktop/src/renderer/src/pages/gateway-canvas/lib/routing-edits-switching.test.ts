@@ -116,10 +116,10 @@ test('a switched router stands as a table the stored shape will serve', () => {
   expect(routingSchema.safeParse(routingOf(switchedLadder().switched)).success).toBe(true);
 });
 
-test('a switched router is born keeping the branch each conversation first earned', () => {
+test('a switched router is born reading the topic again on every request', () => {
   const { switched, routerId } = switchedLadder();
 
-  expect(conditionalPolicyOf(switched, routerId)?.rejudgeEveryRequest).toBe(false);
+  expect(conditionalPolicyOf(switched, routerId)?.rejudgeEveryRequest).toBe(true);
 });
 
 test('a switch the stored shape would refuse stores nothing, so the save never bounces', () => {

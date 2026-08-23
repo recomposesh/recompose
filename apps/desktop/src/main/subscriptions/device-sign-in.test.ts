@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { DeviceSignInPort } from './device-sign-in-port';
 
@@ -14,7 +14,10 @@ function urlOf(input: Parameters<typeof fetch>[0]): string {
   return input instanceof URL ? input.href : input.url;
 }
 
-function portAnswering(answers: readonly Answer[]): DeviceSignInPort & {
+function portAnswering(
+  answers: readonly Answer[],
+  openBrowser: (url: string) => Promise<void> = async () => Promise.resolve(),
+): DeviceSignInPort & {
   sent: string[];
 } {
   const sent: string[] = [];
@@ -25,6 +28,7 @@ function portAnswering(answers: readonly Answer[]): DeviceSignInPort & {
     nowMs: () => 0,
     sleep: async () => Promise.resolve(),
     machine: { name: 'ada-machine', id: 'device-1', model: 'macOS arm64', version: '0.0.0' },
+    openInBrowser: openBrowser,
     fetchLike: async (input) => {
       const answer = answers[Math.min(turn, answers.length - 1)];
 
@@ -54,6 +58,79 @@ const aCode = {
 
 beforeEach(() => {
   forgetPendingDeviceSignIns();
+});
+
+describe('the address a person authorizes at', () => {
+  test('the address opens in a browser as the code is issued', async () => {
+    const opened: string[] = [];
+
+    await startDeviceSignIn(
+      portAnswering([aCode], async (url) => {
+        opened.push(url);
+
+        return Promise.resolve();
+      }),
+      'copilot',
+    );
+
+    expect(opened).toEqual(['https://github.com/login/device']);
+  });
+
+  test('the address carrying the code is the one opened, where a vendor publishes both', async () => {
+    const opened: string[] = [];
+    const withTheCode = {
+      status: 200,
+      body: {
+        ...aCode.body,
+        verification_uri_complete: 'https://www.kimi.com/code/authorize_device?user_code=ABCD-1234',
+      },
+    };
+
+    await startDeviceSignIn(
+      portAnswering([withTheCode], async (url) => {
+        opened.push(url);
+
+        return Promise.resolve();
+      }),
+      'kimi',
+    );
+
+    expect(opened).toEqual(['https://www.kimi.com/code/authorize_device?user_code=ABCD-1234']);
+  });
+});
+
+describe('a browser that will not come forward', () => {
+  test('a browser that will not open still leaves the code and the address on screen', async () => {
+    const complaints = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const shown = await startDeviceSignIn(
+      portAnswering([aCode], async () => Promise.reject(new Error('no browser answered'))),
+      'copilot',
+    );
+
+    expect(shown).toEqual({
+      verdict: 'shown',
+      userCode: 'ABCD-1234',
+      verificationUri: 'https://github.com/login/device',
+    });
+    expect(complaints).toHaveBeenCalled();
+    complaints.mockRestore();
+  });
+
+  test('a refused ask opens nothing, because there is no address to open', async () => {
+    const opened: string[] = [];
+
+    await startDeviceSignIn(
+      portAnswering([{ status: 404, body: {} }], async (url) => {
+        opened.push(url);
+
+        return Promise.resolve();
+      }),
+      'copilot',
+    );
+
+    expect(opened).toEqual([]);
+  });
 });
 
 describe('the code the screen shows', () => {

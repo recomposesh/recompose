@@ -10,9 +10,7 @@ import { isJsonObject, parsedJson } from '../gateway-wire';
 import { antigravitySubscriptionModels } from '../subscription/antigravity-models';
 import { claudeSubscriptionModels } from '../subscription/claude-models';
 import { kimiSubscriptionModels } from '../subscription/kimi-models';
-import { authHeadersFor } from './key-probe';
-
-const modelsPath = '/v1/models';
+import { lookHeadersFor, modelsPathFor } from './look-request';
 
 const nothingListed: ModelListing = { standing: 'unlisted' };
 
@@ -98,16 +96,6 @@ function knownSubscriptionListing(
   return { standing: 'listed', modelIds: [...models] };
 }
 
-function headersFor(custody: LookCustody): Record<string, string> {
-  if (custody.custody === 'open') {
-    return {};
-  }
-
-  return custody.custody === 'provider-key'
-    ? authHeadersFor(custody.provider, custody.credential)
-    : { Authorization: `Bearer ${custody.credential}` };
-}
-
 async function answerOrSilence(
   fetchLike: typeof fetch,
   origin: string,
@@ -116,7 +104,7 @@ async function answerOrSilence(
   try {
     return await fetchLike(`${origin}${modelsPathFor(custody)}`, {
       method: 'GET',
-      headers: headersFor(custody),
+      headers: lookHeadersFor(custody),
       redirect: 'error',
       signal: AbortSignal.timeout(modelListBoundMs),
     });
@@ -125,13 +113,6 @@ async function answerOrSilence(
 
     return null;
   }
-}
-
-function modelsPathFor(custody: LookCustody): string {
-  return custody.custody === 'provider-key' &&
-    (custody.provider === 'gemini' || custody.provider === 'gemini-interactions')
-    ? '/v1beta/models'
-    : modelsPath;
 }
 
 async function bodyOrNothing(response: Response): Promise<unknown> {

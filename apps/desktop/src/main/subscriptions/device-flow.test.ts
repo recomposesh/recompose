@@ -125,7 +125,9 @@ describe('the code a person is shown, read out of the answer', () => {
       expiresInMs: 900_000,
     });
   });
+});
 
+describe('what the ask refuses to show', () => {
   test('an answer missing the code refuses rather than showing a person nothing', async () => {
     const { fetchLike } = fetchAnswering([{ status: 200, body: { user_code: 'ABCD-1234' } }]);
 

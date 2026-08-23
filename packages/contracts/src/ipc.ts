@@ -8,9 +8,9 @@ import {
 import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
 import { gatewayBranchPinsSchema } from './engine-branch-pins';
 import { gatewayCooldownsSchema } from './engine-cooldowns';
+import { modelListingSchema } from './engine-custody';
 import { gatewayJudgingSchema } from './engine-judging';
 import { logBatchSchema } from './engine-logs';
-import { modelListingSchema } from './engine-protocol';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
 import { fileBrowserSchema } from './file-browser';

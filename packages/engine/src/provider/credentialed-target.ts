@@ -12,6 +12,7 @@ import {
 import { geminiTurnsUpstreamWillTake } from './gemini-leading-turn';
 import { cappedGeminiOutput } from './gemini-model-limits';
 import { geminiSignaturesUpstreamWillTake } from './gemini-response-signatures';
+import { groqProviderBody } from './groq-request';
 import { prepareKimiReplay } from './kimi-replay-runtime';
 import { kimiProviderBody } from './kimi-request';
 import {
@@ -120,6 +121,7 @@ function aiStudioBody(crossing: Crossing, body: JsonObject): JsonObject {
 
 const BODY_BUILDERS = new Map<string, BodyBuilder>([
   ['aistudio', aiStudioBody],
+  ['groq', (_crossing, body) => groqProviderBody(body)],
   ['anthropic', prepareClaudeReplay],
   [
     'gemini',
@@ -172,11 +174,13 @@ const messagesPath = '/v1/messages';
  * The path a vendor lands on whatever dialect it is reached in.
  *
  * @summary DeepInfra publishes `https://api.deepinfra.com/v1/openai` as the base an OpenAI client
- * is pointed at, so its turn lands one segment shorter than every other compatible vendor. The
- * other two answer one dialect only, so nothing about the crossing can move them.
+ * is pointed at, so its turn lands one segment shorter than every other compatible vendor, and
+ * Copilot's own base carries no version segment at all. The rest answer one dialect only, so
+ * nothing about the crossing can move them.
  */
 const FIXED_PATHS = new Map<string, string>([
   ['anthropic', messagesPath],
+  ['copilot', '/chat/completions'],
   ['deepinfra', '/chat/completions'],
   ['xai', '/responses'],
 ]);

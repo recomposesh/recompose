@@ -1,48 +1,8 @@
-import type { KeyCheckReport, KeyCheckVerdict, KeyProviderId } from '@recompose/contracts';
+import type { KeyCheckReport, KeyCheckVerdict, KeyCustody } from '@recompose/contracts';
 
 import { keyProbeBoundMs } from '@recompose/contracts';
 
-export const firstPartyProbeOrigins: Readonly<Record<KeyProviderId, string>> = {
-  anthropic: 'https://api.anthropic.com',
-  openai: 'https://api.openai.com',
-  gemini: 'https://generativelanguage.googleapis.com',
-  'gemini-interactions': 'https://generativelanguage.googleapis.com',
-};
-
-const modelsPath = '/v1/models';
-
-const anthropicVersion = '2023-06-01';
-
-/**
- * The headers one first-party vendor reads its own key from.
- *
- * @summary Anthropic answers `x-api-key` beside the version it was written against and turns a
- * bearer token away, so the header is picked per vendor rather than assumed. The model-list look
- * reads the same `GET /v1/models` this probe does, so both spell the credential from here.
- */
-export function authHeadersFor(provider: KeyProviderId, key: string): Record<string, string> {
-  switch (provider) {
-    case 'anthropic':
-      return { 'x-api-key': key, 'anthropic-version': anthropicVersion };
-    case 'openai':
-      return { Authorization: `Bearer ${key}` };
-    case 'gemini':
-    case 'gemini-interactions':
-      return { 'x-goog-api-key': key };
-
-    default: {
-      const unknownProvider: never = provider;
-
-      throw new Error(`no probe speaks to the provider: ${String(unknownProvider)}`);
-    }
-  }
-}
-
-function modelsPathFor(provider: KeyProviderId): string {
-  return provider === 'gemini' || provider === 'gemini-interactions'
-    ? '/v1beta/models'
-    : modelsPath;
-}
+import { lookHeadersFor, modelsPathFor } from './look-request';
 
 function verdictFor(status: number): KeyCheckVerdict {
   if (Math.floor(status / 100) === 2) {
@@ -56,23 +16,32 @@ function verdictFor(status: number): KeyCheckVerdict {
   return 'could-not-check';
 }
 
+/**
+ * Whether one stored key still opens the vendor it was stored for.
+ *
+ * @summary The check reads the model catalog the vendor already publishes, at the origin the host
+ * resolved for the account, so a key pasted for any vendor recompose serves is checkable rather
+ * than only the handful whose headers differ. Only the status is read, because a catalog that
+ * answers at all has already accepted the credential that asked for it.
+ */
 export async function probeKey(
   fetchLike: typeof fetch,
-  provider: KeyProviderId,
-  key: string,
-  origin: string = firstPartyProbeOrigins[provider],
+  origin: string,
+  custody: KeyCustody,
 ): Promise<KeyCheckReport> {
   try {
-    const response = await fetchLike(`${origin}${modelsPathFor(provider)}`, {
+    const response = await fetchLike(`${origin}${modelsPathFor(custody)}`, {
       method: 'GET',
-      headers: authHeadersFor(provider, key),
+      headers: lookHeadersFor(custody),
       redirect: 'error',
       signal: AbortSignal.timeout(keyProbeBoundMs),
     });
 
     return { verdict: verdictFor(response.status), status: response.status };
   } catch {
-    console.error(`The ${provider} probe could not reach ${origin}, so the check did not run.`);
+    console.error(
+      `The ${custody.provider} probe could not reach ${origin}, so the check did not run.`,
+    );
 
     return { verdict: 'could-not-check' };
   }

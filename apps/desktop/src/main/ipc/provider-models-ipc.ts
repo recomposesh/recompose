@@ -3,6 +3,7 @@ import type { LookCustody, ModelListing } from '@recompose/contracts';
 import type { TargetCustodyContext } from '../engine-host/target-custody';
 import type { IpcHandlers } from './dispatch';
 
+import { servedByAPlugin } from '../engine-host/provider-origin';
 import { resolveTargetCustody } from '../engine-host/target-custody';
 import { applyModelPolicy } from '../storage/model-policy-diff';
 import { storageFailure } from './storage-envelope';
@@ -32,7 +33,7 @@ async function listModelsOf(ctx: ProviderModelsIpcContext, accountId: string) {
       return { ok: true as const, value: nothingListed };
     }
 
-    if (resolved.providerOrigin.startsWith('plugin://')) {
+    if (servedByAPlugin(resolved.providerOrigin)) {
       return { ok: true as const, value: nothingListed };
     }
 
