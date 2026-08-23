@@ -1,11 +1,14 @@
 const MINIMAP_NODES = [
-  { x: 10, y: 26, tone: 'fill-gateway' },
-  { x: 50, y: 8, tone: 'fill-virtual-model' },
-  { x: 50, y: 46, tone: 'fill-virtual-model' },
-  { x: 88, y: 8, tone: 'fill-subscription' },
-  { x: 88, y: 46, tone: 'fill-router' },
-  { x: 124, y: 20, tone: 'fill-subscription' },
-  { x: 124, y: 52, tone: 'fill-subscription' },
+  { x: 8, y: 23, tone: 'fill-gateway' },
+  { x: 46, y: 19, tone: 'fill-virtual-model' },
+  { x: 46, y: 63, tone: 'fill-virtual-model' },
+  { x: 84, y: 19, tone: 'fill-router' },
+  { x: 84, y: 63, tone: 'fill-router' },
+  { x: 124, y: 2, tone: 'fill-subscription' },
+  { x: 124, y: 19, tone: 'fill-api-key' },
+  { x: 124, y: 37, tone: 'fill-subscription' },
+  { x: 124, y: 54, tone: 'fill-subscription' },
+  { x: 124, y: 71, tone: 'fill-subscription' },
 ];
 
 export function CanvasMinimap() {

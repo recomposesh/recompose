@@ -9,8 +9,8 @@ export function StatusBar() {
       <span className="h-3.5 w-px bg-win-line" />
       <StatusStat value="0" unit="tok/min" statId="tok-min" />
       <span className="ms-auto flex gap-1">
-        <StatusStat value="7" unit="nodes ·" />
-        <StatusStat value="6" unit="wires" />
+        <StatusStat value="11" unit="nodes ·" />
+        <StatusStat value="9" unit="wires" />
       </span>
     </div>
   );

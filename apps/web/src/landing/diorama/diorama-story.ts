@@ -110,19 +110,17 @@ function playClaudeSetup(story: Story) {
   typeLine(story, 'claude-prompt', 0.16, 0.035);
 }
 
-function playFastRequest(story: Story) {
+function playJudgedRequest(story: Story) {
   showProp(story, 'claude-working', 0.21);
-  wireLive(story, 'fast-in', 0.21);
-  wireLive(story, 'fast-out', 0.21);
-  wireLive(story, 'rr-codex', 0.22);
-  wireRest(story, 'rr-codex', 0.3);
-  wireLive(story, 'rr-kimi', 0.3);
-  wireRest(story, 'rr-kimi', 0.38);
-  wireLive(story, 'rr-codex', 0.38);
+  wireLive(story, 'smart-in', 0.21);
+  wireLive(story, 'smart-out', 0.21);
+  wireLive(story, 'judge-tie', 0.23);
+  wireRest(story, 'judge-tie', 0.3);
+  wireLive(story, 'judge-deepseek', 0.3);
   showProp(story, 'claude-done', 0.46);
-  wireRest(story, 'fast-in', 0.46);
-  wireRest(story, 'fast-out', 0.46);
-  wireRest(story, 'rr-codex', 0.46);
+  wireRest(story, 'smart-in', 0.46);
+  wireRest(story, 'smart-out', 0.46);
+  wireRest(story, 'judge-deepseek', 0.46);
 }
 
 function playCodexAct(story: Story) {
@@ -141,8 +139,13 @@ function playCodexAct(story: Story) {
   showProp(story, 'codex-ready', 0.695);
   typeLine(story, 'codex-prompt', 0.7, 0.03);
   showProp(story, 'codex-working', 0.74);
-  wireLive(story, 'smart-in', 0.74);
-  wireLive(story, 'smart-out', 0.74);
+  wireLive(story, 'fast-in', 0.74);
+  wireLive(story, 'fast-out', 0.74);
+  wireLive(story, 'rr-codex', 0.75);
+  wireRest(story, 'rr-codex', 0.8);
+  wireLive(story, 'rr-claude', 0.8);
+  wireRest(story, 'rr-claude', 0.84);
+  wireLive(story, 'rr-codex', 0.84);
 }
 
 function playClaudeNarration(story: Story) {
@@ -164,7 +167,7 @@ export function playExitFade(story: Story) {
 
 export function playStory(story: Story) {
   playClaudeSetup(story);
-  playFastRequest(story);
+  playJudgedRequest(story);
   playTrafficCounters(story);
   playClaudeNarration(story);
   playCodexAct(story);
