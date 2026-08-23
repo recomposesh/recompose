@@ -11,6 +11,15 @@ export function producesBlock(part: GeminiPart): boolean {
   );
 }
 
+/**
+ * @summary A part carrying a signature and nothing else contributes no content, and the run it
+ * arrived in ends there all the same. Letting the next part continue the open run would read one
+ * run of text across a boundary the model drew.
+ */
+export function endsTheRun(part: GeminiPart): boolean {
+  return carriesSignature(part);
+}
+
 export function continuedRun(
   state: GeminiRunState,
   part: GeminiPart,
@@ -44,12 +53,20 @@ export function openedRun(
 ): HubStreamEvent[] {
   const index = state.nextIndex;
 
-  state.open = { index, kind: opening.kind, sealed: carriesSignature(part) };
+  state.open = { index, kind: opening.kind, sealed: sealsItsRun(part) };
 
   return [
     { type: 'block-open', index, opening },
     ...deltas.map((delta): HubStreamEvent => ({ type: 'block-delta', index, delta })),
   ];
+}
+
+/**
+ * @summary A web-search block opens under the same tool kind a function call does, so a call
+ * arriving unnamed would read as that block's own continuation and append its arguments there.
+ */
+function sealsItsRun(part: GeminiPart): boolean {
+  return carriesSignature(part) || part.serverWebSearch !== undefined;
 }
 
 function continuationKind(part: GeminiPart): HubBlockOpening['kind'] | null {

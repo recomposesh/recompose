@@ -86,9 +86,11 @@ function affordableTokens(message: string): number | null {
 }
 
 function cappedAt(body: JsonObject, affordable: number): JsonObject | null {
-  const field = OUTPUT_FIELDS.find((named) => oversized(body[named], affordable));
+  const fields = OUTPUT_FIELDS.filter((named) => oversized(body[named], affordable));
 
-  return field === undefined ? null : { ...body, [field]: affordable };
+  if (fields.length === 0) return null;
+
+  return fields.reduce((held, field) => ({ ...held, [field]: affordable }), body);
 }
 
 function oversized(asked: unknown, affordable: number): boolean {

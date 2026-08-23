@@ -180,3 +180,25 @@ describe('the shape the catalog read takes on the wire', () => {
     });
   });
 });
+
+describe('a Copilot catalog the vendor would not hand over', () => {
+  test('reads again on the next turn rather than holding the failure for the window', async () => {
+    const { sent, fetchLike } = fetchAnswering(500, null);
+    const deps = { fetchLike, now: () => 1_700_000_000_000, catalog: copilotCatalog() };
+
+    await copilotWireOf(deps, custody, origin, 'mai-code-1.1-flash');
+    await copilotWireOf(deps, custody, origin, 'mai-code-1.1-flash');
+
+    expect(sent).toHaveLength(2);
+  });
+
+  test('holds a read that answered, so a turn inside the window asks nothing', async () => {
+    const { sent, fetchLike } = fetchAnswering(200, catalogBody);
+    const deps = { fetchLike, now: () => 1_700_000_000_000, catalog: copilotCatalog() };
+
+    await copilotWireOf(deps, custody, origin, 'gpt-4.1');
+    await copilotWireOf(deps, custody, origin, 'gpt-4.1');
+
+    expect(sent).toHaveLength(1);
+  });
+});

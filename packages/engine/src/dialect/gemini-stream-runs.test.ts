@@ -165,8 +165,6 @@ describe('Gemini stream run sealing', () => {
   });
 });
 
-// Helpers
-
 async function decoded(source: AsyncIterable<GeminiResponse>) {
   const events = [];
 
@@ -193,3 +191,27 @@ function chunksOf(...chunks: readonly (readonly GeminiPart[])[]): AsyncIterable<
     }
   })();
 }
+
+describe('Gemini stream run boundaries a review found', () => {
+  test('breaks the run at a part that carries nothing but a signature', async () => {
+    const events = await decoded(
+      chunksOf([{ text: 'so' }], [{ thoughtSignature: 'EqQBCqEB' }], [{ text: 'me' }]),
+    );
+    const openings = events.filter((event) => event.type === 'block-open');
+
+    expect(openings).toHaveLength(2);
+    expect(events.filter((event) => event.type === 'block-delta')).toHaveLength(2);
+  });
+
+  test('refuses to fold an unnamed function call into an open web-search block', async () => {
+    const events = await decoded(
+      chunksOf(
+        [{ serverWebSearch: { kind: 'use', id: 'ws-1', input: {} } }],
+        [{ functionCall: { name: '', args: { step: 2 } } }],
+      ),
+    );
+    const openings = events.filter((event) => event.type === 'block-open');
+
+    expect(openings).toHaveLength(2);
+  });
+});

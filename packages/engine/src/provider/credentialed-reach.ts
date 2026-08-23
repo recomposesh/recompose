@@ -142,6 +142,7 @@ async function stampOutputCeiling(
     spend.provider,
     grant.providerOrigin,
     credentialedRequestHeaders(spend, crossing),
+    spend.accountId ?? '',
   );
   const ceiling = ceilings.get(crossing.providerModel);
 

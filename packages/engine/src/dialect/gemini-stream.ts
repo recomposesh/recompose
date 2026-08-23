@@ -13,7 +13,13 @@ import {
   geminiStopReason,
   geminiUsage,
 } from './gemini-response';
-import { closedRun, continuedRun, openedRun, producesBlock } from './gemini-stream-runs';
+import {
+  closedRun,
+  continuedRun,
+  endsTheRun,
+  openedRun,
+  producesBlock,
+} from './gemini-stream-runs';
 import { geminiThinkingOpening } from './gemini-thinking-opening';
 import { geminiClaudeToolUseId } from './gemini-tool-provenance';
 import {
@@ -130,7 +136,11 @@ function* blockEvents(
     return;
   }
 
-  if (!producesBlock(part)) return;
+  if (!producesBlock(part)) {
+    if (endsTheRun(part)) yield* closedRun(state);
+
+    return;
+  }
 
   const deltas = deltasOf(part);
   const continued = continuedRun(state, part, deltas);

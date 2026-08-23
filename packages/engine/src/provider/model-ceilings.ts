@@ -127,12 +127,13 @@ export async function modelCeilingsFor(
   provider: string,
   origin: string,
   headers: Record<string, string>,
+  accountId: string,
 ): Promise<Ceilings> {
   const spelling = CATALOG_SPELLINGS.get(provider);
 
   if (spelling === undefined) return new Map();
 
-  const key = `${provider}:${origin}`;
+  const key = `${provider}:${origin}:${accountId}`;
   const held = known.get(key);
 
   if (held !== undefined) return held;

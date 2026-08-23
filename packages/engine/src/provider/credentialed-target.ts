@@ -85,10 +85,9 @@ function preparedCredentialedBody(
   }
 
   const prepared = BODY_BUILDERS.get(spend.provider)?.(crossing, body, spend.accountId) ?? body;
-  const capped = cappedOutput(prepared, crossing.outputCeiling);
-  const cached = cachedWhereTheVendorReadsIt(spend.provider, crossing, capped);
+  const cached = cachedWhereTheVendorReadsIt(spend.provider, crossing, prepared);
 
-  return applyOpenAICompatPayloadOverride(cached);
+  return cappedOutput(applyOpenAICompatPayloadOverride(cached), crossing.outputCeiling);
 }
 
 /**

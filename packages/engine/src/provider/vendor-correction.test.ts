@@ -127,3 +127,15 @@ describe('refusals that name no remedy this gateway knows', () => {
     expect(correctedForVendor(400, toolRefusal, body)).toEqual({ model: 'groq/compound' });
   });
 });
+
+describe('a turn asking twice over', () => {
+  test('brings down every output field the turn oversized, not just the first', () => {
+    const body = { model: 'x-ai/grok-4.6', max_tokens: 32_000, max_completion_tokens: 32_000 };
+
+    expect(correctedForVendor(402, creditRefusal, body)).toEqual({
+      model: 'x-ai/grok-4.6',
+      max_tokens: 6588,
+      max_completion_tokens: 6588,
+    });
+  });
+});

@@ -8,7 +8,7 @@ import { lookHeadersFor, modelsPathFor } from './look-request';
 
 type SubscriptionLook = Extract<LookCustody, { custody: 'subscription' }>;
 
-type CatalogRead = { readAtMs: number; endpoints: Map<string, readonly unknown[]> };
+type CatalogRead = { readAtMs: number; endpoints: Map<string, readonly unknown[]> | null };
 
 export type CopilotCatalog = Map<string, CatalogRead>;
 
@@ -45,6 +45,11 @@ export async function copilotWireOf(
   return copilotWireFor(endpoints.get(model) ?? []);
 }
 
+/**
+ * @summary A read the vendor refused is remembered as a failure rather than as an empty catalog,
+ * because holding "this account names no endpoints" for the window would put every Responses-only
+ * model out of reach until it expired.
+ */
 async function endpointsFor(
   deps: CopilotCatalogDeps,
   custody: SubscriptionLook,
@@ -53,21 +58,24 @@ async function endpointsFor(
   const held = deps.catalog.get(custody.accountId);
   const nowMs = deps.now();
 
-  if (held !== undefined && nowMs - held.readAtMs < CATALOG_WINDOW_MS) return held.endpoints;
+  if (held?.endpoints != null && nowMs - held.readAtMs < CATALOG_WINDOW_MS) return held.endpoints;
 
   const endpoints = await readCatalog(deps.fetchLike, custody, origin);
 
   deps.catalog.set(custody.accountId, { readAtMs: nowMs, endpoints });
 
-  return endpoints;
+  return endpoints ?? new Map();
 }
 
 async function readCatalog(
   fetchLike: typeof fetch,
   custody: SubscriptionLook,
   origin: string,
-): Promise<Map<string, readonly unknown[]>> {
+): Promise<Map<string, readonly unknown[]> | null> {
   const body = await catalogBody(fetchLike, custody, origin);
+
+  if (body === undefined) return null;
+
   const entries = isJsonObject(body) && Array.isArray(body['data']) ? body['data'] : [];
 
   return new Map(entries.map(endpointRow).filter((row) => row !== null));
