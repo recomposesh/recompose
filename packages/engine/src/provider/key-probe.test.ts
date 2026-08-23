@@ -110,12 +110,20 @@ describe('the vendors a probe reaches beyond the first-party four', () => {
     expect(headers.get('authorization')).toBe(`Bearer ${aKey}`);
   });
 
-  test('an address a person typed is asked instead of any vendor host', async () => {
+  test('an address a person typed is asked where the turn it checks would land', async () => {
     const { sent, fetchLike } = fetchAnswering(200);
 
-    await probeKey(fetchLike, 'https://gateway.example/v1', pastedKeyFor('custom-endpoint'));
+    await probeKey(fetchLike, 'https://gateway.example', pastedKeyFor('custom-endpoint'));
 
-    expect(onlyRequestOf(sent).url).toBe('https://gateway.example/v1/v1/models');
+    expect(onlyRequestOf(sent).url).toBe('https://gateway.example/v1/models');
+  });
+
+  test('the catalog path is appended whole, the way a served turn appends its own', async () => {
+    const { sent, fetchLike } = fetchAnswering(200);
+
+    await probeKey(fetchLike, 'https://gateway.example/openai', pastedKeyFor('custom-endpoint'));
+
+    expect(onlyRequestOf(sent).url).toBe('https://gateway.example/openai/v1/models');
   });
 
   test('a given origin substitutes for the vendor host', async () => {

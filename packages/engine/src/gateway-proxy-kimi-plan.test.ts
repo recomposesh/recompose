@@ -140,6 +140,19 @@ describe('a turn bought by a Kimi plan', () => {
     expect(kept).toHaveLength(1);
   });
 
+  test('the answer a lapsed token drew is closed rather than left in flight', async () => {
+    const lapsed = new Response(new ReadableStream(), { status: 401 });
+    const { app } = planApp([
+      lapsed,
+      Response.json({ access_token: 'fresh-access', refresh_token: 'fresh', expires_in: 900 }),
+      Response.json(anthropicAnswer),
+    ]);
+
+    await askThePlan(app);
+
+    expect(lapsed.bodyUsed || lapsed.body?.locked).toBeTruthy();
+  });
+
   test('the plan credential never reaches Kimi as the bearer itself', async () => {
     const { app, sent } = planApp([Response.json(anthropicAnswer)]);
 

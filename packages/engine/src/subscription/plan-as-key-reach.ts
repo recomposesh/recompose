@@ -75,6 +75,9 @@ function spentAsAKey(grant: ResolvedGrant, spend: PlanSpend, accessToken: string
  * margin can still meet a token the far end has already retired. Renewing once and sending again is
  * what keeps that from reaching a person as a sign-in they already did. A plan the engine does not
  * renew is left alone, because the credential it carries was bought for this turn by the parent.
+ *
+ * The lapsed answer is closed before the retry, because nobody will read it and an unread body
+ * leaves the attempt it opened standing in flight for as long as the app runs.
  */
 function tokenLapsed(answer: Response, spend: PlanSpend): boolean {
   return answer.status === 401 && spend.renewal === 'app' && renewedHere(spend);
@@ -116,6 +119,8 @@ export async function reachPlanAsAKey(
   if (!tokenLapsed(answer, spend)) {
     return answer;
   }
+
+  void answer.body?.cancel().catch(() => undefined);
 
   const renewed = await refreshedAndPersisted(spend, ready.blob, reach.subscriptions);
 

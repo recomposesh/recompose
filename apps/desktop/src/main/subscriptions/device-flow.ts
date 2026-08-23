@@ -91,11 +91,28 @@ const defaultExpirySeconds = 900;
  * is preferred over the bare one, because RFC 8628 leaves a bare page free to offer no way to type
  * the code, and Kimi's answers `missing user_code parameter` to anyone who arrives without it.
  */
+/**
+ * The address a person is sent to, where the vendor named one a browser may be handed.
+ *
+ * @summary The answer is the far end's to write and this app opens what it says, so the scheme is
+ * held to `https` before it reaches the operating system's handler. Electron passes whatever it is
+ * given to whichever program claims the scheme, which turns a vendor's answer into a way to launch
+ * something local.
+ */
+function addressAPersonMayBeSentTo(named: string | undefined): string | undefined {
+  if (named === undefined || !URL.canParse(named)) {
+    return undefined;
+  }
+
+  return new URL(named).protocol === 'https:' ? named : undefined;
+}
+
 function codeShownIn(body: Record<string, unknown>, name: string): DeviceCodeAsked {
   const deviceCode = textAt(body, 'device_code');
   const userCode = textAt(body, 'user_code');
   const verificationUri =
-    textAt(body, 'verification_uri_complete') ?? textAt(body, 'verification_uri');
+    addressAPersonMayBeSentTo(textAt(body, 'verification_uri_complete')) ??
+    addressAPersonMayBeSentTo(textAt(body, 'verification_uri'));
 
   if (deviceCode === undefined || userCode === undefined || verificationUri === undefined) {
     return refused(`${name} answered the device request without a code.`);
