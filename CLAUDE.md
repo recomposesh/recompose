@@ -61,6 +61,7 @@
 ## Testing
 
 - Write tests at every layer of the test pyramid: unit, integration, e2e.
+- **Never run Vitest from the repository root.** There is no root test project, and the root config refuses with the commands that work (`docs/adr/0162-vitest-refuses-to-run-from-the-repository-root.md`). Run `pnpm test` for every package, `pnpm --filter <package> exec vitest run` for one package, and add `--project <name>` for one of the desktop projects.
 - Unit & integration tests: use the `javascript-testing-patterns` skill.
 - Load-bearing derived types (mapped types, schema-inferred types) get type-level specs: `*.test-d.ts` with `expectTypeOf`, run through vitest typecheck. The TDD invariant applies at the type level: a type contract changes if and only if its type spec changes.
 - Vitest work (writing tests, config, mocking, coverage): use the `vitest` skill.
