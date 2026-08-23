@@ -3,7 +3,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import react from '@vitejs/plugin-react';
 import { fumadocsMdx } from 'fumadocs-mdx/vite';
 import { nitro } from 'nitro/vite';
-import { defineConfig, type Plugin } from 'vite';
+import { createLogger, defineConfig, type Plugin } from 'vite';
 
 import {
   changelogVersionPaths,
@@ -30,7 +30,30 @@ function docsMarkdownThroughNitroDev(): Plugin {
   };
 }
 
+/**
+ * A logger that drops one dependency's sourcemap warning and keeps every other one.
+ *
+ * @summary zbsearch publishes sourcemaps naming a `src` tree it never publishes, so every server
+ * render prints one warning per file the search client touches. Pre-bundling it through
+ * `optimizeDeps.include` on the client environment and on the ssr one, and externalizing it, all
+ * leave the nitro environment reading those maps, so the message goes by name. Naming zbsearch
+ * rather than the whole message keeps a broken sourcemap in our own code visible.
+ */
+function loggerWithoutZbsearchSourcemapNoise() {
+  const logger = createLogger();
+  const warnOnce = logger.warnOnce.bind(logger);
+
+  logger.warnOnce = (message, options) => {
+    if (message.includes('zbsearch') && message.includes('points to missing source files')) return;
+
+    warnOnce(message, options);
+  };
+
+  return logger;
+}
+
 export default defineConfig({
+  customLogger: loggerWithoutZbsearchSourcemapNoise(),
   plugins: [
     docsMarkdownThroughNitroDev(),
     fumadocsMdx(),

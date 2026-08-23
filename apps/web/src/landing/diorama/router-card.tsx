@@ -1,4 +1,4 @@
-import { GitFork } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 import { CHAMFER_INNER, CHAMFER_OUTER } from '../chamfer';
 import { Port } from './port';
@@ -6,7 +6,7 @@ import { Port } from './port';
 const PORT_SIDES = ['left', 'right'] as const;
 
 function frameSize(className: string | undefined) {
-  return className ?? 'h-22 w-46';
+  return className ?? 'h-19 w-42';
 }
 
 function frameAnchor(x: number | undefined, y: number | undefined, className: string | undefined) {
@@ -16,13 +16,15 @@ function frameAnchor(x: number | undefined, y: number | undefined, className: st
 export function RouterCard({
   x,
   y,
-  label = 'round-robin',
+  label,
+  glyph: Glyph,
   className,
   ports = true,
 }: {
   x?: number;
   y?: number;
-  label?: string;
+  label: string;
+  glyph: LucideIcon;
   className?: string;
   ports?: boolean;
 }) {
@@ -37,10 +39,10 @@ export function RouterCard({
         <path d={CHAMFER_OUTER} strokeWidth={1.5} className="fill-win-card stroke-router" />
         <path d={CHAMFER_INNER} strokeWidth={1.5} fill="none" className="stroke-router" />
       </svg>
-      <div className="relative flex h-full flex-col justify-center gap-0.5 px-5">
+      <div className="relative flex h-full flex-col justify-center gap-0.5 px-4">
         <span className="flex items-center gap-1.5">
           <span className="flex size-4.25 items-center justify-center rounded bg-router/12">
-            <GitFork className="size-2.75 text-router" />
+            <Glyph className="size-2.75 text-router" />
           </span>
           <span className="text-caption font-medium tracking-wider text-router uppercase">
             Router

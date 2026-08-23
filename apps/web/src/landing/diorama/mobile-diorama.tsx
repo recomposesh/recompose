@@ -1,3 +1,5 @@
+import { Split } from 'lucide-react';
+
 import type { CanvasNode } from './node-card';
 
 import { ClaudeWindow } from './claude-window';
@@ -8,27 +10,27 @@ import { RouterCard } from './router-card';
 
 const COMPACT = 'h-20 w-38 px-2.75';
 
-const FAST: CanvasNode = {
+const SMART: CanvasNode = {
   kind: 'virtual-model',
   kicker: 'virtual model',
-  title: 'fast',
-  mono: 'fast',
+  title: 'smart',
+  mono: 'smart',
   ports: 'none',
 };
 
-const WORK: CanvasNode = {
+const ZAI: CanvasNode = {
   kind: 'subscription',
   kicker: 'subscription',
-  title: 'Claude',
-  prose: 'work@example.com',
+  title: 'Z.ai',
+  prose: 'glm-5-air',
   ports: 'none',
 };
 
-const PERSONAL: CanvasNode = {
-  kind: 'subscription',
-  kicker: 'subscription',
-  title: 'Claude',
-  prose: 'personal@example.com',
+const DEEPSEEK: CanvasNode = {
+  kind: 'api-key',
+  kicker: 'api key',
+  title: 'DeepSeek',
+  prose: 'deepseek-v4',
   ports: 'none',
 };
 
@@ -67,14 +69,15 @@ export function MobileDiorama() {
               ))}
             </svg>
 
-            <NodeCard node={FAST} className={`${COMPACT} inset-s-1/2 top-3.5 -translate-x-1/2`} />
+            <NodeCard node={SMART} className={`${COMPACT} inset-s-1/2 top-3.5 -translate-x-1/2`} />
             <RouterCard
-              label="failover"
+              label="conditional"
+              glyph={Split}
               ports={false}
               className={`${COMPACT} inset-s-1/2 top-29 -translate-x-1/2`}
             />
-            <NodeCard node={WORK} className={`${COMPACT} inset-s-2 top-58`} />
-            <NodeCard node={PERSONAL} className={`${COMPACT} inset-e-2 top-58`} />
+            <NodeCard node={ZAI} className={`${COMPACT} inset-s-2 top-58`} />
+            <NodeCard node={DEEPSEEK} className={`${COMPACT} inset-e-2 top-58`} />
           </div>
         </div>
 

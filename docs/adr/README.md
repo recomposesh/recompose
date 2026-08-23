@@ -175,3 +175,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0167](0167-a-block-no-vendor-will-read-comes-off-the-way-out.md)               | A block no vendor will read comes off on the way out                                | Accepted   | 2026-08-23 |
 | [0168](0168-copilot-answers-on-the-wire-its-own-catalog-names.md)               | Copilot answers on the wire its own catalog names                                   | Accepted   | 2026-08-23 |
 | [0169](0169-a-refusal-that-names-its-own-remedy-earns-one-more-turn.md)         | A refusal that names its own remedy earns one more turn                             | Accepted   | 2026-08-23 |
+| [0170](0170-one-dependencys-sourcemap-warning-goes-by-name.md)                  | One dependency's sourcemap warning goes by name                                     | Accepted   | 2026-08-23 |
