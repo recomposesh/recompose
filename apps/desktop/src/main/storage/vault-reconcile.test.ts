@@ -66,6 +66,50 @@ describe('a vault entry nothing reaches', () => {
   });
 });
 
+/** A row holding a read-only credential beside the one it spends, which OpenRouter rows can. */
+function aRowHoldingBothKeys(): AccountsDocument {
+  return {
+    schemaVersion: ACCOUNTS_VERSION,
+    accounts: [
+      {
+        id: 'acc-router',
+        provider: 'openrouter',
+        kind: 'aggregator',
+        label: 'Router',
+        credentialRef: 'c-served',
+        readerCredentialRef: 'read-balance',
+      },
+    ],
+  };
+}
+
+describe('the second entry a row reaches for reading a balance', () => {
+  test('a reader entry the row still names survives the sweep', () => {
+    const settled = reconciledVault(
+      vaultHolding(['c-served', 'read-balance']),
+      aRowHoldingBothKeys(),
+    );
+
+    expect(settled.swept).toEqual([]);
+    expect(Object.keys(settled.vault.entries)).toEqual(['c-served', 'read-balance']);
+  });
+
+  test('a reader entry no row names any more is swept like any other orphan', () => {
+    const settled = reconciledVault(
+      vaultHolding(['c-1', 'read-forgotten']),
+      accountsHolding(['c-1']),
+    );
+
+    expect(settled.swept).toEqual(['read-forgotten']);
+  });
+
+  test('a row whose reader entry is gone is not dangling, because the account still serves', () => {
+    const settled = reconciledVault(vaultHolding(['c-served']), aRowHoldingBothKeys());
+
+    expect(settled.dangling).toEqual([]);
+  });
+});
+
 describe('an account whose credential is gone', () => {
   test('the account is named, so somebody can be told which one stopped working', () => {
     const settled = reconciledVault(vaultHolding([]), accountsHolding(['c-missing']));

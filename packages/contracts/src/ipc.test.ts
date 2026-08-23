@@ -13,6 +13,8 @@ const channelNames: IpcChannel[] = [
   'accounts:connect',
   'accounts:remove',
   'accounts:check-key',
+  'accounts:set-reader-key',
+  'accounts:clear-reader-key',
   'system:get',
   'system:open-config-folder',
   'system:window-band',

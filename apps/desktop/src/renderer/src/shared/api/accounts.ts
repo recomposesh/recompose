@@ -132,6 +132,37 @@ export function useVerifyKey() {
   return useMutation({ mutationFn: verifyStoredKey });
 }
 
+/**
+ * Stores or replaces the read-only key one account holds beside the key it spends.
+ *
+ * @summary It invalidates the registry the way a connect does, because the row draws whether a
+ * reader key stands there, and the balance card behind it reads a different answer the moment one
+ * lands.
+ */
+export function useSetReaderKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: IpcRequest<'accounts:set-reader-key'>) =>
+      unwrapIpcResult(await window.recompose['accounts:set-reader-key'](request)),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+  });
+}
+
+export function useClearReaderKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: IpcRequest<'accounts:clear-reader-key'>) =>
+      unwrapIpcResult(await window.recompose['accounts:clear-reader-key'](request)),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+  });
+}
+
 export function useRemoveAccount() {
   const queryClient = useQueryClient();
 

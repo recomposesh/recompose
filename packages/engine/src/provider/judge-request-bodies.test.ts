@@ -17,7 +17,7 @@ const TAIL = '<request>\nrename this function\n</request>';
 
 const ENUM_SCHEMA = {
   type: 'object',
-  properties: { branch: { type: 'string', enum: ['code', 'chat'] } },
+  properties: { branch: { type: 'string', enum: ['code', 'chat', 'none'] } },
   required: ['branch'],
   additionalProperties: false,
 };
@@ -75,7 +75,7 @@ describe('the whole request the two dialects with their own answer modes send', 
       systemInstruction: { parts: [{ text: INSTRUCTIONS }] },
       generationConfig: {
         responseMimeType: 'text/x.enum',
-        responseSchema: { type: 'STRING', enum: ['code', 'chat'] },
+        responseSchema: { type: 'STRING', enum: ['code', 'chat', 'none'] },
       },
     });
   });
@@ -107,7 +107,7 @@ describe('the words the enum offers a judge', () => {
 
     expect(body['generationConfig']).toEqual({
       responseMimeType: 'text/x.enum',
-      responseSchema: { type: 'STRING', enum: ['code'] },
+      responseSchema: { type: 'STRING', enum: ['code', 'none'] },
     });
   });
 });

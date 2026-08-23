@@ -17,13 +17,30 @@ function credentialRefOf(account: Account): string | undefined {
   return 'credentialRef' in account ? account.credentialRef : undefined;
 }
 
+/**
+ * Every vault entry one account reaches, which is what a sweep and a removal both ask for.
+ *
+ * @summary A credentialed row can hold a read-only credential beside the one it spends, so the
+ * answer is a list rather than a single ref. Both callers read it here so a row that grows a third
+ * reference can never be swept by one and released by the other.
+ */
+export function vaultRefsOf(account: Account): readonly string[] {
+  const ref = credentialRefOf(account);
+
+  if (ref === undefined) {
+    return [];
+  }
+
+  const reader = 'readerCredentialRef' in account ? account.readerCredentialRef : undefined;
+
+  return reader === undefined ? [ref] : [ref, reader];
+}
+
 function refsReached(accounts: AccountsDocument): Set<string> {
   const reached = new Set<string>();
 
   for (const account of accounts.accounts) {
-    const ref = credentialRefOf(account);
-
-    if (ref !== undefined) {
+    for (const ref of vaultRefsOf(account)) {
       reached.add(ref);
     }
   }

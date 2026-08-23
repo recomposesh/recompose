@@ -157,7 +157,7 @@
   --spacing-sheet-row: 38px;
   --spacing-sheet-field: 170px;
   --spacing-sheet-port: 74px;
-  --spacing-sheet-secret: 288px;
+  --spacing-sheet-secret: 252px;
   --spacing-menu-row: 28px;
   --spacing-toolbar: 54px;
   --spacing-window-controls: 36px;
@@ -289,6 +289,20 @@
   &:active {
     background-color: var(--color-surface-raised-pressed);
   }
+}
+
+@utility meter-track-ticks {
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--color-line-faint) 0 3px,
+    transparent 3px 5px
+  );
+}
+
+@utility plan-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--spacing) * 56), 1fr));
 }
 
 @utility sidebar-slot {

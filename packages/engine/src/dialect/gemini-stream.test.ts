@@ -33,10 +33,8 @@ describe('Gemini stream decoding', () => {
       { type: 'message-begin', usage: { inputTokens: 3, totalInputTokens: 3 } },
       { type: 'block-open', index: 0, opening: { kind: 'text' } },
       { type: 'block-delta', index: 0, delta: { kind: 'text', text: 'hel' } },
+      { type: 'block-delta', index: 0, delta: { kind: 'text', text: 'lo' } },
       { type: 'block-close', index: 0 },
-      { type: 'block-open', index: 1, opening: { kind: 'text' } },
-      { type: 'block-delta', index: 1, delta: { kind: 'text', text: 'lo' } },
-      { type: 'block-close', index: 1 },
       {
         type: 'message-end',
         stopReason: 'max_output',

@@ -69,8 +69,23 @@ function succeedingSubscriptions(): SubscriptionChannels {
   };
 }
 
+const refusingAccounts = {
+  'accounts:list': refuses,
+  'accounts:connect': refuses,
+  'accounts:remove': refuses,
+  'accounts:set-reader-key': refuses,
+  'accounts:clear-reader-key': refuses,
+  'accounts:check-key': refuses,
+  'accounts:connect-local': refuses,
+  'accounts:detect-runtime': refuses,
+  'accounts:check-runtime': refuses,
+  'accounts:move-runtime': refuses,
+  'accounts:list-models': refuses,
+} satisfies Pick<IpcHandlers, `accounts:${string}` & keyof IpcHandlers>;
+
 export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
   return {
+    ...refusingAccounts,
     'gateways:list': refuses,
     'gateways:save': refuses,
     'gateways:update': refuses,
@@ -78,15 +93,6 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'gateways:set-port': refuses,
     'settings:get': refuses,
     'settings:save': refuses,
-    'accounts:list': refuses,
-    'accounts:connect': refuses,
-    'accounts:remove': refuses,
-    'accounts:check-key': refuses,
-    'accounts:connect-local': refuses,
-    'accounts:detect-runtime': refuses,
-    'accounts:check-runtime': refuses,
-    'accounts:move-runtime': refuses,
-    'accounts:list-models': refuses,
     'system:get': refuses,
     'system:open-config-folder': refuses,
     'system:window-band': refuses,
@@ -140,6 +146,8 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
     'accounts:list': theseAccounts,
     'accounts:connect': theseAccounts,
     'accounts:remove': theseAccounts,
+    'accounts:set-reader-key': theseAccounts,
+    'accounts:clear-reader-key': theseAccounts,
     'accounts:connect-local': theseAccounts,
     'accounts:check-key': async () =>
       Promise.resolve({ ok: true, value: { verdict: 'could-not-check' as const } }),

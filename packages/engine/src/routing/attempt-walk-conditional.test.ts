@@ -176,6 +176,18 @@ describe('the one classification a walk spends, however many children it tries',
   });
 });
 
+describe('the word a judge declines a request with', () => {
+  test('a request fitting no branch reaches else on one ask, not on a second', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'none' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
+
+    const walk = await gateway.send();
+
+    expect(judge.asked).toEqual([JUDGE]);
+    expect(walk.attempted).toEqual(['catchall']);
+  });
+});
+
 describe('the second ask a conditional router spends is the one that settles it', () => {
   test('a second answer naming no branch settles on else, since the judge did classify', async () => {
     const judge = aJudgeAnswering(

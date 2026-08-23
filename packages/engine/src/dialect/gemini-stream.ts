@@ -1,3 +1,4 @@
+import type { GeminiRunState } from './gemini-stream-runs';
 import type { GeminiPart, GeminiResponse } from './gemini-wire';
 import type { HubBlockDelta, HubBlockOpening, HubContentBlock, HubStreamEvent } from './hub';
 
@@ -12,6 +13,13 @@ import {
   geminiStopReason,
   geminiUsage,
 } from './gemini-response';
+import {
+  closedRun,
+  continuedRun,
+  endsTheRun,
+  openedRun,
+  producesBlock,
+} from './gemini-stream-runs';
 import { geminiThinkingOpening } from './gemini-thinking-opening';
 import { geminiClaudeToolUseId } from './gemini-tool-provenance';
 import {
@@ -25,7 +33,7 @@ function openingOf(
   index: number,
   claudeProvenance: boolean,
   preserveTextSignatures: boolean,
-): HubBlockOpening | null {
+): HubBlockOpening {
   const server = geminiWebSearchOpening(part);
 
   if (server !== null) return server;
@@ -33,10 +41,6 @@ function openingOf(
   const call = callOpening(part, index, claudeProvenance);
 
   if (call !== null) return call;
-
-  if (part.text === undefined) {
-    return null;
-  }
 
   return part.thought === true
     ? geminiThinkingOpening(part)
@@ -120,7 +124,7 @@ function deltasOf(part: GeminiPart): HubBlockDelta[] {
 
 function* blockEvents(
   part: GeminiPart,
-  index: number,
+  state: GeminiRunState,
   claudeProvenance: boolean,
   preserveTextSignatures: boolean,
 ): Iterable<HubStreamEvent> {
@@ -132,19 +136,26 @@ function* blockEvents(
     return;
   }
 
-  const opening = openingOf(part, index, claudeProvenance, preserveTextSignatures);
+  if (!producesBlock(part)) {
+    if (endsTheRun(part)) yield* closedRun(state);
 
-  if (opening === null) {
     return;
   }
 
-  yield { type: 'block-open', index, opening };
+  const deltas = deltasOf(part);
+  const continued = continuedRun(state, part, deltas);
 
-  for (const delta of deltasOf(part)) {
-    yield { type: 'block-delta', index, delta };
+  if (continued !== null) {
+    yield* continued;
+
+    return;
   }
 
-  yield { type: 'block-close', index };
+  yield* closedRun(state);
+
+  const opening = openingOf(part, state.nextIndex, claudeProvenance, preserveTextSignatures);
+
+  yield* openedRun(state, part, opening, deltas);
 }
 
 function isStreamMedia(
@@ -179,24 +190,18 @@ function* beginning(began: boolean, response: GeminiResponse): Iterable<HubStrea
 
 function chunkEvents(
   response: GeminiResponse,
-  firstIndex: number,
+  state: GeminiRunState,
   claudeProvenance: boolean,
   toolSeen: boolean,
   preserveTextSignatures: boolean,
 ) {
-  const folded = foldedParts(
-    response,
-    firstIndex,
-    claudeProvenance,
-    toolSeen,
-    preserveTextSignatures,
-  );
+  const folded = foldedParts(response, state, claudeProvenance, toolSeen, preserveTextSignatures);
   const events = folded.events;
 
   const finish = geminiFinishReason(response);
 
   if (finish !== undefined) {
-    events.push({
+    events.push(...closedRun(state), {
       type: 'message-end',
       stopReason: folded.sawTool ? 'tool_use' : geminiStopReason(finish),
       usage: geminiUsage(geminiResponseUsage(response)),
@@ -204,27 +209,25 @@ function chunkEvents(
     });
   }
 
-  return { events, nextIndex: folded.nextIndex, sawTool: folded.sawTool };
+  return { events, sawTool: folded.sawTool };
 }
 
 function foldedParts(
   response: GeminiResponse,
-  firstIndex: number,
+  state: GeminiRunState,
   claudeProvenance: boolean,
   toolSeen: boolean,
   preserveTextSignatures: boolean,
 ) {
   const events: HubStreamEvent[] = [];
-  let nextIndex = firstIndex;
   let sawTool = toolSeen;
 
   for (const part of partsIn(response)) {
-    events.push(...blockEvents(part, nextIndex, claudeProvenance, preserveTextSignatures));
+    events.push(...blockEvents(part, state, claudeProvenance, preserveTextSignatures));
     if (part.functionCall !== undefined) sawTool = true;
-    nextIndex += 1;
   }
 
-  return { events, nextIndex, sawTool };
+  return { events, sawTool };
 }
 
 export async function* decodeStream(
@@ -235,7 +238,7 @@ export async function* decodeStream(
   const lifecycle: StreamLifecycle = {
     began: false,
     ended: false,
-    index: 0,
+    runs: { nextIndex: 0 },
     sawTool: false,
     usage: {},
   };
@@ -250,13 +253,14 @@ export async function* decodeStream(
 function* unfinishedTerminal(lifecycle: StreamLifecycle): Iterable<HubStreamEvent> {
   if (!lifecycle.began || lifecycle.ended) return;
 
+  yield* closedRun(lifecycle.runs);
   yield { type: 'message-end', stopReason: 'end', usage: lifecycle.usage };
 }
 
 type StreamLifecycle = {
   began: boolean;
   ended: boolean;
-  index: number;
+  runs: GeminiRunState;
   sawTool: boolean;
   usage: ReturnType<typeof geminiUsage>;
 };
@@ -276,7 +280,7 @@ function decodedChunk(
   const events = [...beginning(lifecycle.began, response)];
   const chunk = chunkEvents(
     response,
-    lifecycle.index,
+    lifecycle.runs,
     claudeProvenance,
     lifecycle.sawTool,
     preserveTextSignatures,
@@ -284,7 +288,6 @@ function decodedChunk(
 
   events.push(...chunk.events);
   lifecycle.began = true;
-  lifecycle.index = chunk.nextIndex;
   lifecycle.sawTool = chunk.sawTool;
   lifecycle.ended = chunk.events.some((event) => event.type === 'message-end');
 

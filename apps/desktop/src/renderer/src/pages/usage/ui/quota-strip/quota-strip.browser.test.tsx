@@ -59,45 +59,64 @@ async function mounted(
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
 
-test('a burn draws against the record, which the gauge hands to assistive tech exactly', async () => {
+test('a burn nobody set a limit for leads with its count and hands over no meter at all', async () => {
   const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
 
-  const gauge = screen.getByRole('meter', { name: 'Claude · Claude Max 5-hour window burn' });
-
-  await expect.element(screen.getByText('1.2M')).toBeVisible();
-  expect(gauge.element().getAttribute('aria-valuenow')).toBe('0.48');
-  expect(gauge.element().getAttribute('aria-valuetext')).toBe('48%');
+  await expect.element(screen.getByText('1.2M sent')).toBeVisible();
+  expect(screen.container.querySelectorAll('[role="meter"]')).toHaveLength(0);
 });
 
-test('the strip names local logs as its source and claims no official quota', async () => {
+test('the strip names both derivations, so no figure reads as the other', async () => {
   const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
 
   await expect
-    .element(screen.getByText(/this machine's own logs, on UTC hour boundaries/))
+    .element(screen.getByText(/The share each vendor reports for its own plan/))
     .toBeVisible();
-  await expect.element(screen.getByText(/Not an official quota/)).toBeVisible();
+  await expect.element(screen.getByText(/falls back on this machine's own logs/)).toBeVisible();
 });
 
-test('the record prints its figure and day beside the gauge it marks', async () => {
+test('the record prints its figure and the day it was set', async () => {
   const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
 
   await expect.element(screen.getByText('Record 2.0M on Aug 3')).toBeVisible();
 });
 
-test('the five-hour window carries an approximate countdown to its close', async () => {
+test('a window nobody but this machine measured names the hour it resets, marked approximate', async () => {
   const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
 
-  await expect.element(screen.getByText(/Closes in ≈2h 1[34]m/)).toBeVisible();
+  await expect.element(screen.getByText(/^Resets .*~\d{1,2}:\d{2} [AP]M$/)).toBeVisible();
 });
 
-test('the weekly window shows its burn with no countdown beside it', async () => {
+test('a window the vendor measured prints the share of the plan the vendor says is spent', async () => {
+  const now = Date.now();
+  const measured: readonly QuotaWindow[] = [
+    {
+      accountId: 'work',
+      provider: 'anthropic',
+      length: '5h',
+      openedAt: now - AN_HOUR,
+      closesAt: now + AN_HOUR,
+      burnTokens: 1_200_000,
+      reported: { spentShare: 0.23, readAt: now, resetsAt: now + 2 * AN_HOUR },
+    },
+  ];
+
+  const screen = await mounted(<QuotaStrip />, measured);
+  const gauge = screen.getByRole('meter', { name: 'Claude · Claude Max Current session' });
+
+  await expect.element(screen.getByText('23% used')).toBeVisible();
+  await expect.element(screen.getByText('1.2M through this machine')).toBeVisible();
+  await expect.element(screen.getByText(/^Resets .*\d{1,2}:\d{2} [AP]M$/)).toBeVisible();
+  expect(gauge.element().getAttribute('aria-valuenow')).toBe('0.23');
+});
+
+test('the weekly window shows its burn with no reset beside it', async () => {
   const screen = await mounted(<QuotaStrip />, windowsFor(Date.now()));
 
-  await expect.element(screen.getByText('8.4M')).toBeVisible();
-  expect(screen.container.textContent).not.toContain('Weekly window burn closes');
+  await expect.element(screen.getByText('8.4M sent')).toBeVisible();
 });
 
-test('a window that matched the record says so rather than reading as exhausted', async () => {
+test('a window that matched the record says so rather than drawing a bar at its end', async () => {
   const now = Date.now();
   const matched: readonly QuotaWindow[] = [
     {
@@ -112,10 +131,9 @@ test('a window that matched the record says so rather than reading as exhausted'
   ];
 
   const screen = await mounted(<QuotaStrip />, matched);
-  const gauge = screen.getByRole('meter', { name: 'Claude · Claude Max 5-hour window burn' });
 
   await expect.element(screen.getByText('Busiest window on record')).toBeVisible();
-  expect(Number(gauge.element().getAttribute('aria-valuenow'))).toBeLessThan(1);
+  expect(screen.container.querySelectorAll('[role="meter"]')).toHaveLength(0);
 });
 
 test('the card heads with the plan product and keeps the address beneath it', async () => {
@@ -161,17 +179,13 @@ test('two plans on one address read apart by their plan products', async () => {
 
   const screen = await mounted(<QuotaStrip />, bothBurning, oneAddress);
 
-  await expect
-    .element(screen.getByRole('meter', { name: 'Claude · dev@example.com 5-hour window burn' }))
-    .toBeInTheDocument();
-  await expect
-    .element(screen.getByRole('meter', { name: 'Codex · dev@example.com 5-hour window burn' }))
-    .toBeInTheDocument();
+  await expect.element(screen.getByText('Claude', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Codex', { exact: true })).toBeVisible();
   expect(screen.getByText('dev@example.com').elements()).toHaveLength(2);
 });
 
 test('an account nothing has been logged for keeps the strip off the screen entirely', async () => {
   const screen = await mounted(<QuotaStrip />, []);
 
-  await expect.element(screen.getByText('Quota windows')).not.toBeInTheDocument();
+  await expect.element(screen.getByText('Plan usage limits')).not.toBeInTheDocument();
 });

@@ -2,9 +2,29 @@ import { describe, expectTypeOf, test } from 'vitest';
 
 import type { IpcChannel, IpcEvent } from './index';
 
+type AccountChannel =
+  | 'accounts:list'
+  | 'accounts:connect'
+  | 'accounts:remove'
+  | 'accounts:check-key'
+  | 'accounts:set-reader-key'
+  | 'accounts:clear-reader-key'
+  | 'accounts:connect-local'
+  | 'accounts:detect-runtime'
+  | 'accounts:check-runtime'
+  | 'accounts:move-runtime'
+  | 'accounts:list-models';
+
+describe('the account channel vocabulary', () => {
+  test('every channel an account travels is exactly these, so an unlisted one arrives red', () => {
+    expectTypeOf<Extract<IpcChannel, `accounts:${string}`>>().toEqualTypeOf<AccountChannel>();
+  });
+});
+
 describe('the channel vocabulary', () => {
   test('the surface is exactly these channels, so an unlisted one arrives red', () => {
     expectTypeOf<IpcChannel>().toEqualTypeOf<
+      | AccountChannel
       | 'gateways:list'
       | 'gateways:save'
       | 'gateways:update'
@@ -14,15 +34,6 @@ describe('the channel vocabulary', () => {
       | 'gateways:move-port'
       | 'settings:get'
       | 'settings:save'
-      | 'accounts:list'
-      | 'accounts:connect'
-      | 'accounts:remove'
-      | 'accounts:check-key'
-      | 'accounts:connect-local'
-      | 'accounts:detect-runtime'
-      | 'accounts:check-runtime'
-      | 'accounts:move-runtime'
-      | 'accounts:list-models'
       | 'system:get'
       | 'system:open-config-folder'
       | 'system:window-band'

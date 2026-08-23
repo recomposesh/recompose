@@ -2,7 +2,9 @@ import { Checkbox } from '@base-ui/react/checkbox';
 import { Popover } from '@base-ui/react/popover';
 import { useState } from 'react';
 
-import { Icon } from '../../../../shared/ui';
+import type { BrandMarkName } from '../../../../shared/ui';
+
+import { Icon, VendorMark } from '../../../../shared/ui';
 
 export type FilterMember = {
   /** The value the filter carries for this member. */
@@ -11,6 +13,21 @@ export type FilterMember = {
   name: string;
   /** What the member served in the standing window. */
   requests: number;
+  /**
+   * What tells this member apart from one sharing its name, absent where the name stands alone.
+   *
+   * @summary A person may file every account under one address, and a list of identical names is a
+   * list of nothing. The detail is what the row falls back on to say which one is which.
+   */
+  detail?: string | undefined;
+  /**
+   * The vendor drawing the row leads with, absent where the member stands for no vendor at all.
+   *
+   * @summary Present with no mark inside it still leads with a drawing, because a vendor recompose
+   * holds no logo for is still a vendor. Absent leads with nothing, which is what a gateway wants:
+   * a gateway is not a vendor, so a vendor stand-in beside it would name the wrong kind of thing.
+   */
+  lead?: { mark: BrandMarkName | undefined } | undefined;
 };
 
 type FilterMenuProps = {
@@ -37,7 +54,7 @@ function memberRow(member: FilterMember, selected: readonly string[], onPick: Me
 
   return (
     <Checkbox.Root
-      aria-label={member.name}
+      aria-label={member.detail === undefined ? member.name : `${member.name}, ${member.detail}`}
       checked={checked}
       className={`flex w-full items-center gap-2.25 px-2.5 py-1.5 text-start text-detail text-ink focus-ring-wide row-hover ${checked ? 'bg-surface-selected' : ''}`}
       key={member.key}
@@ -50,10 +67,16 @@ function memberRow(member: FilterMember, selected: readonly string[], onPick: Me
           <Icon className="size-2.5" name="check" />
         </Checkbox.Indicator>
       </span>
-      <span aria-hidden className="flex-1 truncate">
-        {member.name}
+      {member.lead === undefined ? null : (
+        <VendorMark className="size-4 shrink-0" name={member.lead.mark} />
+      )}
+      <span aria-hidden className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate">{member.name}</span>
+        {member.detail === undefined ? null : (
+          <span className="truncate text-caption text-ink-secondary">{member.detail}</span>
+        )}
       </span>
-      <span className="font-mono text-mono-caption text-ink-secondary tabular-nums">
+      <span className="shrink-0 font-mono text-mono-caption text-ink-secondary tabular-nums">
         {member.requests.toLocaleString('en-US')}
       </span>
     </Checkbox.Root>
@@ -154,8 +177,9 @@ export function FilterMenu({
 }: FilterMenuProps) {
   const [sought, setSought] = useState('');
   const total = new Set([...members.map((member) => member.key), ...selected]).size;
+  const looking = sought.trim().toLowerCase();
   const listed = members.filter((member) =>
-    member.name.toLowerCase().includes(sought.trim().toLowerCase()),
+    `${member.name} ${member.detail ?? ''}`.toLowerCase().includes(looking),
   );
   const missing = members.length === 0 ? 'in this window' : 'by that name';
 

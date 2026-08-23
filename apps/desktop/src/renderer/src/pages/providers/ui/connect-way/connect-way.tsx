@@ -25,6 +25,8 @@ type ConnectWayProps = {
   provider: SubscriptionProviderId;
   toolName: string;
   command: string;
+  /** What a person still has to do inside the tool once it opens, where anything remains. */
+  signInHint: string | undefined;
   /** What spending this plan through the tool means, which only an empty machine has to read. */
   terms: ReactNode;
   onConnected: () => void;
@@ -39,6 +41,7 @@ type Arm = {
   waiting: boolean;
   refusal: string | undefined;
   launchNote: string | undefined;
+  signInHint: string | undefined;
 };
 
 type EmptyArm = Arm & {
@@ -138,6 +141,7 @@ function emptyMachineArm(arm: EmptyArm): ReactElement {
     onSignIn,
     reading,
     refusal,
+    signInHint,
     terms,
     toolName,
     waiting,
@@ -149,7 +153,12 @@ function emptyMachineArm(arm: EmptyArm): ReactElement {
         {terms}
       </PickedIdentity>
       {waiting ? (
-        <WaitingOnTheTool command={command} note={launchNote} toolName={toolName} />
+        <WaitingOnTheTool
+          command={command}
+          hint={signInHint}
+          note={launchNote}
+          toolName={toolName}
+        />
       ) : (
         <>
           {nothingToAdopt(reading, toolName, onAskAgain)}
@@ -168,7 +177,12 @@ function foundAccountArm(arm: FoundArm): ReactElement {
         <p className="text-detail text-ink-secondary">Pick the account this gateway spends.</p>
       </PickedIdentity>
       {arm.waiting ? (
-        <WaitingOnTheTool command={arm.command} note={arm.launchNote} toolName={arm.toolName} />
+        <WaitingOnTheTool
+          command={arm.command}
+          hint={arm.signInHint}
+          note={arm.launchNote}
+          toolName={arm.toolName}
+        />
       ) : (
         twoWaysIn(arm)
       )}
@@ -192,6 +206,7 @@ export function ConnectWay({
   provider,
   toolName,
   command,
+  signInHint,
   terms,
   onConnected,
 }: ConnectWayProps) {
@@ -210,6 +225,7 @@ export function ConnectWay({
   const standing = {
     command,
     launchNote: signIn.isPending ? launch.note : undefined,
+    signInHint,
     lead,
     onSignIn,
     toolName,

@@ -3,7 +3,7 @@ title: 'Request log'
 description: 'Every served request, one line each, scoped by what you select.'
 ---
 
-The request log is a drawer under the canvas on a gateway's detail page. Open it with the **Request log** button on the toolbar, or with **Gateway → Show Logs**, Cmd+Shift+L on macOS and Ctrl+Shift+L elsewhere. Drag its top edge to resize it.
+The request log is a drawer under the canvas on a gateway's detail page. Open it with the **Request log** button on the toolbar, or with **Gateway → Show Logs**, Control+` on every platform. Drag its top edge to resize it.
 
 ## Reading the drawer
 
@@ -11,14 +11,18 @@ The header names what you're looking at, as `Logs for My gateway` plus the subje
 
 ## Reading a row
 
-Each row is one request, newest at the bottom, and shows in order:
+A head above the run names the columns and holds still while the rows scroll. Each row is one request, newest at the top, and shows in order:
 
-1. The time, as `HH:MM:SS`
-2. The HTTP method
-3. The model journey, as `virtual model → provider model`
-4. The provider and the account that answered
-5. The status code, painted danger red at 400 and above, attention amber on 429
-6. The duration, as seconds with one decimal, such as `2.3s`
+1. **Time**, as `HH:MM:SS`
+2. **Method**, the HTTP method
+3. **Model**, the journey as `virtual model → provider model`
+4. **Provider**, what answered
+5. **Account**, which account it answered through
+6. **Status**, the status code, painted danger red at 400 and above, attention amber on 429
+7. **Took**, the duration as seconds with one decimal, such as `2.3s`
+8. **Detail**, the sentence a failed request came to, empty on a served one
+
+A narrow drawer drops columns rather than clipping every one of them: the account goes first, then the provider, the method, and the duration.
 
 A request still in flight shows the word `live` in place of a status and its duration ticks upward. A request the gateway refused before trying any provider shows empty provider cells and no duration: nothing upstream ever ran.
 

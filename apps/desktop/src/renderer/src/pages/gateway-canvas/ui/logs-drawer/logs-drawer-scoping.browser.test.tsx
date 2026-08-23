@@ -3,6 +3,7 @@ import { userEvent } from 'vitest/browser';
 
 import {
   cursorRefIn,
+  drawerHeader,
   drawerOn,
   focusTheList,
   freshDrawer,
@@ -75,7 +76,7 @@ test('a selected target reads the account name and target type', async () => {
   });
 
   await expect.element(screen.getByText('Logs for openrouter')).toBeVisible();
-  await expect.element(screen.getByText('Provider', { exact: true })).toBeVisible();
+  await expect.element(drawerHeader(screen).getByText('Provider', { exact: true })).toBeVisible();
   expect(listed(screen.container)).toHaveLength(2);
   expect(listed(screen.container).join(' ')).not.toContain('anthropic');
 });

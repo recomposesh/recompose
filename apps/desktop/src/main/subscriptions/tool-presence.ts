@@ -89,7 +89,7 @@ async function reportTool(
   provider: ToolBackedProviderId,
   request: ToolReportRequest,
 ): Promise<SubscriptionTool> {
-  const { toolBinary, toolName } = subscriptionProviders[provider];
+  const { toolBinary, toolName, signInHint } = subscriptionProviders[provider];
 
   return {
     provider,
@@ -105,6 +105,7 @@ async function reportTool(
       pointer: request.homes.activePointerFor(provider),
       platform: request.platform,
     }),
+    ...(signInHint === undefined ? {} : { signInHint }),
   };
 }
 

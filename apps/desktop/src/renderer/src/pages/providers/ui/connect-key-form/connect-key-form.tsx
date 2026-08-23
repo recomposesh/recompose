@@ -14,6 +14,7 @@ import {
   keyShapeHintFor,
   keyTitleFor,
   providerName,
+  readerKeyAskFor,
 } from '../../model/provider-catalog';
 import { ConnectStep } from '../connect-step/connect-step';
 import { SheetField } from '../sheet-field/sheet-field';
@@ -101,9 +102,19 @@ function useKeyDraftForm(
   onConnected: () => void,
 ) {
   return useForm({
-    defaultValues: { label: '', secret: '' },
+    defaultValues: { label: '', secret: '', readerSecret: '' },
     onSubmit: ({ value }) => {
-      connect.mutate({ provider, kind, ...value }, { onSuccess: onConnected });
+      const { readerSecret, ...stored } = value;
+
+      connect.mutate(
+        {
+          provider,
+          kind,
+          ...stored,
+          ...(readerSecret.trim() === '' ? {} : { readerSecret }),
+        },
+        { onSuccess: onConnected },
+      );
     },
   });
 }
@@ -134,7 +145,38 @@ function keyFields(form: KeyDraftForm, provider: string): ReactNode {
           />
         )}
       </form.Field>
+      {readerKeyField(form, provider)}
     </>
+  );
+}
+
+/**
+ * The second key a provider wants before it will report a balance, asked for beside the first.
+ *
+ * @summary It stands in the same step rather than behind a later one, because a person holding
+ * both keys is holding them now. Leaving it empty stores nothing and costs nothing: the account
+ * serves requests either way, and only the balance card reads it.
+ */
+function readerKeyField(form: KeyDraftForm, provider: string): ReactNode {
+  const ask = readerKeyAskFor(provider);
+
+  if (ask === undefined) {
+    return null;
+  }
+
+  return (
+    <form.Field name="readerSecret">
+      {(field) => (
+        <SheetField
+          label={ask.label}
+          note={ask.note}
+          onChangeValue={field.handleChange}
+          placeholder={ask.hint}
+          type="password"
+          value={field.state.value}
+        />
+      )}
+    </form.Field>
   );
 }
 

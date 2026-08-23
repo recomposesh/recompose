@@ -3,11 +3,13 @@ import type { AccountsDocument, CredentialedAccount, IpcRequest } from '@recompo
 import { keyTail } from '@recompose/contracts';
 import { randomUUID } from 'node:crypto';
 
+import type { SecretCodec } from '../storage/safe-storage-codec';
 import type { StorageIpcContext, StoragePaths } from './storage-context';
 
 import { amendAccountsFile, loadAccountsFile } from '../storage/accounts-store';
 import { saveVaultFile, setSecret, type VaultDocument } from '../storage/vault';
 import { openVaultForWrite } from './open-vault';
+import { readerRef } from './reader-credential';
 import { ipcFailure, storageFailure } from './storage-envelope';
 
 type ConnectRequest = IpcRequest<'accounts:connect'>;
@@ -39,28 +41,56 @@ async function refuseHeldName(
   );
 }
 
+type MintedCredentials = {
+  vault: VaultDocument;
+  refs: { credentialRef: string; readerCredentialRef?: string };
+};
+
+/**
+ * Both keys a connect can carry, each sealed under a reference of its own.
+ *
+ * @summary The reader key takes a second reference rather than sharing the first, because the two
+ * keys are replaced on their own schedules and one reference could only ever hold one of them.
+ */
+function mintedInto(
+  vault: VaultDocument,
+  codec: SecretCodec,
+  request: ConnectRequest,
+): MintedCredentials {
+  const credentialRef = `cred-${randomUUID()}`;
+  const withServed = setSecret(vault, codec, credentialRef, request.secret);
+
+  if (request.readerSecret === undefined) {
+    return { vault: withServed, refs: { credentialRef } };
+  }
+
+  const readerCredentialRef = readerRef();
+
+  return {
+    vault: setSecret(withServed, codec, readerCredentialRef, request.readerSecret),
+    refs: { credentialRef, readerCredentialRef },
+  };
+}
+
 async function storeConnectedAccount(
   ctx: StorageIpcContext,
   paths: StoragePaths,
   request: ConnectRequest,
   vault: VaultDocument,
 ) {
-  const credentialRef = `cred-${randomUUID()}`;
+  const minted = mintedInto(vault, ctx.getCodec(), request);
   const tail = keyTail(request.secret);
   const account = {
     id: `acc-${randomUUID()}`,
     provider: request.provider,
     kind: request.kind,
     label: request.label,
-    credentialRef,
+    ...minted.refs,
     ...(tail === undefined ? {} : { keyTail: tail }),
     ...(request.endpoint === undefined ? {} : { endpoint: request.endpoint }),
   };
 
-  await saveVaultFile(
-    paths.vaultFile,
-    setSecret(vault, ctx.getCodec(), credentialRef, request.secret),
-  );
+  await saveVaultFile(paths.vaultFile, minted.vault);
 
   return amendAccountsFile(paths.accountsFile, ctx.onCorrupt, (accounts) => ({
     ...accounts,

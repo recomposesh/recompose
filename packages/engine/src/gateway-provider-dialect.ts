@@ -10,8 +10,9 @@ import { credentialedDialect } from './provider/credentialed-target';
  * @summary Each plan answers the dialect its own tool speaks, so the dialect follows the plan
  * rather than the caller, with two exceptions. Kimi serves both dialects and follows the caller
  * whether the credential is a plan token or a pasted key, so it answers from the one table that
- * already knows that. Copilot serves the OpenAI-compatible dialect and only that, so it says so
- * here rather than falling through to the Responses dialect Codex speaks.
+ * already knows that. Copilot serves three wires and names per model which of them answers, so the
+ * completions dialect here is only what a turn falls back to: the catalog read on the way out
+ * settles the wire ahead of this, and this stands for the turn whose catalog could not be read.
  */
 function subscriptionDialect(provider: string, sourceDialect: ProxyDialect): ProviderDialect {
   if (provider === 'anthropic') return 'anthropic';

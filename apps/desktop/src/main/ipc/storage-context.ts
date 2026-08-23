@@ -40,6 +40,8 @@ export type StoragePaths = {
   settingsFile: string;
   accountsFile: string;
   vaultFile: string;
+  planUsageFile: string;
+  balancesFile: string;
 };
 
 export function storagePathsFor(userDataPath: string): StoragePaths {
@@ -48,5 +50,7 @@ export function storagePathsFor(userDataPath: string): StoragePaths {
     settingsFile: join(userDataPath, 'settings.json'),
     accountsFile: join(userDataPath, 'accounts.json'),
     vaultFile: join(userDataPath, 'vault.bin'),
+    planUsageFile: join(userDataPath, 'plan-usage.json'),
+    balancesFile: join(userDataPath, 'balances.json'),
   };
 }

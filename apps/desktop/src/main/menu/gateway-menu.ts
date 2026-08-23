@@ -70,10 +70,17 @@ function zoomItems(handlers: AppMenuHandlers): AppMenuItem[] {
   ];
 }
 
+/**
+ * The Show Logs tick, on the stroke every editor already puts a panel under a stage with.
+ *
+ * @summary The modifier reads Control on every platform rather than CmdOrCtrl, because macOS keeps
+ * Command with the backtick for cycling a program's windows and would answer it before the menu
+ * ever saw the stroke.
+ */
 function showLogsItem(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
   return {
     label: 'Show Logs',
-    accelerator: 'CmdOrCtrl+Shift+L',
+    accelerator: 'Control+`',
     type: 'checkbox',
     checked: view.logsDrawerOpen,
     click: canvasCommandClick(handlers, 'toggle-logs'),

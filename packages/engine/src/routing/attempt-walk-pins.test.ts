@@ -135,6 +135,19 @@ describe('the branch a walk refuses to pin when no judgment happened', () => {
     expect(watching.pinned).toEqual([]);
   });
 
+  test('a declined request leaves no pin, so the next turn is read on its own words', async () => {
+    const watching = watchingPins();
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'none' });
+    const gateway = aGatewayServing(aJudgedRouterOver(), {
+      classifyBranch: judge.classifyBranch,
+      pinBranchAt: watching.pinBranchAt,
+    });
+
+    await gateway.send();
+
+    expect(watching.pinned).toEqual([]);
+  });
+
   test('a sealed turn nobody pinned takes else and stays unpinned', async () => {
     const watching = watchingPins();
     const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });

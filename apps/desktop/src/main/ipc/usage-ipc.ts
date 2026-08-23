@@ -1,4 +1,4 @@
-import type { LogRow, UsageBucket } from '@recompose/contracts';
+import type { LogRow, PlanUsageReadings, UsageBucket } from '@recompose/contracts';
 
 import type { BalancesDesk } from '../usage/balances';
 import type { StandingPrices } from '../usage/price-map';
@@ -18,6 +18,7 @@ export type UsageIpcDeps = {
   store: Pick<UsageStore, 'report' | 'heldBuckets'>;
   standingPrices: () => StandingPrices;
   retainedRows: () => readonly LogRow[];
+  planUsage: () => PlanUsageReadings;
   balances: Pick<BalancesDesk, 'read'>;
   noteUsageTable: (open: boolean) => void;
 };
@@ -35,8 +36,8 @@ function coveringDays(
  *
  * @summary A report carries its buckets whole and prices the covering days at answer time, so a
  * corrected price recomputes every historical day on the next ask and no cost ever persists.
- * The quota read folds the held buckets beside the rows still in flight, and the table twin note
- * lands where the menu reads its checkbox from.
+ * The quota read folds the held buckets beside the rows still in flight and the plan readings the
+ * engine host has heard, and the table twin note lands where the menu reads its checkbox from.
  */
 export function createUsageIpcHandlers(deps: UsageIpcDeps): UsageIpcHandlers {
   return {
@@ -53,7 +54,12 @@ export function createUsageIpcHandlers(deps: UsageIpcDeps): UsageIpcHandlers {
     'usage:quota-windows': async () =>
       Promise.resolve({
         ok: true,
-        value: quotaWindowsOf(deps.store.heldBuckets(), deps.retainedRows(), Date.now()),
+        value: quotaWindowsOf(
+          deps.store.heldBuckets(),
+          deps.retainedRows(),
+          Date.now(),
+          deps.planUsage(),
+        ),
       }),
     'usage:balances': async ({ refresh }) => ({
       ok: true,

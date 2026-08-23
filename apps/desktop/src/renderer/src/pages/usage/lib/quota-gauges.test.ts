@@ -1,13 +1,14 @@
-import type { QuotaWindow } from '@recompose/contracts';
+import type { Account, QuotaWindow } from '@recompose/contracts';
 
 import { expect, test } from 'vitest';
 
-import { quotaGaugesOf } from './quota-gauges';
+import { quotaCardsOf, quotaGaugesOf } from './quota-gauges';
 
-const AUGUST_THIRD = Date.UTC(2026, 7, 3, 9, 0);
-const NOW = Date.UTC(2026, 8, 14, 12, 0);
+const AUGUST_THIRD = new Date(2026, 7, 3, 9, 0).getTime();
+const NOW = new Date(2026, 8, 14, 12, 0).getTime();
+const THIS_AFTERNOON = new Date(2026, 8, 14, 15, 30).getTime();
+const NEXT_WEEK = new Date(2026, 8, 17, 15, 0).getTime();
 const AN_HOUR = 3_600_000;
-const A_MINUTE = 60_000;
 
 function openWindow(patch: Partial<QuotaWindow> = {}): QuotaWindow {
   return {
@@ -15,11 +16,18 @@ function openWindow(patch: Partial<QuotaWindow> = {}): QuotaWindow {
     provider: 'anthropic',
     length: '5h',
     openedAt: NOW - AN_HOUR,
-    closesAt: NOW + 2 * AN_HOUR + 14 * A_MINUTE,
+    closesAt: THIS_AFTERNOON,
     burnTokens: 1_200_000,
     record: { burnTokens: 2_000_000, openedAt: AUGUST_THIRD },
     ...patch,
   };
+}
+
+function vendorRead(patch: Partial<QuotaWindow> = {}): QuotaWindow {
+  return openWindow({
+    reported: { spentShare: 0.23, readAt: NOW, resetsAt: THIS_AFTERNOON },
+    ...patch,
+  });
 }
 
 function onlyGauge(window: QuotaWindow, now = NOW) {
@@ -33,11 +41,22 @@ function onlyGauge(window: QuotaWindow, now = NOW) {
   return gauge;
 }
 
-test('a burn draws on a track the record sits inside, so the fill never reaches the end', () => {
+test('a burn nobody set a limit for draws no track, since a track would invent a limit', () => {
   const gauge = onlyGauge(openWindow());
 
-  expect(gauge.share).toBeCloseTo(0.48);
-  expect(gauge.marker).toBe(0.8);
+  expect(gauge.share).toBeUndefined();
+});
+
+test('a window that beat its own record still draws no track, so it never reads as exhausted', () => {
+  const gauge = onlyGauge(
+    openWindow({
+      burnTokens: 9_000_000,
+      record: { burnTokens: 2_000_000, openedAt: AUGUST_THIRD },
+    }),
+  );
+
+  expect(gauge.share).toBeUndefined();
+  expect(gauge.headline).toBe('9.0M sent');
 });
 
 test('the record prints its own figure and the day it was set', () => {
@@ -53,51 +72,42 @@ test('a window that beats every earlier one says so instead of filling the track
   );
 
   expect(gauge.standing).toBe('Busiest window on record');
-  expect(gauge.share).toBeLessThan(1);
 });
 
-test('an account with nothing on record carries its burn without a gauge to measure it', () => {
+test('an account with nothing on record prints no standing line rather than an empty one', () => {
   const gauge = onlyGauge(openWindow({ record: undefined }));
 
-  expect(gauge.marker).toBeUndefined();
-  expect(gauge.standing).toBe('No window on record yet');
+  expect(gauge.share).toBeUndefined();
+  expect(gauge.standing).toBeUndefined();
 });
 
-test('a burn prints as a compact token count beside its gauge', () => {
-  expect(onlyGauge(openWindow()).burn).toBe('1.2M');
+test('a window nobody but this machine measured heads with what it sent, said as sent', () => {
+  expect(onlyGauge(openWindow()).headline).toBe('1.2M sent');
 });
 
-test('the five-hour countdown reads as approximate, because the anchor is inferred', () => {
-  expect(onlyGauge(openWindow()).countdown).toBe('Closes in ≈2h 14m');
+test('an inferred reset names its hour, and wears the mark that says nobody vouched for it', () => {
+  expect(onlyGauge(openWindow()).countdown).toBe('Resets at ~3:30 PM');
 });
 
-test('a countdown landing on the hour drops the empty minutes', () => {
-  expect(onlyGauge(openWindow({ closesAt: NOW + 2 * AN_HOUR })).countdown).toBe('Closes in ≈2h');
+test('an inferred reset on a later day names that day, since an hour alone reads as today', () => {
+  expect(onlyGauge(openWindow({ closesAt: NEXT_WEEK })).countdown).toBe('Resets Thu at ~3:00 PM');
 });
 
-test('a countdown under an hour reads in minutes alone', () => {
-  expect(onlyGauge(openWindow({ closesAt: NOW + 14 * A_MINUTE })).countdown).toBe('Closes in ≈14m');
-});
-
-test('a countdown inside its last minute still rounds up to a minute rather than to nothing', () => {
-  expect(onlyGauge(openWindow({ closesAt: NOW + 12_000 })).countdown).toBe('Closes in ≈1m');
-});
-
-test('the weekly gauge shows its burn with no countdown, because no honest weekly close exists', () => {
+test('the weekly gauge shows its burn with no reset, because no honest weekly boundary exists', () => {
   const gauge = onlyGauge(openWindow({ length: 'week', openedAt: undefined, closesAt: undefined }));
 
   expect(gauge.countdown).toBeUndefined();
-  expect(gauge.lengthLabel).toBe('Weekly window');
+  expect(gauge.lengthLabel).toBe('Current week');
 });
 
-test('a five-hour window nobody has opened yet carries no countdown either', () => {
+test('a five-hour window nobody has opened yet carries no reset either', () => {
   expect(
     onlyGauge(openWindow({ burnTokens: 0, openedAt: undefined, closesAt: undefined })).countdown,
   ).toBeUndefined();
 });
 
-test('the five-hour gauge names the length it stands for', () => {
-  expect(onlyGauge(openWindow()).lengthLabel).toBe('5-hour window');
+test('the five-hour gauge names the window a person sends through as their session', () => {
+  expect(onlyGauge(openWindow()).lengthLabel).toBe('Current session');
 });
 
 test('both lengths of one account fold into a single card, in the order they arrived', () => {
@@ -131,7 +141,91 @@ test('a record that burned nothing counts as nothing on record, never as a windo
     openWindow({ burnTokens: 0, record: { burnTokens: 0, openedAt: AUGUST_THIRD } }),
   );
 
-  expect(gauge.marker).toBeUndefined();
-  expect(gauge.share).toBe(0);
-  expect(gauge.standing).toBe('No window on record yet');
+  expect(gauge.share).toBeUndefined();
+  expect(gauge.standing).toBeUndefined();
+});
+
+test('a window the vendor measured heads with the share of the plan it says is spent', () => {
+  expect(onlyGauge(vendorRead()).headline).toBe('23% used');
+});
+
+test('a share the vendor read to a fraction of a percent prints as a whole percent', () => {
+  const gauge = onlyGauge(vendorRead({ reported: { spentShare: 0.235, readAt: NOW } }));
+
+  expect(gauge.headline).toBe('24% used');
+});
+
+test('a vendor share draws a track, since the vendor named the limit the track ends at', () => {
+  expect(onlyGauge(vendorRead()).share).toBeCloseTo(0.23);
+});
+
+test('a vendor reading keeps the local burn under it, said as what this machine sent', () => {
+  expect(onlyGauge(vendorRead()).standing).toBe('1.2M through this machine');
+});
+
+test('a vendor reset names its hour, without the mark an inferred one earns', () => {
+  expect(onlyGauge(vendorRead()).countdown).toBe('Resets at 3:30 PM');
+});
+
+test('a weekly reset names its day and hour, because a span of days tells nobody anything', () => {
+  const gauge = onlyGauge(
+    vendorRead({
+      length: 'week',
+      openedAt: undefined,
+      closesAt: undefined,
+      reported: { spentShare: 0.23, readAt: NOW, resetsAt: NEXT_WEEK },
+    }),
+  );
+
+  expect(gauge.countdown).toBe('Resets Thu at 3:00 PM');
+  expect(gauge.headline).toBe('23% used');
+});
+
+test('a vendor reading that named no reset falls back on nothing rather than on the local one', () => {
+  expect(
+    onlyGauge(openWindow({ reported: { spentShare: 0.5, readAt: NOW } })).countdown,
+  ).toBeUndefined();
+});
+
+test('a plan the vendor says is spent draws a full track rather than one that stops short', () => {
+  const gauge = onlyGauge(vendorRead({ reported: { spentShare: 1, readAt: NOW } }));
+
+  expect(gauge.share).toBe(1);
+  expect(gauge.headline).toBe('100% used');
+});
+
+const signedIn: Account[] = [
+  {
+    id: 'work',
+    kind: 'subscription',
+    provider: 'anthropic',
+    label: 'work@example.com',
+    provenance: 'sign-in',
+  },
+  {
+    id: 'quiet',
+    kind: 'subscription',
+    provider: 'openai',
+    label: 'quiet@example.com',
+    provenance: 'sign-in',
+  },
+  { id: 'keyed', kind: 'api-key', provider: 'groq', label: 'a key', credentialRef: 'r1' },
+];
+
+test('every signed-in plan carries a card, whether or not this machine has served it', () => {
+  const cards = quotaCardsOf(signedIn, [openWindow()], NOW);
+
+  expect(cards.map((card) => card.accountId)).toEqual(['work', 'quiet']);
+});
+
+test('a plan nothing has been served through yet carries no gauges to draw', () => {
+  const cards = quotaCardsOf(signedIn, [openWindow()], NOW);
+
+  expect(cards[1]?.gauges).toEqual([]);
+});
+
+test('a plan the registry no longer holds keeps its card, since its burn is still on record', () => {
+  const cards = quotaCardsOf([], [openWindow()], NOW);
+
+  expect(cards.map((card) => card.accountId)).toEqual(['work']);
 });

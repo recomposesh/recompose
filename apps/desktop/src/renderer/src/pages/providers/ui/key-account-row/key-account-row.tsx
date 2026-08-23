@@ -1,9 +1,17 @@
 import type { CredentialedAccount, KeyCheckVerdict } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { useVerifyKey, useRemoveAccount, withRefusal } from '../../../../shared/api';
-import { BrandMark, OverflowMenu, UsageSummaryLink } from '../../../../shared/ui';
-import { checkableKey, keyTitleFor, markFor } from '../../model/provider-catalog';
+import { useState } from 'react';
+
+import {
+  useClearReaderKey,
+  useRemoveAccount,
+  useVerifyKey,
+  withRefusal,
+} from '../../../../shared/api';
+import { OverflowMenu, UsageSummaryLink, VendorMark } from '../../../../shared/ui';
+import { checkableKey, keyTitleFor, markFor, readerKeyAskFor } from '../../model/provider-catalog';
+import { ReaderKeySheet } from '../reader-key-sheet/reader-key-sheet';
 
 type KeyAccountRowProps = {
   /** The stored key as the registry holds it, which is everything the row may read. */
@@ -85,9 +93,39 @@ type RowActs = {
   checking: boolean;
   onVerify: () => void;
   onRemove: () => void;
+  onAddReaderKey: () => void;
+  onForgetReaderKey: () => void;
 };
 
-function quieterActions({ account, checking, onVerify, onRemove }: RowActs) {
+/**
+ * The read-only key acts this row offers, which only a provider that asks for one ever shows.
+ *
+ * @summary Forgetting stands apart from replacing because the two are different answers to a lost
+ * key: one hands over a new one, the other says this account should stop reading a balance at all.
+ * A row holding none offers only the first, since there is nothing yet to forget.
+ */
+function readerKeyActs(account: CredentialedAccount, acts: RowActs) {
+  if (readerKeyAskFor(account.provider) === undefined) {
+    return [];
+  }
+
+  const held = account.readerCredentialRef !== undefined;
+
+  return [
+    {
+      label: held ? 'Replace credits key' : 'Add credits key',
+      icon: 'key' as const,
+      onSelect: acts.onAddReaderKey,
+    },
+    ...(held
+      ? [{ label: 'Forget credits key', icon: 'trash' as const, onSelect: acts.onForgetReaderKey }]
+      : []),
+  ];
+}
+
+function quieterActions(acts: RowActs) {
+  const { account, checking, onVerify, onRemove } = acts;
+
   return [
     ...(checkableKey(account)
       ? [
@@ -100,6 +138,7 @@ function quieterActions({ account, checking, onVerify, onRemove }: RowActs) {
           },
         ]
       : []),
+    ...readerKeyActs(account, acts),
     { label: 'Remove', icon: 'trash' as const, tone: 'danger' as const, onSelect: onRemove },
   ];
 }
@@ -118,12 +157,15 @@ function quieterActions({ account, checking, onVerify, onRemove }: RowActs) {
 export function KeyAccountRow({ account }: KeyAccountRowProps) {
   const check = withRefusal(useVerifyKey());
   const forget = withRefusal(useRemoveAccount());
+  const forgetReader = useClearReaderKey();
+  const [askingForReaderKey, setAskingForReaderKey] = useState(false);
 
   const mark = markFor(account.provider);
+  const readerAsk = readerKeyAskFor(account.provider);
 
   return (
     <li className="flex min-h-row items-center gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
-      {mark === undefined ? null : <BrandMark name={mark} />}
+      <VendorMark name={mark} />
       {keyIdentity(account, check.refusal ?? forget.refusal, check.data?.verdict)}
       <UsageSummaryLink scope={{ param: 'providers', value: account.id }} />
       <OverflowMenu
@@ -136,9 +178,23 @@ export function KeyAccountRow({ account }: KeyAccountRowProps) {
           onRemove: () => {
             forget.mutate({ id: account.id });
           },
+          onAddReaderKey: () => {
+            setAskingForReaderKey(true);
+          },
+          onForgetReaderKey: () => {
+            forgetReader.mutate({ id: account.id });
+          },
         })}
         label={`Actions for ${account.label}`}
       />
+      {readerAsk === undefined ? null : (
+        <ReaderKeySheet
+          accountId={account.id}
+          ask={readerAsk}
+          onOpenChange={setAskingForReaderKey}
+          open={askingForReaderKey}
+        />
+      )}
     </li>
   );
 }

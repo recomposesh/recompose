@@ -5,11 +5,34 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useId, useState } from 'react';
 
+import { LOG_COLUMN_HEADS, LOG_GRID_LINE } from '../log-row/log-columns';
 import { LogRow } from '../log-row/log-row';
 import { LOG_ROW_HEIGHT, copiedRow } from '../log-row/logged-request';
 import { announced, useArrivals } from './arriving-requests';
 
 const ROWS_BEYOND_VIEW = 8;
+
+/**
+ * What each column holds, standing still while the run scrolls under it.
+ *
+ * @summary The heads sit outside the listbox rather than as its first option, because a person
+ * walking the rows with the arrows must never land on the frame. They stand over an empty scope too:
+ * a header that came and went with the first request would move the whole list on arrival.
+ */
+function columnHeads(): ReactNode {
+  return (
+    <div
+      className={`${LOG_GRID_LINE} shrink-0 border-b border-line-faint text-ink-secondary`}
+      data-log-heads=""
+    >
+      {LOG_COLUMN_HEADS.map(({ className, head }) => (
+        <span className={className} key={head}>
+          {head}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 /**
  * The key one seat in the run is drawn under, which is the request's own id.
@@ -214,6 +237,7 @@ export function LogList({ rows, scope, accounts, nothingYet }: LogListProps) {
   if (rows.length === 0) {
     return (
       <>
+        {columnHeads()}
         <p className="px-3 py-2 text-detail text-ink-secondary">{nothingYet}</p>
         {arrivalRegion(arrived)}
       </>
@@ -222,6 +246,7 @@ export function LogList({ rows, scope, accounts, nothingYet }: LogListProps) {
 
   return (
     <>
+      {columnHeads()}
       {requestRun({
         drawn: virtualizer.getVirtualItems(),
         wholeRun: virtualizer.getTotalSize(),

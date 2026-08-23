@@ -28,7 +28,7 @@ async function forwarded(grant: SpendGrant, path: string, body: unknown): Promis
     body: JSON.stringify(body),
   });
 
-  return sent;
+  return sent.filter((request) => request.init?.method !== 'GET');
 }
 
 const aChatAsk = {

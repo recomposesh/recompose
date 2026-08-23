@@ -30,7 +30,7 @@ describe('the branch a turn that resumes server-side state keeps', () => {
     expect(walk.attempted).toEqual([]);
   });
 
-  test('re-judging every request still cannot move a sealed conversation off its pin', async () => {
+  test('re-judging every request reads the topic again and moves a sealed conversation off its pin', async () => {
     const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
     const gateway = aGatewayServing(aJudgedRouterOver({ rejudgeEveryRequest: true }), {
       classifyBranch: judge.classifyBranch,
@@ -40,8 +40,21 @@ describe('the branch a turn that resumes server-side state keeps', () => {
 
     const walk = await gateway.send();
 
-    expect(judge.asked).toEqual([]);
-    expect(walk.attempted).toEqual(['talker']);
+    expect(judge.asked).toEqual([JUDGE]);
+    expect(walk.attempted).toEqual(['coder']);
+  });
+
+  test('re-judging every request asks the judge for a sealed turn nobody pinned', async () => {
+    const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
+    const gateway = aGatewayServing(aJudgedRouterOver({ rejudgeEveryRequest: true }), {
+      classifyBranch: judge.classifyBranch,
+      resumesServerState: true,
+    });
+
+    const walk = await gateway.send();
+
+    expect(judge.asked).toEqual([JUDGE]);
+    expect(walk.attempted).toEqual(['coder']);
   });
 
   test('a conditional router refuses that turn for the judge it could not ask, not for spreading', async () => {

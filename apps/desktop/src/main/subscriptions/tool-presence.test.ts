@@ -102,7 +102,7 @@ describe('reporting which provider tools this machine can run', () => {
     expect(tools.map((tool) => tool.present)).toEqual([false, false]);
   });
 
-  test('given any tool, the report carries its name and the two lines a person needs', async () => {
+  test('given any tool, the report carries its name and every line a person needs', async () => {
     const tools = await reportTools({ homes, searchPath: binFolder, platform: 'darwin' });
 
     expect(toolFor(tools, 'anthropic')).toEqual({
@@ -111,7 +111,14 @@ describe('reporting which provider tools this machine can run', () => {
       present: false,
       signInCommand: `CLAUDE_CONFIG_DIR="${homes.pendingHomeFor('anthropic')}" claude`,
       shellSetupLine: `export CLAUDE_CONFIG_DIR="$(readlink -f "${homes.activePointerFor('anthropic')}")"`,
+      signInHint: 'Type /login in the terminal that opened.',
     });
+  });
+
+  test('a tool whose command signs in by itself carries no further instruction', async () => {
+    const tools = await reportTools({ homes, searchPath: binFolder, platform: 'darwin' });
+
+    expect(toolFor(tools, 'openai')).not.toHaveProperty('signInHint');
   });
 });
 

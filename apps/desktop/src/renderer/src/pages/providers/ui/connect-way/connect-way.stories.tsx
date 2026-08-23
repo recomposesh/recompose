@@ -44,6 +44,7 @@ const meta = preview.meta({
     provider: 'anthropic' as const,
     toolName: 'Claude Code',
     command: 'CLAUDE_CONFIG_DIR="/Users/dev/.recompose/pending" claude',
+    signInHint: 'Type /login in the terminal that opened.',
     terms: (
       <p className="text-detail text-ink-secondary">
         Claude Code signs in on its own and spends your Anthropic plan, under Anthropic&apos;s

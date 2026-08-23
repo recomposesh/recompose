@@ -4,17 +4,10 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { requestFailed, requestInFlight } from '../../../../entities/request-log';
+import { LOG_COLUMNS, LOG_GRID_LINE } from './log-columns';
 import { servedAt, servedByAccount, servedByProvider, tookFor } from './logged-request';
 
 const TOO_MANY_REQUESTS = 429;
-
-const AWAY_WITH_THE_ACCOUNT = '@max-[32rem]:hidden';
-
-const AWAY_WITH_THE_PROVIDER = '@max-[24rem]:hidden';
-
-const AWAY_WITH_THE_METHOD = '@max-[19rem]:hidden';
-
-const AWAY_WITH_THE_DURATION = '@max-[13rem]:hidden';
 
 function statusInk(logged: LoggedRequest, ongoing: boolean): string {
   if (ongoing) {
@@ -90,7 +83,7 @@ function targetInk(account: Account | undefined): string {
  */
 function failureCell(failure: string | undefined): ReactNode {
   return (
-    <span className="min-w-0 flex-1 truncate text-ink-secondary" title={failure}>
+    <span className={`${LOG_COLUMNS.failure} text-ink-secondary`} title={failure}>
       {failure}
     </span>
   );
@@ -104,7 +97,7 @@ function modelJourneyOf(logged: LoggedRequest): ModelJourney {
 
 function modelJourneyCell({ asked, resolved }: ModelJourney): ReactNode {
   return (
-    <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+    <span className={LOG_COLUMNS.model}>
       <span className="max-w-1/2 shrink-0 truncate" title={asked}>
         {asked}
       </span>
@@ -159,32 +152,28 @@ export function LogRow({ logged, account, id, underCursor = false, place, wholeR
       aria-posinset={place}
       aria-selected={underCursor}
       aria-setsize={wholeRun}
-      className={`flex h-5 items-center gap-1 px-2 font-mono text-mono-caption whitespace-nowrap text-ink ${cursor}`}
+      className={`${LOG_GRID_LINE} text-ink ${cursor}`}
       id={id}
       role="option"
     >
-      <span className="w-16 shrink-0 text-ink-secondary tabular-nums">{servedAt(logged.at)}</span>
-      <span className={`w-10 shrink-0 text-ink-secondary ${AWAY_WITH_THE_METHOD}`}>
-        {logged.method}
+      <span className={`${LOG_COLUMNS.time} text-ink-secondary tabular-nums`}>
+        {servedAt(logged.at)}
       </span>
+      <span className={`${LOG_COLUMNS.method} text-ink-secondary`}>{logged.method}</span>
       {modelJourneyCell(journey)}
-      <span
-        className={`w-20 shrink-0 truncate text-end ${AWAY_WITH_THE_PROVIDER} ${targetInk(account)}`}
-      >
+      <span className={`${LOG_COLUMNS.provider} ${targetInk(account)}`}>
         {servedByProvider(logged)}
       </span>
       <span
-        className={`w-36 shrink-0 truncate ${AWAY_WITH_THE_ACCOUNT} ${targetInk(account)}`}
+        className={`${LOG_COLUMNS.account} ${targetInk(account)}`}
         title={servedByAccount(logged, account)}
       >
         {servedByAccount(logged, account)}
       </span>
-      <span className={`w-8 shrink-0 text-end tabular-nums ${statusInk(logged, ongoing)}`}>
+      <span className={`${LOG_COLUMNS.status} tabular-nums ${statusInk(logged, ongoing)}`}>
         {statusCell(logged, ongoing)}
       </span>
-      <span
-        className={`min-w-10 shrink-0 text-end text-ink-secondary tabular-nums ${AWAY_WITH_THE_DURATION}`}
-      >
+      <span className={`${LOG_COLUMNS.duration} text-ink-secondary tabular-nums`}>
         {durationCell(took)}
       </span>
       {failureCell(logged.failure)}

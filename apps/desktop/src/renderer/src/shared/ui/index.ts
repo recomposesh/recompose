@@ -4,6 +4,7 @@ export { BrandMark } from './brand-mark/brand-mark';
 export {
   type BrandMarkName,
   type BrandMarkVariant,
+  type VendorDrawingProps,
   brandMarkNames,
 } from './brand-mark/brand-mark-inventory';
 export { Chip } from './chip/chip';
@@ -28,6 +29,7 @@ export { HoverReading } from './hover-reading/hover-reading';
 export { MetricTile } from './metric-tile/metric-tile';
 export { NumericCell } from './numeric-cell/numeric-cell';
 export { ProportionFill } from './proportion-fill/proportion-fill';
+export { VendorMark } from './vendor-mark/vendor-mark';
 export { type ChartBar, type ChartSeries, SeriesChart } from './series-chart/series-chart';
 export { newestThatFit } from './series-chart/newest-that-fit';
 export { rankedChartSeries, tokenChartSeries } from './series-chart/series-presets';

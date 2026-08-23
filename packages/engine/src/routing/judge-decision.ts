@@ -3,8 +3,14 @@ import type { RouterPolicy } from '@recompose/contracts';
 import type { JudgeReading } from './outcome-classification';
 import type { BranchChoice, BranchRule, ConditionalPolicy } from './policies';
 
+import {
+  childOneReadingNames,
+  judgeDeclined,
+  labelABranchWears,
+  labelOneReadingCarries,
+} from './judge-verdict-label';
 import { classifyJudge } from './outcome-classification';
-import { branchWearingTheLabel, childTheLabelNames } from './policies';
+import { branchWearingTheLabel } from './policies';
 
 /**
  * How one router asks its judge, naming itself as well as the judge it asks.
@@ -123,22 +129,6 @@ async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
 }
 
 /**
- * The word a judge answered with, or nothing where the reading carried no answer at all.
- *
- * @summary The one place a reading is narrowed to its word, so the label table and the pin question
- * are answered from a single reading of the verdict rather than classifying the same answer twice.
- */
-function labelOneReadingCarries(reading: JudgeReading): string | undefined {
-  const verdict = classifyJudge(reading);
-
-  return verdict.verdict === 'answered' ? verdict.label : undefined;
-}
-
-function labelABranchWears(question: BranchQuestion, reading: JudgeReading): boolean {
-  return branchWearingTheLabel(question.branches, labelOneReadingCarries(reading)) !== undefined;
-}
-
-/**
  * What the judge's second and final answer settles, whichever way it reads.
  *
  * @summary Final however it reads is what bounds a request at two calls, but the two ways of not
@@ -155,7 +145,7 @@ async function childASecondAskEarns(asking: Asking): Promise<Decided> {
 
   const child = childOneReadingNames(question.branches, question.elseChild, reading);
 
-  return labelABranchWears(question, reading)
+  return labelABranchWears(question.branches, reading)
     ? judgedOntoABranch(child)
     : settledWithoutAPin(child);
 }
@@ -166,19 +156,23 @@ async function childTheJudgeAnswers(asking: Asking): Promise<Decided> {
 
   if (named !== undefined) return judgedOntoABranch(named.child);
 
+  if (judgeDeclined(asking.question.branches, reading)) {
+    return settledWithoutAPin(asking.question.elseChild);
+  }
+
   return classifyJudge(reading).verdict === 'answered'
     ? childASecondAskEarns(asking)
     : nothingJudgedIt(asking.question.elseChild);
 }
 
 function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
-  const reads = question.resumesServerState || !question.rejudgeEveryRequest;
-
-  return reads ? question.pinnedBranch : undefined;
+  return question.rejudgeEveryRequest ? undefined : question.pinnedBranch;
 }
 
 async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
-  if (question.resumesServerState) return nothingJudgedIt(question.elseChild);
+  if (question.resumesServerState && !question.rejudgeEveryRequest) {
+    return nothingJudgedIt(question.elseChild);
+  }
 
   const classify = question.judgeStandsCooling ? undefined : question.classify;
 
@@ -198,11 +192,10 @@ async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
  * read here as no judge at all, and the request goes back unjudged without spending a call the
  * ledger already knows would fail.
  *
- * A turn resuming state one account holds never earns a fresh judgment: it follows its pin when one
- * exists and is refused when none does. Re-judging it could hand a sealed conversation to a second
- * account that cannot read the token it carries, and sending it down else would hand that same token
- * to the one child the judge never chose. That is also why re-judge every request skips the pin on
- * an ordinary turn but never on this one.
+ * A turn resuming state one account holds follows its pin, and is refused where it has none, because
+ * a second account cannot read the token it carries. Re-judge every request overrides that: a client
+ * replaying a signature every turn would otherwise route a whole conversation by its opening message,
+ * which is the one thing that toggle exists to prevent.
  */
 async function childTheJudgeDecides(question: BranchQuestion): Promise<Decided> {
   const pinned = pinTheTurnKeeps(question);
@@ -281,20 +274,4 @@ export async function branchTheWalkFollows(
   if (decided.earnsAPin) judging.pinBranchAt(routeNode, decided.child);
 
   return choice;
-}
-
-/**
- * The one child a conditional router hands the request to for one reading of its judge.
- *
- * @summary Total by construction: the reading table sends every trouble to else and the label table
- * sends every unrecognized answer there too, so the two compose into a mapping no judge behavior
- * can fall out of. That totality is what lets the walk ask once and act, rather than carrying a
- * "the judge said something strange" state the rest of the walk would have to understand.
- */
-export function childOneReadingNames(
-  branches: readonly BranchRule[],
-  elseChild: string,
-  reading: JudgeReading,
-): string {
-  return childTheLabelNames(branches, elseChild, labelOneReadingCarries(reading));
 }

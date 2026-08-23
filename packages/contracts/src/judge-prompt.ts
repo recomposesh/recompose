@@ -15,6 +15,28 @@ type PromptAssembly = {
   tail: readonly string[];
 };
 
+const DECLINED = 'none';
+
+const DECLINED_RULE = 'the request fits none of the branches above';
+
+function unclaimed(word: string, taken: ReadonlySet<string>): string {
+  return taken.has(word) ? unclaimed(`${word}_`, taken) : word;
+}
+
+/**
+ * The word a judge answers with where the request resembles no branch at all.
+ *
+ * @summary Every dialect closes the answer to the words offered, which is what stops a caller talking
+ * its way onto an expensive branch. That closure also left a request resembling nothing with nowhere
+ * to go: the else child is never offered, so a judge with only real labels in front of it had to name
+ * one, and a question about football landed on whichever branch read closest. This is the floor made
+ * answerable without widening the set to anything a caller could name. It steps out of the way of a
+ * label a person already wrote, so their branch keeps its word and the decline keeps its own.
+ */
+export function declineWordFor(branches: readonly JudgeBranchWording[]): string {
+  return unclaimed(DECLINED, new Set(branches.map((branch) => branch.label.trim())));
+}
+
 /**
  * The one assembly behind every judge prompt, whether it goes on the wire or onto a panel.
  *
@@ -45,6 +67,18 @@ function listedBranches(branches: readonly JudgeBranchWording[]): string {
   return branches.map((branch) => `${branch.label.trim()}: ${branch.rule.trim()}`).join('\n');
 }
 
+/**
+ * The branches as the judge reads them, with the decline standing last among them.
+ *
+ * @summary It stands last because it is the floor rather than a category, and a word offered before
+ * the real branches would invite a model to take it before reading them. It is worded as a rule like
+ * any other so the list stays one shape, which is what keeps a judge from reading it as an
+ * instruction about the list rather than an option inside it.
+ */
+function listedWithTheDecline(branches: readonly JudgeBranchWording[], listed: string): string {
+  return `${listed}\n${declineWordFor(branches)}: ${DECLINED_RULE}`;
+}
+
 function writtenDirective(brief: JudgeBrief): string {
   return brief.directive?.trim() ?? '';
 }
@@ -58,7 +92,7 @@ function writtenDirective(brief: JudgeBrief): string {
 export function compiledJudgePrompt(brief: JudgeBrief): string {
   return assembledJudgePrompt({
     directive: writtenDirective(brief),
-    listed: listedBranches(brief.branches),
+    listed: listedWithTheDecline(brief.branches, listedBranches(brief.branches)),
     tail: [],
   });
 }
@@ -80,7 +114,7 @@ export function previewedJudgePrompt(brief: JudgeBrief): string {
 
   return assembledJudgePrompt({
     directive: writtenDirective(brief),
-    listed: listed === '' ? NOTHING_LISTED_YET : listed,
+    listed: listedWithTheDecline(brief.branches, listed === '' ? NOTHING_LISTED_YET : listed),
     tail: [WHERE_THE_REQUEST_ARRIVES],
   });
 }

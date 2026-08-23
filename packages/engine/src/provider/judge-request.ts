@@ -1,4 +1,4 @@
-import { compiledJudgePrompt } from '@recompose/contracts';
+import { compiledJudgePrompt, declineWordFor } from '@recompose/contracts';
 
 import type { JsonObject, ProviderDialect } from '../gateway-wire';
 import type { BranchRule } from '../routing/policies';
@@ -20,14 +20,27 @@ const TAIL_CLOSE = '</request>';
 
 const TAIL_CHARS = 2_000;
 
+const ELIDED = '\n...\n';
+
 const ANTHROPIC_ANSWER_TOKENS = 1_024;
 
 const TOOL_NAME = 'pick_branch';
 
 const LABEL_KEYS = new Set(['branch', 'text', 'content', 'output_text']);
 
+/**
+ * Every word the judge may answer with, which is the branches and then the decline.
+ *
+ * @summary The decline rides in the enum rather than beside it, because Gemini answers a bare label
+ * and has no second field to carry a refusal in. It stands last for the same reason it stands last in
+ * the prompt, and the two lists are drawn from one authority so a judge can never be offered a word
+ * the prompt never showed it.
+ */
 function labelsOf(question: JudgeQuestion): readonly string[] {
-  return question.branches.map((branch) => branch.label.trim());
+  return [
+    ...question.branches.map((branch) => branch.label.trim()),
+    declineWordFor(question.branches),
+  ];
 }
 
 /**
@@ -41,16 +54,33 @@ function judgeInstructions(question: JudgeQuestion): string {
 }
 
 /**
+ * The last turn narrowed to what a judge is given room to read, keeping both of its ends.
+ *
+ * @summary No client agrees on where the ask sits inside a turn. An agentic client appends reminders
+ * and gathered context after the words a person typed, while somebody pasting a long log writes the
+ * ask underneath it. A window over either end alone drops the ask for half of them, and a window over
+ * the trailing end alone is how a question about deployment reached a judge as a page of renderer
+ * vocabulary. The middle is elided instead, because no classification has ever turned on it.
+ */
+function withinTheJudgesRoom(spoken: string): string {
+  if (spoken.length <= TAIL_CHARS) return spoken;
+
+  const end = TAIL_CHARS / 2;
+
+  return `${spoken.slice(0, end)}${ELIDED}${spoken.slice(-end)}`;
+}
+
+/**
  * The caller's own words, marked as the untrusted data they are.
  *
  * @summary A tail that wrote the markers itself could otherwise close the block and go on as if it
- * were the gateway talking, so both markers are struck out of it before it is wrapped. Only the end
- * of the last turn travels: the classification turns on what is being asked now, and a whole
- * transcript would spend the judge's context on turns already answered.
+ * were the gateway talking, so both markers are struck out of it before it is wrapped. Only the last
+ * turn travels: the classification turns on what is being asked now, and a whole transcript would
+ * spend the judge's context on turns already answered.
  */
 function markedTail(raw: JsonObject): string {
-  const spoken = userTurnsOf(raw).at(-1) ?? '';
-  const tail = spoken.slice(-TAIL_CHARS).replaceAll(TAIL_OPEN, ' ').replaceAll(TAIL_CLOSE, ' ');
+  const spoken = withinTheJudgesRoom(userTurnsOf(raw).at(-1) ?? '');
+  const tail = spoken.replaceAll(TAIL_OPEN, ' ').replaceAll(TAIL_CLOSE, ' ');
 
   return `${TAIL_OPEN}\n${tail}\n${TAIL_CLOSE}`;
 }

@@ -17,7 +17,9 @@ import {
   credentialedRequestUrl,
 } from './credentialed-target';
 import { observeKimiReplay } from './kimi-replay-runtime';
+import { modelCeilingsFor, statesItsCeiling } from './model-ceilings';
 import { providerObservability, providerRequestId } from './provider-observability';
+import { correctedForVendor, refusalIsCorrectable } from './vendor-correction';
 import { observeXAIReplay } from './xai-replay-runtime';
 import { asXaiRefusalReads } from './xai-response';
 import { filterXAIInternalSearchResponse } from './xai-search-response';
@@ -119,6 +121,56 @@ async function interceptedRequest(
   };
 }
 
+/**
+ * The output ceiling the target model states, put on the crossing before the turn is worded.
+ *
+ * @summary A vendor that refuses an oversized ask rather than clamping it states its own limit per
+ * model, so the number is read off its catalog here and the wording downstream brings the turn
+ * down to it. A vendor stating none leaves the ask as the caller wrote it.
+ */
+async function stampOutputCeiling(
+  crossing: Crossing,
+  grant: ResolvedGrant,
+  fetchLike: typeof fetch,
+): Promise<void> {
+  const spend = grant.spend;
+
+  if (spend.custody !== 'credentialed' || !statesItsCeiling(spend.provider)) return;
+
+  const ceilings = await modelCeilingsFor(
+    fetchLike,
+    spend.provider,
+    grant.providerOrigin,
+    credentialedRequestHeaders(spend, crossing),
+    spend.accountId ?? '',
+  );
+  const ceiling = ceilings.get(crossing.providerModel);
+
+  if (ceiling !== undefined) crossing.outputCeiling = ceiling;
+}
+
+/**
+ * The one turn a vendor's own refusal earns, reworded the way that refusal said it would take it.
+ *
+ * @summary A refusal naming its remedy is answerable, and once: a second refusal of the same kind
+ * would say the same thing again. The refused answer is read to learn the remedy and then let go,
+ * so nothing downstream is handed a body already spent.
+ */
+async function correctedTurn(
+  answer: Response,
+  body: JsonObject,
+): Promise<{ body: JsonObject } | null> {
+  if (answer.ok || !refusalIsCorrectable(answer.status)) return null;
+
+  const said: unknown = await answer
+    .clone()
+    .json()
+    .catch(() => undefined);
+  const corrected = correctedForVendor(answer.status, said, body);
+
+  return corrected === null ? null : { body: corrected };
+}
+
 export async function reachCredentialed(
   crossing: Crossing,
   grant: ResolvedGrant,
@@ -127,6 +179,31 @@ export async function reachCredentialed(
   aiStudio?: AIStudioRelay,
   plugins?: PluginHost,
 ): Promise<Response> {
+  const answer = await reachedOnce(crossing, grant, body, fetchLike, aiStudio, plugins);
+
+  if (answer instanceof Response) {
+    const correction = await correctedTurn(answer, body);
+
+    if (correction === null) return answer;
+
+    void answer.body?.cancel().catch(() => undefined);
+
+    return reachedOnce(crossing, grant, correction.body, fetchLike, aiStudio, plugins);
+  }
+
+  return answer;
+}
+
+async function reachedOnce(
+  crossing: Crossing,
+  grant: ResolvedGrant,
+  body: JsonObject,
+  fetchLike: typeof fetch,
+  aiStudio?: AIStudioRelay,
+  plugins?: PluginHost,
+): Promise<Response> {
+  await stampOutputCeiling(crossing, grant, fetchLike);
+
   const prepared = requestFor(grant, crossing, body);
   const intercepted = await interceptedRequest(crossing, grant, prepared, plugins);
 

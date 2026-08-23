@@ -31,7 +31,7 @@ recompose ships a platform-shaped menu bar, a macOS Dock menu, and an optional m
 | Zoom In / Zoom Out / Actual Size | Cmd+= / Cmd+- / Cmd+0 |
 | Zoom to Fit                      | Shift+Cmd+0           |
 | Tidy Up                          | Option+Cmd+T          |
-| Show Logs                        | Cmd+Shift+L           |
+| Show Logs                        | Control+`             |
 | Delete Gateway                   |                       |
 
 **Usage** appears on the Usage page: window presets `Last Hour` through `This Month` on Option+Cmd+1 through 6, `Custom Range…`, a `Metric` submenu, `Show Data Table` (Cmd+Shift+T), and `Refresh Usage` (Option+Cmd+R).

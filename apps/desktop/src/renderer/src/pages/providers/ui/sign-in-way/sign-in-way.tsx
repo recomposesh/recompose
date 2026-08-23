@@ -29,6 +29,7 @@ export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
   const toolName = subscriptionPlanNames[provider];
   const reported = tools.find((tool) => tool.provider === provider);
   const command = reported?.present === true ? reported.signInCommand : undefined;
+  const signInHint = reported?.signInHint;
   const lead = { mark: subscriptionMarkFor(provider) };
 
   const terms = (
@@ -57,6 +58,7 @@ export function SignInWay({ name, provider, onConnected }: SignInWayProps) {
           name={name}
           onConnected={onConnected}
           provider={provider}
+          signInHint={signInHint}
           terms={terms}
           toolName={toolName}
         />

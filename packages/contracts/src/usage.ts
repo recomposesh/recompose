@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { accountKindSchema } from './accounts';
 import { gatewaySlugSchema, modelAliasSchema } from './gateway-config';
 import { nonBlankString } from './non-blank';
+import { planUsageWindowSchema } from './plan-usage';
 
 const wholeCount = z.number().int().nonnegative();
 
@@ -165,10 +166,11 @@ export type UsageReport = z.infer<typeof usageReportSchema>;
 /**
  * One subscription account's window burn, derived from local logs.
  *
- * @summary No first-party quota endpoint exists, so a window never claims official remaining
- * quota: it reads what this machine sent, anchored where traffic followed five quiet hours, and
- * carries the account's own busiest window as the record a meter measures against. A window that
- * never opened carries burn alone.
+ * @summary The burn always reads what this machine sent, anchored where traffic followed five
+ * quiet hours, and carries the account's own busiest earlier window as the record a meter measures
+ * against. `reported` is the one figure here a vendor answered for: where a provider names how much
+ * of the window is spent, the meter reads that share instead of the record, and where no provider
+ * says, nothing here claims official remaining quota. A window that never opened carries burn alone.
  */
 export const quotaWindowSchema = z.strictObject({
   accountId: nonBlankString,
@@ -183,14 +185,28 @@ export const quotaWindowSchema = z.strictObject({
       openedAt: wholeCount,
     })
     .optional(),
+  reported: planUsageWindowSchema.omit({ length: true }).extend({ readAt: wholeCount }).optional(),
 });
 
 export type QuotaWindow = z.infer<typeof quotaWindowSchema>;
 
-/** One credits read as the upstream answered it, stamped with the instant it was taken. */
+/**
+ * One balance read as the upstream answered it, stamped with the instant it was taken.
+ *
+ * @summary What is left is the one figure every vendor reports, so it is the only one required.
+ * Some name what was bought and what was spent beside it and some name neither, and a card that
+ * demanded both would have to invent them for the vendors that report a balance alone. The currency
+ * rides along because one vendor answers in yuan and another in dollars, and a figure printed under
+ * the wrong sign is worse than one nobody printed.
+ */
 export const balanceReadingSchema = z.strictObject({
-  totalCredits: z.number().nonnegative(),
-  totalUsage: z.number().nonnegative(),
+  remaining: z.number().nonnegative(),
+  added: z.number().nonnegative().optional(),
+  spent: z.number().nonnegative().optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/u, 'must be a three-letter currency code')
+    .optional(),
   readAt: wholeCount,
 });
 

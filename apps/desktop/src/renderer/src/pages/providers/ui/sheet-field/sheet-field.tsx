@@ -8,6 +8,8 @@ type SheetFieldProps = {
   placeholder?: string | undefined;
   /** Passed only where the value is a secret, so the control hides what it holds. */
   type?: 'password';
+  /** Quiet sentence standing under the control, inside the row's own border. */
+  note?: string | undefined;
   /**
    * Stands the label over the control rather than beside it.
    *
@@ -30,6 +32,7 @@ export function SheetField({
   onChangeValue,
   placeholder,
   type,
+  note,
   stacked,
 }: SheetFieldProps) {
   const controlClasses = stacked === true ? 'w-full' : 'w-sheet-secret';
@@ -39,6 +42,7 @@ export function SheetField({
       <FieldBoxRow
         controlClasses={controlClasses}
         label={label}
+        note={note}
         onChangeValue={onChangeValue}
         placeholder={placeholder}
         stacked={stacked}
@@ -52,6 +56,7 @@ export function SheetField({
     <FieldBoxRow
       controlClasses={controlClasses}
       label={label}
+      note={note}
       onChangeValue={onChangeValue}
       placeholder={placeholder}
       stacked={stacked}

@@ -19,6 +19,7 @@ import {
   runtimeReachabilitySchema,
 } from './local-runtimes';
 import { nonBlankString } from './non-blank';
+import { planUsageReadingSchema } from './plan-usage';
 import { providerDialectSchema } from './provider-directory';
 import { gatewayBindAddressSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
@@ -164,6 +165,21 @@ export const engineLogReportSchema = z.strictObject({
 });
 
 export type EngineLogReport = z.infer<typeof engineLogReportSchema>;
+
+/**
+ * What the child says on its own once a provider answered with a reading of its own plan.
+ *
+ * @summary It answers no directive, because nothing asked: the reading rides an answer the vendor
+ * was already sending, so a plan a person stopped sending through simply stops speaking rather than
+ * being polled. Only the shares and the reset instants cross, never the headers they were read from,
+ * because a vendor's header set is its own business and the Usage page needs the figures alone.
+ */
+export const enginePlanUsageReportSchema = z.strictObject({
+  kind: z.literal('plan-usage'),
+  reading: planUsageReadingSchema,
+});
+
+export type EnginePlanUsageReport = z.infer<typeof enginePlanUsageReportSchema>;
 
 /**
  * The child asking the parent for custody of one attempt.

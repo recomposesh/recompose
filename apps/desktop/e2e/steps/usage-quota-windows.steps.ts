@@ -13,7 +13,7 @@ import {
 } from '../usage-screen';
 
 function quotaWindows(page: Page) {
-  return page.getByRole('region', { name: 'Quota windows' });
+  return page.getByRole('region', { name: 'Plan usage limits' });
 }
 
 Given(
@@ -34,7 +34,7 @@ When('the person opens the usage screen', async ({ page }) => {
 });
 
 Then(
-  'the quota windows show a {string} card and a {string} card',
+  'the plan usage limits show a {string} card and a {string} card',
   async ({ page }, firstPlan: string, secondPlan: string) => {
     const strip = quotaWindows(page);
 

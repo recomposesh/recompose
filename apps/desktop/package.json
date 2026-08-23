@@ -27,7 +27,7 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "pnpm run typecheck && pnpm run build && electron-builder --dir",
     "build:win": "pnpm run typecheck && pnpm run build && electron-builder --win --publish never",
-    "build:mac": "pnpm run typecheck && pnpm run build && electron-builder --mac --x64 --arm64 --publish never",
+    "build:mac": "pnpm run typecheck && pnpm run build && electron-builder --mac --x64 --arm64 --publish never; rc=$?; ./scripts/detach-dmg-volumes.sh; exit $rc",
     "build:linux": "pnpm run typecheck && pnpm run build && electron-builder --linux --publish never",
     "generate:icons": "node scripts/generate-icons.mts",
     "storybook": "storybook dev -p 6006",

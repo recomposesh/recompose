@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { accountLabelOf } from './account-labels';
+import { accountFaceOf, accountLabelOf } from './account-labels';
 
 const registry = {
   accounts: [{ id: 'build', label: 'build key' }, { id: 'loopback' }],
@@ -26,4 +26,29 @@ test('a name that is not text reads by the id rather than by a malformed record'
   const malformedRegistry = { accounts: [{ id: 'build', label: 7 }] };
 
   expect(accountLabelOf(malformedRegistry, 'build')).toBe('build');
+});
+
+test('a stored account faces with its product, its name, and the mark its vendor draws', () => {
+  const face = accountFaceOf(
+    {
+      accounts: [
+        {
+          id: 'work',
+          kind: 'subscription',
+          provider: 'anthropic',
+          label: 'dev@example.com',
+          provenance: 'sign-in',
+        },
+      ],
+    },
+    'work',
+  );
+
+  expect(face).toEqual({ name: 'dev@example.com', product: 'Claude', mark: 'anthropic' });
+});
+
+test('an account the registry no longer holds faces with the id its buckets kept', () => {
+  const face = accountFaceOf({ accounts: [] }, 'departed');
+
+  expect(face).toEqual({ name: 'departed', product: undefined, mark: undefined });
 });

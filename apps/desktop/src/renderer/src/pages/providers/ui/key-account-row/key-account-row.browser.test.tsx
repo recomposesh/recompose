@@ -119,7 +119,32 @@ test('a key the catalog never offered stands under the provider it was stored as
   await press('Actions for build');
 
   await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
-  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(1);
+  await expect.element(page.getByRole('menuitem', { name: 'Verify' })).not.toBeInTheDocument();
+});
+
+test('a provider whose balance wants a second key offers to take one, and none to forget yet', async () => {
+  await renderRow({ ...stored, provider: 'openrouter', kind: 'aggregator' });
+
+  await press('Actions for build');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Add credits key' })).toBeVisible();
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Forget credits key' }))
+    .not.toBeInTheDocument();
+});
+
+test('a provider already holding that key offers to replace it or to forget it', async () => {
+  await renderRow({
+    ...stored,
+    provider: 'openrouter',
+    kind: 'aggregator',
+    readerCredentialRef: 'read-1',
+  });
+
+  await press('Actions for build');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Replace credits key' })).toBeVisible();
+  await expect.element(page.getByRole('menuitem', { name: 'Forget credits key' })).toBeVisible();
 });
 
 test('an aggregator key takes the same row and offers no check, because no probe knows it', async () => {
@@ -130,7 +155,32 @@ test('an aggregator key takes the same row and offers no check, because no probe
   await press('Actions for build');
 
   await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
-  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(1);
+  await expect.element(page.getByRole('menuitem', { name: 'Verify' })).not.toBeInTheDocument();
+});
+
+test('a provider whose balance wants a second key offers to take one, and none to forget yet', async () => {
+  await renderRow({ ...stored, provider: 'openrouter', kind: 'aggregator' });
+
+  await press('Actions for build');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Add credits key' })).toBeVisible();
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Forget credits key' }))
+    .not.toBeInTheDocument();
+});
+
+test('a provider already holding that key offers to replace it or to forget it', async () => {
+  await renderRow({
+    ...stored,
+    provider: 'openrouter',
+    kind: 'aggregator',
+    readerCredentialRef: 'read-1',
+  });
+
+  await press('Actions for build');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Replace credits key' })).toBeVisible();
+  await expect.element(page.getByRole('menuitem', { name: 'Forget credits key' })).toBeVisible();
 });
 
 test('a custom aggregator row names the address a person gave it, and still offers no check', async () => {
@@ -143,7 +193,32 @@ test('a custom aggregator row names the address a person gave it, and still offe
   await press('Actions for house pool');
 
   await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
-  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(1);
+  await expect.element(page.getByRole('menuitem', { name: 'Verify' })).not.toBeInTheDocument();
+});
+
+test('a provider whose balance wants a second key offers to take one, and none to forget yet', async () => {
+  await renderRow({ ...stored, provider: 'openrouter', kind: 'aggregator' });
+
+  await press('Actions for build');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Add credits key' })).toBeVisible();
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Forget credits key' }))
+    .not.toBeInTheDocument();
+});
+
+test('a provider already holding that key offers to replace it or to forget it', async () => {
+  await renderRow({
+    ...stored,
+    provider: 'openrouter',
+    kind: 'aggregator',
+    readerCredentialRef: 'read-1',
+  });
+
+  await press('Actions for build');
+
+  await expect.element(page.getByRole('menuitem', { name: 'Replace credits key' })).toBeVisible();
+  await expect.element(page.getByRole('menuitem', { name: 'Forget credits key' })).toBeVisible();
 });
 
 test('an aggregator row the app addresses itself claims no address of its own', async () => {

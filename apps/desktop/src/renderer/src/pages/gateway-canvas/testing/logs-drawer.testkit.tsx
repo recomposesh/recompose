@@ -1,7 +1,7 @@
 import type { Account, GatewayConfig, LogRow as LoggedRequest } from '@recompose/contracts';
 
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import type { InspectorSubject } from '../ui/gateway-canvas-page/canvas-subjects';
 
@@ -79,6 +79,17 @@ export function freshDrawer(): void {
 /** What each listed row reads as, which is how a scenario says which requests remain. */
 export function listed(container: Element): readonly (string | null)[] {
   return [...container.querySelectorAll('[role="option"]')].map((row) => row.textContent);
+}
+
+/**
+ * The drawer's own header, which is where a scenario reads what the drawer says it is showing.
+ *
+ * @summary The run below names its columns, and Provider heads one of them while also being a
+ * subject type. Scoping to the header is what keeps a scenario about the subject from catching a
+ * column head instead.
+ */
+export function drawerHeader(screen: Drawer) {
+  return page.elementLocator(screen.container.querySelector('header') ?? screen.container);
 }
 
 /** Narrows the selected subject to failed requests. */

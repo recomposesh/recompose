@@ -51,12 +51,15 @@ export type Crossing = {
         skipPluginId: string;
       }
     | undefined;
+  copilotPath?: string | undefined;
   xaiNamespaceTools?: Record<string, { namespace: string; name: string }> | undefined;
   xaiInjectSearch?: boolean | undefined;
   xaiSearchOwnership?: { clientTools: readonly string[] } | undefined;
   geminiToolNames?: Readonly<Record<string, string>> | undefined;
   geminiNativeWebSearch?: boolean | undefined;
   responsesToolRefs?: Readonly<Record<string, ResponsesToolRef>> | undefined;
+  /** The output the target model will take, where its vendor states one and refuses more. */
+  outputCeiling?: number | undefined;
 };
 
 export function parsedJson(text: string): unknown {

@@ -13,19 +13,19 @@ A conditional router sends each request to the child best suited to answer it. E
 2. Bind the judge: an account plus a provider model. Fast, cheap models judge best, because the judge only names a branch and every request waits on its answer.
 3. Give every branch a label and a rule. The **Branch rule** sheet holds both, along with a **Routes to** line naming the child. The label is the exact word the judge answers with, so a rename changes what it reads.
 
-A permanent else branch completes the router. No match, a judge refusal, and a judge out of time all land there, so routing trouble never drops a request.
+A permanent else branch completes the router. It holds every request the judge reads and places on no branch of its own.
 
 ## How the judge decides
 
-The router spends one classification per request. The judge hears the branch labels, the rules, and what the caller has said, then answers with one label. An answer naming no branch earns exactly one more ask, and a second miss lands on else. A refusal from the judge, or an answer that outwaits its three-second budget, lands on else without a second ask. The judge itself never receives the request it classified.
+The router spends one classification per request. The judge hears the branch labels, the rules, and what the caller has said, then answers with one label. Beside those labels the judge always gets one more word, `none`, for a request that fits no branch at all, and that answer lands on else without a second ask. An answer wearing neither a label nor `none` earns exactly one more ask, and a second miss lands on else too. The judge itself never receives the request it classified.
 
-The judge cools down after a rate limit like any target. A cooling judge sends requests to else without a call leaving the machine, and the branch children stay free to serve. When the cooldown ends, the judge reads the next request again.
+A judge that reaches no verdict refuses the request rather than routing it. Three things read that way: a refusal from the judge, an answer that outwaits its three-second budget, and a judge standing cool after a rate limit. The virtual model then answers `503` and names the trouble. Else is where a judge sends a request it has read, never where the router drops one it never read.
 
 ## A conversation keeps its branch
 
 A conversation keeps the branch it first earned, so its prompt cache survives every turn. The gateway recognizes a conversation by the turns the caller has spoken, whichever request shape carried them. The conversation keeps only a branch the judge actually named. A request that fell to else asks the judge fresh next time, so one bad minute from a judge never parks a whole conversation on the fallback.
 
-The **Re-judge every request** toggle opts out: every request goes back to the judge. A conversation can then change branch on the way, and each change costs a prompt cache hit. A turn that resumes server-side state keeps the branch it earned under either rhythm.
+The **Re-judge every request** toggle opts out: every request goes back to the judge. A conversation can then change branch on the way, and each change costs a prompt cache hit. The toggle reaches every turn, including one that resumes state a provider holds for a single account. Leave it off and such a turn keeps the branch it earned, which matters because clients that replay signed reasoning send one on every turn after the first.
 
 ## What happens on a refusal
 

@@ -70,6 +70,17 @@ function looksLikeGemini(custody: LookCustody): boolean {
  * @summary Copilot's own base carries no version segment, so its catalog stands one segment shorter
  * than every other compatible vendor's, and Gemini publishes its under its own version segment.
  */
+/**
+ * Whether a vendor's catalog names models that answer no turn a gateway sends.
+ *
+ * @summary Copilot publishes its embedding and completion models beside the ones that hold a
+ * conversation, and refuses a turn sent to any of them. Every other vendor here publishes one
+ * catalog of models that all answer the same way.
+ */
+export function namesModelsThatAnswerNoTurn(custody: LookCustody): boolean {
+  return looksLikeCopilot(custody);
+}
+
 export function modelsPathFor(custody: LookCustody): string {
   if (looksLikeGemini(custody)) return geminiModelsPath;
 

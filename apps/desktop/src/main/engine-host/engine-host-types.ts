@@ -16,6 +16,7 @@ import type {
   LogRow,
   LookCustody,
   ModelListing,
+  PlanUsageReadings,
   RuntimeReachability,
   SubscriptionProviderId,
 } from '@recompose/contracts';
@@ -43,6 +44,7 @@ export type EngineHostDeps = {
   onTraffic?: (traffic: GatewayTraffic) => void;
   onBranchPins?: (pinning: GatewayBranchPins) => void;
   onCooldowns?: (cooling: GatewayCooldowns) => void;
+  onPlanUsage?: (readings: PlanUsageReadings) => void;
   onJudging?: (judging: GatewayJudging) => void;
   onLogs?: (batch: LogBatch) => void;
   onSettledRow?: (row: LogRow) => void;

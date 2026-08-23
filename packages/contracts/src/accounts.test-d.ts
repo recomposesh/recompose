@@ -16,8 +16,8 @@ import type {
 import { defaultAccountsDocument, loadAccountsDocument } from './accounts';
 
 describe('the account row the document stores', () => {
-  test('the document pins itself to schema version 9', () => {
-    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<9>();
+  test('the document pins itself to schema version 10', () => {
+    expectTypeOf<AccountsDocument['schemaVersion']>().toEqualTypeOf<10>();
   });
 
   test('a stored row is a subscription, a credentialed account, or a local runtime', () => {
@@ -61,6 +61,23 @@ describe('the reference a credentialed row carries in place of its secret', () =
     >().toEqualTypeOf<CredentialedAccount>();
     expectTypeOf<CredentialedAccount['credentialRef']>().toEqualTypeOf<string>();
     expectTypeOf<CredentialedAccount['kind']>().toEqualTypeOf<'api-key' | 'aggregator'>();
+  });
+
+  test('the read-only reference is optional, and never replaces the one requests are served with', () => {
+    expectTypeOf<CredentialedAccount['readerCredentialRef']>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<CredentialedAccount['credentialRef']>().not.toEqualTypeOf<string | undefined>();
+    expectTypeOf<{
+      id: string;
+      provider: string;
+      kind: CredentialedAccountKind;
+      label: string;
+      readerCredentialRef: string;
+    }>().not.toExtend<CredentialedAccount>();
+  });
+
+  test('neither other arm of a stored row can hold a read-only reference', () => {
+    expectTypeOf<SubscriptionAccount>().not.toHaveProperty('readerCredentialRef');
+    expectTypeOf<LocalAccount>().not.toHaveProperty('readerCredentialRef');
   });
 
   test('the mask is optional, so a row stored before it existed still types', () => {

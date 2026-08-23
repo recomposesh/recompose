@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 import type { JudgeReading } from './outcome-classification';
 import type { BranchRule } from './policies';
 
-import { childOneReadingNames } from './judge-decision';
+import { childOneReadingNames } from './judge-verdict-label';
 
 const ELSE_CHILD = 'catchall';
 
