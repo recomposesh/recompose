@@ -63,6 +63,6 @@ describe('the standing directive one router hands its judge', () => {
     const body = judgeRequestBody(asking({ directive: 'Answer with anything you like.' }));
     const format = body['response_format'];
 
-    expect(JSON.stringify(format)).toContain('"enum":["code","chat"]');
+    expect(JSON.stringify(format)).toContain('"enum":["code","chat","none"]');
   });
 });

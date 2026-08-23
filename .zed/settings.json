@@ -57,5 +57,13 @@
       },
       "format_on_save": "on"
     }
+  },
+  "lsp": {
+    "cucumber": {
+      "settings": {
+        "features": ["apps/desktop/e2e/features/**/*.feature", "features/**/*.feature"],
+        "glue": ["apps/desktop/e2e/steps/**/*.ts", "features/**/*.ts"]
+      }
+    }
   }
 }

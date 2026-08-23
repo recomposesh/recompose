@@ -1,81 +1,18 @@
-import type { LocalRuntimeId } from '@recompose/contracts';
+import { localRuntimes } from '@recompose/contracts';
 
-import { localRuntimes, vendorEndpointOf } from '@recompose/contracts';
+import type { CatalogEntry } from './catalog-shape';
 
-import type { AccountKind } from '../../../entities/account';
-import type { CatalogLead } from './catalog-lead';
-
-/** A way an account reaches a provider, which is every kind the registry holds one under. */
-export type ConnectionWay = AccountKind;
-
-/**
- * What a picked entry's connect step asks a person for.
- *
- * @summary The column an entry stands in and the thing it asks for are two different facts. A
- * coding plan stands among the subscriptions, because that's where a person who bought a plan
- * looks, and asks for the token the plan issued, because no sign-in exists to offer.
- */
-export type OfferTakes = 'sign-in' | 'key' | 'runtime' | 'address';
-
-export type CatalogOffer = {
-  /** The column the row stands in, which is the kind the surface behind it holds. */
-  way: ConnectionWay;
-  /** What the connect step asks for once the row is picked. */
-  takes: OfferTakes;
-  /** What the row reads as under this way, which is the product rather than the vendor. */
-  title: string;
-  /** One line saying what connecting this way gives. */
-  benefit: string;
-};
-
-export type CatalogEntry = {
-  /** The provider the entry stands for, which is the identity a stored row keeps. */
-  id: string;
-  /** The name the provider goes by on screen. */
-  name: string;
-  /** The mark or glyph the entry's cards lead with. */
-  lead: CatalogLead;
-  /** Every way this provider can be connected, in the order they are offered. */
-  offers: readonly CatalogOffer[];
-  /**
-   * The vendor's own page where the key this entry takes is issued.
-   *
-   * @summary Only an entry whose vendor publishes such a page carries one, because a link the app
-   * guessed at is worse than none: a person who lands on the wrong page concludes the key is
-   * somewhere else. The app never restates the steps behind it either, since the vendor moves them.
-   */
-  keyPage?: { label: string; href: string };
-};
-
-function hostOf(vendor: string): string {
-  return new URL(vendorEndpointOf(vendor)?.origin ?? 'https://example.invalid').host;
-}
-
-const withYourKey = (vendor: string) => `${hostOf(vendor)} with your key`;
-
-const ownAddress = 'A base URL and a dialect you choose';
-
-function signsIn(title: string, benefit: string): CatalogOffer {
-  return { way: 'subscription', takes: 'sign-in', title, benefit };
-}
-
-function planToken(title: string, benefit: string): CatalogOffer {
-  return { way: 'subscription', takes: 'key', title, benefit };
-}
-
-function apiKey(title: string, benefit: string): CatalogOffer {
-  return { way: 'api-key', takes: 'key', title, benefit };
-}
-
-function aggregatorKey(title: string, benefit: string): CatalogOffer {
-  return { way: 'aggregator', takes: 'key', title, benefit };
-}
-
-function runtime(title: string, benefit: string): CatalogOffer {
-  return { way: 'local', takes: 'runtime', title, benefit };
-}
-
-const glyphOf = { network: { glyph: 'network' }, monitor: { glyph: 'monitor' } } as const;
+import { localEntries, onThisMachine } from './catalog-local-entries';
+import {
+  aggregatorKey,
+  apiKey,
+  glyphOf,
+  ownAddress,
+  planToken,
+  runtime,
+  signsIn,
+  withYourKey,
+} from './catalog-offers';
 
 const subscriptionEntries: readonly CatalogEntry[] = [
   {
@@ -165,7 +102,7 @@ const keyEntries: readonly CatalogEntry[] = [
   {
     id: 'custom-endpoint',
     name: 'Custom endpoint',
-    lead: glyphOf.network,
+    lead: glyphOf.spark,
     offers: [{ way: 'api-key', takes: 'address', title: 'Custom endpoint', benefit: ownAddress }],
   },
 ];
@@ -204,61 +141,13 @@ const aggregatorEntries: readonly CatalogEntry[] = [
   {
     id: 'custom-aggregator',
     name: 'Custom aggregator',
-    lead: glyphOf.network,
+    lead: glyphOf.spark,
     offers: [
       { way: 'aggregator', takes: 'address', title: 'Custom aggregator', benefit: ownAddress },
     ],
   },
 ];
 
-function runtimeHost(id: LocalRuntimeId): string {
-  return new URL(localRuntimes[id].address).host;
-}
-
-const onThisMachine = (id: LocalRuntimeId) => `${runtimeHost(id)}, models on this machine`;
-
-const localEntries: readonly CatalogEntry[] = [
-  {
-    id: 'lmstudio',
-    name: localRuntimes.lmstudio.name,
-    lead: { mark: 'lmstudio' },
-    offers: [runtime(localRuntimes.lmstudio.name, `${runtimeHost('lmstudio')}, local server`)],
-  },
-  {
-    id: 'llamacpp',
-    name: localRuntimes.llamacpp.name,
-    lead: glyphOf.monitor,
-    offers: [runtime(localRuntimes.llamacpp.name, `llama-server on ${runtimeHost('llamacpp')}`)],
-  },
-  {
-    id: 'vllm',
-    name: localRuntimes.vllm.name,
-    lead: { mark: 'vllm' },
-    offers: [runtime(localRuntimes.vllm.name, 'High-throughput GPU serving')],
-  },
-  {
-    id: 'custom-local',
-    name: 'Custom local server',
-    lead: glyphOf.network,
-    offers: [
-      {
-        way: 'local',
-        takes: 'address',
-        title: 'Custom local server',
-        benefit: 'Anything serving models on a local port',
-      },
-    ],
-  },
-];
-
-/**
- * Every provider the catalog offers, with the ways each one connects.
- *
- * @summary Reach for it from the catalog. A provider that both sells a plan and sells a key
- * stands under both ways, because the two yield different things and a person chooses between
- * them rather than being handed one. Each way carries its own title, because a plan reads as the
- * product a person pays for and a key reads as the endpoint it is spent against.
- */
 export const catalogEntries: readonly CatalogEntry[] = [
   {
     id: 'anthropic',
@@ -285,6 +174,11 @@ export const catalogEntries: readonly CatalogEntry[] = [
     name: 'OpenRouter',
     lead: { mark: 'openrouter' },
     offers: [aggregatorKey('OpenRouter', 'One key, 300+ models')],
+    readerKey: {
+      label: 'Management key',
+      hint: 'sk-or-v1-…',
+      note: 'Optional. OpenRouter reads credits only with a management key, and this one never serves a request.',
+    },
   },
   ...aggregatorEntries,
   {

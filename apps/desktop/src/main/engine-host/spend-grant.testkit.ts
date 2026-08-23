@@ -43,6 +43,14 @@ export const aggregatorRow: CredentialedAccount = {
   credentialRef: 'cred-many',
 };
 
+/** The management key an OpenRouter row reads its balance with, which serves no request. */
+export const readerSecret = 'sk-or-management-4d1a';
+
+export const aggregatorRowHoldingAReader: CredentialedAccount = {
+  ...aggregatorRow,
+  readerCredentialRef: 'read-many',
+};
+
 export const localRow: LocalAccount = {
   id: 'acc-here',
   provider: 'ollama',

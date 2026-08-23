@@ -17,6 +17,37 @@ import {
   subscriptionPlanNames,
 } from '@recompose/contracts';
 
+type ReaderKeySet = (id: string, held: boolean) => AccountsDocument;
+
+/**
+ * Stands a read-only credential on one row, or takes it away, as the real acts do.
+ *
+ * @summary A reference rather than a secret, because the fake registry holds what the real one
+ * holds and the vault behind it is the only place a secret ever lives.
+ */
+function withReaderKey(registry: AccountsDocument, id: string, held: boolean): AccountsDocument {
+  return {
+    ...registry,
+    accounts: registry.accounts.map((row) =>
+      row.id === id && row.kind !== 'subscription' && row.kind !== 'local'
+        ? { ...row, ...(held ? { readerCredentialRef: 'read-fake' } : {}) }
+        : row,
+    ),
+  };
+}
+
+/** The two acts that stand a read-only credential on a row or take it away again. */
+function readerKeyActs(
+  set: ReaderKeySet,
+): Pick<RecomposeIpc, 'accounts:set-reader-key' | 'accounts:clear-reader-key'> {
+  return {
+    'accounts:set-reader-key': async ({ id }) =>
+      Promise.resolve({ ok: true, value: set(id, true) }),
+    'accounts:clear-reader-key': async ({ id }) =>
+      Promise.resolve({ ok: true, value: set(id, false) }),
+  };
+}
+
 /** A registry nobody has connected anything to, which every install starts as. */
 export const noAccounts: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accounts: [] };
 
@@ -26,6 +57,8 @@ type AccountHandlers = Pick<
   | 'accounts:connect'
   | 'accounts:remove'
   | 'accounts:check-key'
+  | 'accounts:set-reader-key'
+  | 'accounts:clear-reader-key'
   | 'accounts:connect-local'
   | 'accounts:detect-runtime'
   | 'accounts:check-runtime'
@@ -105,39 +138,55 @@ function withRuntimeMoved(held: AccountsDocument, id: string, port: number): Acc
   };
 }
 
+/**
+ * The one registry every fake act reads and writes, so a scenario sees its own connects.
+ *
+ * @summary The mutators live together rather than inside the handler map, because they share one
+ * piece of state and a handler map that also held them would be the only thing in this file a
+ * reader had to hold two ideas about at once.
+ */
+function registryDesk(seed: AccountsDocument) {
+  let registry = seed;
+  let nextAccountNumber = registry.accounts.length + 1;
+
+  return {
+    held: () => registry,
+    append: (row: Account): AccountsDocument => {
+      registry = { ...registry, accounts: [...registry.accounts, row] };
+
+      return registry;
+    },
+    moved: (id: string, port: number): AccountsDocument => {
+      registry = withRuntimeMoved(registry, id, port);
+
+      return registry;
+    },
+    forgotten: (id: string): AccountsDocument => {
+      registry = { ...registry, accounts: registry.accounts.filter((row) => row.id !== id) };
+
+      return registry;
+    },
+    readerKeySet: (id: string, standing: boolean): AccountsDocument => {
+      registry = withReaderKey(registry, id, standing);
+
+      return registry;
+    },
+    nextId: (): string => {
+      const id = `a${nextAccountNumber}`;
+
+      nextAccountNumber += 1;
+
+      return id;
+    },
+  };
+}
+
 export function accountHandlers(
   seed: AccountsDocument,
   verdict: KeyCheckVerdict,
   reachability: RuntimeReachability,
 ): AccountsHalf {
-  let registry = seed;
-  let nextAccountNumber = registry.accounts.length + 1;
-
-  function append(row: Account): AccountsDocument {
-    registry = { ...registry, accounts: [...registry.accounts, row] };
-
-    return registry;
-  }
-
-  function moved(id: string, port: number): AccountsDocument {
-    registry = withRuntimeMoved(registry, id, port);
-
-    return registry;
-  }
-
-  function forgotten(id: string): AccountsDocument {
-    registry = { ...registry, accounts: registry.accounts.filter((row) => row.id !== id) };
-
-    return registry;
-  }
-
-  function nextId(): string {
-    const id = `a${nextAccountNumber}`;
-
-    nextAccountNumber += 1;
-
-    return id;
-  }
+  const { append, moved, forgotten, readerKeySet, nextId, held } = registryDesk(seed);
 
   const localRuntimeActs = {
     'accounts:connect-local': async (request: IpcRequest<'accounts:connect-local'>) =>
@@ -158,10 +207,11 @@ export function accountHandlers(
         label: subscriptionPlanNames[provider],
       });
     },
-    'accounts:list': async () => Promise.resolve({ ok: true, value: registry }),
+    'accounts:list': async () => Promise.resolve({ ok: true, value: held() }),
     'accounts:connect': async (request) =>
       Promise.resolve({ ok: true, value: append(keyRow(nextId(), request)) }),
     'accounts:check-key': async () => Promise.resolve({ ok: true as const, value: { verdict } }),
     'accounts:remove': async ({ id }) => Promise.resolve({ ok: true, value: forgotten(id) }),
+    ...readerKeyActs(readerKeySet),
   };
 }

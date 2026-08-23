@@ -44,6 +44,10 @@ const openWindows: readonly QuotaWindow[] = [
   },
 ];
 
+function signedInWith(quotaWindows: readonly QuotaWindow[]) {
+  return { bridge: { accounts: signedIn, quotaWindows } };
+}
+
 const meta = preview.meta({
   component: QuotaStrip,
   parameters: { bridge: { accounts: signedIn, quotaWindows: openWindows } },
@@ -59,77 +63,81 @@ const meta = preview.meta({
 /** A five-hour burn part way toward the account's own record, with the week beneath it. */
 export const BurningTowardTheRecord = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('region', { name: 'Quota windows' })).toBeVisible();
-
-    const gauge = await canvas.findByRole('meter', {
-      name: 'Claude · Claude Max 5-hour window burn',
-    });
-
-    await expect(gauge).toHaveAttribute('aria-valuenow', '0.48');
+    await expect(await canvas.findByRole('region', { name: 'Plan usage limits' })).toBeVisible();
     await expect(await canvas.findByText('Record 2.0M on Aug 3')).toBeVisible();
+    await expect(await canvas.findByText('1.2M sent')).toBeVisible();
   },
 });
 
-/** The caption that keeps every figure honest: local logs, and no official quota anywhere. */
+/** The caption that keeps the two derivations apart, so no figure can read as the other. */
 export const NamingItsDerivation = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText(/Not an official quota/)).toBeVisible();
+    await expect(
+      await canvas.findByText(/The share each vendor reports for its own plan/),
+    ).toBeVisible();
   },
 });
 
-/** The five-hour countdown, approximate because the anchor was inferred from a quiet stretch. */
+/** The inferred reset, named by the hour it lands on and marked approximate. */
 export const CountingDownToTheClose = meta.story({
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText(/Closes in ≈2h 1[34]m/)).toBeVisible();
+    await expect(await canvas.findByText(/^Resets .*~\d{1,2}:\d{2} [AP]M$/)).toBeVisible();
+  },
+});
+
+/** A plan the vendor measured for itself, which is the only share here that means a quota. */
+export const MeasuredByTheVendor = meta.story({
+  parameters: signedInWith([
+    {
+      accountId: 'work',
+      provider: 'anthropic',
+      length: '5h',
+      openedAt: NOW - AN_HOUR,
+      closesAt: NOW + AN_HOUR,
+      burnTokens: 1_200_000,
+      reported: { spentShare: 0.23, readAt: NOW, resetsAt: NOW + 2 * AN_HOUR },
+    },
+    {
+      accountId: 'work',
+      provider: 'anthropic',
+      length: 'week',
+      burnTokens: 8_400_000,
+      reported: { spentShare: 0.41, readAt: NOW, resetsAt: NOW + 3 * 24 * AN_HOUR },
+    },
+  ]),
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('23% used')).toBeVisible();
+    await expect(await canvas.findByText('41% used')).toBeVisible();
+    await expect(await canvas.findByText('1.2M through this machine')).toBeVisible();
   },
 });
 
 /** A window that burned past every earlier one says so, and its bar still stops short of the end. */
 export const TheBusiestOnRecord = meta.story({
-  parameters: {
-    bridge: {
-      accounts: signedIn,
-      quotaWindows: [
-        {
-          accountId: 'work',
-          provider: 'anthropic',
-          length: '5h',
-          openedAt: NOW - AN_HOUR,
-          closesAt: NOW + AN_HOUR,
-          burnTokens: 2_000_000,
-          record: { burnTokens: 2_000_000, openedAt: NOW - AN_HOUR },
-        },
-      ],
+  parameters: signedInWith([
+    {
+      accountId: 'work',
+      provider: 'anthropic',
+      length: '5h',
+      openedAt: NOW - AN_HOUR,
+      closesAt: NOW + AN_HOUR,
+      burnTokens: 2_000_000,
+      record: { burnTokens: 2_000_000, openedAt: NOW - AN_HOUR },
     },
-  },
+  ]),
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('Busiest window on record')).toBeVisible();
-
-    const gauge = await canvas.findByRole('meter', {
-      name: 'Claude · Claude Max 5-hour window burn',
-    });
-
-    await expect(Number(gauge.getAttribute('aria-valuenow'))).toBeLessThan(1);
+    await expect(await canvas.findByText('2.0M sent')).toBeVisible();
   },
 });
 
-/** An account with nothing on record yet carries its burn without a gauge to measure it. */
+/** An account with nothing on record yet carries its burn and says nothing it cannot prove. */
 export const NothingOnRecordYet = meta.story({
-  parameters: {
-    bridge: {
-      accounts: signedIn,
-      quotaWindows: [
-        {
-          accountId: 'work',
-          provider: 'anthropic',
-          length: '5h',
-          burnTokens: 0,
-        },
-      ],
-    },
-  },
+  parameters: signedInWith([
+    { accountId: 'work', provider: 'anthropic', length: '5h', burnTokens: 0 },
+  ]),
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('No window on record yet')).toBeVisible();
+    await expect(await canvas.findByText('0 sent')).toBeVisible();
   },
 });
 
@@ -174,6 +182,14 @@ export const TwoPlansOneAddress = meta.story({
     await expect(await canvas.findByText('Claude', { exact: true })).toBeVisible();
     await expect(await canvas.findByText('Codex', { exact: true })).toBeVisible();
     await expect(await canvas.findAllByText('dev@example.com')).toHaveLength(2);
+  },
+});
+
+/** A plan signed into but never sent through, drawn as the card it will become. */
+export const AwaitingItsFirstRequest = meta.story({
+  parameters: signedInWith([]),
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('No traffic yet')).toBeVisible();
   },
 });
 

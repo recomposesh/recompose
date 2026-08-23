@@ -1,4 +1,4 @@
-import type { EngineStates, Settings } from '@recompose/contracts';
+import type { EngineStates, PlanUsageReadings, Settings } from '@recompose/contracts';
 
 import { join } from 'node:path';
 
@@ -9,6 +9,7 @@ import type { ServingMemory } from '../engine-host/serving-memory';
 import type { SpendGrantContext } from '../engine-host/spend-grant';
 import type { StorageWatchers } from '../storage/storage-watchers';
 import type { CredentialCustody } from '../subscriptions/credential-custody';
+import type { PlanUsageStore } from '../usage/plan-usage-store';
 import type { UsageStore } from '../usage/usage-store';
 
 import { createEngineHost } from '../engine-host/engine-host';
@@ -39,6 +40,7 @@ import { reconcileVault } from '../storage/vault-maintenance';
 import { subscriptionCredentialStore } from '../subscriptions/subscription-credential-store';
 import { machineCustody } from '../subscriptions/subscriptions-wiring';
 import { openAccountKinds } from '../usage/account-kinds';
+import { openPlanUsageStore } from '../usage/plan-usage-store';
 import { openUsageStore } from '../usage/usage-store';
 
 export type StoredBootDeps = {
@@ -58,6 +60,7 @@ export type StoredBoot = {
   engineHost: EngineHost;
   storageWatchers: StorageWatchers;
   usageStore: UsageStore;
+  planUsage: () => PlanUsageReadings;
   serveStoredGateways: () => void;
   close: () => void;
 };
@@ -116,13 +119,14 @@ function watchEngineStates(
   engineHost: EngineHost,
   deps: StoredBootDeps,
   servingMemory: ServingMemory,
-  usageStore: UsageStore,
+  stores: WritingStores,
 ): void {
   engineHost.onStatesChanged(pushEngineStates);
   engineHost.onStatesChanged(deps.repaintStates);
   engineHost.onStatesChanged(servingMemory.keep);
   engineHost.onStatesChanged(() => {
-    void usageStore.flushNow();
+    void stores.usage.flushNow();
+    void stores.planUsage.flushNow();
   });
   deps.repaintStates(engineHost.states());
 }
@@ -139,6 +143,37 @@ async function repairedStore(deps: StoredBootDeps): Promise<void> {
   }
 }
 
+type WritingStores = {
+  usage: UsageStore;
+  planUsage: PlanUsageStore;
+};
+
+type StoredHostStanding = {
+  slugs: readonly string[];
+  custody: CredentialCustody | null;
+  stores: WritingStores;
+};
+
+function hostOverStoredState(deps: StoredBootDeps, standing: StoredHostStanding): EngineHost {
+  return createEngineHost({
+    knownSlugs: standing.slugs,
+    spawnChild: () => spawnEngineChild(deps.recomposeHome()),
+    grantFor: storedSpendGrants(deps, standing.custody),
+    storeSubscriptionCredential: subscriptionCredentialStore(
+      deps.recomposeHome(),
+      deps.platform,
+      standing.custody,
+    ).write,
+    onTraffic: pushEngineTraffic,
+    onBranchPins: pushEngineBranchPins,
+    onCooldowns: pushEngineCooldowns,
+    onPlanUsage: standing.stores.planUsage.hold,
+    onJudging: pushEngineJudging,
+    onLogs: pushEngineLogs,
+    onSettledRow: standing.stores.usage.accrue,
+  });
+}
+
 export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredBoot> {
   await adoptLegacyConfigHome(deps.legacyUserDataPath, deps.recomposeHome());
 
@@ -148,26 +183,18 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
 
   const custody = machineCustody(deps.recomposeHome());
   const { accountKinds, usageStore } = await openUsageLedger(deps);
-  const engineHost = createEngineHost({
-    knownSlugs: boot.slugs,
-    spawnChild: () => spawnEngineChild(deps.recomposeHome()),
-    grantFor: storedSpendGrants(deps, custody),
-    storeSubscriptionCredential: subscriptionCredentialStore(
-      deps.recomposeHome(),
-      deps.platform,
-      custody,
-    ).write,
-    onTraffic: pushEngineTraffic,
-    onBranchPins: pushEngineBranchPins,
-    onCooldowns: pushEngineCooldowns,
-    onJudging: pushEngineJudging,
-    onLogs: pushEngineLogs,
-    onSettledRow: usageStore.accrue,
-  });
+  const stores: WritingStores = {
+    usage: usageStore,
+    planUsage: await openPlanUsageStore({
+      file: storagePathsFor(deps.recomposeHome()).planUsageFile,
+      onCorrupt: deps.onCorrupt,
+    }),
+  };
+  const engineHost = hostOverStoredState(deps, { slugs: boot.slugs, custody, stores });
   const rememberedServing = await rememberedServingSlugs(deps.recomposeHome(), deps.onCorrupt);
   const servingMemory = servingMemoryKeeper(deps.recomposeHome());
 
-  watchEngineStates(engineHost, deps, servingMemory, usageStore);
+  watchEngineStates(engineHost, deps, servingMemory, stores);
 
   const storageWatchers = await startStorageWatchers({
     userDataPath: deps.recomposeHome(),
@@ -185,6 +212,7 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
     engineHost,
     storageWatchers,
     usageStore,
+    planUsage: () => stores.planUsage.read(Date.now()),
     serveStoredGateways: () => {
       if (boot.settings.startGatewaysOnLaunch === true) {
         startAllStoredGateways(engineHost, deps.recomposeHome(), deps.onCorrupt);

@@ -204,6 +204,7 @@ async function answerEveryChannel(profile: StoredBoot): Promise<void> {
     reach: storageReach,
     store: profile.usageStore,
     retainedRows: profile.engineHost.retainedLogRows,
+    planUsage: profile.planUsage,
     bundledPricesFile: bundledPrices,
     noteUsageTable: appMenu.reflectUsageTable,
   });

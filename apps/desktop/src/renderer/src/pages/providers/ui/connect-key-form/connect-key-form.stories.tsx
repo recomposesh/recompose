@@ -103,3 +103,12 @@ export const PlanPointsAtItsKeyPage = meta.story({
 
 /** The same form in the dark scheme, where the field ink sits on the raised surface instead. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/** A provider that reads its balance only with a second key asks for one, in the same box. */
+export const AsksForAReadOnlyKey = meta.story({
+  args: { entry: entryNamed('openrouter'), kind: 'aggregator' },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByLabelText('Management key')).toBeVisible();
+    await expect(await canvas.findByText(/never serves a request/)).toBeVisible();
+  },
+});

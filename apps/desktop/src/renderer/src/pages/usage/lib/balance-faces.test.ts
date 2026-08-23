@@ -9,7 +9,7 @@ const A_MINUTE = 60_000;
 
 const read: AccountBalance = {
   accountId: 'build',
-  reading: { totalCredits: 100, totalUsage: 62.29, readAt: NOW - 3 * A_MINUTE },
+  reading: { remaining: 37.71, added: 100, spent: 62.29, readAt: NOW - 3 * A_MINUTE },
 };
 
 test('the balance headlines what is left rather than what was bought', () => {
@@ -27,7 +27,7 @@ test('the reading prints beside the instant it was taken, never as a live counte
 test('an account spent past what it added reads its overdraft rather than a floor of zero', () => {
   const overdrawn: AccountBalance = {
     accountId: 'build',
-    reading: { totalCredits: 10, totalUsage: 12.5, readAt: NOW },
+    reading: { remaining: -2.5, added: 10, spent: 12.5, readAt: NOW },
   };
 
   expect(balanceFaceOf(overdrawn, NOW).remaining).toBe('-$2.50');
@@ -62,8 +62,35 @@ test('the card keeps the account it stands for, so a row can find its own', () =
 test('a sub-cent remainder still prints its cents rather than rounding away', () => {
   const nearlySpent: AccountBalance = {
     accountId: 'build',
-    reading: { totalCredits: 5, totalUsage: 4.99, readAt: NOW },
+    reading: { remaining: 0.01, added: 5, spent: 4.99, readAt: NOW },
   };
 
   expect(balanceFaceOf(nearlySpent, NOW).remaining).toBe('$0.01');
+});
+
+test('a balance a rounding put a hair under zero prints as zero, never as a debt', () => {
+  const face = balanceFaceOf(
+    { accountId: 'aggregator', reading: { remaining: -0.0, added: 5, spent: 5.0001, readAt: NOW } },
+    NOW,
+  );
+
+  expect(face.remaining).toBe('$0.00');
+});
+
+test('a balance a vendor counted in another currency prints under that sign', () => {
+  const face = balanceFaceOf(
+    { accountId: 'kimi', reading: { remaining: 40, currency: 'CNY', readAt: NOW } },
+    NOW,
+  );
+
+  expect(face.remaining).toBe('CN¥40.00');
+});
+
+test('a balance naming no currency prints in dollars, which is what most vendors count', () => {
+  const face = balanceFaceOf(
+    { accountId: 'router', reading: { remaining: 12.5, readAt: NOW } },
+    NOW,
+  );
+
+  expect(face.remaining).toBe('$12.50');
 });

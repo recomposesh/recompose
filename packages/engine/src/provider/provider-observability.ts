@@ -6,6 +6,8 @@ import type {
 import type { ProviderUsage } from './provider-usage';
 import type { AttemptInFlight } from './telemetry-feed';
 
+import { planUsageTheProviderReports } from './plan-usage-headers';
+import { publishPlanUsage } from './plan-usage-watch';
 import {
   clonedMedia,
   clonedObservation,
@@ -124,6 +126,8 @@ export class ProviderObservationSpan {
       firstHeader(response.headers, upstreamRequestIdHeaders),
     );
 
+    this.sayWhatThePlanReads(response.headers);
+
     if (response.body === null) {
       this.finish(response.status, upstreamRequestIdHash, 0, emptyProviderUsage());
 
@@ -182,12 +186,33 @@ export class ProviderObservationSpan {
     body: Uint8Array,
     ttftMs = this.owner.now() - this.startedAt,
   ): void {
+    this.sayWhatThePlanReads(headers);
     this.finish(
       status,
       requestIdHash(firstHeader(headers, upstreamRequestIdHeaders)),
       ttftMs,
       providerUsageFrom(this.request.dialect, new TextDecoder().decode(body)),
     );
+  }
+
+  /**
+   * Says what the vendor behind this answer reported about the plan the account is spending.
+   *
+   * @summary A call spending a key belongs to no account, and a vendor that reported nothing leaves
+   * the reading empty rather than reading as unspent, so both stay silent: a plan nobody measured
+   * and a plan measured at zero must never draw the same meter.
+   */
+  private sayWhatThePlanReads(headers: Headers): void {
+    const { accountId, provider } = this.request;
+
+    if (accountId === undefined) return;
+
+    const readAt = this.owner.wallClock();
+    const windows = planUsageTheProviderReports(headers, readAt);
+
+    if (windows.length === 0) return;
+
+    publishPlanUsage({ accountId, provider, readAt, windows });
   }
 
   private finish(

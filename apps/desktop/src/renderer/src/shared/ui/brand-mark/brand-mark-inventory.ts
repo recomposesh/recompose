@@ -43,3 +43,17 @@ export type BrandMarkName = (typeof brandMarkNames)[number];
 
 /** Which of a vendor's two drawings a surface asks for. */
 export type BrandMarkVariant = 'color' | 'mono';
+
+/**
+ * How any surface asks for a vendor drawing, whatever it falls back on when there is no mark.
+ *
+ * @summary Every such surface answers the same two questions, its size and whose colors it takes,
+ * and they differ only in what stands in for a missing mark. Naming the pair once is what keeps a
+ * client's row and a plan's card asking for a drawing in the same words.
+ */
+export type VendorDrawingProps = {
+  /** Size classes, replacing the standing square rather than adding to it. */
+  className?: string;
+  /** Whether a vendor mark takes its own colors or the ink around it. */
+  variant?: BrandMarkVariant;
+};

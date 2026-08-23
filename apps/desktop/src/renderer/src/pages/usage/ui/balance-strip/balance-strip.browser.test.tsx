@@ -25,7 +25,7 @@ const registry: AccountsDocument = {
 };
 
 function readOf(readAt: number): AccountBalance {
-  return { accountId: 'build', reading: { totalCredits: 100, totalUsage: 62.29, readAt } };
+  return { accountId: 'build', reading: { remaining: 37.71, added: 100, spent: 62.29, readAt } };
 }
 
 async function mounted(ui: ReactNode, overrides?: Partial<RecomposeIpc>) {

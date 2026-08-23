@@ -97,6 +97,7 @@ describe('the tool that performs each sign-in', () => {
       configHome: { told: 'environment', variable: 'CLAUDE_CONFIG_DIR' },
       signInArguments: [],
       renewArguments: ['auth', 'status'],
+      signInHint: 'Type /login in the terminal that opened.',
     });
   });
 
@@ -264,5 +265,17 @@ describe('the one plan no tool on the machine signs into', () => {
     for (const provider of subscriptionProviderIdSchema.options) {
       expect(subscriptionPlanNames[provider].length, provider).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('what a person still has to do once the tool is open', () => {
+  test('Claude Code opens on a prompt, so the tool names the word that signs in', () => {
+    expect(subscriptionProviders.anthropic.signInHint).toBe(
+      'Type /login in the terminal that opened.',
+    );
+  });
+
+  test('a tool whose command signs in by itself names nothing more to do', () => {
+    expect(subscriptionProviders.openai.signInHint).toBeUndefined();
   });
 });

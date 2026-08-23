@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -141,9 +141,11 @@ export const ScopedToAVirtualModel = meta.story({
 /** A target selected on the canvas, named from the account registry. */
 export const ScopedToATarget = meta.story({
   args: { subject: theAggregator },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
+    const header = within(canvasElement.querySelector('header') ?? canvasElement);
+
     await expect(await canvas.findByText('Logs for openrouter')).toBeVisible();
-    await expect(await canvas.findByText('Provider', { exact: true })).toBeVisible();
+    await expect(await header.findByText('Provider', { exact: true })).toBeVisible();
   },
 });
 

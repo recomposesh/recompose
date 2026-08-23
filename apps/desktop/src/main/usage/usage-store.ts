@@ -10,6 +10,7 @@ import type {
 
 import { USAGE_LEDGER_VERSION, usageLedgerSchema } from '@recompose/contracts';
 
+import { flushingWhenQuiet } from '../storage/flush-cadence';
 import { newerSchemaVersion, readJsonWithQuarantine, writeJsonAtomic } from '../storage/json-file';
 import {
   accrued,
@@ -18,10 +19,6 @@ import {
   hourBucketsWithin,
   prunedBefore,
 } from './usage-buckets';
-
-const FLUSH_QUIET_MS = 3_000;
-
-const FLUSH_CEILING_MS = 30_000;
 
 const DAY_MS = 86_400_000;
 
@@ -45,18 +42,6 @@ export type UsageStore = {
   heldBuckets: () => readonly UsageBucket[];
   flushNow: () => Promise<void>;
 };
-
-type FlushWatch = {
-  quiet: ReturnType<typeof setTimeout> | null;
-  ceiling: ReturnType<typeof setTimeout> | null;
-};
-
-function stopWatching(watch: FlushWatch): void {
-  clearTimeout(watch.quiet ?? undefined);
-  clearTimeout(watch.ceiling ?? undefined);
-  watch.quiet = null;
-  watch.ceiling = null;
-}
 
 async function loadLedger(deps: UsageStoreDeps): Promise<UsageLedger> {
   const raw = await readJsonWithQuarantine(deps.file, deps.onCorrupt ?? (() => undefined));
@@ -92,10 +77,9 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
 
   let ledger = prunedBefore(loaded, await retentionEdge());
   let dirty = ledger.buckets.length !== loaded.buckets.length;
-  const watch: FlushWatch = { quiet: null, ceiling: null };
 
   const flush = async (): Promise<void> => {
-    stopWatching(watch);
+    cadence.stopWatching();
 
     if (!dirty) {
       return;
@@ -106,21 +90,15 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
     await writeJsonAtomic(deps.file, ledger);
   };
 
-  const watchForQuiet = (): void => {
-    clearTimeout(watch.quiet ?? undefined);
-    watch.quiet = setTimeout(() => {
-      void flush();
-    }, FLUSH_QUIET_MS);
-    watch.ceiling ??= setTimeout(() => {
-      void flush();
-    }, FLUSH_CEILING_MS);
-  };
+  const cadence = flushingWhenQuiet(() => {
+    void flush();
+  });
 
   return {
     accrue: (row) => {
       ledger = accrued(ledger, row, deps.accountKindOf(row.accountId));
       dirty = true;
-      watchForQuiet();
+      cadence.watchForQuiet();
     },
     report: async (ask) => {
       const { range } = ask;

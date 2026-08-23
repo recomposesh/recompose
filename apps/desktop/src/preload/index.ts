@@ -39,6 +39,8 @@ const recompose: RecomposeIpc = Object.freeze({
   'accounts:connect': bridgeEntry('accounts:connect'),
   'accounts:remove': bridgeEntry('accounts:remove'),
   'accounts:check-key': bridgeEntry('accounts:check-key'),
+  'accounts:set-reader-key': bridgeEntry('accounts:set-reader-key'),
+  'accounts:clear-reader-key': bridgeEntry('accounts:clear-reader-key'),
   'accounts:connect-local': bridgeEntry('accounts:connect-local'),
   'accounts:detect-runtime': bridgeEntry('accounts:detect-runtime'),
   'accounts:check-runtime': bridgeEntry('accounts:check-runtime'),

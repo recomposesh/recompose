@@ -5,6 +5,7 @@ import {
   engineDirectiveSchema,
   engineJudgingReportSchema,
   engineLogReportSchema,
+  enginePlanUsageReportSchema,
   engineReportSchema,
   engineTrafficReportSchema,
 } from '@recompose/contracts';
@@ -23,6 +24,7 @@ import { type NoteTraffic, subscribeToLogRows } from './gateway-traffic';
 import { loopbackOverrideOrNull } from './loopback-override';
 import { probeKey } from './provider/key-probe';
 import { listProviderModels } from './provider/model-list';
+import { subscribeToPlanUsage } from './provider/plan-usage-watch';
 import { probeRuntime } from './provider/runtime-probe';
 import { claudeAddressBehind } from './subscription/claude-oauth-profile';
 
@@ -229,6 +231,23 @@ function tellingTheParentEveryCooldown(parentPort: ParentPort): void {
   });
 }
 
+/**
+ * Tells the parent what one account's plan reads, the moment a vendor says so.
+ *
+ * @summary The reading rides an answer the request was already making rather than a poll, so a plan
+ * a person stopped sending through simply stops speaking. One the parent cannot be told is written
+ * down and dropped, because the next answer that account draws says the share again.
+ */
+function tellingTheParentEveryPlanUsage(parentPort: ParentPort): void {
+  subscribeToPlanUsage((reading) => {
+    try {
+      parentPort.postMessage(enginePlanUsageReportSchema.parse({ kind: 'plan-usage', reading }));
+    } catch (failure) {
+      console.error(`The engine child dropped a plan reading for "${reading.accountId}".`, failure);
+    }
+  });
+}
+
 export function attachEngineChild(
   parentPort: ParentPort,
   openListeners: OpenListeners,
@@ -254,6 +273,7 @@ export function attachEngineChild(
   tellingTheParentEveryBranchTally(parentPort);
   tellingTheParentEveryCooldown(parentPort);
   tellingTheParentEveryJudging(parentPort);
+  tellingTheParentEveryPlanUsage(parentPort);
 
   parentPort.on('message', (messageEvent) => {
     if (spendLane.settle(messageEvent.data) || credentialLane.settle(messageEvent.data)) {

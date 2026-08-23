@@ -14,11 +14,17 @@ import {
 } from '@recompose/contracts';
 
 import type { BrandMarkName } from '../../../shared/ui';
-import type { CatalogEntry, CatalogOffer, ConnectionWay } from './catalog-entries';
+import type { CatalogEntry, CatalogOffer, ConnectionWay, ReaderKeyAsk } from './catalog-shape';
 
 import { catalogEntries } from './catalog-entries';
 
-export type { CatalogEntry, CatalogOffer, ConnectionWay, OfferTakes } from './catalog-entries';
+export type {
+  CatalogEntry,
+  CatalogOffer,
+  ConnectionWay,
+  OfferTakes,
+  ReaderKeyAsk,
+} from './catalog-shape';
 export { catalogEntries } from './catalog-entries';
 
 function entryFor(id: string): CatalogEntry | undefined {
@@ -207,4 +213,16 @@ export function keyKindOf(entry: CatalogEntry): CredentialedAccountKind | undefi
   }
 
   return offer.way === 'aggregator' ? 'aggregator' : 'api-key';
+}
+
+/**
+ * What a provider wants before it will report a balance, or nothing where its own key suffices.
+ *
+ * @summary Reach for it wherever a person is handing over a key, so a provider that refuses its
+ * inference key on the balance endpoint asks for the second one in the same breath. A provider with
+ * no ask reads a balance with the key it already holds, or reports none at all, and either way has
+ * nothing more to ask for.
+ */
+export function readerKeyAskFor(provider: string): ReaderKeyAsk | undefined {
+  return entryFor(provider)?.readerKey;
 }

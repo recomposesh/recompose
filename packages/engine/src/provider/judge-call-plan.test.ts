@@ -45,7 +45,7 @@ describe('a judge bound to a person’s own plan', () => {
 
     expect(asked).toMatchObject({
       tool_choice: { type: 'tool', name: 'pick_branch' },
-      tools: [{ input_schema: { properties: { branch: { enum: ['code', 'chat'] } } } }],
+      tools: [{ input_schema: { properties: { branch: { enum: ['code', 'chat', 'none'] } } } }],
     });
   });
 

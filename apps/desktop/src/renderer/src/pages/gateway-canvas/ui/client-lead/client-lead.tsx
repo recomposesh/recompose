@@ -1,15 +1,11 @@
-import type { BrandMarkVariant } from '../../../../shared/ui';
+import type { VendorDrawingProps } from '../../../../shared/ui';
 import type { ConnectLead } from '../../model/connect-facts';
 
 import { BrandMark, Icon } from '../../../../shared/ui';
 
-type ClientLeadProps = {
+type ClientLeadProps = VendorDrawingProps & {
   /** What this client is drawn with: its own mark, or the glyph a tool without one takes. */
   lead: ConnectLead;
-  /** Size classes, replacing the standing 16px square rather than adding to it. */
-  className?: string;
-  /** Whether a vendor mark takes its own colors or the ink around it. */
-  variant?: BrandMarkVariant;
 };
 
 /**

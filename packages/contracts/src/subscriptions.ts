@@ -53,6 +53,7 @@ export const subscriptionProviders = {
     configHome: { told: 'environment', variable: 'CLAUDE_CONFIG_DIR' },
     signInArguments: [],
     renewArguments: ['auth', 'status'],
+    signInHint: 'Type /login in the terminal that opened.',
   },
   openai: {
     toolBinary: 'codex',
@@ -60,6 +61,7 @@ export const subscriptionProviders = {
     configHome: { told: 'environment', variable: 'CODEX_HOME' },
     signInArguments: ['login'],
     renewArguments: [],
+    signInHint: undefined,
   },
 } as const satisfies Record<
   ToolBackedProviderId,
@@ -69,6 +71,14 @@ export const subscriptionProviders = {
     configHome: ToolConfigHome;
     signInArguments: readonly string[];
     renewArguments: readonly string[];
+    /**
+     * What a person still has to do once the tool is open, where the command alone doesn't sign in.
+     *
+     * @summary A tool whose sign-in arguments are empty opens on its own prompt and waits, so the
+     * app would otherwise show a terminal that looks finished and is not. A tool that signs in from
+     * the command line names nothing here, because there is nothing left to say.
+     */
+    signInHint?: string | undefined;
   }
 >;
 
@@ -204,6 +214,8 @@ export const subscriptionToolSchema = z.strictObject({
   present: z.boolean(),
   signInCommand: nonBlankString,
   shellSetupLine: nonBlankString,
+  /** What a person still has to do once this tool is open, where the command alone doesn't sign in. */
+  signInHint: nonBlankString.optional(),
 });
 
 export type SubscriptionTool = z.infer<typeof subscriptionToolSchema>;

@@ -1,27 +1,16 @@
 import { z } from 'zod';
 
-import {
-  accountEndpointSchema,
-  accountsDocumentSchema,
-  credentialedAccountKindSchema,
-} from './accounts';
-import { keyCheckReportSchema, pastedKeySchema } from './api-keys';
 import { gatewayBranchPinsSchema } from './engine-branch-pins';
 import { gatewayCooldownsSchema } from './engine-cooldowns';
-import { modelListingSchema } from './engine-custody';
 import { gatewayJudgingSchema } from './engine-judging';
 import { logBatchSchema } from './engine-logs';
 import { engineStatesSchema, gatewayEngineStateSchema } from './engine-state';
 import { gatewayTrafficSchema } from './engine-traffic';
 import { fileBrowserSchema } from './file-browser';
 import { gatewayConfigSchema, gatewayPortSchema, gatewaySlugSchema } from './gateway-config';
+import { accountChannels } from './ipc-accounts';
 import { ipcResult } from './ipc-result';
 import { subscriptionChannels } from './ipc-subscriptions';
-import {
-  localProviderIdSchema,
-  runtimePortSchema,
-  runtimeReachabilitySchema,
-} from './local-runtimes';
 import { nonBlankString } from './non-blank';
 import { settingsPatchSchema, settingsSchema } from './settings';
 import { subscriptionProviderIdSchema } from './subscriptions';
@@ -32,25 +21,6 @@ import {
   usageReportSchema,
   usageSearchRangeSchema,
 } from './usage';
-
-export const connectAccountRequestSchema = z.strictObject({
-  provider: nonBlankString,
-  kind: credentialedAccountKindSchema,
-  label: z.string().trim().min(1),
-  secret: pastedKeySchema,
-  endpoint: accountEndpointSchema.optional(),
-});
-
-/**
- * Whether a look at a server carries the port it needs.
- *
- * @summary A documented runtime falls back to the port its own project publishes. A server nobody
- * documents has no port to fall back to, so a request that names none would aim the look at
- * nothing.
- */
-function namesItsOwnPort(asked: { runtime: string; port?: number | undefined }): boolean {
-  return asked.runtime !== 'custom' || asked.port !== undefined;
-}
 
 /**
  * Where the running app stands against the release feed.
@@ -93,62 +63,7 @@ export const ipcChannels = {
   },
   'settings:get': { request: z.void(), response: ipcResult(settingsSchema) },
   'settings:save': { request: settingsPatchSchema, response: ipcResult(settingsSchema) },
-  'accounts:list': { request: z.void(), response: ipcResult(accountsDocumentSchema) },
-  'accounts:connect': {
-    request: connectAccountRequestSchema,
-    response: ipcResult(accountsDocumentSchema),
-  },
-  'accounts:remove': {
-    request: z.strictObject({ id: nonBlankString }),
-    response: ipcResult(accountsDocumentSchema),
-  },
-  'accounts:check-key': {
-    request: z.strictObject({ id: nonBlankString }),
-    response: ipcResult(keyCheckReportSchema),
-  },
-  'accounts:connect-local': {
-    request: z
-      .strictObject({
-        runtime: localProviderIdSchema,
-        port: runtimePortSchema.optional(),
-        label: z.string().trim().min(1).optional(),
-      })
-      .refine(namesItsOwnPort, 'a server nobody documents must name its own port')
-      .refine(
-        (asked) => asked.runtime !== 'custom' || asked.label !== undefined,
-        'a server nobody documents must carry the name a person gave it',
-      ),
-    response: ipcResult(accountsDocumentSchema),
-  },
-  'accounts:detect-runtime': {
-    request: z
-      .strictObject({
-        runtime: localProviderIdSchema,
-        port: runtimePortSchema.optional(),
-      })
-      .refine(namesItsOwnPort, 'a server nobody documents must name its own port'),
-    response: ipcResult(runtimeReachabilitySchema),
-  },
-  'accounts:check-runtime': {
-    request: z.strictObject({ id: nonBlankString }),
-    response: ipcResult(runtimeReachabilitySchema),
-  },
-  /**
-   * Points a stored runtime at another port, without taking the row away and putting it back.
-   *
-   * @summary A server's port is not a fact about the row, it is where the server happens to answer
-   * today, and a moved `OLLAMA_HOST` used to mean removing the row and adding it again. It names
-   * the row rather than the runtime, because only a row has somewhere to move from, and it carries
-   * a port rather than an address, because the app mints the address the same way an add does.
-   */
-  'accounts:move-runtime': {
-    request: z.strictObject({ id: nonBlankString, port: runtimePortSchema }),
-    response: ipcResult(accountsDocumentSchema),
-  },
-  'accounts:list-models': {
-    request: z.strictObject({ id: nonBlankString }),
-    response: ipcResult(modelListingSchema),
-  },
+  ...accountChannels,
   'system:get': { request: z.void(), response: ipcResult(systemStateSchema) },
   'system:open-config-folder': { request: z.void(), response: ipcResult(z.void()) },
   'system:window-band': { request: z.enum(['sidebar', 'toolbar']), response: ipcResult(z.void()) },

@@ -3,7 +3,8 @@ Feature: A conversation keeps the branch it first earned
   The first judgment pins a conversation to its branch, keyed by a
   fingerprint that prefers the caller's own conversation key and falls back
   to content that stays stable across turns. Re-judging is a choice made per
-  router, and a server-state turn never changes branch.
+  router, and the router that re-judges reads the topic again on every turn,
+  including one that resumes state a provider holds.
 
   Background:
     Given a virtual model "fast" bound to a conditional router with a "code" branch, a "chat" branch, and an else branch
@@ -37,9 +38,15 @@ Feature: A conversation keeps the branch it first earned
     When a second request arrives that the judge classifies as "chat"
     Then the child behind the "chat" branch receives the request
 
-  Scenario: A server-state turn refuses a branch change under re-judge
+  Scenario: A server-state turn changes branch under re-judge
     Given re-judge every request enabled on the router
     And a conversation whose earlier turn earned the "chat" branch
+    When a request resuming state a provider holds arrives that the judge classifies as "code"
+    Then the child behind the "code" branch receives the request
+    And the judge receives exactly one classification call
+
+  Scenario: A server-state turn keeps its branch where the router does not re-judge
+    Given a conversation whose earlier turn earned the "chat" branch
     When a request arrives that resumes state a provider holds for one account
     Then the child behind the "chat" branch receives the request
     And no classification call leaves the machine

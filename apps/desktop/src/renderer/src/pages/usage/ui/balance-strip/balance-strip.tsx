@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import type { AccountFace } from '../../lib/account-labels';
 import type { BalanceFace } from '../../lib/balance-faces';
 
 import {
@@ -9,28 +10,44 @@ import {
   withRefusal,
 } from '../../../../shared/api';
 import { useDisplayTick } from '../../../../shared/lib';
-import { Button, Icon } from '../../../../shared/ui';
-import { accountLabelOf } from '../../lib/account-labels';
+import { Button, Icon, VendorMark } from '../../../../shared/ui';
+import { accountFaceOf } from '../../lib/account-labels';
 import { balanceFaceOf } from '../../lib/balance-faces';
 
 const A_MINUTE = 60_000;
 
-function balanceCard(face: BalanceFace, accountName: string) {
+/**
+ * One account's balance, headed the way its plan card is headed on the strip above.
+ *
+ * @summary The two strips name the same accounts, so a person who learned an account by its mark
+ * and its product on one meets the same head on the other. The product leads and the name sits
+ * under it, because a person may file several accounts under one address and the address alone
+ * would leave the cards indistinguishable.
+ */
+function balanceCard(face: BalanceFace, who: AccountFace) {
   return (
-    <li className="flex min-w-40 flex-1 flex-col items-start gap-1" key={face.accountId}>
-      <span className="text-caption text-ink-secondary">{accountName}</span>
-      <span className="font-mono text-mono-figure text-ink tabular-nums">{face.remaining}</span>
-      {face.detail === undefined ? null : (
-        <span className="text-caption text-ink-secondary">{face.detail}</span>
-      )}
-      {face.stamp === undefined ? null : (
-        <span className="text-caption text-ink-secondary">{face.stamp}</span>
-      )}
-      {face.failure === undefined ? null : (
-        <span className="text-caption text-danger-ink" role="alert">
-          {face.failure}
+    <li className="flex min-w-0 flex-col gap-2" key={face.accountId}>
+      <div className="flex min-w-0 items-center gap-2">
+        <VendorMark className="size-5 shrink-0" name={who.mark} />
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-card-title text-ink">{who.product ?? who.name}</span>
+          <span className="truncate text-detail text-ink-secondary">{who.name}</span>
         </span>
-      )}
+      </div>
+      <div className="flex flex-col items-start gap-0.5">
+        <span className="font-mono text-mono-figure text-ink tabular-nums">{face.remaining}</span>
+        {face.detail === undefined ? null : (
+          <span className="text-caption text-ink-secondary">{face.detail}</span>
+        )}
+        {face.stamp === undefined ? null : (
+          <span className="text-caption text-ink-secondary">{face.stamp}</span>
+        )}
+        {face.failure === undefined ? null : (
+          <span className="text-caption text-danger-ink" role="alert">
+            {face.failure}
+          </span>
+        )}
+      </div>
     </li>
   );
 }
@@ -76,12 +93,9 @@ export function BalanceStrip() {
           {refresh.refusal}
         </p>
       )}
-      <ul className="flex flex-wrap gap-6">
+      <ul className="plan-card-grid gap-x-6 gap-y-5">
         {held.map((balance) =>
-          balanceCard(
-            balanceFaceOf(balance, now),
-            accountLabelOf(accounts.data, balance.accountId),
-          ),
+          balanceCard(balanceFaceOf(balance, now), accountFaceOf(accounts.data, balance.accountId)),
         )}
       </ul>
     </section>

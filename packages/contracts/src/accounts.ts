@@ -9,7 +9,7 @@ import { providerDialectSchema } from './provider-directory';
 import { subscriptionProvenanceSchema, subscriptionProviderIdSchema } from './subscriptions';
 import { accountTransportPolicySchema } from './transport-policy';
 
-export const ACCOUNTS_VERSION = 9;
+export const ACCOUNTS_VERSION = 10;
 
 export const accountKindSchema = z.enum(['subscription', 'api-key', 'aggregator', 'local']);
 
@@ -51,6 +51,16 @@ const credentialedAccountSchema = z.strictObject({
   kind: credentialedAccountKindSchema,
   label: z.string().trim().min(1),
   credentialRef: nonBlankString,
+  /**
+   * A second credential that only reads, held beside the one this account spends.
+   *
+   * @summary It stands apart from `credentialRef` rather than replacing it because the two are
+   * different classes of key. OpenRouter answers `GET /api/v1/credits` only to a management key,
+   * and a management key cannot serve inference, so the key that reads a balance can never stand in
+   * for the key that serves a request. Optional, because an account works without one and only the
+   * balance read reaches for it.
+   */
+  readerCredentialRef: nonBlankString.optional(),
   keyTail: z.string().length(4).optional(),
   endpoint: accountEndpointSchema.optional(),
 });
@@ -154,6 +164,11 @@ const rowsPredateAnEndpointOfTheirOwn: Migration = {
   migrate: (doc) => ({ ...doc, schemaVersion: 9 }),
 };
 
+const rowsPredateAReadOnlyCredential: Migration = {
+  from: 9,
+  migrate: (doc) => ({ ...doc, schemaVersion: 10 }),
+};
+
 const accountsMigrations: readonly Migration[] = [
   subscriptionRowsHeldPastedSecrets,
   rowsPredateTheMaskNoMigrationCanMint,
@@ -163,6 +178,7 @@ const accountsMigrations: readonly Migration[] = [
   rowsPredateModelCompatibility,
   subscriptionRowsPredateTheirOrigin,
   rowsPredateAnEndpointOfTheirOwn,
+  rowsPredateAReadOnlyCredential,
 ];
 
 export function loadAccountsDocument(doc: unknown): AccountsDocument {

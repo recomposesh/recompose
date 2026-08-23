@@ -18,9 +18,11 @@ import {
 } from '../storage/settings-store';
 import { deleteSecret, saveVaultFile } from '../storage/vault';
 import { inVaultOrder } from '../storage/vault-order';
+import { vaultRefsOf } from '../storage/vault-reconcile';
 import { connectAccount } from './connect-account';
 import { createGatewayStorageHandlers } from './gateway-storage-ipc';
 import { openVault } from './open-vault';
+import { clearReaderCredential, setReaderCredential } from './reader-credential';
 import { storagePathsFor, type StorageIpcContext, type StoragePaths } from './storage-context';
 import { ipcFailure, storageFailure } from './storage-envelope';
 
@@ -122,18 +124,24 @@ async function releaseSubscriptionRow(
   return { ok: true as const };
 }
 
-async function releaseKeyRow(
-  ctx: StorageIpcContext,
-  paths: StoragePaths,
-  row: { credentialRef: string },
-) {
+/**
+ * Every secret a removed key row reached, taken out of the vault together.
+ *
+ * @summary A row can hold a read-only credential beside the one it spends, and a removal forgetting
+ * the second would strand a secret nothing can open again, because the reference naming it left
+ * with the row.
+ */
+async function releaseKeyRow(ctx: StorageIpcContext, paths: StoragePaths, row: Account) {
   const opened = await openVault(paths.vaultFile, ctx.onCorrupt, ctx.homeFolder);
 
   if (!opened.ok) {
     return opened;
   }
 
-  await saveVaultFile(paths.vaultFile, deleteSecret(opened.vault, row.credentialRef));
+  await saveVaultFile(
+    paths.vaultFile,
+    vaultRefsOf(row).reduce((vault, ref) => deleteSecret(vault, ref), opened.vault),
+  );
 
   return { ok: true as const };
 }
@@ -202,6 +210,8 @@ export type StorageIpcHandlers = Pick<
   | 'accounts:list'
   | 'accounts:connect'
   | 'accounts:remove'
+  | 'accounts:set-reader-key'
+  | 'accounts:clear-reader-key'
 >;
 
 export function createStorageIpcHandlers(ctx: StorageIpcContext): StorageIpcHandlers {
@@ -216,5 +226,9 @@ export function createStorageIpcHandlers(ctx: StorageIpcContext): StorageIpcHand
       inVaultOrder(async () => connectAccount(ctx, paths, request)),
     'accounts:remove': async (request) =>
       inVaultOrder(async () => removeAccount(ctx, paths, request)),
+    'accounts:set-reader-key': async (request) =>
+      inVaultOrder(async () => setReaderCredential(ctx, paths, request)),
+    'accounts:clear-reader-key': async (request) =>
+      inVaultOrder(async () => clearReaderCredential(ctx, paths, request)),
   };
 }

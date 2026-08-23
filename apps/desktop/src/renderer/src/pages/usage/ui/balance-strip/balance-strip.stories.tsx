@@ -25,7 +25,7 @@ const connected: AccountsDocument = {
 
 const held: AccountBalance = {
   accountId: 'build',
-  reading: { totalCredits: 100, totalUsage: 62.29, readAt: NOW - 3 * A_MINUTE },
+  reading: { remaining: 37.71, added: 100, spent: 62.29, readAt: NOW - 3 * A_MINUTE },
 };
 
 function answeringRefreshWith(onRefresh: readonly AccountBalance[]) {
@@ -90,3 +90,19 @@ export const NothingReadYet = meta.story({
 
 /** The same card in the dark scheme, where the headline figure has to stay the brightest ink. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/** A provider that reports what is left and nothing else, which is how most of them answer. */
+export const ABalanceAlone = meta.story({
+  parameters: {
+    bridge: {
+      accounts: connected,
+      balances: [
+        { accountId: 'build', reading: { remaining: 12.5, readAt: NOW - 3 * A_MINUTE } },
+      ] satisfies readonly AccountBalance[],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('$12.50')).toBeVisible();
+    await expect(canvas.queryByText(/added/)).toBeNull();
+  },
+});

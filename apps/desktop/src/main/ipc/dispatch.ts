@@ -22,6 +22,8 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'accounts:connect',
   'accounts:remove',
   'accounts:check-key',
+  'accounts:set-reader-key',
+  'accounts:clear-reader-key',
   'accounts:connect-local',
   'accounts:detect-runtime',
   'accounts:check-runtime',

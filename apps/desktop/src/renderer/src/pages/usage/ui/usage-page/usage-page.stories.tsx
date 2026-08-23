@@ -91,14 +91,14 @@ export const AccountStandingUnderTheExplorer = meta.story({
       balances: [
         {
           accountId: 'build',
-          reading: { totalCredits: 100, totalUsage: 62.29, readAt: Date.now() },
+          reading: { remaining: 37.71, added: 100, spent: 62.29, readAt: Date.now() },
         },
       ],
     },
   },
   render: () => <UsagePage onSearchChange={() => {}} search={at7d} />,
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('region', { name: 'Quota windows' })).toBeVisible();
+    await expect(await canvas.findByRole('region', { name: 'Plan usage limits' })).toBeVisible();
     await expect(await canvas.findByRole('region', { name: 'Credits' })).toBeVisible();
     await expect(await canvas.findByText('$37.71')).toBeVisible();
   },

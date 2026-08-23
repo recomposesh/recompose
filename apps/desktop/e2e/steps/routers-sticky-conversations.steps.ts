@@ -153,6 +153,15 @@ When('a request arrives that resumes state a provider holds for one account', as
   await aTurnArrives(page, { ...conversationUnderway(page), resumes: A_TURN_ONE_ACCOUNT_HOLDS });
 });
 
+When(
+  'a request resuming state a provider holds arrives that the judge classifies as {string}',
+  async ({ judge, page }, label: string) => {
+    judge.names(label);
+
+    await aTurnArrives(page, { ...conversationUnderway(page), resumes: A_TURN_ONE_ACCOUNT_HOLDS });
+  },
+);
+
 Then('the judge receives one classification call for each conversation', ({ judge, page }) => {
   expect(judge.classificationsAsked()).toHaveLength(conversationsUnderway(page).length);
 });

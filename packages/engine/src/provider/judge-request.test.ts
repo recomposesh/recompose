@@ -47,7 +47,7 @@ describe('the classification an openai-shaped judge is asked for', () => {
         strict: true,
         schema: {
           type: 'object',
-          properties: { branch: { type: 'string', enum: ['code', 'chat'] } },
+          properties: { branch: { type: 'string', enum: ['code', 'chat', 'none'] } },
           required: ['branch'],
           additionalProperties: false,
         },
@@ -75,7 +75,7 @@ describe('the classification a responses-shaped judge is asked for', () => {
         strict: true,
         schema: {
           type: 'object',
-          properties: { branch: { type: 'string', enum: ['code', 'chat'] } },
+          properties: { branch: { type: 'string', enum: ['code', 'chat', 'none'] } },
           required: ['branch'],
           additionalProperties: false,
         },
@@ -91,6 +91,7 @@ describe('the classification an interactions-shaped judge is asked for', () => {
     expect(body).toHaveProperty('response_format.json_schema.schema.properties.branch.enum', [
       'code',
       'chat',
+      'none',
     ]);
   });
 });
@@ -101,7 +102,7 @@ describe('the classification a gemini-shaped judge is asked for', () => {
 
     expect(body['generationConfig']).toEqual({
       responseMimeType: 'text/x.enum',
-      responseSchema: { type: 'STRING', enum: ['code', 'chat'] },
+      responseSchema: { type: 'STRING', enum: ['code', 'chat', 'none'] },
     });
   });
 });
@@ -111,7 +112,11 @@ describe('the classification an anthropic-shaped judge is asked for', () => {
     const body = judgeRequestBody(asking({ dialect: 'anthropic' }));
 
     expect(body['tool_choice']).toEqual({ type: 'tool', name: 'pick_branch' });
-    expect(body).toHaveProperty('tools.0.input_schema.properties.branch.enum', ['code', 'chat']);
+    expect(body).toHaveProperty('tools.0.input_schema.properties.branch.enum', [
+      'code',
+      'chat',
+      'none',
+    ]);
   });
 
   test('the answer holds room past the thinking a judge may do first', () => {
@@ -133,13 +138,20 @@ describe('what every judge is told about the branches it picks between', () => {
     expect(sent.indexOf('code')).toBeLessThan(sent.indexOf('chat'));
   });
 
-  test('the else branch is never a label the judge may answer with', () => {
+  test('the else child is never a label the judge may answer with, but declining is', () => {
     const body = judgeRequestBody(asking());
 
     expect(body).toHaveProperty('response_format.json_schema.schema.properties.branch.enum', [
       'code',
       'chat',
+      'none',
     ]);
+  });
+
+  test('the decline word stands last, so a judge reads the branches before the floor', () => {
+    const sent = sentText(asking());
+
+    expect(sent.indexOf('chat')).toBeLessThan(sent.indexOf('none'));
   });
 });
 
@@ -171,12 +183,22 @@ describe('how the caller’s own words reach the judge', () => {
     expect(tailSentIn({ model: 'fast' })).toBe('<request>\n\n</request>');
   });
 
-  test('only the end of a long turn travels, because a judge reads what is being asked now', () => {
-    const long = `${'x'.repeat(2_000)}what is this`;
-    const sent = tailSentFor(long);
+  test('the close of a long turn travels, because a pasted log puts the ask underneath it', () => {
+    const sent = tailSentFor(`${'x'.repeat(4_000)}what is this`);
 
-    expect(sent).toBe(`<request>\n${long.slice(-2_000)}\n</request>`);
     expect(sent).toContain('what is this');
+  });
+
+  test('the opening of a long turn travels, because an agentic client appends context after it', () => {
+    const sent = tailSentFor(`fix the deploy pipeline${'x'.repeat(4_000)}`);
+
+    expect(sent).toContain('fix the deploy pipeline');
+  });
+
+  test('a turn inside the budget travels whole, with nothing elided out of its middle', () => {
+    const whole = `${'x'.repeat(1_900)}what is this`.slice(0, 2_000);
+
+    expect(tailSentFor(whole)).toBe(`<request>\n${whole}\n</request>`);
   });
 });
 

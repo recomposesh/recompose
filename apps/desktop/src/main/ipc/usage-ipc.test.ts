@@ -1,4 +1,10 @@
-import type { LogRow, UsageBucket, UsageReport } from '@recompose/contracts';
+import type {
+  LogRow,
+  PlanUsageReading,
+  PlanUsageReadings,
+  UsageBucket,
+  UsageReport,
+} from '@recompose/contracts';
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -46,6 +52,42 @@ function aBucket(
   };
 }
 
+function anOpenSubscriptionHour(): UsageBucket {
+  return aBucket({
+    accountId: 'sub-1',
+    accountKind: 'subscription',
+    start: NOW - (NOW % HOUR),
+    tokens: 1_000,
+  });
+}
+
+function aLiveRow(tokens: number): LogRow {
+  return {
+    id: 'live-1',
+    at: NOW - 60_000,
+    gateway: 'relay',
+    virtualModel: 'creative',
+    origin: 'provider',
+    method: 'POST',
+    provider: 'anthropic',
+    accountId: 'sub-1',
+    providerModel: 'claude-sonnet-4-5',
+    status: 200,
+    durationMs: 912,
+    tokens,
+    clientKey: CLIENT_KEY,
+  };
+}
+
+function aPlanRead(spentShare: number): PlanUsageReading {
+  return {
+    accountId: 'sub-1',
+    provider: 'anthropic',
+    readAt: NOW - 30_000,
+    windows: [{ length: '5h', spentShare }],
+  };
+}
+
 function aQuietReport(buckets: readonly UsageBucket[]): UsageReport {
   return {
     range: '24h',
@@ -62,6 +104,7 @@ function handlersOver(standing: {
   reported?: readonly UsageBucket[];
   held?: readonly UsageBucket[];
   rows?: readonly LogRow[];
+  plans?: PlanUsageReadings;
   noted?: boolean[];
 }) {
   return createUsageIpcHandlers({
@@ -77,9 +120,10 @@ function handlersOver(standing: {
       provenance: { source: 'synced', fetchedAt: NOW - HOUR },
     }),
     retainedRows: () => standing.rows ?? [],
+    planUsage: () => standing.plans ?? {},
     balances: openBalancesDesk({
       aggregatorAccounts: async () => Promise.resolve([{ accountId: 'router-1' }]),
-      creditsOf: async () => Promise.resolve({ totalCredits: 25, totalUsage: 18.4 }),
+      creditsOf: async () => Promise.resolve({ remaining: 6.6, added: 25, spent: 18.4 }),
     }),
     noteUsageTable: (open) => {
       standing.noted?.push(open);
@@ -135,32 +179,7 @@ describe('the report answer', () => {
 
 describe('the quota answer', () => {
   test('the windows fold over the held buckets and the rows still in flight', async () => {
-    const live: LogRow = {
-      id: 'live-1',
-      at: NOW - 60_000,
-      gateway: 'relay',
-      virtualModel: 'creative',
-      origin: 'provider',
-      method: 'POST',
-      provider: 'anthropic',
-      accountId: 'sub-1',
-      providerModel: 'claude-sonnet-4-5',
-      status: 200,
-      durationMs: 912,
-      tokens: 500,
-      clientKey: CLIENT_KEY,
-    };
-    const handlers = handlersOver({
-      held: [
-        aBucket({
-          accountId: 'sub-1',
-          accountKind: 'subscription',
-          start: NOW - (NOW % HOUR),
-          tokens: 1_000,
-        }),
-      ],
-      rows: [live],
-    });
+    const handlers = handlersOver({ held: [anOpenSubscriptionHour()], rows: [aLiveRow(500)] });
 
     const answer = await handlers['usage:quota-windows'](undefined);
 
@@ -169,6 +188,25 @@ describe('the quota answer', () => {
     }
 
     expect(answer.value.find((held) => held.length === '5h')?.burnTokens).toBe(1_500);
+  });
+
+  test('the reading the plan desk last heard rides the row of the length it names', async () => {
+    const handlers = handlersOver({
+      held: [anOpenSubscriptionHour()],
+      plans: { 'sub-1': aPlanRead(0.62) },
+    });
+
+    const answer = await handlers['usage:quota-windows'](undefined);
+
+    if (!answer.ok) {
+      throw new Error('the quota read refused');
+    }
+
+    expect(answer.value.find((held) => held.length === '5h')?.reported).toEqual({
+      spentShare: 0.62,
+      readAt: NOW - 30_000,
+    });
+    expect(answer.value.find((held) => held.length === 'week')?.reported).toBeUndefined();
   });
 });
 
@@ -183,7 +221,7 @@ describe('the balances answer and the table twin note', () => {
     }
 
     expect(answer.value).toEqual([
-      { accountId: 'router-1', reading: { totalCredits: 25, totalUsage: 18.4, readAt: NOW } },
+      { accountId: 'router-1', reading: { remaining: 6.6, added: 25, spent: 18.4, readAt: NOW } },
     ]);
   });
 

@@ -12,7 +12,7 @@ import {
 
 const CODEX_GUIDE = {
   label: 'The Codex config reference',
-  href: 'https://learn.chatgpt.com/docs/config-file/config-reference',
+  href: 'https://developers.openai.com/codex/config-reference',
 };
 
 /**
@@ -89,7 +89,7 @@ export const codexInChatgpt: ConnectClient = {
     {
       title: 'Restart the app so it reads the file again',
       lines: ['Codex → Quit Codex, then open it again'],
-      note: 'The ChatGPT chat surface takes no custom endpoint of its own. Only the Codex side reads config.toml, and it reads it once, at launch.',
+      note: "The ChatGPT chat surface takes no custom endpoint of its own, and only the Codex side reads config.toml. The desktop model picker doesn't list a custom provider's models yet, so the block may serve the command line while the app still shows OpenAI's own list.",
     },
   ],
 };

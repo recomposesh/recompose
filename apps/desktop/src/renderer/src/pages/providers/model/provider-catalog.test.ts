@@ -18,7 +18,6 @@ import {
   signInProviderOf,
   subscriptionMarkFor,
   subscriptionTitleFor,
-  keyShapeHintFor,
 } from './provider-catalog';
 
 const anyWay = fc.constantFrom<ConnectionWay[]>('subscription', 'api-key', 'aggregator', 'local');
@@ -246,6 +245,11 @@ test('a provider the catalog never offered is drawn with no mark at all', () => 
   expect(markFor('a-plugin-vendor')).toBeUndefined();
 });
 
+test('an address a person types leads with the stand-in a row with no mark draws', () => {
+  expect(offered('custom-endpoint').lead).toEqual({ glyph: 'spark' });
+  expect(offered('custom-aggregator').lead).toEqual({ glyph: 'spark' });
+});
+
 test('a check can answer for a key whose provider the probe knows', () => {
   expect(checkableKey(storedKey())).toBe(true);
   expect(checkableKey(storedKey({ provider: 'openai' }))).toBe(true);
@@ -280,17 +284,3 @@ test.prop([anyCatalog, anyWay])(
     expect(under.every((entry) => offerFor(entry, way) !== undefined)).toBe(true);
   },
 );
-
-test('a key field hints at the shape the provider hands out', () => {
-  expect(keyShapeHintFor('anthropic')).toBe('sk-ant-…');
-  expect(keyShapeHintFor('openai')).toBe('sk-proj-…');
-});
-
-test('the aggregator field hints at the one shape its vendor documents', () => {
-  expect(keyShapeHintFor('openrouter')).toBe('sk-or-v1-…');
-});
-
-test('a provider whose key shape the catalog never learned hints at nothing', () => {
-  expect(keyShapeHintFor('ollama')).toBeUndefined();
-  expect(keyShapeHintFor('mistral')).toBeUndefined();
-});

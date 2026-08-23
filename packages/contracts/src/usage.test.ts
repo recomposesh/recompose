@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   USAGE_LEDGER_VERSION,
   accountBalanceSchema,
+  balanceReadingSchema,
   priceMissSchema,
   quotaWindowSchema,
   usageBucketSchema,
@@ -159,7 +160,7 @@ describe('an aggregator balance as the card prints it', () => {
   test('a read balance carries its instant, so staleness is data rather than guesswork', () => {
     const read = {
       accountId: 'router',
-      reading: { totalCredits: 25, totalUsage: 18.4, readAt: hourStart },
+      reading: { remaining: 6.6, added: 25, spent: 18.4, readAt: hourStart },
     };
 
     expect(accountBalanceSchema.parse(read)).toEqual(read);
@@ -193,5 +194,46 @@ describe('the ledger document on disk', () => {
     };
 
     expect(() => usageLedgerSchema.parse(newer)).toThrow();
+  });
+});
+
+describe('a balance reading a card prints', () => {
+  test('a provider that reports only what is left carries that figure alone', () => {
+    const reading = { remaining: 12.5, readAt: 1_700_000_000_000 };
+
+    expect(balanceReadingSchema.parse(reading)).toEqual(reading);
+  });
+
+  test('a provider that reports both sides carries them beside what is left', () => {
+    const reading = { remaining: 37.71, added: 100, spent: 62.29, readAt: 1_700_000_000_000 };
+
+    expect(balanceReadingSchema.parse(reading)).toEqual(reading);
+  });
+
+  test('a balance below zero is refused, since no wallet this card draws goes into debt', () => {
+    expect(() =>
+      balanceReadingSchema.parse({ remaining: -1, readAt: 1_700_000_000_000 }),
+    ).toThrow();
+  });
+});
+
+describe('the currency a balance is counted in', () => {
+  test('a reading carries the currency its vendor answered in', () => {
+    const reading = { remaining: 40, currency: 'CNY', readAt: 1_700_000_000_000 };
+
+    expect(balanceReadingSchema.parse(reading)).toEqual(reading);
+  });
+
+  test('a reading that named none is refused nothing, since dollars are what most vendors count', () => {
+    expect(balanceReadingSchema.parse({ remaining: 40, readAt: 1_700_000_000_000 })).toEqual({
+      remaining: 40,
+      readAt: 1_700_000_000_000,
+    });
+  });
+
+  test('a currency that is no three-letter code is refused rather than printed', () => {
+    expect(() =>
+      balanceReadingSchema.parse({ remaining: 40, currency: 'dollars', readAt: 1_700_000_000_000 }),
+    ).toThrow();
   });
 });

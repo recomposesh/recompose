@@ -42,7 +42,7 @@ describe('the Gateway menu shape', () => {
         ['separator', undefined],
         ['Tidy Up', 'Alt+CmdOrCtrl+T'],
         ['separator', undefined],
-        ['Show Logs', 'CmdOrCtrl+Shift+L'],
+        ['Show Logs', 'Control+`'],
         ['separator', undefined],
         ['Delete Gateway', undefined],
       ]);

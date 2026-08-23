@@ -21,6 +21,13 @@ type FieldBoxRowProps = {
   onCommitValue?: ((value: string) => void) | undefined;
   /** Sentence explaining why the last save refused this field. */
   refusal?: string | undefined;
+  /**
+   * Quiet sentence standing under the control, inside the row's own border.
+   *
+   * @summary A note about one field belongs to that field, so it sits inside the box rather than
+   * under it, where it would read as a note about the whole form.
+   */
+  note?: string | undefined;
   /** Width and family classes for the control, which sibling fields do not share. */
   controlClasses: string;
   /**
@@ -33,6 +40,33 @@ type FieldBoxRowProps = {
   /** Reaches the input itself, so the sheet can land opening focus on this row. */
   ref?: Ref<HTMLInputElement> | undefined;
 };
+
+/**
+ * What a keystroke settles, which is the value on Enter and the last settled one on Escape.
+ *
+ * @summary Escape restores rather than clearing, because a person who typed into a field holding a
+ * value asked to abandon the typing rather than to empty the field.
+ */
+function walkedByKey(
+  key: string,
+  typed: string,
+  settle: (value: string) => void,
+  restore: () => void,
+): void {
+  if (key === 'Enter') {
+    settle(typed);
+  }
+
+  if (key === 'Escape') {
+    restore();
+  }
+}
+
+function noteLine(note: string | undefined) {
+  return note === undefined ? null : (
+    <p className="w-full text-caption text-ink-secondary">{note}</p>
+  );
+}
 
 /**
  * How the row lays its label and its control out, which is the one thing stacking changes.
@@ -72,6 +106,7 @@ export function FieldBoxRow({
   onChangeValue,
   onCommitValue,
   refusal,
+  note,
   controlClasses,
   stacked,
   ref,
@@ -100,19 +135,16 @@ export function FieldBoxRow({
           onChangeValue(event.currentTarget.value);
         }}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            settle(event.currentTarget.value);
-          }
-
-          if (event.key === 'Escape') {
+          walkedByKey(event.key, event.currentTarget.value, settle, () => {
             onChangeValue(lastSettled.current);
-          }
+          });
         }}
         placeholder={placeholder}
         ref={ref}
         type={type}
         value={value}
       />
+      {noteLine(note)}
       {refusalLine(refusal)}
     </Field.Root>
   );

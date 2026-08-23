@@ -9,6 +9,8 @@ import type { StoredBoot, StoredBootDeps } from './stored-boot';
 
 import { running, scriptedChild } from '../engine-host/engine-host.testkit';
 import { contextFor, storageHolding } from '../engine-host/spend-grant.testkit';
+import { isRecord } from '../storage/json-file';
+import { PLAN_USAGE_VERSION } from '../usage/plan-usage-store';
 import { bootFromStoredState } from './stored-boot';
 
 type Dock = { scripted: ReturnType<typeof scriptedChild> | null };
@@ -70,6 +72,37 @@ function aSettledRow(id: string, accountId: string): LogRow {
     tokens: 1_820,
     clientKey,
   };
+}
+
+const RESETS_LONG_FROM_NOW = 4_102_444_800_000;
+
+const RESET_LONG_AGO = 1_000_000_000_000;
+
+function aPlanReading(spentShare: number) {
+  return {
+    accountId: 'sub-1',
+    provider: 'anthropic',
+    readAt: 1_754_524_800_000,
+    windows: [{ length: '5h', spentShare, resetsAt: RESETS_LONG_FROM_NOW }],
+  };
+}
+
+async function storedPlanUsage(home: string, readings: unknown): Promise<void> {
+  await writeFile(
+    join(home, 'plan-usage.json'),
+    JSON.stringify({ schemaVersion: PLAN_USAGE_VERSION, readings }),
+    'utf8',
+  );
+}
+
+async function storedPlanReadings(home: string): Promise<unknown> {
+  const document: unknown = JSON.parse(await readFile(join(home, 'plan-usage.json'), 'utf8'));
+
+  return isRecord(document) ? document['readings'] : undefined;
+}
+
+function aPlanRead(spentShare: number): unknown {
+  return { kind: 'plan-usage', reading: aPlanReading(spentShare) };
 }
 
 async function storedUsage(home: string): Promise<UsageLedger> {
@@ -193,5 +226,73 @@ describe('the usage ledger the boot stands up', () => {
     });
 
     expect(stamped.tuple.accountKind).toBe('subscription');
+  });
+});
+
+describe('the plan readings the stored profile holds', () => {
+  test('a boot that heard no vendor answer holds no readings at all', async () => {
+    const boot = await bootFromStoredState(depsOver(await aQuietHome()));
+
+    openBoots.push(boot);
+
+    expect(boot.planUsage()).toEqual({});
+  });
+
+  test('a reading the child speaks stands under its account until a newer one lands', async () => {
+    const boot = await bootFromStoredState(depsOver(await aQuietHome()));
+
+    openBoots.push(boot);
+    dock.scripted = scriptedChild(running);
+
+    await boot.engineHost.start(aGatewayServing());
+    dock.scripted.send(aPlanRead(0.4));
+    dock.scripted.send(aPlanRead(0.7));
+
+    expect(boot.planUsage()).toEqual({ 'sub-1': aPlanReading(0.7) });
+  });
+
+  test('a share the last launch stored stands again at the next boot', async () => {
+    const home = await aQuietHome();
+
+    await storedPlanUsage(home, { 'sub-1': aPlanReading(0.4) });
+
+    const boot = await bootFromStoredState(depsOver(home));
+
+    openBoots.push(boot);
+
+    expect(boot.planUsage()).toEqual({ 'sub-1': aPlanReading(0.4) });
+  });
+
+  test('a stored window that turned over while the app was closed stays off the page', async () => {
+    const home = await aQuietHome();
+
+    await storedPlanUsage(home, {
+      'sub-1': {
+        ...aPlanReading(0.4),
+        windows: [{ length: '5h', spentShare: 0.4, resetsAt: RESET_LONG_AGO }],
+      },
+    });
+
+    const boot = await bootFromStoredState(depsOver(home));
+
+    openBoots.push(boot);
+
+    expect(boot.planUsage()).toEqual({});
+  });
+
+  test('a reading the child speaks reaches the disk once the gateway stops', async () => {
+    const home = await aQuietHome();
+    const boot = await bootFromStoredState(depsOver(home));
+
+    openBoots.push(boot);
+    dock.scripted = scriptedChild(running);
+
+    await boot.engineHost.start(aGatewayServing());
+    dock.scripted.send(aPlanRead(0.7));
+    await boot.engineHost.stop('codex');
+
+    expect(await eventually(async () => storedPlanReadings(home))).toEqual({
+      'sub-1': aPlanReading(0.7),
+    });
   });
 });
