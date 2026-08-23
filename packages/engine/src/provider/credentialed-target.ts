@@ -19,6 +19,7 @@ import {
   applyOpenAICompatPayloadOverride,
   withOpenAICompatPromptCache,
 } from './openai-compat-payload';
+import { cappedOutput } from './output-ceiling';
 import { parseVertexCredential, vertexProviderBody, vertexRequestUrl } from './vertex-request';
 import { prepareXAIReplay } from './xai-replay-runtime';
 import { xaiProviderBody } from './xai-request';
@@ -84,14 +85,36 @@ function preparedCredentialedBody(
   }
 
   const prepared = BODY_BUILDERS.get(spend.provider)?.(crossing, body, spend.accountId) ?? body;
-  const cached = withOpenAICompatPromptCache(prepared, {
+  const capped = cappedOutput(prepared, crossing.outputCeiling);
+  const cached = cachedWhereTheVendorReadsIt(spend.provider, crossing, capped);
+
+  return applyOpenAICompatPayloadOverride(cached);
+}
+
+/**
+ * The turn carrying the prompt-cache key, wherever the vendor reads one.
+ *
+ * @summary The key is this gateway's own: it is stamped on a turn the caller never asked to cache,
+ * so that one conversation keeps landing on one upstream cache. A vendor that does not implement
+ * prompt caching refuses the whole request over the field rather than passing it by, and refusing a
+ * person's turn to carry a hint they never asked for is the wrong trade.
+ */
+function cachedWhereTheVendorReadsIt(
+  provider: string,
+  crossing: Crossing,
+  body: JsonObject,
+): JsonObject {
+  if (REFUSES_THE_PROMPT_CACHE_KEY.has(provider)) return body;
+
+  return withOpenAICompatPromptCache(body, {
     ...(crossing.sessionId === undefined ? {} : { sessionId: crossing.sessionId }),
     model: crossing.providerModel,
     protocol: crossing.dialect,
   });
-
-  return applyOpenAICompatPayloadOverride(cached);
 }
+
+/** Vendors that answer a turn carrying `prompt_cache_key` with a refusal rather than reading it. */
+const REFUSES_THE_PROMPT_CACHE_KEY: ReadonlySet<string> = new Set(['groq']);
 
 function xaiBody(crossing: Crossing, body: JsonObject): JsonObject {
   crossing.xaiNamespaceTools = collectXAINamespaceTools(body);
@@ -127,7 +150,7 @@ const BODY_BUILDERS = new Map<string, BodyBuilder>([
     'gemini',
     (crossing, body) =>
       geminiSignaturesUpstreamWillTake(
-        geminiTurnsUpstreamWillTake(cappedGeminiOutput(body, crossing.providerModel)),
+        geminiTurnsUpstreamWillTake(cappedGeminiOutput(body, crossing.outputCeiling)),
       ),
   ],
   ['xai', xaiBody],
@@ -186,15 +209,25 @@ const FIXED_PATHS = new Map<string, string>([
 ]);
 
 function providerPath(provider: string, crossing: Crossing, dialect?: ProviderDialect): string {
-  const fixed = FIXED_PATHS.get(provider);
+  const stamped = stampedPath(provider, crossing);
 
-  if (fixed !== undefined) return fixed;
+  if (stamped !== undefined) return stamped;
 
   if (provider === 'kimi' && crossing.dialect === 'anthropic') return '/v1/messages?beta=true';
 
   return credentialedDialect(provider, crossing.dialect, dialect) === 'anthropic'
     ? messagesPath
     : chatPath;
+}
+
+/**
+ * @summary Copilot names its own wire per model, so the reach the attempt settled stands ahead of
+ * the one path every other fixed vendor answers on.
+ */
+function stampedPath(provider: string, crossing: Crossing): string | undefined {
+  if (provider === 'copilot' && crossing.copilotPath !== undefined) return crossing.copilotPath;
+
+  return FIXED_PATHS.get(provider);
 }
 
 export function credentialedRequestUrl(grant: ResolvedGrant, crossing: Crossing): string {

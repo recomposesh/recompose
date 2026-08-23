@@ -168,3 +168,10 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0160](0160-a-model-id-reaches-claude-codes-picker-by-name.md)                  | A model id reaches Claude Code's picker by name                                     | Accepted   | 2026-08-22 |
 | [0161](0161-the-mutation-gate-scopes-itself-from-its-own-config.md)             | The mutation gate scopes itself from its own config                                 | Accepted   | 2026-08-22 |
 | [0162](0162-vitest-refuses-to-run-from-the-repository-root.md)                  | Vitest refuses to run from the repository root                                      | Accepted   | 2026-08-23 |
+| [0163](0163-a-plan-reads-its-own-share-off-the-answer-it-just-gave.md)          | A plan reads its own share off the answer it just gave                              | Accepted   | 2026-08-23 |
+| [0164](0164-the-request-log-names-its-columns-and-answers-one-stroke.md)        | The request log names its columns and answers one stroke                            | Accepted   | 2026-08-23 |
+| [0165](0165-an-account-can-hold-a-second-key-that-only-reads.md)                | An account can hold a second key that only reads                                    | Accepted   | 2026-08-23 |
+| [0166](0166-a-gemini-answer-crosses-as-runs-not-as-chunks.md)                   | A Gemini answer crosses as runs, not as chunks                                      | Accepted   | 2026-08-23 |
+| [0167](0167-a-block-no-vendor-will-read-comes-off-the-way-out.md)               | A block no vendor will read comes off on the way out                                | Accepted   | 2026-08-23 |
+| [0168](0168-copilot-answers-on-the-wire-its-own-catalog-names.md)               | Copilot answers on the wire its own catalog names                                   | Accepted   | 2026-08-23 |
+| [0169](0169-a-refusal-that-names-its-own-remedy-earns-one-more-turn.md)         | A refusal that names its own remedy earns one more turn                             | Accepted   | 2026-08-23 |

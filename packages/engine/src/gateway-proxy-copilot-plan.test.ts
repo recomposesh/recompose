@@ -27,6 +27,14 @@ const chatAnswer = {
   choices: [{ index: 0, message: { role: 'assistant', content: 'hello' }, finish_reason: 'stop' }],
 };
 
+function theTurnOf(sent: { url: string; init: RequestInit | undefined }[]) {
+  const turn = sent.find((request) => request.init?.method === 'POST');
+
+  if (turn === undefined) throw new Error('no turn left for the plan');
+
+  return turn;
+}
+
 function requestBody(init: RequestInit | undefined): JsonObject {
   const parsed = typeof init?.body === 'string' ? parsedJson(init.body) : undefined;
 
@@ -70,7 +78,7 @@ describe('a turn bought by a Copilot plan', () => {
     const answer = await askThePlan(app);
 
     expect(answer.status).toBe(200);
-    expect(sent[0]?.url).toBe('https://api.githubcopilot.com/chat/completions');
+    expect(theTurnOf(sent).url).toBe('https://api.githubcopilot.com/chat/completions');
   });
 
   test('carries the short-lived credential the parent bought as its bearer', async () => {
@@ -78,7 +86,9 @@ describe('a turn bought by a Copilot plan', () => {
 
     await askThePlan(app);
 
-    expect(new Headers(sent[0]?.init?.headers).get('authorization')).toBe(`Bearer ${boughtToken}`);
+    expect(new Headers(theTurnOf(sent).init?.headers).get('authorization')).toBe(
+      `Bearer ${boughtToken}`,
+    );
   });
 
   test('names the editor Copilot serves, the way its own plugin does', async () => {
@@ -86,7 +96,7 @@ describe('a turn bought by a Copilot plan', () => {
 
     await askThePlan(app);
 
-    const headers = new Headers(sent[0]?.init?.headers);
+    const headers = new Headers(theTurnOf(sent).init?.headers);
 
     expect(headers.get('copilot-integration-id')).toBe('vscode-chat');
     expect(headers.get('editor-version')).toBe('vscode/1.110.1');
@@ -99,7 +109,7 @@ describe('a turn bought by a Copilot plan', () => {
 
     await askThePlan(app);
 
-    const body = requestBody(sent[0]?.init);
+    const body = requestBody(theTurnOf(sent).init);
 
     expect(body).toMatchObject({ model: 'gpt-5.2' });
     expect(body['input']).toBeUndefined();

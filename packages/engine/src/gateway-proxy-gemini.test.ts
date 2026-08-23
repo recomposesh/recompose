@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 import { createGatewayApp } from './gateway-app';
 import { aCredentialedGrant, aGatewayHolding, aVirtualModel } from './gateway-app.testkit';
 import { isJsonObject, parsedJson } from './gateway-wire';
+import { forgetModelCeilings } from './provider/model-ceilings';
 
 const grant = aCredentialedGrant('https://generativelanguage.googleapis.com', 'gemini');
 
@@ -105,9 +106,21 @@ describe('Gemini provider serving', () => {
 });
 
 describe('Gemini provider output limits', () => {
+  beforeEach(() => {
+    forgetModelCeilings();
+  });
+
   test('caps maxOutputTokens before reaching a known Gemini model', async () => {
     const sent: Record<string, unknown>[] = [];
-    const fetchLike: typeof fetch = async (_input, init) => {
+    const fetchLike: typeof fetch = async (input, init) => {
+      if (urlOf(input).endsWith('/v1beta/models')) {
+        return Promise.resolve(
+          Response.json({
+            models: [{ name: 'models/gemini-3.1-pro-preview', outputTokenLimit: 65_536 }],
+          }),
+        );
+      }
+
       sent.push(bodyOf(init));
 
       return Promise.resolve(geminiResponse());

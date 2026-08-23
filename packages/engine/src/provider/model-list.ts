@@ -10,7 +10,7 @@ import { isJsonObject, parsedJson } from '../gateway-wire';
 import { antigravitySubscriptionModels } from '../subscription/antigravity-models';
 import { claudeSubscriptionModels } from '../subscription/claude-models';
 import { kimiSubscriptionModels } from '../subscription/kimi-models';
-import { lookHeadersFor, modelsPathFor } from './look-request';
+import { lookHeadersFor, modelsPathFor, namesModelsThatAnswerNoTurn } from './look-request';
 
 const nothingListed: ModelListing = { standing: 'unlisted' };
 
@@ -148,7 +148,7 @@ function entriesValue(body: object): unknown {
   return 'models' in body ? body.models : null;
 }
 
-function listedIdsIn(body: unknown): string[] | null {
+function listedIdsIn(body: unknown, chatOnly: boolean): string[] | null {
   const entries = catalogEntriesIn(body);
 
   if (entries === null) {
@@ -157,7 +157,21 @@ function listedIdsIn(body: unknown): string[] | null {
 
   const ids = entries.map(idOf);
 
-  return ids.every((id): id is string => id !== null) ? ids : null;
+  if (!ids.every((id): id is string => id !== null)) return null;
+
+  return chatOnly ? ids.filter((_id, at) => holdsAConversation(entries[at])) : ids;
+}
+
+/**
+ * @summary A catalog stating nothing of what an entry answers keeps it, because silence is not a
+ * refusal, and only the two kinds seen to refuse a turn are read as refusing one.
+ */
+function holdsAConversation(entry: unknown): boolean {
+  if (!isJsonObject(entry) || !isJsonObject(entry['capabilities'])) return true;
+
+  const kind = entry['capabilities']['type'];
+
+  return kind !== 'embeddings' && kind !== 'completion';
 }
 
 /**
@@ -189,7 +203,7 @@ export async function listProviderModels(
     return nothingListed;
   }
 
-  const modelIds = listedIdsIn(await bodyOrNothing(response));
+  const modelIds = listedIdsIn(await bodyOrNothing(response), namesModelsThatAnswerNoTurn(custody));
 
   return modelIds === null ? nothingListed : { standing: 'listed', modelIds };
 }

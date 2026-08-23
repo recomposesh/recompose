@@ -4,6 +4,7 @@ import type { TranslationRefusal } from './refusals';
 
 import { translateRequest } from './dialect/dispatcher';
 import { translateRequestToGemini } from './dialect/gemini-bridge';
+import { withoutGeminiCarriers } from './gateway-outbound-carriers';
 import { ingressPayload, streamAsk } from './gateway-wire';
 import { applySummaryFromSource } from './provider/summary-policy';
 import { emptyConversation } from './refusals';
@@ -88,7 +89,13 @@ export function outboundBodyFor(
       : translatedOutbound(crossing, upstreamDialect, payload, preserveIncompatibleReasoning);
 
   return 'body' in outbound
-    ? { body: summaryBody(crossing, upstreamDialect, outbound.body) }
+    ? {
+        body: withoutGeminiCarriers(
+          summaryBody(crossing, upstreamDialect, outbound.body),
+          crossing,
+          upstreamDialect,
+        ),
+      }
     : outbound;
 }
 

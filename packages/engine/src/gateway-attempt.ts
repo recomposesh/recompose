@@ -18,6 +18,7 @@ import { dialectFor } from './gateway-provider-dialect';
 import { upstreamAtTheCommitLatch } from './gateway-stream-commit';
 import { InvalidJsonBodyError, refusalResponse } from './gateway-wire';
 import { pluginGatewayTarget, reachPluginExecutor } from './plugin-gateway';
+import { copilotReachFor } from './provider/copilot-reach';
 import { reachCredentialed } from './provider/credentialed-reach';
 import { coolUntilTheProviderNames } from './routing/cooldown-signal';
 import { parseSubscriptionCredential } from './subscription/credentials';
@@ -181,7 +182,12 @@ async function readingFromProvider(
   crossing: Crossing,
   grant: Resolved,
 ): Promise<AttemptReading<Response>> {
-  const upstreamDialect = dialectFor(grant, crossing.dialect);
+  const copilotDialect = await copilotReachFor(
+    { fetchLike: deps.fetchLike, now: deps.now, catalog: deps.subscriptions.copilotCatalog },
+    crossing,
+    grant,
+  );
+  const upstreamDialect = copilotDialect ?? dialectFor(grant, crossing.dialect);
   const outbound = outboundBodyFor(crossing, upstreamDialect, isAntigravitySubscription(grant));
 
   if ('refusal' in outbound) {

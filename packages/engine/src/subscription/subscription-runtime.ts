@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import type { ClaudeProfile } from './claude-oauth-profile';
 import type { ProviderRequest } from './claude-request';
 
+import { copilotCatalog } from '../provider/copilot-catalog';
 import { AntigravityReasoningReplay } from './antigravity-replay';
 import { ClaudeDiagnostics } from './claude-diagnostics';
 import { newClaudeDeviceId } from './claude-identity';
@@ -39,6 +40,7 @@ export function subscriptionRuntime(
       policy?: AccountTransportPolicy,
     ): Promise<ClaudeProfile> => fetchClaudeProfile(accessToken, undefined, policy),
     diagnostics: new ClaudeDiagnostics(),
+    copilotCatalog: copilotCatalog(),
     codexReplay: new CodexReasoningReplay(),
     antigravityReplay: new AntigravityReasoningReplay(),
   };

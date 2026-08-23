@@ -5,6 +5,7 @@ import type {
 } from '@recompose/contracts';
 
 import type { JsonObject, ProxyDialect } from '../gateway-wire';
+import type { CopilotCatalog } from '../provider/copilot-catalog';
 import type { AntigravityReasoningReplay } from './antigravity-replay';
 import type { ClaudeDeviceProfile } from './claude-device-profile';
 import type { ClaudeProfile } from './claude-oauth-profile';
@@ -37,6 +38,7 @@ import { subscriptionScope } from './subscription-scope';
 export { subscriptionRuntime } from './subscription-runtime';
 
 export type SubscriptionRuntime = {
+  copilotCatalog?: CopilotCatalog;
   send: (
     provider: SubscriptionProviderId,
     request: ProviderRequest,
