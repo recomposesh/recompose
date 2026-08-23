@@ -1,27 +1,31 @@
-import { RotateCw } from 'lucide-react';
+import { Asterisk, Repeat, RotateCw, Split } from 'lucide-react';
 
 import type { CanvasNode } from './node-card';
 
 import { CanvasMinimap } from './canvas-minimap';
 import { CanvasWire } from './canvas-wire';
+import { JudgeSatellite } from './judge-satellite';
 import { NodeCard } from './node-card';
 import { RouterCard } from './router-card';
 import { ZoomToolbar } from './zoom-toolbar';
 
 const WIRES = [
-  { id: 'smart-in', d: 'M208 164 C244 164, 244 92, 280 92' },
-  { id: 'fast-in', d: 'M208 164 C244 164, 244 332, 280 332' },
-  { id: 'smart-out', d: 'M464 92 L536 92' },
-  { id: 'fast-out', d: 'M464 332 L536 332' },
-  { id: 'rr-kimi', d: 'M720 332 C745 332, 745 172, 770 172' },
-  { id: 'rr-codex', d: 'M720 332 C745 332, 745 372, 770 372' },
+  { id: 'smart-in', d: 'M192 158 C232 158, 232 140, 272 140' },
+  { id: 'fast-in', d: 'M192 158 C232 158, 232 370, 272 370' },
+  { id: 'smart-out', d: 'M440 140 L520 140' },
+  { id: 'fast-out', d: 'M440 370 L520 370' },
+  { id: 'judge-zai', d: 'M688 140 C728 140, 728 48, 768 48' },
+  { id: 'judge-deepseek', d: 'M688 140 L768 140' },
+  { id: 'judge-kimi', d: 'M688 140 C728 140, 728 232, 768 232' },
+  { id: 'rr-claude', d: 'M688 370 C728 370, 728 324, 768 324' },
+  { id: 'rr-codex', d: 'M688 370 C728 370, 728 416, 768 416' },
 ];
 
 const NODES: CanvasNode[] = [
   { x: 24, y: 120, kind: 'gateway', kicker: 'Gateway', title: 'coding', mono: ':8397' },
   {
-    x: 280,
-    y: 48,
+    x: 272,
+    y: 102,
     kind: 'virtual-model',
     kicker: 'Virtual model',
     title: 'smart',
@@ -29,8 +33,8 @@ const NODES: CanvasNode[] = [
     ports: 'both',
   },
   {
-    x: 280,
-    y: 288,
+    x: 272,
+    y: 332,
     kind: 'virtual-model',
     kicker: 'Virtual model',
     title: 'fast',
@@ -38,18 +42,28 @@ const NODES: CanvasNode[] = [
     ports: 'both',
   },
   {
-    x: 536,
-    y: 48,
+    x: 768,
+    y: 10,
     kind: 'subscription',
     kicker: 'Subscription',
-    title: 'Claude',
-    prose: 'work@example.com',
-    mono: 'claude-opus-5',
+    title: 'Z.ai',
+    prose: 'GLM Coding Plan',
+    mono: 'glm-5-air',
     ports: 'in',
   },
   {
-    x: 770,
-    y: 128,
+    x: 768,
+    y: 102,
+    kind: 'api-key',
+    kicker: 'API key',
+    title: 'DeepSeek',
+    prose: 'your own key',
+    mono: 'deepseek-v4',
+    ports: 'in',
+  },
+  {
+    x: 768,
+    y: 194,
     kind: 'subscription',
     kicker: 'Subscription',
     title: 'Kimi',
@@ -58,8 +72,19 @@ const NODES: CanvasNode[] = [
     ports: 'in',
   },
   {
-    x: 770,
-    y: 328,
+    x: 768,
+    y: 286,
+    kind: 'subscription',
+    kicker: 'Subscription',
+    title: 'Claude',
+    prose: 'work@example.com',
+    mono: 'claude-fable-5',
+    ports: 'in',
+    glyph: Asterisk,
+  },
+  {
+    x: 768,
+    y: 378,
     kind: 'subscription',
     kicker: 'Subscription',
     title: 'Codex',
@@ -82,7 +107,9 @@ export function AppCanvas() {
       {NODES.map((node) => (
         <NodeCard key={`${node.x}-${node.y}`} node={node} />
       ))}
-      <RouterCard x={536} y={288} />
+      <JudgeSatellite x={556} y={6} model="glm-5-air" />
+      <RouterCard x={520} y={102} label="conditional" glyph={Split} />
+      <RouterCard x={520} y={332} label="round-robin" glyph={Repeat} />
 
       <ZoomToolbar />
       <CanvasMinimap />

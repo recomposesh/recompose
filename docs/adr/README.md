@@ -168,3 +168,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0160](0160-a-model-id-reaches-claude-codes-picker-by-name.md)                  | A model id reaches Claude Code's picker by name                                     | Accepted   | 2026-08-22 |
 | [0161](0161-the-mutation-gate-scopes-itself-from-its-own-config.md)             | The mutation gate scopes itself from its own config                                 | Accepted   | 2026-08-22 |
 | [0162](0162-vitest-refuses-to-run-from-the-repository-root.md)                  | Vitest refuses to run from the repository root                                      | Accepted   | 2026-08-23 |
+| [0170](0170-one-dependencys-sourcemap-warning-goes-by-name.md)                  | One dependency's sourcemap warning goes by name                                     | Accepted   | 2026-08-23 |

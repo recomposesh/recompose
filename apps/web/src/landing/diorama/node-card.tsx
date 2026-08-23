@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-import { Asterisk, Share2, Sparkle } from 'lucide-react';
+import { Asterisk, Key, Share2, Sparkle } from 'lucide-react';
 
 import { Port } from './port';
 
@@ -16,12 +16,14 @@ const KIND_STYLES = {
     chip: 'bg-subscription/12',
     text: 'text-subscription',
   },
+  'api-key': { border: 'border-api-key', chip: 'bg-api-key/12', text: 'text-api-key' },
 } as const;
 
 const KIND_GLYPHS = {
   gateway: Share2,
   'virtual-model': Sparkle,
   subscription: Asterisk,
+  'api-key': Key,
 } as const;
 
 const PORT_SIDES = {
@@ -73,7 +75,7 @@ export function NodeCard({ node, className }: { node: CanvasNode; className?: st
 
   return (
     <div
-      className={`absolute flex flex-col justify-center gap-0.5 rounded-node bg-win-card shadow-xl ${styles.border} ${className ?? 'h-22 w-46 px-2.75'}`}
+      className={`absolute flex flex-col justify-center gap-0.5 rounded-node bg-win-card shadow-xl ${styles.border} ${className ?? 'h-19 w-42 px-2.5'}`}
       style={
         className === undefined
           ? { left: node.x, top: node.y, borderWidth: 1.5 }
