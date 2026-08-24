@@ -147,10 +147,6 @@ test('the tidy command drops the arrangement and reseats every card', async () =
   expect(localStorage.getItem(POSITIONS_KEY)).toBeNull();
 });
 
-/**
- * Reseating cards a person cannot see is an arrangement they have no way to read, so the one press
- * that tidies also brings the whole composition back into the pane.
- */
 test('tidying brings the whole composition back into the pane', async () => {
   standCanvasBridge();
 
