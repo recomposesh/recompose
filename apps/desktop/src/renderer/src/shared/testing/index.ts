@@ -20,4 +20,4 @@ export { emitViewCommand, reportedSurfaceToggles } from './fake-view-pushes';
 export { refusedReport, servedReport } from './fake-usage-report';
 export { edgeRuleDrawn, tokenChartSeries } from './chart-fixtures';
 export { fitsItsPane, narrowed, paintedBox, paintedCentre, paintedStyle } from './measuring';
-export { chooseNamedAct, pressNamedControl, pressedByKeyboard } from './pressing';
+export { pressedByKeyboard } from './pressing';

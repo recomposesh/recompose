@@ -9,9 +9,10 @@ import { appliedSeatMoves, tidiedArrangement } from './arrangement-gestures';
 import { shownWhereItWasBorn } from './born-card-camera';
 import { birthedDraftAt, connectWiring } from './cable-gestures';
 import { cableLandings } from './cable-rules';
+import { canvasMenuActs } from './canvas-menu-acts';
 import { revealOn } from './canvas-standings';
 import { bindingCableId, flowEdgesOf, flowNodesOf, seatBeyond } from './canvas-wiring';
-import { deletionWiring } from './deletion-gestures';
+import { deletionWiring, releaseAskedFor } from './deletion-gestures';
 
 function pressedTheCardItself(target: EventTarget | null): boolean {
   const pressed = target instanceof Element ? target.closest('button') : null;
@@ -114,6 +115,14 @@ export function flowWiring(world: CanvasWorld): CanvasFlowWiring {
     ...connectWiring(world),
     ...deletionWiring(world),
     onTidy: tidiedArrangement(world),
+    actsFor: (subject) =>
+      canvasMenuActs(world, subject, {
+        ...cardAsks(world),
+        onTidy: tidiedArrangement(world),
+        onReleaseCable: (edgeId) => {
+          releaseAskedFor(world, edgeId);
+        },
+      }),
     onNodeFocus: (nodeId) => {
       if (world.standings.selection !== nodeId) {
         world.standings.select(nodeId);

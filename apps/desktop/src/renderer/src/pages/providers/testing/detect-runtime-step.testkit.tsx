@@ -96,7 +96,7 @@ export function lookRefusedAfterOne(
   };
 }
 
-export { pressNamedControl as press } from '../../../shared/testing';
+export { pressNamedControl as press } from './row-acts.testkit';
 
 export async function commitPort(port: string) {
   await page.getByRole('textbox', { name: 'Port', exact: true }).fill(port);

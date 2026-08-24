@@ -18,6 +18,7 @@ import type { ReactNode } from 'react';
 
 import { ReactFlow, ReactFlowProvider } from '@xyflow/react';
 
+import type { MenuAction } from '../../../../shared/ui';
 import type { BindingOutcome } from '../../lib/cable-announcements';
 
 import { announcedOutcome, announcedUrgency } from '../../lib/cable-announcements';
@@ -25,6 +26,7 @@ import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
 import { CanvasCommands } from '../../lib/use-canvas-commands';
 import { BindingCable } from '../binding-cable/binding-cable';
 import { CableConnectionLine } from '../cable-connection-line/cable-connection-line';
+import { CanvasContextMenu } from '../canvas-context-menu/canvas-context-menu';
 import { CanvasMinimap } from '../canvas-minimap/canvas-minimap';
 import { CanvasZoomControls } from '../canvas-zoom-controls/canvas-zoom-controls';
 import { DraftModelNode } from '../draft-model-node/draft-model-node';
@@ -54,6 +56,8 @@ export type CanvasFlowWiring = {
   onInit: OnInit;
   onTidy: () => void;
   onNodeFocus: (nodeId: string) => void;
+  /** The acts one card, cable, or the bare canvas offers, read off what a right-click landed on. */
+  actsFor: (subject: string | undefined) => readonly MenuAction[];
 };
 
 type GatewayStageProps = {
@@ -181,19 +185,14 @@ export function GatewayStage(props: GatewayStageProps) {
   const { flow, announced } = props;
 
   return (
-    <section
-      className="relative flex min-w-0 flex-1 overflow-hidden bg-surface-content dot-grid"
-      data-focus-group="spatial"
-      onFocusCapture={(event) => {
-        const nodeId = event.target.closest('.react-flow__node')?.getAttribute('data-id');
-
-        if (nodeId !== null && nodeId !== undefined) {
-          flow.onNodeFocus(nodeId);
-        }
+    <CanvasContextMenu
+      actsFor={flow.actsFor}
+      noticeCardFocus={(nodeId) => {
+        flow.onNodeFocus(nodeId);
       }}
     >
       {flowCanvas(props)}
       {liveRegions(announced)}
-    </section>
+    </CanvasContextMenu>
   );
 }

@@ -187,3 +187,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0172](0172-the-editing-menu-stands-where-a-press-asks-to-edit.md)              | The editing menu stands where a press asks to edit                                  | Accepted   | 2026-08-24 |
 | [0173](0173-one-act-list-stands-behind-both-ways-into-a-menu.md)                | One act list stands behind both ways into a menu                                    | Accepted   | 2026-08-24 |
 | [0174](0174-the-traffic-strip-answers-a-double-click-off-its-readings.md)       | The traffic strip answers a double-click off its readings                           | Accepted   | 2026-08-24 |
+| [0175](0175-the-canvas-reads-a-right-click-off-the-document.md)                 | The canvas reads a right-click off the document                                     | Accepted   | 2026-08-24 |

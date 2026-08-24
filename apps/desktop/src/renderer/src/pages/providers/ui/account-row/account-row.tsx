@@ -1,6 +1,4 @@
-import type { ReactNode } from 'react';
-
-import type { MenuAction } from '../../../../shared/ui';
+import type { ComponentProps, ReactNode } from 'react';
 
 import { ContextMenu } from '../../../../shared/ui';
 
@@ -10,7 +8,7 @@ type AccountRowProps = {
   /** How the row lays its own contents out, which is the one thing the three kinds disagree on. */
   layout: string;
   /** The acts a right-click on the row raises, which are the acts its control holds as well. */
-  items: readonly MenuAction[];
+  items: ComponentProps<typeof ContextMenu>['items'];
   /** What the row draws, which each kind of account fills in for itself. */
   children: ReactNode;
 };

@@ -2,14 +2,12 @@ import { expect, screen } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import type { MenuAction } from '../../../../shared/ui';
-
 import { AccountRow } from './account-row';
 
-const acts: MenuAction[] = [
+const acts = [
   { label: 'Verify', icon: 'shield', tone: 'positive', onSelect: () => {} },
   { label: 'Remove', icon: 'trash', tone: 'danger', onSelect: () => {} },
-];
+] as const;
 
 const meta = preview.meta({
   component: AccountRow,

@@ -45,6 +45,7 @@ const restingFlow: CanvasFlowWiring = {
   onInit: () => {},
   onTidy: () => {},
   onNodeFocus: () => {},
+  actsFor: () => [],
 };
 
 const meta = preview.meta({
