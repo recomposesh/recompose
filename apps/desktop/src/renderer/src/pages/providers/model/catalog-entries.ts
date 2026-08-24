@@ -139,6 +139,12 @@ const aggregatorEntries: readonly CatalogEntry[] = [
     offers: [aggregatorKey('Cerebras', 'Wafer-scale, fastest tokens per second')],
   },
   {
+    id: 'opencode-zen',
+    name: 'OpenCode Zen',
+    lead: { mark: 'opencode' },
+    offers: [aggregatorKey('OpenCode Zen', 'Benchmarked models for coding agents')],
+  },
+  {
     id: 'custom-aggregator',
     name: 'Custom aggregator',
     lead: glyphOf.spark,

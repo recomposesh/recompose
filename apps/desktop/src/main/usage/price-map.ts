@@ -2,9 +2,11 @@ import type { PricingProvenance } from '@recompose/contracts';
 
 import { readFile } from 'node:fs/promises';
 
-import type { ModelPrice, PriceMap } from './pricing';
+import type { PriceMap } from './pricing';
 
 import { isRecord, readJsonWithQuarantine, writeJsonAtomic } from '../storage/json-file';
+import { fetchLiteLlmPrices, liteLlmPricesFrom } from './litellm-prices';
+import { fetchOpenCodeZenPrices, openCodeZenPricesFrom } from './opencode-zen-prices';
 
 const REFRESH_EVERY_MS = 24 * 3_600_000;
 
@@ -13,7 +15,9 @@ const PRICE_CACHE_VERSION = 1;
 export type PriceMapDeps = {
   cacheFile: string;
   bundledFile: string;
+  bundledRegistryFile: string;
   fetchPrices?: () => Promise<unknown>;
+  fetchRegistryPrices?: () => Promise<unknown>;
   onCorrupt?: (quarantinedPath: string) => void;
 };
 
@@ -27,71 +31,6 @@ export type PriceMapDesk = {
   refreshNow: () => Promise<void>;
   dispose: () => void;
 };
-
-async function fetchFromLiteLlm(): Promise<unknown> {
-  const answer = await fetch(
-    'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json',
-  );
-
-  if (!answer.ok) {
-    throw new Error(`the price map answered ${String(answer.status)}`);
-  }
-
-  return answer.json();
-}
-
-function rateAt(entry: Record<string, unknown>, field: string): number | undefined {
-  const rate = entry[field];
-
-  return typeof rate === 'number' && Number.isFinite(rate) ? rate : undefined;
-}
-
-function cacheRatesOf(raw: Record<string, unknown>): Partial<ModelPrice> {
-  const cacheRead = rateAt(raw, 'cache_read_input_token_cost');
-  const cacheWrite = rateAt(raw, 'cache_creation_input_token_cost');
-
-  return {
-    ...(cacheRead === undefined ? {} : { cacheReadPerToken: cacheRead }),
-    ...(cacheWrite === undefined ? {} : { cacheWritePerToken: cacheWrite }),
-  };
-}
-
-function pricedEntryOf(raw: unknown): ModelPrice | undefined {
-  if (!isRecord(raw)) {
-    return undefined;
-  }
-
-  const inputPerToken = rateAt(raw, 'input_cost_per_token');
-  const outputPerToken = rateAt(raw, 'output_cost_per_token');
-
-  if (inputPerToken === undefined || outputPerToken === undefined) {
-    return undefined;
-  }
-
-  return { inputPerToken, outputPerToken, ...cacheRatesOf(raw) };
-}
-
-/**
- * The usable entries one raw map payload holds, and nothing when the payload is not a map at all.
- *
- * @summary Parsing stays lenient on purpose: the upstream adds fields freely, so each entry is
- * read for the four rates this app prices with and the rest is ignored. An entry missing either
- * required rate is dropped rather than priced wrong, and a payload that is not an object refuses
- * whole so a moved shape never empties the standing copy.
- */
-function pricesFrom(payload: unknown): PriceMap | undefined {
-  if (!isRecord(payload) || Array.isArray(payload)) {
-    return undefined;
-  }
-
-  const entries = Object.entries(payload).flatMap(([name, raw]): [string, ModelPrice][] => {
-    const priced = pricedEntryOf(raw);
-
-    return priced === undefined ? [] : [[name, priced]];
-  });
-
-  return new Map(entries);
-}
 
 function cachedAt(raw: unknown): number | undefined {
   if (!isRecord(raw)) {
@@ -119,71 +58,173 @@ function cacheEraKnown(cached: Record<string, unknown>): boolean {
   return named === undefined || named === PRICE_CACHE_VERSION;
 }
 
-function syncedFromCache(cached: unknown): StandingPrices | undefined {
+type PriceLayers = { base: PriceMap; registry: PriceMap };
+
+type CachedPayloads = { payload: unknown; registryPayload: unknown; fetchedAt: number | undefined };
+
+type StoredPayloads = Omit<CachedPayloads, 'fetchedAt'>;
+
+const NOTHING_CACHED: CachedPayloads = {
+  payload: undefined,
+  registryPayload: undefined,
+  fetchedAt: undefined,
+};
+
+type ReadPrices = (payload: unknown) => PriceMap | undefined;
+
+/**
+ * The two layers as one map, with the registry's own prices standing last.
+ *
+ * @summary A gateway reselling a model the wider map also names is charged at its own rate, so the
+ * layer that knows the gateway wins wherever both name a key.
+ */
+function mergedPrices(layers: PriceLayers): PriceMap {
+  return new Map([...layers.base, ...layers.registry]);
+}
+
+function cachedPayloadsIn(cached: unknown): CachedPayloads {
   const fetchedAt = cachedAt(cached);
 
   if (!isRecord(cached) || fetchedAt === undefined || !cacheEraKnown(cached)) {
+    return NOTHING_CACHED;
+  }
+
+  return { payload: cached['payload'], registryPayload: cached['registryPayload'], fetchedAt };
+}
+
+async function bundledPricesIn(file: string, read: ReadPrices): Promise<PriceMap> {
+  return read(JSON.parse(await readFile(file, 'utf8'))) ?? new Map();
+}
+
+type OpenedPrices = { layers: PriceLayers; stored: StoredPayloads; provenance: PricingProvenance };
+
+type SyncedLayers = { base: PriceMap | undefined; registry: PriceMap | undefined };
+
+async function layersOver(deps: PriceMapDeps, synced: SyncedLayers): Promise<PriceLayers> {
+  return {
+    base: synced.base ?? (await bundledPricesIn(deps.bundledFile, liteLlmPricesFrom)),
+    registry:
+      synced.registry ?? (await bundledPricesIn(deps.bundledRegistryFile, openCodeZenPricesFrom)),
+  };
+}
+
+function provenanceOf(
+  fetchedAt: number | undefined,
+  base: PriceMap | undefined,
+): PricingProvenance {
+  return fetchedAt === undefined || base === undefined
+    ? { source: 'bundled' }
+    : { source: 'synced', fetchedAt };
+}
+
+/**
+ * Both layers as a boot resolves them, each from the cache where a past run fetched it.
+ *
+ * @summary Provenance follows the wider map rather than either layer, because that map prices all
+ * but one vendor, and a person reading a stale date wants to know how old the bulk of it is.
+ */
+async function standingFromDisk(deps: PriceMapDeps): Promise<OpenedPrices> {
+  const cached = cachedPayloadsIn(
+    await readJsonWithQuarantine(deps.cacheFile, deps.onCorrupt ?? (() => undefined)),
+  );
+  const synced: SyncedLayers = {
+    base: liteLlmPricesFrom(cached.payload),
+    registry: openCodeZenPricesFrom(cached.registryPayload),
+  };
+
+  return {
+    layers: await layersOver(deps, synced),
+    stored: { payload: cached.payload, registryPayload: cached.registryPayload },
+    provenance: provenanceOf(cached.fetchedAt, synced.base),
+  };
+}
+
+type FetchedLayer = { prices: PriceMap; payload: unknown };
+
+type FetchedLayers = { base: FetchedLayer | undefined; registry: FetchedLayer | undefined };
+
+function layersAfter(standing: PriceLayers, fetched: FetchedLayers): PriceLayers {
+  return {
+    base: fetched.base?.prices ?? standing.base,
+    registry: fetched.registry?.prices ?? standing.registry,
+  };
+}
+
+function payloadsAfter(stored: StoredPayloads, fetched: FetchedLayers): StoredPayloads {
+  return {
+    payload: fetched.base === undefined ? stored.payload : fetched.base.payload,
+    registryPayload:
+      fetched.registry === undefined ? stored.registryPayload : fetched.registry.payload,
+  };
+}
+
+async function fetchedLayer(
+  askFor: () => Promise<unknown>,
+  read: ReadPrices,
+  named: string,
+): Promise<FetchedLayer | undefined> {
+  let payload: unknown;
+
+  try {
+    payload = await askFor();
+  } catch (failure) {
+    console.error(`recompose could not fetch ${named}.`, failure);
+
     return undefined;
   }
 
-  const prices = pricesFrom(cached['payload']);
+  const prices = read(payload);
 
-  return prices === undefined ? undefined : { prices, provenance: { source: 'synced', fetchedAt } };
-}
+  if (prices === undefined) {
+    console.error(`recompose refused ${named}, whose shape moved.`);
 
-async function standingFromDisk(deps: PriceMapDeps): Promise<StandingPrices> {
-  const synced = syncedFromCache(
-    await readJsonWithQuarantine(deps.cacheFile, deps.onCorrupt ?? (() => undefined)),
-  );
-
-  if (synced !== undefined) {
-    return synced;
+    return undefined;
   }
 
-  const bundled = pricesFrom(JSON.parse(await readFile(deps.bundledFile, 'utf8')));
-
-  return { prices: bundled ?? new Map(), provenance: { source: 'bundled' } };
+  return { prices, payload };
 }
 
 /**
  * The price map through its whole life in main: bundle, cache, and a day-long refresh.
  *
  * @summary Resolution runs memory, then the cache a past run fetched, then the vendored snapshot,
- * so a first boot offline still prices. A refresh that fails or answers a moved shape keeps the
- * standing copy serving and stamps nothing, which bounds the failure to prices going stale rather
- * than a screen breaking. Every answer names its source and fetch instant, so staleness is data.
+ * so a first boot offline still prices. The two sources refresh independently, so one host being
+ * unreachable costs only the layer it serves. A refresh that fails or answers a moved shape keeps
+ * the standing copy serving and stamps nothing, which bounds the failure to prices going stale
+ * rather than a screen breaking. Every answer names its source and fetch instant.
  */
 export async function openPriceMap(deps: PriceMapDeps): Promise<PriceMapDesk> {
-  const fetchPrices = deps.fetchPrices ?? fetchFromLiteLlm;
+  const askForPrices = deps.fetchPrices ?? fetchLiteLlmPrices;
+  const askForRegistry = deps.fetchRegistryPrices ?? fetchOpenCodeZenPrices;
 
-  let standing = await standingFromDisk(deps);
+  const opened = await standingFromDisk(deps);
+  let layers = opened.layers;
+  let stored = opened.stored;
+  let standing: StandingPrices = {
+    prices: mergedPrices(layers),
+    provenance: opened.provenance,
+  };
 
   const refreshNow = async (): Promise<void> => {
-    let payload: unknown;
+    const [base, registry] = await Promise.all([
+      fetchedLayer(askForPrices, liteLlmPricesFrom, 'the model price map'),
+      fetchedLayer(askForRegistry, openCodeZenPricesFrom, 'the model registry'),
+    ]);
 
-    try {
-      payload = await fetchPrices();
-    } catch (failure) {
-      console.error('recompose could not fetch the model price map.', failure);
-
-      return;
-    }
-
-    const prices = pricesFrom(payload);
-
-    if (prices === undefined) {
-      console.error('recompose refused a price map whose shape moved.');
-
+    if (base === undefined && registry === undefined) {
       return;
     }
 
     const fetchedAt = Date.now();
 
-    standing = { prices, provenance: { source: 'synced', fetchedAt } };
+    layers = layersAfter(layers, { base, registry });
+    stored = payloadsAfter(stored, { base, registry });
+    standing = { prices: mergedPrices(layers), provenance: { source: 'synced', fetchedAt } };
+
     await writeJsonAtomic(deps.cacheFile, {
       schemaVersion: PRICE_CACHE_VERSION,
       fetchedAt,
-      payload,
+      ...stored,
     });
   };
 

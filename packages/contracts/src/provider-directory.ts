@@ -52,6 +52,7 @@ export const vendorEndpoints = {
   mistral: { origin: 'https://api.mistral.ai', dialect: 'chat-completions' },
   moonshot: { origin: 'https://api.moonshot.ai', dialect: 'chat-completions' },
   openai: { origin: 'https://api.openai.com', dialect: 'chat-completions' },
+  'opencode-zen': { origin: 'https://opencode.ai/zen', dialect: 'chat-completions' },
   openrouter: { origin: 'https://openrouter.ai/api', dialect: 'chat-completions' },
   qwen: { origin: 'https://dashscope.aliyuncs.com/compatible-mode', dialect: 'chat-completions' },
   'qwen-coding': {

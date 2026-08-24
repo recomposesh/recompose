@@ -52,7 +52,9 @@ never serves a request, and forgetting it takes its own act on the same row.
 
 ## How recompose computes spend
 
-Prices come from the public LiteLLM price map. recompose ships a bundled snapshot, refreshes it daily from GitHub, and caches the refresh at `~/.recompose/prices.json`. It computes estimates at answer time and never stores them, so a price correction reprices your whole history on the next read.
+Prices come from the public LiteLLM price map, beside the models.dev registry for the one gateway that map never names, [OpenCode Zen](/docs/providers/aggregators). recompose ships a bundled snapshot of each, refreshes them daily, and caches both at `~/.recompose/prices.json`. One source being unreachable leaves the other refreshing. It computes estimates at answer time and never stores them, so a price correction reprices your whole history on the next read.
+
+Where a gateway resells a model under its maker's name, the gateway's own rate is the one used. An OpenAI model served through OpenCode Zen prices at Zen's rate, not OpenAI's own.
 
 Spend splits by account kind and the two halves never merge:
 

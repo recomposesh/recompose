@@ -125,6 +125,7 @@ test('a way keeps the providers that connect by it and drops the rest', () => {
     'groq',
     'deepinfra',
     'cerebras',
+    'opencode-zen',
     'custom-aggregator',
   ]);
   expect(offeredUnder(catalogEntries, 'local').map((entry) => entry.id)).toEqual([
@@ -220,6 +221,7 @@ test('a stored key reads as the product its catalog entry was picked as', () => 
   expect(keyTitleFor('anthropic')).toBe('Anthropic API');
   expect(keyTitleFor('openai')).toBe('OpenAI API');
   expect(keyTitleFor('openrouter')).toBe('OpenRouter');
+  expect(keyTitleFor('opencode-zen')).toBe('OpenCode Zen');
 });
 
 test('a stored key the catalog never offered reads as the provider it was stored under', () => {
@@ -233,6 +235,7 @@ test('a key provider names the one host its key is spent against', () => {
 
 test('a provider whose key reaches many hosts names none of them', () => {
   expect(keyHostFor('openrouter')).toBeUndefined();
+  expect(keyHostFor('opencode-zen')).toBeUndefined();
 });
 
 test('a provider the catalog offers is drawn with its own mark', () => {
@@ -257,6 +260,7 @@ test('a check can answer for a key whose provider the probe knows', () => {
 
 test('a check can answer for neither an aggregator key nor a provider nothing documents', () => {
   expect(checkableKey(storedKey({ provider: 'openrouter', kind: 'aggregator' }))).toBe(false);
+  expect(checkableKey(storedKey({ provider: 'opencode-zen', kind: 'aggregator' }))).toBe(false);
   expect(checkableKey(storedKey({ provider: 'a-plugin-vendor' }))).toBe(false);
 });
 

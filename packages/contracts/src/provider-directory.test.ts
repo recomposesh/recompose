@@ -58,6 +58,10 @@ describe('where a turn goes', () => {
       origin: 'https://api.cerebras.ai',
       dialect: 'chat-completions',
     });
+    expect(vendorEndpointOf('opencode-zen')).toEqual({
+      origin: 'https://opencode.ai/zen',
+      dialect: 'chat-completions',
+    });
   });
 
   test('the one vendor whose base URL carries the version reaches it whole', () => {
@@ -135,7 +139,14 @@ describe('the shape a vendor hands its keys out in', () => {
   });
 
   test('a vendor documenting no opening hints nothing rather than teaching a shape', () => {
-    for (const vendor of ['cerebras', 'mistral', 'deepseek', 'together', 'deepinfra']) {
+    for (const vendor of [
+      'cerebras',
+      'mistral',
+      'deepseek',
+      'together',
+      'deepinfra',
+      'opencode-zen',
+    ]) {
       expect(documentedKeyOpeningOf(vendor), vendor).toBeUndefined();
     }
   });

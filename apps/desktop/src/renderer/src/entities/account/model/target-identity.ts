@@ -19,6 +19,7 @@ const providerProducts: Readonly<Record<string, string>> = {
   anthropic: 'Anthropic',
   openai: 'OpenAI',
   openrouter: 'OpenRouter',
+  'opencode-zen': 'OpenCode Zen',
   gemini: 'Gemini',
   'gemini-interactions': 'Gemini',
   ollama: 'Ollama',
@@ -27,6 +28,7 @@ const providerProducts: Readonly<Record<string, string>> = {
 const markAliases: Readonly<Record<string, BrandMarkName>> = {
   antigravity: 'gemini',
   'gemini-interactions': 'gemini',
+  'opencode-zen': 'opencode',
 };
 
 /**
