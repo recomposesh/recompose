@@ -9,6 +9,16 @@ const branchSchema = z.strictObject({
 });
 
 /**
+ * How long a conditional router waits on its judge when nobody has said otherwise.
+ *
+ * @summary Half a minute is long enough that a judge behind a slow channel, a cold model, or a
+ * queue still answers inside it, and short enough that a request nothing will ever come back for
+ * refuses rather than hanging. It is the born value and the one a stored router that never chose is
+ * lifted to, so both read it here rather than each carrying its own copy of the same number.
+ */
+export const BORN_JUDGE_BOUND_MS = 30_000;
+
+/**
  * The standing instruction one router hands its judge, read ahead of the labels and the rules.
  *
  * @summary It is optional because a router whose labels already read plainly needs no preamble, and

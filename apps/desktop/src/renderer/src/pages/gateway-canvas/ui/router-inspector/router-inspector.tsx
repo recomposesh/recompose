@@ -17,11 +17,13 @@ import { gatewayDroppingNode, gatewayReordering, gatewaySwitching } from '../../
 import {
   gatewayBindingJudge,
   gatewayJudgingEveryRequest,
+  gatewayJudgingWithin,
   gatewayWritingBranch,
 } from '../../lib/routing-edits-conditional';
 import { useOfferedModels } from '../../lib/use-offered-models';
 import { BranchEditor } from '../branch-editor/branch-editor';
 import { JudgeSection } from '../judge-section/judge-section';
+import { JudgeTimeoutField } from '../judge-timeout-field/judge-timeout-field';
 import { useLeavingConditional } from '../leaving-conditional/use-leaving-conditional';
 import { modePicking } from '../mode-rows/mode-picking';
 import { ModeSection } from '../mode-section/mode-section';
@@ -72,6 +74,12 @@ function judgingBody(view: StoredView, policy: ConditionalPolicy): ReactNode {
           onRewrite(gatewayJudgingEveryRequest(gateway, model.id, routeNodeId, next));
         }}
         rejudgeEveryRequest={policy.rejudgeEveryRequest}
+      />
+      <JudgeTimeoutField
+        judgeBoundMs={policy.judgeBoundMs}
+        onCommitBoundMs={(next) => {
+          onRewrite(gatewayJudgingWithin(gateway, model.id, routeNodeId, next));
+        }}
       />
       <JudgeSection
         accounts={accounts}
@@ -189,9 +197,9 @@ function ladderEdits(props: RouterInspectorProps, onRewrite: (next: GatewayConfi
  * children and their order exactly as they stood, so trying the other mode is never a rebuild.
  * Leaving conditional is the one switch that costs something, and it asks before it takes it.
  *
- * A conditional router carries two more decisions between the mode and the children: how often it
- * asks its judge, and which judge it asks. Both stand above the ladder, because both change what
- * every row below them receives.
+ * A conditional router carries three more decisions between the mode and the children: how often
+ * it asks its judge, how long it waits on the answer, and which judge it asks. All three stand
+ * above the ladder, because all three change what every row below them receives.
  */
 export function RouterInspector(props: RouterInspectorProps) {
   const { gateway, model, routeNodeId, router, accounts } = props;

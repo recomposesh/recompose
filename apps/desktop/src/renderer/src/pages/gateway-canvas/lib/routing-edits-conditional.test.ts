@@ -8,6 +8,7 @@ import { gatewayBindingChild, gatewayDroppingNode } from './routing-edits';
 import {
   gatewayBindingJudge,
   gatewayJudgingEveryRequest,
+  gatewayJudgingWithin,
   gatewayWritingBranch,
 } from './routing-edits-conditional';
 import { codex, judged, policyOf, routingOf, sharingOneJudge } from './routing-edits.testkit';
@@ -123,6 +124,26 @@ test('moving the judging rhythm leaves the judge, the branches, and the else chi
 
 test('a router that spreads some other way has no rhythm to move', () => {
   expect(gatewayJudgingEveryRequest(codex, 'fast', 't1', true)).toEqual(codex);
+});
+
+test('setting how long the judge has leaves everything else the router decides by alone', () => {
+  const waiting = gatewayJudgingWithin(judged(), 'fast', 'r1', 45_000);
+
+  expect(conditionalPolicyOf(waiting)).toEqual({
+    ...conditionalPolicyOf(),
+    judgeBoundMs: 45_000,
+  });
+  expect(routingSchema.safeParse(routingOf(waiting)).success).toBe(true);
+});
+
+test('a router that spreads some other way has no judge to wait on', () => {
+  expect(gatewayJudgingWithin(codex, 'fast', 't1', 45_000)).toEqual(codex);
+});
+
+test('a budget the stored shape would refuse never reaches the table', () => {
+  for (const refused of [0, -1000, 1500.5]) {
+    expect(gatewayJudgingWithin(judged(), 'fast', 'r1', refused)).toEqual(judged());
+  }
 });
 
 test('writing a branch pairs a label and a rule with the child that answers to them', () => {

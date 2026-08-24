@@ -17,8 +17,8 @@ type TargetNode = Extract<RouteNode, { kind: 'target' }>;
 type RouterNode = Extract<RouteNode, { kind: 'router' }>;
 
 describe('the stored shape of a virtual model', () => {
-  test('the config pins itself to schema version 4', () => {
-    expectTypeOf<GatewayConfig['schemaVersion']>().toEqualTypeOf<4>();
+  test('the config pins itself to schema version 5', () => {
+    expectTypeOf<GatewayConfig['schemaVersion']>().toEqualTypeOf<5>();
   });
 
   test('a gateway holds a list of virtual models', () => {

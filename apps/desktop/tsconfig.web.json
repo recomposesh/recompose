@@ -7,6 +7,7 @@
     "src/renderer/src/**/*.tsx",
     "src/preload/*.d.ts",
     ".storybook/checklist-panel.tsx",
+    ".storybook/inspector-panel.tsx",
     ".storybook/preview.ts",
     ".storybook/providers-column.tsx",
     ".storybook/recompose-bridge.tsx",

@@ -1,5 +1,7 @@
 import type { RouteNode, RouterPolicy } from '@recompose/contracts';
 
+import { BORN_JUDGE_BOUND_MS } from '@recompose/contracts';
+
 import { derivedBranchLabel } from './derived-branch-label';
 
 /** What a conditional router decides by, which is the judge, the branches, and the else child. */
@@ -10,15 +12,6 @@ export type Branch = ConditionalPolicy['branches'][number];
 
 /** What a person writes on one branch, which together are the judge's whole vocabulary for it. */
 export type BranchWording = { label: string; rule: string };
-
-/**
- * How long a fresh conditional router waits on its judge before the request goes to else.
- *
- * @summary Three seconds is long enough for a fast model to answer and short enough that a person
- * waiting on the request never reads the wait as a hang. It is stored rather than fixed, because a
- * judge behind a slower channel is a per-router fact rather than a rule about the mode.
- */
-const BORN_JUDGE_BOUND_MS = 3000;
 
 /**
  * The policy a conditional router is born under, which is a judge and somewhere to catch the rest.
