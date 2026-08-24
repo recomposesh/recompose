@@ -11,6 +11,7 @@ import {
 } from '../../../../shared/api';
 import { OverflowMenu, UsageSummaryLink, VendorMark } from '../../../../shared/ui';
 import { checkableKey, keyTitleFor, markFor, readerKeyAskFor } from '../../model/provider-catalog';
+import { AccountRow } from '../account-row/account-row';
 import { ReaderKeySheet } from '../reader-key-sheet/reader-key-sheet';
 
 type KeyAccountRowProps = {
@@ -151,8 +152,8 @@ function quieterActions(acts: RowActs) {
  * the mask, so a person tells two keys of one provider apart without the secret reaching the
  * screen. The bullets stand on every key row, so a card always says a key stands there, and a key
  * stored before the mask existed reads the name beside the bare bullets. Both acts live behind the
- * overflow, because neither is part of reading the row, and Verify appears there only where a
- * probe knows the provider well enough to answer.
+ * overflow and behind a right-click on the row, because neither is part of reading the row, and
+ * Verify appears there only where a probe knows the provider well enough to answer.
  */
 export function KeyAccountRow({ account }: KeyAccountRowProps) {
   const check = withRefusal(useVerifyKey());
@@ -163,30 +164,29 @@ export function KeyAccountRow({ account }: KeyAccountRowProps) {
   const mark = markFor(account.provider);
   const readerAsk = readerKeyAskFor(account.provider);
 
+  const acts = quieterActions({
+    account,
+    checking: check.isPending,
+    onVerify: () => {
+      check.mutate({ id: account.id });
+    },
+    onRemove: () => {
+      forget.mutate({ id: account.id });
+    },
+    onAddReaderKey: () => {
+      setAskingForReaderKey(true);
+    },
+    onForgetReaderKey: () => {
+      forgetReader.mutate({ id: account.id });
+    },
+  });
+
   return (
-    <li className="flex min-h-row items-center gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
+    <AccountRow items={acts} layout="flex min-h-row items-center gap-3">
       <VendorMark name={mark} />
       {keyIdentity(account, check.refusal ?? forget.refusal, check.data?.verdict)}
       <UsageSummaryLink scope={{ param: 'providers', value: account.id }} />
-      <OverflowMenu
-        items={quieterActions({
-          account,
-          checking: check.isPending,
-          onVerify: () => {
-            check.mutate({ id: account.id });
-          },
-          onRemove: () => {
-            forget.mutate({ id: account.id });
-          },
-          onAddReaderKey: () => {
-            setAskingForReaderKey(true);
-          },
-          onForgetReaderKey: () => {
-            forgetReader.mutate({ id: account.id });
-          },
-        })}
-        label={`Actions for ${account.label}`}
-      />
+      <OverflowMenu items={acts} label={`Actions for ${account.label}`} />
       {readerAsk === undefined ? null : (
         <ReaderKeySheet
           accountId={account.id}
@@ -195,6 +195,6 @@ export function KeyAccountRow({ account }: KeyAccountRowProps) {
           open={askingForReaderKey}
         />
       )}
-    </li>
+    </AccountRow>
   );
 }

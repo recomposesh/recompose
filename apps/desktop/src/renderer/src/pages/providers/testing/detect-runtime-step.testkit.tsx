@@ -2,7 +2,6 @@ import type { RecomposeIpc, RuntimeReachability } from '@recompose/contracts';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { expect } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page, userEvent } from 'vitest/browser';
 
@@ -97,15 +96,7 @@ export function lookRefusedAfterOne(
   };
 }
 
-export async function press(name: string) {
-  const control = page.getByRole('button', { name, exact: true });
-
-  await expect.element(control).toBeVisible();
-
-  control.element().focus();
-
-  await userEvent.keyboard('{Enter}');
-}
+export { pressNamedControl as press } from '../../../shared/testing';
 
 export async function commitPort(port: string) {
   await page.getByRole('textbox', { name: 'Port', exact: true }).fill(port);

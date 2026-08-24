@@ -3,6 +3,7 @@ import { RouterContextProvider, createMemoryHistory } from '@tanstack/react-rout
 import { Suspense } from 'react';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
+import { page } from 'vitest/browser';
 
 import type { BridgeParameters } from '../../../../../shared/testing';
 
@@ -161,4 +162,44 @@ test('the gateway whose canvas the screen shows reads as the current destination
   await expect
     .element(screen.getByRole('link', { name: 'Gemini Stopped' }))
     .not.toHaveAttribute('aria-current');
+});
+
+function rightClickTheRow(row: Element): void {
+  row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+}
+
+function actNamed(label: string) {
+  return page.getByRole('menuitem', { name: label, exact: true });
+}
+
+test('a stopped gateway offers to start and holds stopping out of reach', async () => {
+  const { screen } = await renderSidebar({ gateways: [codex], engineStates: {} });
+
+  rightClickTheRow(screen.getByRole('link', { name: 'Codex Stopped' }).element());
+
+  await expect.element(actNamed('Start')).toBeVisible();
+  await expect.element(actNamed('Stop')).toHaveAttribute('data-disabled');
+});
+
+test('a running gateway offers to stop and holds starting out of reach', async () => {
+  const { screen } = await renderSidebar({
+    gateways: [codex],
+    engineStates: { codex: { status: 'running' } },
+  });
+
+  rightClickTheRow(screen.getByRole('link', { name: 'Codex Running' }).element());
+
+  await expect.element(actNamed('Stop')).toBeVisible();
+  await expect.element(actNamed('Start')).toHaveAttribute('data-disabled');
+});
+
+test('starting from a row reaches that gateway rather than the one standing', async () => {
+  const { screen } = await renderSidebar({ gateways: [codex, gemini], engineStates: {} });
+
+  rightClickTheRow(screen.getByRole('link', { name: 'Gemini Stopped' }).element());
+
+  await actNamed('Start').click();
+
+  await expect.element(screen.getByRole('link', { name: 'Gemini Running' })).toBeVisible();
+  await expect.element(screen.getByRole('link', { name: 'Codex Stopped' })).toBeVisible();
 });

@@ -248,3 +248,39 @@ test('a plan with no tool to point offers no taking over, because nothing would 
     .poll(() => page.getByRole('menuitem', { name: 'Use this account' }).elements().length)
     .toBe(0);
 });
+
+function rightClickTheRow(container: Element): void {
+  const row = container.querySelector('li');
+
+  if (row === null) {
+    throw new Error('the row never rendered');
+  }
+
+  row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+}
+
+function listedActs(): (string | null)[] {
+  return page
+    .getByRole('menuitem')
+    .elements()
+    .map((act) => act.textContent);
+}
+
+test('a right-click on the row offers the acts the trailing control holds', async () => {
+  const screen = await renderRow(connected);
+
+  await press('Actions for Anthropic');
+
+  const fromTheControl = listedActs();
+
+  expect(fromTheControl.length).toBeGreaterThan(0);
+
+  await userEvent.keyboard('{Escape}');
+  await expect.element(page.getByRole('menu')).not.toBeInTheDocument();
+
+  rightClickTheRow(screen.container);
+
+  await expect.element(page.getByRole('menu')).toBeVisible();
+
+  expect(listedActs()).toEqual(fromTheControl);
+});

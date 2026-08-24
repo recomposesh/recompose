@@ -10,6 +10,7 @@ import {
 } from '../../../../shared/api';
 import { Badge, BrandMark, CommandLine, OverflowMenu, StatusChip } from '../../../../shared/ui';
 import { subscriptionMarkFor, subscriptionTitleFor } from '../../model/provider-catalog';
+import { AccountRow } from '../account-row/account-row';
 
 type SubscriptionAccountRowProps = {
   /** The account as the machine last observed it, standing for one row. */
@@ -166,7 +167,8 @@ function accountIdentity(view: SubscriptionAccountView, refusal: string | undefi
  * target and has nowhere else to be edited. It holds two lines, the plan product and the address
  * it signed in as, because the connect step already taught what the account serves. A lapse puts
  * its remedy on the row rather than behind the overflow, so the standing and the way out of it
- * are read in one glance, and the overflow keeps only signing in again and removal. The plan's
+ * are read in one glance, and the overflow and a right-click on the row keep only signing in
+ * again and removal. The plan's
  * chosen account carries one line more, which is the only place the choosing shows.
  */
 export function SubscriptionAccountRow({ view, shellSetupLine }: SubscriptionAccountRowProps) {
@@ -180,28 +182,27 @@ export function SubscriptionAccountRow({ view, shellSetupLine }: SubscriptionAcc
     restore.mutate({ id: view.id });
   };
 
+  const acts = quieterActions({
+    view,
+    onSignInAgain: signInAgain,
+    onRemove: () => {
+      forget.mutate({ id: view.id });
+    },
+    onUseThis: () => {
+      useThis.mutate({ id: view.id });
+    },
+  });
+
   return (
-    <li className="flex flex-col gap-2.5 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
+    <AccountRow items={acts} layout="flex flex-col gap-2.5">
       <div className="flex min-h-row items-center gap-3">
         <BrandMark name={subscriptionMarkFor(view.provider)} />
         {accountIdentity(view, refusal)}
         {wayBack(view, signInAgain)}
         <StatusChip tone={standing[view.standing].tone} word={standing[view.standing].word} />
-        <OverflowMenu
-          items={quieterActions({
-            view,
-            onSignInAgain: signInAgain,
-            onRemove: () => {
-              forget.mutate({ id: view.id });
-            },
-            onUseThis: () => {
-              useThis.mutate({ id: view.id });
-            },
-          })}
-          label={`Actions for ${view.label}`}
-        />
+        <OverflowMenu items={acts} label={`Actions for ${view.label}`} />
       </div>
       {terminalReach(view, shellSetupLine)}
-    </li>
+    </AccountRow>
   );
 }
