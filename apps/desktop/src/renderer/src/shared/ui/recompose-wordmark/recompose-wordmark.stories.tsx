@@ -60,7 +60,7 @@ export const CarriesTheWordAlone = meta.story({
  * The letters sit in the middle of the box the wordmark takes up.
  *
  * @summary Only `p` descends, so a box drawn to the ink hangs lower than the letters do, and
- * anything centring that box stands the word above its neighbour's middle. Padding the box above
+ * anything centring that box stands the word above the mark it sits beside. Padding the box above
  * by the reach of the descender puts the letters back on the centre a lockup lines up by.
  */
 export const LettersCentreInTheirBox = meta.story({
