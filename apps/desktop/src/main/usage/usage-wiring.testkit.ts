@@ -23,6 +23,8 @@ const sonnetPriced = {
   'claude-sonnet-4-5': { input_cost_per_token: 0.000003, output_cost_per_token: 0.000015 },
 };
 
+const zenPriced = { opencode: { models: { 'kimi-k3': { cost: { input: 3, output: 15 } } } } };
+
 /** Stands the clock at `NOW` and clears the stubbed reach a story left behind. */
 export function aUsageClock(): void {
   beforeEach(() => {
@@ -44,6 +46,7 @@ export async function usageHome(accounts: readonly Account[]): Promise<string> {
   await rewriteRegistry(home, accounts);
   await rewriteVault(home, { 'cred-many': secret, 'read-many': readerSecret });
   await writeFile(join(home, 'bundled-prices.json'), JSON.stringify(sonnetPriced), 'utf8');
+  await writeFile(join(home, 'bundled-registry-prices.json'), JSON.stringify(zenPriced), 'utf8');
 
   return home;
 }
@@ -71,6 +74,7 @@ export async function wiringOver(
     retainedRows: () => [],
     planUsage: () => ({}),
     bundledPricesFile: join(home, 'bundled-prices.json'),
+    bundledRegistryPricesFile: join(home, 'bundled-registry-prices.json'),
     ...handed,
   };
 }

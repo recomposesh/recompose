@@ -8,6 +8,7 @@ import type { StorageIpcContext } from './ipc/storage-context';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
 import bundledPrices from '../../resources/model-prices.json?asset';
+import bundledRegistryPrices from '../../resources/opencode-zen-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
 import { applyProcessOverrides } from './boot/process-overrides';
 import { surfaceStateRepaints } from './boot/state-repaints';
@@ -207,6 +208,7 @@ async function answerEveryChannel(profile: StoredBoot): Promise<void> {
     retainedRows: profile.engineHost.retainedLogRows,
     planUsage: profile.planUsage,
     bundledPricesFile: bundledPrices,
+    bundledRegistryPricesFile: bundledRegistryPrices,
     noteUsageTable: appMenu.reflectUsageTable,
   });
 

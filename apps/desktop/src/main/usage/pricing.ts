@@ -21,8 +21,10 @@ const DATED_MODEL_SUFFIX = /-\d{8}$/;
 /**
  * The price entry one served model resolves to, tried the way the LiteLLM map writes keys.
  *
- * @summary Exact name first, then the provider-prefixed form, then the undated twin of a
- * date-suffixed name. A miss answers nothing rather than a zero price, so the caller surfaces it.
+ * @summary The provider-prefixed form stands first, then the exact name, then the undated twin of
+ * a date-suffixed name. A gateway reselling a model the map also names bare would otherwise price
+ * at the model maker's rate, and the two rates differ by the margin the gateway lives on. A miss
+ * answers nothing rather than a zero price, so the caller surfaces it.
  */
 function priceEntryFor(
   prices: PriceMap,
@@ -30,8 +32,8 @@ function priceEntryFor(
   providerModel: string,
 ): ModelPrice | undefined {
   return (
-    prices.get(providerModel) ??
     prices.get(`${provider ?? ''}/${providerModel}`) ??
+    prices.get(providerModel) ??
     prices.get(providerModel.replace(DATED_MODEL_SUFFIX, ''))
   );
 }

@@ -47,8 +47,8 @@ row plus a single catalog entry, which is the whole point of the table.
 
 **Bad**: a Zen model whose behavior differs between its native endpoint and the compatible one will
 differ here, and recompose has no way to notice. Reasoning content on the Responses models is the
-likeliest place to feel it. Zen model prices are absent from the bundled price table, so spend for
-these targets reads as no cost until that table carries them.
+likeliest place to feel it. The gateway's rates live nowhere the price map reaches, which ADR 0184
+answers with a second source.
 
 ## Alternatives
 

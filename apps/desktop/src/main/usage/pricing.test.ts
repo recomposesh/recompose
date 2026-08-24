@@ -215,3 +215,20 @@ describe('how price misses accumulate', () => {
     expect(priceMisses).toStrictEqual([{ providerModel: 'claude-mystery', requests: 3 }]);
   });
 });
+
+describe('whose rate a served model is priced at', () => {
+  test("a gateway reselling a model prices at its own rate, never the model maker's", () => {
+    const resold: PriceMap = new Map([
+      ['gpt-5.5', { inputPerToken: 0.00000125, outputPerToken: 0.00001 }],
+      ['opencode-zen/gpt-5.5', { inputPerToken: 0.000005, outputPerToken: 0.00003 }],
+    ]);
+
+    const served = aDay({
+      provider: 'opencode-zen',
+      providerModel: 'gpt-5.5',
+      tokens: { input: 1_000_000, output: 0, total: 1_000_000 },
+    });
+
+    expect(dayCostsOf([served], resold).dayCosts.at(0)?.billedMicroDollars).toBe(5_000_000);
+  });
+});

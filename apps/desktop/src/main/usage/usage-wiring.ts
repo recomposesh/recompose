@@ -133,6 +133,7 @@ export type UsageWiring = {
   retainedRows: () => readonly LogRow[];
   planUsage: () => PlanUsageReadings;
   bundledPricesFile: string;
+  bundledRegistryPricesFile: string;
   noteUsageTable?: (open: boolean) => void;
 };
 
@@ -149,6 +150,7 @@ export async function openUsageIpcDeps(wiring: UsageWiring): Promise<UsageIpcDep
     openPriceMap({
       cacheFile: join(wiring.reach().userDataPath, 'prices.json'),
       bundledFile: wiring.bundledPricesFile,
+      bundledRegistryFile: wiring.bundledRegistryPricesFile,
       onCorrupt: wiring.reach().onCorrupt,
     }),
     openBalanceStore({

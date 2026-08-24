@@ -8,6 +8,7 @@ import {
   miniPriced,
   neverFetches,
   NOW,
+  zenFetched,
 } from './price-map.testkit';
 
 aPricingClock();
@@ -49,6 +50,46 @@ describe('where the prices come from', () => {
     const reopened = await aMapOver(files, neverFetches);
 
     expect(reopened.standing().provenance).toEqual({ source: 'synced', fetchedAt: NOW });
+  });
+});
+
+describe('the prices only the vendor registry publishes', () => {
+  test('a first boot offline prices the gateway from its own bundled snapshot', async () => {
+    const map = await aMapOver(await aPricingHome(), neverFetches, neverFetches);
+
+    expect(map.standing().prices.get('opencode-zen/kimi-k3')).toEqual({
+      inputPerToken: 0.000003,
+      outputPerToken: 0.000015,
+    });
+  });
+
+  test('the registry layer stands beside the price map rather than replacing it', async () => {
+    const map = await aMapOver(await aPricingHome(), neverFetches, neverFetches);
+
+    expect(map.standing().prices.get('claude-sonnet-4-5')).toBeDefined();
+    expect(map.standing().prices.get('opencode-zen/kimi-k3')).toBeDefined();
+  });
+
+  test('a refresh moves each layer on its own, so one host being down costs only its own', async () => {
+    const files = await aPricingHome();
+    const map = await aMapOver(files, neverFetches, async () => Promise.resolve(zenFetched));
+
+    await map.refreshNow();
+
+    expect(map.standing().prices.get('opencode-zen/glm-5.2')?.inputPerToken).toBe(0.0000014);
+    expect(map.standing().prices.get('claude-sonnet-4-5')).toBeDefined();
+  });
+
+  test('a reopened cache still holds what the registry answered', async () => {
+    const files = await aPricingHome();
+    const map = await aMapOver(files, neverFetches, async () => Promise.resolve(zenFetched));
+
+    await map.refreshNow();
+
+    const reopened = await aMapOver(files, neverFetches, neverFetches);
+
+    expect(reopened.standing().prices.get('opencode-zen/glm-5.2')).toBeDefined();
+    expect(reopened.standing().prices.get('opencode-zen/kimi-k3')).toBeUndefined();
   });
 });
 
@@ -146,7 +187,7 @@ describe('what the price parser drops and refuses', () => {
     expect(map.standing().prices.get('a-note')).toBeUndefined();
   });
 
-  test('a bundle whose shape moved still boots, pricing nothing', async () => {
+  test('a bundle whose shape moved still boots, and prices nothing of its own', async () => {
     const files = await aPricingHome();
 
     await writeFile(files.bundledFile, JSON.stringify(['moved']));
@@ -154,6 +195,16 @@ describe('what the price parser drops and refuses', () => {
     const map = await aMapOver(files, neverFetches);
 
     expect(map.standing().provenance).toEqual({ source: 'bundled' });
-    expect(map.standing().prices.size).toBe(0);
+    expect(map.standing().prices.get('claude-sonnet-4-5')).toBeUndefined();
+  });
+
+  test('a layer whose shape moved leaves the other one pricing', async () => {
+    const files = await aPricingHome();
+
+    await writeFile(files.bundledFile, JSON.stringify(['moved']));
+
+    const map = await aMapOver(files, neverFetches);
+
+    expect(map.standing().prices.get('opencode-zen/kimi-k3')).toBeDefined();
   });
 });

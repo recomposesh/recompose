@@ -187,6 +187,7 @@ lockfiles
 logit
 logomark
 logprobs
+longcat
 loong
 lossily
 ltrimstr
@@ -200,6 +201,7 @@ memlab
 Menlo
 Meridius
 mgmt
+mimo
 mispair
 mispaired
 Mistral
@@ -212,6 +214,7 @@ multiset
 musistudio
 NCLBUTTONDBLCLK
 negotiables
+nemotron
 nizos
 nodrag
 nofilter

@@ -27,16 +27,31 @@ export const miniPriced = {
   'gpt-5-mini': { input_cost_per_token: 2.5e-7, output_cost_per_token: 0.000002 },
 };
 
-export type PricingFiles = { cacheFile: string; bundledFile: string };
+const zenBundled = {
+  opencode: { models: { 'kimi-k3': { cost: { input: 3, output: 15 } } } },
+};
 
-/** A profile holding the bundled snapshot, with nothing cached beside it yet. */
+/** A registry answer that shares no model with the bundled one, so a swap shows in one lookup. */
+export const zenFetched = {
+  opencode: { models: { 'glm-5.2': { cost: { input: 1.4, output: 4.4 } } } },
+};
+
+export type PricingFiles = {
+  cacheFile: string;
+  bundledFile: string;
+  bundledRegistryFile: string;
+};
+
+/** A profile holding both bundled snapshots, with nothing cached beside them yet. */
 export async function aPricingHome(): Promise<PricingFiles> {
   const home = await mkdtemp(join(tmpdir(), 'recompose-prices-'));
   const bundledFile = join(home, 'bundled-prices.json');
+  const bundledRegistryFile = join(home, 'bundled-registry-prices.json');
 
   await writeFile(bundledFile, JSON.stringify(sonnetPriced));
+  await writeFile(bundledRegistryFile, JSON.stringify(zenBundled));
 
-  return { cacheFile: join(home, 'prices.json'), bundledFile };
+  return { cacheFile: join(home, 'prices.json'), bundledFile, bundledRegistryFile };
 }
 
 /** A lane that never answers, which is what a first boot offline reaches. */
@@ -75,16 +90,23 @@ export function aPricingClock(): void {
 export async function aMapOver(
   files: PricingFiles,
   fetchPrices?: () => Promise<unknown>,
+  fetchRegistryPrices?: () => Promise<unknown>,
 ): Promise<PriceMapDesk> {
   return aMapWatching({
     ...files,
     ...(fetchPrices === undefined ? {} : { fetchPrices }),
+    ...(fetchRegistryPrices === undefined ? {} : { fetchRegistryPrices }),
   });
 }
 
-/** The same desk for a story that wants to hear which paths were moved aside. */
+/**
+ * The same desk for a story that wants to hear which paths were moved aside.
+ *
+ * @summary The registry lane defaults to refusing, so a story that says nothing about it never
+ * reaches the real host. Only a story about registry prices hands one over.
+ */
 export async function aMapWatching(deps: PriceMapDeps): Promise<PriceMapDesk> {
-  const map = await openPriceMap(deps);
+  const map = await openPriceMap({ fetchRegistryPrices: neverFetches, ...deps });
 
   disposers.push(map.dispose);
 
