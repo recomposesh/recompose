@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { paintedBox, paintedStyle } from '../../testing';
+import { paintedBox } from '../../testing';
 import { AppTitle } from './app-title';
 
 const meta = preview.meta({
@@ -16,18 +16,30 @@ const meta = preview.meta({
   ],
 });
 
-/** The name and the mark a hidden title bar took away, standing together in the sidebar's band. */
+/** The mark and the name a hidden title bar took away, standing together in the sidebar's band. */
 export const Basic = meta.story({
   play: async ({ canvas, canvasElement }) => {
-    await expect(await canvas.findByText('recompose')).toBeVisible();
-    await expect(canvasElement.querySelector('svg')).toBeInTheDocument();
+    await expect(await canvas.findByRole('img', { name: 'recompose' })).toBeVisible();
+    await expect(canvasElement.querySelectorAll('rect')).toHaveLength(3);
+  },
+});
+
+/**
+ * The name as the brand sets it, never as the interface font types it.
+ *
+ * @summary The word is drawn by the wordmark's own paths, so nothing here spells `recompose` in
+ * whatever face the platform hands the rest of the chrome.
+ */
+export const TheBrandSetsTheName = meta.story({
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText('recompose')).toBeNull();
   },
 });
 
 /** The mark, drawn small enough to sit in a band the window controls also fit in. */
 export const MarkFitsTheBand = meta.story({
   play: async ({ canvasElement }) => {
-    const mark = canvasElement.querySelector('svg');
+    const mark = canvasElement.querySelectorAll('svg')[0];
 
     await expect(paintedBox(mark).height).toBe(16);
     await expect(paintedBox(mark).width).toBe(16);
@@ -35,33 +47,18 @@ export const MarkFitsTheBand = meta.story({
 });
 
 /**
- * The two gradients each mark draws with, which belong to that mark alone.
+ * The mark and the name are lined up by one centre.
  *
- * @summary A second mark on the same surface would paint through the first one's gradients if both
- * declared the same ids, so a title that renders twice is what proves the ids differ.
+ * @summary A lockup reads as two things stuck together the moment its parts sit on two centres,
+ * and the descender in `recompose` is what pulls them apart if nothing accounts for it.
  */
-export const TwoMarksKeepTheirOwnGradients = meta.story({
-  render: () => (
-    <>
-      <AppTitle />
-      <AppTitle />
-    </>
-  ),
+export const MarkAndNameShareACentre = meta.story({
   play: async ({ canvasElement }) => {
-    const gradients = [...canvasElement.querySelectorAll('linearGradient')].map(
-      (drawn) => drawn.id,
-    );
+    const [mark, word] = canvasElement.querySelectorAll('svg');
+    const tile = mark?.getBoundingClientRect();
+    const letters = word?.querySelector('path')?.getBoundingClientRect();
+    const middleOf = (box: DOMRect | undefined) => (box?.top ?? 0) + (box?.height ?? 0) / 2;
 
-    await expect(gradients).toHaveLength(4);
-    await expect(new Set(gradients).size).toBe(4);
-  },
-});
-
-/** The name, drawn in the quieter ink the band's other contents take. */
-export const QuietAgainstTheBand = meta.story({
-  play: async ({ canvas }) => {
-    const title = await canvas.findByText('recompose');
-
-    await expect(paintedStyle(title).fontSize).toBe('12px');
+    await expect(Math.abs(middleOf(letters) - middleOf(tile))).toBeLessThan(0.5);
   },
 });
