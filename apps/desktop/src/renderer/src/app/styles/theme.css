@@ -4,8 +4,9 @@
   --radius-*: initial;
   --font-*: initial;
 
-  --font-sans: -apple-system, 'SF Pro Text', system-ui, sans-serif;
-  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --font-sans:
+    -apple-system, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
 
   --color-surface-sidebar: light-dark(var(--gray-75-a80), var(--gray-925-a82));
   --color-surface-toolbar: light-dark(var(--gray-100), var(--gray-900));
@@ -162,6 +163,7 @@
   --spacing-toolbar: 54px;
   --spacing-window-controls: 36px;
   --spacing-window-controls-width: 90px;
+  --spacing-window-caption: 138px;
   --spacing-page-top: 68px;
   --spacing-explorer-top: 62px;
   --spacing-status-bar: 38px;

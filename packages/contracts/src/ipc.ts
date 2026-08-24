@@ -13,6 +13,7 @@ import { ipcResult } from './ipc-result';
 import { subscriptionChannels } from './ipc-subscriptions';
 import { nonBlankString } from './non-blank';
 import { settingsPatchSchema, settingsSchema } from './settings';
+import { shortcutKeySchema } from './shortcut-key';
 import { subscriptionProviderIdSchema } from './subscriptions';
 import {
   accountBalanceSchema,
@@ -21,6 +22,7 @@ import {
   usageReportSchema,
   usageSearchRangeSchema,
 } from './usage';
+import { windowControlsSchema } from './window-controls';
 
 /**
  * Where the running app stands against the release feed.
@@ -43,6 +45,8 @@ export const systemStateSchema = z.strictObject({
   menuBarVisible: z.boolean(),
   configFolder: nonBlankString,
   version: nonBlankString,
+  windowControls: windowControlsSchema,
+  shortcutKey: shortcutKeySchema,
 });
 
 export type SystemState = z.infer<typeof systemStateSchema>;

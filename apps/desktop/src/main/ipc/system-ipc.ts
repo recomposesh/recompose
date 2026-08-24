@@ -1,4 +1,4 @@
-import type { IpcRequest, SystemState } from '@recompose/contracts';
+import type { IpcRequest, ShortcutKey, SystemState, WindowControls } from '@recompose/contracts';
 
 import type { FileBrowser } from '../system/file-browser';
 import type { LoginItemAvailability } from '../system/login-item';
@@ -10,6 +10,8 @@ import { ipcFailure } from './storage-envelope';
 
 export type SystemIpcContext = {
   fileBrowser: FileBrowser;
+  windowControls: WindowControls;
+  shortcutKey: ShortcutKey;
   loginItem: LoginItemAvailability;
   configFolder: string;
   homeFolder: string;
@@ -40,6 +42,8 @@ export type SystemIpcHandlers = Pick<
 function observeSystem(ctx: SystemIpcContext): SystemState {
   return {
     fileBrowser: ctx.fileBrowser,
+    windowControls: ctx.windowControls,
+    shortcutKey: ctx.shortcutKey,
     loginItem: ctx.loginItem,
     loginItemEnabled: ctx.readLoginItem(),
     menuBarVisible: ctx.isMenuBarVisible(),

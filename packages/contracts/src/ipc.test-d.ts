@@ -98,6 +98,8 @@ describe('ipc response contracts', () => {
       { ok: true; value: SystemState } | { ok: false; error: IpcError }
     >();
     expectTypeOf<SystemState>().not.toHaveProperty('platform');
+    expectTypeOf<SystemState['windowControls']>().toEqualTypeOf<'leading' | 'trailing' | 'none'>();
+    expectTypeOf<SystemState['shortcutKey']>().toEqualTypeOf<'command' | 'control'>();
   });
 
   test('account rows crossing the bridge are structurally secret-free', () => {

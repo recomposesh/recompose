@@ -1,0 +1,37 @@
+import { describe, expect, test } from 'vitest';
+
+import { titleBarOverlayFor, titleBarOverlayPaintsOn } from './title-bar-overlay';
+
+describe('the caption strip Windows draws over the renderer', () => {
+  test('a light window gets the toolbar surface under dark symbols', () => {
+    expect(titleBarOverlayFor('light')).toEqual({
+      color: '#f4f4f6',
+      symbolColor: '#1c1c1e',
+      height: 54,
+    });
+  });
+
+  test('a dark window gets the toolbar surface under light symbols', () => {
+    expect(titleBarOverlayFor('dark')).toEqual({
+      color: '#28282c',
+      symbolColor: '#f9f9fb',
+      height: 54,
+    });
+  });
+
+  test('the strip stands as tall as the bar it is drawn over, so both centres agree', () => {
+    expect(titleBarOverlayFor('light').height).toBe(54);
+    expect(titleBarOverlayFor('light').height).toBe(titleBarOverlayFor('dark').height);
+  });
+});
+
+describe('which platforms hold a caption strip to repaint', () => {
+  test('Windows holds one', () => {
+    expect(titleBarOverlayPaintsOn('win32')).toBe(true);
+  });
+
+  test('macOS and Linux hold none', () => {
+    expect(titleBarOverlayPaintsOn('darwin')).toBe(false);
+    expect(titleBarOverlayPaintsOn('linux')).toBe(false);
+  });
+});

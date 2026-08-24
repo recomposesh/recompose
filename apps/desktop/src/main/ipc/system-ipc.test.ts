@@ -9,6 +9,8 @@ const configFolder = '/home/someone/.config/recompose';
 function systemContext(overrides: Partial<SystemIpcContext> = {}): SystemIpcContext {
   return {
     fileBrowser: 'finder',
+    windowControls: 'leading',
+    shortcutKey: 'command',
     loginItem: 'available',
     configFolder,
     homeFolder: '/home/someone',
@@ -68,11 +70,13 @@ describe('what the renderer tells main about the logs drawer', () => {
   });
 });
 
-describe('the system state behind the settings screen', () => {
+describe('the machine words the reading carries', () => {
   test('carries the file browser, the login item, the menu bar, and the config folder', async () => {
     const handlers = createSystemIpcHandlers(
       systemContext({
         fileBrowser: 'explorer',
+        windowControls: 'trailing',
+        shortcutKey: 'control',
         loginItem: 'unpackaged',
         readLoginItem: () => true,
         isMenuBarVisible: () => true,
@@ -83,6 +87,8 @@ describe('the system state behind the settings screen', () => {
       ok: true,
       value: {
         fileBrowser: 'explorer',
+        windowControls: 'trailing',
+        shortcutKey: 'control',
         loginItem: 'unpackaged',
         loginItemEnabled: true,
         menuBarVisible: true,
@@ -91,7 +97,9 @@ describe('the system state behind the settings screen', () => {
       },
     });
   });
+});
 
+describe('the system state behind the settings screen', () => {
   test('names the running version the packaging stamped', async () => {
     const handlers = createSystemIpcHandlers(systemContext({ appVersion: '0.4.0' }));
 

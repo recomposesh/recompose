@@ -190,3 +190,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0182](0182-the-canvas-reads-a-right-click-off-the-document.md)                 | The canvas reads a right-click off the document                                     | Accepted   | 2026-08-24 |
 | [0183](0183-opencode-zen-reaches-its-catalog-on-the-compatible-surface.md)      | OpenCode Zen reaches its catalog on the compatible surface                          | Accepted   | 2026-08-24 |
 | [0184](0184-the-gateways-own-prices-come-from-the-registry-it-publishes.md)     | The gateway's own prices come from the registry it publishes                        | Accepted   | 2026-08-24 |
+| [0185](0185-the-shell-reads-which-edge-takes-the-window-controls.md)            | The shell reads which edge takes the window controls                                | Accepted   | 2026-08-24 |

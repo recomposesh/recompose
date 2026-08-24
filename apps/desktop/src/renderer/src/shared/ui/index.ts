@@ -1,3 +1,4 @@
+export { AppTitle } from './app-title/app-title';
 export { Badge } from './badge/badge';
 export { Button } from './button/button';
 export { BrandMark } from './brand-mark/brand-mark';

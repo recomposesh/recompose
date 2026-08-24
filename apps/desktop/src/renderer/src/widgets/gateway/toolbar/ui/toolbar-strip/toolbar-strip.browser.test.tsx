@@ -26,6 +26,7 @@ async function renderStrip() {
       port={51234}
       running={false}
       status="stopped"
+      windowControls="leading"
     />,
   );
 }

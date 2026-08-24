@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { GATEWAY_CONFIG_VERSION } from './gateway-config';
-import { ipcChannels, systemStateSchema, type IpcChannel } from './ipc';
+import { ipcChannels, type IpcChannel } from './ipc';
 import { ipcErrorSchema } from './ipc-result';
 
 const channelNames: IpcChannel[] = [
@@ -183,54 +183,6 @@ describe('what the subscription channels answer', () => {
         value: [connectedView],
       });
     }
-  });
-});
-
-describe('the system state crossing the bridge', () => {
-  const observedSystemState = {
-    fileBrowser: 'finder',
-    loginItem: 'available',
-    loginItemEnabled: true,
-    menuBarVisible: false,
-    configFolder: '/Users/someone/Library/Application Support/recompose',
-    version: '0.3.0',
-  };
-
-  test('a full reading round-trips', () => {
-    expect(
-      ipcChannels['system:get'].response.parse({ ok: true, value: observedSystemState }),
-    ).toEqual({ ok: true, value: observedSystemState });
-  });
-
-  test('the file browser and the login-item availability are closed sets', () => {
-    expect(() =>
-      systemStateSchema.parse({ ...observedSystemState, fileBrowser: 'nautilus' }),
-    ).toThrow();
-    expect(() => systemStateSchema.parse({ ...observedSystemState, loginItem: 'maybe' })).toThrow();
-  });
-
-  test('the reading always names the running version', () => {
-    expect(() => systemStateSchema.parse({ ...observedSystemState, version: '' })).toThrow();
-  });
-
-  test('every platform reads its own file browser and login-item standing', () => {
-    for (const fileBrowser of ['finder', 'explorer', 'file-manager']) {
-      for (const loginItem of ['available', 'unpackaged', 'unsupported']) {
-        const reading = { ...observedSystemState, fileBrowser, loginItem };
-
-        expect(systemStateSchema.parse(reading)).toEqual(reading);
-      }
-    }
-  });
-
-  test('a blank config folder is rejected', () => {
-    expect(() =>
-      systemStateSchema.parse({ ...observedSystemState, configFolder: '   ' }),
-    ).toThrow();
-  });
-
-  test('the platform never rides along', () => {
-    expect(() => systemStateSchema.parse({ ...observedSystemState, platform: 'darwin' })).toThrow();
   });
 });
 

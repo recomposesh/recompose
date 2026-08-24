@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 
-import { gatewaysQueryOptions } from '../../../../shared/api';
+import { gatewaysQueryOptions, systemQueryOptions } from '../../../../shared/api';
 import { EmptyState } from '../empty-state/empty-state';
 import { NoGatewayChosen } from '../no-gateway-chosen/no-gateway-chosen';
 
@@ -18,11 +18,12 @@ type HomePageProps = {
  */
 export function HomePage({ onCreateGateway }: HomePageProps) {
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
+  const { data: system } = useSuspenseQuery(systemQueryOptions);
 
   return (
     <div className="relative h-full dot-grid">
       {gateways.length === 0 ? (
-        <EmptyState onCreateGateway={onCreateGateway} />
+        <EmptyState onCreateGateway={onCreateGateway} shortcutKey={system.shortcutKey} />
       ) : (
         <NoGatewayChosen />
       )}

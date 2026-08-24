@@ -17,6 +17,8 @@ const quietReport: UsageReport = {
 
 const observedSystem: SystemState = {
   fileBrowser: 'finder',
+  windowControls: 'leading',
+  shortcutKey: 'command',
   loginItem: 'available',
   loginItemEnabled: false,
   menuBarVisible: false,

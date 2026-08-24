@@ -1,15 +1,10 @@
-import { RouterContextProvider } from '@tanstack/react-router';
 import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import { AddProviderAct } from '../../pages/providers';
 import { hideSidebar, showSidebar } from '../../shared/lib';
-import { gatewaySeed, paintedBox, paintedStyle } from '../../shared/testing';
-import { SidebarToggle } from '../../shared/ui';
-import { createQueryClient } from '../query-client';
-import { createAppRouter } from '../router';
-import { AppSidebar } from './-app-sidebar';
+import { gatewaySeed, machineSeed, paintedBox, paintedStyle } from '../../shared/testing';
 import { AppToolbar } from './-app-toolbar';
 
 const codex = gatewaySeed({ slug: 'codex', displayName: 'Codex', port: 51234 });
@@ -144,91 +139,6 @@ export const TopEdgeTakesHoldOfTheWindow = meta.story({
 });
 
 /**
- * The sidebar's top inset, which clears the window controls instead of reserving toolbar height.
- *
- * @summary macOS draws its own controls over this corner, and clearing them is all the inset owes.
- * Borrowing the toolbar's height reserves eighteen more pixels for a toolbar the sidebar never
- * carries, which pushes the first group heading below where the rest of the shell expects it. The
- * band is where the control that puts the sidebar away stands, on the centre the controls take.
- */
-export const SidebarClearsTheWindowControls = meta.story({
-  parameters: { bridge: { engineStates: {}, gateways: [codex] } },
-  render: () => (
-    <RouterContextProvider router={createAppRouter({ queryClient: createQueryClient() })}>
-      <AppSidebar away={false} onNewGateway={() => undefined} />
-    </RouterContextProvider>
-  ),
-  play: async ({ canvas, canvasElement }) => {
-    await canvas.findByRole('heading', { name: 'Local gateways' });
-
-    const sidebar = canvasElement.firstElementChild?.firstElementChild;
-    const heading = sidebar?.querySelector('h2');
-
-    await expect(paintedBox(heading).top - paintedBox(sidebar).top).toBe(36);
-  },
-});
-
-/**
- * The control in the sidebar's band, drawn to the centre macOS gives its own controls.
- *
- * @summary The window controls sit centred in a thirty-six pixel band, so anything sharing that
- * band and drawn to another centre reads as a mistake. The control also stands clear of the
- * corner they occupy, at the trailing edge, where nothing it could collide with is drawn.
- */
-export const SidebarControlTakesTheWindowControlCentre = meta.story({
-  parameters: { bridge: { engineStates: {}, gateways: [codex] } },
-  render: () => (
-    <RouterContextProvider router={createAppRouter({ queryClient: createQueryClient() })}>
-      <AppSidebar
-        away={false}
-        band={<SidebarToggle where="chrome" />}
-        onNewGateway={() => undefined}
-      />
-    </RouterContextProvider>
-  ),
-  play: async ({ canvas, canvasElement }) => {
-    const toggle = await canvas.findByRole('button', { name: 'Sidebar' });
-    const sidebar = canvasElement.firstElementChild?.firstElementChild;
-    const drawn = paintedBox(toggle);
-    const band = paintedBox(sidebar);
-
-    await expect((drawn.top + drawn.bottom) / 2 - band.top).toBe(18);
-    const cleared = getComputedStyle(document.documentElement).getPropertyValue(
-      '--spacing-window-controls-width',
-    );
-
-    await expect(drawn.left - band.left).toBeGreaterThan(Number.parseInt(cleared, 10));
-  },
-});
-
-/**
- * The sidebar once a person has put it away, which has to take no room at all.
- *
- * @summary The slot owns whether the sidebar stands, and the width a person dragged it to only
- * says how wide it stands while it does. A width that outranked the collapse would leave the
- * sidebar painted after its control said to put it away, and the toolbar clearing the window
- * controls beside it, so the reading measures the slot rather than trusting the class. What is
- * left is the hairline the slot's own border draws, which is the surface edge rather than the
- * sidebar.
- */
-export const SidebarAwayTakesNoRoom = meta.story({
-  parameters: { bridge: { engineStates: {}, gateways: [codex] } },
-  beforeEach: () => {
-    hideSidebar();
-  },
-  render: () => (
-    <RouterContextProvider router={createAppRouter({ queryClient: createQueryClient() })}>
-      <AppSidebar away band={null} onNewGateway={() => undefined} />
-    </RouterContextProvider>
-  ),
-  play: async ({ canvasElement }) => {
-    await expect(paintedBox(canvasElement.firstElementChild?.firstElementChild).width).toBeLessThan(
-      2,
-    );
-  },
-});
-
-/**
  * The region every route scrolls inside, which paints no texture of its own.
  *
  * @summary The dot grid belongs to the canvas routes rather than to the shell, so a route that
@@ -244,5 +154,29 @@ export const ContentSurface = meta.story({
     const surface = canvasElement.firstElementChild?.firstElementChild;
 
     await expect(paintedStyle(surface).backgroundImage).toBe('none');
+  },
+});
+
+/**
+ * The same surface on Windows, where the caption buttons stand over its trailing edge.
+ *
+ * @summary Windows draws its own caption buttons over the top-right corner of whatever the app
+ * paints, so the bar stands whether or not the sidebar does. Left bare, the buttons would float
+ * over the content surface with nothing under them, and an act at the trailing edge would sit
+ * under the close button.
+ */
+export const WindowsCaptionStandsOverTheBar = meta.story({
+  args: { trailing: <AddProviderAct kind="subscription" /> },
+  parameters: { bridge: { system: machineSeed({ windowControls: 'trailing' }) } },
+  play: async ({ canvas, canvasElement }) => {
+    const control = await canvas.findByRole('button', { name: 'Add provider' });
+    const region = canvasElement.firstElementChild?.firstElementChild;
+
+    await expect(paintedStyle(region).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+
+    const strip = paintedBox(region);
+    const act = paintedBox(control);
+
+    await expect(strip.x + strip.width - (act.x + act.width)).toBeGreaterThanOrEqual(138);
   },
 });

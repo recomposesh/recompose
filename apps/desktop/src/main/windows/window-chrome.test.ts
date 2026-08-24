@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { answerTitleBarDoubleClick, placeWindowButtons } from './window-chrome';
+import {
+  answerTitleBarDoubleClick,
+  paintTitleBarOverlay,
+  placeWindowButtons,
+} from './window-chrome';
 
 type ZoomState = { maximized: boolean; minimized: boolean };
 
@@ -13,7 +17,12 @@ type FocusedWindow = {
 
 type Placement = { x: number; y: number };
 
-type ControlWindow = { setWindowButtonPosition: (position: Placement) => void };
+type Overlay = { color: string; symbolColor: string; height: number };
+
+type ControlWindow = {
+  setWindowButtonPosition: (position: Placement) => void;
+  setTitleBarOverlay: (overlay: Overlay) => void;
+};
 
 const desktop = vi.hoisted(
   (): {
@@ -52,16 +61,20 @@ function focusWindow(): ZoomState {
   return zoom;
 }
 
-function openWindow(): Placement[] {
+function openWindow(): { placements: Placement[]; overlays: Overlay[] } {
   const placements: Placement[] = [];
+  const overlays: Overlay[] = [];
 
   desktop.open.push({
     setWindowButtonPosition: (position) => {
       placements.push(position);
     },
+    setTitleBarOverlay: (overlay) => {
+      overlays.push(overlay);
+    },
   });
 
-  return placements;
+  return { placements, overlays };
 }
 
 beforeEach(() => {
@@ -100,7 +113,7 @@ describe('answering a title-bar double-click the renderer reported', () => {
 
 describe('placing the window controls over the band they now sit on', () => {
   test('on macOS the controls move to the reported position', () => {
-    const placements = openWindow();
+    const { placements } = openWindow();
 
     placeWindowButtons('darwin', { x: 14, y: 12 });
 
@@ -108,10 +121,40 @@ describe('placing the window controls over the band they now sit on', () => {
   });
 
   test('off macOS, where the platform draws its own controls, nothing is moved', () => {
-    const placements = openWindow();
+    const { placements } = openWindow();
 
     placeWindowButtons('linux', { x: 14, y: 12 });
 
     expect(placements).toEqual([]);
+  });
+
+  test('a band reported after its window closed is answered by doing nothing', () => {
+    expect(() => {
+      placeWindowButtons('darwin', { x: 14, y: 12 });
+    }).not.toThrow();
+  });
+});
+
+describe('repainting the caption strip when the scheme turns', () => {
+  test('on Windows the strip takes the colors the new scheme names', () => {
+    const { overlays } = openWindow();
+
+    paintTitleBarOverlay('win32', 'dark');
+
+    expect(overlays).toEqual([{ color: '#28282c', symbolColor: '#f9f9fb', height: 54 }]);
+  });
+
+  test('off Windows, where no strip is drawn, nothing is repainted', () => {
+    const { overlays } = openWindow();
+
+    paintTitleBarOverlay('darwin', 'dark');
+
+    expect(overlays).toEqual([]);
+  });
+
+  test('a scheme that turns after its window closed is answered by doing nothing', () => {
+    expect(() => {
+      paintTitleBarOverlay('win32', 'light');
+    }).not.toThrow();
   });
 });

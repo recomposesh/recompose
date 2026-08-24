@@ -9,6 +9,8 @@ import { renderUnderTheBridge } from '../../../shared/browser-testing';
 
 const observed: SystemState = {
   fileBrowser: 'finder',
+  windowControls: 'leading',
+  shortcutKey: 'command',
   loginItem: 'available',
   loginItemEnabled: false,
   menuBarVisible: false,
