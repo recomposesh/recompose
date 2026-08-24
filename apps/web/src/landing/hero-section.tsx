@@ -1,14 +1,17 @@
 import { Link } from '@tanstack/react-router';
 
-import { AppleMark } from '../components/apple-mark';
 import { SiteNav } from '../components/site-nav';
 import { HeroCanvas } from '../hero/hero-canvas';
+import { useVisitorPlatform } from '../lib/visitor-platform';
+import { DownloadCall } from './download-call';
 
 const DOWNLOAD_CTA =
   'inline-flex items-center justify-center gap-2 rounded-lg bg-fd-primary px-5 py-3 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-85';
 const DOWNLOAD_CTA_STAGE_INK = 'max-md:bg-white max-md:text-neutral-900';
 
 export function HeroSection() {
+  const platform = useVisitorPlatform();
+
   return (
     <section data-spot-stage className="relative min-h-svh overflow-hidden">
       <HeroCanvas />
@@ -37,8 +40,7 @@ export function HeroSection() {
 
         <div className="mt-8 flex flex-col gap-2 md:mt-9 md:flex-row md:items-center">
           <Link className={`${DOWNLOAD_CTA} ${DOWNLOAD_CTA_STAGE_INK}`} to="/download">
-            <AppleMark />
-            download for macOS
+            <DownloadCall platform={platform} />
           </Link>
           <Link
             className="hero-lift rounded-lg px-5 py-3 text-center text-sm text-fd-foreground transition-colors hover:bg-fd-accent max-md:text-white"

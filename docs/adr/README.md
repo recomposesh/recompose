@@ -176,3 +176,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0168](0168-copilot-answers-on-the-wire-its-own-catalog-names.md)               | Copilot answers on the wire its own catalog names                                   | Accepted   | 2026-08-23 |
 | [0169](0169-a-refusal-that-names-its-own-remedy-earns-one-more-turn.md)         | A refusal that names its own remedy earns one more turn                             | Accepted   | 2026-08-23 |
 | [0170](0170-one-dependencys-sourcemap-warning-goes-by-name.md)                  | One dependency's sourcemap warning goes by name                                     | Accepted   | 2026-08-23 |
+| [0171](0171-the-landing-call-names-the-visitors-platform.md)                    | The landing call names the visitor's platform                                       | Accepted   | 2026-08-24 |

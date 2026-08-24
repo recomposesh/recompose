@@ -1,13 +1,16 @@
 import { Link } from '@tanstack/react-router';
 import { Star } from 'lucide-react';
 
-import { AppleMark } from '../components/apple-mark';
 import { gitHubUrl } from '../lib/links';
+import { useVisitorPlatform } from '../lib/visitor-platform';
 import { CtaWires, STAGE_HEIGHT, STAGE_WIDTH } from './cta-wires';
+import { DownloadCall } from './download-call';
 
 const PILL_GLOW = '0 0 60px rgb(50 215 75 / 0.15), 0 24px 60px rgb(0 0 0 / 0.35)';
 
 export function CtaSection() {
+  const platform = useVisitorPlatform();
+
   return (
     <section className="bg-stage">
       <div className="mx-auto flex max-w-360 flex-col items-center px-5 py-20 md:px-10 md:py-24 lg:px-16 lg:py-32">
@@ -43,8 +46,7 @@ export function CtaSection() {
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-fd-primary px-6 py-3.5 text-body font-medium text-fd-primary-foreground transition-opacity hover:opacity-85"
             to="/download"
           >
-            <AppleMark />
-            download for macOS
+            <DownloadCall platform={platform} />
           </Link>
           <a
             className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-body text-stage-ink transition-colors hover:bg-fd-accent"
