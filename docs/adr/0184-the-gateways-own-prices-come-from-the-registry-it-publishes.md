@@ -49,13 +49,11 @@ LiteLLM never names, and it costs one call to add.
 
 **Bad**: recompose now depends on a second host for prices, and a person behind a proxy that
 allows one and not the other gets a half-fresh map. The registry quotes a long-context tier for
-several models while this app holds one flat rate. A turn over 200 thousand tokens on those models
-therefore reads under what it cost. The vendored snapshot ages until a release refreshes it, and
-nothing in the build regenerates it.
+several models while this app holds one flat rate, which ADR 0186 answers. The vendored snapshot
+ages until a release refreshes it, and nothing in the build regenerates it.
 
-**Also**: `refreshNow` still runs only on the day-long timer, so a desktop session shorter than a
-day prices from the snapshot throughout. That was true of the wider map before this change and it
-is now true of two layers rather than one.
+**Also**: `refreshNow` ran only on the day-long timer when this landed, so a desktop session
+shorter than a day priced from the snapshot throughout. ADR 0186 gives a due boot its own ask.
 
 ## Alternatives
 

@@ -5,13 +5,14 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import type { StoredBoot, StoredBootDeps } from './stored-boot';
+import type { StoredBoot } from './stored-boot';
 
 import { running, scriptedChild } from '../engine-host/engine-host.testkit';
-import { contextFor, storageHolding } from '../engine-host/spend-grant.testkit';
+import { storageHolding } from '../engine-host/spend-grant.testkit';
 import { isRecord } from '../storage/json-file';
 import { PLAN_USAGE_VERSION } from '../usage/plan-usage-store';
 import { bootFromStoredState } from './stored-boot';
+import { depsOver } from './stored-boot.testkit';
 
 type Dock = { scripted: ReturnType<typeof scriptedChild> | null };
 
@@ -140,19 +141,6 @@ async function aQuietHome(): Promise<string> {
   await writeFile(join(home, 'settings.json'), JSON.stringify(defaultSettings()), 'utf8');
 
   return home;
-}
-
-function depsOver(home: string): StoredBootDeps {
-  return {
-    legacyUserDataPath: join(home, 'legacy'),
-    platform: 'linux',
-    recomposeHome: () => home,
-    onCorrupt: () => undefined,
-    spendGrantContext: () => contextFor(home),
-    reflectSettings: () => undefined,
-    repaintStates: () => undefined,
-    lifecycle: { reapply: () => undefined, stop: () => undefined },
-  };
 }
 
 let openBoots: StoredBoot[] = [];

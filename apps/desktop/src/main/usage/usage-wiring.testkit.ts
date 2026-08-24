@@ -14,6 +14,8 @@ import {
   secret,
 } from '../engine-host/spend-grant.testkit';
 import { reversibleCodec } from '../storage/safe-storage-codec.testkit';
+import { openPriceMap } from './price-map';
+import { neverFetches } from './price-map.testkit';
 import { openUsageStore } from './usage-store';
 
 /** The instant every usage-wiring story reads the clock at, so a reading stamp is a fixed number. */
@@ -73,8 +75,13 @@ export async function wiringOver(
     }),
     retainedRows: () => [],
     planUsage: () => ({}),
-    bundledPricesFile: join(home, 'bundled-prices.json'),
-    bundledRegistryPricesFile: join(home, 'bundled-registry-prices.json'),
+    priceMap: await openPriceMap({
+      cacheFile: join(home, 'prices.json'),
+      bundledFile: join(home, 'bundled-prices.json'),
+      bundledRegistryFile: join(home, 'bundled-registry-prices.json'),
+      fetchPrices: neverFetches,
+      fetchRegistryPrices: neverFetches,
+    }),
     ...handed,
   };
 }

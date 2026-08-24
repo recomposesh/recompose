@@ -7,7 +7,6 @@ import type { StoredBoot, StoredBootDeps } from './stored-boot';
 
 import { rememberedServingSlugs } from '../engine-host/serving-memory';
 import {
-  contextFor,
   gatewayHolding,
   keyRow,
   pointingAt,
@@ -15,6 +14,7 @@ import {
   storageHolding,
 } from '../engine-host/spend-grant.testkit';
 import { bootFromStoredState } from './stored-boot';
+import { depsOver } from './stored-boot.testkit';
 
 type GatewayDirective =
   | { kind: 'start'; id: string; gateway: { slug: string } }
@@ -131,20 +131,6 @@ async function storeSecondGateway(home: string): Promise<void> {
     JSON.stringify({ ...gatewayHolding([]), slug: 'work', displayName: 'Work', port: 8398 }),
     'utf8',
   );
-}
-
-function depsOver(home: string, overrides: Partial<StoredBootDeps> = {}): StoredBootDeps {
-  return {
-    legacyUserDataPath: join(home, 'legacy'),
-    platform: 'linux',
-    recomposeHome: () => home,
-    onCorrupt: () => undefined,
-    spendGrantContext: () => contextFor(home),
-    reflectSettings: () => undefined,
-    repaintStates: () => undefined,
-    lifecycle: { reapply: () => undefined, stop: () => undefined },
-    ...overrides,
-  };
 }
 
 let openBoots: StoredBoot[] = [];

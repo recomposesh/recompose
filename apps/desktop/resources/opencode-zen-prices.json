@@ -5,7 +5,18 @@
         "cost": {
           "input": 2,
           "output": 12,
-          "cache_read": 0.2
+          "cache_read": 0.2,
+          "tiers": [
+            {
+              "input": 4,
+              "output": 18,
+              "cache_read": 0.4,
+              "tier": {
+                "type": "context",
+                "size": 200000
+              }
+            }
+          ]
         }
       },
       "claude-opus-4-7": {
@@ -145,7 +156,18 @@
         "cost": {
           "input": 2,
           "output": 12,
-          "cache_read": 0.2
+          "cache_read": 0.2,
+          "tiers": [
+            {
+              "input": 4,
+              "output": 18,
+              "cache_read": 0.4,
+              "tier": {
+                "type": "context",
+                "size": 200000
+              }
+            }
+          ]
         }
       },
       "gpt-5.6-sol": {
@@ -153,14 +175,37 @@
           "input": 2,
           "output": 10,
           "cache_read": 0.2,
-          "cache_write": 2.5
+          "cache_write": 2.5,
+          "tiers": [
+            {
+              "input": 4,
+              "output": 15,
+              "cache_read": 0.4,
+              "cache_write": 5,
+              "tier": {
+                "type": "context",
+                "size": 272000
+              }
+            }
+          ]
         }
       },
       "grok-4.6": {
         "cost": {
           "input": 2,
           "output": 6,
-          "cache_read": 0.5
+          "cache_read": 0.5,
+          "tiers": [
+            {
+              "input": 4,
+              "output": 12,
+              "cache_read": 1,
+              "tier": {
+                "type": "context",
+                "size": 200000
+              }
+            }
+          ]
         }
       },
       "gpt-5.4-pro": {
@@ -181,7 +226,18 @@
         "cost": {
           "input": 2,
           "output": 6,
-          "cache_read": 0.5
+          "cache_read": 0.5,
+          "tiers": [
+            {
+              "input": 4,
+              "output": 12,
+              "cache_read": 1,
+              "tier": {
+                "type": "context",
+                "size": 200000
+              }
+            }
+          ]
         }
       },
       "gpt-5": {
@@ -270,7 +326,19 @@
           "input": 0.2,
           "output": 1.2,
           "cache_read": 0.02,
-          "cache_write": 0.25
+          "cache_write": 0.25,
+          "tiers": [
+            {
+              "input": 0.4,
+              "output": 1.8,
+              "cache_read": 0.04,
+              "cache_write": 0.5,
+              "tier": {
+                "type": "context",
+                "size": 272000
+              }
+            }
+          ]
         }
       },
       "kimi-k2": {
@@ -327,7 +395,19 @@
           "input": 3,
           "output": 15,
           "cache_read": 0.3,
-          "cache_write": 3.75
+          "cache_write": 3.75,
+          "tiers": [
+            {
+              "input": 6,
+              "output": 22.5,
+              "cache_read": 0.6,
+              "cache_write": 7.5,
+              "tier": {
+                "type": "context",
+                "size": 200000
+              }
+            }
+          ]
         }
       },
       "gpt-5.3-codex-spark": {
@@ -418,7 +498,18 @@
         "cost": {
           "input": 5,
           "output": 30,
-          "cache_read": 0.5
+          "cache_read": 0.5,
+          "tiers": [
+            {
+              "input": 10,
+              "output": 45,
+              "cache_read": 1,
+              "tier": {
+                "type": "context",
+                "size": 272000
+              }
+            }
+          ]
         }
       },
       "mimo-v2-flash-free": {
@@ -461,7 +552,19 @@
           "input": 3,
           "output": 15,
           "cache_read": 0.3,
-          "cache_write": 3.75
+          "cache_write": 3.75,
+          "tiers": [
+            {
+              "input": 6,
+              "output": 22.5,
+              "cache_read": 0.6,
+              "cache_write": 7.5,
+              "tier": {
+                "type": "context",
+                "size": 200000
+              }
+            }
+          ]
         }
       },
       "glm-5.2": {
@@ -511,7 +614,19 @@
           "input": 2.5,
           "output": 15,
           "cache_read": 0.25,
-          "cache_write": 3.125
+          "cache_write": 3.125,
+          "tiers": [
+            {
+              "input": 5,
+              "output": 22.5,
+              "cache_read": 0.5,
+              "cache_write": 6.25,
+              "tier": {
+                "type": "context",
+                "size": 272000
+              }
+            }
+          ]
         }
       },
       "gemini-3-flash": {
@@ -525,7 +640,18 @@
         "cost": {
           "input": 2.5,
           "output": 15,
-          "cache_read": 0.25
+          "cache_read": 0.25,
+          "tiers": [
+            {
+              "input": 5,
+              "output": 22.5,
+              "cache_read": 0.5,
+              "tier": {
+                "type": "context",
+                "size": 272000
+              }
+            }
+          ]
         }
       },
       "qwen3.6-plus": {

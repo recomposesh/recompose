@@ -1,10 +1,25 @@
 import type { PriceMiss, UsageBucket, UsageDayCost, UsageMeasures } from '@recompose/contracts';
 
+/**
+ * One rate band a model charges above a context threshold.
+ *
+ * @summary A band names the threshold rather than its place in a list, so a bucket stamped with
+ * the threshold it rose above still finds its band after the prices move and a vendor adds one.
+ */
+export type ContextBandPrice = {
+  contextOverTokens: number;
+  inputPerToken: number;
+  outputPerToken: number;
+  cacheReadPerToken?: number;
+  cacheWritePerToken?: number;
+};
+
 export type ModelPrice = {
   inputPerToken: number;
   outputPerToken: number;
   cacheReadPerToken?: number;
   cacheWritePerToken?: number;
+  bands?: readonly ContextBandPrice[];
 };
 
 export type PriceMap = ReadonlyMap<string, ModelPrice>;
@@ -36,6 +51,42 @@ function priceEntryFor(
     prices.get(providerModel) ??
     prices.get(providerModel.replace(DATED_MODEL_SUFFIX, ''))
   );
+}
+
+/**
+ * The rate one bucket is charged at, which is the band its prompts rose into or the base rate.
+ *
+ * @summary A bucket naming a threshold the prices no longer publish falls back to the base rate
+ * rather than to nothing, because the traffic was really served and a vendor dropping a band is
+ * not a reason to stop pricing it.
+ */
+function rateFor(price: ModelPrice, contextOverTokens: number | undefined): ModelPrice {
+  if (contextOverTokens === undefined) {
+    return price;
+  }
+
+  return price.bands?.find((band) => band.contextOverTokens === contextOverTokens) ?? price;
+}
+
+/**
+ * The context thresholds one served model publishes, in the order they open.
+ *
+ * @summary Accrual asks this of the standing prices to stamp a bucket, so it resolves a model the
+ * same way pricing does. A model nobody priced publishes none, which lands its traffic in the
+ * ordinary bucket rather than refusing the row.
+ */
+export function contextThresholdsIn(
+  prices: PriceMap,
+  provider: string | undefined,
+  providerModel: string | undefined,
+): readonly number[] {
+  if (providerModel === undefined) {
+    return [];
+  }
+
+  const bands = priceEntryFor(prices, provider, providerModel)?.bands ?? [];
+
+  return bands.map((band) => band.contextOverTokens).sort((first, next) => first - next);
 }
 
 function microDollarsOf(tokens: UsageMeasures['tokens'], price: ModelPrice): number {
@@ -106,7 +157,13 @@ export function dayCostsOf(days: readonly UsageBucket[], prices: PriceMap): DayC
 
       return {
         ...priced,
-        dayCosts: [...priced.dayCosts, costRowOf(day, microDollarsOf(day.measures.tokens, entry))],
+        dayCosts: [
+          ...priced.dayCosts,
+          costRowOf(
+            day,
+            microDollarsOf(day.measures.tokens, rateFor(entry, day.tuple.contextOverTokens)),
+          ),
+        ],
       };
     },
     { dayCosts: [], priceMisses: [] },

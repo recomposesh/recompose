@@ -207,8 +207,7 @@ async function answerEveryChannel(profile: StoredBoot): Promise<void> {
     store: profile.usageStore,
     retainedRows: profile.engineHost.retainedLogRows,
     planUsage: profile.planUsage,
-    bundledPricesFile: bundledPrices,
-    bundledRegistryPricesFile: bundledRegistryPrices,
+    priceMap: profile.priceMap,
     noteUsageTable: appMenu.reflectUsageTable,
   });
 
@@ -240,6 +239,8 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
 
   const profile = await bootFromStoredState({
     legacyUserDataPath: app.getPath('userData'),
+    bundledPricesFile: bundledPrices,
+    bundledRegistryPricesFile: bundledRegistryPrices,
     platform: process.platform,
     recomposeHome,
     onCorrupt: onStorageCorrupt,

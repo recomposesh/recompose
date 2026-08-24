@@ -19,6 +19,7 @@ describe('the tuple every bucket accrues under', () => {
       providerModel?: string | undefined;
       accountId?: string | undefined;
       accountKind?: 'subscription' | 'api-key' | 'aggregator' | 'local' | undefined;
+      contextOverTokens?: number | undefined;
     }>();
   });
 });

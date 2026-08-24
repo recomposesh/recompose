@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { rm, writeFile } from 'node:fs/promises';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -8,6 +8,7 @@ import {
   miniPriced,
   neverFetches,
   NOW,
+  sonnetRepriced,
   zenFetched,
 } from './price-map.testkit';
 
@@ -198,6 +199,17 @@ describe('what the price parser drops and refuses', () => {
     expect(map.standing().prices.get('claude-sonnet-4-5')).toBeUndefined();
   });
 
+  test('a bundle the disk cannot hand over still boots, pricing nothing of its own', async () => {
+    const files = await aPricingHome();
+
+    await rm(files.bundledFile);
+
+    const map = await aMapOver(files, neverFetches);
+
+    expect(map.standing().provenance).toEqual({ source: 'bundled' });
+    expect(map.standing().prices.get('opencode-zen/kimi-k3')).toBeDefined();
+  });
+
   test('a layer whose shape moved leaves the other one pricing', async () => {
     const files = await aPricingHome();
 
@@ -206,5 +218,59 @@ describe('what the price parser drops and refuses', () => {
     const map = await aMapOver(files, neverFetches);
 
     expect(map.standing().prices.get('opencode-zen/kimi-k3')).toBeDefined();
+  });
+});
+
+describe('the refresh a boot asks for on its own', () => {
+  test('a boot standing on the bundle asks for prices as soon as it can', async () => {
+    const map = await aMapOver(await aPricingHome(), async () => Promise.resolve(miniPriced));
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(map.standing().provenance).toEqual({ source: 'synced', fetchedAt: NOW });
+  });
+
+  test('a boot whose cache is younger than a day asks for nothing', async () => {
+    const files = await aPricingHome();
+
+    await writeFile(
+      files.cacheFile,
+      JSON.stringify({ schemaVersion: 1, fetchedAt: NOW - 3_600_000, payload: miniPriced }),
+    );
+
+    const map = await aMapOver(files, async () => Promise.resolve(sonnetRepriced));
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(map.standing().provenance).toEqual({ source: 'synced', fetchedAt: NOW - 3_600_000 });
+  });
+
+  test('a boot whose cache went stale asks again rather than serving a week-old map', async () => {
+    const files = await aPricingHome();
+
+    await writeFile(
+      files.cacheFile,
+      JSON.stringify({ schemaVersion: 1, fetchedAt: NOW - 7 * 86_400_000, payload: miniPriced }),
+    );
+
+    const map = await aMapOver(files, async () => Promise.resolve(sonnetRepriced));
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(map.standing().prices.get('claude-sonnet-4-5')?.inputPerToken).toBe(0.000009);
+  });
+
+  test('a desk closed before the ask lands never reaches the network at all', async () => {
+    let asked = 0;
+    const map = await aMapOver(await aPricingHome(), async () => {
+      asked += 1;
+
+      return Promise.resolve(miniPriced);
+    });
+
+    map.dispose();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(asked).toBe(0);
   });
 });
