@@ -34,10 +34,12 @@ with `titleBarOverlay` leaves the caption buttons native, so Snap Layouts and th
 working, while the rest of the row becomes the app's to paint. This is what Visual Studio Code,
 Slack, and Discord ship.
 
-**The strip stands as tall as the toolbar under it.** Windows centres the caption buttons in
-whatever height the app names, so a 36-pixel strip over a 54-pixel bar centres them 9 pixels above
-every control beside them. Matching the toolbar puts both on one centre, on a gateway's toolbar and
-on the bar a surface holding no gateway paints alike.
+**The strip stands as tall as the toolbar under it, less the hairline.** Windows centres the
+caption buttons in whatever height the app names, so a 36-pixel strip over a 54-pixel bar centres
+them 9 pixels above every control beside them. Matching the toolbar puts both on one centre, on a
+gateway's toolbar and on the bar a surface holding no gateway paints alike. The last pixel stays
+the app's. Windows paints the strip over whatever the renderer drew there. A strip the full 54
+covers the line under the bar across the 138 pixels it spans, so the line stops mid-window.
 
 **The overlay colors follow the scheme, and a scheme that turns repaints them.** Windows holds the
 two colors the constructor names until something names them again, so a window opened light and
