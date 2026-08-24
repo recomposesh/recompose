@@ -17,7 +17,7 @@ type CanvasEffects = {
   zoomIn: () => void;
   zoomOut: () => void;
   zoomTo100: () => void;
-  onTidy: () => void;
+  tidy: () => void;
 };
 
 /**
@@ -34,7 +34,7 @@ function actsOn(canvas: CanvasEffects): Record<CanvasCommand, () => void> {
     'zoom-out': canvas.zoomOut,
     'zoom-to-100': canvas.zoomTo100,
     'zoom-to-fit': canvas.fitView,
-    tidy: canvas.onTidy,
+    tidy: canvas.tidy,
     'toggle-logs': () => undefined,
     'copy-base-url': () => undefined,
     'remove-gateway': () => undefined,
@@ -42,12 +42,26 @@ function actsOn(canvas: CanvasEffects): Record<CanvasCommand, () => void> {
 }
 
 /**
+ * Arranging the canvas afresh and then framing the whole of what the arrangement made.
+ *
+ * @summary The reseated cards reach the flow a render after the arrangement drops, so the fit
+ * waits a frame rather than framing the seats the cards have already left.
+ */
+function tidiedThenFramed(onTidy: () => void, fitView: () => void): () => void {
+  return () => {
+    onTidy();
+    requestAnimationFrame(fitView);
+  };
+}
+
+/**
  * The ear the canvas turns toward the Gateway menu and the toolbar, answering every command.
  *
  * @summary Mount it inside the flow it commands, because the viewport it drives lives in the
- * flow's own context. The zoom commands move the viewport where they arrive, and Tidy travels on
- * to the arrangement, since where nodes stand is the composition's business rather than the
- * camera's. It renders nothing: the menu and the toolbar are the controls, the canvas the effect.
+ * flow's own context. The zoom commands move the viewport where they arrive, and Tidy reaches
+ * both the arrangement and the camera: cards reseated past the edge of the pane read as a press
+ * that did nothing, so the one press that arranges also brings the whole composition into view.
+ * It renders nothing: the menu and the toolbar are the controls, the canvas the effect.
  *
  * The drawer toggle rides the same channel, because one channel carries every Gateway menu act,
  * and it passes through here untouched: the logs drawer stands beside the flow rather than inside
@@ -57,10 +71,12 @@ export function CanvasCommands({ onTidy }: CanvasCommandsProps): null {
   const { fitView, zoomIn, zoomOut, zoomTo } = useReactFlow();
 
   useEffect(() => {
+    const fits = () => {
+      void fitView();
+    };
+    const tidy = tidiedThenFramed(onTidy, fits);
     const acts = actsOn({
-      fitView: () => {
-        void fitView();
-      },
+      fitView: fits,
       zoomIn: () => {
         void zoomIn();
       },
@@ -70,21 +86,19 @@ export function CanvasCommands({ onTidy }: CanvasCommandsProps): null {
       zoomTo100: () => {
         void zoomTo(1);
       },
-      onTidy,
+      tidy,
     });
 
-    return window.recomposeEvents['canvas:command']((command) => {
+    const unsubscribeFromCommands = window.recomposeEvents['canvas:command']((command) => {
       acts[command]();
     });
-  }, [fitView, zoomIn, zoomOut, zoomTo, onTidy]);
+    const unsubscribeFromAsks = subscribeToCanvasAsks(tidy);
 
-  useEffect(
-    () =>
-      subscribeToCanvasAsks(() => {
-        onTidy();
-      }),
-    [onTidy],
-  );
+    return () => {
+      unsubscribeFromCommands();
+      unsubscribeFromAsks();
+    };
+  }, [fitView, zoomIn, zoomOut, zoomTo, onTidy]);
 
   return null;
 }

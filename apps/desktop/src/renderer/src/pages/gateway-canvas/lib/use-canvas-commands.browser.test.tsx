@@ -120,30 +120,32 @@ test('the page-owned commands pass through here and move no viewport', async () 
   expect(viewportTransform(screen.container)).toBe(resting);
 });
 
-test('the tidy command reaches the arrangement rather than the viewport', async () => {
+test('the tidy command arranges the canvas and brings the arrangement into view', async () => {
   const asked: string[] = [];
 
   const screen = await renderCommandedFlow(() => {
     asked.push('tidy');
-  });
+  }, [distantCard]);
   const resting = viewportTransform(screen.container);
 
   pushCommand('tidy');
 
   expect(asked).toEqual(['tidy']);
-  expect(viewportTransform(screen.container)).toBe(resting);
+  await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
 });
 
-test("the toolbar's tidy ask reaches the arrangement the same way the menu does", async () => {
+test("the toolbar's tidy ask arranges and fits the same way the menu does", async () => {
   const asked: string[] = [];
 
-  await renderCommandedFlow(() => {
+  const screen = await renderCommandedFlow(() => {
     asked.push('tidy');
-  });
+  }, [distantCard]);
+  const resting = viewportTransform(screen.container);
 
   askTheCanvas('tidy');
 
   expect(asked).toEqual(['tidy']);
+  await expect.poll(() => viewportTransform(screen.container)).not.toBe(resting);
 });
 
 test('an unmounted canvas hears no ask, so a stale listener never arranges a gone stage', async () => {

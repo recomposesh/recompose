@@ -147,6 +147,30 @@ test('the tidy command drops the arrangement and reseats every card', async () =
   expect(localStorage.getItem(POSITIONS_KEY)).toBeNull();
 });
 
+/**
+ * Reseating cards a person cannot see is an arrangement they have no way to read, so the one press
+ * that tidies also brings the whole composition back into the pane.
+ */
+test('tidying brings the whole composition back into the pane', async () => {
+  standCanvasBridge();
+
+  const pushCommand = canvasCommandLine();
+  const screen = await renderCanvasPage();
+
+  await expect.poll(() => everyCardStandsInThePane(screen.container)).toBe(true);
+
+  pushCommand('zoom-in');
+  pushCommand('zoom-in');
+  pushCommand('zoom-in');
+  pushCommand('zoom-in');
+
+  await expect.poll(() => everyCardStandsInThePane(screen.container)).toBe(false);
+
+  pushCommand('tidy');
+
+  await expect.poll(() => everyCardStandsInThePane(screen.container)).toBe(true);
+});
+
 test('the zoom command reaches the viewport through the menu line', async () => {
   standCanvasBridge();
 
