@@ -5,7 +5,7 @@ import preview from '#.storybook/preview';
 import { ReaderKeySheet } from './reader-key-sheet';
 
 const ask = {
-  label: 'Management key',
+  label: 'Mgmt key',
   hint: 'sk-or-v1-…',
   note: 'Optional. OpenRouter reads credits only with a management key, and this one never serves a request.',
 };
