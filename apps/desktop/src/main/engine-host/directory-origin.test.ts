@@ -32,6 +32,7 @@ describe('where a key the directory names is spent', () => {
     ['groq', 'https://api.groq.com/openai'],
     ['deepinfra', 'https://api.deepinfra.com/v1/openai'],
     ['cerebras', 'https://api.cerebras.ai'],
+    ['opencode-zen', 'https://opencode.ai/zen'],
   ];
 
   test.each(aggregatorTable)('%s is spent at the endpoint it documents', (provider, origin) => {

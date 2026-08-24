@@ -188,3 +188,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0180](0180-a-streamed-answer-states-its-counts-across-events.md)               | A streamed answer states its counts across events                                   | Accepted   | 2026-08-24 |
 | [0181](0181-the-traffic-strip-answers-a-double-click-off-its-readings.md)       | The traffic strip answers a double-click off its readings                           | Accepted   | 2026-08-24 |
 | [0182](0182-the-canvas-reads-a-right-click-off-the-document.md)                 | The canvas reads a right-click off the document                                     | Accepted   | 2026-08-24 |
+| [0183](0183-opencode-zen-reaches-its-catalog-on-the-compatible-surface.md)      | OpenCode Zen reaches its catalog on the compatible surface                          | Accepted   | 2026-08-24 |

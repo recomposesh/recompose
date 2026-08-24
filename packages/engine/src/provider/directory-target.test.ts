@@ -35,7 +35,14 @@ function grantFor(provider: string, origin: string, dialect?: ProviderDialect): 
 
 describe('the dialect a vendor in the directory speaks', () => {
   it('answers Chat Completions for every aggregator the directory names', () => {
-    for (const vendor of ['together', 'fireworks', 'groq', 'deepinfra', 'cerebras']) {
+    for (const vendor of [
+      'together',
+      'fireworks',
+      'groq',
+      'deepinfra',
+      'cerebras',
+      'opencode-zen',
+    ]) {
       expect(credentialedDialect(vendor, 'chat-completions'), vendor).toBe('chat-completions');
     }
   });
@@ -85,6 +92,15 @@ describe('the path a turn lands on', () => {
     expect(url).toBe('https://api.deepinfra.com/v1/openai/chat/completions');
   });
 
+  it('lands the gateway whose base ends in its version on the endpoint it documents', () => {
+    const url = credentialedRequestUrl(
+      grantFor('opencode-zen', 'https://opencode.ai/zen'),
+      crossingFor(),
+    );
+
+    expect(url).toBe('https://opencode.ai/zen/v1/chat/completions');
+  });
+
   it('lands a coding plan on the messages path its dialect uses', () => {
     const url = credentialedRequestUrl(
       grantFor('zhipu', 'https://api.z.ai/api/anthropic'),
@@ -106,7 +122,15 @@ describe('the path a turn lands on', () => {
 
 describe('the header a vendor reads its credential from', () => {
   it('hands every OpenAI-compatible vendor a bearer token', () => {
-    for (const vendor of ['together', 'fireworks', 'groq', 'deepinfra', 'cerebras', 'mistral']) {
+    for (const vendor of [
+      'together',
+      'fireworks',
+      'groq',
+      'deepinfra',
+      'cerebras',
+      'opencode-zen',
+      'mistral',
+    ]) {
       const headers = credentialedRequestHeaders(
         grantFor(vendor, 'https://example.test').spend,
         crossingFor(),

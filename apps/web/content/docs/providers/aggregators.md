@@ -13,6 +13,7 @@ An aggregator account is one key that reaches a whole catalog of models through 
 | Groq              | Lowest latency on its own silicon      |
 | DeepInfra         | Low-cost open-model catalog            |
 | Cerebras          | Wafer-scale, fastest tokens per second |
+| OpenCode Zen      | Benchmarked models for coding agents   |
 | Custom aggregator | A base URL and a dialect you choose    |
 
 ## Connecting

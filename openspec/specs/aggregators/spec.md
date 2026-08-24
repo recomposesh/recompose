@@ -6,9 +6,9 @@ The behavioral contract of an aggregator account in recompose. An aggregator is 
 
 ## Requirements
 
-### Requirement: The catalog connects six aggregators and an address of one's own
+### Requirement: The catalog connects seven aggregators and an address of one's own
 
-The Aggregators catalog MUST offer six connectable entries: OpenRouter, Together AI, Fireworks AI, Groq, DeepInfra, and Cerebras. It MUST also offer a Custom aggregator entry. No entry MUST stand under a Soon badge, because every entry now connects.
+The Aggregators catalog MUST offer seven connectable entries: OpenRouter, Together AI, Fireworks AI, Groq, DeepInfra, Cerebras, and OpenCode Zen. It MUST also offer a Custom aggregator entry. No entry MUST stand under a Soon badge, because every entry now connects.
 
 A picked vendor MUST ask for a name and a key in the anatomy the API Keys destination ships, and the stored account MUST take the `aggregator` kind. The app MUST spend that key against the origin the provider directory names for the vendor, and MUST NOT ask a person for it.
 

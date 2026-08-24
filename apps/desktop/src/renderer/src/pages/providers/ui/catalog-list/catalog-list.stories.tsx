@@ -53,9 +53,9 @@ export const Keys = meta.story({
 });
 
 /**
- * The aggregator grid: seven hosted catalogs, every one of them connectable.
+ * The aggregator grid: eight hosted catalogs, every one of them connectable.
  *
- * @summary Five of the seven sell their own open-model catalogs rather than routing onward, so
+ * @summary Five of the eight sell their own open-model catalogs rather than routing onward, so
  * each card says what it sells rather than repeating the destination's promise.
  */
 export const Aggregators = meta.story({
@@ -65,6 +65,9 @@ export const Aggregators = meta.story({
       'aria-disabled',
     );
     await expect(await canvas.findByRole('button', { name: /Cerebras/ })).not.toHaveAttribute(
+      'aria-disabled',
+    );
+    await expect(await canvas.findByRole('button', { name: /OpenCode Zen/ })).not.toHaveAttribute(
       'aria-disabled',
     );
   },

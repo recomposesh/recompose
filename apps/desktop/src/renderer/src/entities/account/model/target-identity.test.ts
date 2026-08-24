@@ -31,6 +31,12 @@ test('an account whose vendor recompose draws leads with that vendor mark', () =
   expect(accountMark(workKey)).toBe('anthropic');
 });
 
+test('an account whose stored id is not the mark name still leads with that vendor mark', () => {
+  expect(accountMark({ ...workKey, provider: 'opencode-zen', kind: 'aggregator' })).toBe(
+    'opencode',
+  );
+});
+
 test('an account whose vendor recompose draws no mark for leads with nothing', () => {
   expect(accountMark({ ...workKey, provider: 'a-vendor-nobody-drew' })).toBeUndefined();
 });
@@ -59,6 +65,18 @@ test('the other target kinds name their provider product', () => {
     }),
   ).toBe('OpenRouter');
   expect(accountProductName(runtime)).toBe('Ollama');
+});
+
+test('a vendor whose stored id is hyphenated still names the product it goes by', () => {
+  expect(
+    accountProductName({
+      id: 'gateway',
+      provider: 'opencode-zen',
+      kind: 'aggregator',
+      label: 'Zen',
+      credentialRef: 'c-gateway',
+    }),
+  ).toBe('OpenCode Zen');
 });
 
 test('the target detail reads the account identity appropriate to its kind', () => {
