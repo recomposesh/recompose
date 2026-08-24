@@ -1,4 +1,4 @@
-# 0174: The traffic strip answers a double-click off its readings
+# 0181: The traffic strip answers a double-click off its readings
 
 **Status**: Accepted
 **Date**: 2026-08-24
