@@ -180,3 +180,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0172](0172-the-tool-probe-asks-an-interactive-login-shell.md)                  | The tool probe asks an interactive login shell                                      | Accepted   | 2026-08-24 |
 | [0173](0173-asking-for-a-sign-in-code-is-an-act.md)                             | Asking for a sign-in code is an act, never a reading                                | Accepted   | 2026-08-24 |
 | [0176](0176-the-browser-suites-open-when-a-run-asks-for-them.md)                | The browser suites open when a run asks for them                                    | Accepted   | 2026-08-24 |
+| [0177](0177-a-router-waiting-on-its-judge-lights-the-path-above-it.md)          | A router waiting on its judge lights the path above it                              | Accepted   | 2026-08-24 |

@@ -4,6 +4,7 @@ export type { BridgeParameters } from './fake-bridge';
 export {
   emitEngineBranchPins,
   emitEngineCooldowns,
+  emitEngineJudging,
   emitEngineLogs,
   emitEngineStates,
   emitEngineTraffic,
