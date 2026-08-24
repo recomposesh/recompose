@@ -25,6 +25,7 @@ import { pushDevtoolsToggle, pushSettingsChanged, pushUpdatesChanged } from './i
 import { assembleIpcHandlers, registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
 import { bootAppMenu } from './menu/app-menu-boot';
+import { registerEditingContextMenu } from './menu/editing-menu-wiring';
 import { registerAppScheme, serveRenderer } from './protocol/app-protocol';
 import {
   applyBootSettingsOrComplain,
@@ -271,6 +272,7 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
   });
 
   registerPermissionHandlers();
+  registerEditingContextMenu();
 
   appMenu.reflectSettings(profile.settings);
 

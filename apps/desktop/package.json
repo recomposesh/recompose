@@ -49,6 +49,7 @@
     "@tanstack/react-router": "1.170.18",
     "@tanstack/react-virtual": "3.14.9",
     "@xyflow/react": "12.11.2",
+    "electron-context-menu": "^4.1.2",
     "electron-liquid-glass": "^1.1.1",
     "electron-updater": "6.8.9",
     "electron-window-state": "^5.0.3",
