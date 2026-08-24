@@ -149,6 +149,36 @@ export function gatewayJudgingEveryRequest(
 }
 
 /**
+ * The gateway once one conditional router gives its judge a different length of time to answer.
+ *
+ * @summary The budget is the whole of what the field moves, so the judge, the branches, and the
+ * else child stand exactly as they did. A length the stored shape would refuse leaves the table
+ * alone rather than bouncing off the schema with a message written for a developer, and a judge
+ * past its budget refuses the request rather than falling to the else branch (ADR-0158), so the
+ * number a person writes here decides how long a slow judge is waited on and never where its
+ * silence lands.
+ */
+export function gatewayJudgingWithin(
+  gateway: GatewayConfig,
+  modelId: string,
+  routerId: string,
+  judgeBoundMs: number,
+): GatewayConfig {
+  return routedBy(gateway, modelId, (was) => {
+    const policy = conditionalIn(was.nodes[routerId]);
+
+    if (policy === undefined || !Number.isInteger(judgeBoundMs) || judgeBoundMs <= 0) {
+      return was;
+    }
+
+    return routerEdited(was, routerId, (router) => ({
+      ...router,
+      policy: { ...policy, judgeBoundMs },
+    }));
+  });
+}
+
+/**
  * The gateway once one child of a conditional router answers to a label and a rule.
  *
  * @summary Writing the same child twice rewrites the branch it already stood as rather than adding

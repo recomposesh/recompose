@@ -1,5 +1,6 @@
 import { expect, fn } from 'storybook/test';
 
+import { withInspectorPanel } from '#.storybook/inspector-panel';
 import preview from '#.storybook/preview';
 
 import { RejudgeToggle } from './rejudge-toggle';
@@ -7,13 +8,7 @@ import { RejudgeToggle } from './rejudge-toggle';
 const meta = preview.meta({
   component: RejudgeToggle,
   args: { rejudgeEveryRequest: false, onChangeChecked: fn() },
-  decorators: [
-    (Story) => (
-      <div className="mx-auto my-4 w-76 bg-surface-toolbar p-3.5">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [withInspectorPanel],
 });
 
 /**

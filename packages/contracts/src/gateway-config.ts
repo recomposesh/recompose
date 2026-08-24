@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
 import { type GatewayApiKey, gatewayApiKeySchema } from './gateway-api-key';
+import { noStoredRouterEverChoseHowLongItsJudgeHad } from './gateway-config-judge-budget';
 import { routingSchema } from './gateway-routing';
 import { migrateDocument, type Migration } from './migration';
 import { nonBlankString } from './non-blank';
 
-export const GATEWAY_CONFIG_VERSION = 4;
+export const GATEWAY_CONFIG_VERSION = 5;
 
 export const GATEWAY_PORT_RANGE = { min: 1024, max: 65535 } as const;
 
@@ -205,6 +206,7 @@ const gatewayConfigMigrations: readonly Migration[] = [
   noStoredGatewayEverMintedAVirtualModel,
   noStoredGatewayEverRequiredAKey,
   noStoredVirtualModelEverBoundMoreThanOneTarget,
+  noStoredRouterEverChoseHowLongItsJudgeHad,
 ];
 
 export function loadGatewayConfig(doc: unknown): GatewayConfig {

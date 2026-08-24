@@ -19,23 +19,23 @@ function servedBindings(document: unknown): unknown[] {
 }
 
 describe('a gateway stored before virtual models bound to one target', () => {
-  test('the version stamp reads 4, so every shape before it has a version to come from', () => {
-    expect(GATEWAY_CONFIG_VERSION).toBe(4);
+  test('the version stamp reads 5, so every shape before it has a version to come from', () => {
+    expect(GATEWAY_CONFIG_VERSION).toBe(5);
   });
 
   test('a version 1 document loads at the version this build stores', () => {
-    expect(loadGatewayConfig(storedUnderVersionOne).schemaVersion).toBe(4);
+    expect(loadGatewayConfig(storedUnderVersionOne).schemaVersion).toBe(5);
   });
 
   test('the restamp carries the gateway forward untouched, because it held no binding', () => {
     expect(loadGatewayConfig(storedUnderVersionOne)).toEqual({
       ...storedUnderVersionOne,
-      schemaVersion: 4,
+      schemaVersion: 5,
     });
   });
 
-  test('a document already at version 4 loads unchanged', () => {
-    const current = { ...storedUnderVersionOne, schemaVersion: 4 };
+  test('a document already at version 5 loads unchanged', () => {
+    const current = { ...storedUnderVersionOne, schemaVersion: 5 };
 
     expect(loadGatewayConfig(current)).toEqual(current);
   });
@@ -55,20 +55,20 @@ describe('a gateway stored before any of them could require a key', () => {
   const storedUnderVersionTwo = { ...storedUnderVersionOne, schemaVersion: 2 };
 
   test('a version 2 document loads at the version this build stores', () => {
-    expect(loadGatewayConfig(storedUnderVersionTwo).schemaVersion).toBe(4);
+    expect(loadGatewayConfig(storedUnderVersionTwo).schemaVersion).toBe(5);
   });
 
   test('the restamp adds no key, because no build before it could mint one', () => {
     expect(loadGatewayConfig(storedUnderVersionTwo)).toEqual({
       ...storedUnderVersionTwo,
-      schemaVersion: 4,
+      schemaVersion: 5,
     });
   });
 
   test('a gateway that requires its key stores the value beside the requirement', () => {
     const requiring = {
       ...storedUnderVersionOne,
-      schemaVersion: 4,
+      schemaVersion: 5,
       apiKey: { value: 'rc-local-abcdef', required: true },
     };
 
@@ -78,7 +78,7 @@ describe('a gateway stored before any of them could require a key', () => {
   test('a gateway that stores a key it no longer requires reads back holding it', () => {
     const holding = {
       ...storedUnderVersionOne,
-      schemaVersion: 4,
+      schemaVersion: 5,
       apiKey: { value: 'rc-local-abcdef', required: false },
     };
 
@@ -92,7 +92,7 @@ describe('a gateway stored before any of them could require a key', () => {
     expect(() =>
       loadGatewayConfig({
         ...storedUnderVersionOne,
-        schemaVersion: 4,
+        schemaVersion: 5,
         apiKey: { required: true },
       }),
     ).toThrow();
@@ -102,7 +102,7 @@ describe('a gateway stored before any of them could require a key', () => {
     expect(() =>
       loadGatewayConfig({
         ...storedUnderVersionOne,
-        schemaVersion: 4,
+        schemaVersion: 5,
         apiKey: { value: '  ', required: true },
       }),
     ).toThrow();
@@ -128,7 +128,7 @@ const boundDirectly = {
 
 describe('a gateway stored while a virtual model could bind only one target', () => {
   test('a version 3 document loads at the version this build stores', () => {
-    expect(loadGatewayConfig(boundDirectly).schemaVersion).toBe(4);
+    expect(loadGatewayConfig(boundDirectly).schemaVersion).toBe(5);
   });
 
   test('the stored target becomes the one node its entry names', () => {
@@ -178,7 +178,7 @@ describe('the rewrite that carried a stored binding into its graph', () => {
 
     expect({ ...loaded, virtualModels: [] }).toEqual({
       ...storedUnderVersionOne,
-      schemaVersion: 4,
+      schemaVersion: 5,
     });
   });
 

@@ -8,6 +8,8 @@ import {
 } from './gateway-routing-conditional';
 import { nonBlankString } from './non-blank';
 
+export { BORN_JUDGE_BOUND_MS } from './gateway-routing-conditional';
+
 export const routeNodeIdSchema = nonBlankString;
 
 /**
