@@ -8,6 +8,12 @@ const ECHOES_ITS_INPUT = [
   'let held = ""; process.stdin.on("data", (d) => { held += d; }); process.stdin.on("end", () => process.stdout.write(held));',
 ];
 
+/** Prints one variable of its own environment back, on every platform this app ships to. */
+const PRINTS_A_NAMED_VARIABLE = [
+  '-e',
+  'process.stdout.write(process.env.A_VARIABLE_THE_CALLER_NAMED ?? "");',
+];
+
 const A_BOUND = 30_000;
 
 describe('handing a command something on its standard input', () => {
@@ -19,6 +25,26 @@ describe('handing a command something on its standard input', () => {
 
   test('a tool handed nothing reads nothing, because its input still closes', async () => {
     await expect(runCommand(process.execPath, ECHOES_ITS_INPUT, A_BOUND, '')).resolves.toBe('');
+  });
+});
+
+describe('the environment a command runs under', () => {
+  test('given an environment named by the caller, the tool runs under that one', async () => {
+    await expect(
+      runCommand(process.execPath, PRINTS_A_NAMED_VARIABLE, A_BOUND, undefined, {
+        A_VARIABLE_THE_CALLER_NAMED: 'named-by-the-caller',
+      }),
+    ).resolves.toBe('named-by-the-caller');
+  });
+
+  test('given no environment named, the tool runs under the one this process carries', async () => {
+    process.env['A_VARIABLE_THE_CALLER_NAMED'] = 'carried-by-the-process';
+
+    await expect(runCommand(process.execPath, PRINTS_A_NAMED_VARIABLE, A_BOUND)).resolves.toBe(
+      'carried-by-the-process',
+    );
+
+    delete process.env['A_VARIABLE_THE_CALLER_NAMED'];
   });
 });
 
