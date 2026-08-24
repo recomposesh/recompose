@@ -46,7 +46,7 @@ Agents consume stories through manifests built by static analysis (source: [Stor
 
 ## Verification
 
-- `pnpm --filter @recompose/desktop exec vitest run --project storybook` runs every story as a browser test.
+- `RECOMPOSE_BROWSER_TESTS=1 pnpm --filter @recompose/desktop exec vitest run --project storybook` runs every story as a browser test. Without the variable the project stays closed, because the Chromium suites are opt-in locally (record 0176).
 - `pnpm --filter @recompose/desktop run storybook` serves the workshop on port 6006, with the MCP endpoint at `/mcp`.
 
 ### Look at it, every time

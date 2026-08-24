@@ -16,7 +16,7 @@
   "scripts": {
     "lint": "oxlint && pnpm run lint:hig",
     "lint:hig": "hig-doctor src/renderer/src --fail-on moderate",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "test:mutation": "stryker run",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",

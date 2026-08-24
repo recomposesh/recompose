@@ -62,6 +62,8 @@
 
 - Write tests at every layer of the test pyramid: unit, integration, e2e.
 - **Never run Vitest from the repository root.** There is no root test project, and the root config refuses with the commands that work (`docs/adr/0162-vitest-refuses-to-run-from-the-repository-root.md`). Run `pnpm test` for every package, `pnpm --filter <package> exec vitest run` for one package, and add `--project <name>` for one of the desktop projects.
+- **The browser suites are opt-in locally.** `pnpm test` and a bare `vitest run` open the node projects only. The Chromium projects (`browser`, `storybook`, `storybook-dark` on desktop, `browser` on web) carry most of the wall time, so they open only where a run asks for them: `RECOMPOSE_BROWSER_TESTS=1`, or continuous integration, which sets `CI` on its own. Coverage rides the same condition (`docs/adr/0176-the-browser-suites-open-when-a-run-asks-for-them.md`).
+- **Run `pnpm test:full` before the commit that opens a pull request.** It's the only local run that opens the browser suites and measures coverage, so it's what stands between the branch and a red pipeline. Iterate on one suite with `RECOMPOSE_BROWSER_TESTS=1 pnpm --filter @recompose/desktop exec vitest run --project storybook`.
 - Unit & integration tests: use the `javascript-testing-patterns` skill.
 - Load-bearing derived types (mapped types, schema-inferred types) get type-level specs: `*.test-d.ts` with `expectTypeOf`, run through vitest typecheck. The TDD invariant applies at the type level: a type contract changes if and only if its type spec changes.
 - Vitest work (writing tests, config, mocking, coverage): use the `vitest` skill.
