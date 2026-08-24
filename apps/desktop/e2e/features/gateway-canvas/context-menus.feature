@@ -11,9 +11,9 @@ Feature: A right-click on the canvas raises the acts of what it landed on
     When the person right-clicks the canvas behind the cards
     Then the canvas menu offers "Add a virtual model" and "Tidy the canvas"
 
-  Scenario: A definition offers the target pick its own port offers
+  Scenario: A definition leaves the target pick to its own port
     When the person right-clicks the virtual model card
-    Then the canvas menu offers "Pick a target" and "Delete virtual model…"
+    Then the canvas menu offers "Show in inspector" and "Delete virtual model…"
 
   Scenario: The gateway card offers the acts that run its composition
     When the person right-clicks the gateway card
