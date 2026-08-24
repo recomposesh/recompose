@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 import type { CanvasEdge, CanvasGraph } from '../../lib/node-graph';
 
 import { CABLE_GRAB_SPAN } from '../../lib/cable-standing';
-import { CARD_MEASURE } from '../../lib/tidy-layout';
+import { CARD_MEASURE, SATELLITE_MEASURE } from '../../lib/tidy-layout';
 import { flowEdgesOf, flowNodesOf, movedSeats } from './canvas-wiring';
 
 describe('the controlled flow applies position changes only', () => {
@@ -55,20 +55,21 @@ describe('the controlled flow applies position changes only', () => {
   });
 });
 
+const graph: CanvasGraph = {
+  nodes: [
+    { id: 'gateway', kind: 'gateway', displayName: 'My Gateway', port: 8397 },
+    {
+      id: 'model:fast',
+      kind: 'virtual-model',
+      modelId: 'fast',
+      displayName: 'Fast',
+      providerModel: 'claude-haiku-4-5',
+    },
+  ],
+  edges: [],
+};
+
 describe('what the flow hands each card to stand on', () => {
-  const graph: CanvasGraph = {
-    nodes: [
-      { id: 'gateway', kind: 'gateway', displayName: 'My Gateway', port: 8397 },
-      {
-        id: 'model:fast',
-        kind: 'virtual-model',
-        modelId: 'fast',
-        displayName: 'Fast',
-        providerModel: 'claude-haiku-4-5',
-      },
-    ],
-    edges: [],
-  };
   const asks = { onAddVirtualModel: () => {}, onBindFrom: () => {} };
 
   test('a card seats where the arrangement puts it', () => {
@@ -98,14 +99,53 @@ describe('what the flow hands each card to stand on', () => {
     expect(seated.map((node) => node.selected)).toEqual([false, true]);
   });
 
-  test('a card stands under its own kind, carrying the measure edges draw against', () => {
+  test('a card stands under its own kind', () => {
     const seated = flowNodesOf(graph, {}, undefined, asks, () => false);
 
     expect(seated.map((node) => node.type)).toEqual(['gateway', 'virtual-model']);
+  });
+});
+
+describe('the measure every card hands the flow to draw cables against', () => {
+  const asks = { onAddVirtualModel: () => {}, onBindFrom: () => {} };
+
+  test('a card declares the space it takes', () => {
+    const seated = flowNodesOf(graph, {}, undefined, asks, () => false);
+
     expect(seated.map((node) => ({ width: node.width, height: node.height }))).toEqual([
       CARD_MEASURE,
       CARD_MEASURE,
     ]);
+  });
+
+  test('a card re-derived between repaints keeps the measure it was already taken at', () => {
+    const seated = flowNodesOf(graph, {}, undefined, asks, () => false);
+    const again = flowNodesOf(graph, {}, undefined, asks, () => false);
+
+    expect(seated.map((node) => node.measured)).toEqual([CARD_MEASURE, CARD_MEASURE]);
+    expect(again.map((node) => node.measured)).toEqual([CARD_MEASURE, CARD_MEASURE]);
+  });
+
+  test('a judge satellite keeps its own smaller measure rather than a card measure', () => {
+    const advised: CanvasGraph = {
+      nodes: [
+        {
+          id: 'judge:fast/pick',
+          kind: 'judge',
+          modelId: 'fast',
+          routeNodeId: 'pick',
+          depth: 2,
+          advises: 'route:fast',
+          accountId: 'k1',
+          providerModel: 'claude-haiku-4-5',
+        },
+      ],
+      edges: [],
+    };
+
+    const seated = flowNodesOf(advised, {}, undefined, asks, () => false);
+
+    expect(seated.map((node) => node.measured)).toEqual([SATELLITE_MEASURE]);
   });
 });
 

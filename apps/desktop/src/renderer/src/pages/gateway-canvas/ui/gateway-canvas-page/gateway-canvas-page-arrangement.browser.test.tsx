@@ -198,3 +198,24 @@ test('the canvas mounts under StrictMode with a console clear of warnings', asyn
   warned.mockRestore();
   erred.mockRestore();
 });
+
+/**
+ * Every cable the canvas holds stays drawn once a card moves to a new seat.
+ *
+ * @operation The reading waits for the card to reach its new seat rather than taking the count
+ * straight after the gesture, because the arrangement lands a frame later and a count read too
+ * early agrees with a canvas whose cables have not been dropped yet.
+ */
+test('moving a card leaves every cable it holds drawn on the canvas', async () => {
+  const screen = await canvasPageOn();
+  const cablesDrawn = () => screen.container.querySelectorAll('.react-flow__edge').length;
+
+  await expect.poll(cablesDrawn).toBeGreaterThan(0);
+
+  const before = cablesDrawn();
+
+  draggedCard(cardWrapper(screen.container, 'model:fast'), { x: 40, y: 30 });
+
+  await expect.poll(() => seatOf(screen.container, 'model:fast')).toBe('translate(360px, 30px)');
+  expect(cablesDrawn()).toBe(before);
+});
