@@ -180,3 +180,13 @@ export function forgetEngineJudgingListeners(): void {
 export function listenForEngineJudging(listener: (judging: GatewayJudging) => void): () => void {
   return engineJudgingLine.listen(listener);
 }
+
+/**
+ * Pushes a judging snapshot at everything listening, the way the main process would.
+ *
+ * @summary Reach for it in a story or a spec that has to hold a router waiting on its judge, which
+ * is a moment no traffic snapshot can stand for: the request has reached no child yet.
+ */
+export function emitEngineJudging(judging: GatewayJudging): void {
+  engineJudgingLine.emit(judging);
+}

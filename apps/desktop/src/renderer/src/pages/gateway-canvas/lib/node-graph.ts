@@ -24,7 +24,7 @@ import {
 } from './canvas-cables';
 import { routeCard } from './canvas-cards';
 import { cardStanding, readingsFor } from './card-standing';
-import { heldAt } from './held-at';
+import { waitingOnAJudge, waitingOnItsJudge } from './judging-standing';
 import { addressName } from './route-addresses';
 import { firstDeclaredTarget, walkedRouteNodes } from './route-graph';
 
@@ -96,24 +96,6 @@ function outcomeOnto(
     : painted[placed.walked.routeNodeId];
 }
 
-/**
- * Whether the router this judge advises is waiting on it right now.
- *
- * @summary The count is read under the router rather than the judge, because a judge two routers
- * share would otherwise light both ties when only one of them asked.
- */
-function judgingTheTieDraws(
-  placed: PlacedRouteNode,
-  readings: EngineReadings,
-  model: string,
-): boolean {
-  const advises = placed.walked.advises;
-
-  return advises === undefined
-    ? false
-    : (heldAt(heldAt(readings.judging, model), advises) ?? 0) > 0;
-}
-
 function routedCards(
   model: VirtualModel,
   registry: Registry,
@@ -121,25 +103,32 @@ function routedCards(
 ): RoutedCards {
   const seated = seatedCards(model, registry);
   const painted = paintedOnto(seated, readings.carried);
-  const throughRouters = outcomesThroughRouters(
-    seated.map((held) => held.placed.walked),
-    painted,
-  );
-  const edges = seated.map(({ placed, card }) =>
-    placed.walked.advises === undefined
+  const waiting = waitingOnAJudge(seated, readings, model.id);
+  const flowing = { ...painted, ...waiting };
+  const throughRouters = {
+    ...outcomesThroughRouters(
+      seated.map((held) => held.placed.walked),
+      flowing,
+    ),
+    ...waiting,
+  };
+  const edges = seated.map(({ placed, card }) => {
+    const advises = placed.walked.advises;
+
+    return advises === undefined
       ? cableInto(placed, card, outcomeOnto(placed, painted, throughRouters))
       : tieOnto(
           placed,
           card,
           painted[placed.walked.routeNodeId],
-          judgingTheTieDraws(placed, readings, model.id),
-        ),
-  );
+          waitingOnItsJudge(readings, model.id, advises),
+        );
+  });
 
   return {
     nodes: seated.map((held) => cardStanding(held, painted, readings)),
     edges,
-    flowed: latestAcrossNodes(painted),
+    flowed: latestAcrossNodes(flowing),
   };
 }
 

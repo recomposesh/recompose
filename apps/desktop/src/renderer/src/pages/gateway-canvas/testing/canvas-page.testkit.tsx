@@ -9,7 +9,11 @@ import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../shared/testing';
 
-import { bindEngineLogsToCache, bindEngineTrafficToCache } from '../../../shared/api';
+import {
+  bindEngineJudgingToCache,
+  bindEngineLogsToCache,
+  bindEngineTrafficToCache,
+} from '../../../shared/api';
 import { closeInspector, closeLogsDrawer } from '../../../shared/lib';
 import { forgetEngineLogsListeners, installFakeBridge } from '../../../shared/testing';
 import { dropCanvasPositions } from '../lib/canvas-position-store';
@@ -89,6 +93,7 @@ function wrappedPage(strict: boolean, onGatewayRemoved?: () => void): ReactEleme
   });
 
   bindEngineTrafficToCache(queryClient);
+  bindEngineJudgingToCache(queryClient);
   bindEngineLogsToCache(queryClient);
 
   const page = (

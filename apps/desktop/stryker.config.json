@@ -30,6 +30,7 @@
     "src/renderer/src/pages/gateway-canvas/lib/derived-branch-label.ts",
     "src/renderer/src/pages/gateway-canvas/lib/branch-pins.ts",
     "src/renderer/src/pages/gateway-canvas/lib/judge-cooldown.ts",
+    "src/renderer/src/pages/gateway-canvas/lib/judging-standing.ts",
     "src/renderer/src/pages/gateway-canvas/lib/cable-traffic.ts",
     "src/renderer/src/pages/gateway-canvas/lib/tidy-layout.ts",
     "src/renderer/src/pages/gateway-canvas/lib/canvas-positions.ts",
