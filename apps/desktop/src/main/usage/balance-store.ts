@@ -10,6 +10,7 @@ import {
   readJsonWithQuarantine,
   writeJsonAtomic,
 } from '../storage/json-file';
+import { writingInTurn } from '../storage/writing-in-turn';
 
 const BALANCE_VERSION = 1;
 
@@ -83,14 +84,21 @@ function withinRetention(kept: readonly KeptBalance[], now: number): readonly Ke
 export async function openBalanceStore(deps: BalanceStoreDeps): Promise<BalanceStore> {
   let kept = withinRetention(await loadKept(deps), Date.now());
 
-  const flush = async (): Promise<void> => {
-    cadence.stopWatching();
+  const flush = writingInTurn(async () => {
     await writeJsonAtomic(deps.file, { schemaVersion: BALANCE_VERSION, readings: kept });
-  };
+  });
 
   const cadence = flushingWhenQuiet(() => {
-    void flush();
+    flush().catch((failure: unknown) => {
+      console.error(`recompose could not write the kept balances to ${deps.file}.`, failure);
+    });
   });
+
+  const flushNow = async (): Promise<void> => {
+    cadence.stopWatching();
+
+    return flush();
+  };
 
   return {
     keep: (accountId, reading) => {
@@ -98,6 +106,6 @@ export async function openBalanceStore(deps: BalanceStoreDeps): Promise<BalanceS
       cadence.watchForQuiet();
     },
     restored: () => kept,
-    flushNow: flush,
+    flushNow,
   };
 }

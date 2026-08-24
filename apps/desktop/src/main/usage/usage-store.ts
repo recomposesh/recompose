@@ -12,6 +12,7 @@ import { USAGE_LEDGER_VERSION, usageLedgerSchema } from '@recompose/contracts';
 
 import { flushingWhenQuiet } from '../storage/flush-cadence';
 import { newerSchemaVersion, readJsonWithQuarantine, writeJsonAtomic } from '../storage/json-file';
+import { writingInTurn } from '../storage/writing-in-turn';
 import {
   accrued,
   dayFolded,
@@ -69,40 +70,65 @@ async function loadLedger(deps: UsageStoreDeps): Promise<UsageLedger> {
  * `flushNow` for quit and interrupt. The prune runs on load and on every flush against the live
  * retention setting, so a shortened window empties on the next write rather than waiting for a
  * restart. Reports answer from memory and never touch the disk.
+ *
+ * A write the disk refuses leaves the ledger unwritten and the memory unpruned, so the next flush
+ * carries everything the failed one owed rather than a launch's traffic disappearing on one bad
+ * write, and the refusal is written down rather than dropped into a promise nobody reads.
+ *
+ * The revision is what keeps a row that settled mid-write. A flush names the revision its snapshot
+ * covered, and only that revision reaches `writtenRevision`, so a row accrued while the disk was
+ * busy still reads as unwritten. The pruned snapshot replaces memory only where nothing moved
+ * behind it, because writing it back over a newer ledger would drop that row from the readings too.
  */
+type LedgerDesk = { ledger: UsageLedger; revision: number; writtenRevision: number };
+
+type RetentionEdge = () => Promise<number>;
+
+function ledgerWrites(deps: UsageStoreDeps, desk: LedgerDesk, retentionEdge: RetentionEdge) {
+  return writingInTurn(async () => {
+    if (desk.revision === desk.writtenRevision) {
+      return;
+    }
+
+    const edge = await retentionEdge();
+    const covered = desk.revision;
+    const written = prunedBefore(desk.ledger, edge);
+
+    await writeJsonAtomic(deps.file, written);
+    desk.writtenRevision = covered;
+
+    if (desk.revision === covered) {
+      desk.ledger = written;
+    }
+  });
+}
+
 export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> {
   const retentionEdge = async () => Date.now() - (await deps.retentionDays()) * DAY_MS;
 
   const loaded = await loadLedger(deps);
-
-  let ledger = prunedBefore(loaded, await retentionEdge());
-  let dirty = ledger.buckets.length !== loaded.buckets.length;
-
-  const flush = async (): Promise<void> => {
-    cadence.stopWatching();
-
-    if (!dirty) {
-      return;
-    }
-
-    ledger = prunedBefore(ledger, await retentionEdge());
-    dirty = false;
-    await writeJsonAtomic(deps.file, ledger);
+  const ledger = prunedBefore(loaded, await retentionEdge());
+  const desk: LedgerDesk = {
+    ledger,
+    revision: ledger.buckets.length === loaded.buckets.length ? 0 : 1,
+    writtenRevision: 0,
   };
-
+  const flush = ledgerWrites(deps, desk, retentionEdge);
   const cadence = flushingWhenQuiet(() => {
-    void flush();
+    flush().catch((failure: unknown) => {
+      console.error(`recompose could not write the usage ledger to ${deps.file}.`, failure);
+    });
   });
 
   return {
     accrue: (row) => {
-      ledger = accrued(ledger, row, deps.accountKindOf(row.accountId));
-      dirty = true;
+      desk.ledger = accrued(desk.ledger, row, deps.accountKindOf(row.accountId));
+      desk.revision += 1;
       cadence.watchForQuiet();
     },
     report: async (ask) => {
       const { range } = ask;
-      const hours = hourBucketsWithin(ledger, range, Date.now());
+      const hours = hourBucketsWithin(desk.ledger, range, Date.now());
       const width = ask.bucketWidth ?? (range === '24h' ? ('hour' as const) : ('day' as const));
 
       return {
@@ -115,7 +141,11 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
         oldestRetainedStart: await retentionEdge(),
       };
     },
-    heldBuckets: () => ledger.buckets,
-    flushNow: flush,
+    heldBuckets: () => desk.ledger.buckets,
+    flushNow: async () => {
+      cadence.stopWatching();
+
+      return flush();
+    },
   };
 }

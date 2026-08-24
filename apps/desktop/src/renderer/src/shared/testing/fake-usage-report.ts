@@ -56,3 +56,35 @@ export const servedReport: UsageReport = {
   priceMisses: [],
   pricing: { source: 'bundled' },
 };
+
+function refusedBucket(start: number, gateway: string, requests: number): UsageBucket {
+  return {
+    start,
+    tuple: { gateway, virtualModel: 'creative' },
+    measures: {
+      requests,
+      failed: requests,
+      answered: requests,
+      durationMsSum: requests * 40,
+      tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, total: 0 },
+    },
+  };
+}
+
+/**
+ * A window whose every request the gateway refused before a provider stood for it.
+ *
+ * @summary Those requests reach no account and carry no tokens, which is the window that reads as
+ * empty everywhere a reading folds by account. The filters and the panels both need it to prove
+ * they name that traffic rather than hiding it.
+ */
+export const refusedReport: UsageReport = {
+  range: '7d',
+  bucketWidth: 'hour',
+  buckets: Array.from({ length: 6 }, (_unused, hour) =>
+    refusedBucket(NOW_HOUR - (6 - hour) * HOUR_MS, 'relay', 4 + hour),
+  ),
+  dayCosts: [],
+  priceMisses: [],
+  pricing: { source: 'bundled' },
+};

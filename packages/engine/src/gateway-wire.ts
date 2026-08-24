@@ -52,6 +52,16 @@ export type Crossing = {
       }
     | undefined;
   copilotPath?: string | undefined;
+  /**
+   * The dialect the answer to this turn comes back in, settled before the body is worded.
+   *
+   * @summary A vendor serving one wire reads the same either way, but Copilot names its wire per
+   * model and a plan token spent as a key arrives here as a credentialed grant, so the vendor alone
+   * cannot say what the answer will look like. Everything downstream that has to read the answer
+   * rather than write the request stands on this, which is what keeps a token count from being
+   * parsed in a dialect the provider never spoke.
+   */
+  upstreamDialect?: ProviderDialect | undefined;
   xaiNamespaceTools?: Record<string, { namespace: string; name: string }> | undefined;
   xaiInjectSearch?: boolean | undefined;
   xaiSearchOwnership?: { clientTools: readonly string[] } | undefined;

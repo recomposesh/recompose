@@ -9,6 +9,7 @@ import {
   readJsonWithQuarantine,
   writeJsonAtomic,
 } from '../storage/json-file';
+import { writingInTurn } from '../storage/writing-in-turn';
 
 export const PLAN_USAGE_VERSION = 1;
 
@@ -79,27 +80,36 @@ function stillCurrent(held: PlanUsageReadings, now: number): PlanUsageReadings {
  */
 export async function openPlanUsageStore(deps: PlanUsageStoreDeps): Promise<PlanUsageStore> {
   let held = await loadReadings(deps);
-  let dirty = false;
+  let revision = 0;
+  let writtenRevision = 0;
 
-  const flush = async (): Promise<void> => {
-    cadence.stopWatching();
-
-    if (!dirty) {
+  const flush = writingInTurn(async () => {
+    if (revision === writtenRevision) {
       return;
     }
 
-    dirty = false;
+    const covered = revision;
+
     await writeJsonAtomic(deps.file, { schemaVersion: PLAN_USAGE_VERSION, readings: held });
-  };
+    writtenRevision = covered;
+  });
 
   const cadence = flushingWhenQuiet(() => {
-    void flush();
+    flush().catch((failure: unknown) => {
+      console.error(`recompose could not write the plan readings to ${deps.file}.`, failure);
+    });
   });
+
+  const flushNow = async (): Promise<void> => {
+    cadence.stopWatching();
+
+    return flush();
+  };
 
   return {
     hold: (readings) => {
       held = { ...held, ...readings };
-      dirty = true;
+      revision += 1;
       cadence.watchForQuiet();
     },
     /**
@@ -109,6 +119,6 @@ export async function openPlanUsageStore(deps: PlanUsageStoreDeps): Promise<Plan
      * drops out rather than reading as a plan at 0%, a figure no vendor ever sent.
      */
     read: (now) => stillCurrent(held, now),
-    flushNow: flush,
+    flushNow,
   };
 }

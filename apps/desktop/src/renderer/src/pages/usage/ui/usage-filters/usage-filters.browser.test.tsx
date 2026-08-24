@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-react';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
-import { installFakeBridge, servedReport } from '../../../../shared/testing';
+import { installFakeBridge, refusedReport, servedReport } from '../../../../shared/testing';
 import { UsageFilters } from './usage-filters';
 
 const at7d: UsageSearch = { range: '7d', metric: 'requests', stackedBy: 'gateway' };
@@ -56,4 +56,17 @@ test('the provider filter narrows by the account a person connected', async () =
   await screen.getByRole('checkbox', { name: 'work' }).click();
 
   expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, providers: ['work'] });
+});
+
+test('the provider filter names the traffic that reached no account', async () => {
+  const onSearchChange = vi.fn<(next: UsageSearch) => void>();
+
+  installFakeBridge({ usageReport: refusedReport });
+
+  const screen = await mounted(<UsageFilters onSearchChange={onSearchChange} search={at7d} />);
+
+  await screen.getByRole('button', { name: /Providers/ }).click();
+  await screen.getByRole('checkbox', { name: 'No account reached' }).click();
+
+  expect(onSearchChange).toHaveBeenCalledWith({ ...at7d, providers: ['(none)'] });
 });

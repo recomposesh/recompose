@@ -1,68 +1,21 @@
-import type { LogRow, UsageLedger } from '@recompose/contracts';
+import type { UsageLedger } from '@recompose/contracts';
 
-import { USAGE_LEDGER_VERSION, usageLedgerSchema } from '@recompose/contracts';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { USAGE_LEDGER_VERSION } from '@recompose/contracts';
+import { writeFile } from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { openUsageStore, UsageNewerSchemaError } from './usage-store';
+import { UsageNewerSchemaError } from './usage-store';
+import {
+  anOpenStore,
+  aStoreFile,
+  eventually,
+  NOW,
+  served,
+  storedLedger,
+} from './usage-store.testkit';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
-
-const NOW = 1_754_600_400_000 - (1_754_600_400_000 % HOUR) + 30 * 60_000;
-
-const CLIENT_KEY = `sha256:${'a'.repeat(64)}`;
-
-function served(id: string, at: number): LogRow {
-  return {
-    id,
-    at,
-    gateway: 'relay',
-    virtualModel: 'creative',
-    origin: 'provider',
-    method: 'POST',
-    provider: 'anthropic',
-    accountId: 'work',
-    providerModel: 'claude-sonnet-4-5',
-    status: 200,
-    durationMs: 912,
-    tokens: 1_820,
-    usage: { input: 1_200, output: 480, cacheRead: 96, cacheWrite: 32, reasoning: 12 },
-    clientKey: CLIENT_KEY,
-  };
-}
-
-async function aStoreFile(): Promise<string> {
-  return join(await mkdtemp(join(tmpdir(), 'recompose-usage-')), 'usage.json');
-}
-
-async function anOpenStore(file: string, retentionDays: 7 | 30 | 90 = 30) {
-  return openUsageStore({
-    file,
-    retentionDays: async () => Promise.resolve(retentionDays),
-    accountKindOf: () => 'subscription',
-  });
-}
-
-async function storedLedger(file: string): Promise<UsageLedger> {
-  return usageLedgerSchema.parse(JSON.parse(await readFile(file, 'utf8')));
-}
-
-async function eventually<Value>(read: () => Promise<Value>): Promise<Value> {
-  for (let breath = 0; breath < 50; breath += 1) {
-    try {
-      return await read();
-    } catch {
-      await new Promise((rested) => {
-        setImmediate(rested);
-      });
-    }
-  }
-
-  return read();
-}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });

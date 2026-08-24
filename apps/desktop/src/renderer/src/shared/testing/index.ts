@@ -17,7 +17,7 @@ export { emitUpdateState } from './fake-update-pushes';
 export { connectedSubscription } from './fake-subscriptions';
 export { emitUsageCommand } from './fake-usage-pushes';
 export { emitViewCommand, reportedSurfaceToggles } from './fake-view-pushes';
-export { servedReport } from './fake-usage-report';
+export { refusedReport, servedReport } from './fake-usage-report';
 export { edgeRuleDrawn, tokenChartSeries } from './chart-fixtures';
 export { fitsItsPane, narrowed, paintedBox, paintedCentre, paintedStyle } from './measuring';
 export { pressedByKeyboard } from './pressing';

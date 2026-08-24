@@ -1,10 +1,10 @@
-import { expect } from 'storybook/test';
+import { expect, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
 import type { UsageSearch } from '../../lib/usage-search';
 
-import { servedReport } from '../../../../shared/testing';
+import { refusedReport, servedReport } from '../../../../shared/testing';
 import { UsageFilters } from './usage-filters';
 
 const at7d: UsageSearch = { range: '7d', metric: 'requests', stackedBy: 'gateway' };
@@ -28,5 +28,15 @@ export const Narrowed = meta.story({
   args: { search: { ...at7d, gateways: ['relay'] } },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('button', { name: /Gateways 1 of/ })).toBeVisible();
+  },
+});
+
+/** A window the gateway refused throughout, where the provider filter names the absence. */
+export const NothingReachedAnAccount = meta.story({
+  parameters: { bridge: { usageReport: refusedReport } },
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Providers All' }));
+
+    await expect(await screen.findByRole('checkbox', { name: 'No account reached' })).toBeVisible();
   },
 });

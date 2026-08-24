@@ -182,3 +182,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0176](0176-the-browser-suites-open-when-a-run-asks-for-them.md)                | The browser suites open when a run asks for them                                    | Accepted   | 2026-08-24 |
 | [0177](0177-a-router-waiting-on-its-judge-lights-the-path-above-it.md)          | A router waiting on its judge lights the path above it                              | Accepted   | 2026-08-24 |
 | [0178](0178-the-judge-budget-is-a-persons-to-set.md)                            | The judge budget is a person's to set                                               | Accepted   | 2026-08-24 |
+| [0179](0179-the-token-count-follows-the-wire-the-answer-came-back-on.md)        | The token count follows the wire the answer came back on                            | Accepted   | 2026-08-24 |

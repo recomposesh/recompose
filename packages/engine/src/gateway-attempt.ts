@@ -188,6 +188,9 @@ async function readingFromProvider(
     grant,
   );
   const upstreamDialect = copilotDialect ?? dialectFor(grant, crossing.dialect);
+
+  crossing.upstreamDialect = upstreamDialect;
+
   const outbound = outboundBodyFor(crossing, upstreamDialect, isAntigravitySubscription(grant));
 
   if ('refusal' in outbound) {

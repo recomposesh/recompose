@@ -4,15 +4,7 @@ import type { PanelRow } from '../ui/breakdown-panel/breakdown-panel';
 import type { GroupDimension } from './usage-groups';
 
 import { compactCount, exactCount } from '../../../shared/lib';
-import { groupedBy } from './usage-groups';
-
-const ABSENCE_WORDING: Readonly<Record<GroupDimension, string>> = {
-  gateway: 'No gateway',
-  virtualModel: 'Direct traffic',
-  provider: 'No provider reached',
-  account: 'No account reached',
-  target: 'No target reached',
-};
+import { ABSENCE_WORDING, groupedBy } from './usage-groups';
 
 /**
  * One panel's printed rows, folded from the buckets every other reading folds from.

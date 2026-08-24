@@ -7,7 +7,12 @@ import type { FilterMember } from '../filter-menu/filter-menu';
 
 import { accountMark, accountName, accountProductName } from '../../../../entities/account';
 import { accountsQueryOptions } from '../../../../shared/api';
-import { filteredBuckets, memberNames } from '../../lib/usage-groups';
+import {
+  ABSENCE_WORDING,
+  ABSENT_MEMBER_KEY,
+  filteredBuckets,
+  memberNames,
+} from '../../lib/usage-groups';
 import { filteredMembers, withoutFilter } from '../../lib/usage-search';
 import { useWindowBuckets } from '../../model/use-window-buckets';
 import { FilterMenu } from '../filter-menu/filter-menu';
@@ -31,12 +36,18 @@ function named(
  *
  * @summary A person may file every account under one address, so a list of names alone is a list
  * of one name repeated. The product and its mark are what tell those rows apart, which is why an
- * account the registry no longer holds falls back on the raw id rather than on a blank row.
+ * account the registry no longer holds falls back on the raw id rather than on a blank row. The
+ * absent member is not an account at all, so it leads with nothing rather than with a vendor
+ * stand-in for a vendor no request ever reached.
  */
 function accountMember(
   member: { key: string; requests: number },
   held: Account | undefined,
 ): FilterMember {
+  if (member.key === ABSENT_MEMBER_KEY) {
+    return { ...member, name: ABSENCE_WORDING.account };
+  }
+
   if (held === undefined) {
     return { ...member, name: member.key, lead: { mark: undefined } };
   }
