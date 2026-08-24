@@ -2,9 +2,9 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { ContextMenu as BaseContextMenu } from '@base-ui/react/context-menu';
 
-import type { MenuAction } from '../menu-action';
+import type { MenuAction } from '../menu-action/menu-action';
 
-import { menuActionItems } from '../menu-action';
+import { MenuActions } from '../menu-action/menu-action';
 
 type ContextMenuProps = {
   /** The acts the surface offers, in reading order. */
@@ -34,7 +34,7 @@ export function ContextMenu({ items, className, render, children }: ContextMenuP
       <BaseContextMenu.Portal>
         <BaseContextMenu.Positioner>
           <BaseContextMenu.Popup className="menu-surface">
-            {menuActionItems(items)}
+            <MenuActions items={items} />
           </BaseContextMenu.Popup>
         </BaseContextMenu.Positioner>
       </BaseContextMenu.Portal>

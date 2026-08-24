@@ -1,7 +1,13 @@
 import { expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { choose, heldAccounts, press, renderRow, stored } from './key-account-row.testkit';
+import {
+  choose,
+  heldAccounts,
+  press,
+  renderRow,
+  stored,
+} from '../../testing/key-account-row.testkit';
 
 test('the overflow holds the two quieter acts and nothing else', async () => {
   await renderRow(stored);

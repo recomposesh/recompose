@@ -1,10 +1,8 @@
-import type { ReactNode } from 'react';
-
 import { Menu } from '@base-ui/react/menu';
 
-import type { IconName } from './icon/icon';
+import type { IconName } from '../icon/icon';
 
-import { Icon } from './icon/icon';
+import { Icon } from '../icon/icon';
 
 /** The ink an act carries at rest, which names what choosing it does rather than how it looks. */
 type MenuTone = 'accent' | 'danger' | 'positive';
@@ -29,14 +27,19 @@ const toneInk: Record<MenuTone, string> = {
   positive: 'text-running',
 };
 
+type MenuActionsProps = {
+  /** The acts to draw, in reading order. */
+  items: readonly MenuAction[];
+};
+
 /**
- * Draws a surface's acts as menu items, whichever control raised the menu they stand in.
+ * A surface's acts, drawn as the items of whichever menu raised them.
  *
  * @summary Base UI builds its context menu out of the very same item, so one surface declares its
  * acts once and both the trailing control and a right-click read that one list. Two lists written
  * for one row is the failure this exists to stop: they drift the moment an act is added to one.
  */
-export function menuActionItems(items: readonly MenuAction[]): ReactNode {
+export function MenuActions({ items }: MenuActionsProps) {
   return items.map((action) => (
     <Menu.Item
       className="group menu-action"

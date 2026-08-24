@@ -1,9 +1,9 @@
 import { Menu } from '@base-ui/react/menu';
 
-import type { MenuAction } from '../menu-action';
+import type { MenuAction } from '../menu-action/menu-action';
 
 import { Icon } from '../icon/icon';
-import { menuActionItems } from '../menu-action';
+import { MenuActions } from '../menu-action/menu-action';
 
 type OverflowMenuProps = {
   /** Accessible name of the control, naming what these actions act on. */
@@ -30,7 +30,9 @@ export function OverflowMenu({ label, items }: OverflowMenuProps) {
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner align="end" sideOffset={4}>
-          <Menu.Popup className="menu-surface">{menuActionItems(items)}</Menu.Popup>
+          <Menu.Popup className="menu-surface">
+            <MenuActions items={items} />
+          </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>
     </Menu.Root>

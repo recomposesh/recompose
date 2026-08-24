@@ -7,7 +7,7 @@ import {
   renderRow,
   stored,
   storedBeforeTheMask,
-} from './key-account-row.testkit';
+} from '../../testing/key-account-row.testkit';
 
 test('a stored key reads as the product it reaches over the name it was given', async () => {
   const screen = await renderRow(stored);

@@ -2,7 +2,7 @@ import { expect, screen, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import type { MenuAction } from '../menu-action';
+import type { MenuAction } from '../menu-action/menu-action';
 
 import { ContextMenu } from '../index';
 
