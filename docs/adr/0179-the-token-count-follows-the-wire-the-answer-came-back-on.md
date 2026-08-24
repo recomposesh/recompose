@@ -34,6 +34,12 @@ after, and the cadence fired the write as `void flush()`. A refused write theref
 accrual and said nothing about it. `plan-usage-store.ts` carried the same ordering, and
 `balance-store.ts` the same silence.
 
+Moving the clear behind the write opened a second hole, and review caught it. A flush reads the
+retention setting off the disk and then writes, and rows settle between those two steps. One
+boolean can't tell a quiet store from one a row reached mid-write. So the flush cleared a flag a
+row had just set, and wrote its stale snapshot back over the newer ledger. Two flushes overlap the
+same way, because a gateway state change asks for one while the quiet cadence runs its own.
+
 ## Decision
 
 The crossing carries `upstreamDialect`. `readingFromProvider` stamps it the moment the turn settles
@@ -46,8 +52,12 @@ lookup only where no turn ever resolved a wire.
 wording stays `ABSENCE_WORDING`, which the breakdown panels already printed. `usage-groups.ts` holds
 it once now, and both readers import it.
 
-A store clears `dirty` only after the write returns. Each cadence reports a refusal against the
-document it couldn't write.
+A store counts revisions rather than holding a boolean. Every accrual raises `revision`, a flush
+names the revision its snapshot covered, and only that revision reaches `writtenRevision`. A row
+that settles mid-write therefore still reads as unwritten, and the pruned snapshot replaces memory
+only where nothing moved behind it. `writingInTurn` queues each document's writes, so the last
+rename carries the newest snapshot. Each cadence reports a refusal against the document it
+couldn't write.
 
 ## Alternatives
 
@@ -59,15 +69,21 @@ document it couldn't write.
 - **Keying the Providers menu on accounts alone, and printing why it stands empty**: rejected. The
   menu wasn't empty the way a window that served nothing stands empty. It hid rows the tiles beside
   it counted, and nobody could reach them.
-- **Retrying a refused write on a timer**: rejected. The ledger stays dirty, so the next accrual and
-  the flush at quit each carry what the failed write owed. A timer would spin against a disk that
-  isn't coming back.
+- **Retrying a refused write on a timer**: rejected. The ledger stays unwritten, so the next accrual
+  and the flush at quit each carry what the failed write owed. A timer would spin against a disk
+  that isn't coming back.
+- **Keeping the boolean and copying the ledger before each await**: rejected. It answers the stale
+  snapshot but not the flag, and a row that settles mid-write would still clear it. The revision
+  answers both with one number.
+- **A lock around the whole flush rather than a write queue**: rejected. A lock that turns the
+  second caller away drops the flush at quit when the cadence happens to hold it. The queue keeps
+  every asked-for write and only orders them.
 
 ## Consequences
 
 **Good**: a vendor serving more than one wire counts its tokens on each of them. The Providers
-filter reaches every request the window counted. A launch accrual survives one bad write, and a disk
-that refused says so.
+filter reaches every request the window counted. A launch accrual survives one bad write, a row that
+settles mid-write survives it too, and a disk that refused says so.
 
 **Bad**: `ABSENT_MEMBER_KEY` reserves a value in the address. An account whose id read `(none)`
 would collide with it. Account ids take the registry's own `acc-` form, and a gateway slug takes
