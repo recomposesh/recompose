@@ -25,6 +25,7 @@ argjson
 asar
 Attio
 autobump
+autostarted
 autostarts
 Aydin
 backticked

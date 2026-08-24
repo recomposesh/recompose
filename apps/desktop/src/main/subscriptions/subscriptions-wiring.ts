@@ -22,7 +22,7 @@ import { adoptedCredentialReader } from './adopted-credential';
 import { antigravityVendor } from './antigravity-sign-in';
 import { credentialCustody } from './credential-custody';
 import { keychainCarriedOnce, repairCustody } from './custody-repair';
-import { loginShellPath } from './login-shell-path';
+import { loginShellPath, pathHeldBriefly } from './login-shell-path';
 import { thisMachine } from './machine-identity';
 import { securityKeychain } from './macos-keychain';
 import { runCommand } from './run-command';
@@ -35,7 +35,17 @@ import { codexVendorItem } from './vendor-item';
 
 const SIGN_IN_BOUND_MS = 5 * 60 * 1000;
 const SIGN_IN_EVERY_MS = 1_000;
-const LOGIN_SHELL_BOUND_MS = 3_000;
+/**
+ * How long the search-path probe may hold an interactive login shell open.
+ *
+ * @summary An interactive shell runs the whole rc file, which on a working machine means a plugin
+ * manager, a version manager, and a prompt, and a cold one of those outlasts the three seconds a
+ * login-only shell needed. The bound running out reads on screen as no tool installed, so it is
+ * set past a slow start rather than at a fast one.
+ */
+const LOGIN_SHELL_BOUND_MS = 10_000;
+
+const SEARCH_PATH_HELD_MS = 10_000;
 const SECURITY_COMMAND = '/usr/bin/security';
 
 /**
@@ -126,14 +136,17 @@ export function machineCustody(userDataPath: string): CredentialCustody | null {
   );
 }
 
-async function toolSearchPath(): Promise<string> {
-  return loginShellPath({
-    shell: process.env['SHELL'],
-    environmentPath: process.env['PATH'] ?? '',
-    platform: process.platform,
-    boundMs: LOGIN_SHELL_BOUND_MS,
-  });
-}
+const toolSearchPath = pathHeldBriefly({
+  ask: async () =>
+    loginShellPath({
+      shell: process.env['SHELL'],
+      environmentPath: process.env['PATH'] ?? '',
+      platform: process.platform,
+      boundMs: LOGIN_SHELL_BOUND_MS,
+    }),
+  nowMs: () => Date.now(),
+  holdMs: SEARCH_PATH_HELD_MS,
+});
 
 async function sleepFor(ms: number): Promise<void> {
   return new Promise((settle) => {

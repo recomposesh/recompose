@@ -79,6 +79,7 @@ export async function runCommand(
   args: readonly string[],
   boundMs: number,
   input?: string,
+  env: NodeJS.ProcessEnv = process.env,
 ): Promise<string> {
   const line = commandLineFor(command, args, process.platform);
 
@@ -91,6 +92,7 @@ export async function runCommand(
         timeout: boundMs,
         windowsHide: true,
         windowsVerbatimArguments: line.verbatim,
+        env,
       },
       (failure, stdout) => {
         if (failure === null) {
