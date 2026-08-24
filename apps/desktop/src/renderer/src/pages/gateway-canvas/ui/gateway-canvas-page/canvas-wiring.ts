@@ -176,6 +176,20 @@ function askedData(
 }
 
 /**
+ * The measure a card hands the flow: the space it takes, and the size it was already taken at.
+ *
+ * @summary The graph derives afresh on every render, so the flow never sees the same node object
+ * twice, and a node object the library has not seen before loses the handle positions it measured
+ * unless the node names the size it was measured at. Handle positions are what every cable draws
+ * between, so a card that declares only the space it takes stands there with its cables gone.
+ */
+function measureOf(node: CanvasNode): Pick<Node, 'width' | 'height' | 'measured'> {
+  const measure = node.kind === 'judge' ? SATELLITE_MEASURE : CARD_MEASURE;
+
+  return { ...measure, measured: measure };
+}
+
+/**
  * The node objects the flow renders, derived afresh from the graph every time.
  *
  * @summary Each node declares the card's own measure, so edges draw on first paint instead of
@@ -198,7 +212,7 @@ export function flowNodesOf(
     data: askedData(node, asks, takesCable),
     selected: node.id === selection,
     draggable: true,
-    ...(node.kind === 'judge' ? SATELLITE_MEASURE : CARD_MEASURE),
+    ...measureOf(node),
   }));
 }
 
