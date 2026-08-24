@@ -1,14 +1,11 @@
 import type { RecomposeIpc, RuntimeReachability } from '@recompose/contracts';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { expect } from 'vitest';
-import { render } from 'vitest-browser-react';
 import { page, userEvent } from 'vitest/browser';
 
 import type { BridgeParameters } from '../../../shared/testing';
 
-import { installFakeBridge } from '../../../shared/testing';
+import { renderUnderTheBridge } from '../../../shared/browser-testing';
 import { DetectRuntimeStep } from '../ui/detect-runtime-step/detect-runtime-step';
 
 function Step() {
@@ -26,16 +23,8 @@ function Step() {
   );
 }
 
-const retriesOff = { queries: { retry: false }, mutations: { retry: false } };
-
 export async function renderStep(parameters: BridgeParameters = {}) {
-  installFakeBridge(parameters);
-
-  return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: retriesOff })}>
-      <Step />
-    </QueryClientProvider>,
-  );
+  return renderUnderTheBridge(<Step />, parameters);
 }
 
 export function lookAnsweringInTurn(...readings: readonly RuntimeReachability[]) {
@@ -97,15 +86,7 @@ export function lookRefusedAfterOne(
   };
 }
 
-export async function press(name: string) {
-  const control = page.getByRole('button', { name, exact: true });
-
-  await expect.element(control).toBeVisible();
-
-  control.element().focus();
-
-  await userEvent.keyboard('{Enter}');
-}
+export { pressNamedControl as press } from './row-acts.testkit';
 
 export async function commitPort(port: string) {
   await page.getByRole('textbox', { name: 'Port', exact: true }).fill(port);

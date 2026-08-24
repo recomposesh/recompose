@@ -1,13 +1,11 @@
 import type { SystemState } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Suspense } from 'react';
-import { render } from 'vitest-browser-react';
 
 import type { BridgeParameters } from '../../../shared/testing';
 
-import { installFakeBridge } from '../../../shared/testing';
+import { renderUnderTheBridge } from '../../../shared/browser-testing';
 
 const observed: SystemState = {
   fileBrowser: 'finder',
@@ -38,15 +36,5 @@ export function reportingSystem(state: Partial<SystemState> = {}): BridgeParamet
  * @summary Reach for it instead of rebuilding the query client and suspense boundary per spec.
  */
 export async function renderAgainstBridge(surface: ReactNode, parameters: BridgeParameters = {}) {
-  installFakeBridge(parameters);
-
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <Suspense fallback={null}>{surface}</Suspense>
-    </QueryClientProvider>,
-  );
+  return renderUnderTheBridge(<Suspense fallback={null}>{surface}</Suspense>, parameters);
 }

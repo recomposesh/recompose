@@ -1,89 +1,13 @@
-import type { CredentialedAccount } from '@recompose/contracts';
-
-import { ACCOUNTS_VERSION } from '@recompose/contracts';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, test } from 'vitest';
-import { render } from 'vitest-browser-react';
-import { page, userEvent } from 'vitest/browser';
+import { page } from 'vitest/browser';
 
-import type { BridgeParameters } from '../../../../shared/testing';
-
-import { installFakeBridge } from '../../../../shared/testing';
-import { KeyAccountRow } from './key-account-row';
-
-const stored: CredentialedAccount = {
-  id: 'a1',
-  provider: 'anthropic',
-  kind: 'api-key',
-  label: 'build',
-  credentialRef: 'c1',
-  keyTail: '7f2c',
-};
-
-const storedBeforeTheMask: CredentialedAccount = {
-  id: 'a1',
-  provider: 'anthropic',
-  kind: 'api-key',
-  label: 'build',
-  credentialRef: 'c1',
-};
-
-const addressedByHand: CredentialedAccount = {
-  id: 'a4',
-  provider: 'models-example',
-  kind: 'aggregator',
-  label: 'house pool',
-  credentialRef: 'c4',
-  keyTail: '4d1a',
-  endpoint: { origin: 'https://models.example.com', dialect: 'chat-completions' },
-};
-
-async function renderRow(account: CredentialedAccount, parameters: BridgeParameters = {}) {
-  installFakeBridge({
-    accounts: { schemaVersion: ACCOUNTS_VERSION, accounts: [account] },
-    ...parameters,
-  });
-
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ul>
-        <KeyAccountRow account={account} />
-      </ul>
-    </QueryClientProvider>,
-  );
-}
-
-async function press(name: string) {
-  const control = page.getByRole('button', { name, exact: true });
-
-  await expect.element(control).toBeVisible();
-
-  control.element().focus();
-
-  await userEvent.keyboard('{Enter}');
-}
-
-async function choose(action: string) {
-  await press('Actions for build');
-
-  const item = page.getByRole('menuitem', { name: action, exact: true });
-
-  await expect.element(item).toBeVisible();
-
-  item.element().focus();
-
-  await userEvent.keyboard('{Enter}');
-}
-
-async function heldAccounts() {
-  const answer = await window.recompose['accounts:list']();
-
-  return answer.ok ? answer.value.accounts : [];
-}
+import {
+  addressedByHand,
+  press,
+  renderRow,
+  stored,
+  storedBeforeTheMask,
+} from '../../testing/key-account-row.testkit';
 
 test('a stored key reads as the product it reaches over the name it was given', async () => {
   const screen = await renderRow(stored);
@@ -226,61 +150,4 @@ test('an aggregator row the app addresses itself claims no address of its own', 
 
   await expect.element(screen.getByRole('listitem')).toBeVisible();
   expect(screen.container.textContent).not.toContain('https://');
-});
-
-test('the overflow holds the two quieter acts and nothing else', async () => {
-  await renderRow(stored);
-
-  await press('Actions for build');
-
-  await expect.element(page.getByRole('menuitem', { name: 'Verify' })).toBeVisible();
-  await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
-  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(2);
-});
-
-test('removing a key takes it out of the registry it was held in', async () => {
-  await renderRow(stored);
-
-  await choose('Remove');
-
-  await expect.poll(heldAccounts).toEqual([]);
-});
-
-test('a check answers as of the moment it ran rather than as a standing the row keeps', async () => {
-  const screen = await renderRow(stored, { keyCheck: 'authenticates' });
-
-  await choose('Verify');
-
-  await expect.element(screen.getByRole('status')).toHaveTextContent('at the last check');
-});
-
-test('a check still out keeps Verify out of reach, so one press asks one probe', async () => {
-  await renderRow(stored, {
-    overrides: {
-      'accounts:check-key': async () => new Promise(() => undefined),
-    },
-  });
-
-  await choose('Verify');
-  await press('Actions for build');
-
-  await expect
-    .element(page.getByRole('menuitem', { name: 'Verify' }))
-    .toHaveAttribute('aria-disabled', 'true');
-});
-
-test('a refused check says why on the row rather than leaving the act silent', async () => {
-  const screen = await renderRow(stored, {
-    overrides: {
-      'accounts:check-key': async () =>
-        Promise.resolve({
-          ok: false,
-          error: { code: 'storage-failed', message: 'The stored key is missing.' },
-        }),
-    },
-  });
-
-  await choose('Verify');
-
-  await expect.element(screen.getByRole('alert')).toHaveTextContent('The stored key is missing.');
 });

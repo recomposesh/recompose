@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { expect } from '@playwright/test';
 
 import { chooseMenuItem, menuItemChecked } from '../app-menu';
@@ -54,6 +56,39 @@ When('the person picks {string} from the Gateway menu', async ({ electronApp }, 
 When('the person picks {string} again', async ({ electronApp }, item: string) => {
   expect(item).toBe(SHOW_LOGS);
   await chooseMenuItem(electronApp, item);
+});
+
+/**
+ * The stretch of the strip that carries no reading, which is where the gesture answers.
+ *
+ * @summary The readings crowd the leading edge, so the press lands near the trailing one, where
+ * the strip carries nothing but its own padding at every width this suite opens the window at.
+ */
+async function pressTheBareStrip(page: Page): Promise<void> {
+  const strip = trafficFooter(page);
+  const box = await strip.boundingBox();
+
+  expect(box).not.toBeNull();
+
+  await strip.dblclick({ position: { x: (box?.width ?? 0) / 2, y: (box?.height ?? 0) / 2 } });
+}
+
+When('the person double-clicks the empty run of the footer', async ({ page }) => {
+  await pressTheBareStrip(page);
+});
+
+When('the person double-clicks a footer reading', async ({ page }) => {
+  await trafficFooter(page).getByText('req/min').dblclick();
+});
+
+Then('the drawer stays closed', async ({ page }) => {
+  await expect(logsHeading(page, SERVING_GATEWAY)).toBeHidden();
+});
+
+Then('the word under the press stands selected', async ({ page }) => {
+  await expect
+    .poll(async () => page.evaluate(() => window.getSelection()?.toString().trim() ?? ''))
+    .not.toBe('');
 });
 
 When('the person selects the footer text and copies it', async ({ electronApp, page }) => {

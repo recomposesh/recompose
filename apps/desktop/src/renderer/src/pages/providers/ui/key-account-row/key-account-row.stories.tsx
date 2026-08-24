@@ -6,15 +6,7 @@ import { expect, screen, userEvent } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { KeyAccountRow } from './key-account-row';
-
-const stored: CredentialedAccount = {
-  id: 'a1',
-  provider: 'anthropic',
-  kind: 'api-key',
-  label: 'build',
-  credentialRef: 'c1',
-  keyTail: '7f2c',
-};
+import { addressedByHand, stored } from './key-account-row.fixtures';
 
 const storedBeforeTheMask: CredentialedAccount = {
   id: 'a2',
@@ -31,16 +23,6 @@ const storedUnderAnUnknownProvider: CredentialedAccount = {
   label: 'scratch',
   credentialRef: 'c3',
   keyTail: '19be',
-};
-
-const addressedByHand: CredentialedAccount = {
-  id: 'a4',
-  provider: 'models-example',
-  kind: 'aggregator',
-  label: 'house pool',
-  credentialRef: 'c4',
-  keyTail: '4d1a',
-  endpoint: { origin: 'https://models.example.com', dialect: 'chat-completions' },
 };
 
 /**

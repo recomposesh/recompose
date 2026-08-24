@@ -13,6 +13,7 @@ import {
 } from '../../../../shared/api';
 import { BrandMark, Icon, OverflowMenu, StatusChip } from '../../../../shared/ui';
 import { localLeadFor, localRuntimeName } from '../../model/local-catalog';
+import { AccountRow } from '../account-row/account-row';
 import { MoveRuntimeDialog } from '../move-runtime-dialog/move-runtime-dialog';
 
 type LocalRuntimeRowProps = {
@@ -115,8 +116,18 @@ export function LocalRuntimeRow({ account }: LocalRuntimeRowProps) {
   const refusal =
     standing.error === null ? (move.refusal ?? forget.refusal) : refusalSentence(standing.error);
 
+  const acts = actsFor({
+    onCheckAgain: () => {
+      void standing.refetch();
+    },
+    onMove: move.ask,
+    onForget: () => {
+      forget.mutate({ id: account.id });
+    },
+  });
+
   return (
-    <li className="flex min-h-row items-center gap-3 rounded-card border border-line-subtle bg-surface-card px-4 py-2.5">
+    <AccountRow items={acts} layout="flex min-h-row items-center gap-3">
       {'mark' in lead ? (
         <BrandMark name={lead.mark} />
       ) : (
@@ -132,19 +143,8 @@ export function LocalRuntimeRow({ account }: LocalRuntimeRowProps) {
         )}
       </div>
       {observedStanding(standing.isFetching, standing.data)}
-      <OverflowMenu
-        items={actsFor({
-          onCheckAgain: () => {
-            void standing.refetch();
-          },
-          onMove: move.ask,
-          onForget: () => {
-            forget.mutate({ id: account.id });
-          },
-        })}
-        label={`Actions for ${name}`}
-      />
+      <OverflowMenu items={acts} label={`Actions for ${name}`} />
       {move.dialog(name)}
-    </li>
+    </AccountRow>
   );
 }

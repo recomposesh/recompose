@@ -70,6 +70,31 @@ function releaseDestroys(world: CanvasWorld, edgeId: string): string | undefined
   return `${node.kind === 'router' ? 'route' : 'target'}:${addressWritten(address)}`;
 }
 
+/**
+ * Releases one binding cable, asking first wherever letting go would cost a person work.
+ *
+ * @summary The menu and the Delete press are two ways into one release, so both read the same
+ * question: a cable whose release stands the definition back as a draft goes straight through,
+ * and one holding a ladder or a child raises the very question that child's own card raises.
+ */
+export function releaseAskedFor(world: CanvasWorld, edgeId: string): void {
+  const modelId = bindingCableId(edgeId);
+
+  if (modelId === undefined) {
+    return;
+  }
+
+  const asking = releaseDestroys(world, edgeId);
+
+  if (asking === undefined) {
+    releasedWithTheDraftSelected(world, modelId);
+
+    return;
+  }
+
+  world.standings.setRemoving(asking);
+}
+
 function cableQuestionAsked(world: CanvasWorld, cables: readonly Edge[]): boolean {
   const [asking] = cables.flatMap((edge) => {
     const card = releaseDestroys(world, edge.id);

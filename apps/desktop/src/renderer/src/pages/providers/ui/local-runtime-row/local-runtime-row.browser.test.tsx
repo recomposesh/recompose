@@ -223,3 +223,39 @@ test('a refused removal says why on the row rather than failing in silence', asy
     .element(screen.getByRole('alert'))
     .toHaveTextContent('recompose could not rewrite the registry.');
 });
+
+function rightClickTheRow(container: Element): void {
+  const row = container.querySelector('li');
+
+  if (row === null) {
+    throw new Error('the row never rendered');
+  }
+
+  row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+}
+
+function listedActs(): (string | null)[] {
+  return page
+    .getByRole('menuitem')
+    .elements()
+    .map((act) => act.textContent);
+}
+
+test('a right-click on the row offers the acts the trailing control holds', async () => {
+  const screen = await renderRow({ reachability: { verdict: 'answers', version: '0.5.1' } });
+
+  await press('Actions for Ollama');
+
+  const fromTheControl = listedActs();
+
+  expect(fromTheControl.length).toBeGreaterThan(0);
+
+  await userEvent.keyboard('{Escape}');
+  await expect.element(page.getByRole('menu')).not.toBeInTheDocument();
+
+  rightClickTheRow(screen.container);
+
+  await expect.element(page.getByRole('menu')).toBeVisible();
+
+  expect(listedActs()).toEqual(fromTheControl);
+});

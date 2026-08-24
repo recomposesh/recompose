@@ -1,35 +1,15 @@
 import { Menu } from '@base-ui/react/menu';
 
-import type { IconName } from '../icon/icon';
+import type { MenuAction } from '../menu-action/menu-action';
 
 import { Icon } from '../icon/icon';
-
-type OverflowTone = 'accent' | 'danger' | 'positive';
-
-type OverflowAction = {
-  /** What the action reads as, which is also the name it answers to. */
-  label: string;
-  /** Glyph drawn leading the label, so the acts scan without reading. */
-  icon?: IconName | undefined;
-  /** Ink the glyph carries at rest; a highlighted act repaints it in the highlight's own ink. */
-  tone?: OverflowTone | undefined;
-  /** Keeps the act readable but out of reach while the work it asks for is still out. */
-  disabled?: boolean | undefined;
-  /** Runs when a person chooses this action. */
-  onSelect: () => void;
-};
-
-const toneInk: Record<OverflowTone, string> = {
-  accent: 'text-accent-ink',
-  danger: 'text-danger-ink',
-  positive: 'text-running',
-};
+import { MenuActions } from '../menu-action/menu-action';
 
 type OverflowMenuProps = {
   /** Accessible name of the control, naming what these actions act on. */
   label: string;
   /** The actions, in reading order. */
-  items: readonly OverflowAction[];
+  items: readonly MenuAction[];
 };
 
 /**
@@ -51,26 +31,7 @@ export function OverflowMenu({ label, items }: OverflowMenuProps) {
       <Menu.Portal>
         <Menu.Positioner align="end" sideOffset={4}>
           <Menu.Popup className="menu-surface">
-            {items.map((action) => (
-              <Menu.Item
-                className="group menu-action"
-                disabled={action.disabled ?? false}
-                key={action.label}
-                onClick={() => {
-                  action.onSelect();
-                }}
-              >
-                {action.icon === undefined ? null : (
-                  <Icon
-                    className={`size-4 group-data-highlighted:text-highlight-ink ${
-                      action.tone === undefined ? 'text-ink-secondary' : toneInk[action.tone]
-                    }`}
-                    name={action.icon}
-                  />
-                )}
-                {action.label}
-              </Menu.Item>
-            ))}
+            <MenuActions items={items} />
           </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>

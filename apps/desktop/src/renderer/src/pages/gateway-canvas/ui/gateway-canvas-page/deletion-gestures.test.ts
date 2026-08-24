@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { gateway, keyboardInAText, keyboardOnTheCanvas } from './canvas-wiring.testkit';
-import { deletionWiring } from './deletion-gestures';
+import { deletionWiring, releaseAskedFor } from './deletion-gestures';
 import { cable, card, worldOver } from './deletion-gestures.testkit';
 
 const nothingSelected = { nodes: [], edges: [] };
@@ -205,6 +205,45 @@ describe('the release a let-go cable writes', () => {
 
     deletionWiring(world).onEdgesDelete([cable('cable:pooled', 'model:pooled', 'route:pooled')]);
 
+    expect(record.released).toEqual([]);
+  });
+});
+
+describe('a release asked for by name, which the menu reaches the same act through', () => {
+  test("a cable onto a definition's one target releases at once, since nothing is lost", () => {
+    const { world, record } = worldOver(gateway);
+
+    releaseAskedFor(world, 'cable:fast');
+
+    expect(record.asked).toEqual([]);
+    expect(record.released).toHaveLength(1);
+    expect(record.released[0]?.virtualModels.map((model) => model.id)).not.toContain('fast');
+  });
+
+  test('a cable holding one child of a ladder asks about that child rather than releasing', () => {
+    const { world, record } = worldOver(gateway);
+
+    releaseAskedFor(world, 'cable:pooled:t1');
+
+    expect(record.asked).toEqual(['target:pooled:t1']);
+    expect(record.released).toEqual([]);
+  });
+
+  test('a cable onto a router asks about the router, which the whole ladder stands under', () => {
+    const { world, record } = worldOver(gateway);
+
+    releaseAskedFor(world, 'cable:pooled');
+
+    expect(record.asked).toEqual(['route:pooled']);
+    expect(record.released).toEqual([]);
+  });
+
+  test('a wire that binds nothing releases nothing and asks nothing', () => {
+    const { world, record } = worldOver(gateway);
+
+    releaseAskedFor(world, 'wire:model:fast');
+
+    expect(record.asked).toEqual([]);
     expect(record.released).toEqual([]);
   });
 });
