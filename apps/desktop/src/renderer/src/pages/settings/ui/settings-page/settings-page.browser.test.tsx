@@ -37,6 +37,8 @@ async function renderSettingsFromShortcut(parameters: BridgeParameters = {}) {
 function runningOn(loginItem: SystemState['loginItem']): BridgeParameters {
   const observed: SystemState = {
     fileBrowser: 'finder',
+    windowControls: 'leading',
+    shortcutKey: 'command',
     loginItem,
     loginItemEnabled: false,
     menuBarVisible: false,

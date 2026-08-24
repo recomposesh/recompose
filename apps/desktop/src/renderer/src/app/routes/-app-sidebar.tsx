@@ -1,9 +1,16 @@
 import type { ReactNode } from 'react';
 
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useMatchRoute, useNavigate } from '@tanstack/react-router';
 import { Suspense, useId, useSyncExternalStore } from 'react';
 
-import { focusDrivenByArrow, panelWidth, subscribeToPanelWidths } from '../../shared/lib';
+import { systemQueryOptions } from '../../shared/api';
+import {
+  bandAlignmentFor,
+  focusDrivenByArrow,
+  panelWidth,
+  subscribeToPanelWidths,
+} from '../../shared/lib';
 import { Icon } from '../../shared/ui';
 import { UpdateReadyCard } from '../../widgets/app-update';
 import { GatewaySidebar } from '../../widgets/gateway/sidebar';
@@ -75,6 +82,7 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
   const standing = away ? undefined : { width };
   const matchRoute = useMatchRoute();
   const navigate = useNavigate();
+  const { data: system } = useSuspenseQuery(systemQueryOptions);
 
   return (
     <aside
@@ -85,7 +93,9 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
       style={standing}
     >
       <div className="app-drag flex h-full flex-col px-2.5 pb-2.5" style={{ width }}>
-        <div className="flex h-window-controls shrink-0 items-center justify-end">
+        <div
+          className={`flex h-window-controls shrink-0 items-center ${bandAlignmentFor(system.windowControls)}`}
+        >
           <span className="app-no-drag flex">{band}</span>
         </div>
         <nav className="app-no-drag flex flex-1 flex-col overflow-y-auto" data-focus-group="">

@@ -10,6 +10,7 @@ import {
   gatewayStateIn,
   gatewaysQueryOptions,
   settingsQueryOptions,
+  systemQueryOptions,
 } from '../../../../../shared/api';
 import { useGatewayLifecycle } from '../../lib/use-gateway-lifecycle';
 import { ToolbarFooter } from '../toolbar-footer/toolbar-footer';
@@ -34,6 +35,7 @@ export function GatewayToolbar({ slug }: GatewayToolbarProps) {
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
   const { data: states } = useSuspenseQuery(engineStatesQueryOptions);
   const { data: settings } = useSuspenseQuery(settingsQueryOptions);
+  const { data: system } = useSuspenseQuery(systemQueryOptions);
   const lifecycle = useGatewayLifecycle(slug);
   const gateway = gateways.find((held) => held.slug === slug);
 
@@ -55,6 +57,7 @@ export function GatewayToolbar({ slug }: GatewayToolbarProps) {
         port={gateway.port}
         running={running}
         status={state.status}
+        windowControls={system.windowControls}
       />
       <ToolbarFooter
         attempt={lifecycle.attempt}

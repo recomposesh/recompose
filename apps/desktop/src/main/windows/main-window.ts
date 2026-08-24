@@ -1,7 +1,9 @@
 import { is } from '@electron-toolkit/utils';
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, nativeTheme, shell } from 'electron';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
+
+import type { WindowScheme } from './title-bar-overlay';
 
 import icon from '../../../resources/icon.png?asset';
 import { devServerOrigin } from '../environment/dev-server-origin';
@@ -20,6 +22,8 @@ import {
   usageRouteFor,
 } from './renderer-url';
 import { staysBack } from './stays-back';
+import { titleBarOverlayPaintsOn } from './title-bar-overlay';
+import { paintTitleBarOverlay } from './window-chrome';
 import { windowOptionsFor } from './window-options';
 
 const isMac = process.platform === 'darwin';
@@ -36,6 +40,28 @@ function targetForLog(url: string): string {
   return URL.canParse(url) ? new URL(url).origin : 'a malformed target';
 }
 
+function currentScheme(): WindowScheme {
+  return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+}
+
+/**
+ * Keeps the Windows caption strip on the scheme the window is painting in.
+ *
+ * @summary The strip is repainted for as long as the window stands and no longer, because the
+ * listener outliving its window would repaint a strip nobody is looking at and hold the closed
+ * window in memory.
+ */
+function followSchemeWithCaptionStrip(window: BrowserWindow): void {
+  const repaint = (): void => {
+    paintTitleBarOverlay(process.platform, currentScheme());
+  };
+
+  nativeTheme.on('updated', repaint);
+  window.on('closed', () => {
+    nativeTheme.off('updated', repaint);
+  });
+}
+
 function applyGlassBackdrop(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     void import('electron-liquid-glass').then(({ default: liquidGlass }) => {
@@ -48,7 +74,12 @@ export function createMainWindow(route: string): void {
   const windowStaysBack = staysBack(process.env);
   const windowState = windowStateKeeper({ defaultWidth: 1120, defaultHeight: 780 });
   const mainWindow = new BrowserWindow({
-    ...windowOptionsFor(process.platform, join(__dirname, '../preload/index.js'), icon),
+    ...windowOptionsFor(
+      process.platform,
+      join(__dirname, '../preload/index.js'),
+      icon,
+      currentScheme(),
+    ),
     x: windowState.x,
     y: windowState.y,
     width: windowState.width,
@@ -59,6 +90,10 @@ export function createMainWindow(route: string): void {
 
   if (isMac && !windowStaysBack) {
     applyGlassBackdrop(mainWindow);
+  }
+
+  if (titleBarOverlayPaintsOn(process.platform)) {
+    followSchemeWithCaptionStrip(mainWindow);
   }
 
   mainWindow.on('ready-to-show', () => {

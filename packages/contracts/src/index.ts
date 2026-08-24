@@ -16,6 +16,8 @@ export * from './engine-cooldowns';
 export * from './engine-judging';
 export * from './engine-logs';
 export * from './file-browser';
+export * from './window-controls';
+export * from './shortcut-key';
 export * from './plan-usage';
 export * from './usage';
 export * from './usage-measures';

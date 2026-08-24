@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react';
 
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense, useSyncExternalStore } from 'react';
 
-import { sidebarHidden, subscribeToSidebarVisibility } from '../../shared/lib';
+import { systemQueryOptions } from '../../shared/api';
+import {
+  barLeadInsetFor,
+  barStandsFor,
+  barTailInsetFor,
+  sidebarHidden,
+  subscribeToSidebarVisibility,
+} from '../../shared/lib';
 import { SidebarToggle } from '../../shared/ui';
 import { GatewayToolbar } from '../../widgets/gateway/toolbar';
 
@@ -32,11 +40,18 @@ type AppToolbarProps = {
  */
 export function AppToolbar({ slug, leading, trailing }: AppToolbarProps) {
   const away = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
+  const { data: system } = useSuspenseQuery(systemQueryOptions);
+  const controls = system.windowControls;
 
   if (slug === undefined) {
+    const standing = barStandsFor(controls, away)
+      ? 'border-b border-line-subtle bg-surface-toolbar'
+      : '';
+    const lead = away ? barLeadInsetFor(controls, away) : '';
+
     return (
       <div
-        className={`app-drag absolute inset-x-0 top-0 z-10 flex h-toolbar items-center ${away ? 'border-b border-line-subtle bg-surface-toolbar ps-window-controls-width' : ''}`}
+        className={`app-drag absolute inset-x-0 top-0 z-10 flex h-toolbar items-center ${standing} ${lead}`}
       >
         {away && (
           <span className="app-no-drag flex">
@@ -44,7 +59,9 @@ export function AppToolbar({ slug, leading, trailing }: AppToolbarProps) {
           </span>
         )}
         <span className="app-no-drag flex min-w-0 items-center gap-2 ps-4">{leading}</span>
-        <span className="app-no-drag ms-auto flex shrink-0 items-center gap-2 pe-3.5">
+        <span
+          className={`app-no-drag ms-auto flex shrink-0 items-center gap-2 ${barTailInsetFor(controls)}`}
+        >
           {trailing}
         </span>
       </div>

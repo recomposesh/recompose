@@ -8,12 +8,15 @@ import type { CredentialCustody } from '../subscriptions/credential-custody';
 import type { LoginItem, LoginItemAvailability } from '../system/login-item';
 import type { AllowedOrigins, TrustedSender } from './sender-trust';
 import type { StorageIpcContext } from './storage-context';
+import type { SystemIpcContext } from './system-ipc';
 import type { UsageIpcDeps } from './usage-ipc';
 
 import { probeFreePort } from '../engine-host/probe-free-port';
 import { devServerOrigin } from '../environment/dev-server-origin';
 import { subscriptionIpcHandlers } from '../subscriptions/subscriptions-wiring';
 import { fileBrowserFor } from '../system/file-browser';
+import { shortcutKeyFor } from '../system/shortcut-key';
+import { windowControlsFor } from '../system/window-controls';
 import { isMenuBarTrayVisible } from '../tray/menu-bar-tray';
 import { answerTitleBarDoubleClick, placeWindowButtons } from '../windows/window-chrome';
 import { dispatchIpc, ipcChannelNames, type IpcHandlers } from './dispatch';
@@ -71,8 +74,31 @@ export type HandlerWiring = {
 };
 
 /** Which channels this app answers, and what each group of them reaches. */
+function systemContextFor(wiring: HandlerWiring): SystemIpcContext {
+  return {
+    fileBrowser: fileBrowserFor(wiring.platform),
+    windowControls: windowControlsFor(wiring.platform),
+    shortcutKey: shortcutKeyFor(wiring.platform),
+    loginItem: wiring.loginItemAvailability,
+    configFolder: wiring.userDataPath,
+    homeFolder: wiring.homeFolder,
+    appVersion: app.getVersion(),
+    readLoginItem: () => wiring.loginItem.isEnabled(),
+    isMenuBarVisible: () => isMenuBarTrayVisible(),
+    openFolder: wiring.openFolder,
+    placeWindowButtons: (position) => {
+      placeWindowButtons(wiring.platform, position);
+    },
+    answerTitleBarDoubleClick: () => {
+      answerTitleBarDoubleClick(wiring.platform);
+    },
+    noteLogsDrawer: wiring.appMenu.reflectLogsDrawer,
+    noteSurfaceToggles: wiring.appMenu.reflectSurfaceToggles,
+  };
+}
+
 export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
-  const { engineHost, custody, userDataPath, homeFolder, onCorrupt, appMenu } = wiring;
+  const { engineHost, custody, userDataPath, homeFolder, onCorrupt } = wiring;
 
   return {
     ...subscriptionIpcHandlers({
@@ -100,24 +126,7 @@ export function assembleIpcHandlers(wiring: HandlerWiring): IpcHandlers {
       onCorrupt,
       probeRuntime: async (address, provider) => engineHost.probeRuntime(address, provider),
     }),
-    ...createSystemIpcHandlers({
-      fileBrowser: fileBrowserFor(wiring.platform),
-      loginItem: wiring.loginItemAvailability,
-      configFolder: userDataPath,
-      homeFolder,
-      appVersion: app.getVersion(),
-      readLoginItem: () => wiring.loginItem.isEnabled(),
-      isMenuBarVisible: () => isMenuBarTrayVisible(),
-      openFolder: wiring.openFolder,
-      placeWindowButtons: (position) => {
-        placeWindowButtons(wiring.platform, position);
-      },
-      answerTitleBarDoubleClick: () => {
-        answerTitleBarDoubleClick(wiring.platform);
-      },
-      noteLogsDrawer: appMenu.reflectLogsDrawer,
-      noteSurfaceToggles: appMenu.reflectSurfaceToggles,
-    }),
+    ...createSystemIpcHandlers(systemContextFor(wiring)),
     ...createUsageIpcHandlers(wiring.usage),
     ...createUpdatesIpcHandlers(wiring.updates),
   };

@@ -8,7 +8,7 @@ import { EmptyState } from './empty-state';
 
 const meta = preview.meta({
   component: EmptyState,
-  args: { onCreateGateway: () => {} },
+  args: { onCreateGateway: () => {}, shortcutKey: 'command' as const },
   decorators: [withShellSurface],
 });
 
@@ -86,5 +86,13 @@ export const CallToAction = meta.story({
     await expect(paintedStyle(create).borderTopWidth).toBe('1px');
     await expect(paintedStyle(create).borderTopColor).toBe('rgba(0, 0, 0, 0)');
     await expect(paintedStyle(guide).borderTopColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
+});
+
+/** The same invitation on a machine that holds its shortcuts under Control. */
+export const ShortcutUnderControl = meta.story({
+  args: { shortcutKey: 'control' as const },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('or press Ctrl N')).toBeVisible();
   },
 });

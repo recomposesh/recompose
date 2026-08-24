@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { paintedStyle } from '../../../../../shared/testing';
+import { paintedBox, paintedStyle } from '../../../../../shared/testing';
 import { ToolbarStrip } from './toolbar-strip';
 
 function windowRegionOf(element: Element | null | undefined): string {
@@ -18,6 +18,7 @@ const meta = preview.meta({
     port: 51234,
     running: false,
     status: 'stopped' as const,
+    windowControls: 'leading' as const,
   },
   decorators: [
     (Story) => (
@@ -70,3 +71,21 @@ export const TakesHoldOfTheWindow = meta.story({
 
 /** The same strip in the dark scheme, where every raised control has to keep its edge. */
 export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
+
+/**
+ * The same strip on Windows, whose trailing controls stand clear of the caption buttons.
+ *
+ * @summary Windows draws close, maximize, and minimize over the trailing end of whatever the app
+ * paints on that row. The grouped controls are the last thing in the strip, so without the
+ * clearance they sit under the buttons and a press lands on the wrong one.
+ */
+export const WindowsCaptionClearsTheGroupedControls = meta.story({
+  args: { windowControls: 'trailing' as const },
+  play: async ({ canvas, canvasElement }) => {
+    const grouped = await canvas.findByRole('button', { name: 'Request log' });
+    const strip = paintedBox(canvasElement.firstElementChild?.firstElementChild);
+    const group = paintedBox(grouped.parentElement);
+
+    await expect(strip.x + strip.width - (group.x + group.width)).toBeGreaterThanOrEqual(138);
+  },
+});

@@ -44,6 +44,7 @@ BYOK
 Cabe
 cais
 Canthropic
+Cascadia
 ccmax
 ccproxy
 Cerebras
@@ -120,6 +121,7 @@ Flathub
 flatlist
 Flodesk
 fract
+frameless
 freenothing
 frontmatter
 frontmost
@@ -165,10 +167,10 @@ Kimi
 Kiritimati
 koffi
 konsole
+koromix
 Langdock
 Laravel
 Lemni
-koromix
 letrec
 librsvg
 libsecret
@@ -293,9 +295,9 @@ resvg
 revisioned
 rharkor
 rhysd
+riscv
 Rlcw
 RPOP
-riscv
 rsae
 rsvg
 safemode
@@ -306,6 +308,7 @@ Scriptable
 scrollview
 secp
 seedable
+Segoe
 selam
 semgrep
 servernum

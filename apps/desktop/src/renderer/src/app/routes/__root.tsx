@@ -31,6 +31,7 @@ import {
   engineStatesQueryOptions,
   gatewaysQueryOptions,
   settingsQueryOptions,
+  systemQueryOptions,
   updatesQueryOptions,
 } from '../../shared/api';
 import { sidebarHidden, subscribeToSidebarVisibility, useArrowWalk } from '../../shared/lib';
@@ -65,6 +66,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       context.queryClient.ensureQueryData(accountsQueryOptions),
       context.queryClient.ensureQueryData(settingsQueryOptions),
       context.queryClient.ensureQueryData(updatesQueryOptions),
+      context.queryClient.ensureQueryData(systemQueryOptions),
     ]);
   },
   component: RootLayout,

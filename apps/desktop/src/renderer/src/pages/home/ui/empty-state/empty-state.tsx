@@ -1,9 +1,15 @@
+import type { ShortcutKey } from '@recompose/contracts';
+
+import { chordLabelFor } from '@recompose/contracts';
+
 import { Icon } from '../../../../shared/ui';
 import { GhostGraph } from '../ghost-graph/ghost-graph';
 
 type EmptyStateProps = {
   /** Asked for when the person takes the invitation to make their first gateway. */
   onCreateGateway: () => void;
+  /** The modifier this machine holds its shortcuts under, which the hint prints. */
+  shortcutKey: ShortcutKey;
 };
 
 const GUIDE_URL = 'https://recompose.sh/docs';
@@ -14,7 +20,7 @@ const GUIDE_URL = 'https://recompose.sh/docs';
  * @summary Reach for it on the home surface while the app holds no gateway. It carries the one
  * act worth taking here, so nothing else on it competes for the press.
  */
-export function EmptyState({ onCreateGateway }: EmptyStateProps) {
+export function EmptyState({ onCreateGateway, shortcutKey }: EmptyStateProps) {
   return (
     <section className="absolute inset-0 flex flex-col items-center justify-center text-center">
       <GhostGraph />
@@ -33,7 +39,9 @@ export function EmptyState({ onCreateGateway }: EmptyStateProps) {
           Read the guide
         </a>
       </div>
-      <span className="mt-3.5 font-mono text-mono-value text-ink-secondary">or press ⌘ N</span>
+      <span className="mt-3.5 font-mono text-mono-value text-ink-secondary">
+        {`or press ${chordLabelFor(shortcutKey, 'N')}`}
+      </span>
     </section>
   );
 }

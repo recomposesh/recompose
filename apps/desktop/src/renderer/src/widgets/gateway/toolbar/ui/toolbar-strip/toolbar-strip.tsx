@@ -1,23 +1,20 @@
-import type { GatewayEngineState } from '@recompose/contracts';
+import type { GatewayEngineState, WindowControls } from '@recompose/contracts';
 
 import { useSyncExternalStore } from 'react';
 
 import {
   askTheCanvas,
+  barLeadInsetFor,
+  barTailInsetFor,
   connectSheetOpen,
-  logsDrawerOpen,
   openConnectSheet,
   sidebarHidden,
   subscribeToConnectSheetVisibility,
-  subscribeToLogsDrawerVisibility,
   subscribeToSidebarVisibility,
-  toggleLogsDrawer,
 } from '../../../../../shared/lib';
-import { InspectorToggle, SidebarToggle, ToolbarButton } from '../../../../../shared/ui';
+import { SidebarToggle, ToolbarButton } from '../../../../../shared/ui';
 import { AddressPill } from '../address-pill/address-pill';
-
-const GROUP =
-  'app-no-drag inline-flex h-7.25 items-center gap-0.5 rounded-control border border-line-subtle bg-surface-raised p-0.5';
+import { SurfaceControls } from '../surface-controls/surface-controls';
 
 type ToolbarStripProps = {
   address: string;
@@ -27,6 +24,8 @@ type ToolbarStripProps = {
   port: number;
   running: boolean;
   status: GatewayEngineState['status'];
+  /** Which edge of the strip the window controls float over, which its acts stand clear of. */
+  windowControls: WindowControls;
 };
 
 /**
@@ -37,15 +36,22 @@ type ToolbarStripProps = {
  * it takes itself back out, which is what leaves the gaps to move the window by and the controls
  * to press.
  */
-export function ToolbarStrip({ address, name, onRun, port, running, status }: ToolbarStripProps) {
+export function ToolbarStrip({
+  address,
+  name,
+  onRun,
+  port,
+  running,
+  status,
+  windowControls,
+}: ToolbarStripProps) {
   const away = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
-  const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
   const connectShown = useSyncExternalStore(subscribeToConnectSheetVisibility, connectSheetOpen);
 
   return (
     <div
       aria-label={name}
-      className={`app-drag flex h-toolbar items-center gap-2.5 pe-3.5 ${away ? 'ps-window-controls-width' : 'ps-3.5'}`}
+      className={`app-drag flex h-toolbar items-center gap-2.5 ${barLeadInsetFor(windowControls, away)} ${barTailInsetFor(windowControls)}`}
       role="toolbar"
     >
       <SidebarToggle where="standing" />
@@ -72,16 +78,7 @@ export function ToolbarStrip({ address, name, onRun, port, running, status }: To
         }}
         where="standing"
       />
-      <span className={GROUP}>
-        <ToolbarButton
-          expanded={logsShown}
-          glyph="panel-bottom"
-          label="Request log"
-          onPress={toggleLogsDrawer}
-          where="grouped"
-        />
-        <InspectorToggle where="grouped" />
-      </span>
+      <SurfaceControls />
     </div>
   );
 }

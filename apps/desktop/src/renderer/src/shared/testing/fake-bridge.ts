@@ -51,12 +51,19 @@ const emptyDocument: AccountsDocument = { schemaVersion: ACCOUNTS_VERSION, accou
 
 const observedSystem: SystemState = {
   fileBrowser: 'finder',
+  windowControls: 'leading',
+  shortcutKey: 'command',
   loginItem: 'available',
   loginItemEnabled: false,
   menuBarVisible: false,
   configFolder: '~/Library/Application Support/recompose',
   version: '0.3.0',
 };
+
+/** The machine a story paints on, which is macOS unless the story names another platform. */
+export function machineSeed(overrides: Partial<SystemState> = {}): SystemState {
+  return { ...observedSystem, ...overrides };
+}
 
 export type BridgeParameters = {
   accounts?: AccountsDocument;
@@ -65,6 +72,8 @@ export type BridgeParameters = {
   /** The reading every runtime look answers, standing for what the machine says this run. */
   reachability?: RuntimeReachability;
   settings?: Settings;
+  /** The machine every system read answers with, standing for the platform this run paints on. */
+  system?: SystemState;
   /** The accounts whose model lists a look can read this run, and the ids each one serves. */
   providerModels?: SeededModelLists;
   gateways?: readonly GatewayConfig[];
@@ -107,9 +116,9 @@ function settingsHandlers(seed: Settings): SettingsHandlers {
   };
 }
 
-function systemHandlers(): SystemHandlers {
+function systemHandlers(system: SystemState): SystemHandlers {
   return {
-    'system:get': async () => Promise.resolve({ ok: true, value: observedSystem }),
+    'system:get': async () => Promise.resolve({ ok: true, value: system }),
     'system:open-config-folder': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:window-band': async () => Promise.resolve({ ok: true, value: undefined }),
     'system:title-bar-double-click': async () => Promise.resolve({ ok: true, value: undefined }),
@@ -193,6 +202,7 @@ const silentRuntime: RuntimeReachability = { verdict: 'unreachable' };
 function seedsFrom(parameters: BridgeParameters) {
   return {
     settings: defaultSettings(),
+    system: observedSystem,
     accounts: emptyDocument,
     keyCheck: unreachableProvider,
     reachability: silentRuntime,
@@ -232,7 +242,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
   window.recompose = {
     ...settingsHandlers(seeds.settings),
     ...accounts,
-    ...systemHandlers(),
+    ...systemHandlers(seeds.system),
     ...gatewayHandlers(seeds.gateways, seeds.engineStates),
     ...modelListHandlers(seeds.providerModels),
     ...subscriptionHandlers(

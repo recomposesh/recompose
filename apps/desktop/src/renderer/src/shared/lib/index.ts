@@ -39,6 +39,12 @@ export {
   sidebarHidden,
   subscribeToSidebarVisibility,
 } from './visibility/sidebar-visibility';
+export {
+  bandAlignmentFor,
+  barLeadInsetFor,
+  barStandsFor,
+  barTailInsetFor,
+} from './window-chrome/window-chrome';
 export { useDisplayTick } from './use-display-tick/use-display-tick';
 export { usePanelReveal } from './use-panel-reveal';
 export { useStepTransition } from './use-step-transition';

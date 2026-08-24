@@ -1,6 +1,9 @@
 import { BrowserWindow, systemPreferences } from 'electron';
 
+import type { WindowScheme } from './title-bar-overlay';
+
 import { performTitleBarDoubleClick } from './title-bar-double-click';
+import { titleBarOverlayFor, titleBarOverlayPaintsOn } from './title-bar-overlay';
 import { windowButtonsMoveOn } from './window-buttons';
 
 function doubleClickPreference(platform: NodeJS.Platform): string | null {
@@ -39,4 +42,20 @@ export function placeWindowButtons(
   }
 
   BrowserWindow.getAllWindows()[0]?.setWindowButtonPosition(position);
+}
+
+/**
+ * Repaints the caption strip Windows draws, on the platforms that draw one.
+ *
+ * @summary Windows takes the strip colors once at construction and holds them until they are set
+ * again, so a scheme that turns while the window stands leaves light buttons on a dark bar unless
+ * this runs. `setTitleBarOverlay` exists on no other platform, so elsewhere there is nothing to
+ * repaint rather than a method to call.
+ */
+export function paintTitleBarOverlay(platform: NodeJS.Platform, scheme: WindowScheme): void {
+  if (!titleBarOverlayPaintsOn(platform)) {
+    return;
+  }
+
+  BrowserWindow.getAllWindows()[0]?.setTitleBarOverlay(titleBarOverlayFor(scheme));
 }
