@@ -18,6 +18,7 @@
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.oxlintrc.json"]
     },
     "test": {
+      "env": ["CI", "RECOMPOSE_BROWSER_TESTS"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/vitest.shared.ts"],
       "outputs": ["coverage/**"]
     }

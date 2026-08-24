@@ -47,11 +47,18 @@ const chromium = () => ({
 // entry carrying its own `test` block inherits nothing from the root one.
 const pacedForCi = process.env['CI'] === undefined ? {} : { fileParallelism: false, retry: 1 };
 
+// Three of the four projects drive a real Chromium and carry the bulk of the battery's wall time.
+// They open where a full answer is wanted rather than on every run, and coverage follows them,
+// because the thresholds only hold over a battery that ran them (ADR-0176).
+const browserSuitesOpen =
+  process.env['CI'] !== undefined || process.env['RECOMPOSE_BROWSER_TESTS'] === '1';
+
 export default defineConfig({
   test: {
     ...pacedForCi,
     coverage: {
       ...coverageDefaults,
+      enabled: browserSuitesOpen,
       include: ['src/**/*.{ts,tsx}', 'scripts/**/*.mts'],
       exclude: [
         'src/**/*.test.*',
@@ -87,34 +94,40 @@ export default defineConfig({
           ...pacedForCi,
         },
       },
-      {
-        plugins: [react()],
-        test: {
-          name: 'browser',
-          include: ['src/renderer/**/*.browser.test.{ts,tsx}'],
-          browser: chromium(),
-          setupFiles: browserSetup,
-          ...pacedForCi,
-        },
-      },
-      {
-        plugins: [storybookTest({ configDir: '.storybook' })],
-        test: {
-          name: 'storybook',
-          browser: chromium(),
-          setupFiles: browserSetup,
-          ...pacedForCi,
-        },
-      },
-      {
-        plugins: [storybookTest({ configDir: '.storybook', initialGlobals: { theme: 'dark' } })],
-        test: {
-          name: 'storybook-dark',
-          browser: chromium(),
-          setupFiles: browserSetup,
-          ...pacedForCi,
-        },
-      },
+      ...(browserSuitesOpen
+        ? [
+            {
+              plugins: [react()],
+              test: {
+                name: 'browser',
+                include: ['src/renderer/**/*.browser.test.{ts,tsx}'],
+                browser: chromium(),
+                setupFiles: browserSetup,
+                ...pacedForCi,
+              },
+            },
+            {
+              plugins: [storybookTest({ configDir: '.storybook' })],
+              test: {
+                name: 'storybook',
+                browser: chromium(),
+                setupFiles: browserSetup,
+                ...pacedForCi,
+              },
+            },
+            {
+              plugins: [
+                storybookTest({ configDir: '.storybook', initialGlobals: { theme: 'dark' } }),
+              ],
+              test: {
+                name: 'storybook-dark',
+                browser: chromium(),
+                setupFiles: browserSetup,
+                ...pacedForCi,
+              },
+            },
+          ]
+        : []),
     ],
   },
 });

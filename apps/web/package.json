@@ -10,7 +10,7 @@
     "dev": "vite dev",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:browser": "vitest run --project browser",
+    "test:browser": "RECOMPOSE_BROWSER_TESTS=1 vitest run --project browser",
     "test:output": "node scripts/check-output.mts",
     "typecheck": "tsc --noEmit"
   },
