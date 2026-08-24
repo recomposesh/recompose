@@ -184,3 +184,6 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0178](0178-the-judge-budget-is-a-persons-to-set.md)                            | The judge budget is a person's to set                                               | Accepted   | 2026-08-24 |
 | [0179](0179-the-token-count-follows-the-wire-the-answer-came-back-on.md)        | The token count follows the wire the answer came back on                            | Accepted   | 2026-08-24 |
 | [0180](0180-a-streamed-answer-states-its-counts-across-events.md)               | A streamed answer states its counts across events                                   | Accepted   | 2026-08-24 |
+| [0172](0172-the-editing-menu-stands-where-a-press-asks-to-edit.md)              | The editing menu stands where a press asks to edit                                  | Accepted   | 2026-08-24 |
+| [0173](0173-one-act-list-stands-behind-both-ways-into-a-menu.md)                | One act list stands behind both ways into a menu                                    | Accepted   | 2026-08-24 |
+| [0174](0174-the-traffic-strip-answers-a-double-click-off-its-readings.md)       | The traffic strip answers a double-click off its readings                           | Accepted   | 2026-08-24 |

@@ -5,6 +5,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { engineLogsQueryOptions } from '../../../../shared/api';
+import { closeLogsDrawer, logsDrawerOpen } from '../../../../shared/lib';
 import { TrafficFooter } from './traffic-footer';
 
 const SLUG = 'relay';
@@ -56,7 +57,22 @@ async function footerHolding(rows: readonly LogRow[], tally = { nodes: 5, wires:
 
 afterEach(() => {
   vi.useRealTimers();
+  closeLogsDrawer();
 });
+
+function doubleClick(element: Element): void {
+  element.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+}
+
+function stripIn(container: Element): Element {
+  const strip = container.querySelector('footer');
+
+  if (strip === null) {
+    throw new Error('the traffic strip never rendered');
+  }
+
+  return strip;
+}
 
 test('a gateway no client app has called reads zeros rather than hiding the strip', async () => {
   const screen = await footerHolding([]);
@@ -162,4 +178,41 @@ test('the strip stands passive, with nothing on it to press', async () => {
 
   await expect.element(screen.getByText('0 req/min')).toBeVisible();
   expect(screen.container.querySelectorAll('button, a, input, [tabindex]')).toHaveLength(0);
+});
+
+test('a double-click on the bare strip stands the request log up', async () => {
+  const screen = await footerHolding([]);
+
+  await expect.element(screen.getByText('0 req/min')).toBeVisible();
+
+  expect(logsDrawerOpen()).toBe(false);
+
+  doubleClick(stripIn(screen.container));
+
+  expect(logsDrawerOpen()).toBe(true);
+});
+
+test('a second double-click on the strip puts the request log away again', async () => {
+  const screen = await footerHolding([]);
+
+  await expect.element(screen.getByText('0 req/min')).toBeVisible();
+
+  const strip = stripIn(screen.container);
+
+  doubleClick(strip);
+  doubleClick(strip);
+
+  expect(logsDrawerOpen()).toBe(false);
+});
+
+test('a double-click on a reading leaves the log where it was, so a word still selects', async () => {
+  const screen = await footerHolding([]);
+
+  const reading = screen.getByText('0 req/min');
+
+  await expect.element(reading).toBeVisible();
+
+  doubleClick(reading.element());
+
+  expect(logsDrawerOpen()).toBe(false);
 });
