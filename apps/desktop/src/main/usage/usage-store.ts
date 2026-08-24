@@ -8,7 +8,7 @@ import type {
   UsageRetentionDays,
 } from '@recompose/contracts';
 
-import { USAGE_LEDGER_VERSION, usageLedgerSchema } from '@recompose/contracts';
+import { USAGE_LEDGER_VERSION, contextTierOf, usageLedgerSchema } from '@recompose/contracts';
 
 import { flushingWhenQuiet } from '../storage/flush-cadence';
 import { newerSchemaVersion, readJsonWithQuarantine, writeJsonAtomic } from '../storage/json-file';
@@ -34,6 +34,10 @@ export type UsageStoreDeps = {
   file: string;
   retentionDays: () => Promise<UsageRetentionDays>;
   accountKindOf: (accountId: string | undefined) => AccountKind | undefined;
+  contextThresholdsOf?: (
+    provider: string | undefined,
+    providerModel: string | undefined,
+  ) => readonly number[];
   onCorrupt?: (quarantinedPath: string) => void;
 };
 
@@ -122,7 +126,14 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
 
   return {
     accrue: (row) => {
-      desk.ledger = accrued(desk.ledger, row, deps.accountKindOf(row.accountId));
+      const thresholds = deps.contextThresholdsOf?.(row.provider, row.providerModel) ?? [];
+
+      desk.ledger = accrued(
+        desk.ledger,
+        row,
+        deps.accountKindOf(row.accountId),
+        contextTierOf(row, thresholds),
+      );
       desk.revision += 1;
       cadence.watchForQuiet();
     },

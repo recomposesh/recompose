@@ -1,10 +1,9 @@
 import type { Account, CredentialedAccount, LogRow, PlanUsageReadings } from '@recompose/contracts';
 
-import { join } from 'node:path';
-
 import type { UsageIpcDeps } from '../ipc/usage-ipc';
 import type { SecretCodec } from '../storage/safe-storage-codec';
 import type { CreditsReading } from './balances';
+import type { PriceMapDesk } from './price-map';
 import type { UsageStore } from './usage-store';
 
 import { openVault } from '../ipc/open-vault';
@@ -19,7 +18,6 @@ import {
   openBalancesDesk,
   balanceReadableAccountsIn,
 } from './balances';
-import { openPriceMap } from './price-map';
 
 type UsageWiringReach = {
   userDataPath: string;
@@ -132,36 +130,27 @@ export type UsageWiring = {
   store: UsageStore;
   retainedRows: () => readonly LogRow[];
   planUsage: () => PlanUsageReadings;
-  bundledPricesFile: string;
-  bundledRegistryPricesFile: string;
+  priceMap: PriceMapDesk;
   noteUsageTable?: (open: boolean) => void;
 };
 
 /**
  * The dependencies the usage channels answer from, composed at the app's edge.
  *
- * @summary The report reads the boot's store and the price map this opens beside it, the quota
+ * @summary The report reads the boot's store and the price desk the boot already opened, the quota
  * fold borrows the host's retained rows and the plan readings this launch has heard, and the
  * balance cards reach OpenRouter with the vaulted key of each aggregator account. The menu note
  * stands quiet until the Usage menu lands to read it.
  */
 export async function openUsageIpcDeps(wiring: UsageWiring): Promise<UsageIpcDeps> {
-  const [priceMap, balanceStore] = await Promise.all([
-    openPriceMap({
-      cacheFile: join(wiring.reach().userDataPath, 'prices.json'),
-      bundledFile: wiring.bundledPricesFile,
-      bundledRegistryFile: wiring.bundledRegistryPricesFile,
-      onCorrupt: wiring.reach().onCorrupt,
-    }),
-    openBalanceStore({
-      file: storagePathsFor(wiring.reach().userDataPath).balancesFile,
-      onCorrupt: wiring.reach().onCorrupt,
-    }),
-  ]);
+  const balanceStore = await openBalanceStore({
+    file: storagePathsFor(wiring.reach().userDataPath).balancesFile,
+    onCorrupt: wiring.reach().onCorrupt,
+  });
 
   return {
     store: wiring.store,
-    standingPrices: priceMap.standing,
+    standingPrices: wiring.priceMap.standing,
     retainedRows: wiring.retainedRows,
     planUsage: wiring.planUsage,
     balances: openBalancesDesk({

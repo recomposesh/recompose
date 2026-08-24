@@ -1,4 +1,4 @@
-import type { ModelPrice, PriceMap } from './pricing';
+import type { ContextBandPrice, ModelPrice, PriceMap } from './pricing';
 
 import { isRecord } from '../storage/json-file';
 
@@ -16,10 +16,12 @@ export async function fetchLiteLlmPrices(): Promise<unknown> {
   return answer.json();
 }
 
-function rateAt(entry: Record<string, unknown>, field: string): number | undefined {
-  const rate = entry[field];
+function finiteRate(stated: unknown): number | undefined {
+  return typeof stated === 'number' && Number.isFinite(stated) ? stated : undefined;
+}
 
-  return typeof rate === 'number' && Number.isFinite(rate) ? rate : undefined;
+function rateAt(entry: Record<string, unknown>, field: string): number | undefined {
+  return finiteRate(entry[field]);
 }
 
 function cacheRatesOf(raw: Record<string, unknown>): Partial<ModelPrice> {
@@ -30,6 +32,120 @@ function cacheRatesOf(raw: Record<string, unknown>): Partial<ModelPrice> {
     ...(cacheRead === undefined ? {} : { cacheReadPerToken: cacheRead }),
     ...(cacheWrite === undefined ? {} : { cacheWritePerToken: cacheWrite }),
   };
+}
+
+const TOKENS_A_THRESHOLD_COUNTS_IN = 1_000;
+
+/**
+ * The one field shape a context threshold is written into, and nothing else that looks like one.
+ *
+ * @summary The upstream writes several suffixes past the threshold. `_priority` and `_flex` name a
+ * service level rather than a context, and `_above_1hr` names a cache lifetime, so an exact match
+ * is what keeps a rate recompose never asks for out of the band it would otherwise price.
+ */
+const BAND_FIELD =
+  /^(input_cost_per_token|output_cost_per_token|cache_read_input_token_cost|cache_creation_input_token_cost)_above_(\d+)k_tokens$/u;
+
+const BAND_RATE_BY_FIELD: Readonly<Record<string, keyof ContextBandPrice>> = {
+  input_cost_per_token: 'inputPerToken',
+  output_cost_per_token: 'outputPerToken',
+  cache_read_input_token_cost: 'cacheReadPerToken',
+  cache_creation_input_token_cost: 'cacheWritePerToken',
+};
+
+type StatedBandRate = { threshold: number; rate: keyof ContextBandPrice; perToken: number };
+
+function bandRateIn(field: string, stated: unknown): StatedBandRate | undefined {
+  const named = BAND_FIELD.exec(field);
+  const perToken = finiteRate(stated);
+
+  if (named === null || perToken === undefined) {
+    return undefined;
+  }
+
+  const rate = BAND_RATE_BY_FIELD[String(named[1])];
+
+  return rate === undefined
+    ? undefined
+    : { threshold: Number(named[2]) * TOKENS_A_THRESHOLD_COUNTS_IN, rate, perToken };
+}
+
+function ratesByThreshold(raw: Record<string, unknown>): Map<number, Partial<ContextBandPrice>> {
+  const gathered = new Map<number, Partial<ContextBandPrice>>();
+
+  for (const [field, stated] of Object.entries(raw)) {
+    const band = bandRateIn(field, stated);
+
+    if (band !== undefined) {
+      gathered.set(band.threshold, {
+        ...gathered.get(band.threshold),
+        [band.rate]: band.perToken,
+      });
+    }
+  }
+
+  return gathered;
+}
+
+function bandFrom(contextOverTokens: number, rates: Partial<ContextBandPrice>): ContextBandPrice[] {
+  const { inputPerToken, outputPerToken } = rates;
+
+  if (inputPerToken === undefined || outputPerToken === undefined) {
+    return [];
+  }
+
+  return [{ ...rates, contextOverTokens, inputPerToken, outputPerToken }];
+}
+
+function rangeOpensAt(entry: Record<string, unknown>): number | undefined {
+  const range = entry['range'];
+
+  if (!Array.isArray(range)) {
+    return undefined;
+  }
+
+  const opensAt: unknown = range[0];
+
+  return typeof opensAt === 'number' && opensAt > 0 ? opensAt : undefined;
+}
+
+function rangeRates(entry: Record<string, unknown>): Partial<ContextBandPrice> {
+  const inputPerToken = rateAt(entry, 'input_cost_per_token');
+  const outputPerToken = rateAt(entry, 'output_cost_per_token');
+
+  return {
+    ...cacheRatesOf(entry),
+    ...(inputPerToken === undefined ? {} : { inputPerToken }),
+    ...(outputPerToken === undefined ? {} : { outputPerToken }),
+  };
+}
+
+function rangedBand(entry: unknown): ContextBandPrice[] {
+  if (!isRecord(entry)) {
+    return [];
+  }
+
+  const contextOverTokens = rangeOpensAt(entry);
+
+  return contextOverTokens === undefined ? [] : bandFrom(contextOverTokens, rangeRates(entry));
+}
+
+/**
+ * The bands one model charges above a context threshold, and nothing where it charges one rate.
+ *
+ * @summary The upstream states a band two ways and this reads both, because the models split
+ * between them and neither is being retired. A band missing either rate a turn is charged on is
+ * dropped rather than half-priced, which is the rule the base rate already follows.
+ */
+function bandsOf(raw: Record<string, unknown>): Pick<ModelPrice, 'bands'> {
+  const ranged = raw['tiered_pricing'];
+  const bands = Array.isArray(ranged)
+    ? ranged.flatMap(rangedBand)
+    : [...ratesByThreshold(raw)].flatMap(([threshold, rates]) => bandFrom(threshold, rates));
+
+  return bands.length === 0
+    ? {}
+    : { bands: bands.sort((a, b) => a.contextOverTokens - b.contextOverTokens) };
 }
 
 function pricedEntryOf(raw: unknown): ModelPrice | undefined {
@@ -44,7 +160,7 @@ function pricedEntryOf(raw: unknown): ModelPrice | undefined {
     return undefined;
   }
 
-  return { inputPerToken, outputPerToken, ...cacheRatesOf(raw) };
+  return { inputPerToken, outputPerToken, ...cacheRatesOf(raw), ...bandsOf(raw) };
 }
 
 /**

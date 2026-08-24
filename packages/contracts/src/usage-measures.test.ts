@@ -5,6 +5,7 @@ import type { UsageMeasures } from './usage';
 
 import {
   accruedMeasures,
+  contextTierOf,
   emptyUsageMeasures,
   rowUsageTuple,
   summedUsageMeasures,
@@ -41,6 +42,13 @@ const raisedByTheGateway: LogRow = {
   clientKey,
   failure: 'The gateway could not reach the target.',
 };
+
+function aRowSized(prompt: Partial<NonNullable<LogRow['usage']>>): LogRow {
+  return {
+    ...served,
+    usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, ...prompt },
+  };
+}
 
 const alreadyHeld: UsageMeasures = {
   requests: 5,
@@ -185,5 +193,43 @@ describe('the domain tuple one row accrues under', () => {
       providerModel: 'claude-sonnet-4-5',
       accountId: 'work',
     });
+  });
+});
+
+describe('the context tier one request fell in', () => {
+  test('a prompt under every threshold the model publishes falls in no tier', () => {
+    expect(contextTierOf(aRowSized({ input: 100_000 }), [200_000, 500_000])).toBeUndefined();
+  });
+
+  test('a prompt over one threshold names that threshold', () => {
+    expect(contextTierOf(aRowSized({ input: 250_000 }), [200_000, 500_000])).toBe(200_000);
+  });
+
+  test('a prompt over two thresholds names the higher of them', () => {
+    expect(contextTierOf(aRowSized({ input: 900_000 }), [200_000, 500_000])).toBe(500_000);
+  });
+
+  test('the prompt counts every token the model read, cached ones included', () => {
+    const spread = aRowSized({ input: 100_000, cacheRead: 90_000, cacheWrite: 20_000 });
+
+    expect(contextTierOf(spread, [200_000])).toBe(200_000);
+  });
+
+  test('what the model wrote back never counts toward the prompt it read', () => {
+    const answered = aRowSized({ input: 150_000, output: 90_000, reasoning: 40_000 });
+
+    expect(contextTierOf(answered, [200_000])).toBeUndefined();
+  });
+
+  test('a prompt sitting exactly on a threshold stays under it, the way a vendor quotes one', () => {
+    expect(contextTierOf(aRowSized({ input: 200_000 }), [200_000])).toBeUndefined();
+  });
+
+  test('a model publishing no threshold puts every prompt in no tier', () => {
+    expect(contextTierOf(aRowSized({ input: 5_000_000 }), [])).toBeUndefined();
+  });
+
+  test('a row that reported no tokens at all falls in no tier', () => {
+    expect(contextTierOf({ ...aRowSized({}), usage: undefined }, [200_000])).toBeUndefined();
   });
 });

@@ -22,6 +22,11 @@ const sonnetPriced = {
   },
 };
 
+/** The bundle's own model at a different rate, so a refresh that landed shows in one lookup. */
+export const sonnetRepriced = {
+  'claude-sonnet-4-5': { input_cost_per_token: 0.000009, output_cost_per_token: 0.000045 },
+};
+
 /** A second map that shares no model with the bundle, so a swap is visible in one lookup. */
 export const miniPriced = {
   'gpt-5-mini': { input_cost_per_token: 2.5e-7, output_cost_per_token: 0.000002 },

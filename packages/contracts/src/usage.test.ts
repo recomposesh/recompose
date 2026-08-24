@@ -11,6 +11,7 @@ import {
   usageRangeSchema,
   usageReportSchema,
   usageSearchRangeSchema,
+  usageTupleSchema,
 } from './usage';
 
 const hourStart = 1_754_600_400_000;
@@ -235,5 +236,25 @@ describe('the currency a balance is counted in', () => {
     expect(() =>
       balanceReadingSchema.parse({ remaining: 40, currency: 'dollars', readAt: 1_700_000_000_000 }),
     ).toThrow();
+  });
+});
+
+describe('the context tier a bucket accrues under', () => {
+  const base = { gateway: 'relay', provider: 'opencode-zen', providerModel: 'gpt-5.5' };
+
+  test('a bucket for long-context traffic names the threshold its requests rose above', () => {
+    expect(usageTupleSchema.parse({ ...base, contextOverTokens: 272_000 })).toMatchObject({
+      contextOverTokens: 272_000,
+    });
+  });
+
+  test('a bucket naming no threshold is ordinary traffic, which is every stored bucket so far', () => {
+    expect(usageTupleSchema.parse(base).contextOverTokens).toBeUndefined();
+  });
+
+  test('a threshold that is not a whole count of tokens is refused', () => {
+    for (const nonsense of [-1, 1.5, 'many']) {
+      expect(() => usageTupleSchema.parse({ ...base, contextOverTokens: nonsense })).toThrow();
+    }
   });
 });

@@ -10,6 +10,7 @@ import type { SpendGrantContext } from '../engine-host/spend-grant';
 import type { StorageWatchers } from '../storage/storage-watchers';
 import type { CredentialCustody } from '../subscriptions/credential-custody';
 import type { PlanUsageStore } from '../usage/plan-usage-store';
+import type { PriceMapDesk } from '../usage/price-map';
 import type { UsageStore } from '../usage/usage-store';
 
 import { createEngineHost } from '../engine-host/engine-host';
@@ -41,10 +42,14 @@ import { subscriptionCredentialStore } from '../subscriptions/subscription-crede
 import { machineCustody } from '../subscriptions/subscriptions-wiring';
 import { openAccountKinds } from '../usage/account-kinds';
 import { openPlanUsageStore } from '../usage/plan-usage-store';
+import { openPriceMap } from '../usage/price-map';
+import { contextThresholdsIn } from '../usage/pricing';
 import { openUsageStore } from '../usage/usage-store';
 
 export type StoredBootDeps = {
   legacyUserDataPath: string;
+  bundledPricesFile: string;
+  bundledRegistryPricesFile: string;
   platform: NodeJS.Platform;
   recomposeHome: () => string;
   onCorrupt: (quarantinedPath: string) => void;
@@ -60,6 +65,7 @@ export type StoredBoot = {
   engineHost: EngineHost;
   storageWatchers: StorageWatchers;
   usageStore: UsageStore;
+  priceMap: PriceMapDesk;
   planUsage: () => PlanUsageReadings;
   serveStoredGateways: () => void;
   close: () => void;
@@ -81,11 +87,13 @@ function closeInQuitOrder(
   servingMemory: ServingMemory,
   storageWatchers: StorageWatchers,
   engineHost: EngineHost,
+  priceMap: PriceMapDesk,
 ): () => void {
   return () => {
     servingMemory.close();
     storageWatchers.close();
     engineHost.dispose();
+    priceMap.dispose();
   };
 }
 
@@ -99,20 +107,30 @@ function closeInQuitOrder(
  * IPC channel already answers by the time the first gateway stands up.
  */
 async function openUsageLedger(deps: StoredBootDeps) {
-  const accountKinds = await openAccountKinds({
-    file: join(deps.recomposeHome(), 'accounts.json'),
-    onCorrupt: deps.onCorrupt,
-  });
+  const [accountKinds, priceMap] = await Promise.all([
+    openAccountKinds({
+      file: join(deps.recomposeHome(), 'accounts.json'),
+      onCorrupt: deps.onCorrupt,
+    }),
+    openPriceMap({
+      cacheFile: join(deps.recomposeHome(), 'prices.json'),
+      bundledFile: deps.bundledPricesFile,
+      bundledRegistryFile: deps.bundledRegistryPricesFile,
+      onCorrupt: deps.onCorrupt,
+    }),
+  ]);
   const usageStore = await openUsageStore({
     file: join(deps.recomposeHome(), 'usage.json'),
     retentionDays: async () =>
       (await loadSettingsFile(storagePathsFor(deps.recomposeHome()).settingsFile, deps.onCorrupt))
         .usageRetentionDays,
     accountKindOf: accountKinds.kindOf,
+    contextThresholdsOf: (provider, providerModel) =>
+      contextThresholdsIn(priceMap.standing().prices, provider, providerModel),
     onCorrupt: deps.onCorrupt,
   });
 
-  return { accountKinds, usageStore };
+  return { accountKinds, usageStore, priceMap };
 }
 
 /**
@@ -192,7 +210,7 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
   await repairedStore(deps);
 
   const custody = machineCustody(deps.recomposeHome());
-  const { accountKinds, usageStore } = await openUsageLedger(deps);
+  const { accountKinds, usageStore, priceMap } = await openUsageLedger(deps);
   const stores: WritingStores = {
     usage: usageStore,
     planUsage: await openPlanUsageStore({
@@ -222,6 +240,7 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
     engineHost,
     storageWatchers,
     usageStore,
+    priceMap,
     planUsage: () => stores.planUsage.read(Date.now()),
     serveStoredGateways: () => {
       if (boot.settings.startGatewaysOnLaunch === true) {
@@ -232,6 +251,6 @@ export async function bootFromStoredState(deps: StoredBootDeps): Promise<StoredB
 
       startRememberedGateways(engineHost, deps.recomposeHome(), deps.onCorrupt, rememberedServing);
     },
-    close: closeInQuitOrder(servingMemory, storageWatchers, engineHost),
+    close: closeInQuitOrder(servingMemory, storageWatchers, engineHost, priceMap),
   };
 }

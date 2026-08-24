@@ -52,6 +52,22 @@ export async function anOpenStore(
   });
 }
 
+/** The same store for a story about the thresholds a served model publishes. */
+export async function aStoreOverThresholds(
+  file: string,
+  contextThresholdsOf: (
+    provider: string | undefined,
+    providerModel: string | undefined,
+  ) => readonly number[],
+): Promise<UsageStore> {
+  return openUsageStore({
+    file,
+    retentionDays: async () => Promise.resolve(30),
+    accountKindOf: () => 'api-key',
+    contextThresholdsOf,
+  });
+}
+
 export async function storedLedger(file: string): Promise<UsageLedger> {
   return usageLedgerSchema.parse(JSON.parse(await readFile(file, 'utf8')));
 }

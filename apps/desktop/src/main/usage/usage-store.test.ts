@@ -8,6 +8,7 @@ import { UsageNewerSchemaError } from './usage-store';
 import {
   anOpenStore,
   aStoreFile,
+  aStoreOverThresholds,
   eventually,
   NOW,
   served,
@@ -219,5 +220,38 @@ describe('the prune', () => {
     await reopened.flushNow();
 
     expect((await storedLedger(file)).buckets).toHaveLength(1);
+  });
+});
+
+describe('the thresholds a store stamps a bucket with', () => {
+  const aLongPrompt = { input: 300_000, output: 200, cacheRead: 0, cacheWrite: 0, reasoning: 0 };
+
+  test('a long prompt lands under the threshold its own model publishes', async () => {
+    const store = await aStoreOverThresholds(await aStoreFile(), () => [272_000]);
+
+    store.accrue({ ...served('long', NOW), usage: aLongPrompt });
+
+    expect(store.heldBuckets().at(0)?.tuple.contextOverTokens).toBe(272_000);
+  });
+
+  test('a model publishing no threshold lands its longest prompt in the ordinary bucket', async () => {
+    const store = await aStoreOverThresholds(await aStoreFile(), () => []);
+
+    store.accrue({ ...served('long', NOW), usage: aLongPrompt });
+
+    expect(store.heldBuckets().at(0)?.tuple.contextOverTokens).toBeUndefined();
+  });
+
+  test('the thresholds are asked for about the model the request actually reached', async () => {
+    const asked: string[] = [];
+    const store = await aStoreOverThresholds(await aStoreFile(), (provider, providerModel) => {
+      asked.push(`${provider ?? ''}/${providerModel ?? ''}`);
+
+      return [];
+    });
+
+    store.accrue({ ...served('long', NOW), usage: aLongPrompt });
+
+    expect(asked).toEqual(['anthropic/claude-sonnet-4-5']);
   });
 });

@@ -84,11 +84,45 @@ function servedLevels(row: LogRow, accountKind: AccountKind | undefined): Partia
   };
 }
 
-export function rowUsageTuple(row: LogRow, accountKind?: AccountKind): UsageTuple {
+export function rowUsageTuple(
+  row: LogRow,
+  accountKind?: AccountKind,
+  contextOverTokens?: number,
+): UsageTuple {
   return {
     gateway: row.gateway,
     ...(row.virtualModel === undefined ? {} : { virtualModel: row.virtualModel }),
     ...(row.provider === undefined ? {} : { provider: row.provider }),
     ...servedLevels(row, accountKind),
+    ...(contextOverTokens === undefined ? {} : { contextOverTokens }),
   };
+}
+
+/**
+ * The prompt one request handed the model, which is every token it read.
+ *
+ * @summary Cached tokens count: a vendor quoting a long-context rate measures the context it
+ * loaded, not the share of it that arrived fresh. What the model wrote back is not part of the
+ * prompt it read, so output and reasoning stay out however large they run.
+ */
+function promptTokensOf(row: LogRow): number {
+  const measured = row.usage;
+
+  return measured === undefined ? 0 : measured.input + measured.cacheRead + measured.cacheWrite;
+}
+
+/**
+ * The context threshold one request rose above, or nothing where it stayed under every one.
+ *
+ * @summary The highest threshold wins, because a vendor publishing two of them charges the rate of
+ * the band a prompt lands in rather than the first one it passed. A prompt sitting exactly on a
+ * threshold stays under it, which is how every vendor quotes the band: above 200K, not from it.
+ */
+export function contextTierOf(row: LogRow, thresholds: readonly number[]): number | undefined {
+  const prompt = promptTokensOf(row);
+
+  return thresholds
+    .filter((threshold) => prompt > threshold)
+    .sort((a, b) => b - a)
+    .at(0);
 }

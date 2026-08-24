@@ -56,6 +56,8 @@ Prices come from the public LiteLLM price map, beside the models.dev registry fo
 
 Where a gateway resells a model under its maker's name, the gateway's own rate is the one used. An OpenAI model served through OpenCode Zen prices at Zen's rate, not OpenAI's own.
 
+Several models charge more above a long context. recompose records which side of that threshold each request fell on as the request lands. A long prompt then costs the band rate rather than the base rate. The prompt counts every token the model read, cached ones included, and what the model wrote back never counts toward it.
+
 Spend splits by account kind and the two halves never merge:
 
 - **API keys and aggregators**: a billed estimate, from the tokens the provider reported at list price.

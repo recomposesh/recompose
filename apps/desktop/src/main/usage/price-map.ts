@@ -92,8 +92,21 @@ function cachedPayloadsIn(cached: unknown): CachedPayloads {
   return { payload: cached['payload'], registryPayload: cached['registryPayload'], fetchedAt };
 }
 
+/**
+ * The prices one vendored snapshot holds, and none where the disk cannot hand it over.
+ *
+ * @summary The desk opens during boot, so a snapshot missing from a build or unreadable on the
+ * disk would otherwise take the whole launch down over prices. A layer that reads as none leaves
+ * its models surfacing as price misses, which the usage screen already says out loud.
+ */
 async function bundledPricesIn(file: string, read: ReadPrices): Promise<PriceMap> {
-  return read(JSON.parse(await readFile(file, 'utf8'))) ?? new Map();
+  try {
+    return read(JSON.parse(await readFile(file, 'utf8'))) ?? new Map();
+  } catch (unreadable) {
+    console.error(`recompose could not read the bundled prices at ${file}.`, unreadable);
+
+    return new Map();
+  }
 }
 
 type OpenedPrices = { layers: PriceLayers; stored: StoredPayloads; provenance: PricingProvenance };
@@ -106,6 +119,17 @@ async function layersOver(deps: PriceMapDeps, synced: SyncedLayers): Promise<Pri
     registry:
       synced.registry ?? (await bundledPricesIn(deps.bundledRegistryFile, openCodeZenPricesFrom)),
   };
+}
+
+/**
+ * Whether the standing copy is old enough that a boot should ask for a fresh one.
+ *
+ * @summary The day-long timer only fires in a session that runs a day, and a desktop launch rarely
+ * does, so without this the vendored snapshot serves every session it opens. Asking on the cadence
+ * rather than on every launch keeps a person who opens the app ten times from fetching ten times.
+ */
+function dueForRefresh(provenance: PricingProvenance, now: number): boolean {
+  return provenance.fetchedAt === undefined || now - provenance.fetchedAt >= REFRESH_EVERY_MS;
 }
 
 function provenanceOf(
@@ -232,11 +256,18 @@ export async function openPriceMap(deps: PriceMapDeps): Promise<PriceMapDesk> {
     void refreshNow();
   }, REFRESH_EVERY_MS);
 
+  const catchUp = dueForRefresh(standing.provenance, Date.now())
+    ? setTimeout(() => {
+        void refreshNow();
+      }, 0)
+    : undefined;
+
   return {
     standing: () => standing,
     refreshNow,
     dispose: () => {
       clearInterval(beat);
+      clearTimeout(catchUp);
     },
   };
 }

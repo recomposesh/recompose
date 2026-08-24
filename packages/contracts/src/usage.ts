@@ -61,7 +61,9 @@ export type UsageReportAsk = z.infer<typeof usageReportAskSchema>;
  * @summary The tuple is the whole domain hierarchy, so every group-by the explorer offers folds
  * out of the same buckets. A gateway-raised request reached no account, which is why everything
  * past the gateway stays optional, and `accountKind` is stamped at accrual time so a cost basis
- * survives the account's later deletion or rename.
+ * survives the account's later deletion or rename. `contextOverTokens` is stamped there too,
+ * because the threshold a prompt rose above is a fact about one request, and an hour of them
+ * summed together can no longer answer it.
  */
 export const usageTupleSchema = z.strictObject({
   gateway: gatewaySlugSchema,
@@ -70,6 +72,7 @@ export const usageTupleSchema = z.strictObject({
   providerModel: nonBlankString.optional(),
   accountId: nonBlankString.optional(),
   accountKind: accountKindSchema.optional(),
+  contextOverTokens: wholeCount.optional(),
 });
 
 export type UsageTuple = z.infer<typeof usageTupleSchema>;

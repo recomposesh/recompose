@@ -1,4 +1,4 @@
-import type { ModelPrice, PriceMap } from './pricing';
+import type { ContextBandPrice, ModelPrice, PriceMap } from './pricing';
 
 import { isRecord } from '../storage/json-file';
 
@@ -27,6 +27,10 @@ export async function fetchOpenCodeZenPrices(): Promise<unknown> {
   return answer.json();
 }
 
+function plainRecord(value: unknown): Record<string, unknown> | undefined {
+  return isRecord(value) && !Array.isArray(value) ? value : undefined;
+}
+
 function rateAt(cost: Record<string, unknown>, field: string): number | undefined {
   const rate = cost[field];
 
@@ -43,6 +47,61 @@ function cacheRatesOf(cost: Record<string, unknown>): Partial<ModelPrice> {
     ...(cacheRead === undefined ? {} : { cacheReadPerToken: cacheRead }),
     ...(cacheWrite === undefined ? {} : { cacheWritePerToken: cacheWrite }),
   };
+}
+
+function wholeTokenCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : undefined;
+}
+
+function contextThresholdOf(entry: Record<string, unknown>): number | undefined {
+  const named = plainRecord(entry['tier']);
+
+  return named?.['type'] === 'context' ? wholeTokenCount(named['size']) : undefined;
+}
+
+function bandOf(entry: unknown): ContextBandPrice | undefined {
+  const stated = plainRecord(entry);
+
+  if (stated === undefined) {
+    return undefined;
+  }
+
+  const contextOverTokens = contextThresholdOf(stated);
+  const inputPerToken = rateAt(stated, 'input');
+  const outputPerToken = rateAt(stated, 'output');
+
+  if (
+    contextOverTokens === undefined ||
+    inputPerToken === undefined ||
+    outputPerToken === undefined
+  ) {
+    return undefined;
+  }
+
+  return { contextOverTokens, inputPerToken, outputPerToken, ...cacheRatesOf(stated) };
+}
+
+/**
+ * The bands one model charges above a context threshold, and nothing where it charges one rate.
+ *
+ * @summary The registry lists a band for anything a vendor prices in steps, so only a band typed
+ * `context` is read here. A batch or a service band changes the rate for a reason recompose never
+ * asks for, and pricing it as long context would charge the wrong number twice over.
+ */
+function bandsOf(cost: Record<string, unknown>): Pick<ModelPrice, 'bands'> {
+  const stated = cost['tiers'];
+
+  if (!Array.isArray(stated)) {
+    return {};
+  }
+
+  const bands = stated.flatMap((entry): ContextBandPrice[] => {
+    const band = bandOf(entry);
+
+    return band === undefined ? [] : [band];
+  });
+
+  return bands.length === 0 ? {} : { bands };
 }
 
 /**
@@ -65,11 +124,7 @@ function pricedModel(entry: unknown): ModelPrice | undefined {
     return undefined;
   }
 
-  return { inputPerToken, outputPerToken, ...cacheRatesOf(cost) };
-}
-
-function plainRecord(value: unknown): Record<string, unknown> | undefined {
-  return isRecord(value) && !Array.isArray(value) ? value : undefined;
+  return { inputPerToken, outputPerToken, ...cacheRatesOf(cost), ...bandsOf(cost) };
 }
 
 function modelsOfVendor(payload: unknown): Record<string, unknown> | undefined {
