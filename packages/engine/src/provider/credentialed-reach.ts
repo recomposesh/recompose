@@ -2,7 +2,7 @@ import type { SpendGrant } from '@recompose/contracts';
 
 import { proxyFetchBoundMs } from '@recompose/contracts';
 
-import type { Crossing, JsonObject } from '../gateway-wire';
+import type { Crossing, JsonObject, ProviderDialect } from '../gateway-wire';
 import type { PluginHost } from '../plugin-host';
 import type { AIStudioRelay, RelayRequest } from './ai-studio-relay';
 
@@ -93,19 +93,30 @@ async function providerAnswer(
   return observeXAIReplay(crossing, filtered);
 }
 
+/**
+ * The dialect this turn is spoken and answered in, as the turn itself settled it.
+ *
+ * @summary The wire a turn takes is chosen upstream of this call, because a vendor naming its wire
+ * per model cannot be read off the vendor alone. Falling back on the vendor's own table keeps a
+ * caller that never resolved a wire reading exactly as it always did.
+ */
+function turnDialect(crossing: Crossing, grant: ResolvedGrant): ProviderDialect {
+  if (crossing.upstreamDialect !== undefined) return crossing.upstreamDialect;
+
+  return grant.spend.custody === 'credentialed'
+    ? credentialedDialect(grant.spend.provider, crossing.dialect)
+    : 'chat-completions';
+}
+
 async function interceptedRequest(
   crossing: Crossing,
   grant: ResolvedGrant,
   prepared: RelayRequest,
   plugins?: PluginHost,
 ): Promise<{ bodyChanged: boolean; request: RelayRequest } | Response> {
-  const dialect =
-    grant.spend.custody === 'credentialed'
-      ? credentialedDialect(grant.spend.provider, crossing.dialect)
-      : 'chat-completions';
   const intercepted = await afterAuthPlugins(
     crossing,
-    dialect,
+    turnDialect(crossing, grant),
     headerMap(prepared.headers),
     new TextEncoder().encode(prepared.body),
     plugins,
@@ -221,10 +232,7 @@ async function reachedOnce(
     provider: spend.custody === 'credentialed' ? spend.provider : 'open',
     model: crossing.providerModel,
     accountId: spend.custody === 'credentialed' ? spend.accountId : undefined,
-    dialect:
-      spend.custody === 'credentialed'
-        ? credentialedDialect(spend.provider, crossing.dialect)
-        : 'chat-completions',
+    dialect: turnDialect(crossing, grant),
     method: request.method,
     requestId: providerRequestId(new Headers(request.headers)),
   });

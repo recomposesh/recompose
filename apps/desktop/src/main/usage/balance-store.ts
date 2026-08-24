@@ -89,7 +89,9 @@ export async function openBalanceStore(deps: BalanceStoreDeps): Promise<BalanceS
   };
 
   const cadence = flushingWhenQuiet(() => {
-    void flush();
+    flush().catch((failure: unknown) => {
+      console.error(`recompose could not write the kept balances to ${deps.file}.`, failure);
+    });
   });
 
   return {

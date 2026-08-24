@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { UsageSearch } from './usage-search';
 
-import { filteredBuckets, groupedBy, memberNames } from './usage-groups';
+import { ABSENT_MEMBER_KEY, filteredBuckets, groupedBy, memberNames } from './usage-groups';
 
 const HOUR = 3_600_000;
 
@@ -102,7 +102,44 @@ describe('the members a filter menu lists', () => {
     ]);
   });
 
-  it('leaves out traffic that never reached the dimension', () => {
-    expect(memberNames([bucket({ gateway: 'relay' }, 2)], 'account')).toEqual([]);
+  it('lists traffic that never reached the dimension under the absent member', () => {
+    expect(memberNames([bucket({ gateway: 'relay' }, 2)], 'account')).toEqual([
+      { key: ABSENT_MEMBER_KEY, requests: 2 },
+    ]);
+  });
+
+  it('lists the absent member beside the named ones it stands with', () => {
+    const window = [...served, bucket({ gateway: 'relay' }, 20)];
+
+    expect(memberNames(window, 'account').map((member) => member.key)).toEqual([
+      ABSENT_MEMBER_KEY,
+      'k1',
+      'g1',
+    ]);
+  });
+});
+
+describe('narrowing onto traffic that reached no account', () => {
+  const refused = bucket({ gateway: 'relay' }, 4);
+
+  it('keeps only the buckets that reached none while the absent member stands alone', () => {
+    const kept = filteredBuckets([...served, refused], viewing({ providers: [ABSENT_MEMBER_KEY] }));
+
+    expect(kept).toEqual([refused]);
+  });
+
+  it('keeps a named account beside the absent member when both are picked', () => {
+    const kept = filteredBuckets(
+      [...served, refused],
+      viewing({ providers: [ABSENT_MEMBER_KEY, 'g1'] }),
+    );
+
+    expect(kept.map((one) => one.tuple.accountId)).toEqual(['g1', undefined]);
+  });
+
+  it('leaves the refused traffic out while only a named account stands', () => {
+    const kept = filteredBuckets([...served, refused], viewing({ providers: ['g1'] }));
+
+    expect(kept).toHaveLength(1);
   });
 });

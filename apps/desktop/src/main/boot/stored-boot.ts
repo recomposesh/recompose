@@ -115,6 +115,16 @@ async function openUsageLedger(deps: StoredBootDeps) {
   return { accountKinds, usageStore };
 }
 
+/**
+ * @summary A gateway coming up or going down is a good moment to write, and nobody waits on the
+ * write, so a disk that refused it has to say so here or the refusal reaches no one at all.
+ */
+function flushedInTheBackground(flushing: Promise<void>, named: string): void {
+  flushing.catch((failure: unknown) => {
+    console.error(`recompose could not write the ${named} as a gateway changed state.`, failure);
+  });
+}
+
 function watchEngineStates(
   engineHost: EngineHost,
   deps: StoredBootDeps,
@@ -125,8 +135,8 @@ function watchEngineStates(
   engineHost.onStatesChanged(deps.repaintStates);
   engineHost.onStatesChanged(servingMemory.keep);
   engineHost.onStatesChanged(() => {
-    void stores.usage.flushNow();
-    void stores.planUsage.flushNow();
+    flushedInTheBackground(stores.usage.flushNow(), 'usage ledger');
+    flushedInTheBackground(stores.planUsage.flushNow(), 'plan readings');
   });
   deps.repaintStates(engineHost.states());
 }

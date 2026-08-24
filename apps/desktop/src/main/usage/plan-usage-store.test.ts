@@ -1,6 +1,6 @@
 import type { PlanUsageReading, PlanUsageWindow } from '@recompose/contracts';
 
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -48,7 +48,7 @@ async function storedDocument(file: string): Promise<unknown> {
   return held;
 }
 
-async function eventually<Value>(read: () => Promise<Value>): Promise<Value> {
+async function eventually<Value>(read: () => Promise<Value> | Value): Promise<Value> {
   for (let breath = 0; breath < 50; breath += 1) {
     try {
       return await read();
@@ -227,5 +227,53 @@ describe('the document on disk', () => {
     const store = await anOpenStore(file);
 
     expect(store.read(NOW)).toEqual({});
+  });
+});
+
+describe('a write the disk refused', () => {
+  async function blocking(file: string): Promise<() => Promise<void>> {
+    await mkdir(file);
+
+    return async () => rm(file, { recursive: true });
+  }
+
+  test('the readings wait to be written again rather than being dropped', async () => {
+    const file = await aStoreFile();
+    const store = await anOpenStore(file);
+    const unblock = await blocking(file);
+
+    store.hold({ work: readingFor('work', [fiveHours(0.5, NOW + HOUR)]) });
+    await vi.advanceTimersByTimeAsync(3_000);
+    await unblock();
+    await store.flushNow();
+
+    expect(await storedDocument(file)).toMatchObject({ schemaVersion: PLAN_USAGE_VERSION });
+  });
+
+  test('a refused write is said out loud rather than swallowed', async () => {
+    const said: string[] = [];
+    const spoken = vi.spyOn(console, 'error').mockImplementation((sentence: unknown) => {
+      if (typeof sentence === 'string') {
+        said.push(sentence);
+      }
+    });
+    const file = await aStoreFile();
+    const store = await anOpenStore(file);
+
+    await blocking(file);
+    store.hold({ work: readingFor('work', [fiveHours(0.5, NOW + HOUR)]) });
+    await vi.advanceTimersByTimeAsync(3_000);
+
+    const reported = await eventually(() => {
+      if (said.length === 0) {
+        throw new Error('the refused write has not been reported yet');
+      }
+
+      return said.join(' ');
+    });
+
+    expect(reported).toContain(file);
+
+    spoken.mockRestore();
   });
 });

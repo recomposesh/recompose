@@ -88,12 +88,14 @@ export async function openPlanUsageStore(deps: PlanUsageStoreDeps): Promise<Plan
       return;
     }
 
-    dirty = false;
     await writeJsonAtomic(deps.file, { schemaVersion: PLAN_USAGE_VERSION, readings: held });
+    dirty = false;
   };
 
   const cadence = flushingWhenQuiet(() => {
-    void flush();
+    flush().catch((failure: unknown) => {
+      console.error(`recompose could not write the plan readings to ${deps.file}.`, failure);
+    });
   });
 
   return {

@@ -69,6 +69,10 @@ async function loadLedger(deps: UsageStoreDeps): Promise<UsageLedger> {
  * `flushNow` for quit and interrupt. The prune runs on load and on every flush against the live
  * retention setting, so a shortened window empties on the next write rather than waiting for a
  * restart. Reports answer from memory and never touch the disk.
+ *
+ * A write the disk refuses leaves the ledger dirty and the memory unpruned, so the next flush
+ * carries everything the failed one owed rather than a launch's traffic disappearing on one bad
+ * write, and the refusal is written down rather than dropped into a promise nobody reads.
  */
 export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> {
   const retentionEdge = async () => Date.now() - (await deps.retentionDays()) * DAY_MS;
@@ -85,13 +89,17 @@ export async function openUsageStore(deps: UsageStoreDeps): Promise<UsageStore> 
       return;
     }
 
-    ledger = prunedBefore(ledger, await retentionEdge());
+    const written = prunedBefore(ledger, await retentionEdge());
+
+    await writeJsonAtomic(deps.file, written);
+    ledger = written;
     dirty = false;
-    await writeJsonAtomic(deps.file, ledger);
   };
 
   const cadence = flushingWhenQuiet(() => {
-    void flush();
+    flush().catch((failure: unknown) => {
+      console.error(`recompose could not write the usage ledger to ${deps.file}.`, failure);
+    });
   });
 
   return {
