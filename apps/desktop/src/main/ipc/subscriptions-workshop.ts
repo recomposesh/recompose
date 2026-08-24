@@ -14,7 +14,7 @@ import type { SubscriptionHomes } from '../subscriptions/subscription-homes';
 import type { Clock } from '../subscriptions/subscription-sign-in';
 
 import { amendAccountsFile, loadAccountsFile } from '../storage/accounts-store';
-import { subscriptionViews } from '../subscriptions/subscription-views';
+import { isSubscription, subscriptionViews } from '../subscriptions/subscription-views';
 import { reportTools } from '../subscriptions/tool-presence';
 import { ipcFailure } from './storage-envelope';
 
@@ -71,6 +71,31 @@ export type Workshop = {
 
 export function refusalFailure(outcome: CustodyOutcome & { ok: false }) {
   return ipcFailure(outcome.code, outcome.message);
+}
+
+/**
+ * The account already standing for one address under one plan, where one stands.
+ *
+ * @summary A sign-in this app ran and an adoption both make no config home, so the identity
+ * records a tool's sign-in leaves behind are not there to match on. The stored label carries the
+ * address instead, which is what keeps one address standing as one account however it arrived. A
+ * plan that names nobody matches nothing, because two anonymous rows may be two real accounts and
+ * recompose has no way to tell.
+ */
+export function standingUnderTheAddress(
+  accounts: AccountsDocument,
+  provider: SubscriptionProviderId,
+  address: string | undefined,
+): string | null {
+  if (address === undefined) {
+    return null;
+  }
+
+  const held = accounts.accounts.find(
+    (row) => isSubscription(row) && row.provider === provider && row.label === address,
+  );
+
+  return held?.id ?? null;
 }
 
 export async function readAccounts(shop: Workshop): Promise<AccountsDocument> {

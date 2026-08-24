@@ -1,8 +1,4 @@
-import type {
-  AccountsDocument,
-  SubscriptionAccount,
-  SubscriptionProviderId,
-} from '@recompose/contracts';
+import type { SubscriptionAccount, SubscriptionProviderId } from '@recompose/contracts';
 
 import { randomUUID } from 'node:crypto';
 
@@ -16,36 +12,21 @@ import {
 } from '../subscriptions/machine-credential';
 import { machineStoreFor } from '../subscriptions/machine-store';
 import { subscriptionHomes } from '../subscriptions/subscription-homes';
-import { heldUnderTheAddress, isSubscription } from '../subscriptions/subscription-views';
+import { heldUnderTheAddress } from '../subscriptions/subscription-views';
 import { storagePathsFor } from './storage-context';
 import { ipcFailure } from './storage-envelope';
-import { readAccounts, recordTheAccount, refusalFailure, viewsOf } from './subscriptions-workshop';
+import {
+  readAccounts,
+  recordTheAccount,
+  refusalFailure,
+  standingUnderTheAddress,
+  viewsOf,
+} from './subscriptions-workshop';
 
 export type SubscriptionsMachineIpcHandlers = Pick<
   IpcHandlers,
   'subscriptions:detect' | 'subscriptions:adopt'
 >;
-
-/**
- * @summary Adoption makes no config home, so the identity records a sign-in leaves behind are not
- * there to match on. The stored label carries the address instead, which is what keeps one address
- * standing as one account however it arrived.
- */
-function standingUnderTheAddress(
-  accounts: AccountsDocument,
-  provider: SubscriptionProviderId,
-  address: string | undefined,
-): string | null {
-  if (address === undefined) {
-    return null;
-  }
-
-  const held = accounts.accounts.find(
-    (row) => isSubscription(row) && row.provider === provider && row.label === address,
-  );
-
-  return held?.id ?? null;
-}
 
 function storeOn(shop: Workshop, provider: SubscriptionProviderId) {
   return machineStoreFor(provider, shop.ctx.machine);

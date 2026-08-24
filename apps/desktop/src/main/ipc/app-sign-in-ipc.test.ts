@@ -1,64 +1,11 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import type { SubscriptionsIpcContext } from './subscriptions-ipc';
-
 import { forgetPendingDeviceSignIns } from '../subscriptions/device-sign-in';
 import { subscriptionCredentialStore } from '../subscriptions/subscription-credential-store';
 import { quietAppSignIns } from '../subscriptions/subscriptions.testkit';
+import { aDeviceCode, authorized, handlersAnswering, whoSignedIn } from './app-sign-in.testkit';
 import { createSubscriptionsIpcHandlers } from './subscriptions-ipc';
 import { aFreshWorld } from './subscriptions-ipc.testkit';
-
-type Answer = { status: number; body: unknown };
-
-function deviceFlowAnswering(answers: readonly Answer[]): SubscriptionsIpcContext['deviceSignIn'] {
-  let turn = 0;
-
-  return {
-    ...quietAppSignIns().deviceSignIn,
-    fetchLike: async () => {
-      const answer = answers[Math.min(turn, answers.length - 1)];
-
-      turn += 1;
-
-      return Promise.resolve(
-        new Response(JSON.stringify(answer?.body ?? {}), {
-          status: answer?.status ?? 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
-    },
-  };
-}
-
-const aDeviceCode = {
-  status: 200,
-  body: {
-    device_code: 'dev-1',
-    user_code: 'ABCD-1234',
-    verification_uri: 'https://github.com/login/device',
-    expires_in: 900,
-    interval: 1,
-  },
-};
-
-const authorized = { status: 200, body: { access_token: 'gho_the-token' } };
-
-const whoSignedIn = { status: 200, body: { login: 'someone' } };
-
-async function handlersAnswering(answers: readonly Answer[]) {
-  const world = await aFreshWorld();
-  const context = world.contextOn('linux', world.nothingHappens);
-
-  return {
-    world,
-    handlers: createSubscriptionsIpcHandlers({
-      ...context,
-      deviceSignIn: deviceFlowAnswering(answers),
-      writeSubscriptionCredential: subscriptionCredentialStore(world.userDataPath, 'linux', null)
-        .write,
-    }),
-  };
-}
 
 async function handlersBrowsing(settle: (url: string) => void) {
   const world = await aFreshWorld();
@@ -211,41 +158,6 @@ describe('a network that never answered at all', () => {
     const held = await handlers['subscriptions:list']();
 
     expect(held.ok && held.value).toEqual([]);
-  });
-});
-
-describe('the account a sign-in this app ran leaves behind', () => {
-  test('the plan stands connected, because the credential landed where its reader looks', async () => {
-    const { handlers } = await handlersAnswering([aDeviceCode, authorized, whoSignedIn]);
-
-    await handlers['subscriptions:device-code']({ provider: 'copilot' });
-    const answered = await handlers['subscriptions:device-await']({ provider: 'copilot' });
-
-    expect(answered.ok && answered.value).toMatchObject([{ standing: 'connected', active: true }]);
-  });
-
-  test('a second plan on the same channel lands under its own name and stands connected', async () => {
-    const { handlers } = await handlersAnswering([
-      aDeviceCode,
-      { status: 200, body: { access_token: 'kimi-token', refresh_token: 'kimi-refresh' } },
-    ]);
-
-    await handlers['subscriptions:device-code']({ provider: 'kimi' });
-    const answered = await handlers['subscriptions:device-await']({ provider: 'kimi' });
-
-    expect(answered.ok && answered.value).toMatchObject([
-      { provider: 'kimi', label: 'Kimi Code', standing: 'connected', provenance: 'sign-in' },
-    ]);
-  });
-
-  test('a plan waiting on one code is not settled by another plan finishing first', async () => {
-    const { handlers } = await handlersAnswering([aDeviceCode, authorized, whoSignedIn]);
-
-    await handlers['subscriptions:device-code']({ provider: 'copilot' });
-
-    const answered = await handlers['subscriptions:device-await']({ provider: 'kimi' });
-
-    expect(answered).toMatchObject({ ok: false, error: { code: 'sign-in-timed-out' } });
   });
 });
 

@@ -14,21 +14,29 @@ import type { Answered, Workshop } from './subscriptions-workshop';
 import { signInToAntigravity } from '../subscriptions/antigravity-sign-in';
 import { awaitDeviceSignIn, startDeviceSignIn } from '../subscriptions/device-sign-in';
 import { ipcFailure, storageFailure } from './storage-envelope';
-import { keepTheAccount, viewsOf } from './subscriptions-workshop';
+import {
+  keepTheAccount,
+  readAccounts,
+  standingUnderTheAddress,
+  viewsOf,
+} from './subscriptions-workshop';
 
 /**
  * Keeps what a sign-in this app ran itself yielded, under an account of its own.
  *
  * @summary The vault holds the credential rather than a config home, because no tool owns one of
  * these plans and so nothing on the machine would read a home the app wrote. The row reads as
- * whoever signed in where the provider names them, so two accounts on one plan tell apart.
+ * whoever signed in where the provider names them, so two accounts on one plan tell apart. Signing
+ * in again as somebody already standing settles on that row, because a second row under one
+ * address is one account a person would have to tell apart from itself.
  */
 async function keepWhatItYielded(
   shop: Workshop,
   provider: SubscriptionProviderId,
   yielded: SignInYield,
 ): Promise<Answered> {
-  const id = `acc-${randomUUID()}`;
+  const standing = standingUnderTheAddress(await readAccounts(shop), provider, yielded.signedInAs);
+  const id = standing ?? `acc-${randomUUID()}`;
 
   await shop.ctx.writeSubscriptionCredential(provider, id, yielded.credential);
 
