@@ -108,7 +108,7 @@ export const DarkScheme = meta.story({ globals: { theme: 'dark' } });
 export const AsksForAReadOnlyKey = meta.story({
   args: { entry: entryNamed('openrouter'), kind: 'aggregator' },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByLabelText('Management key')).toBeVisible();
+    await expect(await canvas.findByLabelText('Mgmt key')).toBeVisible();
     await expect(await canvas.findByText(/never serves a request/)).toBeVisible();
   },
 });

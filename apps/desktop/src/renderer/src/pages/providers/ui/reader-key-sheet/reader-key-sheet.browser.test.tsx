@@ -7,7 +7,7 @@ import { installFakeBridge } from '../../../../shared/testing';
 import { ReaderKeySheet } from './reader-key-sheet';
 
 const ask = {
-  label: 'Management key',
+  label: 'Mgmt key',
   hint: 'sk-or-v1-…',
   note: 'Optional. OpenRouter reads credits only with a management key, and this one never serves a request.',
 };
@@ -56,7 +56,7 @@ test('the sheet names the key the provider asks for and says why it wants one', 
   const { sheet } = await sheetOn();
 
   await expect.element(sheet.getByText(/never serves a request/)).toBeVisible();
-  await expect.element(sheet.getByLabelText('Management key', { exact: true })).toBeVisible();
+  await expect.element(sheet.getByLabelText('Mgmt key', { exact: true })).toBeVisible();
 });
 
 test('an empty field stores nothing, so a stray press cannot clear a key already held', async () => {
@@ -68,10 +68,7 @@ test('an empty field stores nothing, so a stray press cannot clear a key already
 test('a pasted key is stored and the sheet hands the screen back', async () => {
   const { sheet, onOpenChange } = await sheetOn();
 
-  await userEvent.fill(
-    sheet.getByLabelText('Management key', { exact: true }),
-    'sk-or-v1-abcdefghij',
-  );
+  await userEvent.fill(sheet.getByLabelText('Mgmt key', { exact: true }), 'sk-or-v1-abcdefghij');
   pressed('Save');
 
   await vi.waitFor(() => {

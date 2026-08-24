@@ -198,6 +198,7 @@ mebibyte
 memlab
 Menlo
 Meridius
+mgmt
 mispair
 mispaired
 Mistral
