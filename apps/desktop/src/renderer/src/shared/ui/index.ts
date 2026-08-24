@@ -9,6 +9,7 @@ export {
 } from './brand-mark/brand-mark-inventory';
 export { Chip } from './chip/chip';
 export { ConsequenceDialog } from './consequence-dialog/consequence-dialog';
+export { ContextMenu } from './context-menu/context-menu';
 export { NavGroup } from './nav-group/nav-group';
 export { CommandLine } from './command-line/command-line';
 export { CopyButton } from './copy-button/copy-button';
