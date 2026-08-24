@@ -216,3 +216,17 @@ test('a double-click on a reading leaves the log where it was, so a word still s
 
   expect(logsDrawerOpen()).toBe(false);
 });
+
+test('the strip takes its gesture with it, so a press after it leaves turns nothing over', async () => {
+  const screen = await footerHolding([]);
+
+  await expect.element(screen.getByText('0 req/min')).toBeVisible();
+
+  const strip = stripIn(screen.container);
+
+  await screen.unmount();
+
+  doubleClick(strip);
+
+  expect(logsDrawerOpen()).toBe(false);
+});

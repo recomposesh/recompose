@@ -1,6 +1,7 @@
 import type {
   Account,
   AccountsDocument,
+  CredentialedAccount,
   IpcRequest,
   KeyCheckVerdict,
   RecomposeIpc,
@@ -17,34 +18,62 @@ import {
   subscriptionPlanNames,
 } from '@recompose/contracts';
 
-type ReaderKeySet = (id: string, held: boolean) => AccountsDocument;
+type ReaderKeyActs = {
+  stand: (id: string) => AccountsDocument;
+  forget: (id: string) => AccountsDocument;
+};
 
-/**
- * Stands a read-only credential on one row, or takes it away, as the real acts do.
- *
- * @summary A reference rather than a secret, because the fake registry holds what the real one
- * holds and the vault behind it is the only place a secret ever lives.
- */
-function withReaderKey(registry: AccountsDocument, id: string, held: boolean): AccountsDocument {
+function amendedCredentialedRow(
+  registry: AccountsDocument,
+  id: string,
+  amend: (row: CredentialedAccount) => CredentialedAccount,
+): AccountsDocument {
   return {
     ...registry,
     accounts: registry.accounts.map((row) =>
-      row.id === id && row.kind !== 'subscription' && row.kind !== 'local'
-        ? { ...row, ...(held ? { readerCredentialRef: 'read-fake' } : {}) }
-        : row,
+      row.id === id && row.kind !== 'subscription' && row.kind !== 'local' ? amend(row) : row,
     ),
   };
 }
 
+/**
+ * Stands a read-only credential on one row, as the real act does.
+ *
+ * @summary A reference rather than a secret, because the fake registry holds what the real one
+ * holds and the vault behind it is the only place a secret ever lives.
+ */
+function withReaderKeyStood(registry: AccountsDocument, id: string): AccountsDocument {
+  return amendedCredentialedRow(registry, id, (row) => ({
+    ...row,
+    readerCredentialRef: 'read-fake',
+  }));
+}
+
+/**
+ * Takes a read-only credential off one row, the way the real act does.
+ *
+ * @summary The reference leaves the row rather than reading empty beside it, because a row that
+ * kept the key it was told to forget is a row no spec could ever watch forget one.
+ */
+function withReaderKeyForgotten(registry: AccountsDocument, id: string): AccountsDocument {
+  return amendedCredentialedRow(registry, id, (row) => {
+    const kept: CredentialedAccount = { ...row };
+
+    delete kept.readerCredentialRef;
+
+    return kept;
+  });
+}
+
 /** The two acts that stand a read-only credential on a row or take it away again. */
 function readerKeyActs(
-  set: ReaderKeySet,
+  acts: ReaderKeyActs,
 ): Pick<RecomposeIpc, 'accounts:set-reader-key' | 'accounts:clear-reader-key'> {
   return {
     'accounts:set-reader-key': async ({ id }) =>
-      Promise.resolve({ ok: true, value: set(id, true) }),
+      Promise.resolve({ ok: true, value: acts.stand(id) }),
     'accounts:clear-reader-key': async ({ id }) =>
-      Promise.resolve({ ok: true, value: set(id, false) }),
+      Promise.resolve({ ok: true, value: acts.forget(id) }),
   };
 }
 
@@ -166,8 +195,13 @@ function registryDesk(seed: AccountsDocument) {
 
       return registry;
     },
-    readerKeySet: (id: string, standing: boolean): AccountsDocument => {
-      registry = withReaderKey(registry, id, standing);
+    readerKeyStood: (id: string): AccountsDocument => {
+      registry = withReaderKeyStood(registry, id);
+
+      return registry;
+    },
+    readerKeyForgotten: (id: string): AccountsDocument => {
+      registry = withReaderKeyForgotten(registry, id);
 
       return registry;
     },
@@ -186,7 +220,8 @@ export function accountHandlers(
   verdict: KeyCheckVerdict,
   reachability: RuntimeReachability,
 ): AccountsHalf {
-  const { append, moved, forgotten, readerKeySet, nextId, held } = registryDesk(seed);
+  const { append, moved, forgotten, readerKeyStood, readerKeyForgotten, nextId, held } =
+    registryDesk(seed);
 
   const localRuntimeActs = {
     'accounts:connect-local': async (request: IpcRequest<'accounts:connect-local'>) =>
@@ -212,6 +247,6 @@ export function accountHandlers(
       Promise.resolve({ ok: true, value: append(keyRow(nextId(), request)) }),
     'accounts:check-key': async () => Promise.resolve({ ok: true as const, value: { verdict } }),
     'accounts:remove': async ({ id }) => Promise.resolve({ ok: true, value: forgotten(id) }),
-    ...readerKeyActs(readerKeySet),
+    ...readerKeyActs({ stand: readerKeyStood, forget: readerKeyForgotten }),
   };
 }

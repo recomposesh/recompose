@@ -203,3 +203,17 @@ test('starting from a row reaches that gateway rather than the one standing', as
   await expect.element(screen.getByRole('link', { name: 'Gemini Running' })).toBeVisible();
   await expect.element(screen.getByRole('link', { name: 'Codex Stopped' })).toBeVisible();
 });
+
+test('stopping from a row reaches that gateway and leaves the other where it stood', async () => {
+  const { screen } = await renderSidebar({
+    gateways: [codex, gemini],
+    engineStates: { codex: { status: 'running' }, gemini: { status: 'running' } },
+  });
+
+  rightClickTheRow(screen.getByRole('link', { name: 'Gemini Running' }).element());
+
+  await actNamed('Stop').click();
+
+  await expect.element(screen.getByRole('link', { name: 'Gemini Stopped' })).toBeVisible();
+  await expect.element(screen.getByRole('link', { name: 'Codex Running' })).toBeVisible();
+});

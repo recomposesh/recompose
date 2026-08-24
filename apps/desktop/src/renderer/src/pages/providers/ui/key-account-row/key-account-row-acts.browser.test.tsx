@@ -101,3 +101,32 @@ test('a right-click on the row offers the acts the trailing control holds', asyn
 
   expect(listedActs()).toEqual(fromTheControl);
 });
+
+test('taking a credits key opens the surface that asks for one', async () => {
+  const screen = await renderRow({ ...stored, provider: 'openrouter', kind: 'aggregator' });
+
+  await choose('Add credits key');
+
+  await expect.element(screen.getByRole('dialog')).toBeVisible();
+});
+
+async function heldReaderKey(): Promise<string | undefined> {
+  const [row] = await heldAccounts();
+
+  return row !== undefined && 'readerCredentialRef' in row ? row.readerCredentialRef : undefined;
+}
+
+test('forgetting a credits key takes the reference off the account', async () => {
+  await renderRow({
+    ...stored,
+    provider: 'openrouter',
+    kind: 'aggregator',
+    readerCredentialRef: 'read-1',
+  });
+
+  await expect.poll(heldReaderKey).toBe('read-1');
+
+  await choose('Forget credits key');
+
+  await expect.poll(heldReaderKey).toBeUndefined();
+});

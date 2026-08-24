@@ -4,17 +4,25 @@ import type { CanvasMenuAsks } from './canvas-menu-acts';
 
 import { canvasMenuActs, canvasSubjectKind } from './canvas-menu-acts';
 import { gateway } from './canvas-wiring.testkit';
-import { worldOver } from './deletion-gestures.testkit';
+import { worldWhereWritesHang } from './canvas-world.testkit';
 
-function asksRecording(): CanvasMenuAsks & { bound: string[]; released: string[] } {
+type AsksRecord = { bound: string[]; released: string[]; asked: string[] };
+
+function asksRecording(): CanvasMenuAsks & AsksRecord {
   const bound: string[] = [];
   const released: string[] = [];
+  const asked: string[] = [];
 
   return {
     bound,
     released,
-    onAddVirtualModel: () => {},
-    onTidy: () => {},
+    asked,
+    onAddVirtualModel: () => {
+      asked.push('born');
+    },
+    onTidy: () => {
+      asked.push('tidy');
+    },
     onBindFrom: (from) => {
       bound.push(from);
     },
@@ -24,8 +32,22 @@ function asksRecording(): CanvasMenuAsks & { bound: string[]; released: string[]
   };
 }
 
+function choose(subject: string | undefined, label: string) {
+  const { acts, record, asks } = actsOn(subject);
+
+  const act = acts.find((held) => held.label === label);
+
+  if (act === undefined) {
+    throw new Error(`${label} stands on no menu for ${subject ?? 'the canvas'}`);
+  }
+
+  act.onSelect();
+
+  return { record, asks };
+}
+
 function actsOn(subject: string | undefined) {
-  const { world, record } = worldOver(gateway);
+  const { world, record } = worldWhereWritesHang(gateway);
   const asks = asksRecording();
 
   return { acts: canvasMenuActs(world, subject, asks), record, asks };
@@ -135,5 +157,35 @@ describe('the way out of a subject', () => {
     expect(actsOn('gateway').acts.at(-1)?.tone).toBe('danger');
     expect(actsOn('model:fast').acts.at(-1)?.tone).toBe('danger');
     expect(actsOn('cable:fast').acts.at(-1)?.tone).toBe('danger');
+  });
+});
+
+describe('choosing an act off a menu', () => {
+  test('tidying from the canvas asks the arrangement the toolbar asks for', () => {
+    expect(choose(undefined, 'Tidy the canvas').asks.asked).toEqual(['tidy']);
+  });
+
+  test('adding from the canvas stands a definition the way the gateway plus does', () => {
+    expect(choose(undefined, 'Add a virtual model').asks.asked).toEqual(['born']);
+  });
+
+  test('showing a card puts the inspector on that card rather than on whatever stood', () => {
+    expect(choose('model:fast', 'Show in inspector').record.selected).toEqual(['model:fast']);
+  });
+
+  test('removing a provider asks about the card standing at that binding', () => {
+    expect(choose('target:fast', 'Remove provider…').record.asked).toEqual(['target:fast']);
+  });
+
+  test('discarding a draft asks the question the draft card already answers', () => {
+    expect(choose('draft', 'Discard draft').record.asked).toEqual(['draft']);
+  });
+
+  test('a judge card shows in the inspector, which is where its directive is read', () => {
+    expect(choose('judge:fast', 'Show in inspector').record.selected).toEqual(['judge:fast']);
+  });
+
+  test('a card waiting on a pick offers the tidy, so its menu is never empty', () => {
+    expect(choose('pending', 'Tidy the canvas').asks.asked).toEqual(['tidy']);
   });
 });
