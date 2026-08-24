@@ -6,11 +6,11 @@ export type TitleBarOverlay = {
   height: number;
 };
 
-const BAND_HEIGHT = 36;
+const TOOLBAR_HEIGHT = 54;
 
 const overlays: Record<WindowScheme, TitleBarOverlay> = {
-  light: { color: '#f4f4f6', symbolColor: '#1c1c1e', height: BAND_HEIGHT },
-  dark: { color: '#28282c', symbolColor: '#f9f9fb', height: BAND_HEIGHT },
+  light: { color: '#f4f4f6', symbolColor: '#1c1c1e', height: TOOLBAR_HEIGHT },
+  dark: { color: '#28282c', symbolColor: '#f9f9fb', height: TOOLBAR_HEIGHT },
 };
 
 /**
@@ -18,8 +18,8 @@ const overlays: Record<WindowScheme, TitleBarOverlay> = {
  *
  * @summary Windows paints the caption buttons itself and takes no stylesheet, so the two colors
  * are stated here as the toolbar surface and the ink the renderer would have painted under them.
- * The height matches the band the sidebar clears, so the buttons sit on the row the shell already
- * keeps free rather than over the first thing it draws.
+ * The height matches the toolbar the strip is drawn over, because Windows centres the buttons in
+ * whatever height it is given, and a shorter strip centres them above every control beside them.
  */
 export function titleBarOverlayFor(scheme: WindowScheme): TitleBarOverlay {
   return overlays[scheme];

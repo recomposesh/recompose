@@ -77,23 +77,34 @@ export const SidebarControlTakesTheWindowControlCentre = meta.story({
 });
 
 /**
- * The band on Windows, where the control stands at the edge the caption buttons leave.
+ * The band on Windows, which carries the name the hidden title bar took away.
  *
- * @summary The band clears the window controls, and on Windows there are none to clear on this
- * side. Standing the control at the trailing edge would leave it floating in the middle of an
- * empty row, which is what the macOS placement reads as once the traffic lights have gone.
+ * @summary Windows floats no controls over this corner, so the band would stand empty on every
+ * surface that carries a gateway, with the control alone at its far end reading as a stray. The
+ * app's own name and mark fill it, which is what the title bar it replaces showed.
  */
-export const ControlStandsAtTheLeadingEdgeOnWindows = meta.story({
+export const BandCarriesTheAppTitleOnWindows = meta.story({
   args: { band: <SidebarToggle where="chrome" /> },
   parameters: {
     bridge: { ...onOneGateway, system: machineSeed({ windowControls: 'trailing' }) },
   },
   play: async ({ canvas, canvasElement }) => {
-    const drawn = paintedBox(await canvas.findByRole('button', { name: 'Sidebar' }));
+    const title = paintedBox(await canvas.findByText('recompose'));
+    const control = paintedBox(await canvas.findByRole('button', { name: 'Sidebar' }));
     const band = bandOf(canvasElement);
 
-    await expect(drawn.left - band.left).toBeLessThan(16);
-    await expect((drawn.top + drawn.bottom) / 2 - band.top).toBe(18);
+    await expect(title.left - band.left).toBeLessThan(16);
+    await expect(band.right - control.right).toBeLessThan(16);
+    await expect(title.right).toBeLessThan(control.left);
+    await expect((title.top + title.bottom) / 2 - band.top).toBeCloseTo(18, 0);
+  },
+});
+
+/** The same band on macOS, where the traffic lights fill that corner and no name belongs in it. */
+export const BandCarriesNoTitleOnMacOs = meta.story({
+  args: { band: <SidebarToggle where="chrome" /> },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText('recompose')).toBeNull();
   },
 });
 

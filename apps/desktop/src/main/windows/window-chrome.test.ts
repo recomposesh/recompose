@@ -141,7 +141,7 @@ describe('repainting the caption strip when the scheme turns', () => {
 
     paintTitleBarOverlay('win32', 'dark');
 
-    expect(overlays).toEqual([{ color: '#28282c', symbolColor: '#f9f9fb', height: 36 }]);
+    expect(overlays).toEqual([{ color: '#28282c', symbolColor: '#f9f9fb', height: 54 }]);
   });
 
   test('off Windows, where no strip is drawn, nothing is repainted', () => {

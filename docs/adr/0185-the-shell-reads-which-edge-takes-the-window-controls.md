@@ -32,8 +32,12 @@ with a word, `finder`, `explorer`, or `file-manager`, and every surface conjugat
 **Windows hides its title bar and takes the Window Controls Overlay.** `titleBarStyle: 'hidden'`
 with `titleBarOverlay` leaves the caption buttons native, so Snap Layouts and the hover menu keep
 working, while the rest of the row becomes the app's to paint. This is what Visual Studio Code,
-Slack, and Discord ship. The strip stands 36 pixels tall, the height the sidebar band already
-clears, so one row serves both platforms.
+Slack, and Discord ship.
+
+**The strip stands as tall as the toolbar under it.** Windows centres the caption buttons in
+whatever height the app names, so a 36-pixel strip over a 54-pixel bar centres them 9 pixels above
+every control beside them. Matching the toolbar puts both on one centre, on a gateway's toolbar and
+on the bar a surface holding no gateway paints alike.
 
 **The overlay colors follow the scheme, and a scheme that turns repaints them.** Windows holds the
 two colors the constructor names until something names them again, so a window opened light and
@@ -51,6 +55,11 @@ edge. The last says whether a surface holding no gateway paints its bar at all.
 ADR-0068 leaves that space bare while the sidebar carries the control, because a bar reporting
 nothing reads as a mistake. Where the caption buttons stand on that space it's a title bar however
 the app paints it, and leaving it bare floats three native buttons over the content surface.
+
+**The sidebar's band carries the app title on Windows.** macOS fills that corner with the traffic
+lights. Windows floats nothing there, so on every surface carrying a gateway the band stood empty
+with the control alone at its far end. The name and mark the hidden title bar took away fill it,
+which is what Visual Studio Code, Slack, and Discord draw in the same corner.
 
 **The invitation prints the chord this machine holds.** `chordLabelFor` maps the modifier word to
 `⌘` or `Ctrl`, and the home page hands the invitation the word rather than the invitation reading

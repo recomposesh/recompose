@@ -1,8 +1,18 @@
 import type { WindowControls } from '@recompose/contracts';
 
-/** Which end of the sidebar's top band the control stands at, which is the end left free. */
+/**
+ * How the sidebar's top band spreads what it carries.
+ *
+ * @summary The band clears whichever edge the window controls take, so its own contents go to the
+ * other one. Where the controls take neither edge the band carries the title the hidden bar took
+ * away at its leading end and the control at its trailing end, which is both ends at once.
+ */
 export function bandAlignmentFor(windowControls: WindowControls): string {
-  return windowControls === 'leading' ? 'justify-end' : 'justify-start';
+  if (windowControls === 'leading') {
+    return 'justify-end';
+  }
+
+  return windowControls === 'trailing' ? 'justify-between' : 'justify-start';
 }
 
 /**

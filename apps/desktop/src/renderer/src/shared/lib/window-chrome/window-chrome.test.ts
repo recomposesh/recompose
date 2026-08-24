@@ -2,16 +2,16 @@ import { describe, expect, test } from 'vitest';
 
 import { bandAlignmentFor, barLeadInsetFor, barStandsFor, barTailInsetFor } from './window-chrome';
 
-describe('where the sidebar band stands its control', () => {
-  test('the trailing edge, where the controls take the leading one', () => {
+describe('how the sidebar band spreads what it carries', () => {
+  test('everything to the trailing edge, where the controls take the leading one', () => {
     expect(bandAlignmentFor('leading')).toBe('justify-end');
   });
 
-  test('the leading edge, where the controls take the trailing one', () => {
-    expect(bandAlignmentFor('trailing')).toBe('justify-start');
+  test('to both edges, where the band carries the title the hidden bar took away', () => {
+    expect(bandAlignmentFor('trailing')).toBe('justify-between');
   });
 
-  test('the leading edge, where the platform draws its own title bar', () => {
+  test('everything to the leading edge, where the platform draws its own title bar', () => {
     expect(bandAlignmentFor('none')).toBe('justify-start');
   });
 });

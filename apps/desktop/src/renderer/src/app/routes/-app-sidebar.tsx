@@ -11,7 +11,7 @@ import {
   panelWidth,
   subscribeToPanelWidths,
 } from '../../shared/lib';
-import { Icon } from '../../shared/ui';
+import { AppTitle, Icon } from '../../shared/ui';
 import { UpdateReadyCard } from '../../widgets/app-update';
 import { GatewaySidebar } from '../../widgets/gateway/sidebar';
 import { GetStartedPanel } from '../../widgets/get-started';
@@ -96,6 +96,7 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
         <div
           className={`flex h-window-controls shrink-0 items-center ${bandAlignmentFor(system.windowControls)}`}
         >
+          {system.windowControls === 'trailing' && <AppTitle />}
           <span className="app-no-drag flex">{band}</span>
         </div>
         <nav className="app-no-drag flex flex-1 flex-col overflow-y-auto" data-focus-group="">
