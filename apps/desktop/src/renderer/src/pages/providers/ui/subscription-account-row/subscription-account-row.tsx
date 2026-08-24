@@ -167,8 +167,9 @@ function accountIdentity(view: SubscriptionAccountView, refusal: string | undefi
  * target and has nowhere else to be edited. It holds two lines, the plan product and the address
  * it signed in as, because the connect step already taught what the account serves. A lapse puts
  * its remedy on the row rather than behind the overflow, so the standing and the way out of it
- * are read in one glance, and the overflow and a right-click on the row keep only signing in
- * again and removal. The plan's
+ * are read in one glance. The overflow and a right-click on the row read one act list, which is
+ * signing in again, choosing this account for the plan, and removal, each standing only where the
+ * account's own standing calls for it. The plan's
  * chosen account carries one line more, which is the only place the choosing shows.
  */
 export function SubscriptionAccountRow({ view, shellSetupLine }: SubscriptionAccountRowProps) {

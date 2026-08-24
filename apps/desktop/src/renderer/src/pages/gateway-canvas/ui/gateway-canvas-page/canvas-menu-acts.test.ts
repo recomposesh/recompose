@@ -65,6 +65,7 @@ describe('what a right-click landed on', () => {
   test('each card and cable is read by the name it already answers to', () => {
     expect(canvasSubjectKind('gateway')).toBe('gateway');
     expect(canvasSubjectKind('draft')).toBe('draft');
+    expect(canvasSubjectKind('pending')).toBe('pending');
     expect(canvasSubjectKind('model:fast')).toBe('virtual-model');
     expect(canvasSubjectKind('target:fast')).toBe('target');
     expect(canvasSubjectKind('ghost:fast')).toBe('target');
@@ -183,6 +184,14 @@ describe('choosing an act off a menu', () => {
 
   test('a judge card shows in the inspector, which is where its directive is read', () => {
     expect(choose('judge:fast', 'Show in inspector').record.selected).toEqual(['judge:fast']);
+  });
+
+  test('a card waiting on a pick reads as itself rather than falling back to the canvas', () => {
+    expect(labelsOn('pending')).toEqual(['Show in inspector', 'Tidy the canvas']);
+  });
+
+  test('a judge card offers the same pair, since its directive is read in the inspector', () => {
+    expect(labelsOn('judge:fast')).toEqual(['Show in inspector', 'Tidy the canvas']);
   });
 
   test('a card waiting on a pick offers the tidy, so its menu is never empty', () => {

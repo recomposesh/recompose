@@ -15,9 +15,9 @@ both.
 ## Decision
 
 **A surface declares its acts once, as `MenuAction`.** The type moved out of `OverflowMenu` into
-`shared/ui/menu-action.tsx` beside `menuActionItems`, which draws a list of them. Both the trailing
-control and the new `ContextMenu` render that one drawing, so an act added to a surface appears in
-both ways in without anyone remembering to add it twice.
+`shared/ui/menu-action/menu-action.tsx` beside `MenuActions`, which draws a list of them. Both the
+trailing control and the new `ContextMenu` render that one component, so an act added to a surface
+appears in both ways in without anyone remembering to add it twice.
 
 **The surface itself is the trigger, not a box around it.** `ContextMenu` passes the caller's
 classes and element straight to the Base UI trigger, so a row keeps the layout it already had and a
