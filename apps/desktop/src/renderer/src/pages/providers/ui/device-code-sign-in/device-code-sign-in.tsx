@@ -1,8 +1,7 @@
 import type { DeviceFlowProviderId } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { CatalogEntry } from '../../model/provider-catalog';
 
@@ -22,22 +21,35 @@ type DeviceCodeSignInProps = {
   onConnected: () => void;
 };
 
+type Asked = { code: DeviceCode | null; refusal: unknown };
+
+const nothingAskedYet: Asked = { code: null, refusal: null };
+
+async function codeIssuedFor(provider: DeviceFlowProviderId): Promise<Asked> {
+  try {
+    return {
+      code: unwrapIpcResult(await window.recompose['subscriptions:device-code']({ provider })),
+      refusal: null,
+    };
+  } catch (refusal) {
+    return { code: null, refusal };
+  }
+}
+
 /**
  * Asks the plan for the code a person enters, once, however often this step renders.
  *
  * @summary The ask is an act, never a reading: it spends a code the provider issues once and opens
  * a browser on the address. A query is re-run whenever the client sees fit, and the window ceasing
  * to be covered is one such moment, so carrying this in one hands a person another window every
- * time they come back from the last. A mutation runs only when told, and the guard tells it once
- * per plan because StrictMode runs a mount's effects twice. It is named for what crosses rather
- * than for the flow, because the device code itself never leaves the main process.
+ * time they come back from the last. The answer is held here rather than in a mutation because a
+ * mutation observer drops off the call it started when its subscription is torn down, and
+ * StrictMode tears every subscription down between a mount's two passes, so the code the provider
+ * issued reached nothing and the step read `Asking for a code` forever. The guard tells the ask
+ * once per plan, for the same two passes.
  */
-function useVerificationCode(provider: DeviceFlowProviderId) {
-  const asking = useMutation({
-    mutationFn: async () =>
-      unwrapIpcResult(await window.recompose['subscriptions:device-code']({ provider })),
-  });
-  const { mutate } = asking;
+function useVerificationCode(provider: DeviceFlowProviderId): Asked {
+  const [asked, setAsked] = useState<Asked>(nothingAskedYet);
   const askedUnder = useRef<DeviceFlowProviderId | null>(null);
 
   useEffect(() => {
@@ -46,10 +58,10 @@ function useVerificationCode(provider: DeviceFlowProviderId) {
     }
 
     askedUnder.current = provider;
-    mutate();
-  }, [mutate, provider]);
+    void codeIssuedFor(provider).then(setAsked);
+  }, [provider]);
 
-  return asking;
+  return asked;
 }
 
 type Waiting = ReturnType<typeof useSignInLanding>;
@@ -107,7 +119,6 @@ export function DeviceCodeSignIn({ entry, provider, onConnected }: DeviceCodeSig
     async () => unwrapIpcResult(await window.recompose['subscriptions:device-await']({ provider })),
     onConnected,
   );
-  const code = asked.data ?? null;
 
   return (
     <AppSignInStep
@@ -115,12 +126,12 @@ export function DeviceCodeSignIn({ entry, provider, onConnected }: DeviceCodeSig
       entry={entry}
       refusal={waiting.error}
     >
-      {code === null ? (
+      {asked.code === null ? (
         <p className="text-body text-ink" role="status">
-          {asked.error === null ? 'Asking for a code' : refusalSentence(asked.error)}
+          {asked.refusal === null ? 'Asking for a code' : refusalSentence(asked.refusal)}
         </p>
       ) : (
-        shownCode(code, entry.name, waiting)
+        shownCode(asked.code, entry.name, waiting)
       )}
     </AppSignInStep>
   );

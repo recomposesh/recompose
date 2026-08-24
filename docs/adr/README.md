@@ -192,3 +192,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0184](0184-the-gateways-own-prices-come-from-the-registry-it-publishes.md)     | The gateway's own prices come from the registry it publishes                        | Accepted   | 2026-08-24 |
 | [0185](0185-the-shell-reads-which-edge-takes-the-window-controls.md)            | The shell reads which edge takes the window controls                                | Accepted   | 2026-08-24 |
 | [0186](0186-a-long-prompt-accrues-into-a-bucket-of-its-own.md)                  | A long prompt accrues into a bucket of its own                                      | Accepted   | 2026-08-24 |
+| [0187](0187-the-step-that-asked-keeps-the-code.md)                              | The step that asked keeps the code                                                  | Accepted   | 2026-08-24 |
