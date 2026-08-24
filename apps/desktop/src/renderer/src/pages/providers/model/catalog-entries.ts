@@ -175,7 +175,7 @@ export const catalogEntries: readonly CatalogEntry[] = [
     lead: { mark: 'openrouter' },
     offers: [aggregatorKey('OpenRouter', 'One key, 300+ models')],
     readerKey: {
-      label: 'Management key',
+      label: 'Mgmt key',
       hint: 'sk-or-v1-…',
       note: 'Optional. OpenRouter reads credits only with a management key, and this one never serves a request.',
     },

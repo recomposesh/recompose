@@ -25,6 +25,7 @@ argjson
 asar
 Attio
 autobump
+autostarted
 autostarts
 Aydin
 backticked
@@ -198,6 +199,7 @@ mebibyte
 memlab
 Menlo
 Meridius
+mgmt
 mispair
 mispaired
 Mistral

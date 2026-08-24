@@ -1,4 +1,4 @@
-# 0172: Asking for a sign-in code is an act, never a reading
+# 0173: Asking for a sign-in code is an act, never a reading
 
 **Status**: Accepted
 **Date**: 2026-08-24
