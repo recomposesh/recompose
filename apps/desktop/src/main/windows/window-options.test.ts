@@ -45,7 +45,7 @@ describe('window chrome per platform', () => {
     expect(options.titleBarOverlay).toEqual({
       color: '#f4f4f6',
       symbolColor: '#1c1c1e',
-      height: 54,
+      height: 53,
     });
     expect(options.transparent).toBeUndefined();
     expect(options.icon).toBeUndefined();
@@ -57,7 +57,7 @@ describe('window chrome per platform', () => {
     expect(options.titleBarOverlay).toEqual({
       color: '#28282c',
       symbolColor: '#f9f9fb',
-      height: 54,
+      height: 53,
     });
   });
 

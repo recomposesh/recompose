@@ -7,7 +7,7 @@ describe('the caption strip Windows draws over the renderer', () => {
     expect(titleBarOverlayFor('light')).toEqual({
       color: '#f4f4f6',
       symbolColor: '#1c1c1e',
-      height: 54,
+      height: 53,
     });
   });
 
@@ -15,12 +15,12 @@ describe('the caption strip Windows draws over the renderer', () => {
     expect(titleBarOverlayFor('dark')).toEqual({
       color: '#28282c',
       symbolColor: '#f9f9fb',
-      height: 54,
+      height: 53,
     });
   });
 
-  test('the strip stands as tall as the bar it is drawn over, so both centres agree', () => {
-    expect(titleBarOverlayFor('light').height).toBe(54);
+  test('the strip stops short of the bar hairline, so the line runs the whole width', () => {
+    expect(titleBarOverlayFor('light').height).toBe(53);
     expect(titleBarOverlayFor('light').height).toBe(titleBarOverlayFor('dark').height);
   });
 });

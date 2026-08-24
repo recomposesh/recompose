@@ -93,12 +93,8 @@ describe('the acts a subject offers', () => {
     ]);
   });
 
-  test('a definition offers the target pick its own plus offers', () => {
-    const { acts, asks } = actsOn('model:fast');
-
-    acts[0]?.onSelect();
-
-    expect(asks.bound).toEqual(['model:fast']);
+  test('a definition leaves the target pick to its own plus, offering the inspector and the way out', () => {
+    expect(labelsOn('model:fast')).toEqual(['Show in inspector', 'Delete virtual model…']);
   });
 
   test('a router offers to take one more provider under it', () => {

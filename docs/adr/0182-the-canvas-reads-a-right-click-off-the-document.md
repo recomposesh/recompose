@@ -23,8 +23,9 @@ already the right ones by the time it opens.
 answers to a prefixed name, and the Delete press already reads them that way. A name nobody taught
 this about reads as the canvas, so an unrecognized card still raises the canvas acts.
 
-**Every act runs a gesture the canvas already answers.** Pick a target is the card's own plus. Add
-a provider is the router's. Every removal raises the same question the Delete press raises. Releasing a cable runs the same
+**Every act runs a gesture the canvas already answers.** Add a provider is the router's plus. A
+virtual model leaves its target pick to the plus on the card, so the menu never doubles it. Every
+removal raises the same question the Delete press raises. Releasing a cable runs the same
 reader that decides whether letting go costs a person work, which now stands as one act both ways
 in call.
 

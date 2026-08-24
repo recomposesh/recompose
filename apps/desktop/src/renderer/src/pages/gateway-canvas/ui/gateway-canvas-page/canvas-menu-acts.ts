@@ -110,8 +110,7 @@ const actsOnA: Record<CanvasSubjectKind, ActsOnASubject> = {
     tidied(asks),
     askedAbout(world, subject, 'Delete gateway…'),
   ],
-  'virtual-model': (world, subject, asks) => [
-    boundFrom(asks, subject, 'Pick a target'),
+  'virtual-model': (world, subject) => [
     shownInInspector(world, subject),
     askedAbout(world, subject, 'Delete virtual model…'),
   ],

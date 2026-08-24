@@ -89,7 +89,8 @@ export const BandCarriesTheAppTitleOnWindows = meta.story({
     bridge: { ...onOneGateway, system: machineSeed({ windowControls: 'trailing' }) },
   },
   play: async ({ canvas, canvasElement }) => {
-    const title = paintedBox(await canvas.findByText('recompose'));
+    const name = await canvas.findByRole('img', { name: 'recompose' });
+    const title = paintedBox(name.parentElement);
     const control = paintedBox(await canvas.findByRole('button', { name: 'Sidebar' }));
     const band = bandOf(canvasElement);
 
