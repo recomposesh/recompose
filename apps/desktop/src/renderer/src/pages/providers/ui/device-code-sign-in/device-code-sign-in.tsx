@@ -1,7 +1,8 @@
 import type { DeviceFlowProviderId } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
 import type { CatalogEntry } from '../../model/provider-catalog';
 
@@ -21,15 +22,34 @@ type DeviceCodeSignInProps = {
   onConnected: () => void;
 };
 
-function useDeviceCode(provider: DeviceFlowProviderId) {
-  return useQuery({
-    queryKey: ['device-code', provider],
-    queryFn: async () =>
+/**
+ * Asks the plan for the code a person enters, once, however often this step renders.
+ *
+ * @summary The ask is an act, never a reading: it spends a code the provider issues once and opens
+ * a browser on the address. A query is re-run whenever the client sees fit, and the window ceasing
+ * to be covered is one such moment, so carrying this in one hands a person another window every
+ * time they come back from the last. A mutation runs only when told, and the guard tells it once
+ * per plan because StrictMode runs a mount's effects twice. It is named for what crosses rather
+ * than for the flow, because the device code itself never leaves the main process.
+ */
+function useVerificationCode(provider: DeviceFlowProviderId) {
+  const asking = useMutation({
+    mutationFn: async () =>
       unwrapIpcResult(await window.recompose['subscriptions:device-code']({ provider })),
-    gcTime: 0,
-    refetchOnMount: 'always',
-    retry: false,
   });
+  const { mutate } = asking;
+  const askedUnder = useRef<DeviceFlowProviderId | null>(null);
+
+  useEffect(() => {
+    if (askedUnder.current === provider) {
+      return;
+    }
+
+    askedUnder.current = provider;
+    mutate();
+  }, [mutate, provider]);
+
+  return asking;
 }
 
 type Waiting = ReturnType<typeof useSignInLanding>;
@@ -82,7 +102,7 @@ function shownCode(code: DeviceCode, name: string, waiting: Waiting): ReactNode 
  * not open.
  */
 export function DeviceCodeSignIn({ entry, provider, onConnected }: DeviceCodeSignInProps) {
-  const asked = useDeviceCode(provider);
+  const asked = useVerificationCode(provider);
   const waiting = useSignInLanding(
     async () => unwrapIpcResult(await window.recompose['subscriptions:device-await']({ provider })),
     onConnected,
