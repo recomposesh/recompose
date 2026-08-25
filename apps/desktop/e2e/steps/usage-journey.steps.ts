@@ -91,7 +91,7 @@ Then(
 );
 
 Then('the usage screen opens scoped to {string}', async ({ page }, gateway: string) => {
-  await expect(page.getByRole('heading', { name: 'Usage' })).toBeVisible();
+  await expect(page.getByRole('heading', { exact: true, name: 'Usage' })).toBeVisible();
   await expect(scopeSentence(page)).toContainText(gateway);
   await requestsTileCounts(page, SEEDED_DAY_REQUESTS);
 });

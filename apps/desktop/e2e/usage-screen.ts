@@ -193,7 +193,7 @@ export function oldestBucketStart(ledger: UsageLedger): number {
 /** Opens the usage screen the way a person does, through the sidebar. */
 export async function openUsageScreen(page: Page): Promise<void> {
   await page.getByRole('link', { name: 'Usage' }).click();
-  await expect(page.getByRole('heading', { name: 'Usage' })).toBeVisible({
+  await expect(page.getByRole('heading', { exact: true, name: 'Usage' })).toBeVisible({
     timeout: USAGE_SETTLE_MS,
   });
 }
