@@ -6,6 +6,7 @@ import { Icon } from '../icon/icon';
 
 const variants = {
   primary: 'push-button-primary focus-ring-fill',
+  ink: 'push-button-ink focus-ring-fill',
   secondary: 'push-button focus-ring',
   danger:
     'push-button border-danger bg-danger text-highlight-ink focus-ring-fill hover:bg-danger/90 active:bg-danger/80',

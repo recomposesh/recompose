@@ -4,7 +4,7 @@ import { DEFAULT_GATEWAY_BIND_ADDRESS, enforcedApiKey } from '@recompose/contrac
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
-import type { ConnectFacts } from '../../model/connect-facts';
+import type { ConnectFacts } from '../../../../entities/harness';
 
 import {
   engineLogsQueryOptions,

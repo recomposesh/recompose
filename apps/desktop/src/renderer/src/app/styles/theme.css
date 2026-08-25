@@ -605,6 +605,35 @@
   }
 }
 
+/*
+ * The filled control setup leads with. It takes the surface's own ink rather than the app accent,
+ * so the one act a step is steering toward reads as the heaviest thing on a surface that has no
+ * chrome of its own to weigh against.
+ */
+@utility push-button-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--spacing) * 1.5);
+  height: var(--spacing-button);
+  border: 1px solid transparent;
+  border-radius: var(--push-button-radius, var(--radius-control));
+  background-color: var(--color-ink);
+  padding-inline: 13px;
+  font-size: var(--text-control);
+  font-weight: 500;
+  color: var(--color-surface-content);
+
+  &:not(:disabled):active {
+    background-color: color-mix(in oklab, var(--color-ink), transparent 14%);
+  }
+
+  &:disabled {
+    background-color: color-mix(in oklab, var(--color-ink), transparent 93%);
+    color: color-mix(in oklab, var(--color-ink), transparent 62%);
+  }
+}
+
 @utility push-button-primary {
   display: inline-flex;
   align-items: center;

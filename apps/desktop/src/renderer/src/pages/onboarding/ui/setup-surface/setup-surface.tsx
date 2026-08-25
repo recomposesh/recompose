@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
+import { togglePicked } from '../../model/picked-count';
 import { useSetupStanding } from '../../model/use-setup-standing';
+import { HarnessStep } from '../harness-step/harness-step';
 import { SetupWizard } from '../setup-wizard/setup-wizard';
 import { WelcomeStep } from '../welcome-step/welcome-step';
 
@@ -12,6 +16,7 @@ import { WelcomeStep } from '../welcome-step/welcome-step';
  */
 export function SetupSurface() {
   const setup = useSetupStanding();
+  const [harnesses, setHarnesses] = useState<ReadonlySet<string>>(new Set());
 
   if (setup.step === null) {
     return null;
@@ -27,6 +32,23 @@ export function SetupSurface() {
           onSetUp={() => {
             setup.walkTo('harnesses');
           }}
+        />
+      ) : null}
+      {setup.step === 'harnesses' ? (
+        <HarnessStep
+          onBack={() => {
+            setup.walkTo('welcome');
+          }}
+          onContinue={() => {
+            setup.walkTo('sources');
+          }}
+          onSkip={() => {
+            setup.settle();
+          }}
+          onToggle={(id) => {
+            setHarnesses(togglePicked(harnesses, id));
+          }}
+          picked={harnesses}
         />
       ) : null}
     </SetupWizard>

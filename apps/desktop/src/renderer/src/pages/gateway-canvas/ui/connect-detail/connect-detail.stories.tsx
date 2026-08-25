@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { clientNamed } from '../../model/connect-catalog';
+import { clientNamed } from '../../../../entities/harness';
 import { servingGateway } from '../../testing/connect-facts.testkit';
 import { ConnectDetail } from './connect-detail';
 

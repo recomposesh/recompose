@@ -5,11 +5,10 @@ import type {
   ConnectFacts,
   ConnectModel,
   ConnectStep,
-} from '../../model/connect-facts';
+} from '../../../../entities/harness';
 
+import { ClientLead, addressFor, keyIsAStandIn } from '../../../../entities/harness';
 import { CommandLine, CopyButton } from '../../../../shared/ui';
-import { addressFor, keyIsAStandIn } from '../../model/connect-facts';
-import { ClientLead } from '../client-lead/client-lead';
 import { ConnectStanding } from '../connect-standing/connect-standing';
 
 type ConnectDetailProps = {

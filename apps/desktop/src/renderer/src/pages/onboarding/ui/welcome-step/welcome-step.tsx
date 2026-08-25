@@ -29,7 +29,7 @@ export function WelcomeStep({ onSetUp, onExplore }: WelcomeStepProps) {
       <SetupTagline />
       <p className="max-w-140 text-center text-body text-ink-secondary">{LEDE}</p>
       <div className="flex items-center gap-2.5">
-        <Button onPress={onSetUp} variant="primary">
+        <Button onPress={onSetUp} variant="ink">
           Set up my gateway
         </Button>
         <Button onPress={onExplore}>I&apos;ll explore on my own</Button>
