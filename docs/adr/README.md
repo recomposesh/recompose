@@ -38,7 +38,7 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0030](0030-vale-exclusions-in-config.md)                                       | One Exclusion List for the Prose Gate                                               | Accepted   | 2026-07-25 |
 | [0031](0031-playwright-end-to-end.md)                                           | Playwright End-to-End Testing, the Three-Platform Matrix, and the Quarantine Policy | Accepted   | 2026-07-25 |
 | [0032](0032-renovate-pin-bumps-adr-exempt.md)                                   | Renovate Pin Bumps Take the adr-exempt Escape Hatch Automatically                   | Accepted   | 2026-07-25 |
-| [0033](0033-chromatic-visual-regression.md)                                     | Chromatic Visual Regression, the UI Tests Gate, and the Fake-Bridge Extraction      | Accepted   | 2026-07-25 |
+| [0033](0033-chromatic-visual-regression.md)                                     | Chromatic Visual Regression, the UI Tests Gate, and the Fake-Bridge Extraction      | Superseded | 2026-07-25 |
 | [0034](0034-screen-level-visual-regression.md)                                  | Screen-Level Visual Regression on the Real Electron Shell, Three-Platform Baselines | Accepted   | 2026-07-25 |
 | [0035](0035-release-operations.md)                                              | Release Operations, Unsigned Phase A, and the Homebrew Tap                          | Accepted   | 2026-07-25 |
 | [0036](0036-stryker-mutation-gate.md)                                           | Stryker Mutation Gate Over the Node-Tested Surfaces                                 | Accepted   | 2026-07-26 |
@@ -198,3 +198,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0190](0190-a-rank-picks-the-first-model-a-person-meets.md)                     | A rank picks the first model a person meets                                         | Accepted   | 2026-08-25 |
 | [0191](0191-a-name-derives-an-id-that-picker-keeps.md)                          | A name derives an id that picker keeps                                              | Accepted   | 2026-08-25 |
 | [0192](0192-the-spell-gate-reads-the-whole-tree-so-it-runs-on-every-change.md)  | The spell gate reads the whole tree, so it runs on every change                     | Accepted   | 2026-08-25 |
+| [0193](0193-visual-regression-leaves-with-the-gate-that-never-reports.md)       | Visual regression leaves with the gate that never reports                           | Accepted   | 2026-08-25 |
