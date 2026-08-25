@@ -26,7 +26,7 @@ export const AGlyphWhereNoMarkExists = meta.story({
   },
 });
 
-/** The glyph quiets to secondary ink, so a real mark's own colours still lead the row. */
+/** The glyph quiets to secondary ink, so a real mark's own colors still lead the row. */
 export const TheGlyphQuiets = meta.story({
   args: { lead: { glyph: 'network' as const } },
   play: async ({ canvasElement }) => {

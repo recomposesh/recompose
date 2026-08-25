@@ -197,3 +197,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0189](0189-the-first-served-request-is-an-outcome-not-a-grant.md)              | The first served request is an outcome, not a grant                                 | Accepted   | 2026-08-25 |
 | [0190](0190-a-rank-picks-the-first-model-a-person-meets.md)                     | A rank picks the first model a person meets                                         | Accepted   | 2026-08-25 |
 | [0191](0191-a-name-derives-an-id-that-picker-keeps.md)                          | A name derives an id that picker keeps                                              | Accepted   | 2026-08-25 |
+| [0192](0192-the-spell-gate-reads-the-whole-tree-so-it-runs-on-every-change.md)  | The spell gate reads the whole tree, so it runs on every change                     | Accepted   | 2026-08-25 |

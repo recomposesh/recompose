@@ -14,12 +14,12 @@ type JobRowProps = {
 };
 
 /**
- * @summary The mark takes the standing colour and the reason takes the readable one. A refusal is
+ * @summary The mark takes the standing color and the reason takes the readable one. A refusal is
  * the one row a person has to read rather than glance at, and the mark tone is cut for a shape
  * against a card rather than for twelve-point prose.
  *
  * A finished job takes a tick, a running one a turning ring, and a waiting one a hollow
- * disc that says the run has not reached it. A refusal takes its own mark and its own colour,
+ * disc that says the run has not reached it. A refusal takes its own mark and its own color,
  * because a person scanning the list has to find the one row that stopped without reading four.
  */
 function standingMark(standing: JobStanding): ReactElement {
