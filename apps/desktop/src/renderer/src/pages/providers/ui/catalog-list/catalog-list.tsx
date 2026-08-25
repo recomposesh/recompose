@@ -1,25 +1,19 @@
 import type { ReactNode } from 'react';
 
-import type { AccountKind } from '../../../../entities/account';
-import type { CatalogLead } from '../../model/catalog-lead';
-import type { CatalogEntry, ConnectionWay } from '../../model/provider-catalog';
+import type { CatalogEntry, ConnectionWay, ProviderKind } from '../../../../entities/provider';
 
-import { BrandMark, Icon } from '../../../../shared/ui';
-import { catalogEntries, offerFor, offeredUnder } from '../../model/provider-catalog';
+import {
+  catalogEntries,
+  offerFor,
+  offeredUnder,
+  ProviderLead,
+} from '../../../../entities/provider';
 
 type CatalogListProps = {
   /** The kind the screen behind holds, which is the only kind the list offers. */
-  kind: AccountKind;
+  kind: ProviderKind;
   onPick: (entry: CatalogEntry) => void;
 };
-
-function connectableLead(lead: CatalogLead): ReactNode {
-  return 'mark' in lead ? (
-    <BrandMark name={lead.mark} />
-  ) : (
-    <Icon className="size-4.5 text-ink-secondary" name={lead.glyph} />
-  );
-}
 
 function cardBody(lead: ReactNode, title: string, benefit: string): ReactNode {
   return (
@@ -55,7 +49,11 @@ function connectableCards(
         }}
         type="button"
       >
-        {cardBody(connectableLead(entry.lead), offer.title, offer.benefit)}
+        {cardBody(
+          <ProviderLead className="size-4" lead={entry.lead} />,
+          offer.title,
+          offer.benefit,
+        )}
       </button>
     );
   });

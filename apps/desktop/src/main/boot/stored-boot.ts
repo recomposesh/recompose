@@ -1,4 +1,9 @@
-import type { EngineStates, PlanUsageReadings, Settings } from '@recompose/contracts';
+import type {
+  EngineStates,
+  EngineTrafficReport,
+  PlanUsageReadings,
+  Settings,
+} from '@recompose/contracts';
 
 import { join } from 'node:path';
 
@@ -14,7 +19,7 @@ import type { PriceMapDesk } from '../usage/price-map';
 import type { UsageStore } from '../usage/usage-store';
 
 import { createEngineHost } from '../engine-host/engine-host';
-import { noticingTheFirstGrant } from '../engine-host/first-request';
+import { noticingTheFirstServed } from '../engine-host/first-request';
 import { rememberedServingSlugs, servingMemoryKeeper } from '../engine-host/serving-memory';
 import { spawnEngineChild } from '../engine-host/spawn-engine';
 import { resolveSpendGrant } from '../engine-host/spend-grant';
@@ -72,9 +77,19 @@ export type StoredBoot = {
 };
 
 function storedSpendGrants(deps: StoredBootDeps, custody: CredentialCustody | null): SpendGrantFor {
-  return noticingTheFirstGrant(
-    async (slug, model, routeNode) =>
-      resolveSpendGrant(deps.spendGrantContext(custody), slug, model, routeNode),
+  return async (slug, model, routeNode) =>
+    resolveSpendGrant(deps.spendGrantContext(custody), slug, model, routeNode);
+}
+
+/**
+ * @summary A grant resolving only says a request reached a target, and a target can turn it away,
+ * so the record follows the outcome the gateway wrote down instead. It rides the traffic desk
+ * because that is where every outcome passes.
+ */
+function noticingTheFirstServedRequest(
+  deps: StoredBootDeps,
+): (report: EngineTrafficReport) => void {
+  return noticingTheFirstServed(
     firstRequestReporter(
       () => storagePathsFor(deps.recomposeHome()).settingsFile,
       deps.onCorrupt,
@@ -193,6 +208,7 @@ function hostOverStoredState(deps: StoredBootDeps, standing: StoredHostStanding)
       standing.custody,
     ).write,
     onTraffic: pushEngineTraffic,
+    onTrafficReport: noticingTheFirstServedRequest(deps),
     onBranchPins: pushEngineBranchPins,
     onCooldowns: pushEngineCooldowns,
     onPlanUsage: standing.stores.planUsage.hold,

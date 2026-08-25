@@ -9,6 +9,7 @@ export {
   brandMarkNames,
 } from './brand-mark/brand-mark-inventory';
 export { Chip } from './chip/chip';
+export { ConfettiBurst } from './confetti-burst/confetti-burst';
 export { ConsequenceDialog } from './consequence-dialog/consequence-dialog';
 export { ContextMenu } from './context-menu/context-menu';
 export { type MenuAction } from './menu-action/menu-action';
@@ -30,8 +31,11 @@ export { Sheet, SheetActionSlot } from './sheet/sheet';
 export { stateMark, stateWord } from './gateway-state';
 export { HoverReading } from './hover-reading/hover-reading';
 export { MetricTile } from './metric-tile/metric-tile';
+export { CHAMFERED_CARD, NodeChamfer } from './node-chamfer/node-chamfer';
 export { NumericCell } from './numeric-cell/numeric-cell';
 export { ProportionFill } from './proportion-fill/proportion-fill';
+export { RecomposeMark } from './recompose-mark/recompose-mark';
+export { RecomposeWordmark } from './recompose-wordmark/recompose-wordmark';
 export { VendorMark } from './vendor-mark/vendor-mark';
 export { type ChartBar, type ChartSeries, SeriesChart } from './series-chart/series-chart';
 export { newestThatFit } from './series-chart/newest-that-fit';

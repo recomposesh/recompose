@@ -4,7 +4,7 @@ import { Handle, Position, useConnection } from '@xyflow/react';
 
 import type { IconName } from '../../../../shared/ui';
 
-import { Icon } from '../../../../shared/ui';
+import { CHAMFERED_CARD, Icon, NodeChamfer } from '../../../../shared/ui';
 
 /** The port a cable leaves a card by, and the ask a keyboard reaches it with. */
 export type OutgoingPort = {
@@ -109,34 +109,6 @@ const cardFrame =
 
 const kickerLine = 'shrink-0 text-footnote font-bold tracking-wider uppercase';
 
-const CHAMFER_OUTER = 'M0.78 44 L12.57 0.75 L171.43 0.75 L183.22 44 L171.43 87.25 L12.57 87.25 Z';
-
-const CHAMFER_INNER = 'M5.96 44 L16.39 5.75 L167.61 5.75 L178.04 44 L167.61 82.25 L16.39 82.25 Z';
-
-/**
- * The chamfered outline a router wears in place of the rounded border.
- *
- * @operation The frame is drawn rather than bordered because a CSS border draws only the four
- * sides of a box, so a clipped card would lose its line along the two diagonals. Each path runs
- * half a stroke inside where its line belongs, the way a CSS border paints inside the box it
- * bounds, and the two run exactly five pixels apart along every edge. Both read the same fill,
- * line, and glow variables `node-card` settles, so one state table paints every card on this
- * canvas and the second line costs no second set of rules.
- */
-function chamferedFrame(): ReactNode {
-  return (
-    <svg
-      aria-hidden
-      className="absolute inset-0 size-full node-chamfer-frame"
-      data-chamfer=""
-      viewBox="0 0 184 88"
-    >
-      <path className="node-chamfer-fill" d={CHAMFER_OUTER} />
-      <path className="node-chamfer-line" d={CHAMFER_INNER} />
-    </svg>
-  );
-}
-
 function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
   const { bound, offersCable = true, ask, onAsk } = port;
 
@@ -169,11 +141,11 @@ function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
  */
 const outlines: Record<NodeShape, string> = {
   rounded: 'px-2.75',
-  chamfered: 'node-card-chamfer px-4.5',
+  chamfered: CHAMFERED_CARD,
 };
 
 function drawnFrame(shape: NodeShape): ReactNode {
-  return shape === 'chamfered' ? chamferedFrame() : null;
+  return shape === 'chamfered' ? <NodeChamfer /> : null;
 }
 
 function incomingSide(): ReactNode {

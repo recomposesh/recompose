@@ -2,7 +2,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { connectGroups } from '../../model/connect-catalog';
+import { connectGroups } from '../../../../entities/harness';
 import { ConnectRail } from './connect-rail';
 
 const meta = preview.meta({

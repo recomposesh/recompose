@@ -1,6 +1,6 @@
 import type { BrowserSignInProviderId } from '@recompose/contracts';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogEntry } from '../../../../entities/provider';
 
 import { unwrapIpcResult } from '../../../../shared/api';
 import { AppSignInStep, useSignInLanding } from '../app-sign-in-step/app-sign-in-step';

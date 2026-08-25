@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-import type { ConnectFacts } from '../../model/connect-facts';
+import type { ConnectFacts } from '../../../../entities/harness';
 
+import { clientNamed, connectGroups } from '../../../../entities/harness';
 import { Sheet } from '../../../../shared/ui';
-import { clientNamed, connectGroups } from '../../model/connect-catalog';
 import { ConnectDetail } from '../connect-detail/connect-detail';
 import { ConnectRail } from '../connect-rail/connect-rail';
 

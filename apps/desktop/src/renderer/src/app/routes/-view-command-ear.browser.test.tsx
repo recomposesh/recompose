@@ -17,7 +17,7 @@ test('mounting reports the standing surfaces once, so the menu ticks start hones
 
   await expect
     .poll(() => reportedSurfaceToggles())
-    .toEqual([{ sidebar: true, inspector: false, modal: false }]);
+    .toEqual([{ sidebar: true, inspector: false, modal: false, setup: false }]);
 });
 
 test('the sidebar toggle flips the store and a fresh snapshot rides out', async () => {
@@ -28,14 +28,14 @@ test('the sidebar toggle flips the store and a fresh snapshot rides out', async 
   expect(sidebarHidden()).toBe(true);
   await expect
     .poll(() => reportedSurfaceToggles().at(-1))
-    .toEqual({ sidebar: false, inspector: false, modal: false });
+    .toEqual({ sidebar: false, inspector: false, modal: false, setup: false });
 
   emitViewCommand('toggle-sidebar');
 
   expect(sidebarHidden()).toBe(false);
   await expect
     .poll(() => reportedSurfaceToggles().at(-1))
-    .toEqual({ sidebar: true, inspector: false, modal: false });
+    .toEqual({ sidebar: true, inspector: false, modal: false, setup: false });
 });
 
 test('the inspector toggle travels the same store the toolbar drives', async () => {
@@ -46,7 +46,7 @@ test('the inspector toggle travels the same store the toolbar drives', async () 
   expect(inspectorOpen()).toBe(true);
   await expect
     .poll(() => reportedSurfaceToggles().at(-1))
-    .toEqual({ sidebar: true, inspector: true, modal: false });
+    .toEqual({ sidebar: true, inspector: true, modal: false, setup: false });
 });
 
 test('an on-screen toggle reaches the report without any menu push', async () => {
@@ -65,6 +65,7 @@ test('an on-screen toggle reaches the report without any menu push', async () =>
     sidebar: true,
     inspector: true,
     modal: false,
+    setup: false,
   });
 });
 

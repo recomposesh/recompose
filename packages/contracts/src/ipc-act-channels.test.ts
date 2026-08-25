@@ -25,8 +25,8 @@ describe('the channels that answer with nothing', () => {
     expect(() => ipcChannels['system:logs-drawer'].request.parse({ open: 'yes' })).toThrow();
   });
 
-  test('the surface report carries all three standings in one strict snapshot', () => {
-    const standing = { sidebar: true, inspector: false, modal: false };
+  test('the surface report carries every standing in one strict snapshot', () => {
+    const standing = { sidebar: true, inspector: false, modal: false, setup: false };
 
     expect(ipcChannels['system:surface-toggles'].request.parse(standing)).toEqual(standing);
     expect(() =>

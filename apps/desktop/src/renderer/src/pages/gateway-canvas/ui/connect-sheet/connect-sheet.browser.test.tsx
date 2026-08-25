@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page, userEvent } from 'vitest/browser';
 
-import type { ConnectFacts } from '../../model/connect-facts';
+import type { ConnectFacts } from '../../../../entities/harness';
 
 import { ConnectSheet } from './connect-sheet';
 

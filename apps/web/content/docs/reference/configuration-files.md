@@ -11,7 +11,7 @@ recompose tolerates hand edits by design: the schemas read a hand-typed document
 
 ## settings.json
 
-`schemaVersion: 6`. Fields: `theme` (`system` | `light` | `dark`), `launchAtLogin`, `showInMenuBar`, `firstRequestServed`, `showOnboardingChecklist`, `bindAddress` (default `127.0.0.1`), `startGatewaysOnLaunch`, and `usageRetentionDays` (`7` | `30` | `90`). Older versions migrate forward on load and write back migrated.
+`schemaVersion: 7`. Fields: `theme` (`system` | `light` | `dark`), `launchAtLogin`, `showInMenuBar`, `firstRequestServed`, `showOnboardingChecklist`, `setupWizardSettled`, `bindAddress` (default `127.0.0.1`), `startGatewaysOnLaunch`, and `usageRetentionDays` (`7` | `30` | `90`). `setupWizardSettled` records that this profile finished or dismissed the setup wizard. A document written by an earlier version migrates in with it already set, because upgrading isn't a first session. Older versions migrate forward on load and write back migrated.
 
 ## accounts.json
 

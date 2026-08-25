@@ -199,9 +199,15 @@ const noEngineStates: EngineStates = {};
 const unreachableProvider: KeyCheckVerdict = 'could-not-check';
 const silentRuntime: RuntimeReachability = { verdict: 'unreachable' };
 
+/**
+ * @summary A story about the app is a story about a profile that finished setup, because setup
+ * holds the whole window and nothing behind it is reachable while it stands. A story that wants
+ * setup seeds an unsettled profile itself, which is also the one line saying that is what it is
+ * about.
+ */
 function seedsFrom(parameters: BridgeParameters) {
   return {
-    settings: defaultSettings(),
+    settings: { ...defaultSettings(), setupWizardSettled: true },
     system: observedSystem,
     accounts: emptyDocument,
     keyCheck: unreachableProvider,

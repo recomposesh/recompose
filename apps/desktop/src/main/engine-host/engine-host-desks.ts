@@ -38,7 +38,7 @@ function pushingTo<Reading>(handler: ((reading: Reading) => void) | undefined) {
 
 export function openEngineDesks(deps: EngineHostDeps): EngineDesks {
   return {
-    traffic: openTrafficDesk(pushingTo(deps.onTraffic)),
+    traffic: openTrafficDesk(pushingTo(deps.onTraffic), deps.onTrafficReport),
     pins: openBranchPinDesk(pushingTo(deps.onBranchPins)),
     cooling: openCooldownDesk(pushingTo(deps.onCooldowns)),
     judging: openJudgingDesk(pushingTo(deps.onJudging)),

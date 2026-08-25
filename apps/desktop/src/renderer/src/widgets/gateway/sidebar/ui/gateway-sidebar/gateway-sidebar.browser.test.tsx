@@ -40,7 +40,10 @@ async function renderSidebar(parameters: BridgeParameters, onNewGateway = () => 
     <RouterContextProvider router={router}>
       <QueryClientProvider client={queryClient}>
         <Suspense fallback={<p>Loading…</p>}>
-          <GatewaySidebar onNewGateway={onNewGateway} />
+          <GatewaySidebar
+            onDeleteGateway={async () => Promise.resolve()}
+            onNewGateway={onNewGateway}
+          />
         </Suspense>
       </QueryClientProvider>
     </RouterContextProvider>,

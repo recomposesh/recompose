@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { setupReopened } from '../../pages/onboarding';
 import {
   hideSidebar,
   inspectorOpen,
@@ -7,7 +8,9 @@ import {
   showSidebar,
   sidebarHidden,
   subscribeToInspectorVisibility,
+  setupSurfaceStanding,
   subscribeToModalStanding,
+  subscribeToSetupSurface,
   subscribeToSidebarVisibility,
   toggleInspector,
 } from '../../shared/lib';
@@ -17,6 +20,7 @@ function reportSurfaceToggles(): void {
     sidebar: !sidebarHidden(),
     inspector: inspectorOpen(),
     modal: modalStanding(),
+    setup: setupSurfaceStanding(),
   });
 }
 
@@ -48,6 +52,12 @@ export function ViewCommandEar(): null {
           return;
         }
 
+        if (command === 'open-setup') {
+          setupReopened();
+
+          return;
+        }
+
         toggleInspector();
       }),
     [],
@@ -58,6 +68,7 @@ export function ViewCommandEar(): null {
       subscribeToSidebarVisibility(reportSurfaceToggles),
       subscribeToInspectorVisibility(reportSurfaceToggles),
       subscribeToModalStanding(reportSurfaceToggles),
+      subscribeToSetupSurface(reportSurfaceToggles),
     ];
 
     reportSurfaceToggles();

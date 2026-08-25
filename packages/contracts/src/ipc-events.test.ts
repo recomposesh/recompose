@@ -217,12 +217,13 @@ describe('the logs push', () => {
 describe('the settings push', () => {
   test('it carries the whole document, so a missed push heals on the next', () => {
     const document = {
-      schemaVersion: 6,
+      schemaVersion: 7,
       theme: 'dark',
       launchAtLogin: false,
       showInMenuBar: true,
       firstRequestServed: true,
       showOnboardingChecklist: false,
+      setupWizardSettled: true,
       usageRetentionDays: 30,
     };
 

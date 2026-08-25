@@ -6,7 +6,26 @@ import { unwrapIpcResult, withRefusal } from './ipc-result';
 
 export const gatewaysQueryOptions = queryOptions({
   queryKey: ['gateways'],
-  queryFn: async () => unwrapIpcResult(await window.recompose['gateways:list']()),
+  queryFn: fetchStoredGateways,
+});
+
+/** Every gateway on disk right now, read past whatever a cache is still holding. */
+export async function fetchStoredGateways(): Promise<GatewayConfig[]> {
+  return unwrapIpcResult(await window.recompose['gateways:list']());
+}
+
+/**
+ * A loopback port nothing holds right now, as of this look.
+ *
+ * @summary Nothing caches it and every mount looks again, because a port another process took
+ * since the last look must never read as free. Reach for it wherever a port has to be shown
+ * before a gateway exists to hold one.
+ */
+export const offeredPortQueryOptions = queryOptions({
+  queryKey: ['offered-port'],
+  queryFn: fetchOfferedPort,
+  gcTime: 0,
+  refetchOnMount: 'always',
 });
 
 /** A loopback port nothing holds right now, offered by the process that can actually check. */

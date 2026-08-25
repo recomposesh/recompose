@@ -1,2 +1,3 @@
 export { AddProviderAct } from './ui/add-provider-act/add-provider-act';
 export { ProvidersPage } from './ui/providers-page/providers-page';
+export { ProviderCatalogSheet } from './ui/provider-catalog-sheet/provider-catalog-sheet';

@@ -36,6 +36,7 @@ async function standingConduct(taken: string[] = []) {
     onCanvasCommand: () => undefined,
     onUsageCommand: () => undefined,
     onViewCommand: () => undefined,
+    onOpenSetup: () => undefined,
     onStartGateway: (slug) => {
       taken.push(`start ${slug}`);
     },
@@ -116,12 +117,12 @@ describe('reflecting the surface report into the view', () => {
 
     const painted = desktop.installed.length;
 
-    menu.reflectSurfaceToggles({ sidebar: true, inspector: false, modal: false });
+    menu.reflectSurfaceToggles({ sidebar: true, inspector: false, modal: false, setup: false });
 
     expect(desktop.installed.length).toBe(painted);
 
-    menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false });
-    menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false });
+    menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false, setup: false });
+    menu.reflectSurfaceToggles({ sidebar: false, inspector: true, modal: false, setup: false });
 
     expect(desktop.installed.length).toBe(painted + 1);
   });

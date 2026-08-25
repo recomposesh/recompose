@@ -1,85 +1,78 @@
-import type { SpendGrant } from '@recompose/contracts';
+import type { EngineTrafficReport } from '@recompose/contracts';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
-import type { SpendGrantFor } from './engine-spend';
+import { noticingTheFirstServed } from './first-request';
 
-import { noticingTheFirstGrant } from './first-request';
+const AT = 1_700_000_000_000;
 
-const resolved: SpendGrant = {
-  verdict: 'resolved',
-  providerOrigin: 'https://api.anthropic.com',
-  spend: { custody: 'credentialed', provider: 'anthropic', credential: 'sk-verysecret' },
-};
-
-function answering(grant: SpendGrant): SpendGrantFor {
-  return async () => Promise.resolve(grant);
+function report(outcome: 'live' | 'served' | 'failed'): EngineTrafficReport {
+  return {
+    kind: 'traffic',
+    slug: 'my-gateway',
+    virtualModel: 'claude-my-model',
+    routeNode: 'seat:1',
+    request:
+      outcome === 'failed'
+        ? { outcome, at: AT, status: 401, detail: 'the provider turned the key away' }
+        : { outcome, at: AT },
+  };
 }
 
-describe('noticing the first grant', () => {
-  test('the first resolved grant is reported exactly once across every later turn', async () => {
-    let reports = 0;
-    const grantFor = noticingTheFirstGrant(answering(resolved), () => {
-      reports += 1;
-    });
+describe('noticing the first request a gateway served', () => {
+  test('a served outcome reports it', () => {
+    const told = vi.fn<() => void>();
 
-    await grantFor('personal', 'fast', 't1');
-    await grantFor('personal', 'fast', 't1');
-    await grantFor('work', 'careful', 't1');
+    noticingTheFirstServed(told)(report('served'));
 
-    expect(reports).toBe(1);
+    expect(told).toHaveBeenCalledOnce();
   });
 
-  test('a refusal reports nothing, because no request reached a target', async () => {
-    let reports = 0;
-    const grantFor = noticingTheFirstGrant(answering({ verdict: 'missing-target' }), () => {
-      reports += 1;
-    });
+  test('a request that reached a target and was turned away reports nothing', () => {
+    const told = vi.fn<() => void>();
+    const notice = noticingTheFirstServed(told);
 
-    await grantFor('personal', 'fast', 't1');
-    await grantFor('personal', 'fast', 't1');
+    notice(report('failed'));
 
-    expect(reports).toBe(0);
+    expect(told).not.toHaveBeenCalled();
   });
 
-  test('a refusal never closes the latch, so a later resolved grant still reports', async () => {
-    let reports = 0;
-    const grants: SpendGrant[] = [{ verdict: 'missing-credential' }, resolved, resolved];
-    const grantFor = noticingTheFirstGrant(
-      async () => Promise.resolve(grants.shift() ?? resolved),
-      () => {
-        reports += 1;
-      },
-    );
+  test('a request still answering reports nothing, because it has served nobody yet', () => {
+    const told = vi.fn<() => void>();
 
-    await grantFor('personal', 'fast', 't1');
-    expect(reports).toBe(0);
+    noticingTheFirstServed(told)(report('live'));
 
-    await grantFor('personal', 'fast', 't1');
-    await grantFor('personal', 'fast', 't1');
-    expect(reports).toBe(1);
-  });
-});
-
-describe('what the latch hands on either way', () => {
-  test('the grant passes through untouched', async () => {
-    const grantFor = noticingTheFirstGrant(answering(resolved), () => {});
-
-    expect(await grantFor('personal', 'fast', 't1')).toEqual(resolved);
+    expect(told).not.toHaveBeenCalled();
   });
 
-  test('the route node the child named reaches the resolver behind the latch', async () => {
-    const naming: SpendGrantFor = async (slug, virtualModel, routeNode) =>
-      Promise.resolve({
-        verdict: 'resolved',
-        providerOrigin: `https://${slug}.example/${virtualModel}/${routeNode}`,
-        spend: { custody: 'open' },
-      });
+  test('a live request that later serves reports once', () => {
+    const told = vi.fn<() => void>();
+    const notice = noticingTheFirstServed(told);
 
-    const grantFor = noticingTheFirstGrant(naming, () => {});
+    notice(report('live'));
+    notice(report('served'));
 
-    expect(await grantFor('personal', 'fast', 'spare')).toMatchObject({
-      providerOrigin: 'https://personal.example/fast/spare',
-    });
+    expect(told).toHaveBeenCalledOnce();
+  });
+
+  test('the latch closes on the first served request and never reopens', () => {
+    const told = vi.fn<() => void>();
+    const notice = noticingTheFirstServed(told);
+
+    notice(report('served'));
+    notice(report('served'));
+    notice(report('served'));
+
+    expect(told).toHaveBeenCalledOnce();
+  });
+
+  test('a refusal after the first served request changes nothing', () => {
+    const told = vi.fn<() => void>();
+    const notice = noticingTheFirstServed(told);
+
+    notice(report('served'));
+    notice(report('failed'));
+
+    expect(told).toHaveBeenCalledOnce();
   });
 });

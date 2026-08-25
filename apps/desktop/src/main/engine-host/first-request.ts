@@ -1,26 +1,26 @@
-import type { SpendGrantFor } from './engine-spend';
+import type { EngineTrafficReport } from '@recompose/contracts';
 
 /**
- * Hands back the same grants while reporting the first resolved one.
+ * Reports the first request a gateway actually served, and never reports again.
  *
- * @summary Only a resolved grant means a request reached a target, so a refusal reports nothing.
- * The latch closes on the first report and never reopens, so the observer hears about the first
- * request exactly once per process however many turns follow.
+ * @summary A request reaching a target says nothing about whether the target answered it: a
+ * credential the app stored can be turned away the first time a client spends it, and a stream can
+ * rate-limit after it opens. So the latch reads the outcome the gateway wrote down rather than the
+ * grant that let the request go, and only a served outcome closes it.
+ *
+ * A live outcome closes nothing, because a request still answering has served nobody yet. The
+ * same request arriving later as served is what closes the latch, which is the honest reading of a
+ * stream that opened and then finished.
  */
-export function noticingTheFirstGrant(
-  grantFor: SpendGrantFor,
-  onFirstGrant: () => void,
-): SpendGrantFor {
+export function noticingTheFirstServed(
+  onFirstServed: () => void,
+): (report: EngineTrafficReport) => void {
   let unreported = true;
 
-  return async (slug, virtualModel, routeNode) => {
-    const grant = await grantFor(slug, virtualModel, routeNode);
-
-    if (grant.verdict === 'resolved' && unreported) {
+  return (report) => {
+    if (report.request.outcome === 'served' && unreported) {
       unreported = false;
-      onFirstGrant();
+      onFirstServed();
     }
-
-    return grant;
   };
 }

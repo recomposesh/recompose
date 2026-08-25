@@ -4,8 +4,8 @@ import { subscriptionPlanNames } from '@recompose/contracts';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useId } from 'react';
 
+import { subscriptionMarkFor } from '../../../../entities/provider';
 import { subscriptionToolsQueryOptions } from '../../../../shared/api';
-import { subscriptionMarkFor } from '../../model/provider-catalog';
 import { ConnectWay } from '../connect-way/connect-way';
 import { PickedIdentity } from '../picked-identity/picked-identity';
 import { SignInAction } from '../sign-in-action/sign-in-action';

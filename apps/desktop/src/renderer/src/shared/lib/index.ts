@@ -16,6 +16,11 @@ export {
 } from './visibility/inspector-visibility';
 export { shownAsAskModal } from './asked-modal';
 export { modalStanding, subscribeToModalStanding } from './visibility/modal-standing';
+export {
+  setupSurfaceStanding,
+  setupSurfaceStood,
+  subscribeToSetupSurface,
+} from './visibility/setup-standing';
 export { forgetLookedAtGateway, lookedAtGateway, rememberedGateway } from './last-gateway';
 export {
   closeLogsDrawer,

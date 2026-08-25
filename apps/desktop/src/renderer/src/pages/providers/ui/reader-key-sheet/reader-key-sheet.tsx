@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { ReaderKeyAsk } from '../../model/provider-catalog';
+import type { ReaderKeyAsk } from '../../../../entities/provider';
 
 import { useSetReaderKey, withRefusal } from '../../../../shared/api';
 import { Button, Sheet } from '../../../../shared/ui';

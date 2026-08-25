@@ -1,6 +1,6 @@
-import type { CatalogEntry } from '../model/provider-catalog';
+import type { CatalogEntry } from '../../../entities/provider';
 
-import { catalogEntries } from '../model/provider-catalog';
+import { catalogEntries } from '../../../entities/provider';
 
 /**
  * The catalog entry one reading stands on, refusing loudly where the catalog holds none.

@@ -1,11 +1,8 @@
-import type { GatewayConfig } from '@recompose/contracts';
-
-import { DEFAULT_GATEWAY_BIND_ADDRESS, enforcedApiKey } from '@recompose/contracts';
+import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
-import type { ConnectFacts } from '../../model/connect-facts';
-
+import { connectFactsFor } from '../../../../entities/harness';
 import {
   engineLogsQueryOptions,
   gatewaysQueryOptions,
@@ -16,23 +13,12 @@ import {
   connectSheetOpen,
   subscribeToConnectSheetVisibility,
 } from '../../../../shared/lib';
-import { gatewayBaseUrl } from '../../lib/gateway-base-url';
 import { ConnectSheet } from '../connect-sheet/connect-sheet';
 
 type ConnectInViewProps = {
   /** The gateway the route selected, which every fact in the sheet is read from. */
   slug: string;
 };
-
-function factsOf(gateway: GatewayConfig, bindAddress: string): ConnectFacts {
-  return {
-    gatewayName: gateway.displayName,
-    slug: gateway.slug,
-    baseUrl: gatewayBaseUrl(gateway, bindAddress),
-    apiKey: enforcedApiKey(gateway),
-    models: gateway.virtualModels.map(({ id, displayName }) => ({ id, displayName })),
-  };
-}
 
 /**
  * The connect sheet, standing over the canvas whenever the toolbar control asks for it.
@@ -56,7 +42,7 @@ export function ConnectInView({ slug }: ConnectInViewProps) {
   return (
     <ConnectSheet
       answered={rows?.length ?? 0}
-      facts={factsOf(gateway, settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS)}
+      facts={connectFactsFor(gateway, settings.bindAddress ?? DEFAULT_GATEWAY_BIND_ADDRESS)}
       onOpenChange={closeConnectSheet}
       open={shown}
     />

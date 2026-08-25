@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { migrateDocument, type Migration } from './migration';
 
-export const SETTINGS_VERSION = 6;
+export const SETTINGS_VERSION = 7;
 
 export const usageRetentionDaysSchema = z.union([z.literal(7), z.literal(30), z.literal(90)]);
 
@@ -42,6 +42,7 @@ export const settingsSchema = z.strictObject({
   showInMenuBar: z.boolean(),
   firstRequestServed: z.boolean(),
   showOnboardingChecklist: z.boolean(),
+  setupWizardSettled: z.boolean(),
   bindAddress: gatewayBindAddressSchema.optional(),
   startGatewaysOnLaunch: z.boolean().optional(),
   usageRetentionDays: usageRetentionDaysSchema,
@@ -110,12 +111,27 @@ const keepAMonthOfUsage: Migration = {
   }),
 };
 
+/**
+ * @summary A profile written before the wizard existed reads as settled rather than as fresh.
+ * Upgrading is not a first session, and springing a full-window takeover on someone who already
+ * runs a gateway would read as a fault. The View menu is how they reach it if they want it.
+ */
+const settleTheWizardForEveryProfileThatPredatesIt: Migration = {
+  from: 6,
+  migrate: (doc) => ({
+    ...doc,
+    schemaVersion: 7,
+    setupWizardSettled: true,
+  }),
+};
+
 const settingsMigrations: readonly Migration[] = [
   addVersionTwoSwitches,
   retireTheAppWidePort,
   retireTheAppWideTokenRequirement,
   recordTheFirstSession,
   keepAMonthOfUsage,
+  settleTheWizardForEveryProfileThatPredatesIt,
 ];
 
 export function loadSettings(doc: unknown): Settings {
@@ -130,6 +146,7 @@ export function defaultSettings(): Settings {
     showInMenuBar: false,
     firstRequestServed: false,
     showOnboardingChecklist: true,
+    setupWizardSettled: false,
     bindAddress: DEFAULT_GATEWAY_BIND_ADDRESS,
     startGatewaysOnLaunch: false,
     usageRetentionDays: 30,

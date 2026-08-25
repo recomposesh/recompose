@@ -146,6 +146,9 @@
      both, and an open reading must clear the furniture beside it. */
   --z-cable-furniture: 1001;
   --z-cable-reading: 1002;
+  /* The setup celebration is drawn before the canvas is, so it needs a seat above everything the
+     canvas can raise, including a node React Flow has selected. */
+  --z-setup-celebration: 1003;
   --spacing-cable-pulse-stroke: 5.4px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
@@ -204,6 +207,19 @@
   &[data-placed-focus] {
     outline: 2px solid transparent;
     background-color: var(--color-surface-hover);
+  }
+}
+
+/*
+ * A filled control already carries its own background, so focus brightens it instead of painting
+ * over it. Repainting a filled button on focus drops white ink onto the hover surface, which
+ * measures 1.19 to 1 and reads as a control that broke rather than one that took focus.
+ */
+@utility focus-ring-fill {
+  &:focus-visible,
+  &[data-placed-focus] {
+    outline: 2px solid transparent;
+    filter: brightness(1.12);
   }
 }
 
@@ -338,6 +354,55 @@
   to {
     transform: scaleY(1);
   }
+}
+
+/*
+ * The grid is painted here rather than on the surface, which starts below the chrome band. Two
+ * grids would meet out of phase across that seam, and a bare band above a grid reads as a strip
+ * the paint missed.
+ */
+@utility setup-scrim {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, var(--color-dot-grid) 1px, transparent 1px) 0 0 / 22px 22px;
+  background-color: var(--color-surface-content);
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity 200ms;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      opacity: 0;
+    }
+  }
+}
+
+/*
+ * The surface claims the whole window and hands the drag back through a band of its own, because
+ * a shell drag region under an overlay swallows nothing back. The platform draws its window
+ * controls above the page, so they stay operable through the band.
+ */
+@utility setup-surface {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity 200ms;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      opacity: 0;
+    }
+  }
+}
+
+@utility setup-band {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--spacing-toolbar);
+  -webkit-app-region: drag;
 }
 
 @utility sheet-scrim {
@@ -554,6 +619,35 @@
   }
 }
 
+/*
+ * The filled control setup leads with. It takes the surface's own ink rather than the app accent,
+ * so the one act a step is steering toward reads as the heaviest thing on a surface that has no
+ * chrome of its own to weigh against.
+ */
+@utility push-button-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--spacing) * 1.5);
+  height: var(--spacing-button);
+  border: 1px solid transparent;
+  border-radius: var(--push-button-radius, var(--radius-control));
+  background-color: var(--color-ink);
+  padding-inline: 13px;
+  font-size: var(--text-control);
+  font-weight: 500;
+  color: var(--color-surface-content);
+
+  &:not(:disabled):active {
+    background-color: color-mix(in oklab, var(--color-ink), transparent 14%);
+  }
+
+  &:disabled {
+    background-color: color-mix(in oklab, var(--color-ink), transparent 93%);
+    color: color-mix(in oklab, var(--color-ink), transparent 62%);
+  }
+}
+
 @utility push-button-primary {
   display: inline-flex;
   align-items: center;
@@ -623,6 +717,49 @@
 @utility binding-cable-selected {
   fill: none;
   stroke-width: var(--spacing-cable-stroke-selected);
+}
+
+/*
+ * The rings a waiting step sends out while nothing has landed. Each starts at the epicentre and
+ * fades as it widens, and the three run a third of a cycle apart so the field never empties.
+ */
+/*
+ * The fill mode is load-bearing: a ring waiting out its delay would otherwise paint at its own
+ * full size and full opacity, so the field opened with the widest ring already drawn.
+ */
+@utility sonar-ring {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: sonar-widen 2400ms ease-out infinite backwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 0.18;
+    scale: 1;
+  }
+}
+
+@keyframes sonar-widen {
+  from {
+    opacity: 0.5;
+    scale: 0.25;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1;
+  }
+}
+
+@utility job-turning {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: job-turning-spin 900ms linear infinite;
+  }
+}
+
+@keyframes job-turning-spin {
+  to {
+    rotate: 360deg;
+  }
 }
 
 @utility cable-pulse {
@@ -982,6 +1119,58 @@
 
   @media (prefers-reduced-motion: no-preference) {
     animation: confetti-burst 1100ms ease-out forwards;
+  }
+}
+
+@utility confetti-window {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: var(--z-setup-celebration);
+}
+
+/*
+ * The note is painted from the root, before the canvas is, so a seat of its own is what keeps the
+ * canvas from covering it. Fixed rather than absolute, because the shell's own overflow would
+ * otherwise clip it wherever the surface underneath happens to scroll.
+ */
+@utility setup-note {
+  position: fixed;
+  inset-block-end: calc(var(--spacing) * 12);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  z-index: var(--z-setup-celebration);
+}
+
+@utility confetti-fleck {
+  position: absolute;
+  inset-block-start: -24px;
+  inline-size: 8px;
+  border-radius: 1.5px;
+  background: var(--confetti-tint);
+  rotate: var(--confetti-tilt);
+  opacity: 0;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: confetti-fall var(--confetti-span) ease-in forwards;
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    translate: var(--confetti-drift) 106vh;
+    rotate: calc(var(--confetti-tilt) + 900deg);
   }
 }
 

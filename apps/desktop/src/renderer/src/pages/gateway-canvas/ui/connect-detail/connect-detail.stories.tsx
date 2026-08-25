@@ -2,8 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { clientNamed } from '../../model/connect-catalog';
-import { servingGateway } from '../../testing/connect-facts.testkit';
+import { clientNamed, servingGateway } from '../../../../entities/harness';
 import { ConnectDetail } from './connect-detail';
 
 const meta = preview.meta({

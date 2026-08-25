@@ -41,6 +41,7 @@ import { useTitleBarDoubleClick } from '../lib/use-title-bar-double-click';
 import { AppSidebar } from './-app-sidebar';
 import { AppToolbar } from './-app-toolbar';
 import { NotFound } from './-not-found';
+import { SetupInTheShell } from './-setup-in-the-shell';
 import { surfaceRequest, withSheet, withoutSheet } from './-surface-request';
 import { UsageFiltersAct } from './-usage-filters-act';
 import { UsageRangeAct } from './-usage-range-act';
@@ -190,6 +191,7 @@ function RootLayout() {
   return (
     <div className="flex h-full overflow-hidden">
       <ViewCommandEar />
+      <SetupInTheShell />
       <AppSidebar
         away={sidebarAway}
         band={bandFor(slug)}

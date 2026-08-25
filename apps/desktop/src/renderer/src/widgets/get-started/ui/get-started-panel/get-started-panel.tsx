@@ -11,6 +11,7 @@ import {
   useSettingsWriter,
 } from '../../../../shared/api';
 import { usePanelReveal } from '../../../../shared/lib';
+import { ConfettiBurst } from '../../../../shared/ui';
 import { useCompletionCelebration } from '../../lib/get-started-celebration';
 import { getStartedCollapsed, subscribeToGetStartedCollapse } from '../../lib/get-started-collapse';
 import { getStartedSteps } from '../../lib/get-started-steps';
@@ -18,39 +19,6 @@ import { ChecklistHeader } from '../checklist-header/checklist-header';
 import { ChecklistSteps } from '../checklist-steps/checklist-steps';
 
 const CHECKLIST_EXIT_MS = 150;
-
-const confetti = [
-  { at: 0, tint: 'var(--color-gateway)', drift: '-64px', delay: '0ms' },
-  { at: 1, tint: 'var(--color-virtual-model)', drift: '-40px', delay: '60ms' },
-  { at: 2, tint: 'var(--color-subscription)', drift: '-18px', delay: '20ms' },
-  { at: 3, tint: 'var(--color-running)', drift: '4px', delay: '90ms' },
-  { at: 4, tint: 'var(--color-api-key)', drift: '26px', delay: '40ms' },
-  { at: 5, tint: 'var(--color-aggregator)', drift: '48px', delay: '110ms' },
-  { at: 6, tint: 'var(--color-local)', drift: '68px', delay: '10ms' },
-  { at: 7, tint: 'var(--color-gateway)', drift: '-52px', delay: '130ms' },
-  { at: 8, tint: 'var(--color-virtual-model)', drift: '14px', delay: '70ms' },
-  { at: 9, tint: 'var(--color-subscription)', drift: '-28px', delay: '150ms' },
-  { at: 10, tint: 'var(--color-api-key)', drift: '38px', delay: '30ms' },
-  { at: 11, tint: 'var(--color-aggregator)', drift: '58px', delay: '170ms' },
-];
-
-function confettiBurst(): ReactNode {
-  return (
-    <span aria-hidden className="pointer-events-none absolute inset-0">
-      {confetti.map((piece) => (
-        <i
-          className="confetti-piece"
-          key={piece.at}
-          style={{
-            '--confetti-tint': piece.tint,
-            '--confetti-drift': piece.drift,
-            animationDelay: piece.delay,
-          }}
-        />
-      ))}
-    </span>
-  );
-}
 
 function foldRows(collapsed: boolean, steps: ReactNode): ReactNode {
   return (
@@ -172,7 +140,7 @@ export function GetStartedPanel() {
           aria-labelledby={headingId}
           className="relative rounded-panel border border-line-subtle bg-surface-card px-3 pt-2.5 pb-1.5"
         >
-          {celebrating && confettiBurst()}
+          {celebrating && <ConfettiBurst />}
           <ChecklistHeader collapsed={collapsed} headingId={headingId} />
           {progressLine(done, steps.length)}
           {foldRows(

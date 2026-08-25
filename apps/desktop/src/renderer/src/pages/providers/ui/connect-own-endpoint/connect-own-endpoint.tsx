@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useForm, useSelector } from '@tanstack/react-form';
 import { useId } from 'react';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogEntry } from '../../../../entities/provider';
 
 import { useConnectAccount, withRefusal } from '../../../../shared/api';
 import {

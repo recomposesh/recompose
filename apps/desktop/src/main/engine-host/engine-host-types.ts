@@ -1,4 +1,5 @@
 import type {
+  EngineTrafficReport,
   EngineDirective,
   EngineGateway,
   EngineSpendGrant,
@@ -42,6 +43,8 @@ export type EngineHostDeps = {
     credential: string,
   ) => Promise<void>;
   onTraffic?: (traffic: GatewayTraffic) => void;
+  /** Hears each recorded outcome, for a reader that has to see one request rather than a snapshot. */
+  onTrafficReport?: (report: EngineTrafficReport) => void;
   onBranchPins?: (pinning: GatewayBranchPins) => void;
   onCooldowns?: (cooling: GatewayCooldowns) => void;
   onPlanUsage?: (readings: PlanUsageReadings) => void;

@@ -225,15 +225,16 @@ describe('push surface totality', () => {
 
   test('a view command names one of the two toggles the View menu offers', () => {
     expectTypeOf<IpcEventPayload<'view:command'>>().toEqualTypeOf<
-      'toggle-sidebar' | 'toggle-inspector'
+      'toggle-sidebar' | 'toggle-inspector' | 'open-setup'
     >();
   });
 
-  test('the surface report carries all three standings at one moment', () => {
+  test('the surface report carries every standing at one moment', () => {
     expectTypeOf<IpcRequest<'system:surface-toggles'>>().toEqualTypeOf<{
       sidebar: boolean;
       inspector: boolean;
       modal: boolean;
+      setup: boolean;
     }>();
   });
 

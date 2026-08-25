@@ -2,7 +2,7 @@ import { expect, fn, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { servingGateway } from '../../testing/connect-facts.testkit';
+import { servingGateway } from '../../../../entities/harness';
 import { ConnectSheet } from './connect-sheet';
 
 const meta = preview.meta({

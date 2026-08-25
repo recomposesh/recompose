@@ -3,8 +3,8 @@ import { describe, expectTypeOf, test } from 'vitest';
 import type { Settings } from './index';
 
 describe('the settings document contract', () => {
-  test('the document pins itself to schema version 6', () => {
-    expectTypeOf<Settings['schemaVersion']>().toEqualTypeOf<6>();
+  test('the document pins itself to schema version 7', () => {
+    expectTypeOf<Settings['schemaVersion']>().toEqualTypeOf<7>();
   });
 
   test('the retention window is one of the three offered, never a free number', () => {
@@ -19,6 +19,7 @@ describe('the settings document contract', () => {
   test('the first-session records are plain booleans', () => {
     expectTypeOf<Settings['firstRequestServed']>().toEqualTypeOf<boolean>();
     expectTypeOf<Settings['showOnboardingChecklist']>().toEqualTypeOf<boolean>();
+    expectTypeOf<Settings['setupWizardSettled']>().toEqualTypeOf<boolean>();
   });
 
   test('the global bind address is an optional host string for older documents', () => {
@@ -37,6 +38,7 @@ describe('the settings document contract', () => {
       | 'showInMenuBar'
       | 'firstRequestServed'
       | 'showOnboardingChecklist'
+      | 'setupWizardSettled'
       | 'bindAddress'
       | 'startGatewaysOnLaunch'
       | 'usageRetentionDays'

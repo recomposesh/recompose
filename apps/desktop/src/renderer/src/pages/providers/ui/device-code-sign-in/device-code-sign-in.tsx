@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogEntry } from '../../../../entities/provider';
 
 import { refusalSentence, unwrapIpcResult } from '../../../../shared/api';
 import { CopyButton } from '../../../../shared/ui';

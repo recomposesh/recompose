@@ -1,11 +1,10 @@
 import type { ReactElement } from 'react';
 
-import type { ClientGroup } from '../../model/connect-catalog';
-import type { ConnectClient } from '../../model/connect-facts';
+import type { ClientGroup } from '../../../../entities/harness';
+import type { ConnectClient } from '../../../../entities/harness';
 
+import { ClientLead, clientsMatching } from '../../../../entities/harness';
 import { TextField } from '../../../../shared/ui';
-import { clientsMatching } from '../../model/connect-catalog';
-import { ClientLead } from '../client-lead/client-lead';
 
 const ROW_PAINT =
   'flex w-full items-center gap-2 rounded-control px-2 py-1 text-start focus-ring row-hover';

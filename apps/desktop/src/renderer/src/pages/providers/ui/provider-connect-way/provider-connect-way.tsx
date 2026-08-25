@@ -1,13 +1,13 @@
 import { signsInByDeviceCode, signsInThroughTheBrowser } from '@recompose/contracts';
 
-import type { CatalogEntry, ConnectionWay } from '../../model/provider-catalog';
+import type { CatalogEntry, ConnectionWay } from '../../../../entities/provider';
 
 import {
   keyKindOf,
   localRuntimeOf,
   offerFor,
   signInProviderOf,
-} from '../../model/provider-catalog';
+} from '../../../../entities/provider';
 import { BrowserSignIn } from '../browser-sign-in/browser-sign-in';
 import { ConnectKeyForm } from '../connect-key-form/connect-key-form';
 import { ConnectOwnEndpoint } from '../connect-own-endpoint/connect-own-endpoint';

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogEntry } from '../../../../entities/provider';
 
 import { refusalSentence } from '../../../../shared/api';
 import { PickedIdentity } from '../picked-identity/picked-identity';
