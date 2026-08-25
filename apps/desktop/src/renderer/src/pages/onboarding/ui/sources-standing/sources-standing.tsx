@@ -1,13 +1,14 @@
 import type { CatalogEntry, ProviderKind } from '../../../../entities/provider';
+import type { FoundSource } from '../../model/found-source';
 
 import { useFoundSources } from '../../model/use-found-sources';
 import { SourcesStep } from '../sources-step/sources-step';
 
 type SourcesStandingProps = {
-  /** Which sources the person has marked. */
-  marked: ReadonlySet<string>;
+  /** Whether this source stands marked. */
+  isMarked: (source: FoundSource) => boolean;
   /** Marks a source or clears the mark. */
-  onToggle: (id: string) => void;
+  onMark: (source: FoundSource) => void;
   /** Steps back to the harness question. */
   onBack: () => void;
   /** Opens a provider's own connect sheet. */
@@ -26,22 +27,40 @@ type SourcesStandingProps = {
  * person who never walks past the welcome screen is never asked.
  */
 export function SourcesStanding({
-  marked,
-  onToggle,
+  isMarked,
+  onMark,
   onBack,
   onConnect,
   onContinue,
   onSkip,
 }: SourcesStandingProps) {
+  const found = useFoundSources();
+  const marked = new Set<string>();
+  const byId = new Map<string, FoundSource>();
+
+  for (const source of found) {
+    byId.set(source.id, source);
+
+    if (isMarked(source)) {
+      marked.add(source.id);
+    }
+  }
+
   return (
     <SourcesStep
-      found={useFoundSources()}
+      found={found}
       marked={marked}
       onBack={onBack}
       onConnect={onConnect}
       onContinue={onContinue}
       onSkip={onSkip}
-      onToggle={onToggle}
+      onToggle={(id) => {
+        const source = byId.get(id);
+
+        if (source !== undefined) {
+          onMark(source);
+        }
+      }}
     />
   );
 }

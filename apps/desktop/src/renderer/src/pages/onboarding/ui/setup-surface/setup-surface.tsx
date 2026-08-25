@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { CatalogEntry, ProviderKind } from '../../../../entities/provider';
 
 import { togglePicked } from '../../model/picked-count';
+import { useMarkingSources } from '../../model/use-marking-sources';
 import { useSetupStanding } from '../../model/use-setup-standing';
 import { SetupStanding } from '../setup-standing/setup-standing';
 import { SetupWizard } from '../setup-wizard/setup-wizard';
@@ -45,7 +46,7 @@ function usePicking(): [ReadonlySet<string>, (id: string) => void] {
 export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
   const setup = useSetupStanding();
   const [pickedHarnesses, onPickHarness] = usePicking();
-  const [markedSources, onMarkSource] = usePicking();
+  const { isMarked, onMarkSource } = useMarkingSources();
   const [connecting, setConnecting] = useState<ConnectAsk | undefined>(undefined);
 
   if (setup.step === null) {
@@ -56,9 +57,12 @@ export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
     <>
       <SetupWizard open step={setup.step}>
         <SetupStanding
-          markedSources={markedSources}
+          isMarked={isMarked}
           onConnect={(entry, kind) => {
             setConnecting({ entry, kind });
+          }}
+          onCreate={() => {
+            setup.walkTo('building');
           }}
           onMarkSource={onMarkSource}
           onPickHarness={onPickHarness}

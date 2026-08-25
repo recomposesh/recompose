@@ -9,6 +9,20 @@ export const gatewaysQueryOptions = queryOptions({
   queryFn: async () => unwrapIpcResult(await window.recompose['gateways:list']()),
 });
 
+/**
+ * A loopback port nothing holds right now, as of this look.
+ *
+ * @summary Nothing caches it and every mount looks again, because a port another process took
+ * since the last look must never read as free. Reach for it wherever a port has to be shown
+ * before a gateway exists to hold one.
+ */
+export const offeredPortQueryOptions = queryOptions({
+  queryKey: ['offered-port'],
+  queryFn: fetchOfferedPort,
+  gcTime: 0,
+  refetchOnMount: 'always',
+});
+
 /** A loopback port nothing holds right now, offered by the process that can actually check. */
 export async function fetchOfferedPort(): Promise<number> {
   return unwrapIpcResult(await window.recompose['gateways:offer-port']());

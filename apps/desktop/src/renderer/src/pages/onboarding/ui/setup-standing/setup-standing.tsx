@@ -1,8 +1,10 @@
 import type { ReactElement } from 'react';
 
 import type { CatalogEntry, ProviderKind } from '../../../../entities/provider';
+import type { FoundSource } from '../../model/found-source';
 import type { SetupStep } from '../../model/setup-step';
 
+import { ComposeStanding } from '../compose-standing/compose-standing';
 import { HarnessStep } from '../harness-step/harness-step';
 import { SourcesStanding } from '../sources-standing/sources-standing';
 import { WelcomeStep } from '../welcome-step/welcome-step';
@@ -18,13 +20,26 @@ type SetupStandingProps = {
   pickedHarnesses: ReadonlySet<string>;
   /** Picks a harness or takes it back out. */
   onPickHarness: (id: string) => void;
-  /** The sources the person marked. */
-  markedSources: ReadonlySet<string>;
+  /** Whether a source stands marked. */
+  isMarked: (source: FoundSource) => boolean;
   /** Marks a source or clears the mark. */
-  onMarkSource: (id: string) => void;
+  onMarkSource: (source: FoundSource) => void;
   /** Opens a provider's own connect sheet. */
   onConnect: (entry: CatalogEntry, kind: ProviderKind) => void;
+  /** Builds the graph the compose step showed. */
+  onCreate: () => void;
 };
+
+function welcomeStanding({ walkTo, settle }: SetupStandingProps): ReactElement {
+  return (
+    <WelcomeStep
+      onExplore={settle}
+      onSetUp={() => {
+        walkTo('harnesses');
+      }}
+    />
+  );
+}
 
 function harnessStanding({
   walkTo,
@@ -50,13 +65,13 @@ function harnessStanding({
 function sourcesStanding({
   walkTo,
   settle,
-  markedSources,
+  isMarked,
   onMarkSource,
   onConnect,
 }: SetupStandingProps): ReactElement {
   return (
     <SourcesStanding
-      marked={markedSources}
+      isMarked={isMarked}
       onBack={() => {
         walkTo('harnesses');
       }}
@@ -64,19 +79,28 @@ function sourcesStanding({
       onContinue={() => {
         walkTo('compose');
       }}
+      onMark={onMarkSource}
       onSkip={settle}
-      onToggle={onMarkSource}
     />
   );
 }
 
-function welcomeStanding({ walkTo, settle }: SetupStandingProps): ReactElement {
+function composeStanding({
+  walkTo,
+  settle,
+  pickedHarnesses,
+  isMarked,
+  onCreate,
+}: SetupStandingProps): ReactElement {
   return (
-    <WelcomeStep
-      onExplore={settle}
-      onSetUp={() => {
-        walkTo('harnesses');
+    <ComposeStanding
+      harnesses={pickedHarnesses}
+      isMarked={isMarked}
+      onBack={() => {
+        walkTo('sources');
       }}
+      onCreate={onCreate}
+      onSkip={settle}
     />
   );
 }
@@ -85,6 +109,7 @@ const STANDING: Partial<Record<SetupStep, (props: SetupStandingProps) => ReactEl
   welcome: welcomeStanding,
   harnesses: harnessStanding,
   sources: sourcesStanding,
+  compose: composeStanding,
 };
 
 /**
