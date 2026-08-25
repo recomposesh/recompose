@@ -21,6 +21,7 @@ import { portsHeldFromRecompose } from './port-squatter';
 import { fakeLocalRuntime } from './runtime-stub';
 import { scenarioUserDataDir } from './scenario-user-data';
 import { fakeScriptedProvider } from './scripted-provider';
+import { settledSetupWritten } from './settled-setup';
 import { fakeSubscriptionTools } from './subscription-tools';
 import {
   updatesArrangementFor,
@@ -101,6 +102,10 @@ async function scenarioDataDirPrepared(testInfo: TestInfo, tags: string[]): Prom
 
   await rm(userDataDir, { force: true, recursive: true });
   await mkdir(userDataDir, { recursive: true });
+
+  if (!tags.includes('@fresh-profile')) {
+    await settledSetupWritten(userDataDir);
+  }
 
   if (tags.includes('@seeded-usage-history')) {
     await seededUsageHistoryWritten(userDataDir);

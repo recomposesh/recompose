@@ -193,3 +193,6 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0185](0185-the-shell-reads-which-edge-takes-the-window-controls.md)            | The shell reads which edge takes the window controls                                | Accepted   | 2026-08-24 |
 | [0186](0186-a-long-prompt-accrues-into-a-bucket-of-its-own.md)                  | A long prompt accrues into a bucket of its own                                      | Accepted   | 2026-08-24 |
 | [0187](0187-the-step-that-asked-keeps-the-code.md)                              | The step that asked keeps the code                                                  | Accepted   | 2026-08-24 |
+| [0188](0188-setup-stands-over-the-route-rather-than-taking-one.md)              | Setup stands over the route rather than taking one                                  | Accepted   | 2026-08-25 |
+| [0189](0189-the-first-served-request-is-an-outcome-not-a-grant.md)              | The first served request is an outcome, not a grant                                 | Accepted   | 2026-08-25 |
+| [0190](0190-a-rank-picks-the-first-model-a-person-meets.md)                     | A rank picks the first model a person meets                                         | Accepted   | 2026-08-25 |

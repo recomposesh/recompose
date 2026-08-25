@@ -1,3 +1,5 @@
+import type { GatewayConfig } from '@recompose/contracts';
+
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
@@ -10,11 +12,23 @@ import { setupOpensOn } from './setup-step';
 type SetupStanding = {
   /** The step setup stands on, or nothing while setup stands away. */
   step: SetupStep | null;
+  /** Whether setup ended this session on a request the gateway served. */
+  served: boolean;
+  /** Puts the celebration away, which only a person does. */
+  onCelebrated: () => void;
   /** Moves setup on to the named step, for as long as this session lasts. */
   walkTo: (step: SetupStep) => void;
   /** Records that setup is over, whether it finished or the person left it. */
   settle: () => void;
 };
+
+/** What a profile already holds, which is the whole of what the opening step reads. */
+function whatStands(gateways: readonly GatewayConfig[]) {
+  return {
+    gatewayExists: gateways.length > 0,
+    virtualModelComposed: gateways.some((gateway) => gateway.virtualModels.length > 0),
+  };
+}
 
 /**
  * Where setup stands for this profile, and the two ways it moves.
@@ -39,26 +53,16 @@ export function useSetupStanding(): SetupStanding {
   gatewaysNow.current = gateways;
 
   const [step, setStep] = useState<SetupStep | null>(() =>
-    setupOpensOn({
-      settled: settings.setupWizardSettled,
-      gatewayExists: gateways.length > 0,
-      virtualModelComposed: gateways.some((gateway) => gateway.virtualModels.length > 0),
-    }),
+    setupOpensOn({ settled: settings.setupWizardSettled, ...whatStands(gateways) }),
   );
   const [servedBefore, setServedBefore] = useState(settings.firstRequestServed);
+  const [served, setServed] = useState(false);
 
   useEffect(
     () =>
       subscribeToSetupReopened(() => {
-        setStep(
-          setupOpensOn({
-            settled: false,
-            gatewayExists: gatewaysNow.current.length > 0,
-            virtualModelComposed: gatewaysNow.current.some(
-              (gateway) => gateway.virtualModels.length > 0,
-            ),
-          }),
-        );
+        setServed(false);
+        setStep(setupOpensOn({ settled: false, ...whatStands(gatewaysNow.current) }));
         save({ setupWizardSettled: false });
       }),
     [save],
@@ -69,12 +73,17 @@ export function useSetupStanding(): SetupStanding {
 
     if (settings.firstRequestServed && step === 'waiting') {
       setStep(null);
+      setServed(true);
       save({ setupWizardSettled: true });
     }
   }
 
   return {
     step: settings.setupWizardSettled ? null : step,
+    served,
+    onCelebrated: () => {
+      setServed(false);
+    },
     walkTo: setStep,
     settle: () => {
       setStep(null);
