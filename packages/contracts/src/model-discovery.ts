@@ -1,3 +1,5 @@
+import { modelAliasFromName } from './gateway-config';
+
 const DISCOVERED_WORDS = ['claude', 'anthropic'] as const;
 
 /**
@@ -24,4 +26,16 @@ export function claudeCodeKeepsModelId(id: string): boolean {
  */
 export function claudeShapedModelId(id: string): string {
   return id === '' || claudeCodeKeepsModelId(id) ? id : `claude-${id}`;
+}
+
+/**
+ * The id a name a person typed derives to before anyone edits it.
+ *
+ * @summary Shaped rather than bare, because a derived id nobody reshapes is the one case where a
+ * person never chose to be skipped: they typed a name and took what the field offered (ADR-0191).
+ * `modelAliasFromName` stays the bare normalizer underneath, for the callers that must add no word
+ * to a string a person or a provider already settled.
+ */
+export function modelIdFromName(name: string): string {
+  return claudeShapedModelId(modelAliasFromName(name));
 }

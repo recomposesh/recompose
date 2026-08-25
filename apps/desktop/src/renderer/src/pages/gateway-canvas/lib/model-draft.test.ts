@@ -73,12 +73,29 @@ test('typing a name derives its id live, keeping the dots a client will send', (
   expect(idFollowingName('claude-5', 'claude-5.6', 'claude-5')).toBe('claude-5.6');
 });
 
+test("a name derives an id one client's picker keeps, so nobody has to know the rule", () => {
+  expect(idFollowingName('', 'Fast Sonnet', '')).toBe('claude-fast-sonnet');
+});
+
+test('a name already carrying the word derives no second prefix', () => {
+  expect(idFollowingName('', 'Claude Fast', '')).toBe('claude-fast');
+  expect(idFollowingName('', 'Anthropic Fast', '')).toBe('anthropic-fast');
+});
+
+test('the id keeps following while it still reads as the one the name derives', () => {
+  expect(idFollowingName('Fast', 'Faster', 'claude-fast')).toBe('claude-faster');
+});
+
 test('an id a person edited by hand detaches, so further name typing leaves it alone', () => {
   expect(idFollowingName('Fast', 'Faster', 'my-alias')).toBe('my-alias');
 });
 
+test('stripping the prefix is a hand edit too, so the name stops driving the id', () => {
+  expect(idFollowingName('Fast', 'Faster', 'fast')).toBe('fast');
+});
+
 test('clearing a hand-edited id lets the name drive it again', () => {
-  expect(idFollowingName('Fast', 'Faster', '')).toBe('faster');
+  expect(idFollowingName('Fast', 'Faster', '')).toBe('claude-faster');
 });
 
 test('an id no client could send refuses before anything is stored', () => {

@@ -1,6 +1,6 @@
 import type { GatewayConfig, RouteTarget, Routing } from '@recompose/contracts';
 
-import { mintRouteNodeId, modelAliasFromName } from '@recompose/contracts';
+import { mintRouteNodeId, modelIdFromName } from '@recompose/contracts';
 
 import type { ProviderModelList } from '../../../shared/api';
 import type { BoundKind } from './binding-kinds';
@@ -14,14 +14,16 @@ import { routedThroughARouter } from './routing-edits';
 /**
  * The id a name derives to, kept in step with the name until a person edits the id by hand.
  *
- * @summary The id follows the name while it still reads as the name's derived alias, and an empty
- * id counts as following, so clearing a hand-edit lets the name drive it again. Once the id says
+ * @summary The id follows the name while it still reads as the name's derived id, and an empty id
+ * counts as following, so clearing a hand-edit lets the name drive it again. Once the id says
  * something the name would not derive, it belongs to the person, and typing the name leaves it be.
+ * Stripping the prefix off a derived id is one such edit, so a person who wants the bare name
+ * keeps it rather than watching the next keystroke put the prefix back.
  */
 export function idFollowingName(previousName: string, nextName: string, currentId: string): string {
-  const following = currentId === '' || currentId === modelAliasFromName(previousName);
+  const following = currentId === '' || currentId === modelIdFromName(previousName);
 
-  return following ? modelAliasFromName(nextName) : currentId;
+  return following ? modelIdFromName(nextName) : currentId;
 }
 
 export type SettledDefinition = {

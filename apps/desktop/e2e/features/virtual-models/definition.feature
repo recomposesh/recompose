@@ -7,7 +7,7 @@ Feature: Defining a virtual model on a gateway
     Given a gateway with a stored Anthropic key account
     When the person defines a virtual model "fast" targeting that account's "claude-sonnet-5"
     Then the Models list holds "fast" as one row
-    And the row reads "fast" over its target
+    And the row reads "fast", the id "claude-fast", then its target
 
   Scenario: The person picks the real model rather than typing it
     Given a gateway with a stored Anthropic key account whose model list is reachable
@@ -21,8 +21,14 @@ Feature: Defining a virtual model on a gateway
     Then the inspector reads a typed refusal naming the failed look
     And no definition is stored
 
-  Scenario: The inspector reshapes an id one client's picker would skip
+  Scenario: A named model takes an id one client's picker keeps
     Given a gateway with a stored Anthropic key account
     When the person names a new virtual model "Fast Sonnet"
+    Then the Model id field reads "claude-fast-sonnet"
+
+  Scenario: The inspector offers the reshaping back to an id a person stripped
+    Given a gateway with a stored Anthropic key account
+    When the person names a new virtual model "Fast Sonnet"
+    And the person rewrites the model id as "fast-sonnet"
     And the person takes the reshaped id the inspector offers
     Then the Model id field reads "claude-fast-sonnet"

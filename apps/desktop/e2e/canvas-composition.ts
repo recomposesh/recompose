@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { modelAliasFromName } from '@recompose/contracts';
+import { modelIdFromName } from '@recompose/contracts';
 
 import { dropCableOnEmptyCanvas, takeUpThePortAsk } from './canvas-gestures';
 import { rememberDropPoint, rememberVirtualModel } from './canvas-memory';
@@ -20,7 +20,7 @@ import { focusedGateway } from './scenario-memory';
 /** The card a name stands as: the stored definition, or the draft while it holds no provider yet. */
 export async function cardNamed(page: Page, name: string): Promise<string> {
   const standing = await standingNodes(page);
-  const stored = modelNodeId(modelAliasFromName(name));
+  const stored = modelNodeId(modelIdFromName(name));
 
   rememberVirtualModel(page, name);
 

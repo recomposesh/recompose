@@ -59,3 +59,39 @@ export const ARenameOntoAHeldId = meta.story({
     );
   },
 });
+
+/**
+ * A stored id one picker skips, which says so under its facts rather than staying silent.
+ *
+ * @summary A definition stored before the derivation shaped ids gets no other word about why it
+ * reaches no picker, so the notice is what makes an old id explain itself.
+ */
+export const AStoredIdOnePickerSkips = meta.story({
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByText(
+        'Claude Code lists only ids carrying claude or anthropic. Edit this id to claude-fast to have it listed.',
+      ),
+    ).toBeVisible();
+  },
+});
+
+/** An id that picker lists, which is owed no notice at all. */
+export const AStoredIdOnePickerLists = meta.story({
+  args: { model: { ...fastModel, id: 'claude-fast' } },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText(/Claude Code lists only ids/)).toBeNull();
+  },
+});
+
+/** Editing a skipped id offers the reshaping, which fills the field and leaves the save to a person. */
+export const ReshapingAStoredId = meta.story({
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Edit' }));
+    await userEvent.click(await canvas.findByRole('button', { name: 'Use claude-fast' }));
+
+    await expect(await canvas.findByRole('textbox', { name: 'Model id' })).toHaveValue(
+      'claude-fast',
+    );
+  },
+});

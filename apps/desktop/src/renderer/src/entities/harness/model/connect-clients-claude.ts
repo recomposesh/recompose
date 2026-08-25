@@ -9,17 +9,55 @@ const DISCOVERY_NOTE =
 const ESCAPED_NOTE = `${DISCOVERY_NOTE} That picker skips this id, so the last variable adds it as a row of its own.`;
 
 /**
- * The variable that puts a model id past the filter Claude Code's discovery reads ids through.
+ * The model an escape has to name outright, or nothing where discovery surfaces it already.
  *
- * @summary Discovery keeps only the ids carrying claude or anthropic, and this one names a model
- * outright, skipping that filter and the validation behind it. It stands only where it is needed,
- * because a person handed it beside an id discovery already surfaces would paste a second row of
- * the model they can already pick.
+ * @summary Discovery keeps only the ids carrying claude or anthropic, and the escape names a model
+ * outright, skipping that filter and the validation behind it. The decision lives here alone
+ * because both ways in spell the same variable differently, and two readings of one filter is how
+ * a shell block and a settings file start disagreeing about the same gateway.
  */
-function pickerEscape(facts: ConnectFacts): readonly string[] {
+function modelNeedingTheEscape(facts: ConnectFacts): string | undefined {
   const model = presentedModel(facts);
 
-  return claudeCodeKeepsModelId(model) ? [] : [exportLine('ANTHROPIC_CUSTOM_MODEL_OPTION', model)];
+  return claudeCodeKeepsModelId(model) ? undefined : model;
+}
+
+function pickerEscape(facts: ConnectFacts): readonly string[] {
+  const escaped = modelNeedingTheEscape(facts);
+
+  return escaped === undefined ? [] : [exportLine('ANTHROPIC_CUSTOM_MODEL_OPTION', escaped)];
+}
+
+function settingsEnvRows(facts: ConnectFacts): readonly string[] {
+  const escaped = modelNeedingTheEscape(facts);
+
+  return [
+    `"ANTHROPIC_BASE_URL": "${addressFor('origin', facts)}"`,
+    `"ANTHROPIC_AUTH_TOKEN": "${presentedKey(facts)}"`,
+    `"ANTHROPIC_MODEL": "${presentedModel(facts)}"`,
+    '"CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1"',
+    ...(escaped === undefined ? [] : [`"ANTHROPIC_CUSTOM_MODEL_OPTION": "${escaped}"`]),
+  ];
+}
+
+/**
+ * The settings file spelling of the same block, carrying every variable the shell one carries.
+ *
+ * @summary A settings file is the path background agents read, so a block short of the discovery
+ * switch hands the quieter path a smaller picker than the shell one it sits beside. The rows are
+ * built rather than written out because the last one takes no comma and which row is last moves
+ * with the id.
+ */
+function settingsLines(facts: ConnectFacts): readonly string[] {
+  const rows = settingsEnvRows(facts);
+
+  return [
+    '{',
+    '  "env": {',
+    ...rows.map((row, index) => `    ${row}${index === rows.length - 1 ? '' : ','}`),
+    '  }',
+    '}',
+  ];
 }
 
 export const claudeCode: ConnectClient = {
@@ -50,16 +88,8 @@ export const claudeCode: ConnectClient = {
     },
     {
       title: 'Or keep it in ~/.claude/settings.json',
-      lines: [
-        '{',
-        '  "env": {',
-        `    "ANTHROPIC_BASE_URL": "${addressFor('origin', facts)}",`,
-        `    "ANTHROPIC_AUTH_TOKEN": "${presentedKey(facts)}",`,
-        `    "ANTHROPIC_MODEL": "${presentedModel(facts)}"`,
-        '  }',
-        '}',
-      ],
-      note: 'A settings file reaches background agents as well, which a shell export does not. Run /status in a session to read back the base URL it is using.',
+      lines: [...settingsLines(facts)],
+      note: 'A settings file reaches background agents as well, which a shell export does not, so it carries the same variables rather than a shorter set. Run /status in a session to read back the base URL it is using.',
     },
   ],
 };

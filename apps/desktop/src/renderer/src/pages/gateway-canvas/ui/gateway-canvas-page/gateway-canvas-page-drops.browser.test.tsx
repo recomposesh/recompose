@@ -136,9 +136,11 @@ test('the target a completed pick materializes stands where the cable was let go
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
   await expect
-    .poll(async () => storedBindingOf('steady'))
+    .poll(async () => storedBindingOf('claude-steady'))
     .toEqual({ accountId: 's1', providerModel: 'claude-opus-5' });
-  await expect.poll(async () => portCentreOn(screen.container, 'target:steady')).toEqual(letGo);
+  await expect
+    .poll(async () => portCentreOn(screen.container, 'target:claude-steady'))
+    .toEqual(letGo);
 });
 
 function optionUnderTheMap(container: HTMLElement): Element {

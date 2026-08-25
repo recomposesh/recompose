@@ -173,7 +173,7 @@ test('a completed pick on a pending card writes the binding it stands for', asyn
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
   await expect
-    .poll(async () => storedBindingOf('steady'))
+    .poll(async () => storedBindingOf('claude-steady'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-opus-5' });
   await expect
     .element(screen.getByText('Connected providers', { exact: true }))

@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import type { RouteNode, Routing } from '@recompose/contracts';
 
 import { expect } from '@playwright/test';
-import { modelAliasFromName } from '@recompose/contracts';
+import { modelAliasFromName, modelIdFromName } from '@recompose/contracts';
 
 import { draftNamed, letGoOnEmptyCanvas } from '../canvas-composition';
 import { fitCanvasToView } from '../canvas-gestures';
@@ -219,7 +219,7 @@ When(
 );
 
 Then('a router node stands wired to {string} at the drop point', async ({ page }, name: string) => {
-  const modelId = modelAliasFromName(name);
+  const modelId = modelIdFromName(name);
 
   await expect.poll(async () => routedModelIds(page)).toEqual([modelId]);
 

@@ -5,7 +5,7 @@ import { Field } from '@base-ui/react/field';
 import type { RoutingPickerProps } from '../routing-picker/routing-picker';
 
 import { Button, CopyButton } from '../../../../shared/ui';
-import { discoveryHint, discoverySuggestion } from '../../lib/draft-refusals';
+import { discoveryHint, discoverySuggestion } from '../../lib/picker-discovery';
 import { RoutingPicker } from '../routing-picker/routing-picker';
 
 const MODEL_ID_HELP = 'Clients send this exact string as the model.';
@@ -79,8 +79,10 @@ function shapedIdOffer(id: string, onIdChange: (typed: string) => void): ReactNo
  * What stands under the model id field: a refusal alone, or the help the hint and its offer join.
  *
  * @summary A refusal takes the whole line, because an id no gateway can serve is not one to nudge
- * about a picker. Everything else reads as one description, and the offer stands as its own press
- * under it rather than as a second sentence, so taking the hint costs a person no typing.
+ * about a picker. The hint takes a line of its own under the help rather than riding its end,
+ * because an id derived here already carries the word: reaching the hint at all means a person
+ * typed past that, and a word they typed past has to be readable to be worth printing. The offer
+ * stands as its own press under both, so taking the hint costs a person no typing.
  */
 function modelIdBelow(props: TypedFields): ReactNode {
   if (props.idRefusal !== undefined) {
@@ -96,8 +98,8 @@ function modelIdBelow(props: TypedFields): ReactNode {
   return (
     <>
       <Field.Description className="mt-1.5 block text-footnote text-ink-secondary">
-        {MODEL_ID_HELP}
-        {hint === undefined ? null : ` · ${hint}`}
+        <span className="block">{MODEL_ID_HELP}</span>
+        {hint === undefined ? null : <span className="mt-1 block text-attention-ink">{hint}</span>}
       </Field.Description>
       {shapedIdOffer(props.id, props.onIdChange)}
     </>

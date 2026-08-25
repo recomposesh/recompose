@@ -261,7 +261,7 @@ test('the draft subject edits the held draft as a person types', async () => {
   await screen.getByRole('textbox', { name: 'Name' }).fill('Steady');
 
   expect(heldDraft('my-gateway')?.definition.displayName).toBe('Steady');
-  expect(heldDraft('my-gateway')?.definition.id).toBe('steady');
+  expect(heldDraft('my-gateway')?.definition.id).toBe('claude-steady');
 });
 
 test('a settled draft saves through the inspector and hands the definition over', async () => {
@@ -283,7 +283,7 @@ test('a settled draft saves through the inspector and hands the definition over'
   await userEvent.click(screen.getByRole('button', { name: 'claude-opus-5' }));
   await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
 
-  await expect.poll(() => defined).toEqual(['steady']);
+  await expect.poll(() => defined).toEqual(['claude-steady']);
 });
 
 test('a refusal sentence stands in the inspector as an alert', async () => {
