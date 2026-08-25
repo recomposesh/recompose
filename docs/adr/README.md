@@ -199,3 +199,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0191](0191-a-name-derives-an-id-that-picker-keeps.md)                          | A name derives an id that picker keeps                                              | Accepted   | 2026-08-25 |
 | [0192](0192-the-spell-gate-reads-the-whole-tree-so-it-runs-on-every-change.md)  | The spell gate reads the whole tree, so it runs on every change                     | Accepted   | 2026-08-25 |
 | [0193](0193-visual-regression-leaves-with-the-gate-that-never-reports.md)       | Visual regression leaves with the gate that never reports                           | Accepted   | 2026-08-25 |
+| [0194](0194-the-pipeline-runs-its-work-in-parallel.md)                          | The pipeline runs its work in parallel                                              | Accepted   | 2026-08-25 |
