@@ -4,9 +4,7 @@ import { ConfettiBurst, Icon } from '../../../../shared/ui';
 
 const TITLE = 'That was the whole setup';
 
-const BODY = 'Everything you just built is on this canvas, live.';
-
-const NEXT = 'Drag a cable off the gateway to add another model whenever you want one.';
+const BODY = 'Drag a cable off the gateway to add another model whenever you want one.';
 
 /** How long the note stands before it takes itself away. */
 const NOTE_MS = 5000;
@@ -16,15 +14,9 @@ const NOTE =
   'border border-running/22 bg-surface-card/92 px-3.75 pt-3.25 pb-3.5 shadow-raised backdrop-blur';
 
 type ServedNoteProps = {
-  /** The harness whose request landed, where setup knows which one it was. */
-  harness: string | undefined;
   /** Takes the note away. */
   onDismiss: () => void;
 };
-
-function bodyFor(harness: string | undefined): string {
-  return harness === undefined ? BODY : `${harness} asked, and your plan answered. ${BODY}`;
-}
 
 /**
  * The note takes itself away once it has been read.
@@ -69,7 +61,8 @@ function useNoteClock(onDismiss: () => void): { hold: () => void; release: () =>
  * @summary It stands on the canvas rather than over it: setup is finished, and one more surface
  * holding the window would undo the thing this note is celebrating. It says what happened rather
  * than congratulating, because the graph behind it is the point and the note is only the caption.
- * The last line says what to do next on that graph, which is the one thing setup never showed.
+ * Its one line says what to do next on that graph, which is the one thing setup never showed. What
+ * just happened is already on the screen behind it, so saying it again would only cost a reading.
  *
  * The burst is the one piece that does congratulate, and it falls across the whole window rather
  * than inside the note, because what a person just finished is everything on the screen behind it.
@@ -77,7 +70,7 @@ function useNoteClock(onDismiss: () => void): { hold: () => void; release: () =>
  * It is a status rather than a region, because it leaves on a clock. A landmark that disappears
  * would leave a reader navigating to something no longer there.
  */
-export function ServedNote({ harness, onDismiss }: ServedNoteProps) {
+export function ServedNote({ onDismiss }: ServedNoteProps) {
   const clock = useNoteClock(onDismiss);
 
   return (
@@ -100,8 +93,7 @@ export function ServedNote({ harness, onDismiss }: ServedNoteProps) {
             {TITLE}
           </h2>
         </span>
-        <p className="text-detail text-ink-secondary">{bodyFor(harness)}</p>
-        <p className="text-detail text-ink-secondary">{NEXT}</p>
+        <p className="text-detail text-ink-secondary">{BODY}</p>
       </div>
     </>
   );

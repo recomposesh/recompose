@@ -10,7 +10,7 @@ const CANVAS_SELECTION_LIFT = 1000;
 
 const meta = preview.meta({
   component: ServedNote,
-  args: { harness: 'Claude Code', onDismiss: fn() },
+  args: { onDismiss: fn() },
   decorators: [
     (Story) => (
       <div className="relative h-80 w-full bg-surface-content dot-grid">
@@ -26,27 +26,21 @@ export const Basic = meta.story({
     await expect(
       await canvas.findByRole('heading', { name: 'That was the whole setup' }),
     ).toBeVisible();
-    await expect(
-      await canvas.findByText(/Claude Code asked, and your plan answered/u),
-    ).toBeVisible();
   },
 });
 
-/** Setup cannot tell which harness sent the request, so naming none is honest too. */
-export const WithoutANamedHarness = meta.story({
-  args: { harness: undefined },
-  play: async ({ canvas }) => {
-    await expect(
-      await canvas.findByText(/Everything you just built is on this canvas/u),
-    ).toBeVisible();
-    await expect(canvas.queryByText(/asked, and your plan answered/u)).toBeNull();
-  },
-});
-
-/** The last line says what to do next on the graph, which is the one thing setup never showed. */
+/** Its one line says what to do next on the graph, which is the one thing setup never showed. */
 export const ItSaysWhatToDoNext = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText(/Drag a cable off the gateway/u)).toBeVisible();
+  },
+});
+
+/** It never repeats what the screen behind it already shows. */
+export const ItNeverRestatesTheCanvas = meta.story({
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText(/Everything you just built is on this canvas/u)).toBeNull();
+    await expect(await canvas.findAllByText(/./u)).toHaveLength(2);
   },
 });
 

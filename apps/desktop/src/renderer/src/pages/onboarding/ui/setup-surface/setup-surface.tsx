@@ -5,7 +5,6 @@ import { useState } from 'react';
 
 import type { CatalogEntry, ProviderKind } from '../../../../entities/provider';
 
-import { clientNamed } from '../../../../entities/harness';
 import { togglePicked } from '../../model/picked-count';
 import { useMarkingSources } from '../../model/use-marking-sources';
 import { useSetupStanding } from '../../model/use-setup-standing';
@@ -36,17 +35,6 @@ type SetupSurfaceProps = {
   onBuilt: (gateway: GatewayConfig) => void;
 };
 
-/**
- * @summary The note names one harness rather than listing them, because only one of them sent the
- * request and setup cannot tell which. The first picked is the honest guess, and naming none is
- * honest too.
- */
-function firstHarnessName(harnesses: ReadonlySet<string>): string | undefined {
-  const [first] = [...harnesses];
-
-  return first === undefined ? undefined : clientNamed(first).name;
-}
-
 function usePicking(): [ReadonlySet<string>, (id: string) => void] {
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
 
@@ -76,9 +64,7 @@ export function SetupSurface({ connectSheet, onBuilt }: SetupSurfaceProps) {
   if (setup.step === null) {
     const { onCelebrated } = setup;
 
-    return setup.served ? (
-      <ServedNote harness={firstHarnessName(pickedHarnesses)} onDismiss={onCelebrated} />
-    ) : null;
+    return setup.served ? <ServedNote onDismiss={onCelebrated} /> : null;
   }
 
   return (
