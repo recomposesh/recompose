@@ -720,7 +720,7 @@
 }
 
 /*
- * The rings a waiting step sends out while nothing has landed. Each starts at the epicentre and
+ * The rings a waiting step sends out while nothing has landed. Each starts at the center point and
  * fades as it widens, and the three run a third of a cycle apart so the field never empties.
  */
 /*

@@ -68,6 +68,7 @@ conv
 cooldown
 cooldowns
 copilotkit
+coprime
 covguard
 crashpad
 credentialweight
@@ -163,6 +164,7 @@ JVBE
 kapi
 Kapı
 karpathy
+keyline
 kibibyte
 Kimi
 Kiritimati
@@ -171,6 +173,7 @@ konsole
 koromix
 Langdock
 Laravel
+lede
 Lemni
 letrec
 librsvg
@@ -221,6 +224,7 @@ nemotron
 nizos
 nodrag
 nofilter
+nomic
 nonblocking
 noninteractive
 notarytool
@@ -290,6 +294,7 @@ repainter
 replayable
 Replit
 Reqs
+rerank
 rescans
 respawned
 resvg
@@ -426,6 +431,7 @@ Webflow
 webglcontextlost
 webui
 WHATWG
+windowfall
 winstaller
 wordmark
 worktree

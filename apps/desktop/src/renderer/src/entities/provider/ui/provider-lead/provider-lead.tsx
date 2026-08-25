@@ -14,7 +14,7 @@ type ProviderLeadProps = {
  *
  * @summary Reach for it wherever a provider is named, so no two surfaces disagree about what one
  * looks like. A provider that publishes no mark leads with a glyph rather than with a drawing
- * recompose invented for it, and the glyph quiets while a real mark keeps its own colours.
+ * recompose invented for it, and the glyph quiets while a real mark keeps its own colors.
  */
 export function ProviderLead({ lead, className = 'size-4.5' }: ProviderLeadProps) {
   return 'mark' in lead ? (

@@ -81,7 +81,7 @@ function stored(accounts: readonly StoredSource[]): readonly FoundSource[] {
 /**
  * The plan a provider's own tool is already signed into, where it left one behind.
  *
- * @summary The row reads as the plan rather than as the tool, because a person recognises what
+ * @summary The row reads as the plan rather than as the tool, because a person recognizes what
  * they pay for. Two providers keep credentials on this machine and both are offered, so a machine
  * running Codex is not told recompose found nothing.
  */

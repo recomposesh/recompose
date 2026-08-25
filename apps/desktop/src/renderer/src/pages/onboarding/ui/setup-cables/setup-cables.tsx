@@ -1,7 +1,7 @@
 type Cable = {
   /** The curve the cable runs, drawn on the box the whole field is set in. */
   runs: string;
-  /** The tone the cable carries, which is the colour its far end would plug into. */
+  /** The tone the cable carries, which is the color its far end would plug into. */
   tone: string;
   /** How heavy the line reads, so the near cables sit forward of the far ones. */
   weight: number;
