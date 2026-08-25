@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import type { AccountKind } from '../../../../entities/account';
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogEntry } from '../../../../entities/provider';
 
 import { CatalogList } from './catalog-list';
 

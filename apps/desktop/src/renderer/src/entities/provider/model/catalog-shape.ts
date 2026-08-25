@@ -1,8 +1,18 @@
-import type { AccountKind } from '../../../entities/account';
+import type { AccountKind } from '@recompose/contracts';
+
 import type { CatalogLead } from './catalog-lead';
 
-/** A way an account reaches a provider, which is every kind the registry holds one under. */
+/**
+ * A way an account reaches a provider, which is every kind the registry holds one under.
+ *
+ * @summary The contract owns the set, so the catalog names it rather than restating it. Reading
+ * it from here rather than from the account entity keeps two entities from leaning on each other
+ * for a word neither of them coined.
+ */
 export type ConnectionWay = AccountKind;
+
+/** The kind a provider is held under, offered from here so a catalog reader needs one import. */
+export type ProviderKind = AccountKind;
 
 /**
  * What a picked entry's connect step asks a person for.

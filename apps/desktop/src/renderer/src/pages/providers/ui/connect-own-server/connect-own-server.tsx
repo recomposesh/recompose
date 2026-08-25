@@ -1,7 +1,7 @@
 import { useForm, useSelector } from '@tanstack/react-form';
 import { useId } from 'react';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogLead } from '../../../../entities/provider';
 
 import { useConnectLocalRuntime, withRefusal } from '../../../../shared/api';
 import { portRefusal } from '../../model/own-address-draft';
@@ -9,8 +9,13 @@ import { ConnectStep } from '../connect-step/connect-step';
 import { SheetField } from '../sheet-field/sheet-field';
 
 type ConnectOwnServerProps = {
-  /** The escape-hatch entry a person picked, which knows no port of its own. */
-  entry: CatalogEntry;
+  /**
+   * The escape-hatch row a person picked, which knows no port of its own.
+   *
+   * @summary The step draws the row and never reads its offers, so it takes the drawing rather
+   * than the whole catalog entry behind it.
+   */
+  entry: { lead: CatalogLead; name: string };
   /** Runs once the row is stored, so the catalog can close behind it. */
   onConnected: () => void;
 };

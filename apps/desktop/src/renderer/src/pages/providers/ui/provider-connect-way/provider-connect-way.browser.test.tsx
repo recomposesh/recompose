@@ -5,11 +5,11 @@ import { Suspense, useState } from 'react';
 import { expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
+import type { CatalogEntry } from '../../../../entities/provider';
 
+import { catalogEntries } from '../../../../entities/provider';
 import { subscriptionToolsQueryOptions } from '../../../../shared/api';
 import { installFakeBridge } from '../../../../shared/testing';
-import { catalogEntries } from '../../model/provider-catalog';
 import { ProviderConnectWay } from './provider-connect-way';
 
 const claudeCode: SubscriptionTool = {
@@ -30,7 +30,7 @@ function offered(id: CatalogEntry['id']): CatalogEntry {
   return entry;
 }
 
-import type { ConnectionWay } from '../../model/provider-catalog';
+import type { ConnectionWay } from '../../../../entities/provider';
 
 function Fork({ entry, way }: { entry: CatalogEntry; way: ConnectionWay }) {
   const [connected, setConnected] = useState(false);

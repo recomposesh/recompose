@@ -32,6 +32,7 @@ const settled = { ...defaultSettings(), setupWizardSettled: true };
 
 const meta = preview.meta({
   component: SetupSurface,
+  args: { connectSheet: () => null },
   parameters: { bridge: { gateways: [] } },
 });
 

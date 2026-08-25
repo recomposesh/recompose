@@ -1,10 +1,38 @@
+import type { ReactNode } from 'react';
+
 import { useState } from 'react';
+
+import type { CatalogEntry, ProviderKind } from '../../../../entities/provider';
 
 import { togglePicked } from '../../model/picked-count';
 import { useSetupStanding } from '../../model/use-setup-standing';
-import { HarnessStep } from '../harness-step/harness-step';
+import { SetupStanding } from '../setup-standing/setup-standing';
 import { SetupWizard } from '../setup-wizard/setup-wizard';
-import { WelcomeStep } from '../welcome-step/welcome-step';
+
+/** What setup asks the shell to open for it, because the connect sheet is the providers page's. */
+export type ConnectAsk = { entry: CatalogEntry; kind: ProviderKind };
+
+type SetupSurfaceProps = {
+  /**
+   * Draws the connect sheet for the provider setup asked about, and nothing while it asks about
+   * none.
+   *
+   * @summary Setup cannot reach the providers page's own sheet, and a second copy of it would be
+   * a second place for a connect to drift. The shell holds both, so it hands one to the other.
+   */
+  connectSheet: (ask: ConnectAsk | undefined, onSettled: () => void) => ReactNode;
+};
+
+function usePicking(): [ReadonlySet<string>, (id: string) => void] {
+  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+
+  return [
+    picked,
+    (id) => {
+      setPicked((standing) => togglePicked(standing, id));
+    },
+  ];
+}
 
 /**
  * Setup, standing over whatever route the shell is painting.
@@ -14,43 +42,35 @@ import { WelcomeStep } from '../welcome-step/welcome-step';
  * the same standing the route it redirects to reads, which is the shape every redirect loop in
  * the router's own tracker takes.
  */
-export function SetupSurface() {
+export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
   const setup = useSetupStanding();
-  const [harnesses, setHarnesses] = useState<ReadonlySet<string>>(new Set());
+  const [pickedHarnesses, onPickHarness] = usePicking();
+  const [markedSources, onMarkSource] = usePicking();
+  const [connecting, setConnecting] = useState<ConnectAsk | undefined>(undefined);
 
   if (setup.step === null) {
     return null;
   }
 
   return (
-    <SetupWizard open step={setup.step}>
-      {setup.step === 'welcome' ? (
-        <WelcomeStep
-          onExplore={() => {
-            setup.settle();
+    <>
+      <SetupWizard open step={setup.step}>
+        <SetupStanding
+          markedSources={markedSources}
+          onConnect={(entry, kind) => {
+            setConnecting({ entry, kind });
           }}
-          onSetUp={() => {
-            setup.walkTo('harnesses');
-          }}
+          onMarkSource={onMarkSource}
+          onPickHarness={onPickHarness}
+          pickedHarnesses={pickedHarnesses}
+          settle={setup.settle}
+          step={setup.step}
+          walkTo={setup.walkTo}
         />
-      ) : null}
-      {setup.step === 'harnesses' ? (
-        <HarnessStep
-          onBack={() => {
-            setup.walkTo('welcome');
-          }}
-          onContinue={() => {
-            setup.walkTo('sources');
-          }}
-          onSkip={() => {
-            setup.settle();
-          }}
-          onToggle={(id) => {
-            setHarnesses(togglePicked(harnesses, id));
-          }}
-          picked={harnesses}
-        />
-      ) : null}
-    </SetupWizard>
+      </SetupWizard>
+      {connectSheet(connecting, () => {
+        setConnecting(undefined);
+      })}
+    </>
   );
 }

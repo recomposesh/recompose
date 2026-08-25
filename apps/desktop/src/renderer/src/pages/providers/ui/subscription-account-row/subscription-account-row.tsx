@@ -3,13 +3,13 @@ import type { ReactNode } from 'react';
 
 import { toolBacked } from '@recompose/contracts';
 
+import { subscriptionMarkFor, subscriptionTitleFor } from '../../../../entities/provider';
 import {
   useActivateSubscription,
   useForgetSubscription,
   useRestoreSubscription,
 } from '../../../../shared/api';
 import { Badge, BrandMark, CommandLine, OverflowMenu, StatusChip } from '../../../../shared/ui';
-import { subscriptionMarkFor, subscriptionTitleFor } from '../../model/provider-catalog';
 import { AccountRow } from '../account-row/account-row';
 
 type SubscriptionAccountRowProps = {

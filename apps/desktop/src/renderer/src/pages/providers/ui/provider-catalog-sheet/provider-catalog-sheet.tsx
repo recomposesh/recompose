@@ -11,6 +11,11 @@ type ProviderCatalogSheetProps = CatalogFlowProps;
  * rather than remounting, because a remount would tear the dialog out of the tree before its
  * leaving transition could run.
  */
-export function ProviderCatalogSheet({ kind, open, onOpenChange }: ProviderCatalogSheetProps) {
-  return <CatalogFlow kind={kind} onOpenChange={onOpenChange} open={open} />;
+export function ProviderCatalogSheet({
+  kind,
+  open,
+  onOpenChange,
+  openedOn,
+}: ProviderCatalogSheetProps) {
+  return <CatalogFlow kind={kind} onOpenChange={onOpenChange} open={open} openedOn={openedOn} />;
 }

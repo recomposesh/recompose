@@ -5,17 +5,16 @@ import { authoredRefusalIn, vendorShapeOf } from '@recompose/contracts';
 import { useForm, useSelector } from '@tanstack/react-form';
 import { useId } from 'react';
 
-import type { CatalogEntry } from '../../model/provider-catalog';
-
-import { IpcResultError, useConnectAccount, withRefusal } from '../../../../shared/api';
 import {
+  type CatalogEntry,
   keyHostFor,
   keyPageFor,
   keyShapeHintFor,
   keyTitleFor,
   providerName,
   readerKeyAskFor,
-} from '../../model/provider-catalog';
+} from '../../../../entities/provider';
+import { IpcResultError, useConnectAccount, withRefusal } from '../../../../shared/api';
 import { ConnectStep } from '../connect-step/connect-step';
 import { SheetField } from '../sheet-field/sheet-field';
 

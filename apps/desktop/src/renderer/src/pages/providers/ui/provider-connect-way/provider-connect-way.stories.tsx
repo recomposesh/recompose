@@ -4,7 +4,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { catalogEntries } from '../../model/provider-catalog';
+import { catalogEntries } from '../../../../entities/provider';
 import { ProviderConnectWay } from './provider-connect-way';
 
 const claudeCode: SubscriptionTool = {

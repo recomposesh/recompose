@@ -51,7 +51,7 @@ export function HarnessStep({ picked, onToggle, onBack, onContinue, onSkip }: Ha
             >
               {group.title}
             </h2>
-            <ul className="grid grid-cols-8 gap-1.5">
+            <ul className="grid grid-cols-5 gap-1.5">
               {group.clients.map((client) => (
                 <li key={client.id}>
                   <HarnessTile

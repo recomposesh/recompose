@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useState } from 'react';
 
+import { checkableKey, keyTitleFor, markFor, readerKeyAskFor } from '../../../../entities/provider';
 import {
   useClearReaderKey,
   useRemoveAccount,
@@ -10,7 +11,6 @@ import {
   withRefusal,
 } from '../../../../shared/api';
 import { OverflowMenu, UsageSummaryLink, VendorMark } from '../../../../shared/ui';
-import { checkableKey, keyTitleFor, markFor, readerKeyAskFor } from '../../model/provider-catalog';
 import { AccountRow } from '../account-row/account-row';
 import { ReaderKeySheet } from '../reader-key-sheet/reader-key-sheet';
 

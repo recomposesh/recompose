@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { CatalogLead } from '../../model/catalog-lead';
+import type { CatalogLead } from '../../../../entities/provider';
 
 import { BrandMark, Icon } from '../../../../shared/ui';
 

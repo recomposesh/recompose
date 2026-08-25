@@ -2,8 +2,8 @@ import type { LocalProviderId } from '@recompose/contracts';
 
 import { localRuntimes } from '@recompose/contracts';
 
+import type { CatalogLead } from '../../../entities/provider';
 import type { BrandMarkName } from '../../../shared/ui';
-import type { CatalogLead } from './catalog-lead';
 
 const runtimeMarks: Partial<Record<LocalProviderId, BrandMarkName>> = {
   ollama: 'ollama',

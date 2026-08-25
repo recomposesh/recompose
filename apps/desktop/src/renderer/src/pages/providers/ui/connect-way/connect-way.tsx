@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { useSuspenseQuery } from '@tanstack/react-query';
 
-import type { CatalogLead } from '../../model/catalog-lead';
+import type { CatalogLead } from '../../../../entities/provider';
 
 import {
   machineReadingQueryOptions,
