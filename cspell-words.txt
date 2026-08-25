@@ -120,6 +120,7 @@ firstsecond
 Flathub
 flatlist
 Flodesk
+Fontspring
 fract
 frameless
 freenothing
