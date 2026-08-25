@@ -112,13 +112,27 @@ from a second place rather than rebuilt. The compose step draws the real `Gatewa
 `VirtualModelNode`, `RouterNode`, and `ProviderNode` cards, so the teaching diagram and the
 canvas can't drift apart.
 
+Three seams the wizard rides rather than reinvents, each already carrying a consumer:
+
+- `shared/lib/use-step-transition.ts` holds a directional entrance class against an ordered step
+  list. `RoutingPicker` and `DropPicker` both drive their steps through it, so the wizard's steps
+  move the way every other stepped surface in the app already moves.
+- `shared/lib/visibility/modal-standing.ts` counts the questions standing over the surface, and
+  `app/routes/-view-command-ear.ts` reads that count to report the menu's standing. Registering
+  the wizard through that counter stands the View menu down, so the app-menu requirement in this
+  change needs no second mechanism.
+- `Sheet` already rides `@base-ui/react/dialog`, so the wizard's container follows a convention
+  the segment set rather than introducing a primitive.
+
 **Missing, and new work.**
 
 - _A full-window surface._ `Sheet` and `ConsequenceDialog` both sit over a surface at panel
   scale. Nothing in the segment holds the whole window. This becomes the wizard's own container,
   built on the `@base-ui/react` Dialog already on the dependency list at 1.6.0, with
   `disablePointerDismissal` set and initial focus pinned by name rather than inherited from
-  Chromium's first-focusable behavior.
+  Chromium's first-focusable behavior. `ConsequenceDialog` shows the other route, a native
+  `<dialog>` whose `onCancel` catches Escape, and the wizard turns it down. `showModal()` gives
+  Escape a default the app would have to fight on every step.
 - _A step indicator._ Five dots, one of them a pill. `SegmentedControl` is the nearest neighbor
   and answers a different question, since its segments take a press. Exactly one dot carries
   `aria-current="step"`.
