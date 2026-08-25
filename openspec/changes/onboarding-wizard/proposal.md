@@ -89,6 +89,19 @@ refused request too.
     rejects curating a list per provider, because that can't cover an aggregator serving three
     hundred models or a custom endpoint. It rejects taking whatever the provider listed first,
     because `claudeSubscriptionModels` leads with Haiku.
+
+    The rule reads a model id three ways. A demote list drops the small and the special-purpose
+    ones below neutral, a promote list lifts the flagship words above it, and the higher version
+    number wins among equals. The version read strips dates first, or `claude-opus-4-20250514`
+    outranks `claude-opus-4-8`. A probe over the four listings this repository carries picks
+    `claude-opus-5`, `gpt-5.6-sol`, `kimi-k3-256k`, and `claude-opus-4-6-thinking`. Over a
+    typical Ollama listing it picks `llama3.3:70b`, which is what frame 09 draws. A listing
+    holding nothing but small models still yields one, since the rule ranks rather than filters.
+
+    The determinism this buys is per listing rather than per set. `gpt-5.6-terra` and
+    `gpt-5.6-luna` tie on every key, so the provider's own order decides. That's the property the
+    spec states, and a permutation property test would overclaim.
+
 11. **Headings set in outlined vectors, not in an embedded font.** Questa Grande's free release
     rides the Fontspring Desktop End User License Agreement. Its first clause permits a static
     vector made with a create-outlines tool, and its fifth clause puts computer applications,
