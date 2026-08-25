@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { ContextBandPrice, ModelPrice } from './pricing';
 
-import { openCodeZenPricesFrom } from './opencode-zen-prices';
+import { fetchOpenCodeZenPrices, openCodeZenPricesFrom } from './opencode-zen-prices';
 
 const registry = {
   anthropic: { models: { 'claude-opus-5': { cost: { input: 5, output: 25 } } } },
@@ -203,5 +203,47 @@ describe('what the reader refuses to read as a context threshold', () => {
 
   test('a whole positive threshold names its band', () => {
     expect(bandedAt(200_000)).toHaveLength(1);
+  });
+});
+
+describe('where the registry lookup lands', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  function answering(status: number, body: unknown): string[] {
+    const asked: string[] = [];
+
+    vi.stubGlobal('fetch', async (address: unknown) => {
+      asked.push(String(address));
+
+      return Promise.resolve(new Response(JSON.stringify(body), { status }));
+    });
+
+    return asked;
+  }
+
+  test('the lookup asks the vendor while nothing names a stand-in', async () => {
+    const asked = answering(200, { opencode: { models: {} } });
+
+    await expect(fetchOpenCodeZenPrices()).resolves.toEqual({ opencode: { models: {} } });
+    expect(asked).toEqual(['https://models.dev/api.json']);
+  });
+
+  test('a stand-in on this machine takes the lookup, keeping the vendor path', async () => {
+    vi.stubEnv('RECOMPOSE_PRICE_ORIGIN', 'http://127.0.0.1:9412');
+
+    const asked = answering(200, { opencode: { models: {} } });
+
+    await fetchOpenCodeZenPrices();
+
+    expect(asked).toEqual(['http://127.0.0.1:9412/api.json']);
+  });
+
+  test('a registry that turns the lookup away refuses with the status it answered', async () => {
+    answering(503, {});
+
+    await expect(fetchOpenCodeZenPrices()).rejects.toThrow('the model registry answered 503');
   });
 });
