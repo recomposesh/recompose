@@ -76,13 +76,13 @@ jobs:
         run: pnpm --filter @recompose/web exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
       - if: github.event_name == 'pull_request'
-        run: pnpm exec turbo run lint typecheck build test --concurrency=1 --affected
+        run: pnpm exec turbo run lint typecheck build test --concurrency=100% --affected
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
       - if: github.event_name != 'pull_request'
-        run: pnpm exec turbo run lint typecheck build test --concurrency=1
+        run: pnpm exec turbo run lint typecheck build test --concurrency=100%
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
@@ -211,7 +211,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-26, windows-latest, ubuntu-latest]
+        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') ||
+          fromJSON('["macos-26", "windows-latest", "ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
