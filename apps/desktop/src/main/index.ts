@@ -7,8 +7,6 @@ import type { SpendGrantContext } from './engine-host/spend-grant';
 import type { StorageIpcContext } from './ipc/storage-context';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
-import bundledPrices from '../../resources/model-prices.json?asset';
-import bundledRegistryPrices from '../../resources/opencode-zen-prices.json?asset';
 import { registerAppLifecycle } from './app-lifecycle';
 import { applyProcessOverrides } from './boot/process-overrides';
 import { surfaceStateRepaints } from './boot/state-repaints';
@@ -43,6 +41,7 @@ import { trayRepainter } from './tray/tray-repaint';
 import { trayMenuWiring } from './tray/tray-wiring';
 import { wireDesktopUpdates } from './updates/updater-port';
 import { type UpdatesWiring } from './updates/updates-wiring';
+import { theLivePricing } from './usage/price-lookups';
 import { openUsageIpcDeps } from './usage/usage-wiring';
 import {
   createMainWindow,
@@ -238,9 +237,8 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
   serveRenderer(join(__dirname, '../renderer'));
 
   const profile = await bootFromStoredState({
+    ...theLivePricing,
     legacyUserDataPath: app.getPath('userData'),
-    bundledPricesFile: bundledPrices,
-    bundledRegistryPricesFile: bundledRegistryPrices,
     platform: process.platform,
     recomposeHome,
     onCorrupt: onStorageCorrupt,

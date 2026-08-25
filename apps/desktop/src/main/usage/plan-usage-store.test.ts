@@ -234,7 +234,9 @@ describe('the document on disk', () => {
  * The sentence naming this spec's own file, out of everything the console heard.
  *
  * @summary Another store left standing by an earlier test keeps retrying on the same fake clock, so
- * the first sentence the spy catches is not always the refusal this spec caused.
+ * the first sentence the spy catches is not always the refusal this spec caused. The wait advances
+ * the fake clock rather than spinning, because a real write has to reach the disk and refuse before
+ * anything is said, and a spin under fake timers never lets it.
  */
 function namingThisFile(said: readonly string[], file: string): string | undefined {
   return said.find((sentence) => sentence.includes(file));
@@ -274,7 +276,9 @@ describe('a write the disk refused', () => {
     store.hold({ work: readingFor('work', [fiveHours(0.5, NOW + HOUR)]) });
     await vi.advanceTimersByTimeAsync(3_000);
 
-    const reported = await eventually(() => {
+    const reported = await eventually(async () => {
+      await vi.advanceTimersByTimeAsync(10);
+
       const mine = namingThisFile(said, file);
 
       if (mine === undefined) {
