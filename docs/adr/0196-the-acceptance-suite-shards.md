@@ -55,7 +55,7 @@ per system would have collided on it.
 ## Consequences
 
 **Good**: the acceptance suite reports in about the time a quarter of it takes, plus the fixed
-install and build. A pull request pays four Linux runners for it.
+install and build. A pull request pays eight Linux runners for it.
 
 **Bad, and accepted**: a merge to `main` now starts twelve e2e runners rather than three. The
 repository is public, so standard runners cost nothing on any system. What they spend is

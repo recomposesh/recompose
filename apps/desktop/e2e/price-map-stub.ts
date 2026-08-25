@@ -12,7 +12,6 @@ const PRICE_MAP_PATH = '/BerriAI/litellm/main/model_prices_and_context_window.js
 
 const REGISTRY_PATH = '/api.json';
 
-/** What the stand-in price map holds, which is enough shape for the reader to accept it. */
 const PRICES = {
   'claude-sonnet-5': {
     litellm_provider: 'anthropic',
@@ -21,7 +20,6 @@ const PRICES = {
   },
 };
 
-/** What the stand-in registry holds, in the shape the OpenCode Zen reader parses. */
 const REGISTRY = { opencode: { models: {} } };
 
 export type PriceMapStub = { origin: string; dispose: () => Promise<void> };

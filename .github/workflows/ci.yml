@@ -349,7 +349,9 @@ jobs:
           xvfb-run --auto-servernum pnpm --filter @recompose/desktop exec node keyring-probe.cjs
           xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e
           case "$E2E_SHARD" in
-            1/*) xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:visual ;;
+            1/*)
+              E2E_SHARD= xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:visual
+              ;;
           esac
           SCRIPT
           dbus-run-session -- bash /tmp/e2e-linux.sh
@@ -357,6 +359,8 @@ jobs:
         run: pnpm --filter @recompose/desktop run test:e2e
       - if: runner.os != 'Linux' && matrix.shard == 1
         run: pnpm --filter @recompose/desktop run test:e2e:visual
+        env:
+          E2E_SHARD: ''
       - if: runner.os == 'Linux' && matrix.shard == 1
         run: xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:leak
       - if: runner.os == 'Linux' && matrix.shard == 1
