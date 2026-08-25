@@ -274,14 +274,14 @@ jobs:
           export XDG_CURRENT_DESKTOP=GNOME
           export RECOMPOSE_PASSWORD_STORE=gnome-libsecret
           xvfb-run --auto-servernum pnpm --filter @recompose/desktop exec node keyring-probe.cjs
-          xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e -- --shard="$E2E_SHARD"
-          if [ "$E2E_SHARD" = 1/4 ]; then
-            xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:visual
-          fi
+          xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e
+          case "$E2E_SHARD" in
+            1/*) xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:visual ;;
+          esac
           SCRIPT
           dbus-run-session -- bash /tmp/e2e-linux.sh
       - if: runner.os != 'Linux'
-        run: pnpm --filter @recompose/desktop run test:e2e -- --shard=${{ env.E2E_SHARD }}
+        run: pnpm --filter @recompose/desktop run test:e2e
       - if: runner.os != 'Linux' && matrix.shard == 1
         run: pnpm --filter @recompose/desktop run test:e2e:visual
       - if: runner.os == 'Linux' && matrix.shard == 1

@@ -22,8 +22,14 @@ build and the packaged smoke test all live in it, and each one stays whole.
 ## Decision
 
 **A shard dimension joins the matrix, and the event says how wide.** A pull request runs Linux
-alone, so it takes eight shards. A push takes four, on each of the three systems. Each leg runs
-`test:e2e --shard=n/N`, and `E2E_SHARD` carries both halves so one place spells them.
+alone, so it takes eight shards. A push takes four, on each of the three systems.
+
+**The config reads the shard from `E2E_SHARD`, not from the command line.** `pnpm run` forwards
+extra arguments with the `--` separator still attached, and Playwright reads everything past a bare
+`--` as a file filter rather than as flags. A shard passed that way runs the whole suite and then
+refuses, which is what eight legs did at once before this. The environment carries no separator and
+reaches bash and PowerShell alike, so the workflow sets one variable and `playwright.config.ts`
+parses it.
 
 **Everything that stays whole runs on shard one.** The visual, leak, packaging and packaged
 steps all read `matrix.shard == 1`. Shard one therefore carries the extra work and stands as the
