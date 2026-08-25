@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { declineWordFor } from '@recompose/contracts';
 
 import { Given, Then, When } from '../fixtures';
 import { refusalSentence } from '../gateway-client';
@@ -121,7 +122,11 @@ Then("the classification call carries each branch's label beside its rule text",
 });
 
 Then('else stands nowhere among the offered labels', ({ judge }) => {
-  expect(labelsOffered(judge)).toEqual([CODE_BRANCH.label, CHAT_BRANCH.label]);
+  expect(labelsOffered(judge)).toEqual([
+    CODE_BRANCH.label,
+    CHAT_BRANCH.label,
+    declineWordFor([CODE_BRANCH, CHAT_BRANCH]),
+  ]);
 });
 
 Then('the judge receives exactly two classification calls', ({ judge }) => {

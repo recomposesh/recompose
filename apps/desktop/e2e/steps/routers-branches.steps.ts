@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
+import { declineWordFor } from '@recompose/contracts';
 
 import { Given, Then, When } from '../fixtures';
 import { theGatewayServesTheWrite } from '../gateway-restart';
@@ -160,7 +161,12 @@ When('a fresh conversation arrives under {string}', async ({ page }, model: stri
 Then(
   'the classification call offers {string} and {string} alone',
   ({ judge }, first: string, second: string) => {
-    expect(labelsOffered(judge)).toEqual([first, second]);
+    const branches = [
+      { label: first, rule: '' },
+      { label: second, rule: '' },
+    ];
+
+    expect(labelsOffered(judge)).toEqual([first, second, declineWordFor(branches)]);
   },
 );
 
