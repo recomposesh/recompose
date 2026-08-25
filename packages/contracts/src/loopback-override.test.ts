@@ -7,8 +7,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test('a variable nobody set names no stand-in, so the vendor keeps the call', () => {
+test('a variable nobody set names no stand-in, and says nothing about it', () => {
+  const said = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
   expect(loopbackOverrideOrNull('RECOMPOSE_PRICE_ORIGIN', undefined)).toBeNull();
+  expect(said).not.toHaveBeenCalled();
 });
 
 test('every spelling of this machine is honored, because a scenario picks its own', () => {

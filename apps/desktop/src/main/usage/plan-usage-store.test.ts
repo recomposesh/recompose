@@ -230,6 +230,16 @@ describe('the document on disk', () => {
   });
 });
 
+/**
+ * The sentence naming this spec's own file, out of everything the console heard.
+ *
+ * @summary Another store left standing by an earlier test keeps retrying on the same fake clock, so
+ * the first sentence the spy catches is not always the refusal this spec caused.
+ */
+function namingThisFile(said: readonly string[], file: string): string | undefined {
+  return said.find((sentence) => sentence.includes(file));
+}
+
 describe('a write the disk refused', () => {
   async function blocking(file: string): Promise<() => Promise<void>> {
     await mkdir(file);
@@ -265,11 +275,13 @@ describe('a write the disk refused', () => {
     await vi.advanceTimersByTimeAsync(3_000);
 
     const reported = await eventually(() => {
-      if (said.length === 0) {
+      const mine = namingThisFile(said, file);
+
+      if (mine === undefined) {
         throw new Error('the refused write has not been reported yet');
       }
 
-      return said.join(' ');
+      return mine;
     });
 
     expect(reported).toContain(file);
