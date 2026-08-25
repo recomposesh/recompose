@@ -12,9 +12,8 @@ const NEXT = 'Drag a cable off the gateway to add another model whenever you wan
 const NOTE_MS = 5000;
 
 const NOTE =
-  'pointer-events-auto absolute inset-s-1/2 bottom-8 flex w-105 -translate-x-1/2 flex-col gap-1.25 ' +
-  'rounded-panel border border-running/22 bg-surface-card/92 px-3.75 pt-3.25 pb-3.5 shadow-raised ' +
-  'backdrop-blur';
+  'setup-note pointer-events-auto flex w-105 flex-col gap-1.25 rounded-panel ' +
+  'border border-running/22 bg-surface-card/92 px-3.75 pt-3.25 pb-3.5 shadow-raised backdrop-blur';
 
 type ServedNoteProps = {
   /** The harness whose request landed, where setup knows which one it was. */

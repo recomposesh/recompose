@@ -2,7 +2,11 @@ import { expect, fn, userEvent, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { paintedStyle } from '../../../../shared/testing';
 import { ServedNote } from './served-note';
+
+/** How high React Flow lifts a selected node, which the note has to clear to be seen at all. */
+const CANVAS_SELECTION_LIFT = 1000;
 
 const meta = preview.meta({
   component: ServedNote,
@@ -77,5 +81,30 @@ export const APointerHoldsTheClock = meta.story({
     });
 
     await expect(args.onDismiss).not.toHaveBeenCalled();
+  },
+});
+
+/**
+ * The note clears whatever the canvas raises, because the shell paints setup before the canvas.
+ *
+ * @summary The celebration was drawn from the root, ahead of the surface it celebrates, so the
+ * canvas covered it and only the confetti above it showed. A seat of its own is what fixed it.
+ */
+export const ItClearsTheCanvas = meta.story({
+  decorators: [
+    (Story) => (
+      <div className="relative h-80 w-full bg-surface-content dot-grid">
+        <Story />
+        <div className="absolute inset-0 z-1000 bg-surface-card" />
+      </div>
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const note = await canvas.findByRole('status');
+    const painted = paintedStyle(note);
+
+    await expect(painted.position).toBe('fixed');
+    await expect(Number(painted.zIndex)).toBeGreaterThan(CANVAS_SELECTION_LIFT);
+    await expect(note).toBeVisible();
   },
 });

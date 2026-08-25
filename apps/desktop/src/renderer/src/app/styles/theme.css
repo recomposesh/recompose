@@ -146,6 +146,9 @@
      both, and an open reading must clear the furniture beside it. */
   --z-cable-furniture: 1001;
   --z-cable-reading: 1002;
+  /* The setup celebration is drawn before the canvas is, so it needs a seat above everything the
+     canvas can raise, including a node React Flow has selected. */
+  --z-setup-celebration: 1003;
   --spacing-cable-pulse-stroke: 5.4px;
   --spacing-minimap-width: 172px;
   --spacing-minimap-height: 112px;
@@ -1124,7 +1127,20 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 60;
+  z-index: var(--z-setup-celebration);
+}
+
+/*
+ * The note is painted from the root, before the canvas is, so a seat of its own is what keeps the
+ * canvas from covering it. Fixed rather than absolute, because the shell's own overflow would
+ * otherwise clip it wherever the surface underneath happens to scroll.
+ */
+@utility setup-note {
+  position: fixed;
+  inset-block-end: calc(var(--spacing) * 12);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  z-index: var(--z-setup-celebration);
 }
 
 @utility confetti-fleck {
