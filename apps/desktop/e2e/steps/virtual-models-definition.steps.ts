@@ -74,6 +74,10 @@ When('the person names a new virtual model {string}', async ({ page }, name: str
   await draftNameField(page).fill(name);
 });
 
+When('the person rewrites the model id as {string}', async ({ page }, id: string) => {
+  await draftModelIdField(page).fill(id);
+});
+
 When('the person takes the reshaped id the inspector offers', async ({ page }) => {
   await reshapedIdOffer(page).click();
 });
@@ -90,15 +94,18 @@ Then('the Models list holds {string} as one row', async ({ page }, name: string)
   await expect(servedRow(page, gateway, name)).toBeVisible();
 });
 
-Then('the row reads {string} over its target', async ({ page }, name: string) => {
-  const printed = await rowLines(servedRow(page, focusedGateway(page), name));
+Then(
+  'the row reads {string}, the id {string}, then its target',
+  async ({ page }, name: string, id: string) => {
+    const printed = await rowLines(servedRow(page, focusedGateway(page), name));
 
-  expect(printed.slice(0, NAME_ID_THEN_BINDING)).toEqual([
-    name,
-    name,
-    `${KEY_ACCOUNT} · claude-sonnet-5`,
-  ]);
-});
+    expect(printed.slice(0, NAME_ID_THEN_BINDING)).toEqual([
+      name,
+      id,
+      `${KEY_ACCOUNT} · claude-sonnet-5`,
+    ]);
+  },
+);
 
 Then("the Model field offers the account's live model list", async ({ page }) => {
   for (const providerModel of modelsTheProviderServes) {

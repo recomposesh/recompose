@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { modelAliasFromName } from '@recompose/contracts';
+import { modelIdFromName } from '@recompose/contracts';
 
 import { dragCableOnto, fitCanvasToView, takeUpThePortAsk } from '../canvas-gestures';
 import { rememberComposition, virtualModelInFocus } from '../canvas-memory';
@@ -39,7 +39,7 @@ const REFUSAL = 'A cable binds a virtual model or a router to a provider it does
 
 /** The card a name stands as, which is its stored definition or the draft still holding its seat. */
 async function cardStandingFor(page: Page, name: string): Promise<string> {
-  const stored = modelNodeId(modelAliasFromName(name));
+  const stored = modelNodeId(modelIdFromName(name));
 
   return (await standingNodes(page)).includes(stored) ? stored : DRAFT_NODE;
 }
@@ -149,7 +149,7 @@ When("the person drops a cable from the gateway's port onto that node", async ({
 });
 
 Then('the account stands wired as a target node', async ({ page }) => {
-  const alias = modelAliasFromName(virtualModelInFocus(page));
+  const alias = modelIdFromName(virtualModelInFocus(page));
 
   await expect.poll(async () => standingNodes(page)).toContain(targetNodeId(alias));
   expect(await nodeTreatment(page, targetNodeId(alias))).toBe('target');

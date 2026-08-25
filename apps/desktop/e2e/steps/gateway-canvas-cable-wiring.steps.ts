@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { modelAliasFromName } from '@recompose/contracts';
+import { modelIdFromName } from '@recompose/contracts';
 
 import { cardNamed, draftNamed, letGoOnEmptyCanvas } from '../canvas-composition';
 import { dragCableOnto, fitCanvasToView, pullCableTo, releaseCable } from '../canvas-gestures';
@@ -67,7 +67,7 @@ const COMPANION = 'steady';
 
 async function standsBoundToTheKeyAccount(page: Page, name: string): Promise<void> {
   const key = await accountHeldAs(page, 'api-key');
-  const alias = modelAliasFromName(name);
+  const alias = modelIdFromName(name);
 
   rememberVirtualModel(page, name);
 
@@ -201,7 +201,7 @@ Then('{string} stands bound to it', async ({ page }, name: string) => {
 });
 
 Then('the canvas draws the new cable', async ({ page }) => {
-  const alias = modelAliasFromName(virtualModelInFocus(page));
+  const alias = modelIdFromName(virtualModelInFocus(page));
 
   await expect.poll(async () => standingCables(page)).toContain(cableId(alias));
   await expect(cableBetween(page, modelNodeId(alias), targetNodeId(alias))).toHaveCount(1);
@@ -219,7 +219,7 @@ Then('it anchors to a pending target card at the drop point', async ({ page }) =
 });
 
 Then('the account stands as a target node at the drop point', async ({ page }) => {
-  const alias = modelAliasFromName(virtualModelInFocus(page));
+  const alias = modelIdFromName(virtualModelInFocus(page));
 
   await expect.poll(async () => standingNodes(page)).toContain(targetNodeId(alias));
   expect(await nodeSeat(page, targetNodeId(alias))).toEqual(thePendingSeat(page));
@@ -231,7 +231,7 @@ Then('the picker closes and the pending card leaves the canvas', async ({ page }
 });
 
 Then('{string} still holds no target', async ({ page }, name: string) => {
-  const alias = modelAliasFromName(name);
+  const alias = modelIdFromName(name);
 
   expect(await storedBinding(page, focusedGateway(page), alias)).toBeUndefined();
   expect(await nodeTreatment(page, DRAFT_NODE)).toBe('draft-model');

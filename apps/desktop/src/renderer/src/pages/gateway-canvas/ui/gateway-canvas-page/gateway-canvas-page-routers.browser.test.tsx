@@ -68,7 +68,7 @@ test('picking the router asks the mode, and the mode picked is the one that stan
 
   await expect
     .poll(async () => {
-      const routing = await routingOf('steady');
+      const routing = await routingOf('claude-steady');
 
       return routing === undefined ? undefined : routing.nodes[routing.entry];
     })

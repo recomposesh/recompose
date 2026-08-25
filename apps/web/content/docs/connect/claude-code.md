@@ -32,22 +32,25 @@ The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same v
   "env": {
     "ANTHROPIC_BASE_URL": "http://127.0.0.1:8397",
     "ANTHROPIC_AUTH_TOKEN": "unused",
-    "ANTHROPIC_MODEL": "claude-fast"
+    "ANTHROPIC_MODEL": "claude-fast",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1"
   }
 }
 ```
 
-`~/.claude/settings.json` reaches background agents as well, which a shell export doesn't. When both set the same variable, the settings file wins.
+`~/.claude/settings.json` reaches background agents as well, which a shell export doesn't, so the sheet gives it the same variables rather than a shorter set. When both set the same variable, the settings file wins.
 
 ## When the picker skips your id
 
-Discovery keeps an id only when it carries `claude` or `anthropic` anywhere in the string. An id outside those words serves every request that names it, and appears in that picker for nobody. The sheet adds one more variable to the block when your gateway's first model is such an id:
+Discovery keeps an id only when it carries `claude` or `anthropic` anywhere in the string. An id outside those words serves every request that names it, and appears in that picker for nobody.
+
+A name typed on the canvas derives an id that carries the word, so a model composed in recompose reaches the picker without anyone thinking about it. You meet this section when you edited the id by hand, or when the model predates that. The sheet adds one more variable to both blocks when your gateway's first model is such an id:
 
 ```sh
 export ANTHROPIC_CUSTOM_MODEL_OPTION="fast-sonnet"
 ```
 
-That names the model outright, so it joins the picker as a row of its own and skips the check discovery reads ids through. The other fix is to rename the id: the virtual model's inspector offers the reshaped id under the **Model id** field, one press away.
+That names the model outright, so it joins the picker as a row of its own and skips the check discovery reads ids through. The other fix is to rename the id: the virtual model's inspector says which ids the picker lists and offers the reshaped one under **Model id**, one press away.
 
 ## Verify
 

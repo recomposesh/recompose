@@ -95,15 +95,20 @@ export const ARouterNeedsNoProvider = meta.story({
   },
 });
 
-/** Typing the name derives the id a client sends, and both land in the held draft at once. */
+/**
+ * Typing the name derives the id a client sends, and both land in the held draft at once.
+ *
+ * @summary The derived id carries the word Claude Code's picker reads for, so a person who names a
+ * model and takes what the field offers reaches that picker without knowing the rule exists.
+ */
 export const TheIdFollowsTheName = meta.story({
   play: async ({ canvas, userEvent }) => {
     await userEvent.type(await canvas.findByRole('textbox', { name: 'Name' }), 'Fast Sonnet');
 
     await expect(await canvas.findByRole('textbox', { name: 'Model id' })).toHaveValue(
-      'fast-sonnet',
+      'claude-fast-sonnet',
     );
-    await expect(heldDraft('my-gateway')?.definition.id).toBe('fast-sonnet');
+    await expect(heldDraft('my-gateway')?.definition.id).toBe('claude-fast-sonnet');
   },
 });
 

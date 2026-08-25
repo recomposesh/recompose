@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
-import { modelAliasFromName } from '@recompose/contracts';
+import { modelIdFromName } from '@recompose/contracts';
 
 import type { Seat } from '../canvas-screen';
 
@@ -130,7 +130,7 @@ Then('the draft stands where it was, still holding {string}', async ({ page }, p
 Then(
   '{string} stands as a virtual model node in the regular treatment',
   async ({ page }, name: string) => {
-    const stood = modelNodeId(modelAliasFromName(name));
+    const stood = modelNodeId(modelIdFromName(name));
 
     await expect.poll(async () => standingNodes(page)).toContain(stood);
     expect(await nodeTreatment(page, stood)).toBe('virtual-model');

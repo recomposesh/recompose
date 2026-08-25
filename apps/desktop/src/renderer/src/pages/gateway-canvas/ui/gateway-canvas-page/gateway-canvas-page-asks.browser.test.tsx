@@ -159,7 +159,7 @@ test('a named draft completed through the picker graduates into the composition'
   await userEvent.click(screen.getByRole('dialog').getByRole('button', { name: 'claude-opus-5' }));
 
   await expect
-    .poll(async () => storedBindingOf('steady'))
+    .poll(async () => storedBindingOf('claude-steady'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-opus-5' });
   await expect.element(screen.getByRole('button', { name: /Steady/ })).toBeVisible();
 });
@@ -240,9 +240,9 @@ test('a target born past the pane zooms the view out until it shows', async () =
     screen.getByRole('dialog').getByRole('button', { name: 'claude-sonnet-5' }),
   );
 
-  await expect.poll(async () => storedBindingOf('steady')).toBeDefined();
+  await expect.poll(async () => storedBindingOf('claude-steady')).toBeDefined();
   await expect
-    .poll(() => bornCardReading(screen.container, 'target:steady'), { timeout: 10_000 })
+    .poll(() => bornCardReading(screen.container, 'target:claude-steady'), { timeout: 10_000 })
     .toBe('fits');
 });
 

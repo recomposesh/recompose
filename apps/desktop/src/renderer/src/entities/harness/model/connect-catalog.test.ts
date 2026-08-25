@@ -148,6 +148,43 @@ test('a model id that picker keeps is handed no such variable, because discovery
   expect(copied).not.toContain('skips this id');
 });
 
+function settingsBlockOf(facts: ConnectFacts): unknown {
+  const copied = clientNamed('claude-code')
+    .steps(facts)
+    .flatMap((step) => step.lines)
+    .join('\n');
+
+  return JSON.parse(copied.slice(copied.indexOf('{')));
+}
+
+test('the settings file carries every variable the shell block does, since agents read that path', () => {
+  expect(settingsBlockOf(serving)).toEqual({
+    env: {
+      ANTHROPIC_BASE_URL: 'http://127.0.0.1:8397',
+      ANTHROPIC_AUTH_TOKEN: 'rc-local-4Xh2p9Fd',
+      ANTHROPIC_MODEL: 'creative',
+      CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
+      ANTHROPIC_CUSTOM_MODEL_OPTION: 'creative',
+    },
+  });
+});
+
+test('a kept id leaves the settings file with no escape, because discovery finds it', () => {
+  const block = settingsBlockOf({
+    ...serving,
+    models: [{ id: 'claude-creative', displayName: 'Creative' }],
+  });
+
+  expect(block).toEqual({
+    env: {
+      ANTHROPIC_BASE_URL: 'http://127.0.0.1:8397',
+      ANTHROPIC_AUTH_TOKEN: 'rc-local-4Xh2p9Fd',
+      ANTHROPIC_MODEL: 'claude-creative',
+      CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
+    },
+  });
+});
+
 test('Codex is pointed by a user-level provider block that speaks the Responses dialect', () => {
   const copied = everythingCopied(clientNamed('codex-cli'));
 

@@ -9,7 +9,7 @@ A virtual model is the name a client sends as the model. What stands behind the 
 
 Drag a cable from the gateway's port onto empty canvas. A draft card lands there and the inspector opens on it.
 
-Type a display name, and the **Model id** follows on its own as the name's lowercase alias. Edit the id by hand and it stops following. Ids use lowercase letters, digits, dots, and dashes, and clients send the id exactly as it stands.
+Type a display name, and the **Model id** follows on its own: the name's lowercase alias, carrying `claude-` unless the name already reads as `claude` or `anthropic`. Claude Code's `/model` picker lists only ids carrying one of those words, so the derived id is one it lists. Edit the id by hand and it stops following, the bare alias included. Ids use lowercase letters, digits, dots, and dashes, and clients send the id exactly as it stands.
 
 Then bind the draft: **Provider** picks one account and one model, and **Router** puts [routing](/docs/compose/failover) behind the name instead. The preview line reads the whole answer back, for example `serves as claude-fast → Anthropic · claude-sonnet-4-5`. Click **Add virtual model** and the definition lands.
 

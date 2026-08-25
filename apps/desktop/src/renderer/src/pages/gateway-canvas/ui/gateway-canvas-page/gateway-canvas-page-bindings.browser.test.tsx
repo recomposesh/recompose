@@ -122,12 +122,12 @@ test('a draft finished in the inspector graduates into the composition and says 
   await userEvent.click(screen.getByRole('button', { name: 'Add virtual model' }));
 
   await expect
-    .poll(async () => storedBindingOf('steady'))
+    .poll(async () => storedBindingOf('claude-steady'))
     .toEqual({ accountId: 'k1', providerModel: 'claude-opus-5' });
   expect(draftSeat).toBeDefined();
   expect(canvasPositions('my-gateway')).toMatchObject({
-    'model:steady': draftSeat,
-    'target:steady': targetSeatBesideDraft(draftSeat),
+    'model:claude-steady': draftSeat,
+    'target:claude-steady': targetSeatBesideDraft(draftSeat),
   });
   await expect
     .poll(() => screen.container.querySelector('section > p[aria-live="polite"]')?.textContent)

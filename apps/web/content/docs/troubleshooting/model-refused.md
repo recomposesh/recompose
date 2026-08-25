@@ -30,7 +30,7 @@ Each gateway owns its own virtual models. A client wired to port `8390` never se
 
 ## The client filters what it lists
 
-Claude Code lists only model ids carrying `claude` or `anthropic`, and the virtual model's inspector says so under other names. The model still works when sent explicitly, but it won't appear in that client's picker. The inspector offers the reshaped id under the **Model id** field, and the connect sheet hands you `ANTHROPIC_CUSTOM_MODEL_OPTION` when you'd rather keep the name you gave it.
+Claude Code lists only model ids carrying `claude` or `anthropic`. A name typed on the canvas derives an id that carries one. So this reaches you on an id you edited by hand, or one stored before that. The model still works when sent explicitly, but it won't appear in that client's picker. The inspector says so under the model's facts and offers the reshaped id under **Model id**. The connect sheet hands you `ANTHROPIC_CUSTOM_MODEL_OPTION` when you'd rather keep the name you gave it.
 
 ## The provider refused its own model
 

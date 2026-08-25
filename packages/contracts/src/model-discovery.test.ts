@@ -2,7 +2,7 @@ import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
 import { modelAliasSchema } from './gateway-config';
-import { claudeCodeKeepsModelId, claudeShapedModelId } from './model-discovery';
+import { claudeCodeKeepsModelId, claudeShapedModelId, modelIdFromName } from './model-discovery';
 
 describe("the ids Claude Code's picker keeps out of a gateway's model list", () => {
   test('an id carrying claude anywhere is kept, not only one that opens with it', () => {
@@ -73,4 +73,34 @@ describe('the shaping answers every id a person can store', () => {
 
     expect(claudeShapedModelId(shaped)).toBe(shaped);
   });
+});
+
+describe('the id a name a person typed derives to', () => {
+  test('a name derives an id that one picker keeps, rather than one it skips', () => {
+    expect(modelIdFromName('Fast')).toBe('claude-fast');
+    expect(modelIdFromName('Fast Sonnet')).toBe('claude-fast-sonnet');
+  });
+
+  test('a name already carrying the word takes no second prefix', () => {
+    expect(modelIdFromName('Claude Fast')).toBe('claude-fast');
+    expect(modelIdFromName('Anthropic Fast')).toBe('anthropic-fast');
+  });
+
+  test('a name with nothing in it derives nothing, never a bare prefix', () => {
+    expect(modelIdFromName('')).toBe('');
+    expect(modelIdFromName('   ')).toBe('');
+  });
+
+  test('the derived id is one the stored shape accepts', () => {
+    expect(modelAliasSchema.safeParse(modelIdFromName('GPT 5.6 Sol')).success).toBe(true);
+  });
+
+  test.prop([fc.string()])(
+    'every name derives an id the picker keeps or nothing at all',
+    (name) => {
+      const derived = modelIdFromName(name);
+
+      expect(derived === '' || claudeCodeKeepsModelId(derived)).toBe(true);
+    },
+  );
 });

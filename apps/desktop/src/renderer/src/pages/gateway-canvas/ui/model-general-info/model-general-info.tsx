@@ -5,7 +5,8 @@ import { modelAliasSchema } from '@recompose/contracts';
 import { useState } from 'react';
 
 import { useDefineVirtualModel } from '../../../../shared/api';
-import { CopyButton } from '../../../../shared/ui';
+import { Button, CopyButton } from '../../../../shared/ui';
+import { discoveryHint, discoveryNotice, discoverySuggestion } from '../../lib/picker-discovery';
 import {
   editFooter,
   editRow,
@@ -140,6 +141,47 @@ function modelFactRows(model: VirtualModel): ReactNode {
   );
 }
 
+/**
+ * What a stored definition reads under its facts, where its id reaches one caller's picker for
+ * nobody.
+ *
+ * @summary It stands at rest rather than behind Edit, because a person wondering why one model is
+ * missing from a picker opens the panel to look, not to type. It names Edit rather than reshaping
+ * anything on a press: the id rides the wire, and every client already sending it would then name
+ * an id nothing serves.
+ */
+function skippedIdNotice(storedId: string): ReactNode {
+  const notice = discoveryNotice(storedId);
+
+  return notice === undefined ? null : (
+    <p className="mt-2 px-1 text-caption text-attention-ink" role="status">
+      {notice}
+    </p>
+  );
+}
+
+/** The reshaping offered beside an open id field, which fills it and leaves the save to a person. */
+function reshapeOffer(alias: string, onAlias: (alias: string) => void): ReactNode {
+  const suggestion = discoverySuggestion(alias);
+
+  if (suggestion === undefined) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex flex-col items-start gap-1.5 px-1">
+      <p className="text-caption text-attention-ink">{discoveryHint(alias)}</p>
+      <Button
+        onPress={() => {
+          onAlias(suggestion);
+        }}
+      >
+        {`Use ${suggestion}`}
+      </Button>
+    </div>
+  );
+}
+
 type ModelGeneralInfoProps = {
   /** The stored gateway holding the definition, which a rename rewrites as a whole. */
   gateway: GatewayConfig;
@@ -184,9 +226,17 @@ export function ModelGeneralInfo({ gateway, model, onRenamed }: ModelGeneralInfo
       <div className="field-box">
         {draft === undefined ? modelFactRows(model) : renameRows(draft, setDraft)}
       </div>
-      {draft === undefined
-        ? savedNotice(saved)
-        : editFooter(
+      {draft === undefined ? (
+        <>
+          {skippedIdNotice(model.id)}
+          {savedNotice(saved)}
+        </>
+      ) : (
+        <>
+          {reshapeOffer(draft.alias, (alias) => {
+            setDraft({ ...draft, alias });
+          })}
+          {editFooter(
             {
               onCancel: () => {
                 setDraft(undefined);
@@ -197,6 +247,8 @@ export function ModelGeneralInfo({ gateway, model, onRenamed }: ModelGeneralInfo
             },
             draft.refused,
           )}
+        </>
+      )}
     </>
   );
 }
