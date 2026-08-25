@@ -3,7 +3,7 @@ import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { gatewaySeed } from '../../../../shared/testing';
+import { emitEngineTraffic, gatewaySeed } from '../../../../shared/testing';
 import { SetupSurface } from './setup-surface';
 
 const built = gatewaySeed({
@@ -54,13 +54,17 @@ export const AlreadySettled = meta.story({
   },
 });
 
+const overABuiltGateway = { bridge: { gateways: [built], settings: fresh } };
+
+async function waitingForTheFirstRequest(): Promise<HTMLElement> {
+  return screen.findByRole('dialog', { name: 'Waiting for your first request' });
+}
+
 /** A profile that built a graph and never served a request opens on the wait, not on welcome. */
 export const BuiltButNeverServed = meta.story({
-  parameters: { bridge: { gateways: [built], settings: fresh } },
+  parameters: overABuiltGateway,
   play: async () => {
-    await expect(
-      await screen.findByRole('dialog', { name: 'Waiting for your first request' }),
-    ).toBeVisible();
+    await expect(await waitingForTheFirstRequest()).toBeVisible();
   },
 });
 
@@ -83,5 +87,39 @@ export const SettingUp = meta.story({
     await expect(
       await screen.findByRole('dialog', { name: 'Which harnesses do you use?' }),
     ).toBeVisible();
+  },
+});
+
+/** A request the gateway serves while the wait stands ends setup and brings the note out. */
+export const AServedRequestEndsTheWait = meta.story({
+  parameters: overABuiltGateway,
+  play: async () => {
+    await expect(await waitingForTheFirstRequest()).toBeVisible();
+
+    emitEngineTraffic({
+      'my-gateway': { 'claude-my-model': { 'seat:1': { outcome: 'served', at: 1200 } } },
+    });
+
+    await expect(await screen.findByText('That was the whole setup')).toBeVisible();
+    await expect(await screen.findByText(/Drag a cable off the gateway/u)).toBeVisible();
+    await expect(screen.queryByRole('dialog')).toBeNull();
+  },
+});
+
+/** A request that only reached a target leaves the wait standing, because nothing came back. */
+export const AFailedRequestLeavesTheWaitStanding = meta.story({
+  parameters: overABuiltGateway,
+  play: async () => {
+    await expect(await waitingForTheFirstRequest()).toBeVisible();
+
+    emitEngineTraffic({
+      'my-gateway': {
+        'claude-my-model': {
+          'seat:1': { outcome: 'failed', at: 1200, status: 503, detail: 'no target answered' },
+        },
+      },
+    });
+
+    await expect(await waitingForTheFirstRequest()).toBeVisible();
   },
 });

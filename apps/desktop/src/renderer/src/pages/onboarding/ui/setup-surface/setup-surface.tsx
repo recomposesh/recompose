@@ -95,6 +95,7 @@ export function SetupSurface({ connectSheet, onBuilt }: SetupSurfaceProps) {
           }}
           onBuilt={(gateway) => {
             setBuilt(gateway);
+            setup.waitOn(gateway.slug);
             onBuilt(gateway);
           }}
           onMarkSource={onMarkSource}
