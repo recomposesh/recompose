@@ -43,7 +43,9 @@ test('the usage surface carries the range control in the toolbar', async () => {
 });
 
 test('a range past retention stands inert with the window named', async () => {
-  mountedAt('/usage?range=7d', { settings: { ...defaultSettings(), usageRetentionDays: 7 } });
+  mountedAt('/usage?range=7d', {
+    settings: { ...defaultSettings(), setupWizardSettled: true, usageRetentionDays: 7 },
+  });
 
   const month = page.getByRole('radio', { name: /30d/ });
 

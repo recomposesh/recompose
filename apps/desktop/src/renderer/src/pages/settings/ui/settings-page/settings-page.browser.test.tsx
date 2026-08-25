@@ -141,6 +141,7 @@ test('no waiting row owns a field in the settings document', async () => {
     'firstRequestServed',
     'launchAtLogin',
     'schemaVersion',
+    'setupWizardSettled',
     'showInMenuBar',
     'showOnboardingChecklist',
     'startGatewaysOnLaunch',
