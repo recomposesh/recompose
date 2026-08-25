@@ -75,17 +75,13 @@ jobs:
       - if: needs.changes.outputs.desktop != 'true' && needs.changes.outputs.web == 'true'
         run: pnpm --filter @recompose/web exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
-      - if: github.event_name == 'pull_request'
-        run: pnpm exec turbo run lint typecheck build test --concurrency=100% --affected
+      - run: pnpm exec turbo run lint typecheck build test --concurrency=100% --affected --log-order=stream
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
-          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
-      - if: github.event_name != 'pull_request'
-        run: pnpm exec turbo run lint typecheck build test --concurrency=100%
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
+          TURBO_SCM_BASE:
+            ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha ||
+            github.event.before }}
       - if: needs.changes.outputs.desktop == 'true'
         run: pnpm --filter @recompose/desktop run storybook:build
       - if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
