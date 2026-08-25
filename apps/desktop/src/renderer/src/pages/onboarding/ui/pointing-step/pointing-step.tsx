@@ -54,7 +54,7 @@ export function PointingStep({
       onSkip={onSkip}
       step="pointing"
     >
-      <div className="overflow-hidden rounded-card border border-line-subtle bg-surface-card">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-card border border-line-subtle bg-surface-card">
         {clients.map((client) => (
           <HarnessGuide
             client={client}

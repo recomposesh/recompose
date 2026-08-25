@@ -3,7 +3,7 @@ import { expect, fn, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { gatewaySeed } from '../../../../shared/testing';
+import { gatewaySeed, paintedBox } from '../../../../shared/testing';
 import { onAStepSurface } from '../../testing/on-a-surface';
 import { PointingStanding } from './pointing-standing';
 
@@ -76,5 +76,15 @@ export const OpeningOneClosesTheOther = meta.story({
 export const TheLinesCarryTheBuiltGateway = meta.story({
   play: async () => {
     await expect((await screen.findAllByText(/127\.0\.0\.1:8389/u)).length).toBeGreaterThan(0);
+  },
+});
+
+/** A long block never pushes the harnesses under it off screen; it scrolls inside its own room. */
+export const ALongBlockKeepsTheNamesInView = meta.story({
+  play: async ({ canvasElement }) => {
+    const codex = await screen.findByRole('button', { name: /Codex CLI/u });
+
+    await expect(paintedBox(codex).bottom).toBeLessThanOrEqual(paintedBox(canvasElement).bottom);
+    await expect(codex).toBeVisible();
   },
 });

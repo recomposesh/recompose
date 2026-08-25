@@ -112,28 +112,38 @@ function ollamaOnThisMachine(answering: boolean): FoundSource | undefined {
 }
 
 /**
- * Every source the step offers, the machine's own first and the stored ones after.
+ * Every source the step offers, each one keeping the place the look gave it.
  *
  * @summary A plan the machine signs into and the same plan already stored are one source, not
  * two, so a provider the app already holds never arrives twice. A credential store that refused
  * to open reports nothing rather than an empty machine, because the two are different answers and
  * offering a sign-in for a store nobody could read would be guessing.
+ *
+ * The stored account takes the machine row's own place rather than landing at the end of the
+ * list. Marking a row is what records it, so a list ordered by where a row came from would move
+ * the row a person just pressed, and they would watch their answer jump somewhere else.
  */
+function seatFor(
+  candidate: FoundSource,
+  storedRows: readonly FoundSource[],
+): readonly FoundSource[] {
+  const takenOver = storedRows.filter((row) => row.provider === candidate.provider);
+
+  return takenOver.length > 0 ? takenOver : [candidate];
+}
+
 export function foundSources({ machineReadings, ollamaAnswering, accounts }: Look): FoundSource[] {
-  const held = new Set(accounts.map((account) => account.provider));
   const onThisMachine = [
     ...machineReadings.map(planOnThisMachine),
     ollamaOnThisMachine(ollamaAnswering),
+  ].filter((candidate) => candidate !== undefined);
+  const storedRows = stored(accounts);
+  const seated = new Set(onThisMachine.map((candidate) => candidate.provider));
+
+  return [
+    ...onThisMachine.flatMap((candidate) => seatFor(candidate, storedRows)),
+    ...storedRows.filter((row) => !seated.has(row.provider)),
   ];
-  const unheld: FoundSource[] = [];
-
-  for (const source of onThisMachine) {
-    if (source !== undefined && !held.has(source.provider)) {
-      unheld.push(source);
-    }
-  }
-
-  return [...unheld, ...stored(accounts)];
 }
 
 const COUNTED = ['no', 'One', 'Two', 'Three', 'Four'] as const;

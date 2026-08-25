@@ -33,11 +33,17 @@ function stepBlock(title: string, lines: readonly string[], note: string): React
  * here, so a person meets the same instructions setup gives them and the gateway's own sheet
  * gives them later. Nothing marks an entry as done: setup cannot see inside a terminal, and a
  * tick it could not have earned would be a claim rather than a reading.
+ *
+ * The open entry takes what room is left and scrolls its own lines, so the names under it stay on
+ * screen. Letting the block push them off would hide a harness a person picked behind one whose
+ * instructions happen to run long.
  */
 export function HarnessGuide({ client, facts, open, onOpen }: HarnessGuideProps) {
   return (
-    <div className="border-line-faint not-last:border-b">
-      <h3>
+    <div
+      className={`flex min-h-0 flex-col border-line-faint not-last:border-b ${open ? 'flex-1' : 'shrink-0'}`}
+    >
+      <h3 className="shrink-0">
         <button
           aria-expanded={open}
           className="flex w-full items-center gap-2.5 px-3.5 py-2.75 text-start focus-ring-fill row-hover"
@@ -53,7 +59,7 @@ export function HarnessGuide({ client, facts, open, onOpen }: HarnessGuideProps)
         </button>
       </h3>
       {open ? (
-        <div className="flex flex-col gap-3 px-3.5 pt-0.5 pb-3.5">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3.5 pt-0.5 pb-3.5">
           <p className="text-detail text-ink-secondary">{client.intro}</p>
           <ol className="flex list-none flex-col gap-3 p-0">
             {client.steps(facts).map((step) => stepBlock(step.title, step.lines, step.note))}

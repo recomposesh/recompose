@@ -97,6 +97,32 @@ describe('what else the look at this machine turns up', () => {
   });
 });
 
+describe('where a source sits', () => {
+  test('a recorded plan takes the machine row it replaced, rather than the end of the list', () => {
+    const found = foundSources({
+      machineReadings: [
+        { provider: 'anthropic', reading: signedIn },
+        { provider: 'openai', reading: signedIn },
+      ],
+      ollamaAnswering: true,
+      accounts: [{ id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Claude' }],
+    });
+
+    expect(found.map((source) => source.provider)).toEqual(['anthropic', 'openai', 'ollama']);
+    expect(found.at(0)?.adoptable).toBe(false);
+  });
+
+  test('an account no machine row stands for lands after the ones that do', () => {
+    const found = foundSources({
+      machineReadings: [{ provider: 'anthropic', reading: signedIn }],
+      ollamaAnswering: false,
+      accounts: [{ id: 'a1', provider: 'openrouter', kind: 'aggregator', label: 'OpenRouter' }],
+    });
+
+    expect(found.map((source) => source.provider)).toEqual(['anthropic', 'openrouter']);
+  });
+});
+
 describe('what the store already holds', () => {
   test('an account already connected stands as its own source, ahead of nothing', () => {
     const found = foundSources({

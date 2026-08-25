@@ -69,7 +69,7 @@ export function SetupStepFrame({
         <SetupHeading step={step} />
         <p className="max-w-140 text-center text-body text-ink-secondary">{lede}</p>
       </div>
-      <div className={`mt-6.5 min-h-0 overflow-y-auto ${RAIL[rail]}`}>{children}</div>
+      <div className={`mt-6.5 flex min-h-0 flex-col overflow-y-auto ${RAIL[rail]}`}>{children}</div>
       <div className="mt-6 flex shrink-0 items-center gap-2.5">{acts}</div>
     </div>
   );

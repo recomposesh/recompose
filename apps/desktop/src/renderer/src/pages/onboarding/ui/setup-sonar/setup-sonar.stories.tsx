@@ -33,3 +33,23 @@ export const SaysNothingToAScreenReader = meta.story({
     await expect(canvasElement.querySelector('[aria-hidden="true"]')).not.toBeNull();
   },
 });
+
+/**
+ * No ring paints wide before its turn, so the field opens from the middle outward.
+ *
+ * @summary A ring waiting out its delay held its own full size until the fill mode was named, so
+ * the field opened with the widest ring already drawn. Which branch answers depends on the motion
+ * preference the run carries, and both have an honest reading: a moving field holds the start
+ * state, and a still one stands quiet at rest.
+ */
+export const NoRingStartsWide = meta.story({
+  play: async ({ canvasElement }) => {
+    for (const ring of canvasElement.querySelectorAll('.sonar-ring')) {
+      const painted = paintedStyle(ring);
+
+      await expect(
+        painted.animationName === 'none' ? painted.opacity : painted.animationFillMode,
+      ).toMatch(/backwards|0\.18/u);
+    }
+  },
+});

@@ -720,9 +720,13 @@
  * The rings a waiting step sends out while nothing has landed. Each starts at the epicentre and
  * fades as it widens, and the three run a third of a cycle apart so the field never empties.
  */
+/*
+ * The fill mode is load-bearing: a ring waiting out its delay would otherwise paint at its own
+ * full size and full opacity, so the field opened with the widest ring already drawn.
+ */
 @utility sonar-ring {
   @media (prefers-reduced-motion: no-preference) {
-    animation: sonar-widen 2400ms ease-out infinite;
+    animation: sonar-widen 2400ms ease-out infinite backwards;
   }
 
   @media (prefers-reduced-motion: reduce) {
