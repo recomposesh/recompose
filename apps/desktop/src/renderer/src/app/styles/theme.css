@@ -1115,6 +1115,45 @@
   }
 }
 
+@utility confetti-window {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 60;
+}
+
+@utility confetti-fleck {
+  position: absolute;
+  inset-block-start: -24px;
+  inline-size: 8px;
+  border-radius: 1.5px;
+  background: var(--confetti-tint);
+  rotate: var(--confetti-tilt);
+  opacity: 0;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: confetti-fall var(--confetti-span) ease-in forwards;
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    translate: var(--confetti-drift) 106vh;
+    rotate: calc(var(--confetti-tilt) + 900deg);
+  }
+}
+
 @keyframes confetti-burst {
   0% {
     opacity: 1;

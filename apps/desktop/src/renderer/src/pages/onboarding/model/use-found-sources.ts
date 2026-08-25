@@ -1,6 +1,6 @@
-import type { Account } from '@recompose/contracts';
+import type { Account, SubscriptionProviderId } from '@recompose/contracts';
 
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import type { FoundSource, StoredSource } from './found-source';
 
@@ -10,6 +10,14 @@ import {
   runtimeDetectionQueryOptions,
 } from '../../../shared/api';
 import { foundSources } from './found-source';
+
+/**
+ * The providers whose own tool keeps a credential somewhere this app can read.
+ *
+ * @summary Only these two have a machine store of their own, so asking about the rest would read
+ * an Anthropic store under another provider's name and offer a plan nobody signed into.
+ */
+const LOOKED_AT: readonly SubscriptionProviderId[] = ['anthropic', 'openai'];
 
 function asSource(account: Account): StoredSource {
   return {
@@ -25,18 +33,23 @@ function asSource(account: Account): StoredSource {
 /**
  * Every source the sources step offers, folded from the look and the store.
  *
- * @summary The two looks run as ordinary queries rather than blocking the step, so a machine with
- * no Claude tool and no runtime answering draws its catalog straight away instead of waiting on
- * two timeouts. A look still in flight reads as having found nothing, which is honest: the step
- * says what it has so far and gains a row when an answer lands.
+ * @summary Every look runs as an ordinary query rather than blocking the step, so a machine with
+ * no provider tool and no runtime answering draws its catalog straight away instead of waiting on
+ * a row of timeouts. A look still in flight reads as having found nothing, which is honest: the
+ * step says what it has so far and gains a row when an answer lands.
  */
 export function useFoundSources(): readonly FoundSource[] {
   const { data: registry } = useSuspenseQuery(accountsQueryOptions);
-  const { data: claude } = useQuery(machineReadingQueryOptions('anthropic'));
+  const readings = useQueries({
+    queries: LOOKED_AT.map((provider) => machineReadingQueryOptions(provider)),
+  });
   const { data: ollama } = useQuery(runtimeDetectionQueryOptions('ollama'));
 
   return foundSources({
-    claudeReading: claude ?? { holds: 'nothing' },
+    machineReadings: LOOKED_AT.map((provider, index) => ({
+      provider,
+      reading: readings[index]?.data ?? { holds: 'nothing' },
+    })),
     ollamaAnswering: ollama?.verdict === 'answers',
     accounts: registry.accounts.map(asSource),
   });

@@ -2,7 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
-import { paintedStyle } from '../../testing';
+import { paintedBox, paintedStyle } from '../../testing';
 import { ConfettiBurst } from './confetti-burst';
 
 const meta = preview.meta({
@@ -20,6 +20,38 @@ const meta = preview.meta({
 export const Basic = meta.story({
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelectorAll('.confetti-piece')).toHaveLength(12);
+  },
+});
+
+/** A window-wide fall carries the eighty pieces the drawn frame carries. */
+export const AcrossTheWindow = meta.story({
+  args: { spread: 'window' as const },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelectorAll('.confetti-fleck')).toHaveLength(80);
+  },
+});
+
+/** Every fleck starts in its own column, so nothing falls in a single stripe. */
+export const TheFallSpreadsAcrossTheWidth = meta.story({
+  args: { spread: 'window' as const },
+  play: async ({ canvasElement }) => {
+    const columns = [...canvasElement.querySelectorAll('.confetti-fleck')].map(
+      (fleck) => paintedStyle(fleck).insetInlineStart,
+    );
+
+    await expect(new Set(columns).size).toBeGreaterThan(40);
+  },
+});
+
+/** It reaches the whole window rather than the box it was written into. */
+export const TheFallClaimsTheWindow = meta.story({
+  args: { spread: 'window' as const },
+  play: async ({ canvasElement }) => {
+    const laid = canvasElement.querySelector('[data-confetti="window"]');
+
+    await expect(paintedStyle(laid).position).toBe('fixed');
+    await expect(paintedStyle(laid).pointerEvents).toBe('none');
+    await expect(paintedBox(laid).width).toBe(window.innerWidth);
   },
 });
 

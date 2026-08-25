@@ -9,10 +9,17 @@ const signedIn = {
 } as const;
 const nothingFound = { holds: 'nothing' } as const;
 
-describe('what the look at this machine turns up', () => {
+const claudeSignedIn = [{ provider: 'anthropic', reading: signedIn }] as const;
+const codexSignedIn = [{ provider: 'openai', reading: signedIn }] as const;
+const noToolSignedIn = [
+  { provider: 'anthropic', reading: nothingFound },
+  { provider: 'openai', reading: nothingFound },
+] as const;
+
+describe('the plans a provider tool already signed into', () => {
   test('a Claude plan the machine already signs into arrives as a source', () => {
     const found = foundSources({
-      claudeReading: signedIn,
+      machineReadings: claudeSignedIn,
       ollamaAnswering: false,
       accounts: [],
     });
@@ -29,9 +36,44 @@ describe('what the look at this machine turns up', () => {
     ]);
   });
 
+  test('a Codex plan the machine already signs into arrives as a source too', () => {
+    const look = { machineReadings: codexSignedIn, ollamaAnswering: false, accounts: [] };
+
+    expect(foundSources(look).at(0)).toMatchObject({
+      id: 'machine:openai',
+      provider: 'openai',
+      title: 'Your Codex plan',
+    });
+  });
+
+  test('two provider tools signed in on one machine both arrive', () => {
+    const found = foundSources({
+      machineReadings: [
+        { provider: 'anthropic', reading: signedIn },
+        { provider: 'openai', reading: signedIn },
+      ],
+      ollamaAnswering: false,
+      accounts: [],
+    });
+
+    expect(found.map((source) => source.provider)).toEqual(['anthropic', 'openai']);
+  });
+
+  test('a store that refused to open is not a machine holding nothing', () => {
+    expect(
+      foundSources({
+        machineReadings: [{ provider: 'anthropic', reading: { holds: 'store-refused' } }],
+        ollamaAnswering: false,
+        accounts: [],
+      }),
+    ).toEqual([]);
+  });
+});
+
+describe('what else the look at this machine turns up', () => {
   test('a local runtime answering on its own port arrives as a source', () => {
     const found = foundSources({
-      claudeReading: nothingFound,
+      machineReadings: noToolSignedIn,
       ollamaAnswering: true,
       accounts: [],
     });
@@ -50,17 +92,7 @@ describe('what the look at this machine turns up', () => {
 
   test('a machine holding neither turns up nothing', () => {
     expect(
-      foundSources({ claudeReading: nothingFound, ollamaAnswering: false, accounts: [] }),
-    ).toEqual([]);
-  });
-
-  test('a store that refused to open is not a machine holding nothing', () => {
-    expect(
-      foundSources({
-        claudeReading: { holds: 'store-refused' },
-        ollamaAnswering: false,
-        accounts: [],
-      }),
+      foundSources({ machineReadings: noToolSignedIn, ollamaAnswering: false, accounts: [] }),
     ).toEqual([]);
   });
 });
@@ -68,7 +100,7 @@ describe('what the look at this machine turns up', () => {
 describe('what the store already holds', () => {
   test('an account already connected stands as its own source, ahead of nothing', () => {
     const found = foundSources({
-      claudeReading: nothingFound,
+      machineReadings: noToolSignedIn,
       ollamaAnswering: false,
       accounts: [
         {
@@ -95,7 +127,7 @@ describe('what the store already holds', () => {
 
   test('a plan the machine holds and one already connected never read as two of the same', () => {
     const found = foundSources({
-      claudeReading: signedIn,
+      machineReadings: claudeSignedIn,
       ollamaAnswering: false,
       accounts: [{ id: 'a1', provider: 'anthropic', kind: 'subscription', label: 'Claude' }],
     });

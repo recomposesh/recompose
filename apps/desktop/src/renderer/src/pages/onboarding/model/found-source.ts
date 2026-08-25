@@ -1,4 +1,4 @@
-import type { MachineCredentialReading } from '@recompose/contracts';
+import type { MachineCredentialReading, SubscriptionProviderId } from '@recompose/contracts';
 
 import { localRuntimes } from '@recompose/contracts';
 
@@ -32,9 +32,15 @@ export type StoredSource = {
   address?: string | undefined;
 };
 
+/** What one provider's own tool left on this machine, under the provider it belongs to. */
+type MachineLook = {
+  provider: SubscriptionProviderId;
+  reading: MachineCredentialReading;
+};
+
 type Look = {
-  /** What the app found in the credential store Claude Code writes. */
-  claudeReading: MachineCredentialReading;
+  /** What each provider's own tool left on this machine, in the order the step offers them. */
+  machineReadings: readonly MachineLook[];
   /** Whether a local runtime answers on its documented port. */
   ollamaAnswering: boolean;
   /** The accounts the app already holds. */
@@ -72,14 +78,21 @@ function stored(accounts: readonly StoredSource[]): readonly FoundSource[] {
   }));
 }
 
-function claudeOnThisMachine(reading: MachineCredentialReading): FoundSource | undefined {
+/**
+ * The plan a provider's own tool is already signed into, where it left one behind.
+ *
+ * @summary The row reads as the plan rather than as the tool, because a person recognises what
+ * they pay for. Two providers keep credentials on this machine and both are offered, so a machine
+ * running Codex is not told recompose found nothing.
+ */
+function planOnThisMachine({ provider, reading }: MachineLook): FoundSource | undefined {
   return reading.holds === 'account'
     ? {
-        id: 'machine:anthropic',
-        provider: 'anthropic',
+        id: `machine:${provider}`,
+        provider,
         kind: 'subscription',
-        title: 'Your Claude plan',
-        identity: reading.signedInAs ?? subscriptionTitleFor('anthropic'),
+        title: `Your ${subscriptionTitleFor(provider)} plan`,
+        identity: reading.signedInAs ?? subscriptionTitleFor(provider),
         adoptable: true,
       }
     : undefined;
@@ -106,9 +119,12 @@ function ollamaOnThisMachine(answering: boolean): FoundSource | undefined {
  * to open reports nothing rather than an empty machine, because the two are different answers and
  * offering a sign-in for a store nobody could read would be guessing.
  */
-export function foundSources({ claudeReading, ollamaAnswering, accounts }: Look): FoundSource[] {
+export function foundSources({ machineReadings, ollamaAnswering, accounts }: Look): FoundSource[] {
   const held = new Set(accounts.map((account) => account.provider));
-  const onThisMachine = [claudeOnThisMachine(claudeReading), ollamaOnThisMachine(ollamaAnswering)];
+  const onThisMachine = [
+    ...machineReadings.map(planOnThisMachine),
+    ollamaOnThisMachine(ollamaAnswering),
+  ];
   const unheld: FoundSource[] = [];
 
   for (const source of onThisMachine) {

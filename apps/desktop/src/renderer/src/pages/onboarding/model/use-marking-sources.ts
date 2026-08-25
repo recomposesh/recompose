@@ -1,3 +1,4 @@
+import { subscriptionProviderIdSchema } from '@recompose/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
@@ -89,8 +90,10 @@ export function useMarkingSources(): MarkingSources {
   const recordAccount = (source: FoundSource): void => {
     setCleared(new Set([...cleared].filter((held) => held !== productOf(source))));
 
-    if (source.kind === 'subscription' && source.provider === 'anthropic') {
-      adopt.mutate({ provider: 'anthropic' });
+    const signedIn = subscriptionProviderIdSchema.safeParse(source.provider);
+
+    if (source.kind === 'subscription' && signedIn.success) {
+      adopt.mutate({ provider: signedIn.data });
     }
 
     if (source.kind === 'local' && source.provider === 'ollama') {
