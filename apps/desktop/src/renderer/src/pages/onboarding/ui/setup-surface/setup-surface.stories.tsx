@@ -30,10 +30,12 @@ const built = gatewaySeed({
 
 const settled = { ...defaultSettings(), setupWizardSettled: true };
 
+const fresh = { ...defaultSettings(), setupWizardSettled: false };
+
 const meta = preview.meta({
   component: SetupSurface,
   args: { connectSheet: () => null },
-  parameters: { bridge: { gateways: [] } },
+  parameters: { bridge: { gateways: [], settings: fresh } },
 });
 
 /** A profile that has never settled setup meets it over the whole surface, on the welcome step. */
@@ -54,7 +56,7 @@ export const AlreadySettled = meta.story({
 
 /** A profile that built a graph and never served a request opens on the wait, not on welcome. */
 export const BuiltButNeverServed = meta.story({
-  parameters: { bridge: { gateways: [built] } },
+  parameters: { bridge: { gateways: [built], settings: fresh } },
   play: async () => {
     await expect(
       await screen.findByRole('dialog', { name: 'Waiting for your first request' }),

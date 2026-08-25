@@ -55,3 +55,32 @@ export const Subscription = meta.story({
     await expect(await canvas.findByText('Subscription')).toBeVisible();
   },
 });
+
+/** The router wears the chamfer the canvas gives it, and no other card does. */
+export const TheRouterIsChamfered = meta.story({
+  args: { kind: 'router' as const, name: 'Round-robin', under: 'round-robin' },
+  play: async ({ canvasElement }) => {
+    const card = canvasElement.querySelector('[data-setup-node="router"]');
+
+    if (!card) {
+      throw new Error('The router card drew nothing.');
+    }
+
+    await expect(card.querySelectorAll('svg path')).toHaveLength(2);
+    await expect(getComputedStyle(card).borderTopWidth).toBe('0px');
+  },
+});
+
+/** A rounded card carries a border rather than a drawn outline. */
+export const ARoundedCardIsBordered = meta.story({
+  play: async ({ canvasElement }) => {
+    const card = canvasElement.querySelector('[data-setup-node="gateway"]');
+
+    if (!card) {
+      throw new Error('The gateway card drew nothing.');
+    }
+
+    await expect(card.querySelectorAll('svg path')).toHaveLength(0);
+    await expect(getComputedStyle(card).borderTopWidth).not.toBe('0px');
+  },
+});

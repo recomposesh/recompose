@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { CHAMFERED_CARD, NodeChamfer } from '../../../../shared/ui';
+
 /** One card in the teaching diagram, named for the part of the graph it stands for. */
 type SetupNodeKind = 'gateway' | 'virtual-model' | 'router' | 'subscription' | 'local-runtime';
 
@@ -59,20 +61,35 @@ type SetupNodeProps = {
  * would mean mounting a whole canvas to explain a canvas. The two share their tints, their
  * chamfer, and their card chrome through the token layer, which is where a drift would show.
  */
+/**
+ * @summary A chamfer takes its edges in toward the middle of every line of text, so the rounded
+ * card's inset would run the kicker straight into the inner keyline. The wider inset is the price
+ * of the shape rather than a second opinion about the card's measure.
+ */
+const INSET: Record<'rounded' | 'chamfered', string> = {
+  rounded: 'px-3',
+  chamfered: CHAMFERED_CARD,
+};
+
 export function SetupNode({ kind, name, under, lead }: SetupNodeProps) {
+  const chamfered = kind === 'router';
+
   return (
     <div
-      className={`flex h-22 w-46 flex-col justify-center gap-0.5 node-card px-3 ${TINT[kind]}`}
+      className={`relative flex h-22 w-46 flex-col justify-center gap-0.5 node-card ${TINT[kind]} ${
+        INSET[chamfered ? 'chamfered' : 'rounded']
+      }`}
       data-setup-node={kind}
     >
-      <span className="flex items-center gap-1">
+      {chamfered ? <NodeChamfer /> : null}
+      <span className="relative flex items-center gap-1">
         {lead}
         <span className={`text-footnote font-bold tracking-wider uppercase ${KICKER_INK[kind]}`}>
           {KICKER[kind]}
         </span>
       </span>
-      <span className="truncate text-card-title text-ink">{name}</span>
-      <span className={`truncate text-ink-secondary ${UNDER_SET[kind]}`}>{under}</span>
+      <span className="relative truncate text-card-title text-ink">{name}</span>
+      <span className={`relative truncate text-ink-secondary ${UNDER_SET[kind]}`}>{under}</span>
     </div>
   );
 }
