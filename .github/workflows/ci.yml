@@ -140,11 +140,12 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
       - run: pnpm --filter @recompose/desktop exec vitest run --shard=${{ matrix.shard }}/4
-          --reporter=blob
+          --reporter=blob --reporter=default
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: vitest-blob-${{ matrix.shard }}
           path: apps/desktop/.vitest-reports
+          include-hidden-files: true
           retention-days: 1
 
   test-desktop-merge:

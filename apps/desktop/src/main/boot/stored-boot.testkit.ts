@@ -11,6 +11,18 @@ import { contextFor } from '../engine-host/spend-grant.testkit';
  * price files are named but never written: a story about booting says nothing about prices, and the
  * desk answers an unreadable snapshot with an empty layer rather than refusing the launch.
  */
+/**
+ * A price lookup that answers an empty map without leaving the machine.
+ *
+ * @summary Both lookups run on boot, so a spec that stood one up without them reached two vendor
+ * hosts for prices it never asserted on. Every boot spec takes these unless it says otherwise.
+ */
+async function pricedByNobody(): Promise<unknown> {
+  await Promise.resolve();
+
+  return {};
+}
+
 export function depsOver(home: string, overrides: Partial<StoredBootDeps> = {}): StoredBootDeps {
   return {
     bundledPricesFile: join(home, 'bundled-prices.json'),
@@ -23,6 +35,8 @@ export function depsOver(home: string, overrides: Partial<StoredBootDeps> = {}):
     reflectSettings: () => undefined,
     repaintStates: () => undefined,
     lifecycle: { reapply: () => undefined, stop: () => undefined },
+    fetchPrices: pricedByNobody,
+    fetchRegistryPrices: pricedByNobody,
     ...overrides,
   };
 }

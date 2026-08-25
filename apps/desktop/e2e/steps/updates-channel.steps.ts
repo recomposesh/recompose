@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { Given, Then, test, When } from '../fixtures';
+import { versionAboveThisBuild } from '../newer-version';
 
 Given('a copy a package tool installed from a deb', () => {
   test.skip(process.platform !== 'linux', 'a deb install exists only on Linux');
@@ -11,8 +12,8 @@ Given('a copy running as a Linux AppImage', ({ updateFeed }) => {
   expect(updateFeed.origin).toContain('127.0.0.1');
 });
 
-When('version 0.4.0 reaches the release feed', ({ updateFeed }) => {
-  updateFeed.serveVersion('0.4.0');
+When('the newer version reaches the release feed', ({ updateFeed }) => {
+  updateFeed.serveVersion(versionAboveThisBuild);
 });
 
 Then('the app runs no update check of its own', async ({ mainLog, page }) => {
@@ -25,7 +26,7 @@ Then('the interface offers no update control', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Restart to update' })).toBeHidden();
 });
 
-Then('the app downloads version 0.4.0', async ({ page, updateFeed }) => {
+Then('the app downloads the newer version', async ({ page, updateFeed }) => {
   await page.getByText('Get started').waitFor();
   await expect.poll(() => updateFeed.artifactDownloads(), { timeout: 20_000 }).toBeGreaterThan(0);
 });

@@ -89,6 +89,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
+          setupFiles: ['../../vitest.sealed-network.ts'],
           include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mts', 'e2e/**/*.test.{mts,ts}'],
           exclude: [...defaultExclude, '**/*.browser.test.*'],
           ...pacedForCi,

@@ -8,6 +8,7 @@ import { createBdd, test as base } from 'playwright-bdd';
 import type { JudgeStub } from './judge-stub';
 import type { KeyProbeStub } from './key-probe-stub';
 import type { PortSquatter } from './port-squatter';
+import type { PriceMapStub } from './price-map-stub';
 import type { RuntimeStub } from './runtime-stub';
 import type { ScriptedProvider } from './scripted-provider';
 import type { SubscriptionTools } from './subscription-tools';
@@ -18,6 +19,7 @@ import { pinWindowFor, scenarioEnv } from './launch-environment';
 import { readLoginItem, restoreLoginItem } from './login-item-guard';
 import { theClipboardIsHeld } from './one-clipboard';
 import { portsHeldFromRecompose } from './port-squatter';
+import { fakePriceMap } from './price-map-stub';
 import { fakeLocalRuntime } from './runtime-stub';
 import { scenarioUserDataDir } from './scenario-user-data';
 import { fakeScriptedProvider } from './scripted-provider';
@@ -53,6 +55,7 @@ type ElectronFixtures = {
   aFreshScript: void;
   electronApp: ElectronApplication;
   keyProbe: KeyProbeStub;
+  priceMap: PriceMapStub;
   localRuntime: RuntimeStub;
   /** Everything the main process printed, for the scenarios that read the log back. */
   mainLog: string[];
@@ -138,6 +141,27 @@ function servingOriginFor(
     : keyProbe.origin;
 }
 
+/**
+ * A stub that stands for one scenario and is taken down after it, whatever it stood for.
+ *
+ * @summary Six fixtures raised a stub, handed it over, and disposed of it in a `finally`. The
+ * shape is the same every time, and writing it out six times said nothing the sixth time it had
+ * not said the first.
+ */
+function standingFor<T extends { dispose: () => Promise<void> }>(
+  raise: () => Promise<T>,
+): (deps: object, use: (value: T) => Promise<void>) => Promise<void> {
+  return async (_deps, use) => {
+    const stub = await raise();
+
+    try {
+      await use(stub);
+    } finally {
+      await stub.dispose();
+    }
+  };
+}
+
 export const test = base.extend<ElectronFixtures, WorkerStandIns>({
   oneClipboard: [
     async ({ $tags }, use) => {
@@ -151,30 +175,8 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
     },
     { auto: true },
   ],
-  scriptedProvider: [
-    async ({}, use) => {
-      const provider = await fakeScriptedProvider();
-
-      try {
-        await use(provider);
-      } finally {
-        await provider.dispose();
-      }
-    },
-    { scope: 'worker' },
-  ],
-  judge: [
-    async ({}, use) => {
-      const standIn = await fakeJudge();
-
-      try {
-        await use(standIn);
-      } finally {
-        await standIn.dispose();
-      }
-    },
-    { scope: 'worker' },
-  ],
+  scriptedProvider: [standingFor(fakeScriptedProvider), { scope: 'worker' }],
+  judge: [standingFor(fakeJudge), { scope: 'worker' }],
   aFreshScript: [
     async ({ judge, scriptedProvider }, use) => {
       scriptedProvider.forgets();
@@ -184,33 +186,10 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
     },
     { auto: true },
   ],
-  subscriptionTools: async ({}, use) => {
-    const tools = await fakeSubscriptionTools();
-
-    try {
-      await use(tools);
-    } finally {
-      await tools.dispose();
-    }
-  },
-  keyProbe: async ({}, use) => {
-    const probe = await fakeKeyProbe();
-
-    try {
-      await use(probe);
-    } finally {
-      await probe.dispose();
-    }
-  },
-  localRuntime: async ({}, use) => {
-    const runtime = await fakeLocalRuntime();
-
-    try {
-      await use(runtime);
-    } finally {
-      await runtime.dispose();
-    }
-  },
+  subscriptionTools: standingFor(fakeSubscriptionTools),
+  keyProbe: standingFor(fakeKeyProbe),
+  priceMap: standingFor(fakePriceMap),
+  localRuntime: standingFor(fakeLocalRuntime),
   mainLog: async ({}, use) => {
     await use([]);
   },
@@ -235,6 +214,7 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
       $tags,
       keyProbe,
       localRuntime,
+      priceMap,
       mainLog,
       scriptedProvider,
       subscriptionTools,
@@ -252,6 +232,7 @@ export const test = base.extend<ElectronFixtures, WorkerStandIns>({
           tags: $tags,
           userDataDir,
           probeOrigin: keyProbe.origin,
+          priceOrigin: priceMap.origin,
           servingOrigin: servingOriginFor(testInfo, keyProbe, scriptedProvider),
           runtimeOrigin: localRuntime.origin,
           launchEnv: { ...pinWindowFor(testInfo.file), ...updatesArrangement?.env },

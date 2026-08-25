@@ -38,6 +38,7 @@ type ScenarioSeams = {
   tags: string[];
   userDataDir: string;
   probeOrigin: string;
+  priceOrigin: string;
   servingOrigin: string;
   runtimeOrigin: string;
   launchEnv: Record<string, string>;
@@ -57,6 +58,7 @@ export function scenarioEnv(seams: ScenarioSeams): Record<string, string> {
     ELECTRON_RENDERER_URL: '',
     RECOMPOSE_USER_DATA_DIR: seams.userDataDir,
     RECOMPOSE_PROBE_ORIGIN: seams.probeOrigin,
+    RECOMPOSE_PRICE_ORIGIN: seams.priceOrigin,
     RECOMPOSE_SERVING_ORIGIN: seams.servingOrigin,
     RECOMPOSE_CONTROL_ORIGIN: seams.probeOrigin,
     ...(seams.tags.includes('@probes-the-minted-address')

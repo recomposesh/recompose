@@ -10,22 +10,22 @@ Feature: A downloaded update waits for the person
     Given the app runs on a channel it updates itself
 
   Scenario: A download finishes while the person works
-    When version 0.4.0 finishes downloading
+    When the newer version finishes downloading
     Then the app keeps running and takes no window focus
-    And the update card names version 0.4.0
+    And the update card names the newer version
 
   @update-feed-holds-the-download
   Scenario: A version still downloading shows no card
-    When version 0.4.0 is still downloading
+    When the newer version is still downloading
     Then the interface offers no update card
 
   Scenario: The card outlives navigation
-    Given version 0.4.0 finished downloading
+    Given the newer version finished downloading
     When the person moves to another page
-    Then the update card still names version 0.4.0
+    Then the update card still names the newer version
 
   @packaged
   Scenario: The person chooses the restart
-    Given version 0.4.0 finished downloading
+    Given the newer version finished downloading
     When the person chooses to restart
-    Then the app installs the update and reopens on version 0.4.0
+    Then the app installs the update and reopens on the newer version

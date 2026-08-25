@@ -62,6 +62,10 @@ export type StoredBootDeps = {
   reflectSettings: (settings: Settings) => void;
   repaintStates: (states: EngineStates) => void;
   lifecycle: Pick<GatewayLifecycleRequests, 'reapply' | 'stop'>;
+  /** Where the price map is asked for, which a spec hands a stand-in so no run reaches a vendor. */
+  fetchPrices?: (() => Promise<unknown>) | undefined;
+  /** Where the model registry is asked for, on the same terms. */
+  fetchRegistryPrices?: (() => Promise<unknown>) | undefined;
 };
 
 export type StoredBoot = {
@@ -132,6 +136,10 @@ async function openUsageLedger(deps: StoredBootDeps) {
       bundledFile: deps.bundledPricesFile,
       bundledRegistryFile: deps.bundledRegistryPricesFile,
       onCorrupt: deps.onCorrupt,
+      ...(deps.fetchPrices === undefined ? {} : { fetchPrices: deps.fetchPrices }),
+      ...(deps.fetchRegistryPrices === undefined
+        ? {}
+        : { fetchRegistryPrices: deps.fetchRegistryPrices }),
     }),
   ]);
   const usageStore = await openUsageStore({

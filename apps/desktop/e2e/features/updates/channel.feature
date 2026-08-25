@@ -13,5 +13,5 @@ Feature: An update arrives through the channel that installed the app
   @update-feed @update-checks-fast @appimage-install
   Scenario: An AppImage updates itself
     Given a copy running as a Linux AppImage
-    When version 0.4.0 reaches the release feed
-    Then the app downloads version 0.4.0
+    When the newer version reaches the release feed
+    Then the app downloads the newer version
