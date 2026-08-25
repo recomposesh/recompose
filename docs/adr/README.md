@@ -202,3 +202,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0194](0194-the-pipeline-runs-its-work-in-parallel.md)                          | The pipeline runs its work in parallel                                              | Accepted   | 2026-08-25 |
 | [0195](0195-one-turbo-step-reads-what-changed.md)                               | One turbo step reads what changed                                                   | Accepted   | 2026-08-25 |
 | [0196](0196-the-acceptance-suite-shards.md)                                     | The acceptance suite shards, as wide as the event allows                            | Accepted   | 2026-08-25 |
+| [0197](0197-the-desktop-battery-splits-and-its-coverage-merges.md)              | The desktop battery splits, and its coverage merges                                 | Accepted   | 2026-08-26 |
