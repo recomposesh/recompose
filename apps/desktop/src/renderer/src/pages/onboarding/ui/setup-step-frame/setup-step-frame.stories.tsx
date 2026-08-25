@@ -2,8 +2,12 @@ import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { onAStepSurface } from '../../testing/on-a-surface';
 import { SetupStepFrame } from './setup-step-frame';
+
+/** How tall the window's chrome band runs, which the surface paints its own drag strip across. */
+const BAND = 54;
 
 const meta = preview.meta({
   component: SetupStepFrame,
@@ -33,12 +37,36 @@ export const SkippingLeavesSetup = meta.story({
   play: async ({ args, canvas }) => {
     const skip = await canvas.findByRole('button', { name: 'Skip setup' });
 
-    await expect(skip.getBoundingClientRect().left).toBeGreaterThan(
-      (await canvas.findByRole('button', { name: 'Continue' })).getBoundingClientRect().right,
+    await expect(paintedBox(skip).left).toBeGreaterThan(
+      paintedBox(await canvas.findByRole('button', { name: 'Continue' })).right,
     );
 
     await userEvent.click(skip);
 
     await expect(args.onSkip).toHaveBeenCalledOnce();
+  },
+});
+
+/** The way out rides the chrome band, and clears the drag under it so the press lands. */
+export const SkippingRidesTheChromeBand = meta.story({
+  play: async ({ canvas }) => {
+    const skip = await canvas.findByRole('button', { name: 'Skip setup' });
+
+    await expect(paintedBox(skip).bottom).toBeLessThan(BAND);
+    await expect(paintedStyle(skip).getPropertyValue('-webkit-app-region')).toBe('no-drag');
+    await expect(
+      paintedBox(await canvas.findByRole('list', { name: 'Setup progress' })).top,
+    ).toBeGreaterThan(BAND);
+  },
+});
+
+/** A step taller than the window scrolls its content, never its acts. */
+export const ATallStepKeepsItsActs = meta.story({
+  args: { children: <div className="h-250 rounded-card bg-surface-card" /> },
+  play: async ({ canvas, canvasElement }) => {
+    const acts = await canvas.findByRole('button', { name: 'Continue' });
+
+    await expect(paintedBox(acts).bottom).toBeLessThanOrEqual(paintedBox(canvasElement).bottom);
+    await expect(acts).toBeVisible();
   },
 });

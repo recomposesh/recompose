@@ -6,8 +6,13 @@ import { unwrapIpcResult, withRefusal } from './ipc-result';
 
 export const gatewaysQueryOptions = queryOptions({
   queryKey: ['gateways'],
-  queryFn: async () => unwrapIpcResult(await window.recompose['gateways:list']()),
+  queryFn: fetchStoredGateways,
 });
+
+/** Every gateway on disk right now, read past whatever a cache is still holding. */
+export async function fetchStoredGateways(): Promise<GatewayConfig[]> {
+  return unwrapIpcResult(await window.recompose['gateways:list']());
+}
 
 /**
  * A loopback port nothing holds right now, as of this look.

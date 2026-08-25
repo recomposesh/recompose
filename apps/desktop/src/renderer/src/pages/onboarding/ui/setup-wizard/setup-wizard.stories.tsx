@@ -2,6 +2,7 @@ import { expect, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { SetupWizard } from './setup-wizard';
 
 const meta = preview.meta({
@@ -46,13 +47,25 @@ export const AnOutsidePressLeavesItStanding = meta.story({
   },
 });
 
-/** The surface never claims the chrome band, so the window stays draggable while setup stands. */
-export const LeavesTheChromeDraggable = meta.story({
+/** The surface claims the whole window, so nothing under it is left painting a bare strip. */
+export const ClaimsTheWholeWindow = meta.story({
   play: async () => {
     const surface = await screen.findByRole('dialog', { name: 'Welcome to recompose' });
 
-    await expect(surface.getBoundingClientRect().top).toBeGreaterThan(0);
+    await expect(surface.getBoundingClientRect().top).toBe(0);
     await expect(getComputedStyle(surface).getPropertyValue('-webkit-app-region')).toBe('no-drag');
+  },
+});
+
+/** It hands the drag back through a band of its own, so the window still moves while setup stands. */
+export const HandsTheDragBack = meta.story({
+  play: async () => {
+    const surface = await screen.findByRole('dialog', { name: 'Welcome to recompose' });
+    const band = surface.querySelector('.setup-band');
+
+    await expect(paintedStyle(band).getPropertyValue('-webkit-app-region')).toBe('drag');
+    await expect(paintedBox(band).height).toBeGreaterThan(0);
+    await expect(paintedBox(band).top).toBe(0);
   },
 });
 

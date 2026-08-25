@@ -2,6 +2,7 @@ import { expect } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { paintedBox, paintedStyle } from '../../../../shared/testing';
 import { onASurface } from '../../testing/on-a-surface';
 import { SetupDiagram } from './setup-diagram';
 
@@ -68,6 +69,28 @@ export const TheEndsAreNamed = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('a request')).toBeVisible();
     await expect(await canvas.findByText('you decide this side')).toBeVisible();
+  },
+});
+
+/** Each label sits on a fill of its own, so the dot grid never runs through the words. */
+export const TheLabelsCarryTheirOwnFill = meta.story({
+  play: async ({ canvas }) => {
+    for (const reads of ['a request', 'you decide this side']) {
+      const label = await canvas.findByText(reads);
+
+      await expect(paintedStyle(label).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+      await expect(paintedBox(label).width).toBeGreaterThan(reads.length * 4);
+    }
+  },
+});
+
+/** The lower label stands inside the field, rather than clipped off its bottom edge. */
+export const TheLowerLabelStandsInsideTheField = meta.story({
+  play: async ({ canvas, canvasElement }) => {
+    const field = canvasElement.querySelector('[data-setup-field]');
+    const label = await canvas.findByText('you decide this side');
+
+    await expect(paintedBox(label).bottom).toBeLessThanOrEqual(paintedBox(field).bottom);
   },
 });
 

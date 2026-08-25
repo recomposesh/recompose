@@ -7,9 +7,15 @@ export const onASurface: Decorator = (Story) => (
   </div>
 );
 
-/** Stands a whole step on a surface tall enough to hold it, the way the wizard does. */
+/**
+ * Stands a whole step on the surface the wizard gives it.
+ *
+ * @summary The height is the app window's own, less the chrome band the surface stops short of. A
+ * decorator taller than that would let a step clip its acts in the shipped window while every
+ * story still read fine.
+ */
 export const onAStepSurface: Decorator = (Story) => (
-  <div className="h-250 w-full bg-surface-content">
+  <div className="h-192 w-full bg-surface-content">
     <Story />
   </div>
 );

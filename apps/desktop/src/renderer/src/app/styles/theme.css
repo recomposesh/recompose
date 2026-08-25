@@ -353,9 +353,15 @@
   }
 }
 
+/*
+ * The grid is painted here rather than on the surface, which starts below the chrome band. Two
+ * grids would meet out of phase across that seam, and a bare band above a grid reads as a strip
+ * the paint missed.
+ */
 @utility setup-scrim {
   position: fixed;
   inset: 0;
+  background: radial-gradient(circle, var(--color-dot-grid) 1px, transparent 1px) 0 0 / 22px 22px;
   background-color: var(--color-surface-content);
 
   @media (prefers-reduced-motion: no-preference) {
@@ -369,16 +375,14 @@
 }
 
 /*
- * The surface stops short of the window's own chrome so the platform controls stay operable and
- * the window stays draggable while setup stands. Claiming the whole window would leave it
- * immovable, because a drag region under an overlay swallows nothing back.
+ * The surface claims the whole window and hands the drag back through a band of its own, because
+ * a shell drag region under an overlay swallows nothing back. The platform draws its window
+ * controls above the page, so they stay operable through the band.
  */
 @utility setup-surface {
   position: fixed;
-  inset: var(--spacing-toolbar) 0 0 0;
+  inset: 0;
   overflow: hidden;
-  background: radial-gradient(circle, var(--color-dot-grid) 1px, transparent 1px) 0 0 / 22px 22px;
-  background-color: var(--color-surface-content);
   -webkit-app-region: no-drag;
 
   @media (prefers-reduced-motion: no-preference) {
@@ -389,6 +393,13 @@
       opacity: 0;
     }
   }
+}
+
+@utility setup-band {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--spacing-toolbar);
+  -webkit-app-region: drag;
 }
 
 @utility sheet-scrim {

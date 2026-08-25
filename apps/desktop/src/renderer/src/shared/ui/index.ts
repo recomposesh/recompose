@@ -9,6 +9,7 @@ export {
   brandMarkNames,
 } from './brand-mark/brand-mark-inventory';
 export { Chip } from './chip/chip';
+export { ConfettiBurst } from './confetti-burst/confetti-burst';
 export { ConsequenceDialog } from './consequence-dialog/consequence-dialog';
 export { ContextMenu } from './context-menu/context-menu';
 export { type MenuAction } from './menu-action/menu-action';

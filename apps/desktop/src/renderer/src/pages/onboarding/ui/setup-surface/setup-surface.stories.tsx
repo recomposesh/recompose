@@ -34,7 +34,7 @@ const fresh = { ...defaultSettings(), setupWizardSettled: false };
 
 const meta = preview.meta({
   component: SetupSurface,
-  args: { connectSheet: () => null },
+  args: { connectSheet: () => null, onBuilt: () => undefined },
   parameters: { bridge: { gateways: [], settings: fresh } },
 });
 

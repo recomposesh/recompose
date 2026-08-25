@@ -14,11 +14,9 @@ import {
 import { Suspense, lazy, useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { AccountKind } from '../../entities/account';
-import type { ConnectAsk } from '../../pages/onboarding';
 import type { UsageSearch } from '../../pages/usage';
 
-import { SetupSurface } from '../../pages/onboarding';
-import { AddProviderAct, ProviderCatalogSheet } from '../../pages/providers';
+import { AddProviderAct } from '../../pages/providers';
 import {
   accountsQueryOptions,
   bindAccountChangesToCache,
@@ -43,6 +41,7 @@ import { useTitleBarDoubleClick } from '../lib/use-title-bar-double-click';
 import { AppSidebar } from './-app-sidebar';
 import { AppToolbar } from './-app-toolbar';
 import { NotFound } from './-not-found';
+import { SetupInTheShell } from './-setup-in-the-shell';
 import { surfaceRequest, withSheet, withoutSheet } from './-surface-request';
 import { UsageFiltersAct } from './-usage-filters-act';
 import { UsageRangeAct } from './-usage-range-act';
@@ -74,27 +73,6 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootLayout,
   notFoundComponent: NotFound,
 });
-
-/**
- * The connect sheet setup asks for, drawn here because the sheet belongs to the providers page.
- *
- * @summary Setup owns the question and the providers page owns the answer, so the shell that can
- * see both hands one to the other rather than either growing a copy of the other's surface.
- */
-function setupConnectSheet(ask: ConnectAsk | undefined, onSettled: () => void): ReactNode {
-  return (
-    <ProviderCatalogSheet
-      kind={ask?.kind ?? 'subscription'}
-      onOpenChange={(open) => {
-        if (!open) {
-          onSettled();
-        }
-      }}
-      open={ask !== undefined}
-      openedOn={ask?.entry}
-    />
-  );
-}
 
 /** What the sidebar's band carries, which is nothing while a gateway's toolbar holds the control. */
 function bandFor(slug: string | undefined): ReactNode {
@@ -213,7 +191,7 @@ function RootLayout() {
   return (
     <div className="flex h-full overflow-hidden">
       <ViewCommandEar />
-      <SetupSurface connectSheet={setupConnectSheet} />
+      <SetupInTheShell />
       <AppSidebar
         away={sidebarAway}
         band={bandFor(slug)}

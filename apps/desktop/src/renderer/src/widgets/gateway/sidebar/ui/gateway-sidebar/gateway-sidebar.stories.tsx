@@ -1,4 +1,4 @@
-import { expect } from 'storybook/test';
+import { expect, fn, screen, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 import { withSidebarSurface } from '#.storybook/sidebar-surface';
@@ -11,7 +11,7 @@ const gemini = gatewaySeed({ slug: 'gemini', displayName: 'Gemini', port: 51235 
 
 const meta = preview.meta({
   component: GatewaySidebar,
-  args: { onNewGateway: () => {} },
+  args: { onDeleteGateway: fn(async () => Promise.resolve()), onNewGateway: () => {} },
   decorators: [withSidebarSurface],
 });
 
@@ -95,5 +95,96 @@ export const RowRhythm = meta.story({
 
     await expect(paintedBox(mark).width).toBe(6);
     await expect(paintedBox(mark).right).toBeCloseTo(paintedBox(row).right - 8, 0);
+  },
+});
+
+async function rightClicked(row: HTMLElement): Promise<void> {
+  row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+
+  await expect(await screen.findByRole('menu')).toBeVisible();
+}
+
+/** What a deletion story needs of the canvas, which is one row looked up by what it reads as. */
+type RowLookup = { findByRole: (role: string, named: { name: string }) => Promise<HTMLElement> };
+
+/** Right-clicks the named row and picks the delete, which is where every deletion story starts. */
+async function askedDeletionOf(canvas: RowLookup, row: string): Promise<void> {
+  await rightClicked(await canvas.findByRole('link', { name: row }));
+  await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete gateway…' }));
+}
+
+const overCodex = { bridge: { gateways: [codex] } };
+
+/**
+ * A right-click on a row offers the same delete the canvas offers over the same gateway.
+ *
+ * @summary Two menus over one gateway that disagree about what it can do is two apps, so the
+ * delete stands here too, last and apart, worded and ordered the way the canvas words it.
+ */
+export const RowOffersDeletion = meta.story({
+  parameters: { bridge: { gateways: [codex] } },
+  play: async ({ canvas }) => {
+    await rightClicked(await canvas.findByRole('link', { name: 'Codex Stopped' }));
+
+    const acts = await screen.findAllByRole('menuitem');
+
+    await expect(acts.map((act) => act.textContent)).toStrictEqual([
+      'Start',
+      'Stop',
+      'Delete gateway…',
+    ]);
+  },
+});
+
+/** The delete asks before it acts, naming the gateway and what leaving costs. */
+export const DeletionAsksFirst = meta.story({
+  parameters: overCodex,
+  play: async ({ args, canvas }) => {
+    await askedDeletionOf(canvas, 'Codex Stopped');
+
+    await expect(await screen.findByText('Delete the gateway "Codex"?')).toBeVisible();
+    await expect(
+      await screen.findByText(
+        'The gateway stops serving, and its whole composition leaves this app.',
+      ),
+    ).toBeVisible();
+    await expect(args.onDeleteGateway).not.toHaveBeenCalled();
+  },
+});
+
+/** Answering the question is what deletes, and it names the row the right-click came from. */
+export const ConfirmingDeletes = meta.story({
+  parameters: { bridge: { gateways: [codex, gemini] } },
+  play: async ({ args, canvas }) => {
+    await askedDeletionOf(canvas, 'Gemini Stopped');
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await expect(args.onDeleteGateway).toHaveBeenCalledWith('gemini');
+  },
+});
+
+/** Cancelling leaves the gateway where it stood, which is the whole point of asking. */
+export const CancellingKeepsIt = meta.story({
+  parameters: overCodex,
+  play: async ({ args, canvas }) => {
+    await askedDeletionOf(canvas, 'Codex Stopped');
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    await expect(args.onDeleteGateway).not.toHaveBeenCalled();
+    await expect(await canvas.findByRole('link', { name: 'Codex Stopped' })).toBeVisible();
+  },
+});
+
+/** A refused delete says why on the question rather than closing it over a gateway still there. */
+export const ARefusedDeleteSaysWhy = meta.story({
+  args: {
+    onDeleteGateway: fn(async () => Promise.reject(new Error('The engine still holds this port.'))),
+  },
+  parameters: overCodex,
+  play: async ({ canvas }) => {
+    await askedDeletionOf(canvas, 'Codex Stopped');
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await expect(await screen.findByText('The engine still holds this port.')).toBeVisible();
   },
 });

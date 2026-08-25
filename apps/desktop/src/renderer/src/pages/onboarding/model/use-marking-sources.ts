@@ -1,8 +1,14 @@
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 
 import type { FoundSource } from './found-source';
 
-import { useAdoptSubscription, useConnectLocalRuntime } from '../../../shared/api';
+import {
+  accountsQueryOptions,
+  useAdoptSubscription,
+  useConnectLocalRuntime,
+} from '../../../shared/api';
+import { productOf, productsArrivedSince } from './arrived-accounts';
 import { togglePicked } from './picked-count';
 
 type MarkingSources = {
@@ -12,8 +18,41 @@ type MarkingSources = {
   onMarkSource: (source: FoundSource) => void;
 };
 
-function productOf(source: FoundSource): string {
-  return `${source.provider}:${source.kind}`;
+/**
+ * Every product a person connected since setup opened.
+ *
+ * @summary The first reading is the baseline rather than an arrival, so a machine that already
+ * held accounts opens with none of them decided. Ids are what an arrival is spotted by, because a
+ * second plan from the same provider carries the same product as the first.
+ */
+function useArrivedProducts(): ReadonlySet<string> {
+  const { data: registry } = useQuery(accountsQueryOptions);
+  const [arrived, setArrived] = useState<ReadonlySet<string>>(new Set());
+  const known = useRef<ReadonlySet<string> | undefined>(undefined);
+  const accounts = registry?.accounts;
+
+  useEffect(() => {
+    if (accounts === undefined) {
+      return;
+    }
+
+    const standing = new Set(accounts.map((account) => account.id));
+    const since = known.current;
+
+    known.current = standing;
+
+    if (since === undefined) {
+      return;
+    }
+
+    const landed = productsArrivedSince(since, accounts);
+
+    if (landed.length > 0) {
+      setArrived((held) => new Set([...held, ...landed]));
+    }
+  }, [accounts]);
+
+  return arrived;
 }
 
 /**
@@ -23,30 +62,32 @@ function productOf(source: FoundSource): string {
  * builds finds the accounts already there rather than opening a second sign-in a person already
  * answered.
  *
- * A recorded source arrives back under a stored account id, which is not the id the machine row
- * carried, so the mark is remembered against the product rather than the row. Without that a
- * person would watch their own mark clear the moment the record landed. A second account for the
- * same product still marks by row, because two plans from one provider are two sources and only
- * the person can say which they meant.
+ * A mark is remembered against the product rather than the row, because a recorded source arrives
+ * back under a stored account id, which is not the id the machine row carried. Without that a
+ * person would watch their own mark clear the moment the record landed.
+ *
+ * Nothing is marked before its account lands. A mark stands for a target the build can route to,
+ * so marking one the recording never produced would send the build an account that does not
+ * exist, and the run would refuse on something the person could not see.
  */
 export function useMarkingSources(): MarkingSources {
   const [markedRows, setMarkedRows] = useState<ReadonlySet<string>>(new Set());
-  const [recorded, setRecorded] = useState<ReadonlySet<string>>(new Set());
+  const [cleared, setCleared] = useState<ReadonlySet<string>>(new Set());
+  const arrived = useArrivedProducts();
   const adopt = useAdoptSubscription();
   const connectLocal = useConnectLocalRuntime();
 
   const isMarked = (source: FoundSource): boolean =>
-    markedRows.has(source.id) || recorded.has(productOf(source));
+    markedRows.has(source.id) ||
+    (arrived.has(productOf(source)) && !cleared.has(productOf(source)));
 
   const clearMark = (source: FoundSource): void => {
-    const product = productOf(source);
-
     setMarkedRows(new Set([...markedRows].filter((row) => row !== source.id)));
-    setRecorded(new Set([...recorded].filter((held) => held !== product)));
+    setCleared(new Set([...cleared, productOf(source)]));
   };
 
   const recordAccount = (source: FoundSource): void => {
-    setRecorded(togglePicked(recorded, productOf(source)));
+    setCleared(new Set([...cleared].filter((held) => held !== productOf(source))));
 
     if (source.kind === 'subscription' && source.provider === 'anthropic') {
       adopt.mutate({ provider: 'anthropic' });
@@ -66,11 +107,13 @@ export function useMarkingSources(): MarkingSources {
         return;
       }
 
-      setMarkedRows(togglePicked(markedRows, source.id));
-
       if (source.adoptable) {
         recordAccount(source);
+
+        return;
       }
+
+      setMarkedRows(togglePicked(markedRows, source.id));
     },
   };
 }

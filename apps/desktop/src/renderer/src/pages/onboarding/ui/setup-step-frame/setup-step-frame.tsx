@@ -39,8 +39,13 @@ type SetupStepFrameProps = {
  *
  * @summary The dots, the heading and the lede sit at the same height on every step, so moving
  * between them reads as one surface changing its question rather than as separate screens. The
- * way out sits in the corner rather than in the act row, because leaving setup is not one of the
- * choices the step is offering.
+ * way out rides the window's own chrome band rather than the act row, because leaving setup is
+ * not one of the choices the step is offering, and it takes back the space it used to hold above
+ * the question. It clears the drag under it, or the band would swallow the press.
+ *
+ * Only the content between the lede and the acts scrolls. The window shrinks to 500px tall, which
+ * is shorter than the longest step, and an act row that scrolls away leaves a person on a step
+ * with no way forward.
  */
 export function SetupStepFrame({
   step,
@@ -51,9 +56,9 @@ export function SetupStepFrame({
   rail = 'question',
 }: SetupStepFrameProps) {
   return (
-    <div className="relative flex h-full flex-col items-center px-10 pt-33">
+    <div className="relative flex h-full flex-col items-center px-10 pt-20 pb-10">
       <button
-        className="absolute inset-e-8 top-6 rounded-control focus-ring px-1 text-caption text-ink-secondary hover:text-ink"
+        className="app-no-drag absolute inset-e-8 top-5 rounded-control focus-ring px-1 text-caption text-ink-secondary hover:text-ink"
         onClick={onSkip}
         type="button"
       >
@@ -64,8 +69,8 @@ export function SetupStepFrame({
         <SetupHeading step={step} />
         <p className="max-w-140 text-center text-body text-ink-secondary">{lede}</p>
       </div>
-      <div className={`mt-6.5 ${RAIL[rail]}`}>{children}</div>
-      <div className="mt-6 flex items-center gap-2.5">{acts}</div>
+      <div className={`mt-6.5 min-h-0 overflow-y-auto ${RAIL[rail]}`}>{children}</div>
+      <div className="mt-6 flex shrink-0 items-center gap-2.5">{acts}</div>
     </div>
   );
 }

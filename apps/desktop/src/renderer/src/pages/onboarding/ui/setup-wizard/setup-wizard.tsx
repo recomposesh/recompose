@@ -26,8 +26,9 @@ type SetupWizardProps = {
  * surface rides it rather than a native dialog, whose `showModal` would hand Escape a default the
  * app would fight on every step.
  *
- * The surface stops short of the window's chrome band, so the platform window controls stay
- * operable and the window stays draggable while setup stands.
+ * The surface claims the whole window and paints its own drag band across the top, because a shell
+ * drag region under an overlay swallows nothing back and a window nobody can move is worse than a
+ * band with nothing in it.
  */
 export function SetupWizard({ open, step, children }: SetupWizardProps) {
   useEffect(() => {
@@ -44,6 +45,7 @@ export function SetupWizard({ open, step, children }: SetupWizardProps) {
         <Dialog.Backdrop className="setup-scrim" />
         <Dialog.Popup className="setup-surface" data-setup-step={step}>
           <Dialog.Title className="sr-only">{setupStepReads(step)}</Dialog.Title>
+          <div className="setup-band" />
           {children}
         </Dialog.Popup>
       </Dialog.Portal>

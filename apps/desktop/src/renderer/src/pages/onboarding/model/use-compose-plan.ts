@@ -5,9 +5,8 @@ import type { FoundSource } from './found-source';
 
 import { offeredPortQueryOptions } from '../../../shared/api';
 import { firstModelName, pickServedModel } from './first-model';
+import { useFirstGatewayName } from './use-first-gateway-name';
 import { useServedModels } from './use-served-models';
-
-const GATEWAY_NAME = 'My Gateway';
 
 const TURN = ['answering this turn', 'answers the next one'];
 
@@ -40,6 +39,7 @@ export function useComposePlan(
   }
 
   const { data: port } = useQuery(offeredPortQueryOptions);
+  const gatewayName = useFirstGatewayName();
   const listings = useServedModels(recorded);
 
   const served = recorded.map((source, index) => {
@@ -53,7 +53,7 @@ export function useComposePlan(
   });
 
   return {
-    gatewayName: GATEWAY_NAME,
+    gatewayName,
     port: port === undefined ? '' : `:${String(port)}`,
     modelId: firstModelName(harnesses),
     targets: served,

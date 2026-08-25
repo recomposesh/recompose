@@ -25,6 +25,15 @@ type SetupSurfaceProps = {
    * a second place for a connect to drift. The shell holds both, so it hands one to the other.
    */
   connectSheet: (ask: ConnectAsk | undefined, onSettled: () => void) => ReactNode;
+  /**
+   * Lands the shell on the gateway setup just stored.
+   *
+   * @summary Setup cannot navigate: routes are the shell's, and the surface is drawn from the
+   * root rather than from a route of its own. The landing happens the moment the gateway reaches
+   * disk rather than when the surface goes away, so the canvas behind the last two steps is
+   * already the one a person built.
+   */
+  onBuilt: (gateway: GatewayConfig) => void;
 };
 
 /**
@@ -57,7 +66,7 @@ function usePicking(): [ReadonlySet<string>, (id: string) => void] {
  * the same standing the route it redirects to reads, which is the shape every redirect loop in
  * the router's own tracker takes.
  */
-export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
+export function SetupSurface({ connectSheet, onBuilt }: SetupSurfaceProps) {
   const setup = useSetupStanding();
   const [pickedHarnesses, onPickHarness] = usePicking();
   const { isMarked, onMarkSource } = useMarkingSources();
@@ -84,7 +93,10 @@ export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
           onCreate={() => {
             setup.walkTo('building');
           }}
-          onBuilt={setBuilt}
+          onBuilt={(gateway) => {
+            setBuilt(gateway);
+            onBuilt(gateway);
+          }}
           onMarkSource={onMarkSource}
           onPickHarness={onPickHarness}
           pickedHarnesses={pickedHarnesses}

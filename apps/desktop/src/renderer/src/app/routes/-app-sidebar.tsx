@@ -4,6 +4,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useMatchRoute, useNavigate } from '@tanstack/react-router';
 import { Suspense, useId, useSyncExternalStore } from 'react';
 
+import { useGatewayForgetting } from '../../pages/gateway-canvas';
 import { systemQueryOptions } from '../../shared/api';
 import {
   bandAlignmentFor,
@@ -78,6 +79,7 @@ function systemGroup(
 
 export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
   const systemId = useId();
+  const forgetGateway = useGatewayForgetting();
   const width = useSyncExternalStore(subscribeToPanelWidths, sidebarWidth);
   const standing = away ? undefined : { width };
   const matchRoute = useMatchRoute();
@@ -101,7 +103,7 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
         </div>
         <nav className="app-no-drag flex flex-1 flex-col overflow-y-auto" data-focus-group="">
           <Suspense fallback={null}>
-            <GatewaySidebar onNewGateway={onNewGateway} />
+            <GatewaySidebar onDeleteGateway={forgetGateway} onNewGateway={onNewGateway} />
           </Suspense>
           <Suspense fallback={null}>
             <ProviderSidebar />

@@ -14,19 +14,55 @@ import {
   useStopGateway,
 } from '../../../../../shared/api';
 import { focusDrivenByArrow } from '../../../../../shared/lib';
-import { ContextMenu, Icon, NavGroup, StatusIndicator } from '../../../../../shared/ui';
+import {
+  ConsequenceDialog,
+  ContextMenu,
+  Icon,
+  NavGroup,
+  StatusIndicator,
+} from '../../../../../shared/ui';
+import { useDeletionAsk } from '../../model/deletion-ask';
 
 type GatewaySidebarProps = {
   /** Asked for when a person wants a gateway beyond the ones already listed. */
   onNewGateway: () => void;
+  /**
+   * Deletes the gateway a person asked to delete, once they have accepted the cost.
+   *
+   * @summary The sidebar asks rather than deletes, because everything this side holds about a
+   * gateway lives with the canvas that drew it, and a widget cannot reach a page. The shell holds
+   * both and hands one to the other.
+   */
+  onDeleteGateway: (slug: string) => Promise<void>;
 };
 
 type GatewayLifecycleActs = {
   start: (slug: string) => void;
   stop: (slug: string) => void;
+  askDeletion: (gateway: { slug: string; displayName: string }) => void;
 };
 
 const GATEWAY_PATH = '/gateways/';
+
+/** What deleting costs, worded as the canvas words it, because it is the same act. */
+const DELETION_COST = 'The gateway stops serving, and its whole composition leaves this app.';
+
+/** The question a right-click raised, drawn where the canvas draws the same one. */
+function deletionQuestion(deletion: ReturnType<typeof useDeletionAsk>): ReactElement | null {
+  const { asked, refusal, cancel, confirm } = deletion;
+
+  return asked === undefined ? null : (
+    <ConsequenceDialog
+      confirmLabel="Delete"
+      heading={`Delete the gateway "${asked.displayName}"?`}
+      onCancel={cancel}
+      onConfirm={confirm}
+      open
+    >
+      {refusal ?? DELETION_COST}
+    </ConsequenceDialog>
+  );
+}
 
 function gatewaySlugInPath(pathname: string): string | undefined {
   return pathname.startsWith(GATEWAY_PATH)
@@ -37,12 +73,21 @@ function gatewaySlugInPath(pathname: string): string | undefined {
 /**
  * What a row offers a right-click, which is the pair of acts that run the gateway it names.
  *
- * @summary Both acts stand on every row and the serving state decides which one answers, the way
- * the tray and the Gateway menu already draw them. A row whose act came and went would move the
- * other one under the pointer between one glance and the next. Each act carries the slug of the
- * row it came from, so a gateway nobody selected still starts from its own row.
+ * @summary Both run acts stand on every row and the serving state decides which one answers, the
+ * way the tray and the Gateway menu already draw them. A row whose act came and went would move
+ * the other one under the pointer between one glance and the next. Each act carries the slug of
+ * the row it came from, so a gateway nobody selected still starts from its own row.
+ *
+ * The delete stands last and apart, where the canvas already puts it, so the two menus over the
+ * same gateway read the same way round.
  */
-function lifecycleActs(slug: string, serving: boolean, acts: GatewayLifecycleActs): MenuAction[] {
+function rowActs(
+  gateway: { slug: string; displayName: string },
+  serving: boolean,
+  acts: GatewayLifecycleActs,
+): MenuAction[] {
+  const { slug } = gateway;
+
   return [
     {
       label: 'Start',
@@ -59,6 +104,14 @@ function lifecycleActs(slug: string, serving: boolean, acts: GatewayLifecycleAct
       disabled: !serving,
       onSelect: () => {
         acts.stop(slug);
+      },
+    },
+    {
+      label: 'Delete gateway…',
+      icon: 'trash',
+      tone: 'danger',
+      onSelect: () => {
+        acts.askDeletion(gateway);
       },
     },
   ];
@@ -78,7 +131,7 @@ function gatewayRow(
 ): ReactElement {
   return (
     <ContextMenu
-      items={lifecycleActs(gateway.slug, status === 'running', acts)}
+      items={rowActs(gateway, status === 'running', acts)}
       key={gateway.slug}
       render={
         <Link
@@ -109,7 +162,7 @@ function gatewayRow(
  * right-click on a row runs the gateway that row names rather than the one standing, which is what
  * the tray already offers from outside the window.
  */
-export function GatewaySidebar({ onNewGateway }: GatewaySidebarProps) {
+export function GatewaySidebar({ onNewGateway, onDeleteGateway }: GatewaySidebarProps) {
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
   const { data: states } = useSuspenseQuery(engineStatesQueryOptions);
   const standingOn = useRouterState({
@@ -123,6 +176,11 @@ export function GatewaySidebar({ onNewGateway }: GatewaySidebarProps) {
   };
   const startGateway = useStartGateway();
   const stopGateway = useStopGateway();
+  const deletion = useDeletionAsk(onDeleteGateway, (slug) => {
+    if (slug === standingOn) {
+      void navigate({ to: '/' });
+    }
+  });
 
   const acts: GatewayLifecycleActs = {
     start: (slug) => {
@@ -131,6 +189,7 @@ export function GatewaySidebar({ onNewGateway }: GatewaySidebarProps) {
     stop: (slug) => {
       stopGateway.mutate({ slug });
     },
+    askDeletion: deletion.ask,
   };
 
   return (
@@ -142,6 +201,7 @@ export function GatewaySidebar({ onNewGateway }: GatewaySidebarProps) {
         <Icon className="size-3.5 icon-emphasis" name="plus" />
         New gateway…
       </button>
+      {deletionQuestion(deletion)}
     </NavGroup>
   );
 }

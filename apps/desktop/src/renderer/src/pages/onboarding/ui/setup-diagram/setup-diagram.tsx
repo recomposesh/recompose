@@ -23,7 +23,7 @@ type SetupDiagramProps = {
   targets: readonly DiagramTarget[];
 };
 
-const FIELD = { width: 1020, height: 330 };
+const FIELD = { width: 1020, height: 348 };
 
 const CARD = { width: 184, height: 88 };
 
@@ -65,19 +65,22 @@ function cable(key: string, drawn: string, dimmed: boolean): ReactElement {
   );
 }
 
+const LABEL = 'absolute rounded-full bg-surface-field px-2 py-0.5 text-caption text-ink-secondary';
+
+/**
+ * @summary Each label sits on a fill of its own, because the dot grid runs behind them and a
+ * caption read through it is the one piece of the diagram a person has to squint at.
+ */
 function diagramLabels(): ReactElement {
   return (
     <>
       <span
-        className="absolute text-caption text-ink-secondary"
-        style={{ left: COLUMN.gateway + CARD.width + 18, top: ROW.middle - 8 }}
+        className={LABEL}
+        style={{ left: COLUMN.gateway + CARD.width + 18, top: ROW.middle - 10 }}
       >
         a request
       </span>
-      <span
-        className="absolute text-caption text-ink-secondary"
-        style={{ left: COLUMN.target, top: ROW.lower + CARD.height + 12 }}
-      >
+      <span className={LABEL} style={{ left: COLUMN.target, top: ROW.lower + CARD.height + 12 }}>
         you decide this side
       </span>
     </>
@@ -133,7 +136,11 @@ export function SetupDiagram({ gatewayName, port, modelId, targets }: SetupDiagr
   const routed = targets.length > 0;
 
   return (
-    <div className="relative mx-auto" style={{ height: FIELD.height, width: FIELD.width }}>
+    <div
+      className="relative mx-auto"
+      data-setup-field=""
+      style={{ height: FIELD.height, width: FIELD.width }}
+    >
       {diagramCables(targets)}
       <div className="absolute" style={{ left: COLUMN.gateway, top: ROW.middle }}>
         <SetupNode kind="gateway" name={gatewayName} under={port} />
