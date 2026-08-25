@@ -151,7 +151,7 @@ function servingOriginFor(
 function standingFor<T extends { dispose: () => Promise<void> }>(
   raise: () => Promise<T>,
 ): (deps: object, use: (value: T) => Promise<void>) => Promise<void> {
-  return async (_deps, use) => {
+  return async ({}: object, use: (value: T) => Promise<void>) => {
     const stub = await raise();
 
     try {
