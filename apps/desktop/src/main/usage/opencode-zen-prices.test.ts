@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-import type { ContextBandPrice } from './pricing';
+import type { ContextBandPrice, ModelPrice } from './pricing';
 
 import { openCodeZenPricesFrom } from './opencode-zen-prices';
 
@@ -141,5 +141,67 @@ describe('the bands a model charges above a context threshold', () => {
 
   test('a band charged for something other than context is left where it stands', () => {
     expect(bandsOf('a-model-tiered-by-something-else')).toEqual([]);
+  });
+});
+
+describe('what the reader refuses to read as a rate', () => {
+  function pricedBy(cost: unknown): ModelPrice | undefined {
+    return openCodeZenPricesFrom({ opencode: { models: { doubtful: { cost } } } })?.get(
+      'opencode-zen/doubtful',
+    );
+  }
+
+  test('a rate that is not a number is no rate, so the model is priced by nobody', () => {
+    expect(pricedBy({ input: '5', output: 30 })).toBeUndefined();
+  });
+
+  test('a rate that runs off the end of the numbers is refused as well', () => {
+    for (const stated of [Number.POSITIVE_INFINITY, Number.NaN]) {
+      expect(pricedBy({ input: stated, output: 30 })).toBeUndefined();
+    }
+  });
+
+  test('a cache rate nobody stated is left out rather than read as zero', () => {
+    const priced = pricedBy({ input: 5, output: 30 });
+
+    expect(priced).toMatchObject({ inputPerToken: 5 / 1_000_000 });
+    expect(priced).not.toHaveProperty('cacheReadPerToken');
+    expect(priced).not.toHaveProperty('cacheWritePerToken');
+  });
+
+  test('a cache rate stated at zero is a rate, because free is a price', () => {
+    expect(pricedBy({ input: 5, output: 30, cache_read: 0 })).toMatchObject({
+      cacheReadPerToken: 0,
+    });
+  });
+});
+
+describe('what the reader refuses to read as a context threshold', () => {
+  function bandedAt(size: unknown): readonly ContextBandPrice[] | undefined {
+    const priced = openCodeZenPricesFrom({
+      opencode: {
+        models: {
+          doubtful: {
+            cost: {
+              input: 1,
+              output: 2,
+              tiers: [{ input: 9, output: 9, tier: { type: 'context', size } }],
+            },
+          },
+        },
+      },
+    })?.get('opencode-zen/doubtful');
+
+    return priced?.bands;
+  }
+
+  test('a threshold that is not a whole number of tokens names no band', () => {
+    for (const size of ['200000', 200_000.5, 0, -1]) {
+      expect(bandedAt(size)).toBeUndefined();
+    }
+  });
+
+  test('a whole positive threshold names its band', () => {
+    expect(bandedAt(200_000)).toHaveLength(1);
   });
 });
