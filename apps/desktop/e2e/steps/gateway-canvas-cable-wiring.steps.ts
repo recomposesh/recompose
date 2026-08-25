@@ -27,6 +27,7 @@ import {
 } from '../canvas-picker';
 import { emptyCanvasSpot } from '../canvas-room';
 import {
+  bindingOfModelNamed,
   cableBetween,
   cableId,
   cablePath,
@@ -67,12 +68,11 @@ const COMPANION = 'steady';
 
 async function standsBoundToTheKeyAccount(page: Page, name: string): Promise<void> {
   const key = await accountHeldAs(page, 'api-key');
-  const alias = modelIdFromName(name);
 
   rememberVirtualModel(page, name);
 
   await expect
-    .poll(async () => (await storedBinding(page, focusedGateway(page), alias))?.accountId)
+    .poll(async () => (await bindingOfModelNamed(page, focusedGateway(page), name))?.accountId)
     .toBe(key.id);
 }
 

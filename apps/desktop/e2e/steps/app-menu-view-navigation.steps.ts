@@ -49,7 +49,7 @@ Then('a window opens on the usage screen', async ({ electronApp }) => {
     throw new Error('no window opened on the pick');
   }
 
-  await expect(fresh.getByRole('heading', { name: 'Usage' })).toBeVisible();
+  await expect(fresh.getByRole('heading', { exact: true, name: 'Usage' })).toBeVisible();
 });
 
 Then('the gateway detail of {string} stands', async ({ page }, name: string) => {

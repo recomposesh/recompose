@@ -6,6 +6,7 @@ export * from './transport-policy';
 export * from './non-blank';
 export * from './gateway-routing';
 export * from './judge-prompt';
+export * from './loopback-override';
 export * from './gateway-config';
 export * from './gateway-api-key';
 export * from './engine-routing';

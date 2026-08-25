@@ -1,13 +1,14 @@
 import type { ContextBandPrice, ModelPrice, PriceMap } from './pricing';
 
 import { isRecord } from '../storage/json-file';
+import { priceAddressBehindTheStandIn } from './price-origin';
 
 const PRICE_MAP_URL =
   'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json';
 
 /** The community price map recompose prices every vendor but the one gateway with. */
 export async function fetchLiteLlmPrices(): Promise<unknown> {
-  const answer = await fetch(PRICE_MAP_URL);
+  const answer = await fetch(priceAddressBehindTheStandIn(PRICE_MAP_URL));
 
   if (!answer.ok) {
     throw new Error(`the price map answered ${String(answer.status)}`);

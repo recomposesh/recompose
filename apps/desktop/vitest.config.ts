@@ -9,7 +9,7 @@ import { coverageDefaults } from '../../vitest.shared';
 
 // Chromium keeps every finished test file's memory as files on disk, so a long run fills the
 // runner and the browser dies mid-suite: https://github.com/vitest-dev/vitest/issues/9437
-const FILES_BETWEEN_COLLECTIONS = 5;
+const FILES_BETWEEN_COLLECTIONS = 3;
 
 let filesSinceCollection = 0;
 
@@ -70,6 +70,7 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/main/index.ts',
         'src/main/engine-host/spawn-engine.ts',
+        'src/main/usage/price-lookups.ts',
         'src/main/ipc/register-ipc.ts',
         'src/main/menu/app-menu.ts',
         'src/main/protocol/app-protocol.ts',
@@ -89,6 +90,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
+          setupFiles: ['../../vitest.sealed-network.ts'],
           include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mts', 'e2e/**/*.test.{mts,ts}'],
           exclude: [...defaultExclude, '**/*.browser.test.*'],
           ...pacedForCi,

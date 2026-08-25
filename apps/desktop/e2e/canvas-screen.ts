@@ -251,16 +251,41 @@ export async function hitTarget(control: Locator): Promise<{ width: number; heig
 }
 
 /** What one definition is bound to on disk, which is the outcome every gesture writes toward. */
+function boundTargetOf(
+  bound: { routing: Parameters<typeof targetTheEntryNames>[0] } | undefined,
+): { accountId: string; providerModel: string } | undefined {
+  const target = bound === undefined ? undefined : targetTheEntryNames(bound.routing);
+
+  return target === undefined
+    ? undefined
+    : { accountId: target.accountId, providerModel: target.providerModel };
+}
+
 export async function storedBinding(
   page: Page,
   gateway: string,
   modelId: string,
 ): Promise<{ accountId: string; providerModel: string } | undefined> {
   const { virtualModels } = await storedGateway(page, gateway);
-  const bound = virtualModels.find((model) => model.id === modelId);
-  const target = bound === undefined ? undefined : targetTheEntryNames(bound.routing);
 
-  return target === undefined
-    ? undefined
-    : { accountId: target.accountId, providerModel: target.providerModel };
+  return boundTargetOf(virtualModels.find((model) => model.id === modelId));
+}
+
+/**
+ * The binding standing under the name a scenario quotes, however the model came to stand.
+ *
+ * @summary A scenario names a model the way a person does, and the id beneath that name is a
+ * derivation no step should repeat: a seeded model wears the bare alias its fixture wrote, and a
+ * composed one wears the id the field derived. Reading the display name first answers both, so a
+ * step never has to know which of the two stood the model up.
+ */
+export async function bindingOfModelNamed(
+  page: Page,
+  gateway: string,
+  name: string,
+): Promise<{ accountId: string; providerModel: string } | undefined> {
+  const { virtualModels } = await storedGateway(page, gateway);
+  const named = virtualModels.find((model) => model.displayName === name);
+
+  return boundTargetOf(named ?? virtualModels.find((model) => model.id === name));
 }

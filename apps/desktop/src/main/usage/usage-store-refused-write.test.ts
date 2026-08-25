@@ -29,6 +29,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+/**
+ * The sentence naming this spec's own file, out of everything the console heard.
+ *
+ * @summary Another store left standing by an earlier test keeps retrying on the same fake clock, so
+ * the first sentence the spy catches is not always the refusal this spec caused. The wait advances
+ * the fake clock rather than spinning, because a real write has to reach the disk and refuse before
+ * anything is said, and a spin under fake timers never lets it.
+ */
+function namingThisFile(said: readonly string[], file: string): string | undefined {
+  return said.find((sentence) => sentence.includes(file));
+}
+
 describe('a write the disk refused', () => {
   test('the ledger waits to be written again rather than being dropped', async () => {
     const file = await aStoreFile();
@@ -57,12 +69,16 @@ describe('a write the disk refused', () => {
     store.accrue(served('one', NOW - 2 * HOUR));
     await vi.advanceTimersByTimeAsync(QUIET_MS);
 
-    const reported = await eventually(() => {
-      if (said.length === 0) {
+    const reported = await eventually(async () => {
+      await vi.advanceTimersByTimeAsync(10);
+
+      const mine = namingThisFile(said, file);
+
+      if (mine === undefined) {
         throw new Error('the refused write has not been reported yet');
       }
 
-      return said.join(' ');
+      return mine;
     });
 
     expect(reported).toContain(file);

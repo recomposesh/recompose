@@ -5,6 +5,7 @@ import { coverageDefaults } from '../../vitest.shared';
 export default defineConfig({
   test: {
     environment: 'node',
+    setupFiles: ['../../vitest.sealed-network.ts'],
     include: ['src/**/*.test.ts'],
     typecheck: {
       enabled: true,

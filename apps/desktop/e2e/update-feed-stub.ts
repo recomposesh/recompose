@@ -7,6 +7,8 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as wait } from 'node:timers/promises';
 
+import { versionAboveThisBuild, versionThisBuildRuns } from './newer-version';
+
 const appRoot = join(__dirname, '..');
 
 const devFeedFile = join(appRoot, 'dev-app-update.yml');
@@ -254,7 +256,9 @@ export type UpdatesArrangement = {
  * seeded-usage-history tag already works, and the steps only read and adjust what stands here.
  */
 function arrangedByTags(feed: UpdateFeed, tags: string[]): void {
-  feed.serveVersion(tags.includes('@update-feed-serves-newer') ? '0.4.0' : '0.3.0');
+  feed.serveVersion(
+    tags.includes('@update-feed-serves-newer') ? versionAboveThisBuild : versionThisBuildRuns,
+  );
 
   if (tags.includes('@update-feed-holds-the-download')) {
     feed.holdArtifact();

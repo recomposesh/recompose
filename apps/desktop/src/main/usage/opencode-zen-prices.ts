@@ -1,6 +1,7 @@
 import type { ContextBandPrice, ModelPrice, PriceMap } from './pricing';
 
 import { isRecord } from '../storage/json-file';
+import { priceAddressBehindTheStandIn } from './price-origin';
 
 const REGISTRY_URL = 'https://models.dev/api.json';
 
@@ -18,7 +19,7 @@ const TOKENS_A_RATE_IS_QUOTED_PER = 1_000_000;
  * The document covers every vendor; only the gateway's node is read.
  */
 export async function fetchOpenCodeZenPrices(): Promise<unknown> {
-  const answer = await fetch(REGISTRY_URL);
+  const answer = await fetch(priceAddressBehindTheStandIn(REGISTRY_URL));
 
   if (!answer.ok) {
     throw new Error(`the model registry answered ${String(answer.status)}`);

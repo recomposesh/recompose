@@ -75,25 +75,29 @@ jobs:
       - if: needs.changes.outputs.desktop != 'true' && needs.changes.outputs.web == 'true'
         run: pnpm --filter @recompose/web exec playwright install --with-deps chromium
       - run: pnpm run fmt:check
-      - if: github.event_name == 'pull_request'
-        run: pnpm exec turbo run lint typecheck build test --concurrency=100% --affected
+      - run: pnpm exec turbo run lint typecheck build --concurrency=100% --affected
+          --log-order=stream
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
-          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
-      - if: github.event_name != 'pull_request'
-        run: pnpm exec turbo run lint typecheck build test --concurrency=100%
+          TURBO_SCM_BASE:
+            ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha ||
+            github.event.before }}
+      - run: pnpm exec turbo run test --concurrency=100% --affected --log-order=stream
+          --filter=!@recompose/desktop
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
+          TURBO_SCM_BASE:
+            ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha ||
+            github.event.before }}
       - if: needs.changes.outputs.desktop == 'true'
         run: pnpm --filter @recompose/desktop run storybook:build
       - if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: coverage-reports
+          name: coverage-reports-packages
           path: |
-            apps/desktop/coverage/lcov.info
             packages/contracts/coverage/lcov.info
             packages/engine/coverage/lcov.info
           retention-days: 1
@@ -106,6 +110,71 @@ jobs:
       - run: pnpm run typecheck:workflows
       - run: pnpm run typecheck:root-configs
       - run: pnpm run test:workflows
+
+  test-desktop:
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    runs-on: ubuntu-latest
+    env:
+      RECOMPOSE_TEST_SHARD: ${{ matrix.shard }}/4
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --trust-lockfile
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm --filter @recompose/desktop exec playwright install --with-deps chromium
+      - run: pnpm --filter @recompose/desktop exec vitest run --shard=${{ matrix.shard }}/4
+          --reporter=blob --reporter=default
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vitest-blob-${{ matrix.shard }}
+          path: apps/desktop/.vitest-reports
+          include-hidden-files: true
+          retention-days: 1
+
+  test-desktop-merge:
+    needs: test-desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --trust-lockfile
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: vitest-blob-*
+          merge-multiple: true
+          path: apps/desktop/.vitest-reports
+      - run: pnpm --filter @recompose/desktop exec vitest --mergeReports --coverage
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-reports-desktop
+          path: apps/desktop/coverage/lcov.info
+          retention-days: 1
 
   workflow-floor:
     needs: changes
@@ -212,7 +281,11 @@ jobs:
       matrix:
         os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') ||
           fromJSON('["macos-26", "windows-latest", "ubuntu-latest"]') }}
+        shard: ${{ github.event_name == 'pull_request' && fromJSON('[1, 2, 3, 4, 5, 6, 7, 8]') ||
+          fromJSON('[1, 2, 3, 4]') }}
     runs-on: ${{ matrix.os }}
+    env:
+      E2E_SHARD: ${{ matrix.shard }}/${{ github.event_name == 'pull_request' && 8 || 4 }}
     steps:
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
@@ -275,27 +348,33 @@ jobs:
           export RECOMPOSE_PASSWORD_STORE=gnome-libsecret
           xvfb-run --auto-servernum pnpm --filter @recompose/desktop exec node keyring-probe.cjs
           xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e
-          xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:visual
+          case "$E2E_SHARD" in
+            1/*)
+              E2E_SHARD= xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:visual
+              ;;
+          esac
           SCRIPT
           dbus-run-session -- bash /tmp/e2e-linux.sh
       - if: runner.os != 'Linux'
         run: pnpm --filter @recompose/desktop run test:e2e
-      - if: runner.os != 'Linux'
+      - if: runner.os != 'Linux' && matrix.shard == 1
         run: pnpm --filter @recompose/desktop run test:e2e:visual
-      - if: runner.os == 'Linux'
+        env:
+          E2E_SHARD: ''
+      - if: runner.os == 'Linux' && matrix.shard == 1
         run: xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:leak
-      - if: runner.os == 'Linux'
+      - if: runner.os == 'Linux' && matrix.shard == 1
         run: pnpm --filter @recompose/desktop exec electron-builder --linux --publish never
-      - if: runner.os != 'Linux'
+      - if: runner.os != 'Linux' && matrix.shard == 1
         run: pnpm --filter @recompose/desktop exec electron-builder --dir
-      - if: runner.os == 'Linux'
+      - if: runner.os == 'Linux' && matrix.shard == 1
         run: xvfb-run --auto-servernum pnpm --filter @recompose/desktop run test:e2e:packaged
-      - if: runner.os != 'Linux'
+      - if: runner.os != 'Linux' && matrix.shard == 1
         run: pnpm --filter @recompose/desktop run test:e2e:packaged
       - if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-traces-${{ matrix.os }}
+          name: e2e-traces-${{ matrix.os }}-${{ matrix.shard }}
           path: apps/desktop/test-results
           retention-days: 3
 
@@ -331,7 +410,7 @@ jobs:
           retention-days: 3
 
   coverage-upload:
-    needs: [changes, check]
+    needs: [changes, check, test-desktop-merge]
     if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -346,7 +425,12 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: coverage-reports
+          name: coverage-reports-desktop
+          path: apps/desktop/coverage
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: coverage-reports-packages
+          path: packages
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           use_oidc: true
@@ -569,6 +653,8 @@ jobs:
         e2e,
         mutation,
         coverage-upload,
+        test-desktop,
+        test-desktop-merge,
         spell,
         prose,
         meta,

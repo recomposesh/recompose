@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { Given, test, Then, When } from '../fixtures';
+import { versionAboveThisBuild, versionThisBuildRuns } from '../newer-version';
 
 const CARD = 'Update ready';
 
@@ -11,18 +12,18 @@ const onlyWhereDownloadsRun = (): void => {
   );
 };
 
-When('version 0.4.0 finishes downloading', async ({ page }) => {
+When('the newer version finishes downloading', async ({ page }) => {
   onlyWhereDownloadsRun();
   await page.getByText('Get started').waitFor();
 });
 
-When('version 0.4.0 is still downloading', async ({ page, updateFeed }) => {
+When('the newer version is still downloading', async ({ page, updateFeed }) => {
   onlyWhereDownloadsRun();
   await page.getByText('Get started').waitFor();
   await expect.poll(() => updateFeed.artifactDownloads()).toBeGreaterThan(0);
 });
 
-Given('version 0.4.0 finished downloading', async ({ page }) => {
+Given('the newer version finished downloading', async ({ page }) => {
   onlyWhereDownloadsRun();
   await page.getByText('Get started').waitFor();
   await expect(page.getByRole('region', { name: CARD })).toBeVisible({ timeout: 15_000 });
@@ -41,20 +42,20 @@ Then('the app keeps running and takes no window focus', async ({ electronApp, pa
   expect(electronApp.windows()).toHaveLength(1);
 });
 
-Then('the update card names version 0.4.0', async ({ page }) => {
+Then('the update card names the newer version', async ({ page }) => {
   await expect(page.getByRole('region', { name: CARD })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText('0.3.0 → 0.4.0')).toBeVisible();
+  await expect(page.getByText(`${versionThisBuildRuns} → ${versionAboveThisBuild}`)).toBeVisible();
 });
 
-Then('the update card still names version 0.4.0', async ({ page }) => {
+Then('the update card still names the newer version', async ({ page }) => {
   await expect(page.getByRole('region', { name: CARD })).toBeVisible();
-  await expect(page.getByText('0.3.0 → 0.4.0')).toBeVisible();
+  await expect(page.getByText(`${versionThisBuildRuns} → ${versionAboveThisBuild}`)).toBeVisible();
 });
 
 Then('the interface offers no update card', async ({ page }) => {
   await expect(page.getByRole('region', { name: CARD })).toBeHidden();
 });
 
-Then('the app installs the update and reopens on version 0.4.0', async ({ electronApp }) => {
+Then('the app installs the update and reopens on the newer version', async ({ electronApp }) => {
   await electronApp.waitForEvent('close');
 });

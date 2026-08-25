@@ -18,10 +18,31 @@ const acceptanceDir = defineBddConfig({
  */
 const ELECTRON_LAUNCHES_AT_ONCE = process.env['CI'] === undefined ? 10 : 2;
 
+/**
+ * The slice of the suite this run owns, read from the environment rather than the command line.
+ *
+ * @summary `pnpm run` forwards extra arguments with the `--` separator still attached, and
+ * Playwright reads everything past a bare `--` as a file filter rather than as flags. A shard
+ * passed that way silently runs the whole suite and then refuses. The environment carries no such
+ * separator, and it reaches bash and PowerShell the same way.
+ */
+function countsAsAShardNumber(value: number | undefined): value is number {
+  return value !== undefined && Number.isInteger(value) && value > 0;
+}
+
+function shardOwned(): { current: number; total: number } | undefined {
+  const [current, total] = (process.env['E2E_SHARD'] ?? '').split('/').map(Number);
+
+  return countsAsAShardNumber(current) && countsAsAShardNumber(total)
+    ? { current, total }
+    : undefined;
+}
+
 export default defineConfig({
   globalSetup: './global-setup.ts',
   timeout: 30_000,
   workers: ELECTRON_LAUNCHES_AT_ONCE,
+  shard: shardOwned() ?? null,
   retries: process.env['CI'] === undefined ? 1 : 2,
   use: { trace: 'on-first-retry' },
   snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}',
