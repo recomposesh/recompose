@@ -3,6 +3,62 @@ import { describe, expect } from 'vitest';
 
 import { loadSettings, SETTINGS_VERSION } from './settings';
 
+describe('a stored version 6 document, the shape written before the setup wizard existed', () => {
+  test('the wizard reads as settled, so an upgrade never springs setup on a working profile', () => {
+    const storedUnderVersionSix = {
+      schemaVersion: 6,
+      theme: 'dark',
+      launchAtLogin: true,
+      showInMenuBar: true,
+      firstRequestServed: true,
+      showOnboardingChecklist: false,
+      usageRetentionDays: 90,
+    };
+
+    expect(loadSettings(storedUnderVersionSix)).toEqual({
+      ...storedUnderVersionSix,
+      schemaVersion: SETTINGS_VERSION,
+      setupWizardSettled: true,
+    });
+  });
+
+  const versionSixDocuments = fc.record({
+    schemaVersion: fc.constant(6),
+    theme: fc.constantFrom('system', 'light', 'dark'),
+    launchAtLogin: fc.boolean(),
+    showInMenuBar: fc.boolean(),
+    firstRequestServed: fc.boolean(),
+    showOnboardingChecklist: fc.boolean(),
+    usageRetentionDays: fc.constantFrom(7, 30, 90),
+  });
+
+  test.prop([versionSixDocuments])(
+    'every version 6 document keeps its choices and reads the wizard as settled',
+    (storedUnderVersionSix) => {
+      expect(loadSettings(storedUnderVersionSix)).toEqual({
+        ...storedUnderVersionSix,
+        schemaVersion: SETTINGS_VERSION,
+        setupWizardSettled: true,
+      });
+    },
+  );
+
+  test('a document already at the current version keeps the standing it carries', () => {
+    const storedUnderVersionSeven = {
+      schemaVersion: SETTINGS_VERSION,
+      theme: 'system',
+      launchAtLogin: false,
+      showInMenuBar: false,
+      firstRequestServed: false,
+      showOnboardingChecklist: true,
+      setupWizardSettled: false,
+      usageRetentionDays: 30,
+    };
+
+    expect(loadSettings(storedUnderVersionSeven)).toEqual(storedUnderVersionSeven);
+  });
+});
+
 describe('a stored version 5 document, the shape written before usage was retained', () => {
   test('it gains the month of retention, keeping every choice', () => {
     const storedUnderVersionFive = {
@@ -18,6 +74,7 @@ describe('a stored version 5 document, the shape written before usage was retain
       ...storedUnderVersionFive,
       schemaVersion: SETTINGS_VERSION,
       usageRetentionDays: 30,
+      setupWizardSettled: true,
     });
   });
 
@@ -37,6 +94,7 @@ describe('a stored version 5 document, the shape written before usage was retain
         ...storedUnderVersionFive,
         schemaVersion: SETTINGS_VERSION,
         usageRetentionDays: 30,
+        setupWizardSettled: true,
       });
     },
   );
@@ -59,6 +117,7 @@ describe('a stored version 4 document, the shape written before requests were tr
       firstRequestServed: false,
       showOnboardingChecklist: true,
       usageRetentionDays: 30,
+      setupWizardSettled: true,
     });
   });
 
@@ -78,6 +137,7 @@ describe('a stored version 4 document, the shape written before requests were tr
         firstRequestServed: false,
         showOnboardingChecklist: true,
         usageRetentionDays: 30,
+        setupWizardSettled: true,
       });
     },
   );
@@ -101,6 +161,7 @@ describe('a stored version 3 document, the shape written while the token switch 
       firstRequestServed: false,
       showOnboardingChecklist: true,
       usageRetentionDays: 30,
+      setupWizardSettled: true,
     });
   });
 
@@ -124,6 +185,7 @@ describe('a stored version 3 document, the shape written while the token switch 
         firstRequestServed: false,
         showOnboardingChecklist: true,
         usageRetentionDays: 30,
+        setupWizardSettled: true,
       });
     },
   );
@@ -148,6 +210,7 @@ describe('a stored version 2 document, the shape a real profile holds', () => {
       firstRequestServed: false,
       showOnboardingChecklist: true,
       usageRetentionDays: 30,
+      setupWizardSettled: true,
     });
   });
 
@@ -173,6 +236,7 @@ describe('a stored version 2 document, the shape a real profile holds', () => {
         firstRequestServed: false,
         showOnboardingChecklist: true,
         usageRetentionDays: 30,
+        setupWizardSettled: true,
       });
     },
   );
@@ -190,6 +254,7 @@ describe('a stored version 1 document', () => {
       firstRequestServed: false,
       showOnboardingChecklist: true,
       usageRetentionDays: 30,
+      setupWizardSettled: true,
     });
   });
 
@@ -210,6 +275,7 @@ describe('a stored version 1 document', () => {
         firstRequestServed: false,
         showOnboardingChecklist: true,
         usageRetentionDays: 30,
+        setupWizardSettled: true,
       });
     },
   );

@@ -18,6 +18,7 @@ describe('app settings', () => {
       showInMenuBar: false,
       firstRequestServed: false,
       showOnboardingChecklist: true,
+      setupWizardSettled: false,
       bindAddress: '127.0.0.1',
       startGatewaysOnLaunch: false,
       usageRetentionDays: 30,
@@ -32,12 +33,15 @@ describe('app settings', () => {
       showInMenuBar: true,
       firstRequestServed: true,
       showOnboardingChecklist: false,
+      setupWizardSettled: true,
       usageRetentionDays: 90,
     };
 
     expect(loadSettings(stored)).toEqual(stored);
   });
+});
 
+describe('what a settings document refuses', () => {
   test('a retention outside the offered windows is refused rather than rounded', () => {
     expect(() => loadSettings({ ...defaultSettings(), usageRetentionDays: 14 })).toThrow();
   });

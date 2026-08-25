@@ -207,6 +207,19 @@
   }
 }
 
+/*
+ * A filled control already carries its own background, so focus brightens it instead of painting
+ * over it. Repainting a filled button on focus drops white ink onto the hover surface, which
+ * measures 1.19 to 1 and reads as a control that broke rather than one that took focus.
+ */
+@utility focus-ring-fill {
+  &:focus-visible,
+  &[data-placed-focus] {
+    outline: 2px solid transparent;
+    filter: brightness(1.12);
+  }
+}
+
 @utility focus-ring-wide {
   &:focus-visible,
   &[data-placed-focus] {
@@ -337,6 +350,44 @@
 
   to {
     transform: scaleY(1);
+  }
+}
+
+@utility setup-scrim {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-surface-content);
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity 200ms;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      opacity: 0;
+    }
+  }
+}
+
+/*
+ * The surface stops short of the window's own chrome so the platform controls stay operable and
+ * the window stays draggable while setup stands. Claiming the whole window would leave it
+ * immovable, because a drag region under an overlay swallows nothing back.
+ */
+@utility setup-surface {
+  position: fixed;
+  inset: var(--spacing-toolbar) 0 0 0;
+  overflow: hidden;
+  background: radial-gradient(circle, var(--color-dot-grid) 1px, transparent 1px) 0 0 / 22px 22px;
+  background-color: var(--color-surface-content);
+  -webkit-app-region: no-drag;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity 200ms;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      opacity: 0;
+    }
   }
 }
 

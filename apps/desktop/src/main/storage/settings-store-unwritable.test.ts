@@ -54,6 +54,7 @@ describe('a settings document the disk refuses to take back', () => {
       theme: 'dark',
       launchAtLogin: false,
       showInMenuBar: true,
+      setupWizardSettled: true,
     });
     expect(quarantined).toEqual([]);
   });

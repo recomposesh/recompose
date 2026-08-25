@@ -16,6 +16,7 @@ import { Suspense, lazy, useEffect, useState, useSyncExternalStore } from 'react
 import type { AccountKind } from '../../entities/account';
 import type { UsageSearch } from '../../pages/usage';
 
+import { SetupSurface } from '../../pages/onboarding';
 import { AddProviderAct } from '../../pages/providers';
 import {
   accountsQueryOptions,
@@ -190,6 +191,7 @@ function RootLayout() {
   return (
     <div className="flex h-full overflow-hidden">
       <ViewCommandEar />
+      <SetupSurface />
       <AppSidebar
         away={sidebarAway}
         band={bandFor(slug)}

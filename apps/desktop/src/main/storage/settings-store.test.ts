@@ -81,6 +81,7 @@ describe('a settings document this build already reads', () => {
       showInMenuBar: true,
       firstRequestServed: false,
       showOnboardingChecklist: true,
+      setupWizardSettled: true,
       usageRetentionDays: 30,
     });
   });
