@@ -55,6 +55,9 @@ export function bootAppMenu(seams: AppMenuBootSeams): AppMenuConduct {
     onCanvasCommand: pushCanvasCommand,
     onUsageCommand: pushUsageCommand,
     onViewCommand: pushViewCommand,
+    onOpenSetup: () => {
+      pushViewCommand('open-setup');
+    },
     onStartGateway: seams.lifecycle.start,
     onStopGateway: seams.lifecycle.stop,
     onRestartGateway: seams.lifecycle.restart,

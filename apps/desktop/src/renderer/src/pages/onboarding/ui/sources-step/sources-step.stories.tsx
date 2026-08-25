@@ -4,6 +4,7 @@ import preview from '#.storybook/preview';
 
 import { catalogEntries, offeredUnder } from '../../../../entities/provider';
 import { claudePlan, ollama, openrouter } from '../../testing/found-source';
+import { onAStepSurface } from '../../testing/on-a-surface';
 import { SourcesStep } from './sources-step';
 
 const meta = preview.meta({
@@ -17,13 +18,7 @@ const meta = preview.meta({
     onSkip: fn(),
     onToggle: fn(),
   },
-  decorators: [
-    (Story) => (
-      <div className="h-250 w-full bg-surface-content">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [onAStepSurface],
 });
 
 /** What a machine already running Claude Code and Ollama meets, both marked. */

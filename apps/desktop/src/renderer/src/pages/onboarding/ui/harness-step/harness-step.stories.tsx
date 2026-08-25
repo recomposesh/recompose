@@ -3,6 +3,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { connectClients, connectGroups } from '../../../../entities/harness';
+import { onAStepSurface } from '../../testing/on-a-surface';
 import { HarnessStep } from './harness-step';
 
 const meta = preview.meta({
@@ -14,13 +15,7 @@ const meta = preview.meta({
     onToggle: fn(),
     picked: new Set<string>(),
   },
-  decorators: [
-    (Story) => (
-      <div className="h-200 w-full bg-surface-content">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [onAStepSurface],
 });
 
 /** The whole connect catalog, under the catalog's own headings and in its own order. */

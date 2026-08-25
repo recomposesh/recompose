@@ -2,18 +2,13 @@ import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { onAStepSurface } from '../../testing/on-a-surface';
 import { WelcomeStep } from './welcome-step';
 
 const meta = preview.meta({
   component: WelcomeStep,
   args: { onExplore: fn(), onSetUp: fn() },
-  decorators: [
-    (Story) => (
-      <div className="h-160 w-full bg-surface-content">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [onAStepSurface],
 });
 
 /** The first thing a new profile meets: the lockup, the tagline, and two ways on. */

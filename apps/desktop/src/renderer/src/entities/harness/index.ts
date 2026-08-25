@@ -5,6 +5,7 @@ export {
   connectClients,
   connectGroups,
 } from './model/connect-catalog';
+export { connectFactsFor } from './model/connect-facts-for';
 export {
   addressFor,
   type ConnectClient,

@@ -3,18 +3,13 @@ import { expect, fn, userEvent } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { claudePlan, ollama } from '../../testing/found-source';
+import { inACard } from '../../testing/on-a-surface';
 import { SourceRow } from './source-row';
 
 const meta = preview.meta({
   component: SourceRow,
   args: { marked: false, onToggle: fn(), source: claudePlan },
-  decorators: [
-    (Story) => (
-      <div className="w-160 rounded-card border border-line-subtle bg-surface-card">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [inACard],
 });
 
 /** A plan the machine holds, carrying the account that tells it apart from another. */

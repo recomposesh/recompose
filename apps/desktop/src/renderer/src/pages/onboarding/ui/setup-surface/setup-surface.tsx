@@ -1,3 +1,4 @@
+import type { GatewayConfig } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { useState } from 'react';
@@ -48,6 +49,7 @@ export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
   const [pickedHarnesses, onPickHarness] = usePicking();
   const { isMarked, onMarkSource } = useMarkingSources();
   const [connecting, setConnecting] = useState<ConnectAsk | undefined>(undefined);
+  const [built, setBuilt] = useState<GatewayConfig | undefined>(undefined);
 
   if (setup.step === null) {
     return null;
@@ -57,6 +59,7 @@ export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
     <>
       <SetupWizard open step={setup.step}>
         <SetupStanding
+          built={built}
           isMarked={isMarked}
           onConnect={(entry, kind) => {
             setConnecting({ entry, kind });
@@ -64,6 +67,7 @@ export function SetupSurface({ connectSheet }: SetupSurfaceProps) {
           onCreate={() => {
             setup.walkTo('building');
           }}
+          onBuilt={setBuilt}
           onMarkSource={onMarkSource}
           onPickHarness={onPickHarness}
           pickedHarnesses={pickedHarnesses}

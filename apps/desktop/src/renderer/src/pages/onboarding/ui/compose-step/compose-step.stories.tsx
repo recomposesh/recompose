@@ -2,6 +2,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { onAStepSurface } from '../../testing/on-a-surface';
 import { ComposeStep } from './compose-step';
 
 const claudePlan = {
@@ -26,13 +27,7 @@ const meta = preview.meta({
     port: ':8389',
     targets: twoSources,
   },
-  decorators: [
-    (Story) => (
-      <div className="h-200 w-full bg-surface-content">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [onAStepSurface],
 });
 
 /** The graph a person is asked to build, and the two acts that settle the step. */

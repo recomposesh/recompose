@@ -20,9 +20,9 @@ export const Basic = meta.story({
   },
 });
 
-/** A step whose heading has no outline yet draws nothing rather than falling back to a serif. */
+/** A step that draws its own lockup rather than a heading draws nothing here. */
 export const WithoutAnOutline = meta.story({
-  args: { step: 'waiting' as const },
+  args: { step: 'welcome' as const },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('svg')).toBeNull();
   },

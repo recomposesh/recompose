@@ -28,8 +28,22 @@ export function itemAccelerator(template: AppMenuItem[], label: string): string 
   return itemLabelled(template, label)?.accelerator;
 }
 
+function onboardingHandlers(
+  taken: string[],
+): Pick<AppMenuHandlers, 'onOpenSetup' | 'onToggleChecklist'> {
+  return {
+    onOpenSetup: () => {
+      taken.push('open-setup');
+    },
+    onToggleChecklist: (shown) => {
+      taken.push(`show-checklist ${String(shown)}`);
+    },
+  };
+}
+
 export function recordingHandlers(taken: string[]): AppMenuHandlers {
   return {
+    ...onboardingHandlers(taken),
     onOpenSettings: () => {
       taken.push('open-settings');
     },
@@ -39,6 +53,7 @@ export function recordingHandlers(taken: string[]): AppMenuHandlers {
     onToggleChecklist: (shown) => {
       taken.push(`show-checklist ${String(shown)}`);
     },
+
     onCanvasCommand: (command) => {
       taken.push(command);
     },
@@ -82,6 +97,7 @@ export const idleHandlers = recordingHandlers([]);
 
 export const atHome: AppMenuView = {
   checklistShown: true,
+  setupStanding: false,
   onGatewayDetail: false,
   onProviders: false,
   onUsage: false,

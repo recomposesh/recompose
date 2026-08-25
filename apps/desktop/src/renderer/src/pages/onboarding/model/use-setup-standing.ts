@@ -1,9 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { SetupStep } from './setup-step';
 
 import { gatewaysQueryOptions, settingsQueryOptions, useSettingsWriter } from '../../../shared/api';
+import { subscribeToSetupReopened } from './reopen-setup';
 import { setupOpensOn } from './setup-step';
 
 type SetupStanding = {
@@ -23,11 +24,19 @@ type SetupStanding = {
  * setup was deleted, which is a change of context they never asked for. Everything after the
  * opening is this session's own memory, and none of it reaches disk: what disk holds is whether
  * setup is over, so a relaunch reads the profile again rather than a remembered position.
+ *
+ * The one thing that settles setup without a person pressing anything is a request the gateway
+ * served, which arrives as a push onto the profile. It only settles the step that waits for it: a
+ * profile that served a request years ago must not close a wizard somebody just reopened from the
+ * menu to look at.
  */
 export function useSetupStanding(): SetupStanding {
   const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const { data: gateways } = useSuspenseQuery(gatewaysQueryOptions);
   const { save } = useSettingsWriter();
+  const gatewaysNow = useRef(gateways);
+
+  gatewaysNow.current = gateways;
 
   const [step, setStep] = useState<SetupStep | null>(() =>
     setupOpensOn({
@@ -36,6 +45,33 @@ export function useSetupStanding(): SetupStanding {
       virtualModelComposed: gateways.some((gateway) => gateway.virtualModels.length > 0),
     }),
   );
+  const [servedBefore, setServedBefore] = useState(settings.firstRequestServed);
+
+  useEffect(
+    () =>
+      subscribeToSetupReopened(() => {
+        setStep(
+          setupOpensOn({
+            settled: false,
+            gatewayExists: gatewaysNow.current.length > 0,
+            virtualModelComposed: gatewaysNow.current.some(
+              (gateway) => gateway.virtualModels.length > 0,
+            ),
+          }),
+        );
+        save({ setupWizardSettled: false });
+      }),
+    [save],
+  );
+
+  if (servedBefore !== settings.firstRequestServed) {
+    setServedBefore(settings.firstRequestServed);
+
+    if (settings.firstRequestServed && step === 'waiting') {
+      setStep(null);
+      save({ setupWizardSettled: true });
+    }
+  }
 
   return {
     step: settings.setupWizardSettled ? null : step,

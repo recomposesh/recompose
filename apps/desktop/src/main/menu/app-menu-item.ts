@@ -20,6 +20,8 @@ export type AppMenuHandlers = {
   onOpenSettings: () => void;
   onNewGateway: () => void;
   onToggleChecklist: (shown: boolean) => void;
+  /** Opens the setup wizard again on a profile that already settled it. */
+  onOpenSetup: () => void;
   onCanvasCommand: (command: IpcEventPayload<'canvas:command'>) => void;
   onUsageCommand: (command: IpcEventPayload<'usage:command'>) => void;
   onViewCommand: (command: IpcEventPayload<'view:command'>) => void;
@@ -42,6 +44,8 @@ export type UsageMetricWord =
 
 export type AppMenuView = {
   checklistShown: boolean;
+  /** Whether the setup wizard stands over the window right now. */
+  setupStanding: boolean;
   onGatewayDetail: boolean;
   onProviders: boolean;
   onUsage: boolean;

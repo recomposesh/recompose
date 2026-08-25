@@ -47,6 +47,7 @@ async function conducted(): Promise<Conducted> {
       usageCommanded.push(command);
     },
     onViewCommand: () => undefined,
+    onOpenSetup: () => undefined,
     onStartGateway: () => undefined,
     onStopGateway: () => undefined,
     onRestartGateway: () => undefined,

@@ -62,11 +62,13 @@ function surfaceTogglesInto(
   const changed =
     view.sidebarShown !== toggles.sidebar ||
     view.inspectorOpen !== toggles.inspector ||
-    view.modalStanding !== toggles.modal;
+    view.modalStanding !== toggles.modal ||
+    view.setupStanding !== toggles.setup;
 
   view.sidebarShown = toggles.sidebar;
   view.inspectorOpen = toggles.inspector;
   view.modalStanding = toggles.modal;
+  view.setupStanding = toggles.setup;
 
   return changed;
 }
@@ -74,6 +76,7 @@ function surfaceTogglesInto(
 function freshAppMenuView(development: boolean): AppMenuView {
   return {
     checklistShown: true,
+    setupStanding: false,
     onGatewayDetail: false,
     onProviders: false,
     onUsage: false,

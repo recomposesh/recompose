@@ -1,14 +1,10 @@
-import type { FoundSource } from '../../model/found-source';
+import type { SetupSlice } from '../../model/setup-slice';
 
 import { useComposePlan } from '../../model/use-compose-plan';
 import { useFoundSources } from '../../model/use-found-sources';
 import { ComposeStep } from '../compose-step/compose-step';
 
-type ComposeStandingProps = {
-  /** The harnesses the person picked, which decide the name the model takes. */
-  harnesses: ReadonlySet<string>;
-  /** Whether a source stands marked. */
-  isMarked: (source: FoundSource) => boolean;
+type ComposeStandingProps = SetupSlice & {
   /** Steps back to the source question. */
   onBack: () => void;
   /** Builds the graph the diagram showed. */

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 
 import { Dialog } from '@base-ui/react/dialog';
+import { useEffect } from 'react';
 
 import type { SetupStep } from '../../model/setup-step';
 
+import { setupSurfaceStood } from '../../../../shared/lib';
 import { setupStepReads } from '../../model/setup-step';
 
 type SetupWizardProps = {
@@ -28,6 +30,14 @@ type SetupWizardProps = {
  * operable and the window stays draggable while setup stands.
  */
 export function SetupWizard({ open, step, children }: SetupWizardProps) {
+  useEffect(() => {
+    setupSurfaceStood(open);
+
+    return () => {
+      setupSurfaceStood(false);
+    };
+  }, [open]);
+
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>

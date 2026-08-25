@@ -2,6 +2,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
+import { onAStepSurface } from '../../testing/on-a-surface';
 import { SetupStepFrame } from './setup-step-frame';
 
 const meta = preview.meta({
@@ -13,13 +14,7 @@ const meta = preview.meta({
     onSkip: fn(),
     step: 'harnesses' as const,
   },
-  decorators: [
-    (Story) => (
-      <div className="h-160 w-full bg-surface-content">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [onAStepSurface],
 });
 
 /** The shape every step past the welcome shares: the beats, the heading, the lede, the acts. */

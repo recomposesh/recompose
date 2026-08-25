@@ -11,6 +11,19 @@ function checklistToggleItem(handlers: AppMenuHandlers, view: AppMenuView): AppM
   };
 }
 
+/**
+ * @summary Reopening shows the surface again and resets nothing, which is why it reads as opening
+ * rather than as starting over. It stands beside the checklist toggle because both show a way
+ * through the same first session, and it stands down while the wizard is already up.
+ */
+function openSetupItem(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
+  return {
+    label: 'Open Setup',
+    enabled: !view.setupStanding,
+    click: handlers.onOpenSetup,
+  };
+}
+
 function navigationItems(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem[] {
   const onGateways = !view.onProviders && !view.onUsage;
 
@@ -84,6 +97,7 @@ export function viewMenu(
       { type: 'separator' },
       ...surfaceToggleItems(handlers, view),
       checklistToggleItem(handlers, view),
+      openSetupItem(handlers, view),
       { type: 'separator' },
       ...reloadRows(view),
       { type: 'separator' },

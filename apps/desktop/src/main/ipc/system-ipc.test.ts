@@ -38,13 +38,23 @@ describe('what the renderer tells main about the standing surfaces', () => {
     );
 
     await expect(
-      handlers['system:surface-toggles']({ sidebar: true, inspector: false, modal: false }),
+      handlers['system:surface-toggles']({
+        sidebar: true,
+        inspector: false,
+        modal: false,
+        setup: false,
+      }),
     ).resolves.toEqual({ ok: true, value: undefined });
-    await handlers['system:surface-toggles']({ sidebar: false, inspector: true, modal: true });
+    await handlers['system:surface-toggles']({
+      sidebar: false,
+      inspector: true,
+      modal: true,
+      setup: false,
+    });
 
     expect(snapshots).toEqual([
-      { sidebar: true, inspector: false, modal: false },
-      { sidebar: false, inspector: true, modal: true },
+      { sidebar: true, inspector: false, modal: false, setup: false },
+      { sidebar: false, inspector: true, modal: true, setup: false },
     ]);
   });
 });

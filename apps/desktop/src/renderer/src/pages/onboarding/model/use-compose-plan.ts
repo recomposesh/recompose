@@ -1,10 +1,11 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import type { DiagramTarget } from '../ui/setup-diagram/setup-diagram';
 import type { FoundSource } from './found-source';
 
-import { offeredPortQueryOptions, providerModelsQueryOptions } from '../../../shared/api';
+import { offeredPortQueryOptions } from '../../../shared/api';
 import { firstModelName, pickServedModel } from './first-model';
+import { useServedModels } from './use-served-models';
 
 const GATEWAY_NAME = 'My Gateway';
 
@@ -39,13 +40,10 @@ export function useComposePlan(
   }
 
   const { data: port } = useQuery(offeredPortQueryOptions);
-  const listings = useQueries({
-    queries: recorded.map((source) => providerModelsQueryOptions(source.id)),
-  });
+  const listings = useServedModels(recorded);
 
   const served = recorded.map((source, index) => {
-    const listing = listings[index]?.data;
-    const model = listing?.standing === 'listed' ? pickServedModel(listing.modelIds) : undefined;
+    const model = pickServedModel(listings[index] ?? []);
 
     return {
       kind: kindOf(source),

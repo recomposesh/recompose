@@ -705,6 +705,45 @@
   stroke-width: var(--spacing-cable-stroke-selected);
 }
 
+/*
+ * The rings a waiting step sends out while nothing has landed. Each starts at the epicentre and
+ * fades as it widens, and the three run a third of a cycle apart so the field never empties.
+ */
+@utility sonar-ring {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: sonar-widen 2400ms ease-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 0.18;
+    scale: 1;
+  }
+}
+
+@keyframes sonar-widen {
+  from {
+    opacity: 0.5;
+    scale: 0.25;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1;
+  }
+}
+
+@utility job-turning {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: job-turning-spin 900ms linear infinite;
+  }
+}
+
+@keyframes job-turning-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
 @utility cable-pulse {
   pointer-events: none;
   fill: none;

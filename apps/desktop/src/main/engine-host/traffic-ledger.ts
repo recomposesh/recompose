@@ -133,7 +133,15 @@ function tellTheWindowsSoon(desk: Desk, push: (traffic: GatewayTraffic) => void)
  * the canvas as fast as it serves. Folding here means the windows hear a whole snapshot at most
  * once a frame, with nothing left to reconcile and no ordering rule to get wrong.
  */
-export function openTrafficDesk(push: (traffic: GatewayTraffic) => void): TrafficDesk {
+/**
+ * @summary The desk is the one place every recorded outcome passes, so an observer that has to see
+ * outcomes rather than snapshots is handed one here. The push carries a whole snapshot and could
+ * never tell a caller which row in it just changed.
+ */
+export function openTrafficDesk(
+  push: (traffic: GatewayTraffic) => void,
+  onReport: (report: EngineTrafficReport) => void = () => undefined,
+): TrafficDesk {
   const desk: Desk = { traffic: {}, pending: null, inactive: new Set() };
 
   return {
@@ -149,6 +157,7 @@ export function openTrafficDesk(push: (traffic: GatewayTraffic) => void): Traffi
       }
 
       desk.traffic = withReport(desk.traffic, report.data);
+      onReport(report.data);
       tellTheWindowsSoon(desk, push);
 
       return true;
