@@ -14,4 +14,5 @@ export {
   type ConnectStep,
   keyIsAStandIn,
 } from './model/connect-facts';
+export { servingGateway } from './testing/connect-facts.testkit';
 export { ClientLead } from './ui/client-lead/client-lead';

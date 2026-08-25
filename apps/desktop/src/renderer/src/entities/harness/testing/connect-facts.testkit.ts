@@ -1,4 +1,4 @@
-import type { ConnectFacts } from '../../../entities/harness';
+import type { ConnectFacts } from '../model/connect-facts';
 
 /**
  * A gateway serving two models under a key, which every connect reading is written against.
