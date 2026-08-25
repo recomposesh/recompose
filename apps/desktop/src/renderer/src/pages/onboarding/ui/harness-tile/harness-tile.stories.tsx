@@ -46,6 +46,23 @@ export const TheWholeTilePresses = meta.story({
   },
 });
 
+/** The tick reads against the fill it sits on rather than inheriting the surface's own ink. */
+export const TheTickReadsAgainstItsFill = meta.story({
+  args: { picked: true },
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector('[aria-hidden="true"]');
+
+    if (!box) {
+      throw new Error('The tile drew no standing box.');
+    }
+
+    const painted = getComputedStyle(box);
+
+    await expect(painted.color).not.toBe(painted.backgroundColor);
+    await expect(painted.color).toBe('rgb(255, 255, 255)');
+  },
+});
+
 /** One press reads as one press, because the box in the corner takes none of its own. */
 export const TheBoxTakesNoPressOfItsOwn = meta.story({
   play: async ({ args, canvasElement }) => {

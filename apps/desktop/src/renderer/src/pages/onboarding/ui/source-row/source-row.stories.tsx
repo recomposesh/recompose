@@ -38,6 +38,20 @@ export const Marked = meta.story({
   },
 });
 
+/** The tick reads against the fill it sits on rather than inheriting the surface's own ink. */
+export const TheTickReadsAgainstItsFill = meta.story({
+  args: { marked: true },
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector('[aria-hidden="true"]');
+
+    if (!box) {
+      throw new Error('The row drew no standing box.');
+    }
+
+    await expect(getComputedStyle(box).color).toBe('rgb(255, 255, 255)');
+  },
+});
+
 /** A source carrying a condition says it under the row rather than leaving it to be discovered. */
 export const WithACondition = meta.story({
   args: { note: "Claude Code signs in on its own and spends this plan, under Claude's terms." },

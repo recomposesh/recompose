@@ -13,7 +13,9 @@ type HarnessTileProps = {
 };
 
 function boxTone(picked: boolean): string {
-  return picked ? 'border-accent bg-accent text-white' : 'border-line-field bg-surface-card';
+  return picked
+    ? 'border-accent bg-accent text-highlight-ink'
+    : 'border-line-field bg-surface-card';
 }
 
 /**

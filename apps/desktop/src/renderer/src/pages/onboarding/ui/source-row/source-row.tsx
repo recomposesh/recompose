@@ -15,7 +15,9 @@ type SourceRowProps = {
 };
 
 function boxTone(marked: boolean): string {
-  return marked ? 'border-accent bg-accent text-white' : 'border-line-field bg-surface-card';
+  return marked
+    ? 'border-accent bg-accent text-highlight-ink'
+    : 'border-line-field bg-surface-card';
 }
 
 /**
