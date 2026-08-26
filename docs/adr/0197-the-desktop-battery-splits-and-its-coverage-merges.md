@@ -32,9 +32,12 @@ and `vitest.shared.ts` leaves the thresholds off where it stands. The numbers th
 move. What changes is which run applies them, and the run that applies them is the only one holding
 the whole picture.
 
-**`check` keeps every other package's tests.** It runs `turbo run test --filter=!@recompose/desktop`
-beside its lint, typecheck, and build. Contracts, engine, and the web app together finish in under
-a minute, and a job of their own would spend more on installing than on running.
+**`check` keeps every other package's tests, and runs them every time.** It runs
+`turbo run test --filter=!@recompose/desktop` beside its lint, typecheck, and build. Contracts,
+engine, and the web app together finish in under a minute, and a job of their own would spend more
+on installing than on running. They run unfiltered because their coverage is half of what
+`coverage-upload` collects, and a desktop-only diff that skipped them left that job with an
+artifact that was never written.
 
 **Coverage travels as two artifacts.** `check` uploads what the packages measured and the merge
 uploads what the desktop measured, and `coverage-upload` pulls both into the paths Codecov names.
