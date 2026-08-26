@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { expect } from '@playwright/test';
 
 import { Then } from '../fixtures';
@@ -14,6 +16,26 @@ import {
 const ENTRIES_AND_THE_ONE_DISMISSAL = keyCatalogEntries.length + 1;
 
 const WIDEST_TRAILING_INSET_PX = 24;
+
+/**
+ * What the window chrome keeps for itself on the trailing edge, which the act stands inside of.
+ *
+ * @summary Windows puts its caption buttons on that edge and the shell reserves
+ * `--spacing-window-caption` for them, so the act cannot reach the edge the way it does where the
+ * controls sit leading. The number is read off the page rather than repeated here, so the token
+ * stays the one place that says how wide the strip is.
+ */
+async function chromeKeepsTheTrailingEdge(page: Page): Promise<number> {
+  if (process.platform !== 'win32') {
+    return 0;
+  }
+
+  return page.evaluate(() =>
+    Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--spacing-window-caption'),
+    ),
+  );
+}
 
 Then('the catalog opens over the screen, holding nine entries', async ({ page }) => {
   await expect(catalog(page)).toBeVisible();
@@ -61,8 +83,9 @@ Then(
     const stands = await placementOf(act);
     const title = await placementOf(screenTitle(page));
     const stripWidth = await page.evaluate(() => window.innerWidth);
+    const reserved = await chromeKeepsTheTrailingEdge(page);
 
     expect(stands.bottom).toBeLessThan(title.top);
-    expect(stripWidth - stands.right).toBeLessThan(WIDEST_TRAILING_INSET_PX);
+    expect(stripWidth - stands.right - reserved).toBeLessThan(WIDEST_TRAILING_INSET_PX);
   },
 );

@@ -8,8 +8,10 @@ import { defaultExclude, defineConfig } from 'vitest/config';
 import { coverageDefaults } from '../../vitest.shared';
 
 // Chromium keeps every finished test file's memory as files on disk, so a long run fills the
-// runner and the browser dies mid-suite: https://github.com/vitest-dev/vitest/issues/9437
-const FILES_BETWEEN_COLLECTIONS = 3;
+// runner and the browser dies mid-suite: https://github.com/vitest-dev/vitest/issues/9437. Every
+// fifth file, then every third, still lost sessions once the battery ran as shards, so it collects
+// after each one and pays the collection rather than the restart.
+const FILES_BETWEEN_COLLECTIONS = 1;
 
 let filesSinceCollection = 0;
 

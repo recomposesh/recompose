@@ -83,14 +83,11 @@ jobs:
           TURBO_SCM_BASE:
             ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha ||
             github.event.before }}
-      - run: pnpm exec turbo run test --concurrency=100% --affected --log-order=stream
+      - run: pnpm exec turbo run test --concurrency=100% --log-order=stream
           --filter=!@recompose/desktop
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAMID: ${{ vars.TURBO_TEAMID }}
-          TURBO_SCM_BASE:
-            ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha ||
-            github.event.before }}
       - if: needs.changes.outputs.desktop == 'true'
         run: pnpm --filter @recompose/desktop run storybook:build
       - if: needs.changes.outputs.desktop == 'true' || github.event_name != 'pull_request'
