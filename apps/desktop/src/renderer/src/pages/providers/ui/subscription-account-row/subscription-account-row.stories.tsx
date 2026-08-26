@@ -98,11 +98,11 @@ export const AdoptedAndLapsed = meta.story({
 });
 
 /**
- * The overflow open on a connected account that is not the one being spent.
+ * The overflow open on a connected account that is not the one the terminal reaches.
  *
  * @summary The menu holds the quieter acts and nothing else, because every setup detail the row
- * once copied now travels with the sign-in itself. Taking over leads, because it is the only one
- * of the three a person reaches for while things are working.
+ * once copied now travels with the sign-in itself. The same two acts stand whichever account a
+ * plan's tool currently runs as, since no act on this row moves that pointer.
  */
 export const QuieterActions = meta.story({
   args: { view: { ...connectedSubscription, active: false } },
@@ -111,11 +111,7 @@ export const QuieterActions = meta.story({
 
     const actions = await screen.findAllByRole('menuitem');
 
-    await expect(actions.map((action) => action.textContent)).toEqual([
-      'Use this account',
-      'Sign in again',
-      'Remove',
-    ]);
+    await expect(actions.map((action) => action.textContent)).toEqual(['Sign in again', 'Remove']);
   },
 });
 
@@ -154,44 +150,16 @@ export const APlanWithNoToolToPoint = meta.story({
 });
 
 /**
- * Another account for the same plan, which can be asked to take the plan's tool over.
+ * A second account for the same plan, whose row keeps the line off it.
  *
- * @summary The act sits behind the overflow, because choosing which account a tool reaches is not
- * part of reading the row.
+ * @summary Only the account a plan's tool runs as carries the line, so a person reading two rows
+ * for one plan can tell which terminal reach is the live one without opening anything.
  */
-export const AnotherAccountCanTakeOver = meta.story({
+export const AnAccountNobodyChose = meta.story({
   args: { view: { ...connectedSubscription, active: false } },
   play: async ({ canvas }) => {
     await expect(canvas.queryByText('Your terminal reaches this account.')).toBeNull();
-
-    await userEvent.click(await canvas.findByRole('button', { name: /Actions for/u }));
-
-    await expect(await screen.findByRole('menuitem', { name: 'Use this account' })).toBeVisible();
-  },
-});
-
-/** @summary Opens the overflow and reads whether taking over is on offer at all. */
-async function takeoverIsOffered(canvas: {
-  findByRole: (role: string, options: { name: RegExp }) => Promise<HTMLElement>;
-}): Promise<boolean> {
-  await userEvent.click(await canvas.findByRole('button', { name: /Actions for/u }));
-
-  return screen.queryByRole('menuitem', { name: 'Use this account' }) !== null;
-}
-
-/** The account already chosen offers no way to choose it again. */
-export const TheChosenAccountOffersNoTakeover = meta.story({
-  args: { view: { ...connectedSubscription, active: true } },
-  play: async ({ canvas }) => {
-    await expect(await takeoverIsOffered(canvas)).toBe(false);
-  },
-});
-
-/** A lapsed account cannot take over, because nothing behind it would answer. */
-export const ALapsedAccountCannotTakeOver = meta.story({
-  args: { view: { ...connectedSubscription, active: false, standing: 'lapsed' as const } },
-  play: async ({ canvas }) => {
-    await expect(await takeoverIsOffered(canvas)).toBe(false);
+    await expect(await canvas.findByText('Connected')).toBeVisible();
   },
 });
 

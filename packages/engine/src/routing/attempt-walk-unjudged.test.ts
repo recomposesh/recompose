@@ -11,26 +11,34 @@ import {
 } from './attempt-walk.testkit';
 import { aRateLimit } from './routing.testkit';
 
-async function aWalkWhoseJudgeNamedNoBranch(reading: JudgeReading) {
+async function aWalkWhoseJudgeNamedNoBranch(...readings: readonly JudgeReading[]) {
   const gateway = aGatewayServing(aJudgedRouterOver(), {
-    classifyBranch: aJudgeAnswering(reading).classifyBranch,
+    classifyBranch: aJudgeAnswering(...readings).classifyBranch,
   });
 
   return gateway.send();
 }
 
-describe('what a walk does when no judgment placed the request', () => {
-  test('a judge that refused leaves the request refused at the router that asked it', async () => {
+describe('what a walk does when the judge it asked reached no verdict', () => {
+  test('a judge call that failed leaves the request refused at the router that asked it', async () => {
     const walk = await aWalkWhoseJudgeNamedNoBranch({ heard: 'refusal' });
 
-    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', routeNode: 'ladder' });
+    expect(walk.verdict).toMatchObject({
+      outcome: 'unjudged',
+      routeNode: 'ladder',
+      because: 'judge-call-failed',
+    });
     expect(walk.attempted).toEqual([]);
   });
 
   test('a judge past its budget reads the same way, since it named no branch either', async () => {
     const walk = await aWalkWhoseJudgeNamedNoBranch({ heard: 'timeout' });
 
-    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', routeNode: 'ladder' });
+    expect(walk.verdict).toMatchObject({
+      outcome: 'unjudged',
+      routeNode: 'ladder',
+      because: 'judge-timed-out',
+    });
   });
 
   test('the else child carries none of it, however ready it stood', async () => {
@@ -39,6 +47,23 @@ describe('what a walk does when no judgment placed the request', () => {
     expect(walk.attempted).not.toContain('catchall');
   });
 
+  test('a second ask that ran out of budget names the budget rather than the first answer', async () => {
+    const walk = await aWalkWhoseJudgeNamedNoBranch(
+      { heard: 'answer', label: 'weather' },
+      { heard: 'timeout' },
+    );
+
+    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', because: 'judge-timed-out' });
+  });
+
+  test('the refusal names the router that asked rather than promising a time to come back', async () => {
+    const walk = await aWalkWhoseJudgeNamedNoBranch({ heard: 'refusal' });
+
+    expect(walk.verdict).not.toHaveProperty('retryAtMs');
+  });
+});
+
+describe('what a walk does when it never asked a judge at all', () => {
   test('a judge standing cooling refuses too, with no call leaving the machine', async () => {
     const judge = aJudgeAnswering({ heard: 'answer', label: 'code' });
     const gateway = aGatewayServing(aJudgedRouterOver(), { classifyBranch: judge.classifyBranch });
@@ -47,7 +72,11 @@ describe('what a walk does when no judgment placed the request', () => {
     const walk = await gateway.send();
 
     expect(judge.asked).toEqual([]);
-    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', routeNode: 'ladder' });
+    expect(walk.verdict).toMatchObject({
+      outcome: 'unjudged',
+      routeNode: 'ladder',
+      because: 'judge-standing-cooling',
+    });
   });
 
   test('a turn resuming server state that nobody pinned is refused rather than routed', async () => {
@@ -55,14 +84,12 @@ describe('what a walk does when no judgment placed the request', () => {
 
     const walk = await gateway.send();
 
-    expect(walk.verdict).toMatchObject({ outcome: 'unjudged', routeNode: 'ladder' });
+    expect(walk.verdict).toMatchObject({
+      outcome: 'unjudged',
+      routeNode: 'ladder',
+      because: 'unpinned-sealed-turn',
+    });
     expect(walk.attempted).toEqual([]);
-  });
-
-  test('the refusal names the router that asked rather than promising a time to come back', async () => {
-    const walk = await aWalkWhoseJudgeNamedNoBranch({ heard: 'refusal' });
-
-    expect(walk.verdict).not.toHaveProperty('retryAtMs');
   });
 });
 

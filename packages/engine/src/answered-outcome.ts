@@ -1,8 +1,8 @@
 import type { RequestOutcome } from '@recompose/contracts';
 
-const FIRST_FAILING_STATUS = 400;
+import { messageTheProviderSent } from './provider/provider-error-message';
 
-const DETAIL_SPAN = 280;
+const FIRST_FAILING_STATUS = 400;
 
 const QUOTE_WAIT_MS = 1500;
 
@@ -34,37 +34,13 @@ export function failed(status: number): boolean {
   return status >= FIRST_FAILING_STATUS;
 }
 
-function wordOf(body: unknown): string | undefined {
-  if (typeof body !== 'string') {
-    return undefined;
-  }
-
-  const spoken = body.trim().slice(0, DETAIL_SPAN).trim();
-
-  return spoken === '' ? undefined : spoken;
-}
-
-function spokenInside(body: object): string | undefined {
-  const underError = 'error' in body ? spokenBy(body.error) : undefined;
-
-  return underError ?? ('message' in body ? spokenBy(body.message) : undefined);
-}
-
-function spokenBy(body: unknown): string | undefined {
-  if (typeof body !== 'object' || body === null) {
-    return wordOf(body);
-  }
-
-  return spokenInside(body);
-}
-
 async function quotedByTheTarget(answer: Response): Promise<string | undefined> {
   if (!(answer.headers.get('content-type') ?? '').includes('json')) {
     return undefined;
   }
 
   try {
-    return spokenBy(await answer.clone().json());
+    return messageTheProviderSent(await answer.clone().json());
   } catch {
     return undefined;
   }

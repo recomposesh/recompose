@@ -51,3 +51,4 @@ export { PageError } from './page-error/page-error';
 export { SidebarEdge } from './sidebar-edge/sidebar-edge';
 export { SidebarToggle } from './sidebar-toggle/sidebar-toggle';
 export { ToolbarButton } from './toolbar-button/toolbar-button';
+export { Tooltip } from './tooltip/tooltip';

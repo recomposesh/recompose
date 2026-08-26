@@ -30,7 +30,7 @@ function aWalkOverExhausted(entry: EngineRouteNode): Walking {
     resumesServerState: false,
     attempted,
     judging: {
-      classify: undefined,
+      classify: async () => Promise.resolve({ heard: 'refusal' }),
       judgeStandsCooling: () => false,
       pinnedBranchAt: () => undefined,
       pinBranchAt: () => undefined,

@@ -1,49 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { logBatchSchema, logRowSchema } from './engine-logs';
-
-const servedAt = 1_754_600_000_000;
-
-const clientKey = 'sha256:8706ee88bbbdda48d02a4888691822b90d8b136bc5fb8e3a815e518105f0655c';
-
-const served = {
-  id: 'log-1',
-  at: servedAt,
-  gateway: 'relay',
-  virtualModel: 'creative',
-  origin: 'provider',
-  method: 'POST',
-  provider: 'anthropic',
-  accountId: 'work',
-  providerModel: 'claude-sonnet-4-5',
-  status: 200,
-  durationMs: 912,
-  tokens: 1_820,
-  clientKey,
-};
-
-const unreachable = {
-  id: 'log-2',
-  at: servedAt,
-  gateway: 'relay',
-  virtualModel: 'creative',
-  origin: 'gateway',
-  method: 'POST',
-  status: 502,
-  clientKey,
-  failure: 'The gateway could not reach the target.',
-};
-
-const unreadable = {
-  id: 'log-3',
-  at: servedAt,
-  gateway: 'relay',
-  origin: 'gateway',
-  method: 'POST',
-  status: 400,
-  clientKey,
-  failure: 'The gateway could not read the request.',
-};
+import { clientKey, served, unreachable, unreadable } from './engine-logs.testkit';
 
 describe('one request as the drawer lists it', () => {
   test('a served request carries the model pair, the account that served it, and the duration', () => {

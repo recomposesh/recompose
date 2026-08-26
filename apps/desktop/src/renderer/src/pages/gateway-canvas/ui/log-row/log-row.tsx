@@ -138,7 +138,8 @@ type LogRowProps = {
  * models, and the status stay readable rather than every cell clipping at once. The status digits
  * carry the standing and the ink only reinforces it, so a screen painting no color loses nothing.
  * A request the gateway never served shows no duration, since a number there would claim something
- * answered when nothing did.
+ * answered when nothing did. The row names the request it stands for, so the run around it can tell
+ * which row a pointer landed on without every row carrying a handler of its own.
  */
 export function LogRow({ logged, account, id, underCursor = false, place, wholeRun }: LogRowProps) {
   const journey = modelJourneyOf(logged);
@@ -153,6 +154,7 @@ export function LogRow({ logged, account, id, underCursor = false, place, wholeR
       aria-selected={underCursor}
       aria-setsize={wholeRun}
       className={`${LOG_GRID_LINE} text-ink ${cursor}`}
+      data-request-id={logged.id}
       id={id}
       role="option"
     >

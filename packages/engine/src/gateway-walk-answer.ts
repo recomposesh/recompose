@@ -7,8 +7,9 @@ import type { TranslationRefusal } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
 
 import { unreachableTargetAnswer } from './gateway-answers';
-import { attemptsRecorded } from './gateway-walk-notes';
+import { attemptsRecorded, diagnosisTheWalkLeaves } from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
+import { gatewayDiagnosed } from './provider/serving-turn';
 import { chainedTurn, emptyRouter, exhaustedRouter, unjudgedRequest } from './refusals';
 import { routerTheEntryStands } from './router-entry';
 
@@ -25,9 +26,8 @@ function exhaustedAnswer(
   result: WalkResult<Response>,
   verdict: Exhausted,
   answerable: Response | undefined,
+  router: string | undefined,
 ): Response {
-  const router = routerTheEntryStands(scene.virtualModel.routing);
-
   if (router === undefined) {
     return answerable ?? unreachableTargetAnswer(scene.crossing);
   }
@@ -37,7 +37,7 @@ function exhaustedAnswer(
     exhaustedRouter(
       scene.gateway.displayName,
       scene.virtualModel.id,
-      nameOfRouter(router.policy.mode, router.displayName),
+      router,
       attemptsRecorded(scene.virtualModel.routing, result.notes),
       verdict.retryAtMs,
     ),
@@ -59,7 +59,7 @@ function refusalTheRouterRaises(
 
   return verdict.outcome === 'chained-turn'
     ? chainedTurn(displayName, model, name)
-    : unjudgedRequest(displayName, model, name);
+    : unjudgedRequest(displayName, model, name, verdict.because);
 }
 
 function routerAnswer(scene: WalkScene, verdict: RouterStood): Response {
@@ -69,6 +69,26 @@ function routerAnswer(scene: WalkScene, verdict: RouterStood): Response {
     scene.crossing.dialect,
     refusalTheRouterRaises(verdict, scene.gateway.displayName, scene.virtualModel.id, name),
   );
+}
+
+type WalkFailed = Exclude<WalkResult<Response>['verdict'], { outcome: 'answered' }>;
+
+/**
+ * The router that stood between this request and a child, named as every surface names one.
+ *
+ * @summary A router that settled the walk itself names the router the walk actually stood at, which
+ * a ladder that chains makes different from the one the table opens with. A walk that ran out of
+ * children asks the table instead, and answers nothing where one target stood alone, because a lone
+ * target is the whole ladder and no router was ever in the way.
+ */
+function routerInTheWay(scene: WalkScene, verdict: WalkFailed): string | undefined {
+  if (verdict.outcome !== 'exhausted') {
+    return nameOfRouter(verdict.router.policy.mode, verdict.router.displayName);
+  }
+
+  const router = routerTheEntryStands(scene.virtualModel.routing);
+
+  return router === undefined ? undefined : nameOfRouter(router.policy.mode, router.displayName);
 }
 
 /**
@@ -81,6 +101,9 @@ function routerAnswer(scene: WalkScene, verdict: RouterStood): Response {
  * router refusal to speak about. The refusals a router raises before trying anyone name the router
  * the walk actually stood at rather than the one the table opens with, because a ladder that chains
  * puts a different router in the way at each depth.
+ *
+ * Every way but an answer leaves the walk's own account on the turn, so the row the drawer lists
+ * names the same children in the same words as the refusal the caller was handed.
  */
 export function answerTheWalkGives(
   scene: WalkScene,
@@ -91,13 +114,11 @@ export function answerTheWalkGives(
 
   if (verdict.outcome === 'answered') return verdict.answer;
 
-  if (
-    verdict.outcome === 'empty-router' ||
-    verdict.outcome === 'chained-turn' ||
-    verdict.outcome === 'unjudged'
-  ) {
-    return routerAnswer(scene, verdict);
-  }
+  const router = routerInTheWay(scene, verdict);
 
-  return exhaustedAnswer(scene, result, verdict, answerable);
+  gatewayDiagnosed(diagnosisTheWalkLeaves(scene.virtualModel.routing, result.notes, router));
+
+  return verdict.outcome === 'exhausted'
+    ? exhaustedAnswer(scene, result, verdict, answerable, router)
+    : routerAnswer(scene, verdict);
 }

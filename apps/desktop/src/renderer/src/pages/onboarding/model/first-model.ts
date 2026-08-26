@@ -1,3 +1,5 @@
+import type { ListedModel } from '@recompose/contracts';
+
 const CLAUDE_CODE = 'claude-code';
 
 /**
@@ -44,7 +46,7 @@ const PASSED_OVER = [
 /** The words that mark the model a provider leads its own line with. */
 const REACHED_FOR = ['opus', 'ultra', 'max', 'pro', 'sonnet', 'large', 'sol'];
 
-const DATE = /\b\d{8}\b/gu;
+const DATE = /\b\d{4}-\d{2}-\d{2}\b|\b\d{8}\b/gu;
 
 const NUMBER = /\d+(?:\.\d+)?/gu;
 
@@ -62,8 +64,10 @@ function tierOf(id: string): number {
 
 /**
  * @summary A date reads as an enormous version number, so `claude-opus-4-20250514` would outrank
- * `claude-opus-4-8` on a bare digit read. Dates leave first, and a tag after a colon leaves with
- * them, because `llama3.3:70b` names a parameter count rather than a later release.
+ * `claude-opus-4-8` on a bare digit read. Dates leave first, in both the compact spelling and the
+ * hyphenated one, because a vendor uses whichever it likes and a surviving date beats every real
+ * version. A tag after a colon leaves with them, because `llama3.3:70b` names a parameter count
+ * rather than a later release.
  */
 function versionOf(id: string): readonly number[] {
   const withoutDates = id.toLowerCase().replace(DATE, ' ');
@@ -87,21 +91,12 @@ function outranks(left: readonly number[], right: readonly number[]): boolean {
   return false;
 }
 
-/**
- * The model setup binds a target to, out of everything that account serves.
- *
- * @summary The answer is fixed for a given listing, so two runs over one account bind the same
- * model and a person never meets a graph that reads differently than the one they were shown. It
- * ranks rather than filters, so an account serving nothing but small models still answers with
- * one. Two models that tie on every reading are settled by the order the provider listed them,
- * which is the provider's own opinion and the only one left.
- */
-export function pickServedModel(modelIds: readonly string[]): string | undefined {
+function highestRanked(models: readonly ListedModel[]): string | undefined {
   let best: string | undefined = undefined;
   let bestTier = -Infinity;
   let bestVersion: readonly number[] = [];
 
-  for (const id of modelIds) {
+  for (const { id } of models) {
     const tier = tierOf(id);
     const version = versionOf(id);
 
@@ -113,4 +108,25 @@ export function pickServedModel(modelIds: readonly string[]): string | undefined
   }
 
   return best;
+}
+
+/**
+ * The model setup binds a target to, out of everything that account serves.
+ *
+ * @summary The answer is fixed for a given listing, so two runs over one account bind the same
+ * model and a person never meets a graph that reads differently than the one they were shown. It
+ * ranks rather than filters, so an account serving nothing but small models still answers with
+ * one. Two models that tie on every reading are settled by the order the provider listed them,
+ * which is the provider's own opinion and the only one left.
+ *
+ * A model whose provider has announced a shutdown leaves before the rank runs, because the rank
+ * reads an id and a retired model's id reads exactly like a live one's. The provider maintains
+ * that date, so recompose names no model and nothing needs a release when one retires. A listing
+ * announcing a shutdown for everything still answers, on the same reasoning that ranks rather than
+ * filters: a step offering nothing reads worse than a modest pick.
+ */
+export function pickServedModel(models: readonly ListedModel[]): string | undefined {
+  const standing = models.filter((model) => model.shutdownDate === undefined);
+
+  return highestRanked(standing.length === 0 ? models : standing);
 }

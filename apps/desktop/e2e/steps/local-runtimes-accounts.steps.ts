@@ -55,12 +55,12 @@ When('the maintainer moves it to port {int}', async ({ page }, port: number) => 
   const row = accountRows(page).first();
 
   await row.getByRole('button', { name: /^Actions for / }).click();
-  await page.getByRole('menuitem', { name: 'Move to another port' }).click();
+  await page.getByRole('menuitem', { name: 'Change port' }).click();
 
   const field = page.getByRole('textbox', { name: 'Port' });
 
   await field.fill(String(port));
-  await page.getByRole('button', { name: 'Move' }).click();
+  await page.getByRole('button', { name: 'Change port', exact: true }).click();
 });
 
 Then('the screen lists one local runtime', async ({ page }) => {

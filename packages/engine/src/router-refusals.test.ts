@@ -172,13 +172,16 @@ describe('a chained turn under round-robin refuses rather than rotating', () => 
 
 describe('a conditional router whose judge reached no verdict refuses the request', () => {
   it('answers 503 naming the router, the model, and the else child it declined to use', () => {
-    const rendered = renderRefusal('responses', unjudgedRequest('Codex', 'fast', 'Conditional'));
+    const rendered = renderRefusal(
+      'responses',
+      unjudgedRequest('Codex', 'fast', 'Conditional', 'judge-call-failed'),
+    );
 
     expect(rendered.status).toBe(503);
     expect(rendered.body).toEqual({
       error: {
         message:
-          'The router "Conditional" in the gateway "Codex" got no verdict from its judge, so the virtual model "fast" refused this request rather than sending it to the else child. Check that the judge is bound to an account and a model that can answer.',
+          'The router "Conditional" in the gateway "Codex" asked its judge and could not get an answer out of it, so the virtual model "fast" refused this request rather than sending it to the else child. Check that the judge is bound to an account and a model that can answer, and that its account still holds a working credential.',
         type: 'invalid_request_error',
         code: 'unjudged_request',
         param: null,
@@ -187,13 +190,19 @@ describe('a conditional router whose judge reached no verdict refuses the reques
   });
 
   it('reads as a gateway fault in the Anthropic envelope, never as a caller mistake', () => {
-    const rendered = renderRefusal('anthropic', unjudgedRequest('Codex', 'fast', 'Conditional'));
+    const rendered = renderRefusal(
+      'anthropic',
+      unjudgedRequest('Codex', 'fast', 'Conditional', 'judge-call-failed'),
+    );
 
     expect(rendered.body).toMatchObject({ error: { type: 'api_error' } });
   });
 
   it('promises no wait, because nothing about a judge says when it comes back', () => {
-    const rendered = renderRefusal('anthropic', unjudgedRequest('Codex', 'fast', 'Conditional'));
+    const rendered = renderRefusal(
+      'anthropic',
+      unjudgedRequest('Codex', 'fast', 'Conditional', 'judge-call-failed'),
+    );
 
     expect(rendered.retryAfterSeconds).toBeUndefined();
   });

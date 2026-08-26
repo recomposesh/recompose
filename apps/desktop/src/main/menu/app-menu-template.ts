@@ -2,6 +2,7 @@ import type { AppMenuHandlers, AppMenuItem, AppMenuView } from './app-menu-item'
 
 import { gatewayMenu } from './gateway-menu';
 import { helpMenu } from './help-menu';
+import { checkForUpdatesItem } from './update-menu-item';
 import { usageMenu } from './usage-menu';
 import { viewMenu } from './view-menu';
 
@@ -20,11 +21,12 @@ function newGatewayItem(handlers: AppMenuHandlers, view: AppMenuView): AppMenuIt
   };
 }
 
-function macApplicationMenu(handlers: AppMenuHandlers): AppMenuItem {
+function macApplicationMenu(handlers: AppMenuHandlers, view: AppMenuView): AppMenuItem {
   return {
     label: 'Recompose',
     submenu: [
       { role: 'about' },
+      ...checkForUpdatesItem(handlers, view),
       { type: 'separator' },
       settingsItem(handlers),
       { type: 'separator' },
@@ -65,7 +67,7 @@ function leadingMenus(
   view: AppMenuView,
 ): AppMenuItem[] {
   if (platform === 'darwin') {
-    return [macApplicationMenu(handlers), macFileMenu(handlers, view)];
+    return [macApplicationMenu(handlers, view), macFileMenu(handlers, view)];
   }
 
   return [fileMenu(handlers, view)];
@@ -83,6 +85,6 @@ export function buildAppMenuTemplate(
     ...(view.onGatewayDetail ? [gatewayMenu(handlers, view)] : []),
     ...(view.onUsage ? [usageMenu(handlers, view)] : []),
     { role: 'windowMenu' },
-    helpMenu(platform, handlers),
+    helpMenu(platform, handlers, view),
   ];
 }

@@ -165,14 +165,34 @@ export function keyVariable(facts: ConnectFacts): string {
 }
 
 /**
- * One shell line that hands a value over quoted.
+ * One variable as it stands in front of the command that reads it, quoted for the paste.
  *
  * @summary Every address, key and id here is safe unquoted today, and the quotes are for the paste
  * rather than for this build: a value carrying a character the shell reads would otherwise land as
  * two words in whichever shell the person runs.
  */
-export function exportLine(name: string, value: string): string {
-  return `export ${name}="${value}"`;
+export function carriedVariable(name: string, value: string): string {
+  return `${name}="${value}"`;
+}
+
+/**
+ * One command with the variables it needs standing in front of it.
+ *
+ * @summary An export outlives the command and points every later run in that shell at this
+ * gateway, which is how a person ends up debugging a tool they never meant to reconfigure. The
+ * variables ride in front of the command instead, so the paste reaches one process and leaves the
+ * shell as it found it. The backslash is what keeps a long block readable, and bash, zsh and fish
+ * all read it as a continuation, so what looks like one command runs as one command.
+ */
+export function commandCarrying(variables: readonly string[], command: string): readonly string[] {
+  const closing = [...variables.slice(-1), command].join(' ');
+  const rows = [...variables.slice(0, -1), closing];
+
+  return rows.map((row, index) => {
+    const stood = index === 0 ? row : `  ${row}`;
+
+    return index === rows.length - 1 ? stood : `${stood} \\`;
+  });
 }
 
 /** The address as one client spells it, which is the origin alone or the origin plus `/v1`. */

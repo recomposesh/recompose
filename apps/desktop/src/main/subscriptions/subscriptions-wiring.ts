@@ -19,7 +19,7 @@ import { createSubscriptionsMachineIpcHandlers } from '../ipc/subscriptions-mach
 import { loadAccountsFile } from '../storage/accounts-store';
 import { oneAtATime } from '../storage/one-at-a-time';
 import { adoptedCredentialReader } from './adopted-credential';
-import { antigravityVendor } from './antigravity-sign-in';
+import { browserCallbackPorts } from './browser-sign-in-vendors';
 import { credentialCustody } from './credential-custody';
 import { keychainCarriedOnce, repairCustody } from './custody-repair';
 import { loginShellPath, pathHeldBriefly } from './login-shell-path';
@@ -175,7 +175,7 @@ function subscriptionsContext(wiring: SubscriptionsWiring): SubscriptionsIpcCont
     browserSignIn: {
       fetchLike: fetch,
       sleep: sleepFor,
-      callbackPort: antigravityVendor.callbackPort,
+      callbackPortFor: (provider) => browserCallbackPorts[provider],
       openInBrowser: async (url) => shell.openExternal(url),
       boundMs: SIGN_IN_BOUND_MS,
       mintState: () => randomUUID(),

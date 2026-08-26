@@ -2,9 +2,7 @@ import { electronApp } from '@electron-toolkit/utils';
 import { app, safeStorage, shell } from 'electron';
 import { join } from 'path';
 
-import type { EngineHost } from './engine-host/engine-host';
 import type { SpendGrantContext } from './engine-host/spend-grant';
-import type { StorageIpcContext } from './ipc/storage-context';
 import type { CredentialCustody } from './subscriptions/credential-custody';
 
 import { registerAppLifecycle } from './app-lifecycle';
@@ -14,27 +12,17 @@ import { bootFromStoredState, type StoredBoot } from './boot/stored-boot';
 import { dockMenuWiring } from './dock/dock-wiring';
 import { createGatewayLifecycleRequests } from './engine-host/gateway-lifecycle-requests';
 import { storageReachFor } from './engine-host/storage-reach';
-import {
-  restartServingGateways,
-  serveRewrittenGateway,
-  startStoredGateway,
-  stopRemovedGateway,
-} from './engine-host/stored-gateway-serving';
 import { pushDevtoolsToggle, pushSettingsChanged, pushUpdatesChanged } from './ipc/push-events';
 import { assembleIpcHandlers, registerIpcHandlers } from './ipc/register-ipc';
 import { storagePathsFor } from './ipc/storage-context';
+import { storageContextWiring } from './ipc/storage-context-wiring';
 import { bootAppMenu } from './menu/app-menu-boot';
 import { registerEditingContextMenu } from './menu/editing-menu-wiring';
 import { registerAppScheme, serveRenderer } from './protocol/app-protocol';
-import {
-  applyBootSettingsOrComplain,
-  applyChosenSettingsOrComplain,
-} from './settings/apply-settings';
+import { applyBootSettingsOrComplain } from './settings/apply-settings';
 import { createSettingsEffects } from './settings/settings-effects';
 import { resolveConfigHome } from './storage/config-home';
 import { createSafeStorageCodec } from './storage/safe-storage-codec';
-import { subscriptionHomes } from './subscriptions/subscription-homes';
-import { subscriptionRelease } from './subscriptions/subscription-release';
 import { createLoginItem, loginItemAvailabilityFor } from './system/login-item';
 import { hideMenuBarTray, showMenuBarTray } from './tray/menu-bar-tray';
 import { trayRepainter } from './tray/tray-repaint';
@@ -97,6 +85,9 @@ const appMenu = bootAppMenu({
   onOpenUsage: openUsageSurface,
   lifecycle: gatewayLifecycle,
   configFolder: recomposeHome,
+  onCheckForUpdates: () => {
+    wiredUpdates?.checkNow();
+  },
   development: !app.isPackaged,
   settingsFile: () => storagePathsFor(recomposeHome()).settingsFile,
   onCorrupt: onStorageCorrupt,
@@ -136,46 +127,17 @@ function storageReach(custody: CredentialCustody | null = null): SpendGrantConte
   );
 }
 
-function storageContext(
-  engineHost: EngineHost,
-  custody: CredentialCustody | null,
-): StorageIpcContext {
-  const reach = storageReach(custody);
-
-  return {
-    ...reach,
-    isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
-    readLoginItem: () => loginItem.isEnabled(),
-    applySettings: (settings, askedLoginItem) => {
-      applyChosenSettingsOrComplain(settingsEffects, settings, askedLoginItem);
-    },
-    onSettingsWritten: appMenu.reflectSettings,
-    restartServingGateways: () => {
-      restartServingGateways(engineHost, reach.userDataPath, onStorageCorrupt);
-    },
-    startGateway: startStoredGateway(engineHost),
-    restartGateway: serveRewrittenGateway(engineHost),
-    stopGateway: stopRemovedGateway(engineHost),
-    removeGatewayRuntime: async (slug) => {
-      try {
-        await engineHost.stop(slug);
-      } finally {
-        engineHost.forget?.(slug);
-      }
-    },
-    forgetGateway: (slug) => {
-      engineHost.forget?.(slug);
-    },
-    noteGatewayWrite: (gateway) => {
-      booted?.storageWatchers.noteGatewayWrite(gateway);
-    },
-    isServing: (slug) => engineHost.states()[slug]?.status === 'running',
-    releaseSubscription: subscriptionRelease(
-      subscriptionHomes(reach.userDataPath, process.platform),
-      custody,
-    ),
-  };
-}
+const storageContext = storageContextWiring({
+  storageReach,
+  isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
+  readLoginItem: () => loginItem.isEnabled(),
+  settingsEffects,
+  onSettingsWritten: appMenu.reflectSettings,
+  noteGatewayWrite: (gateway) => {
+    booted?.storageWatchers.noteGatewayWrite(gateway);
+  },
+  platform: process.platform,
+});
 
 const storedGatewaysDir = (): string => storagePathsFor(recomposeHome()).gatewaysDir;
 
@@ -281,7 +243,11 @@ async function startRecompose(stillWanted: () => boolean): Promise<void> {
 
   profile.serveStoredGateways();
 
-  wiredUpdates = wireDesktopUpdates(pushUpdatesChanged);
+  wiredUpdates = wireDesktopUpdates((state) => {
+    pushUpdatesChanged(state);
+    appMenu.reflectUpdateCheck(state.check?.standing === 'asking' ? 'asking' : 'idle');
+  });
+  appMenu.reflectUpdateCheck(wiredUpdates.owned ? 'idle' : 'none');
 
   createMainWindow(HOME_ROUTE);
 }

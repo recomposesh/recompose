@@ -49,13 +49,13 @@ llm-pi-ai:
 
 A model entered by hand counts as text-only until it says otherwise, so add `input: [text, image]` to any model whose targets take images.
 
-## Hand it the key the file names
+## Start it again carrying the key that block names
 
 ```sh
-export RECOMPOSE_MY_GATEWAY_API_KEY="unused"
+RECOMPOSE_MY_GATEWAY_API_KEY="unused" npx @deepseek-ai/dsh web
 ```
 
-The settings file names the variable rather than holding the key, and the harness answers `MISSING_CREDENTIAL` while nothing sets it. A key entered through the Models page needs no variable at all.
+The settings file names the variable rather than holding the key, and the harness answers `MISSING_CREDENTIAL` while nothing sets it. The harness you started above never saw that variable. Start it again with the key in front, which reaches that one process and leaves your shell as it found it. A key entered through the Models page needs no variable at all.
 
 ## Verify
 

@@ -1,8 +1,12 @@
 import { fc, test } from '@fast-check/vitest';
-import { type EngineReport, type GatewayEngineState } from '@recompose/contracts';
+import {
+  type EngineReport,
+  type EngineStates,
+  type GatewayEngineState,
+} from '@recompose/contracts';
 import { describe, expect } from 'vitest';
 
-import { allStopped, foldEngineReport } from './engine-state-ledger';
+import { allStopped, foldEngineReport, withGatewayStopped } from './engine-state-ledger';
 
 const anySlug = fc.constantFrom('codex', 'gemini', 'personal', 'work');
 const anyState: fc.Arbitrary<GatewayEngineState> = fc.oneof(
@@ -106,4 +110,56 @@ describe('folding a run of reports', () => {
 
     expect(Object.keys(folded).sort()).toEqual([...new Set(reports.map((one) => one.slug))].sort());
   });
+});
+
+describe('writing down a gateway no report ever came back for', () => {
+  test('a restart that never came back up leaves its gateway reading stopped', () => {
+    const written = withGatewayStopped({ codex: { status: 'running' } }, 'codex');
+
+    expect(written).toEqual({ codex: { status: 'stopped' } });
+  });
+
+  test('the other gateways stand where they stood, because one restart failed and not the fleet', () => {
+    const written = withGatewayStopped(
+      { codex: { status: 'running' }, gemini: { status: 'running' } },
+      'codex',
+    );
+
+    expect(written).toEqual({ codex: { status: 'stopped' }, gemini: { status: 'running' } });
+  });
+
+  test('the port a failed start named leaves with it, because no port explains a silent restart', () => {
+    const written = withGatewayStopped(
+      { codex: { status: 'stopped', failure: { port: 8397 } } },
+      'codex',
+    );
+
+    expect(written).toEqual({ codex: { status: 'stopped' } });
+  });
+
+  test('a gateway the ledger never named joins it stopped rather than staying unnamed', () => {
+    expect(withGatewayStopped({}, 'codex')).toEqual({ codex: { status: 'stopped' } });
+  });
+
+  test('the ledger it was written from keeps its own word, so no subscriber reads a mutation', () => {
+    const before: EngineStates = { codex: { status: 'running' } };
+
+    withGatewayStopped(before, 'codex');
+
+    expect(before).toEqual({ codex: { status: 'running' } });
+  });
+
+  test.prop([anySlug, fc.array(anyReport)])(
+    'writing one gateway down moves that gateway and no other, whatever the ledger held',
+    (slug, reports) => {
+      const held = reports.reduce(foldEngineReport, {});
+      const written = withGatewayStopped(held, slug);
+
+      expect(written[slug]).toEqual({ status: 'stopped' });
+
+      for (const other of Object.keys(held).filter((one) => one !== slug)) {
+        expect(written[other]).toEqual(held[other]);
+      }
+    },
+  );
 });

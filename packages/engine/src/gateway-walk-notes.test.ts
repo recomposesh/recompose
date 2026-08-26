@@ -6,6 +6,7 @@ import type { WalkNote } from './gateway-walk-notes';
 
 import {
   attemptsRecorded,
+  diagnosisTheWalkLeaves,
   failedOutcome,
   notesThatCarriedARequest,
   nothingAnsweredFor,
@@ -188,5 +189,38 @@ describe('which children the gateway still owes a row for', () => {
 
   it('owes a row for a child whose account left the registry', () => {
     expect(nothingAnsweredFor(noteOf({ because: 'missing-target' }))).toBe(true);
+  });
+});
+
+describe('the reading a walk that served nobody leaves for the drawer', () => {
+  it('names the router that stood in the way and every child it touched', () => {
+    const notes = [
+      noteOf({ because: 'refused', status: 429 }, 'child-1'),
+      noteOf({ because: 'missing-target' }, 'child-2'),
+    ];
+
+    expect(diagnosisTheWalkLeaves(LADDER, notes, 'failover')).toEqual({
+      router: 'failover',
+      tried: [
+        { child: 'gpt-5-mini', why: 'refused with 429' },
+        { child: 'child-2', why: 'has no target' },
+      ],
+    });
+  });
+
+  it('leaves the router out where one target stood alone, because none was in the way', () => {
+    const alone = [noteOf({ because: 'missing-credential' })];
+
+    expect(diagnosisTheWalkLeaves(LADDER, alone, undefined)).toEqual({
+      tried: [{ child: 'gpt-5-mini', why: 'has no credential' }],
+    });
+  });
+
+  it('names the router alone where it refused before reaching a single child', () => {
+    expect(diagnosisTheWalkLeaves(LADDER, [], 'conditional')).toEqual({ router: 'conditional' });
+  });
+
+  it('reads nothing at all where no router stood and no child was touched', () => {
+    expect(diagnosisTheWalkLeaves(LADDER, [], undefined)).toBeUndefined();
   });
 });

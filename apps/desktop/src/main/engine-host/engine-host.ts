@@ -2,7 +2,6 @@ import {
   engineReportSchema,
   engineSpendRequestSchema,
   type EngineDirective,
-  type EngineGateway,
   type EngineReport,
   type EngineStates,
   type GatewayEngineState,
@@ -11,6 +10,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { Waiter } from './directive-waiters';
 import type { EngineDesks } from './engine-host-desks';
+import type { RestartLane } from './engine-host-restart';
 import type { EngineChild, EngineHost, EngineHostDeps } from './engine-host-types';
 import type { EngineLooks } from './engine-looks';
 import type { SpendGrantFor } from './engine-spend';
@@ -24,6 +24,7 @@ import {
   desksServing,
   openEngineDesks,
 } from './engine-host-desks';
+import { midRestart, restartGateway } from './engine-host-restart';
 import {
   answerLook,
   foldEveryLook,
@@ -34,7 +35,7 @@ import {
   probeThroughTheChild,
 } from './engine-looks';
 import { answerSpendRequest } from './engine-spend';
-import { allStopped, foldEngineReport } from './engine-state-ledger';
+import { allStopped, foldEngineReport, withGatewayStopped } from './engine-state-ledger';
 import { createGatewayOrder } from './gateway-order';
 
 export const DIRECTIVE_TIMEOUT_MS = 5000;
@@ -54,6 +55,8 @@ type Resident = {
   awaitingReport: Map<string, Waiter>;
   looks: EngineLooks;
   desks: EngineDesks;
+  /** The gateways a restart is standing over, whose stop is a step rather than an outcome. */
+  restarting: Set<string>;
 };
 
 function publish(resident: Resident, next: EngineStates): void {
@@ -81,7 +84,10 @@ function answerState(resident: Resident, report: Extract<EngineReport, { kind: '
     desksInterrupted(resident.desks, report.slug);
   }
 
-  publish(resident, foldEngineReport(resident.states, report));
+  if (!midRestart(resident.restarting, report)) {
+    publish(resident, foldEngineReport(resident.states, report));
+  }
+
   waiting.answer(report.state);
 }
 
@@ -200,22 +206,28 @@ async function sendDirective(
   });
 }
 
-async function restartGateway(
-  resident: Resident,
-  gateway: EngineGateway,
-): Promise<GatewayEngineState> {
-  await sendDirective(resident, {
-    kind: 'stop',
-    id: randomUUID(),
-    slug: gateway.slug,
-  }).catch((error: unknown) => {
-    console.error(
-      `recompose never heard the stop of the gateway "${gateway.slug}" back, and is starting it again regardless.`,
-      error,
-    );
-  });
+function forgetGateway(resident: Resident, slug: string): void {
+  desksForget(resident.desks, slug);
 
-  return sendDirective(resident, { kind: 'start', id: randomUUID(), gateway });
+  if (resident.states[slug] === undefined) {
+    return;
+  }
+
+  const remaining = { ...resident.states };
+
+  delete remaining[slug];
+  publish(resident, remaining);
+}
+
+function restartLaneFor(resident: Resident): RestartLane {
+  return {
+    restarting: resident.restarting,
+    stop: async (slug) => sendDirective(resident, { kind: 'stop', id: randomUUID(), slug }),
+    start: async (gateway) => sendDirective(resident, { kind: 'start', id: randomUUID(), gateway }),
+    wentQuiet: (slug) => {
+      publish(resident, withGatewayStopped(resident.states, slug));
+    },
+  };
 }
 
 function residentFor(deps: EngineHostDeps): Resident {
@@ -233,11 +245,13 @@ function residentFor(deps: EngineHostDeps): Resident {
     awaitingReport: new Map(),
     looks: openEngineLooks(),
     desks: openEngineDesks(deps),
+    restarting: new Set(),
   };
 }
 
 export function createEngineHost(deps: EngineHostDeps): EngineHost {
   const resident = residentFor(deps);
+  const restarting = restartLaneFor(resident);
   const inGatewayOrder = createGatewayOrder();
   const child = () => runningChild(resident);
 
@@ -251,7 +265,7 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
         sendDirective(resident, { kind: 'stop', id: randomUUID(), slug }),
       ),
     restart: async (gateway) =>
-      inGatewayOrder(gateway.slug, async () => restartGateway(resident, gateway)),
+      inGatewayOrder(gateway.slug, async () => restartGateway(restarting, gateway)),
     probe: async (origin, custody) => probeThroughTheChild(resident.looks, child, origin, custody),
     probeRuntime: async (address, provider) =>
       lookAtTheRuntimeThroughTheChild(resident.looks, child, address, provider),
@@ -265,15 +279,11 @@ export function createEngineHost(deps: EngineHostDeps): EngineHost {
     replayLogs: () => {
       resident.desks.logs.backfill();
     },
+    replayTraffic: () => {
+      resident.desks.traffic.replay();
+    },
     forget: (slug) => {
-      desksForget(resident.desks, slug);
-
-      if (resident.states[slug] !== undefined) {
-        const remaining = { ...resident.states };
-
-        delete remaining[slug];
-        publish(resident, remaining);
-      }
+      forgetGateway(resident, slug);
     },
     onStatesChanged: (listener) => {
       resident.subscribers.add(listener);

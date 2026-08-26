@@ -19,6 +19,7 @@ import {
 import { Icon, PanelSeparator, SegmentedControl, StatusChip } from '../../../../shared/ui';
 import { logScope } from '../../lib/log-scope';
 import { LogList } from '../log-list/log-list';
+import { RequestJourney } from '../request-journey/request-journey';
 import { nothingYetFor, scopeKey, subjectHeading } from './log-subject-wording';
 
 const streamStanding = {
@@ -102,6 +103,44 @@ function drawerHeader({ heading, serving, controls }: DrawerHead): ReactNode {
   );
 }
 
+type DrawerBody = {
+  accounts: readonly Account[];
+  rows: readonly LoggedRequest[];
+  nothingYet: string;
+  scope: string;
+  reading: string | undefined;
+  onCursorRests: (logged: LoggedRequest | undefined) => void;
+};
+
+function drawerBody({
+  accounts,
+  rows,
+  nothingYet,
+  scope,
+  reading,
+  onCursorRests,
+}: DrawerBody): ReactNode {
+  const read = rows.find((row) => row.id === reading);
+
+  return (
+    <div className="flex min-h-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <LogList
+          accounts={accounts}
+          nothingYet={nothingYet}
+          onCursorRests={onCursorRests}
+          rows={rows}
+          scope={scope}
+        />
+      </div>
+      <RequestJourney
+        account={accounts.find((held) => held.id === read?.accountId)}
+        logged={read}
+      />
+    </div>
+  );
+}
+
 function resizeEdge(height: number): ReactNode {
   return (
     <PanelSeparator
@@ -161,9 +200,10 @@ export function LogsDrawer({
   leaving = false,
 }: LogsDrawerProps) {
   const [filter, setFilter] = useState<LogFilter>('all');
+  const [reading, setReading] = useState<string | undefined>(undefined);
   const height = useSyncExternalStore(subscribeToPanelWidths, logsHeight);
   const heading = subjectHeading(gateway, accounts, subject);
-  const scope = scopeKey(subject);
+  const scoped = rows.filter(filteredScope(subject, filter));
 
   return (
     <>
@@ -181,12 +221,16 @@ export function LogsDrawer({
             onFilterChange: setFilter,
           },
         })}
-        <LogList
-          accounts={accounts}
-          nothingYet={nothingYetFor(subject, filter)}
-          rows={rows.filter(filteredScope(subject, filter))}
-          scope={`${scope} ${filter}`}
-        />
+        {drawerBody({
+          accounts,
+          rows: scoped,
+          nothingYet: nothingYetFor(subject, filter),
+          scope: `${scopeKey(subject)} ${filter}`,
+          reading,
+          onCursorRests: (logged) => {
+            setReading(logged?.id);
+          },
+        })}
       </section>
     </>
   );

@@ -42,3 +42,5 @@ Everything else, requests included, travels only where your own canvas points it
 ## Back up or reset
 
 The folder is self-contained: copy `~/.recompose` and you've backed up every gateway, account, and setting. Note that the vault decrypts only for the same OS user on the same machine, so a copied vault doesn't move provider keys to new hardware. Deleting the whole folder resets recompose to first launch.
+
+Two things about that reset surprise people, and neither is a fault. Accounts you signed in through a provider's own tool stay signed in, because their credentials live in that tool's config home rather than here. Setup offers them again straight away, then builds a fresh gateway under the same default name it used the first time. The result looks like a wipe that didn't take, and it's a rebuild from nothing.

@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto';
 import type { SignInYield } from '../subscriptions/device-sign-in-port';
 import type { Answered, Workshop } from './subscriptions-workshop';
 
-import { signInToAntigravity } from '../subscriptions/antigravity-sign-in';
+import { signInThroughTheBrowser } from '../subscriptions/browser-sign-in-vendors';
 import { awaitDeviceSignIn, startDeviceSignIn } from '../subscriptions/device-sign-in';
 import { ipcFailure, storageFailure } from './storage-envelope';
 import {
@@ -74,7 +74,7 @@ async function landBrowserSignIn(
   shop: Workshop,
   provider: BrowserSignInProviderId,
 ): Promise<Answered> {
-  const settled = await signInToAntigravity(shop.ctx.browserSignIn);
+  const settled = await signInThroughTheBrowser(provider, shop.ctx.browserSignIn);
 
   return settled.verdict === 'refused'
     ? ipcFailure('sign-in-timed-out', settled.reason)

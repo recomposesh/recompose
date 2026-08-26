@@ -56,6 +56,7 @@ function conductRecording(stood: string[]): AppMenuConduct {
     reflectUsageTable: () => undefined,
     reflectSurfaceToggles: () => undefined,
     reflectEngineStates: () => undefined,
+    reflectUpdateCheck: () => undefined,
   };
 }
 

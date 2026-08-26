@@ -58,7 +58,7 @@ test('picking a client in the rail rewrites the pane beside it', async () => {
   await expect.element(page.getByText('wire_api = "responses"')).toBeVisible();
 });
 
-test('copying a block puts every line of it on the clipboard at once', async () => {
+test('copying a block lands one runnable command, wrapped lines and all', async () => {
   const clipboard = watchTheClipboard();
 
   await openSheet();
@@ -67,9 +67,11 @@ test('copying a block puts every line of it on the clipboard at once', async () 
   await vi.waitFor(() => {
     expect(clipboard.written).toHaveLength(1);
   });
-  expect(clipboard.written[0]).toContain('export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"');
-  expect(clipboard.written[0]).toContain('export ANTHROPIC_AUTH_TOKEN="rc-local-4Xh2p9Fd"');
-  expect(clipboard.written[0]).toContain('export ANTHROPIC_MODEL="creative"');
+  expect(clipboard.written[0]).toContain('ANTHROPIC_BASE_URL="http://127.0.0.1:8397" \\\n');
+  expect(clipboard.written[0]).toContain('  ANTHROPIC_AUTH_TOKEN="rc-local-4Xh2p9Fd" \\\n');
+  expect(clipboard.written[0]).toContain('  ANTHROPIC_MODEL="creative" \\\n');
+  expect(clipboard.written[0]).toMatch(/ claude$/u);
+  expect(clipboard.written[0]).not.toContain('export ');
 });
 
 test('the address a client copies carries the path segment that client joins onto it', async () => {
@@ -99,7 +101,7 @@ test('a gateway enforcing no key hands over a stand-in and says the gateway chec
   await openSheet({ ...serving, apiKey: undefined });
 
   await expect.element(page.getByText(/This gateway enforces no key/)).toBeVisible();
-  await expect.element(page.getByText(/export ANTHROPIC_AUTH_TOKEN="unused"/)).toBeVisible();
+  await expect.element(page.getByText(/ANTHROPIC_AUTH_TOKEN="unused"/)).toBeVisible();
 });
 
 test('the settle control asks for the sheet to go away rather than answering itself', async () => {

@@ -31,11 +31,7 @@ const connected: SubscriptionAccountView = {
   active: true,
 };
 
-async function renderRow(
-  view: SubscriptionAccountView,
-  parameters: BridgeParameters = {},
-  shellSetupLine: string | undefined = claudeCode.shellSetupLine,
-) {
+async function renderRow(view: SubscriptionAccountView, parameters: BridgeParameters = {}) {
   installFakeBridge({ tools: [claudeCode], subscriptions: [view], ...parameters });
 
   const queryClient = new QueryClient({
@@ -46,7 +42,7 @@ async function renderRow(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<p>Loading…</p>}>
         <ul>
-          <SubscriptionAccountRow shellSetupLine={shellSetupLine} view={view} />
+          <SubscriptionAccountRow shellSetupLine={claudeCode.shellSetupLine} view={view} />
         </ul>
       </Suspense>
     </QueryClientProvider>,
@@ -146,44 +142,29 @@ test('a refused restore says why on the row rather than leaving it unchanged in 
     .toHaveTextContent('Claude Code is not installed.');
 });
 
-test('the overflow holds taking over, signing in again and removal, and nothing else', async () => {
+test('the overflow holds signing in again and removal, and nothing else', async () => {
   await renderRow({ ...connected, active: false });
 
   await press('Actions for Anthropic');
 
-  await expect.element(page.getByRole('menuitem', { name: 'Use this account' })).toBeVisible();
   await expect.element(page.getByRole('menuitem', { name: 'Sign in again' })).toBeVisible();
   await expect.element(page.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
-  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(3);
+  await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(2);
 });
 
-test('the account already being spent offers no way to start spending it again', async () => {
+test('the account the terminal reaches offers the same acts as one nobody chose', async () => {
   await renderRow({ ...connected, active: true });
 
   await press('Actions for Anthropic');
 
   await expect
-    .poll(() => page.getByRole('menuitem', { name: 'Use this account' }).elements().length)
-    .toBe(0);
-});
-
-test('taking over moves the plan onto the account that was asked for it', async () => {
-  const other: SubscriptionAccountView = {
-    ...connected,
-    id: 's2',
-    signedInAs: 'work@example.com',
-    active: false,
-  };
-
-  await renderRow(other, { subscriptions: [{ ...connected, active: true }, other] });
-
-  await choose('Use this account');
-
-  await expect
-    .poll(async () =>
-      (await heldSubscriptions()).filter((view) => view.active).map((view) => view.id),
+    .poll(() =>
+      page
+        .getByRole('menuitem')
+        .elements()
+        .map((act) => act.textContent),
     )
-    .toEqual(['s2']);
+    .toEqual(['Sign in again', 'Remove']);
 });
 
 test('removing an account takes it out of the registry it was held in', async () => {
@@ -227,25 +208,6 @@ test('an account nobody chose keeps the line off its row, so one row alone carri
 
   await expect
     .poll(() => screen.getByText('Your terminal reaches this account.').elements().length)
-    .toBe(0);
-});
-
-test('a plan with no tool to point offers no taking over, because nothing would move', async () => {
-  const copilot: SubscriptionAccountView = {
-    id: 's9',
-    provider: 'copilot',
-    label: 'someone',
-    standing: 'connected',
-    provenance: 'sign-in',
-    active: false,
-  };
-
-  await renderRow(copilot, { subscriptions: [copilot] }, undefined);
-
-  await press('Actions for someone');
-
-  await expect
-    .poll(() => page.getByRole('menuitem', { name: 'Use this account' }).elements().length)
     .toBe(0);
 });
 

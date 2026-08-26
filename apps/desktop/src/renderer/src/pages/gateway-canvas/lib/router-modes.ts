@@ -53,12 +53,13 @@ export type JudgingRhythm = 'every-request' | 'once-per-conversation';
  * @summary Keyed like `modeSentences` and read the same way: the sentence describes the rhythm a
  * person is standing in rather than fixed helper text. One sentence each, saying what the setting
  * does rather than what it costs, because a person reading a toggle wants to know what moves. Both
- * name the server-state turn in a closing clause, because that turn holds its branch under either
- * rhythm and a person who read only the re-judging one would otherwise expect it to move.
+ * name the server-state turn in a closing clause, because that turn is the one thing the rhythms
+ * disagree about: keeping the branch holds it, and re-judging overrides the hold and judges it like
+ * any other request. A person who read only one sentence would otherwise guess the wrong half.
  */
 export const rejudgeSentences: Record<JudgingRhythm, string> = {
   'once-per-conversation':
     'A conversation stays on the branch it first earned, even when a turn resumes server-held state.',
   'every-request':
-    'The judge picks a branch for every request, unless the turn resumes server-held state.',
+    'The judge picks a branch for every request, including a turn that resumes server-held state.',
 };

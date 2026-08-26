@@ -20,12 +20,15 @@ const subscribedAs = (provider: 'kimi' | 'copilot') =>
   }) as const;
 
 describe('a subscription whose models recompose carries', () => {
-  test('offers the ids its own plan serves, never another vendor list', async () => {
+  test('offers the models its own plan serves, never another vendor list', async () => {
     const { sent, fetchLike } = fetchAnswering(200, JSON.stringify({ data: [{ id: 'gpt-5' }] }));
 
     const listing = await listProviderModels(fetchLike, kimiOrigin, subscribedAs('kimi'));
 
-    expect(listing).toEqual({ standing: 'listed', modelIds: [...kimiSubscriptionModels] });
+    expect(listing).toEqual({
+      standing: 'listed',
+      models: kimiSubscriptionModels.map((id) => ({ id })),
+    });
     expect(sent).toHaveLength(0);
   });
 });
@@ -40,7 +43,7 @@ describe('a subscription whose models recompose does not carry', () => {
     expect(onlyRequestOf(sent).url).toBe('https://api.githubcopilot.com/models');
     expect(listing).toEqual({
       standing: 'listed',
-      modelIds: ['gpt-4o-copilot', 'claude-sonnet-4-6'],
+      models: [{ id: 'gpt-4o-copilot' }, { id: 'claude-sonnet-4-6' }],
     });
   });
 

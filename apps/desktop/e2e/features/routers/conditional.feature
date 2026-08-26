@@ -49,7 +49,7 @@ Feature: Conditional routes each request down the branch the judge names
     Given the judge doesn't answer within the timeout budget
     When a request arrives under "fast"
     Then no child of the router receives the request
-    And the caller reads a refusal saying the judge reached no verdict
+    And the caller reads a refusal saying the judge ran past its timeout
 
   Scenario: The timeout clock covers the wait for the judge's first byte
     Given the judge sends its first byte only after the timeout budget

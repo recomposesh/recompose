@@ -1,73 +1,18 @@
-import type { LogRow, SpendGrant } from '@recompose/contracts';
-import type { Hono } from 'hono';
-
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { createGatewayApp } from './gateway-app';
 import {
-  aGatewayHolding,
-  aVirtualModel,
-  fetchAnsweringWith,
-  granting,
-  grantsNothing,
-  neverFetches,
-} from './gateway-app.testkit';
+  ask,
+  aTurn,
+  codex,
+  refusingGateway,
+  rowsFrom,
+  rowsWhile,
+  servingGateway,
+} from './gateway-app-logs.testkit';
+import { granting, neverFetches } from './gateway-app.testkit';
 import { collectingRows } from './gateway-logs.testkit';
 import { providerObservability } from './provider/provider-observability';
-
-const codex = aGatewayHolding(aVirtualModel());
-
-const aTurn = JSON.stringify({ model: 'fast', messages: [{ role: 'user', content: 'hello' }] });
-
-const loopbackClient = { incoming: { socket: { remoteAddress: '127.0.0.1' } } };
-
-function aWorkGrant(): SpendGrant {
-  return {
-    verdict: 'resolved',
-    providerOrigin: 'http://127.0.0.1:4242',
-    spend: {
-      custody: 'credentialed',
-      provider: 'openai',
-      credential: 'sk-live-40d1',
-      accountId: 'work',
-    },
-  };
-}
-
-function servingGateway(answer: () => Response): Hono {
-  const { fetchLike } = fetchAnsweringWith(answer);
-
-  return createGatewayApp(codex, granting(aWorkGrant()).grantFor, fetchLike);
-}
-
-function refusingGateway(): Hono {
-  return createGatewayApp(codex, grantsNothing, neverFetches);
-}
-
-async function ask(app: Hono, body: string, userAgent = 'curl/8.7.1'): Promise<string> {
-  const answer = await app.request(
-    'http://127.0.0.1:8397/v1/chat/completions',
-    { method: 'POST', body, headers: { 'user-agent': userAgent } },
-    loopbackClient,
-  );
-
-  return answer.text();
-}
-
-async function rowsWhile(serving: () => Promise<void>): Promise<LogRow[]> {
-  const collected = collectingRows();
-
-  await serving();
-  collected.forget();
-
-  return collected.standing();
-}
-
-async function rowsFrom(app: Hono, body = aTurn, userAgent?: string): Promise<LogRow[]> {
-  return rowsWhile(async () => {
-    await ask(app, body, userAgent);
-  });
-}
 
 afterEach(() => {
   providerObservability().clear();
@@ -210,11 +155,19 @@ describe('what a row never carries', () => {
     expect(JSON.stringify(rows)).not.toContain('my diary entry');
   });
 
-  test('nothing the target answered rides a row', async () => {
-    const answer = () => new Response(JSON.stringify({ error: 'quota for acme' }), { status: 402 });
+  test('what a target answered rides a row as its refusal sentence and as nothing else', async () => {
+    const answer = () =>
+      Response.json(
+        {
+          error: { message: 'quota for acme exhausted' },
+          choices: [{ message: { content: 'my diary entry' } }],
+        },
+        { status: 402 },
+      );
     const rows = await rowsFrom(servingGateway(answer));
 
-    expect(JSON.stringify(rows)).not.toContain('acme');
+    expect(rows.at(0)?.diagnosis?.upstreamMessage).toBe('quota for acme exhausted');
+    expect(JSON.stringify(rows)).not.toContain('my diary entry');
   });
 
   test('the address it came from never rides a row, only the key standing for it', async () => {

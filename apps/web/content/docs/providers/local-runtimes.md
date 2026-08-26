@@ -31,7 +31,7 @@ The port field comes prefilled with the documented port. Type a different one an
 
 The row reads as the runtime's name, its address, and a standing chip: **Running**, **Not running**, or **Another server answered**. The standing is an observation, never a stored fact. The row looks again every time the screen mounts and every time you pick **Check again**, so no row carries a claim older than its own screen.
 
-The overflow menu holds three acts: **Check again**, **Move to another port**, and **Remove**. Moving keeps the row, because a port is where a server answers today rather than a fact about the row. Removing asks no confirmation and releases nothing, since a local account holds no secret.
+The overflow menu holds three acts: **Check again**, **Change port**, and **Remove**. Changing the port keeps the row, because a port is where a server answers today rather than a fact about the row. Removing asks no confirmation and releases nothing, since a local account holds no secret.
 
 ## Custom local server
 

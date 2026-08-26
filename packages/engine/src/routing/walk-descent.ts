@@ -2,6 +2,7 @@ import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
 import type { JudgedChoice, Judging } from './judge-decision';
+import type { UnjudgedCause } from './outcome-classification';
 import type { RotationCursors, TurnTaken } from './rotation-cursors';
 import type { RouteNodeAddress } from './route-node-key';
 import type { EngineRouter } from './route-table';
@@ -44,7 +45,7 @@ export type Walking = {
 export type WalkStep =
   | { at: 'target'; routeNode: string }
   | { at: 'rotation'; routeNode: string; router: EngineRouter }
-  | { at: 'unjudged'; routeNode: string; router: EngineRouter }
+  | { at: 'unjudged'; routeNode: string; router: EngineRouter; because: UnjudgedCause }
   | { at: 'again' }
   | { at: 'nowhere' };
 
@@ -208,13 +209,16 @@ function turnsHandedBack(descending: Descending): void {
 }
 
 /**
- * Whether one router's own branch decision reached the request without any judgment behind it.
+ * The trouble that left one router's branch decision unjudged, or nothing where a judgment placed it.
  *
- * @summary A router of any other mode decides nothing here, so it answers no and never stands in the
- * way of a walk that never involved a judge.
+ * @summary A router of any other mode decides nothing here, so it answers nothing and never stands
+ * in the way of a walk that never involved a judge. The trouble travels rather than a bare yes,
+ * because the step this ends the walk at is the last thing that can carry it to the refusal.
  */
-function nothingJudgedThisRequest(branch: JudgedChoice | undefined): boolean {
-  return branch !== undefined && !branch.judged;
+function troubleThatJudgedNothing(branch: JudgedChoice | undefined): UnjudgedCause | undefined {
+  if (branch === undefined || branch.judged) return undefined;
+
+  return branch.because;
 }
 
 type Asked = { step: WalkStep } | { descendTo: string };
@@ -232,11 +236,12 @@ async function askedOfTheRouter(
   router: EngineRouter,
 ): Promise<Asked> {
   const branch = await branchTheWalkFollows(routeNode, router.policy, descending.walking.judging);
+  const because = troubleThatJudgedNothing(branch);
 
-  if (nothingJudgedThisRequest(branch)) {
+  if (because !== undefined) {
     turnsHandedBack(descending);
 
-    return { step: { at: 'unjudged', routeNode, router } };
+    return { step: { at: 'unjudged', routeNode, router, because } };
   }
 
   const offered = await childTheRouterOffers(descending, routeNode, router, branch);

@@ -38,8 +38,8 @@ describe('the channel that reads an account model list', () => {
     ).toThrow();
   });
 
-  test('the ids an account serves travel back as a listed answer', () => {
-    const answered = { ok: true, value: { standing: 'listed', modelIds: ['gpt-5'] } };
+  test('the models an account serves travel back as a listed answer', () => {
+    const answered = { ok: true, value: { standing: 'listed', models: [{ id: 'gpt-5' }] } };
 
     expect(ipcChannels['accounts:list-models'].response.parse(answered)).toEqual(answered);
   });

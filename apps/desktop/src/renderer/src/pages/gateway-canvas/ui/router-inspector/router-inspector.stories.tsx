@@ -122,7 +122,7 @@ export const AJudgeThatCannotAnswerHoldsTheRouterOpen = meta.story({
   },
 });
 
-/** Switched on, the sentence says the judge reads every request and names the one exception. */
+/** Switched on, the sentence says the judge reads every request and names the turn it judges too. */
 export const ConditionalRejudgingSaysWhatItDoes = meta.story({
   args: { model: pooledModel(rejudging, true), router: rejudging },
   play: async ({ canvas }) => {
@@ -207,9 +207,12 @@ export const ChoosingConditionalOpensTheDefinition = meta.story({
 export const WordingOneBranchLeavesTheRestOwing = meta.story({
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(await canvas.findByRole('radio', { name: 'Conditional' }));
-    await pickedFromTheRowMenu(await canvas.findByText('Needs a rule'), 'Edit rule');
+    await pickedFromTheRowMenu(await canvas.findByText('Needs a rule'), 'Edit prompt');
     await userEvent.type(await screen.findByLabelText('Label'), 'code');
-    await userEvent.type(await screen.findByLabelText('Rule'), 'questions about source code');
+    await userEvent.type(
+      await screen.findByLabelText('Rule as prompt'),
+      'questions about source code',
+    );
     await userEvent.click(await screen.findByRole('button', { name: 'Save branch' }));
 
     const switching = await canvas.findByRole('button', { name: 'Switch to conditional' });
@@ -251,10 +254,12 @@ export const DeletingABranchNamesItsCost = meta.story({
 export const EditingARuleOpensTheSheet = meta.story({
   args: { model: pooledModel(judging, true), router: judging },
   play: async ({ canvas }) => {
-    await pickedFromTheRowMenu(await canvas.findByText('code'), 'Edit rule');
+    await pickedFromTheRowMenu(await canvas.findByText('code'), 'Edit prompt');
 
     await expect(await screen.findByLabelText('Label')).toHaveValue('code');
-    await expect(await screen.findByLabelText('Rule')).toHaveValue('questions about source code');
+    await expect(await screen.findByLabelText('Rule as prompt')).toHaveValue(
+      'questions about source code',
+    );
   },
 });
 

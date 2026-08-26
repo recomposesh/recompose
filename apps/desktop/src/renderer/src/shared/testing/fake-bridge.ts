@@ -150,6 +150,20 @@ function eventBridge(): RecomposeIpcEvents {
   };
 }
 
+/**
+ * The ask a fresh binding makes for the live traffic, answered the way main answers it.
+ *
+ * @summary The fake answers rather than pushing, because its traffic line retains no snapshot to
+ * send: a scenario stands traffic up by emitting it, and the binding it emits into is already
+ * listening. Standing the channel here keeps the fake and the preload bridge one shape, so a
+ * screen that asks on binding reads the same answer in a story as it does in the app.
+ */
+function trafficHandlers(): Pick<RecomposeIpc, 'engine:replay-traffic'> {
+  return {
+    'engine:replay-traffic': async () => Promise.resolve({ ok: true, value: undefined }),
+  };
+}
+
 function updatesHandlers(): Pick<RecomposeIpc, 'updates:get' | 'updates:restart'> {
   return {
     'updates:get': async () => Promise.resolve({ ok: true, value: { standing: 'quiet' } }),
@@ -258,6 +272,7 @@ export function installFakeBridge(parameters: BridgeParameters = {}): void {
       parameters.machineReading,
     ),
     ...usageHandlers(seeds.usageReport, seeds.quotaWindows, seeds.balances),
+    ...trafficHandlers(),
     ...updatesHandlers(),
     ...parameters.overrides,
   };

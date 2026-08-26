@@ -15,6 +15,15 @@ export const TRAFFIC_PUSH_MS = 16;
 
 export type TrafficDesk = {
   hears: (message: unknown) => boolean;
+  /**
+   * Sends the snapshot the desk holds to the windows again, for a renderer that just bound.
+   *
+   * @summary The desk speaks only when an outcome changes it, so a request already live when a
+   * window binds would hold its cable dark until it settled. A reload and a second window each
+   * start on an empty snapshot while the desk still holds the whole one, and nothing about that
+   * is a gateway starting, so the ask has to be its own act rather than a side effect of one.
+   */
+  replay: () => void;
   keepOnly: (gateway: EngineGateway) => void;
   interrupt: (slug: string) => void;
   forget: (slug: string) => void;
@@ -115,6 +124,28 @@ function withLiveOutcomesFailed(held: ModelTraffic): ModelTraffic | null {
   return changed ? interrupted : null;
 }
 
+function failTheLiveOutcomes(
+  desk: Desk,
+  push: (traffic: GatewayTraffic) => void,
+  slug: string,
+): void {
+  desk.inactive.add(slug);
+  const held = desk.traffic[slug];
+
+  if (held === undefined) {
+    return;
+  }
+
+  const interrupted = withLiveOutcomesFailed(held);
+
+  if (interrupted === null) {
+    return;
+  }
+
+  desk.traffic = { ...desk.traffic, [slug]: interrupted };
+  tellTheWindowsSoon(desk, push);
+}
+
 function tellTheWindowsSoon(desk: Desk, push: (traffic: GatewayTraffic) => void): void {
   if (desk.pending !== null) {
     return;
@@ -162,26 +193,15 @@ export function openTrafficDesk(
 
       return true;
     },
+    replay: () => {
+      push(desk.traffic);
+    },
     keepOnly: (gateway) => {
       desk.inactive.delete(gateway.slug);
       dropRetiredModels(desk, push, gateway);
     },
     interrupt: (slug) => {
-      desk.inactive.add(slug);
-      const held = desk.traffic[slug];
-
-      if (held === undefined) {
-        return;
-      }
-
-      const interrupted = withLiveOutcomesFailed(held);
-
-      if (interrupted === null) {
-        return;
-      }
-
-      desk.traffic = { ...desk.traffic, [slug]: interrupted };
-      tellTheWindowsSoon(desk, push);
+      failTheLiveOutcomes(desk, push, slug);
     },
     forget: (slug) => {
       desk.inactive.delete(slug);

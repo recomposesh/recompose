@@ -1,7 +1,9 @@
 import { describe, expectTypeOf, test } from 'vitest';
 
 import type {
+  AttemptedChild,
   EngineLogReport,
+  FailureDiagnosis,
   IpcChannel,
   IpcEventPayload,
   LogBatch,
@@ -28,6 +30,7 @@ describe('one request as every surface reads it', () => {
       usage?: TokenSplit | undefined;
       clientKey: string;
       failure?: string | undefined;
+      diagnosis?: FailureDiagnosis | undefined;
     }>();
   });
 
@@ -55,6 +58,27 @@ describe('one request as every surface reads it', () => {
     expectTypeOf<LogRow>().not.toHaveProperty('prompt');
     expectTypeOf<LogRow>().not.toHaveProperty('completion');
     expectTypeOf<LogRow>().not.toHaveProperty('body');
+  });
+});
+
+describe('why a failed request failed', () => {
+  test('a diagnosis names the router, the children reached, and the words a provider sent', () => {
+    expectTypeOf<FailureDiagnosis>().toEqualTypeOf<{
+      router?: string | undefined;
+      tried?: readonly AttemptedChild[] | undefined;
+      upstreamMessage?: string | undefined;
+    }>();
+  });
+
+  test('a child names itself and the reason it could not take the request, and nothing else', () => {
+    expectTypeOf<AttemptedChild>().toEqualTypeOf<{ child: string; why: string }>();
+  });
+
+  test('a diagnosis carries no body of any kind, whatever the provider answered with', () => {
+    expectTypeOf<FailureDiagnosis>().not.toHaveProperty('upstreamBody');
+    expectTypeOf<FailureDiagnosis>().not.toHaveProperty('prompt');
+    expectTypeOf<FailureDiagnosis>().not.toHaveProperty('completion');
+    expectTypeOf<FailureDiagnosis>().not.toHaveProperty('headers');
   });
 });
 

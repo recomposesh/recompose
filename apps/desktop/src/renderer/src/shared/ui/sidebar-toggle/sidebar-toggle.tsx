@@ -7,6 +7,7 @@ import {
   subscribeToSidebarVisibility,
 } from '../../lib/visibility/sidebar-visibility';
 import { Icon } from '../icon/icon';
+import { Tooltip } from '../tooltip/tooltip';
 
 const shape = {
   chrome: 'h-6 w-7 rounded-control',
@@ -33,14 +34,15 @@ export function SidebarToggle({ where }: SidebarToggleProps) {
   const hidden = useSyncExternalStore(subscribeToSidebarVisibility, sidebarHidden);
 
   return (
-    <button
-      aria-expanded={!hidden}
-      aria-label="Sidebar"
-      className={`app-no-drag flex items-center justify-center focus-ring text-ink-secondary hover:bg-surface-hover active:bg-surface-pressed ${shape[where]}`}
-      onClick={hidden ? showSidebar : hideSidebar}
-      type="button"
-    >
-      <Icon className="size-4" name="panel-left" />
-    </button>
+    <Tooltip label="Sidebar">
+      <button
+        aria-expanded={!hidden}
+        className={`app-no-drag flex items-center justify-center focus-ring text-ink-secondary hover:bg-surface-hover active:bg-surface-pressed ${shape[where]}`}
+        onClick={hidden ? showSidebar : hideSidebar}
+        type="button"
+      >
+        <Icon className="size-4" name="panel-left" />
+      </button>
+    </Tooltip>
   );
 }

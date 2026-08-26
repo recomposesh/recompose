@@ -16,6 +16,13 @@ describe('the channels that answer with nothing', () => {
     ).toEqual({ ok: true, value: undefined });
   });
 
+  test('asking for the live traffic again carries no snapshot back, because it arrives by push', () => {
+    expect(ipcChannels['engine:replay-traffic'].request.safeParse(undefined).success).toBe(true);
+    expect(
+      ipcChannels['engine:replay-traffic'].response.parse({ ok: true, value: undefined }),
+    ).toEqual({ ok: true, value: undefined });
+  });
+
   test('telling main the drawer stands open carries the standing and nothing else', () => {
     expect(ipcChannels['system:logs-drawer'].request.parse({ open: true })).toEqual({ open: true });
     expect(ipcChannels['system:logs-drawer'].request.parse({ open: false })).toEqual({

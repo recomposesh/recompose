@@ -55,10 +55,11 @@ between pages.
 - When the person moves to another page
 - Then the affordance still names the waiting version
 
-### Requirement: A failed update check stays out of the way
+### Requirement: A check the app runs on its own stays out of the way
 
-An update check that fails MUST leave the app running, and it MUST raise no dialog. The failure
-MUST reach the log with its reason and the feed it tried, so a maintainer can read what happened.
+An update check the app runs on its own MUST leave the app running, and it MUST raise no dialog. It
+MUST report neither its outcome nor its failure to any window. The failure MUST reach the log with
+its reason and the feed it tried, so a maintainer can read what happened.
 
 The app MUST check once at launch and MUST repeat the check on an interval after that.
 
@@ -80,3 +81,43 @@ The app MUST check once at launch and MUST repeat the check on an interval after
 - Given the app has run past its launch check
 - When the interval elapses
 - Then it checks the release feed again
+
+#### Scenario: a check nobody asked for keeps its answer
+
+- Given the app checks the release feed on its own
+- When the feed answers
+- Then no window hears the outcome
+
+### Requirement: A check a person asked for answers back
+
+The app MUST offer a control that checks the release feed when a person chooses it. Where another
+tool owns the channel, the app MUST offer no such control.
+
+A check a person asked for MUST report its outcome to that person, a refusal included, and it MUST
+report it in the interface rather than in a dialog. While such a check stands, the control MUST
+start no second check.
+
+#### Scenario: nothing newer waits
+
+- Given the release feed carries no version newer than the running one
+- When the person checks for updates
+- Then the app names the running version as the newest
+
+#### Scenario: the feed refuses the check the person asked for
+
+- Given the release feed answers with an error
+- When the person checks for updates
+- Then the app names the reason to the person
+- And the app keeps running and raises no dialog
+
+#### Scenario: a second ask while one stands
+
+- Given a check the person asked for hasn't answered yet
+- When the person chooses the control again
+- Then the app runs no second check
+
+#### Scenario: a channel another tool owns offers no check
+
+- Given a package tool installed this copy from a deb
+- When the person looks for the update control
+- Then the app offers none

@@ -1,3 +1,5 @@
+import type { LookCustody } from '@recompose/contracts';
+
 import { urlOf } from '../asked-url.testkit';
 
 type SentRequest = { url: string; init: RequestInit };
@@ -37,3 +39,21 @@ export function onlyRequestOf(sent: SentRequest[]): SentRequest {
 export function headersOf(request: SentRequest): Headers {
   return new Headers(request.init.headers);
 }
+
+export const vendorOrigin = 'https://api.openai.com';
+export const credential = 'sk-ant-api03-long-secret-7f2c';
+
+export const credentialed: LookCustody = {
+  custody: 'bearer',
+  provider: 'openrouter',
+  credential,
+};
+
+export const twoModels = JSON.stringify({
+  data: [
+    { id: 'gpt-5', object: 'model' },
+    { id: 'gpt-5-mini', object: 'model' },
+  ],
+});
+
+export type { SentRequest };

@@ -138,6 +138,7 @@ describe('what a custom application menu must not drop', () => {
     expect(applicationMenu?.label).toBe('Recompose');
     expect(shapeOf(applicationMenu?.submenu ?? [])).toEqual([
       'about',
+      'Check for Updates…',
       'separator',
       'Settings…',
       'separator',

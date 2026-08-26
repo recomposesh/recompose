@@ -1,31 +1,14 @@
 import { expect, test } from 'vitest';
 
-import type { ConnectClient, ConnectFacts } from './connect-facts';
+import type { ConnectClient } from './connect-facts';
 
+import { everythingCopied, servingGateway } from '../testing/connect-facts.testkit';
 import { clientNamed, clientsMatching, connectClients, connectGroups } from './connect-catalog';
 import { addressFor } from './connect-facts';
 
-const serving: ConnectFacts = {
-  gatewayName: 'My Gateway',
-  slug: 'my-gateway',
-  baseUrl: 'http://127.0.0.1:8397',
-  apiKey: 'rc-local-4Xh2p9Fd',
-  models: [
-    { id: 'creative', displayName: 'Creative' },
-    { id: 'fast', displayName: 'Fast' },
-  ],
-};
-
-function everythingCopied(client: ConnectClient, facts: ConnectFacts = serving): string {
-  return client
-    .steps(facts)
-    .flatMap((step) => [...step.lines, step.note])
-    .join('\n');
-}
-
 function everySpellingOfTheAddress(client: ConnectClient): readonly string[] {
   return everythingCopied(client)
-    .split(serving.baseUrl)
+    .split(servingGateway.baseUrl)
     .slice(1)
     .map((rest) => (rest.startsWith('/v1') ? 'v1' : 'origin'));
 }
@@ -38,7 +21,7 @@ test('every client is handed the gateway address spelled the way that client joi
 
     if (client.reach !== 'whole') {
       expect(new Set(spellings)).toEqual(new Set([client.reach]));
-      expect(everythingCopied(client)).toContain(addressFor(client.reach, serving));
+      expect(everythingCopied(client)).toContain(addressFor(client.reach, servingGateway));
     }
   }
 });
@@ -61,7 +44,7 @@ test('a client with nowhere to put a key says so instead of handing one over', (
 });
 
 test('a gateway that enforces no key still hands over a value, because clients demand one', () => {
-  const open = { ...serving, apiKey: undefined };
+  const open = { ...servingGateway, apiKey: undefined };
 
   for (const client of connectClients.filter((held) => held.takesKey)) {
     expect(everythingCopied(client, open)).toContain('unused');
@@ -76,7 +59,7 @@ test('the virtual model a gateway serves reaches every client, since none can gu
 });
 
 test('a gateway serving no model hands over a stand-in rather than an empty field', () => {
-  const bare = { ...serving, models: [] };
+  const bare = { ...servingGateway, models: [] };
 
   for (const client of connectClients) {
     expect(everythingCopied(client, bare)).toContain('your-model-id');
@@ -111,7 +94,7 @@ test('a name no client answers to falls back to the first, so the sheet always s
 
 test('every client offers steps, and every step offers lines to copy', () => {
   for (const client of connectClients) {
-    const steps = client.steps(serving);
+    const steps = client.steps(servingGateway);
 
     expect(steps.length).toBeGreaterThan(0);
 
@@ -121,84 +104,6 @@ test('every client offers steps, and every step offers lines to copy', () => {
       expect(step.note).not.toBe('');
     }
   }
-});
-
-test('Claude Code is pointed by the variables it reads at startup, quoted for the paste', () => {
-  const copied = everythingCopied(clientNamed('claude-code'));
-
-  expect(copied).toContain('export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"');
-  expect(copied).toContain('export ANTHROPIC_AUTH_TOKEN="rc-local-4Xh2p9Fd"');
-  expect(copied).toContain('export ANTHROPIC_MODEL="creative"');
-});
-
-test("a model id Claude Code's picker would skip is handed the variable that adds it anyway", () => {
-  const copied = everythingCopied(clientNamed('claude-code'));
-
-  expect(copied).toContain('export ANTHROPIC_CUSTOM_MODEL_OPTION="creative"');
-  expect(copied).toContain('skips this id');
-});
-
-test('a model id that picker keeps is handed no such variable, because discovery finds it', () => {
-  const copied = everythingCopied(clientNamed('claude-code'), {
-    ...serving,
-    models: [{ id: 'claude-creative', displayName: 'Creative' }],
-  });
-
-  expect(copied).not.toContain('ANTHROPIC_CUSTOM_MODEL_OPTION');
-  expect(copied).not.toContain('skips this id');
-});
-
-function settingsBlockOf(facts: ConnectFacts): unknown {
-  const copied = clientNamed('claude-code')
-    .steps(facts)
-    .flatMap((step) => step.lines)
-    .join('\n');
-
-  return JSON.parse(copied.slice(copied.indexOf('{')));
-}
-
-test('the settings file carries every variable the shell block does, since agents read that path', () => {
-  expect(settingsBlockOf(serving)).toEqual({
-    env: {
-      ANTHROPIC_BASE_URL: 'http://127.0.0.1:8397',
-      ANTHROPIC_AUTH_TOKEN: 'rc-local-4Xh2p9Fd',
-      ANTHROPIC_MODEL: 'creative',
-      CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
-      ANTHROPIC_CUSTOM_MODEL_OPTION: 'creative',
-    },
-  });
-});
-
-test('a kept id leaves the settings file with no escape, because discovery finds it', () => {
-  const block = settingsBlockOf({
-    ...serving,
-    models: [{ id: 'claude-creative', displayName: 'Creative' }],
-  });
-
-  expect(block).toEqual({
-    env: {
-      ANTHROPIC_BASE_URL: 'http://127.0.0.1:8397',
-      ANTHROPIC_AUTH_TOKEN: 'rc-local-4Xh2p9Fd',
-      ANTHROPIC_MODEL: 'claude-creative',
-      CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
-    },
-  });
-});
-
-test('Codex is pointed by a user-level provider block that speaks the Responses dialect', () => {
-  const copied = everythingCopied(clientNamed('codex-cli'));
-
-  expect(copied).toContain('[model_providers.recompose-my-gateway]');
-  expect(copied).toContain('base_url = "http://127.0.0.1:8397/v1"');
-  expect(copied).toContain('wire_api = "responses"');
-  expect(copied).toContain('model = "creative"');
-});
-
-test('Gemini CLI keeps the bare origin, because it appends the version segment itself', () => {
-  const copied = everythingCopied(clientNamed('gemini-cli'));
-
-  expect(copied).toContain('export GOOGLE_GEMINI_BASE_URL="http://127.0.0.1:8397"');
-  expect(copied).toContain('export GEMINI_API_KEY="rc-local-4Xh2p9Fd"');
 });
 
 const LAUNCHES: Record<string, string> = {
@@ -235,7 +140,7 @@ test('every id a client stores carries the gateway, so a second one never overwr
     '[model_providers.recompose-my-gateway]',
   );
   expect(everythingCopied(clientNamed('codex-cli'))).toContain(
-    'export RECOMPOSE_MY_GATEWAY_API_KEY=',
+    'RECOMPOSE_MY_GATEWAY_API_KEY="rc-local-4Xh2p9Fd" codex',
   );
 });
 
@@ -257,7 +162,7 @@ test('a configuration that takes a list carries every model the gateway serves',
 test('a gateway serving two models says how to reach the one a single field left out', () => {
   expect(everythingCopied(clientNamed('codex-cli'))).toContain('codex --model fast');
 
-  const alone = { ...serving, models: [{ id: 'creative', displayName: 'Creative' }] };
+  const alone = { ...servingGateway, models: [{ id: 'creative', displayName: 'Creative' }] };
 
   expect(everythingCopied(clientNamed('codex-cli'), alone)).not.toContain('--model');
 });

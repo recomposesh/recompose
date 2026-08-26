@@ -10,7 +10,7 @@ const credential = 'sk-ant-api03-long-secret-7f2c';
 const credentialed = { custody: 'bearer', provider: 'openrouter', credential } as const;
 const open = { custody: 'open' } as const;
 
-const listing: ModelListing = { standing: 'listed', modelIds: ['gpt-5'] };
+const listing: ModelListing = { standing: 'listed', models: [{ id: 'gpt-5' }] };
 
 afterEach(() => {
   vi.useRealTimers();

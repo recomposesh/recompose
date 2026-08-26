@@ -1,9 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { ComposedCanvas } from './use-gateway-canvas';
 
-import { closeInspector, toggleLogsDrawer } from '../../../../shared/lib';
+import { useGatewayLifecycleAsked, useStartGateway } from '../../../../shared/api';
+import {
+  closeInspector,
+  inspectorOpen,
+  logsDrawerOpen,
+  subscribeToInspectorVisibility,
+  subscribeToLogsDrawerVisibility,
+  subscribeToPanelWidths,
+  toggleLogsDrawer,
+} from '../../../../shared/lib';
 import { COPY_OUTCOME_WORDING } from '../../../../shared/ui';
+import { inspectorWidth } from '../../lib/inspector-width';
+import { usePanelReveal } from '../../lib/use-inspector-reveal';
+import { NOTHING_WATCHED, putAway, watchedAnswering } from './stopped-answering';
 
 /**
  * Turns the Gateway menu's drawer command into the one open state the drawer reads.
@@ -134,4 +146,57 @@ export function useMenuReadsTheDrawer(open: boolean): void {
   useEffect(() => {
     void window.recompose['system:logs-drawer']({ open });
   }, [open]);
+}
+
+/** What the canvas knows about a gateway that went quiet, and the two acts it offers about it. */
+export type SilenceOnTheCanvas = {
+  stoppedAnswering: boolean;
+  putAway: () => void;
+  startAgain: () => void;
+};
+
+/**
+ * Whether this gateway went down with nothing on screen having asked it to, and how to answer that.
+ *
+ * @summary The watch folds after the commit rather than during it, so what a person reads is a
+ * standing the window has already painted rather than a guess made while painting it. It lives on
+ * the page rather than in the notice, because the notice only exists once this says so and a
+ * surface that raised itself would forget every gateway it had watched each time it left.
+ */
+export function useStoppedAnswering(slug: string, serving: boolean): SilenceOnTheCanvas {
+  const asking = useGatewayLifecycleAsked();
+  const [watched, setWatched] = useState(NOTHING_WATCHED);
+  const startGateway = useStartGateway();
+
+  useEffect(() => {
+    setWatched((held) => watchedAnswering(held, { serving, asking }));
+  }, [asking, serving]);
+
+  return {
+    stoppedAnswering: watched.stoppedAnswering,
+    putAway: useCallback(() => {
+      setWatched(putAway);
+    }, []),
+    startAgain: useCallback(() => {
+      startGateway.mutate({ slug });
+    }, [slug, startGateway]),
+  };
+}
+
+/**
+ * Every standing the two side panels hold: whether each is asked for, how each is revealing, and
+ * how wide the inspector sits.
+ *
+ * @summary They are read together because the page reads them together: a reveal is folded from
+ * the standing beside it, and a page that took one without the other would paint a panel that is
+ * open and not revealing, or revealing and not open.
+ */
+export function usePanelStandings() {
+  const shown = useSyncExternalStore(subscribeToInspectorVisibility, inspectorOpen);
+  const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
+  const width = useSyncExternalStore(subscribeToPanelWidths, inspectorWidth);
+  const inspector = usePanelReveal(shown);
+  const logs = usePanelReveal(logsShown);
+
+  return { shown, logsShown, width, inspector, logs };
 }

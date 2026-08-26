@@ -30,11 +30,11 @@ GitHub Copilot and Kimi Code use a device code: the sheet shows a code and the a
 
 Nothing beyond holding it. recompose never refreshes a credential, never spends one outside the requests you route, and never edits what the provider's tool wrote. A subscription request leaves in the provider tool's own shape, which the [FAQ's terms answer](/docs/get-started/faq#tos) covers.
 
-## Point your terminal at an account
+## Which account your terminal reaches
 
-A connected Claude or Codex row offers **Use this account**: it moves your terminal's config-home pointer, and the row then shows `Your terminal reaches this account.` with a copyable export line. This changes what your own terminal spends, never what a gateway spends: the canvas alone decides that.
+Signing in points your terminal's config home at the account you just signed in. That row then shows `Your terminal reaches this account.` with a copyable export line. This changes what your own terminal spends, never what a gateway spends, because the canvas alone decides that. Removing the account your terminal reaches hands the pointer to another connected account on the same plan.
 
-One macOS caveat, out loud: the login keychain holds one Claude Code login per OS user, so the machine-wide Claude Code login follows whichever account you made active here.
+One macOS caveat, out loud: the login keychain holds one Claude Code login per OS user. The machine-wide Claude Code login therefore follows whichever Claude account you signed in last.
 
 ## When a row lapses
 

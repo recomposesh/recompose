@@ -27,7 +27,7 @@ describe('a model-list directive the parent sends', () => {
       {
         kind: 'model-list',
         answers: 'd1',
-        listing: { standing: 'listed', modelIds: ['gpt-5', 'gpt-5-mini'] },
+        listing: { standing: 'listed', models: [{ id: 'gpt-5' }, { id: 'gpt-5-mini' }] },
       },
     ]);
     expect(urls).toEqual(['https://api.openai.com/v1/models']);
@@ -47,7 +47,11 @@ describe('a model-list directive the parent sends', () => {
     await reportsReach(parent, 1);
 
     expect(parent.reports).toEqual([
-      { kind: 'model-list', answers: 'd1', listing: { standing: 'listed', modelIds: ['qwen3'] } },
+      {
+        kind: 'model-list',
+        answers: 'd1',
+        listing: { standing: 'listed', models: [{ id: 'qwen3' }] },
+      },
     ]);
     expect(urls).toEqual(['http://127.0.0.1:11434/v1/models']);
   });

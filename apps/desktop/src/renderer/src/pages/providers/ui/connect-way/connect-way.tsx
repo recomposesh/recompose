@@ -29,6 +29,14 @@ type ConnectWayProps = {
   signInHint: string | undefined;
   /** What spending this plan through the tool means, which only an empty machine has to read. */
   terms: ReactNode;
+  /**
+   * The way in that runs here rather than through the tool, where the plan offers one.
+   *
+   * @summary It arrives already built rather than as a flag, because this step knows which tool a
+   * plan has and nothing about which plans recompose can sign into itself. A plan offering only
+   * the tool passes nothing and reads exactly as it did before.
+   */
+  alsoSignsInHere?: ReactNode;
   onConnected: () => void;
 };
 
@@ -42,6 +50,7 @@ type Arm = {
   refusal: string | undefined;
   launchNote: string | undefined;
   signInHint: string | undefined;
+  alsoSignsInHere: ReactNode;
 };
 
 type EmptyArm = Arm & {
@@ -103,11 +112,18 @@ function refusalLine(refusal: string | undefined): ReactNode {
 }
 
 /**
- * @summary Both ways reach the same end, so they read as two rows of one list rather than a card
+ * @summary Every way reaches the same end, so they read as rows of one list rather than a card
  * with a button inside it beside a link. The list is the whole of the choice, which is why the
  * sheet's foot keeps only Cancel.
  */
-function twoWaysIn({ reading, toolName, adopting, onAdopt, onSignIn }: FoundArm): ReactElement {
+function waysIn({
+  reading,
+  toolName,
+  adopting,
+  onAdopt,
+  onSignIn,
+  alsoSignsInHere,
+}: FoundArm): ReactElement {
   return (
     <div className="w-full divide-y divide-line-faint field-box text-start">
       <FoundAccountRow
@@ -119,10 +135,11 @@ function twoWaysIn({ reading, toolName, adopting, onAdopt, onSignIn }: FoundArm)
         standing={reading.standing}
         toolName={toolName}
       />
+      {alsoSignsInHere}
       <PickRow
         disabled={adopting}
         label="Sign in with a different account"
-        lead={<Icon className="size-4 text-ink-secondary" name="person" />}
+        lead={<Icon className="size-4 text-ink-secondary" name="terminal" />}
         onPick={onSignIn}
         title="Sign in with a different account"
         under={`Opens ${toolName} and waits for it`}
@@ -133,6 +150,7 @@ function twoWaysIn({ reading, toolName, adopting, onAdopt, onSignIn }: FoundArm)
 
 function emptyMachineArm(arm: EmptyArm): ReactElement {
   const {
+    alsoSignsInHere,
     command,
     launchNote,
     lead,
@@ -162,6 +180,11 @@ function emptyMachineArm(arm: EmptyArm): ReactElement {
       ) : (
         <>
           {nothingToAdopt(reading, toolName, onAskAgain)}
+          {alsoSignsInHere === undefined ? null : (
+            <div className="w-full divide-y divide-line-faint field-box text-start">
+              {alsoSignsInHere}
+            </div>
+          )}
           {refusalLine(refusal)}
           <SignInAction name={name} onSignIn={onSignIn} />
         </>
@@ -184,7 +207,7 @@ function foundAccountArm(arm: FoundArm): ReactElement {
           toolName={arm.toolName}
         />
       ) : (
-        twoWaysIn(arm)
+        waysIn(arm)
       )}
       {refusalLine(arm.refusal)}
     </>
@@ -194,41 +217,40 @@ function foundAccountArm(arm: FoundArm): ReactElement {
 /**
  * The ways into a plan, with the account the machine already answers standing among them.
  *
- * @summary A found account turns the step into a choice between two ways, so the head asks which
- * one and the list holds both at the same weight. An empty machine leaves one way in, so the head
- * says what the plan means instead and the sign-in rides the sheet's foot. The three empty readings
- * stay apart, because a store that refused to open is not an empty machine and neither is a record
- * holding no account.
+ * @summary A found account turns the step into a choice, so the head asks which one and the list
+ * holds every way at the same weight. An empty machine leaves the tool's sign-in riding the
+ * sheet's foot, so the head says what the plan means instead. A plan recompose can also sign into
+ * adds one more row wherever the list stands, which is what keeps a person from reading an absent
+ * tool as no way in at all. The three empty readings stay apart, because a store that refused to
+ * open is not an empty machine and neither is a record holding no account.
  */
-export function ConnectWay({
-  lead,
-  name,
-  provider,
-  toolName,
-  command,
-  signInHint,
-  terms,
-  onConnected,
-}: ConnectWayProps) {
+function whatThePlanOffers(
+  props: ConnectWayProps,
+): Omit<Arm, 'launchNote' | 'refusal' | 'waiting'> {
+  return {
+    alsoSignsInHere: props.alsoSignsInHere,
+    command: props.command,
+    lead: props.lead,
+    signInHint: props.signInHint,
+    toolName: props.toolName,
+  };
+}
+
+export function ConnectWay(props: ConnectWayProps) {
+  const { name, onConnected, provider, terms } = props;
   const look = useSuspenseQuery(machineReadingQueryOptions(provider));
   const reading = look.data;
   const adopt = useAdoptSubscription();
   const signIn = useSignInSubscription();
-
   const launch = useLaunchRefusal(provider);
 
-  const onSignIn = () => {
-    launch.forget();
-    signIn.mutate({ provider }, { onSuccess: onConnected });
-  };
-
   const standing = {
-    command,
+    ...whatThePlanOffers(props),
     launchNote: signIn.isPending ? launch.note : undefined,
-    signInHint,
-    lead,
-    onSignIn,
-    toolName,
+    onSignIn: () => {
+      launch.forget();
+      signIn.mutate({ provider }, { onSuccess: onConnected });
+    },
     waiting: signIn.isPending,
   };
 

@@ -25,7 +25,7 @@ Each virtual model is `{ id, displayName, routing }`. The routing graph is `{ en
 
 ## serving-gateways.json
 
-A bare JSON array of slugs, with no version field: the gateways serving at last quit, restored at next launch. Unreadable means empty, and nothing autostarts.
+A versioned document, `{ "schemaVersion": 1, "serving": [...] }`, naming the gateways serving at last quit so the next launch restores them. A bare array of slugs still reads, because that's the shape older builds wrote. Unreadable means empty, and nothing autostarts.
 
 ## usage.json
 

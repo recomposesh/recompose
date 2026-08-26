@@ -2,15 +2,20 @@ import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
+import type { KeyProbeStub } from '../key-probe-stub';
+
 import { Given, Then, When } from '../fixtures';
 import { clipboardHolds, COPY_CHORD, theClipboardStandsEmpty } from '../held-clipboard';
 import {
+  copyRequestDetail,
   loggedRows,
   readsInFull,
+  requestDetail,
   ROW_CELLS,
   rowCells,
   rowUnderCursor,
   servedRequests,
+  theCursorWalksOntoARequest,
 } from '../logs-drawer';
 import { ANTHROPIC_ACCOUNT, definitionsBecome, SERVING_GATEWAY } from '../served-gateway';
 import { turnsThrough, turnThrough } from '../served-traffic';
@@ -46,6 +51,24 @@ async function cellsOfTheNewestRow(page: Page): Promise<string[]> {
   return rowCells(loggedRows(page).first());
 }
 
+/**
+ * Sends one turn at a named target nothing can reach, and waits for the row that failure raises.
+ *
+ * @summary The target is named rather than left to the arrangement's default, because the reading
+ * beside the run prints the child the gateway tried and a scenario asserting that name has to be
+ * the thing that chose it.
+ */
+async function aRequestNothingCouldReach(
+  page: Page,
+  keyProbe: KeyProbeStub,
+  providerModel: string,
+): Promise<void> {
+  await servedAfterRebinding(page, 'creative', providerModel);
+  keyProbe.cannotBeReached();
+  await turnThrough(page, 'creative');
+  await rowsMatchingTheTurnsSent(page);
+}
+
 Given('{string} bound to an unreachable target', ({ keyProbe }, model: string) => {
   expect(model).toBe('creative');
   keyProbe.cannotBeReached();
@@ -71,12 +94,26 @@ Given('three rows standing in the list', async ({ page }) => {
 Given('the row cursor standing on a row', async ({ electronApp, page }) => {
   await turnsThrough(page, 'creative', THREE_ROWS);
   await rowsMatchingTheTurnsSent(page);
-  await servedRequests(page).focus();
-  await page.keyboard.press('ArrowDown');
-
-  await expect.poll(async () => rowUnderCursor(page)).not.toBeNull();
+  await theCursorWalksOntoARequest(page);
   await theClipboardStandsEmpty(electronApp);
 });
+
+Given(
+  '{string} resolved to {string} on a target nothing can reach',
+  async ({ keyProbe, page }, model: string, providerModel: string) => {
+    expect(model).toBe('creative');
+    await aRequestNothingCouldReach(page, keyProbe, providerModel);
+  },
+);
+
+Given(
+  'the row cursor standing on a request {string} never answered',
+  async ({ electronApp, keyProbe, page }, providerModel: string) => {
+    await aRequestNothingCouldReach(page, keyProbe, providerModel);
+    await theCursorWalksOntoARequest(page);
+    await theClipboardStandsEmpty(electronApp);
+  },
+);
 
 When(
   '{string} serves a request through {string} resolved to the provider model {string}',
@@ -114,14 +151,15 @@ When('the person reads its row', async ({ page }) => {
 });
 
 When('the person steps down the list by keyboard', async ({ page }) => {
-  await servedRequests(page).focus();
-  await page.keyboard.press('ArrowDown');
-
-  await expect.poll(async () => rowUnderCursor(page)).not.toBeNull();
+  await theCursorWalksOntoARequest(page);
 });
 
 When('the person copies the focused row', async ({ page }) => {
   await page.keyboard.press(COPY_CHORD);
+});
+
+When('the person copies the reading beside the run', async ({ page }) => {
+  await copyRequestDetail(page).click();
 });
 
 Then('the row names {string} and {string}', async ({ page }, model: string, resolved: string) => {
@@ -207,6 +245,14 @@ Then('the row cursor moves one row at a time', async ({ page }) => {
   await expect.poll(async () => rowUnderCursor(page)).toBe(first);
 
   expect(second).not.toBe(first);
+});
+
+Then('the reading beside the run says {string}', async ({ page }, reading: string) => {
+  await expect(requestDetail(page)).toContainText(reading);
+});
+
+Then('the clipboard holds {string}', async ({ electronApp }, reading: string) => {
+  await expect.poll(async () => clipboardHolds(electronApp)).toContain(reading);
 });
 
 Then("the clipboard holds that row's facts", async ({ electronApp, page }) => {

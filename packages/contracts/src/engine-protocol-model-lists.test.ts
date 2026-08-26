@@ -85,11 +85,11 @@ describe('the directive that asks an account what models it serves', () => {
 });
 
 describe('the report that answers what an account serves', () => {
-  test('a listed answer carries the ids the provider named', () => {
+  test('a listed answer carries the models the provider named', () => {
     const answer = {
       kind: 'model-list',
       answers: 'd1',
-      listing: { standing: 'listed', modelIds: ['gpt-5', 'gpt-5-mini'] },
+      listing: { standing: 'listed', models: [{ id: 'gpt-5' }, { id: 'gpt-5-mini' }] },
     };
 
     expect(engineReportSchema.parse(answer)).toEqual(answer);
@@ -99,10 +99,47 @@ describe('the report that answers what an account serves', () => {
     const answer = {
       kind: 'model-list',
       answers: 'd1',
-      listing: { standing: 'listed', modelIds: [] },
+      listing: { standing: 'listed', models: [] },
     };
 
     expect(engineReportSchema.parse(answer)).toEqual(answer);
+  });
+});
+
+describe('the shutdown a report carries for a model going away', () => {
+  test('a model the provider has announced a shutdown for carries that date', () => {
+    const answer = {
+      kind: 'model-list',
+      answers: 'd1',
+      listing: {
+        standing: 'listed',
+        models: [{ id: 'gpt-5-pro', shutdownDate: '2026-12-11' }, { id: 'gpt-5.6-sol' }],
+      },
+    };
+
+    expect(engineReportSchema.parse(answer)).toEqual(answer);
+  });
+
+  test('a model nobody has announced a shutdown for carries no date at all', () => {
+    const listing = modelListingSchema.parse({
+      standing: 'listed',
+      models: [{ id: 'gpt-5.6-sol' }],
+    });
+
+    expect(listing).toEqual({ standing: 'listed', models: [{ id: 'gpt-5.6-sol' }] });
+  });
+
+  test('a blank shutdown date is refused, because a blank announces nothing', () => {
+    expect(() =>
+      modelListingSchema.parse({
+        standing: 'listed',
+        models: [{ id: 'gpt-5-pro', shutdownDate: '  ' }],
+      }),
+    ).toThrow();
+  });
+
+  test('a bare id where an entry belongs is refused, so no reader guesses the shape', () => {
+    expect(() => modelListingSchema.parse({ standing: 'listed', models: ['gpt-5'] })).toThrow();
   });
 
   test('an unlisted answer carries no sentence, because the screen owns those words', () => {
@@ -119,10 +156,12 @@ describe('the report that answers what an account serves', () => {
   });
 
   test('a listing holding a blank id is refused, because no client could ask for it', () => {
-    expect(() => modelListingSchema.parse({ standing: 'listed', modelIds: ['  '] })).toThrow();
+    expect(() =>
+      modelListingSchema.parse({ standing: 'listed', models: [{ id: '  ' }] }),
+    ).toThrow();
   });
 
   test('a listing standing for neither answer is refused', () => {
-    expect(() => modelListingSchema.parse({ standing: 'partial', modelIds: [] })).toThrow();
+    expect(() => modelListingSchema.parse({ standing: 'partial', models: [] })).toThrow();
   });
 });

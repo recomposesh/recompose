@@ -78,14 +78,30 @@ export const lookCustodySchema = z.discriminatedUnion('custody', [
 export type LookCustody = z.infer<typeof lookCustodySchema>;
 
 /**
- * What one look at an account's model list read: the ids it serves, or that nothing could be read.
+ * One model an account serves, beside the date its provider announced for shutting it down.
+ *
+ * @summary The date rides the listing the account already answers with, so recompose holds no list
+ * of retiring models and nothing needs a release when one retires. A provider publishing no such
+ * field leaves every entry dateless, which reads the same as a provider announcing nothing.
+ */
+export const listedModelSchema = z.strictObject({
+  id: nonBlankString,
+  shutdownDate: nonBlankString.optional(),
+});
+
+export type ListedModel = z.infer<typeof listedModelSchema>;
+
+/**
+ * What one look at an account's model list read: what it serves, or that nothing could be read.
  *
  * @summary The unlisted arm carries no words, because a person reads the sentence the screen owns
- * rather than one the engine invented. An account that answered with no ids still stands as listed,
- * so a catalog that is genuinely empty never reads as a look that failed.
+ * rather than one the engine invented. An account that answered with nothing still stands as
+ * listed, so a catalog that is genuinely empty never reads as a look that failed. Each model
+ * carries its own shutdown date rather than the listing carrying a second roll of retiring ids,
+ * because one collection cannot fall out of step with itself.
  */
 export const modelListingSchema = z.discriminatedUnion('standing', [
-  z.strictObject({ standing: z.literal('listed'), modelIds: z.array(nonBlankString) }),
+  z.strictObject({ standing: z.literal('listed'), models: z.array(listedModelSchema) }),
   z.strictObject({ standing: z.literal('unlisted') }),
 ]);
 

@@ -1,3 +1,5 @@
+import type { FailureDiagnosis } from '@recompose/contracts';
+
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 /**
@@ -14,7 +16,11 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * `refusedWith` holds the sentence the gateway wrote for this turn, so the row a person reads carries
  * the words the caller was actually given rather than a second sentence written from the status. Only
  * refusals the gateway composed itself are ever remembered here, which is what keeps a provider's own
- * words off every row while still letting them ride a cable.
+ * words out of that sentence while still letting them ride a cable.
+ *
+ * `diagnosis` holds the reading behind that sentence: which router stood in the way and what each
+ * child it reached did. It rides the turn for the same reason the sentence does, because the walk
+ * that knows it has already handed its answer back by the time the turn settles into a row.
  */
 export type ServingTurn = {
   gateway: string;
@@ -23,6 +29,7 @@ export type ServingTurn = {
   virtualModel?: string | undefined;
   rowPublished: boolean;
   refusedWith?: string | undefined;
+  diagnosis?: FailureDiagnosis | undefined;
   aborted?: boolean | undefined;
   abortListeners?: Set<() => void> | undefined;
 };
@@ -115,4 +122,17 @@ export function gatewayRefusedWith(sentence: string): void {
   const turn = servingTurns.getStore();
 
   if (turn !== undefined) turn.refusedWith = sentence;
+}
+
+/**
+ * Remembers what the gateway read behind the refusal it wrote for this turn.
+ *
+ * @summary A reading that found nothing clears the one before it rather than leaving it standing,
+ * because a turn that walked twice must never explain its second failure with the first walk's
+ * children.
+ */
+export function gatewayDiagnosed(diagnosis: FailureDiagnosis | undefined): void {
+  const turn = servingTurns.getStore();
+
+  if (turn !== undefined) turn.diagnosis = diagnosis;
 }

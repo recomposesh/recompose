@@ -19,8 +19,42 @@ const meta = preview.meta({
 export const Basic = meta.story({
   play: async () => {
     await expect(await screen.findByLabelText('Label')).toHaveValue('code');
-    await expect(await screen.findByLabelText('Rule')).toHaveValue('questions about source code');
+    await expect(await screen.findByLabelText('Rule as prompt')).toHaveValue(
+      'questions about source code',
+    );
     await expect(await screen.findByText('Work key · claude-sonnet-5')).toBeVisible();
+  },
+});
+
+/**
+ * The rule field names itself a prompt, so nobody writes a keyword at a model that reads sentences.
+ *
+ * @summary A field headed Rule alone reads as a matcher the gateway evaluates, and that is what
+ * people wrote into it. The heading says what the text becomes and the sentence beside it says who
+ * reads it, which is the whole difference between a switch statement and a classification.
+ */
+export const TheFieldSaysTheRuleIsAPrompt = meta.story({
+  play: async () => {
+    await expect(await screen.findByText('Rule as prompt')).toBeVisible();
+    await expect(await screen.findByText(/reads this text as its prompt/)).toBeVisible();
+  },
+});
+
+/**
+ * An empty field stands an example in the register the judge actually reads.
+ *
+ * @summary The example describes the requests that belong on the branch and then says what does
+ * not, because a classifier reads a boundary as readily as a category and nothing else on this
+ * surface could teach that a rule may hold more than a noun phrase.
+ */
+export const TheEmptyFieldShowsAnExamplePrompt = meta.story({
+  args: { branch: { label: '', rule: '' } },
+  play: async () => {
+    const field = await screen.findByLabelText('Rule as prompt');
+    const example = field.getAttribute('placeholder') ?? '';
+
+    await expect(example).toMatch(/^Requests about source code/);
+    await expect(example).toMatch(/Not general chat/);
   },
 });
 

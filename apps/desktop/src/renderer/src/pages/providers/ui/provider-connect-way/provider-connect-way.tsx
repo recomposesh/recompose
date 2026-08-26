@@ -1,4 +1,8 @@
-import { signsInByDeviceCode, signsInThroughTheBrowser } from '@recompose/contracts';
+import {
+  signsInBothWays,
+  signsInByDeviceCode,
+  signsInThroughTheBrowser,
+} from '@recompose/contracts';
 
 import type { CatalogEntry, ConnectionWay } from '../../../../entities/provider';
 
@@ -27,14 +31,20 @@ type ProviderConnectWayProps = {
 
 /**
  * @summary Which surface a plan's sign-in gets follows how the plan authorizes, never which plan
- * it is. A plan whose own tool owns the flow names the command to run; the rest are run here, by
- * code or by browser, because nothing on the machine would run them otherwise.
+ * it is. A plan reachable both ways gets the surface that can show both, and it is asked about
+ * first so that neither single-channel arm can claim it and hide the other way in. A plan whose
+ * own tool owns the flow names the command to run; the rest are run here, by code or by browser,
+ * because nothing on the machine would run them otherwise.
  */
 function signInArm(entry: CatalogEntry, onConnected: () => void) {
   const provider = signInProviderOf(entry);
 
   if (provider === undefined) {
     return null;
+  }
+
+  if (signsInBothWays(provider)) {
+    return <SignInWay name={entry.name} onConnected={onConnected} provider={provider} />;
   }
 
   if (signsInByDeviceCode(provider)) {

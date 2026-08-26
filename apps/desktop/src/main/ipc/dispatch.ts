@@ -42,6 +42,7 @@ export const ipcChannelNames: readonly IpcChannel[] = [
   'engine:stop',
   'engine:states',
   'engine:replay-logs',
+  'engine:replay-traffic',
   'usage:report',
   'usage:quota-windows',
   'usage:balances',

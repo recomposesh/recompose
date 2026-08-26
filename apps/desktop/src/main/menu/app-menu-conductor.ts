@@ -1,5 +1,6 @@
 import type { EngineStates, IpcRequest, Settings } from '@recompose/contracts';
 
+import type { UpdateCheckStanding } from './app-menu-item';
 import type { AppMenuHandlers, AppMenuView } from './app-menu-template';
 
 import { amendStoredSettings } from '../storage/settings-amend';
@@ -30,6 +31,8 @@ export type AppMenuConduct = {
   standNowhere: () => void;
   /** Carries the engine snapshot into the lifecycle group's enablement. */
   reflectEngineStates: (states: EngineStates) => void;
+  /** Carries the updater's own standing into whether the check item shows and answers. */
+  reflectUpdateCheck: (standing: UpdateCheckStanding) => void;
 };
 
 type AppMenuSeams = Omit<AppMenuHandlers, 'onToggleChecklist'> & {
@@ -91,6 +94,7 @@ function freshAppMenuView(development: boolean): AppMenuView {
     usageRange: '24h',
     usageMetric: 'requests',
     usageRetentionDays: 30,
+    updateCheck: 'none',
     development,
   };
 }
@@ -168,6 +172,12 @@ function simpleReflectors(view: AppMenuView, repaint: () => void) {
     },
     reflectSurfaceToggles: (toggles: IpcRequest<'system:surface-toggles'>): void => {
       if (surfaceTogglesInto(view, toggles)) {
+        repaint();
+      }
+    },
+    reflectUpdateCheck: (standing: UpdateCheckStanding): void => {
+      if (view.updateCheck !== standing) {
+        view.updateCheck = standing;
         repaint();
       }
     },

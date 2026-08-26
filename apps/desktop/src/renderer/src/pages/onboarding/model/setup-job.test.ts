@@ -8,13 +8,21 @@ const connected = [
 ];
 
 describe('the jobs a run carries', () => {
-  test('the accounts come first, then the gateway, then the virtual model', () => {
+  test('the accounts come first, then the reading, then the gateway and the virtual model', () => {
     expect(jobsFor(connected, 'claude-my-model', 2).map((job) => job.id)).toEqual([
       'a1',
       'a2',
+      'sources',
       'gateway',
       'virtual-model',
     ]);
+  });
+
+  test('the reading of what the sources serve is a job of its own, not a silent wait', () => {
+    const [reading] = jobsFor(connected, 'claude-my-model', 2).slice(2, 3);
+
+    expect(reading?.title).toBe('Reading what your sources serve');
+    expect(reading?.note).toBe('The models each one offers');
   });
 
   test('the virtual model job names what it composes and what stands behind it', () => {

@@ -77,6 +77,7 @@ function hostServing(serving: Set<string>) {
     states: () => ({}),
     onStatesChanged: () => () => undefined,
     replayLogs: () => undefined,
+    replayTraffic: () => undefined,
     retainedLogRows: () => [],
     dispose: () => undefined,
   } satisfies EngineHost;

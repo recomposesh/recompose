@@ -62,7 +62,7 @@ function cablePills(page: Page): Locator {
 async function theBranchSheetOpensOn(page: Page, label: string): Promise<void> {
   await theRouterStandsInspected(page);
   await branchRow(page, label).click({ button: 'right' });
-  await page.getByRole('menuitem', { name: 'Edit rule' }).click();
+  await page.getByRole('menuitem', { name: 'Edit prompt' }).click();
   await expect(branchSheet(page)).toBeVisible();
 }
 
@@ -94,7 +94,7 @@ Given(
 Given('a branch ruled {string} holding no label of its own', async ({ page }, rule: string) => {
   await theBranchSheetOpensOn(page, CODE_BRANCH.label);
   await branchSheet(page).getByRole('textbox', { name: 'Label' }).fill('');
-  await branchSheet(page).getByRole('textbox', { name: 'Rule' }).fill(rule);
+  await branchSheet(page).getByRole('textbox', { exact: true, name: 'Rule as prompt' }).fill(rule);
   await theSheetIsSaved(page);
 
   branchesInHand.set(page, { label: '', rule });
@@ -144,7 +144,9 @@ When(
 
 When('the person rewrites the rule to {string}', async ({ page }, rewritten: string) => {
   await theBranchSheetOpensOn(page, branchInHand(page).label);
-  await branchSheet(page).getByRole('textbox', { name: 'Rule' }).fill(rewritten);
+  await branchSheet(page)
+    .getByRole('textbox', { exact: true, name: 'Rule as prompt' })
+    .fill(rewritten);
   await theSheetIsSaved(page);
 
   branchesInHand.set(page, { label: branchInHand(page).label, rule: rewritten });

@@ -105,6 +105,25 @@ describe('a request refused while every child stands cooling', () => {
     expect(rows.at(0)?.failure).toContain('stands cooling');
   });
 
+  test('the row names the ladder that ran out and every child it stood over', async () => {
+    const scene = serving(aLadder(), answeringInTurn(coolingRefusal));
+
+    await (await scene.ask()).text();
+
+    const collected = collectingRows();
+
+    await (await scene.ask()).text();
+    collected.forget();
+
+    expect(collected.standing().at(0)?.diagnosis).toEqual({
+      router: 'Failover',
+      tried: [
+        { child: 'gpt-5-mini', why: 'stands cooling' },
+        { child: 'claude-sonnet-4-5', why: 'stands cooling' },
+      ],
+    });
+  });
+
   test('the row stands for a request no child ever carried', async () => {
     const scene = serving(aLadder(), answeringInTurn(coolingRefusal));
 
@@ -153,6 +172,34 @@ describe('a child that annotated a cable without answering', () => {
       status: 502,
       detail: 'The child could not be reached.',
     });
+  });
+
+  test('the row names the child nothing answered for, which its sentence alone never could', async () => {
+    const scene = serving(aLadder(), answeringInTurn(droppedConnection, served));
+    const collected = collectingRows();
+
+    await (await scene.ask()).text();
+    collected.forget();
+
+    const unreached = collected.standing().find((row) => row.origin === 'gateway');
+
+    expect(unreached?.diagnosis).toEqual({
+      tried: [{ child: 'gpt-5-mini', why: 'could not be reached' }],
+    });
+  });
+});
+
+describe('a child a provider answered for', () => {
+  test('a child a provider refused carries the words that provider refused it with', async () => {
+    const scene = serving(aLadder(), answeringInTurn(coolingRefusal, served));
+    const collected = collectingRows();
+
+    await (await scene.ask()).text();
+    collected.forget();
+
+    const refused = collected.standing().find((row) => row.status === 429);
+
+    expect(refused?.diagnosis).toEqual({ upstreamMessage: 'slow down' });
   });
 
   test('a child a provider refused keeps one row, because its attempt already raised it', async () => {

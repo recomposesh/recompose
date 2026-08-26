@@ -1,6 +1,6 @@
 import type { RouterPolicy } from '@recompose/contracts';
 
-import type { JudgeReading } from './outcome-classification';
+import type { JudgeReading, UnjudgedCause } from './outcome-classification';
 import type { BranchChoice, BranchRule, ConditionalPolicy } from './policies';
 
 import {
@@ -47,17 +47,20 @@ export type JudgedRequest = {
 };
 
 /**
- * The branch one router settled on, and whether any judgment at all placed the request there.
+ * The branch one router settled on, and what placed the request there when no judgment did.
  *
  * @summary The child alone cannot tell a router working from a judge in trouble, because the else
  * child stands in both choices. Whether a judgment placed the request is what parts them, and it is
  * what the walk reads to decide between serving and refusing, so the fact rides beside the choice
- * rather than inside the mode's own picking.
+ * rather than inside the mode's own picking. A choice nothing judged carries which trouble left it
+ * unjudged, because the refusal a person eventually reads is written from that and from nothing
+ * else the walk keeps.
  */
-export type JudgedChoice = BranchChoice & { judged: boolean };
+export type JudgedChoice = BranchChoice &
+  ({ judged: true } | { judged: false; because: UnjudgedCause });
 
 export type Judging = {
-  classify: BranchClassifier | undefined;
+  classify: BranchClassifier;
   judgeStandsCooling: (judge: string) => boolean;
   pinnedBranchAt: (routeNode: string) => string | undefined;
   pinBranchAt: (routeNode: string, child: string) => void;
@@ -71,14 +74,12 @@ type BranchQuestion = {
   branches: readonly BranchRule[];
   directive: string | undefined;
   elseChild: string;
-  classify: BranchClassifier | undefined;
+  classify: BranchClassifier;
   judgeStandsCooling: boolean;
   pinnedBranch: string | undefined;
   resumesServerState: boolean;
   rejudgeEveryRequest: boolean;
 };
-
-type Asking = { question: BranchQuestion; classify: BranchClassifier };
 
 /**
  * The child a conditional router settles on, and the two things anyone asks about how it got there.
@@ -90,7 +91,9 @@ type Asking = { question: BranchQuestion; classify: BranchClassifier };
  * is the router doing what it was drawn to do, while a judge that answered nothing is trouble no
  * child should absorb.
  */
-type Decided = { child: string; earnsAPin: boolean; judged: boolean };
+type Decided =
+  | { child: string; earnsAPin: boolean; judged: true }
+  | { child: string; earnsAPin: false; judged: false; because: UnjudgedCause };
 
 /** The branch a judge's own word named, which the conversation keeps for the turns after it. */
 function judgedOntoABranch(child: string): Decided {
@@ -109,22 +112,24 @@ function settledWithoutAPin(child: string): Decided {
 }
 
 /**
- * A request no judgment placed, which its router refuses rather than routing.
+ * A request no judgment placed, carrying the trouble that left it unplaced.
  *
  * @summary The else child rides along so the choice stays a whole `BranchChoice` for anyone reading
  * which two children this router narrowed itself to. Nothing ever serves it: the walk stops at the
- * router the moment it reads a choice nothing judged.
+ * router the moment it reads a choice nothing judged. The trouble rides with it because this is the
+ * only moment anything knows which of the four it was, and the sentence the caller reads is written
+ * from it much later, where the reading itself is long gone.
  */
-function nothingJudgedIt(elseChild: string): Decided {
-  return { child: elseChild, earnsAPin: false, judged: false };
+function nothingJudgedIt(elseChild: string, because: UnjudgedCause): Decided {
+  return { child: elseChild, earnsAPin: false, judged: false, because };
 }
 
-async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
-  return asking.classify(
-    asking.question.routeNode,
-    asking.question.judge,
-    asking.question.branches,
-    asking.question.directive,
+async function readingOneAskEarns(question: BranchQuestion): Promise<JudgeReading> {
+  return question.classify(
+    question.routeNode,
+    question.judge,
+    question.branches,
+    question.directive,
   );
 }
 
@@ -137,11 +142,11 @@ async function readingOneAskEarns(asking: Asking): Promise<JudgeReading> {
  * that could not classify at all, and a request nothing judged is refused rather than handed to a
  * child no judgment chose.
  */
-async function childASecondAskEarns(asking: Asking): Promise<Decided> {
-  const reading = await readingOneAskEarns(asking);
-  const question = asking.question;
+async function childASecondAskEarns(question: BranchQuestion): Promise<Decided> {
+  const reading = await readingOneAskEarns(question);
+  const verdict = classifyJudge(reading);
 
-  if (classifyJudge(reading).verdict !== 'answered') return nothingJudgedIt(question.elseChild);
+  if (verdict.verdict !== 'answered') return nothingJudgedIt(question.elseChild, verdict.because);
 
   const child = childOneReadingNames(question.branches, question.elseChild, reading);
 
@@ -150,35 +155,43 @@ async function childASecondAskEarns(asking: Asking): Promise<Decided> {
     : settledWithoutAPin(child);
 }
 
-async function childTheJudgeAnswers(asking: Asking): Promise<Decided> {
-  const reading = await readingOneAskEarns(asking);
-  const named = branchWearingTheLabel(asking.question.branches, labelOneReadingCarries(reading));
+async function childTheJudgeAnswers(question: BranchQuestion): Promise<Decided> {
+  const reading = await readingOneAskEarns(question);
+  const named = branchWearingTheLabel(question.branches, labelOneReadingCarries(reading));
 
   if (named !== undefined) return judgedOntoABranch(named.child);
 
-  if (judgeDeclined(asking.question.branches, reading)) {
-    return settledWithoutAPin(asking.question.elseChild);
-  }
+  if (judgeDeclined(question.branches, reading)) return settledWithoutAPin(question.elseChild);
 
-  return classifyJudge(reading).verdict === 'answered'
-    ? childASecondAskEarns(asking)
-    : nothingJudgedIt(asking.question.elseChild);
+  const verdict = classifyJudge(reading);
+
+  return verdict.verdict === 'answered'
+    ? childASecondAskEarns(question)
+    : nothingJudgedIt(question.elseChild, verdict.because);
 }
 
 function pinTheTurnKeeps(question: BranchQuestion): string | undefined {
   return question.rejudgeEveryRequest ? undefined : question.pinnedBranch;
 }
 
+/**
+ * The child a router with no pin to follow settles on, or the trouble that stopped it asking.
+ *
+ * @summary The two troubles that spend no judge call are named apart here rather than merged into
+ * an absent classifier, because a person told only that no verdict came back would go looking at a
+ * judge that was never asked. A sealed turn is answered before the cooling question, since a
+ * conversation the walk cannot place is refused whatever the judge is doing.
+ */
 async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
   if (question.resumesServerState && !question.rejudgeEveryRequest) {
-    return nothingJudgedIt(question.elseChild);
+    return nothingJudgedIt(question.elseChild, 'unpinned-sealed-turn');
   }
 
-  const classify = question.judgeStandsCooling ? undefined : question.classify;
+  if (question.judgeStandsCooling) {
+    return nothingJudgedIt(question.elseChild, 'judge-standing-cooling');
+  }
 
-  return classify === undefined
-    ? nothingJudgedIt(question.elseChild)
-    : childTheJudgeAnswers({ question, classify });
+  return childTheJudgeAnswers(question);
 }
 
 /**
@@ -188,9 +201,9 @@ async function childNoPinNames(question: BranchQuestion): Promise<Decided> {
  * judge saying it cannot classify at all, so asking again spends a second call to learn the same
  * thing, while an answer no branch wears may well be the judge misreading a closed set it can read
  * on a second look. The second answer is final however it reads, which is what bounds a request at
- * two judge calls no matter how strangely the judge behaves. A judge already standing cooling is
- * read here as no judge at all, and the request goes back unjudged without spending a call the
- * ledger already knows would fail.
+ * two judge calls no matter how strangely the judge behaves. A judge already standing cooling sends
+ * the request back unjudged under a trouble of its own, without spending a call the ledger already
+ * knows would fail, and the refusal then says the judge stood down rather than that it went quiet.
  *
  * A turn resuming state one account holds follows its pin, and is refused where it has none, because
  * a second account cannot read the token it carries. Re-judge every request overrides that: a client
@@ -239,6 +252,12 @@ function questionOf(
  * The conversation is pinned here and only here, the moment a judgment settles, so the branch a
  * request earned outlives the walk that earned it while the branch trouble picked never does.
  */
+function choiceOf(decided: Decided, elseChild: string): JudgedChoice {
+  return decided.judged
+    ? { decided: decided.child, elseChild, judged: true }
+    : { decided: decided.child, elseChild, judged: false, because: decided.because };
+}
+
 /**
  * The branch one conditional router follows, judged where there is anything to judge.
  *
@@ -263,11 +282,7 @@ export async function branchTheWalkFollows(
   if (held !== undefined) return held;
 
   const decided = await childTheJudgeDecides(questionOf(routeNode, policy, judging));
-  const choice = {
-    decided: decided.child,
-    elseChild: policy.elseChild,
-    judged: decided.judged,
-  };
+  const choice = choiceOf(decided, policy.elseChild);
 
   judging.decided.set(routeNode, choice);
 

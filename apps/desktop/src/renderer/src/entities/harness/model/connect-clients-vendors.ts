@@ -2,8 +2,9 @@ import type { ConnectClient } from './connect-facts';
 
 import {
   addressFor,
+  carriedVariable,
+  commandCarrying,
   everyModel,
-  exportLine,
   keyVariable,
   presentedKey,
   presentedModel,
@@ -88,9 +89,12 @@ export const deepseekHarness: ConnectClient = {
       note: 'A model entered by hand counts as text-only until it says otherwise, so add input: [text, image] to any model whose targets take images.',
     },
     {
-      title: 'Hand it the key that block names',
-      lines: [exportLine(keyVariable(facts), presentedKey(facts))],
-      note: 'The settings file names the variable rather than holding the key, and the harness answers MISSING_CREDENTIAL while nothing sets it. A key entered through the Models page needs no variable at all.',
+      title: 'Start it again carrying the key that block names',
+      lines: commandCarrying(
+        [carriedVariable(keyVariable(facts), presentedKey(facts))],
+        'npx @deepseek-ai/dsh web',
+      ),
+      note: 'The settings file names the variable rather than holding the key, and the harness answers MISSING_CREDENTIAL while nothing sets it, so the key rides in front of the launch and reaches that process alone. A key entered through the Models page needs no variable at all.',
     },
   ],
 };
@@ -103,7 +107,8 @@ export const geminiCli: ConnectClient = {
   kind: 'terminal',
   reach: 'origin',
   takesKey: true,
-  intro: 'Two variables. Plain http is allowed here because the address is loopback.',
+  intro:
+    'Two variables in front of the command. Plain http is allowed here because the address is loopback.',
   guide: {
     label: 'The Gemini CLI configuration reference',
     href: 'https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md',
@@ -111,11 +116,13 @@ export const geminiCli: ConnectClient = {
   steps: (facts) => [
     {
       title: 'Point it at the gateway and start it',
-      lines: [
-        exportLine('GOOGLE_GEMINI_BASE_URL', addressFor('origin', facts)),
-        exportLine('GEMINI_API_KEY', presentedKey(facts)),
+      lines: commandCarrying(
+        [
+          carriedVariable('GOOGLE_GEMINI_BASE_URL', addressFor('origin', facts)),
+          carriedVariable('GEMINI_API_KEY', presentedKey(facts)),
+        ],
         `gemini --model ${presentedModel(facts)}`,
-      ],
+      ),
       note: 'The base URL must be https unless it names localhost, 127.0.0.1 or [::1], which is exactly what a gateway on this machine is. The key travels as x-goog-api-key, one of the four spellings this gateway reads.',
     },
   ],

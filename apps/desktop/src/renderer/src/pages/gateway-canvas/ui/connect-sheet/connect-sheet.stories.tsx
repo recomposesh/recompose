@@ -33,7 +33,7 @@ export const PickingAnotherClient = meta.story({
     await userEvent.click(await screen.findByRole('button', { name: /Gemini CLI/ }));
 
     await expect(await screen.findByRole('heading', { name: 'Gemini CLI' })).toBeVisible();
-    await expect(await screen.findByText(/export GOOGLE_GEMINI_BASE_URL/)).toBeVisible();
+    await expect(await screen.findByText(/GOOGLE_GEMINI_BASE_URL/)).toBeVisible();
   },
 });
 

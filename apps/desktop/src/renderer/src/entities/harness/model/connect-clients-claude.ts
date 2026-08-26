@@ -2,7 +2,13 @@ import { claudeCodeKeepsModelId } from '@recompose/contracts';
 
 import type { ConnectClient, ConnectFacts } from './connect-facts';
 
-import { addressFor, exportLine, presentedKey, presentedModel } from './connect-facts';
+import {
+  addressFor,
+  carriedVariable,
+  commandCarrying,
+  presentedKey,
+  presentedModel,
+} from './connect-facts';
 
 const DISCOVERY_NOTE =
   'The token rides in Authorization: Bearer. ANTHROPIC_API_KEY sends the same value as x-api-key instead, and this gateway reads either one. The discovery variable puts every model whose id carries claude or anthropic into the /model picker, labelled From gateway.';
@@ -25,7 +31,7 @@ function modelNeedingTheEscape(facts: ConnectFacts): string | undefined {
 function pickerEscape(facts: ConnectFacts): readonly string[] {
   const escaped = modelNeedingTheEscape(facts);
 
-  return escaped === undefined ? [] : [exportLine('ANTHROPIC_CUSTOM_MODEL_OPTION', escaped)];
+  return escaped === undefined ? [] : [carriedVariable('ANTHROPIC_CUSTOM_MODEL_OPTION', escaped)];
 }
 
 function settingsEnvRows(facts: ConnectFacts): readonly string[] {
@@ -68,7 +74,8 @@ export const claudeCode: ConnectClient = {
   kind: 'terminal',
   reach: 'origin',
   takesKey: true,
-  intro: 'Two variables, read once at startup. A running session keeps the endpoint it began with.',
+  intro:
+    'Variables in front of the command, read once at startup and kept out of the shell. A running session keeps the endpoint it began with.',
   guide: {
     label: "Anthropic's own guide",
     href: 'https://code.claude.com/docs/en/llm-gateway-connect',
@@ -76,20 +83,22 @@ export const claudeCode: ConnectClient = {
   steps: (facts) => [
     {
       title: 'Point it at the gateway and start it',
-      lines: [
-        exportLine('ANTHROPIC_BASE_URL', addressFor('origin', facts)),
-        exportLine('ANTHROPIC_AUTH_TOKEN', presentedKey(facts)),
-        exportLine('ANTHROPIC_MODEL', presentedModel(facts)),
-        exportLine('CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY', '1'),
-        ...pickerEscape(facts),
+      lines: commandCarrying(
+        [
+          carriedVariable('ANTHROPIC_BASE_URL', addressFor('origin', facts)),
+          carriedVariable('ANTHROPIC_AUTH_TOKEN', presentedKey(facts)),
+          carriedVariable('ANTHROPIC_MODEL', presentedModel(facts)),
+          carriedVariable('CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY', '1'),
+          ...pickerEscape(facts),
+        ],
         'claude',
-      ],
+      ),
       note: claudeCodeKeepsModelId(presentedModel(facts)) ? DISCOVERY_NOTE : ESCAPED_NOTE,
     },
     {
       title: 'Or keep it in ~/.claude/settings.json',
       lines: [...settingsLines(facts)],
-      note: 'A settings file reaches background agents as well, which a shell export does not, so it carries the same variables rather than a shorter set. Run /status in a session to read back the base URL it is using.',
+      note: 'A settings file reaches background agents as well, which variables handed to a single command do not, so it carries the same set rather than a shorter one. Run /status in a session to read back the base URL it is using.',
     },
   ],
 };

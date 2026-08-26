@@ -2,7 +2,8 @@ import type { ConnectClient, ConnectFacts, ConnectStep } from './connect-facts';
 
 import {
   addressFor,
-  exportLine,
+  carriedVariable,
+  commandCarrying,
   keyVariable,
   presentedKey,
   presentedModel,
@@ -46,17 +47,19 @@ function providerBlock(facts: ConnectFacts): ConnectStep {
  * @summary `model` in the file names the default alone, so a gateway serving several needs the
  * line that reaches another. The second model is named here rather than described, because a
  * person reading a list of two ids wants to know which flag carries the one the file left out.
+ * The key stands in front of the command because Codex reads it out of its own environment, so
+ * nothing has to be left set in the shell for the file to resolve `env_key`.
  */
 function keyAndLaunch(facts: ConnectFacts): ConnectStep {
   const other = secondModel(facts);
 
   return {
     title: 'Hand it the key and start it',
-    lines: [exportLine(keyVariable(facts), presentedKey(facts)), 'codex'],
+    lines: commandCarrying([carriedVariable(keyVariable(facts), presentedKey(facts))], 'codex'),
     note:
       other === undefined
-        ? 'Codex reads the variable named by env_key and presents it as a bearer token, which is one of the four spellings this gateway accepts.'
-        : `Codex reads the variable named by env_key and presents it as a bearer token. The file names ${presentedModel(facts)} as the default, so reach the other with codex --model ${other}.`,
+        ? 'Codex reads the variable named by env_key out of its own environment and presents it as a bearer token, which is one of the four spellings this gateway accepts.'
+        : `Codex reads the variable named by env_key out of its own environment and presents it as a bearer token. The file names ${presentedModel(facts)} as the default, so reach the other with codex --model ${other}.`,
   };
 }
 

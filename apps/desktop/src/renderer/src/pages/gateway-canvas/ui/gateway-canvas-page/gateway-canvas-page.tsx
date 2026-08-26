@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
 import { DEFAULT_GATEWAY_BIND_ADDRESS } from '@recompose/contracts';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { notFound } from '@tanstack/react-router';
-import { useRef, useSyncExternalStore } from 'react';
+import { useRef } from 'react';
 
+import type { SilenceOnTheCanvas } from './canvas-page-hooks';
 import type { PickerOnCanvas } from './picker-on-canvas';
 import type { ComposedCanvas } from './use-gateway-canvas';
 
@@ -18,19 +19,13 @@ import {
   settingsQueryOptions,
 } from '../../../../shared/api';
 import {
-  inspectorOpen,
   keepPanelWidth,
-  logsDrawerOpen,
   panelBounds,
   setPanelWidth,
-  subscribeToInspectorVisibility,
-  subscribeToLogsDrawerVisibility,
-  subscribeToPanelWidths,
   toggleInspector,
 } from '../../../../shared/lib';
 import { PanelSeparator } from '../../../../shared/ui';
 import { gatewayBaseUrl } from '../../lib/gateway-base-url';
-import { inspectorWidth } from '../../lib/inspector-width';
 import { usePanelReveal } from '../../lib/use-inspector-reveal';
 import { AnchoredPicker } from '../anchored-picker/anchored-picker';
 import { BranchWording } from '../branch-wording/branch-wording';
@@ -39,6 +34,7 @@ import { GatewayDrawer } from '../gateway-drawer/gateway-drawer';
 import { GatewayStage } from '../gateway-stage/gateway-stage';
 import { LogsDrawer } from '../logs-drawer/logs-drawer';
 import { RemovalDialog } from '../removal-dialog/removal-dialog';
+import { StoppedAnsweringNote } from '../stopped-answering-note/stopped-answering-note';
 import { TrafficFooter } from '../traffic-footer/traffic-footer';
 import {
   useInspectorPutAwayOnLeave,
@@ -46,7 +42,9 @@ import {
   useMenuAsksGatewayRemoval,
   useMenuCopiesBaseUrl,
   useMenuReadsTheDrawer,
+  usePanelStandings,
   useSelectionPutAwayWithInspector,
+  useStoppedAnswering,
 } from './canvas-page-hooks';
 import { useGatewayCanvas } from './use-gateway-canvas';
 
@@ -146,6 +144,8 @@ type CanvasColumn = {
   serving: 'running' | 'stopped';
   logs: ReturnType<typeof usePanelReveal>;
   canvas: ComposedCanvas;
+  /** What the canvas knows about this gateway going quiet, and the acts it offers about it. */
+  silence: SilenceOnTheCanvas;
 };
 
 /**
@@ -153,10 +153,13 @@ type CanvasColumn = {
  *
  * @summary The strip and logs belong to the left column rather than the window, so both stop where
  * the full-height inspector begins. Opening the logs shrinks only the stage: the inspector keeps
- * all of its height and the drawer keeps all of its width, with neither covering the other.
+ * all of its height and the drawer keeps all of its width, with neither covering the other. A
+ * gateway that went quiet says so in the same column and in the same way, taking a band of its own
+ * rather than a layer over the composition it is about.
  */
 function canvasColumn(standing: CanvasColumn): ReactNode {
   const { slug, gateway, accounts, rows, serving, logs, canvas } = standing;
+  const { putAway, startAgain, stoppedAnswering } = standing.silence;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col" data-canvas-column="">
@@ -164,6 +167,13 @@ function canvasColumn(standing: CanvasColumn): ReactNode {
         {anchoredPicker(canvas.picker)}
       </GatewayStage>
       <BranchWording gateway={gateway} />
+      {stoppedAnswering ? (
+        <StoppedAnsweringNote
+          gateway={gateway.displayName}
+          onPutAway={putAway}
+          onStartAgain={startAgain}
+        />
+      ) : null}
       {logs.rendered ? (
         <LogsDrawer
           accounts={accounts}
@@ -226,11 +236,7 @@ export function GatewayCanvasPage({
   const { data: engines } = useSuspenseQuery(engineStatesQueryOptions);
   const { data: settings } = useSuspenseQuery(settingsQueryOptions);
   const { data: served } = useQuery(engineLogsQueryOptions(slug));
-  const shown = useSyncExternalStore(subscribeToInspectorVisibility, inspectorOpen);
-  const logsShown = useSyncExternalStore(subscribeToLogsDrawerVisibility, logsDrawerOpen);
-  const width = useSyncExternalStore(subscribeToPanelWidths, inspectorWidth);
-  const inspector = usePanelReveal(shown);
-  const logs = usePanelReveal(logsShown);
+  const { shown, logsShown, width, inspector, logs } = usePanelStandings();
   const gateway = gateways.find((held) => held.slug === slug);
   const canvas = useGatewayCanvas(slug, gateway, registry.accounts, onGatewayRemoved);
   const gatewayOnceStood = useRef(false);
@@ -242,6 +248,8 @@ export function GatewayCanvasPage({
   useMenuAsksGatewayRemoval(askRemovalOf(canvas));
 
   const copySpoken = useMenuCopiesBaseUrl(printedBaseUrl(gateway, settings));
+  const serving = gatewayStateIn(engines, slug).status;
+  const silence = useStoppedAnswering(slug, serving === 'running');
 
   if (gateway === undefined || canvas === undefined) {
     if (gatewayOnceStood.current) {
@@ -260,9 +268,10 @@ export function GatewayCanvasPage({
         gateway,
         accounts: registry.accounts,
         rows: served,
-        serving: gatewayStateIn(engines, slug).status,
+        serving,
         logs,
         canvas,
+        silence,
       })}
       {inspectorBeside({ gateway, reveal: inspector, width, canvas })}
       <ConnectInView slug={slug} />

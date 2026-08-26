@@ -20,6 +20,7 @@ type AppMenuBootSeams = {
     restart: (slug: string) => void;
   };
   configFolder: () => string;
+  onCheckForUpdates: () => void;
   development: boolean;
   settingsFile: () => string;
   onCorrupt: (quarantinedPath: string) => void;
@@ -64,6 +65,7 @@ export function bootAppMenu(seams: AppMenuBootSeams): AppMenuConduct {
     onOpenHelpSite: openedExternally(HELP_SITE_URL),
     onOpenConfigFolder: openedConfigFolder(seams.configFolder),
     onReportIssue: openedExternally(NEW_ISSUE_URL),
+    onCheckForUpdates: seams.onCheckForUpdates,
     development: seams.development,
     settingsFile: seams.settingsFile,
     onCorrupt: seams.onCorrupt,

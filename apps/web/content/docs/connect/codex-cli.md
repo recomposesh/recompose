@@ -33,11 +33,10 @@ Codex ignores `model_provider` and `model_providers` in a project-local `.codex/
 ## Hand it the key and start it
 
 ```sh
-export RECOMPOSE_MY_GATEWAY_API_KEY="unused"
-codex
+RECOMPOSE_MY_GATEWAY_API_KEY="unused" codex
 ```
 
-Codex reads the variable named by `env_key` and presents it as a bearer token, one of the four spellings a gateway accepts. The file names one model as the default: reach any other with `codex --model` and the id, or its `-m` alias.
+Codex reads the variable named by `env_key` out of its own environment and presents it as a bearer token, one of the four spellings a gateway accepts. One key in front of the command satisfies the file for that reason: the process Codex starts holds the value, and your shell keeps none of it afterward. The file names one model as the default: reach any other with `codex --model` and the id, or its `-m` alias.
 
 ## Verify
 

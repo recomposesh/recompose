@@ -8,6 +8,7 @@ import type { AttemptInFlight } from './telemetry-feed';
 
 import { planUsageTheProviderReports } from './plan-usage-headers';
 import { publishPlanUsage } from './plan-usage-watch';
+import { quoteTheAnswerAllows } from './provider-error-quote';
 import {
   clonedMedia,
   clonedObservation,
@@ -144,11 +145,14 @@ export class ProviderObservationSpan {
       if (settled) return;
 
       settled = true;
+      const answered = text.join('');
+
       this.finish(
         response.status,
         upstreamRequestIdHash,
         ttft,
-        providerUsageFrom(this.request.dialect, text.join('')),
+        providerUsageFrom(this.request.dialect, answered),
+        answered,
       );
     };
     const observed = response.body.pipeThrough(
@@ -187,11 +191,14 @@ export class ProviderObservationSpan {
     ttftMs = this.owner.now() - this.startedAt,
   ): void {
     this.sayWhatThePlanReads(headers);
+    const answered = new TextDecoder().decode(body);
+
     this.finish(
       status,
       requestIdHash(firstHeader(headers, upstreamRequestIdHeaders)),
       ttftMs,
-      providerUsageFrom(this.request.dialect, new TextDecoder().decode(body)),
+      providerUsageFrom(this.request.dialect, answered),
+      answered,
     );
   }
 
@@ -220,6 +227,7 @@ export class ProviderObservationSpan {
     upstreamRequestIdHash: string | undefined,
     ttftMs: number,
     usage: ProviderUsage,
+    answered = '',
   ): void {
     const durationMs = this.owner.now() - this.startedAt;
 
@@ -234,7 +242,11 @@ export class ProviderObservationSpan {
       generate: this.request.generate ?? true,
       media: clonedMedia(this.request.media),
     });
-    this.attempt.answered(status, { durationMs, tokens: usage.totalTokens, usage });
+    this.attempt.answered(
+      status,
+      { durationMs, tokens: usage.totalTokens, usage },
+      quoteTheAnswerAllows(status, answered),
+    );
   }
 }
 

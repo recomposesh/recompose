@@ -3,8 +3,8 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import { Given, Then, When } from '../fixtures';
-import { loggedRows, ROW_CELLS, rowCells } from '../logs-drawer';
-import { turnCarryingPrompt, turnThrough } from '../served-traffic';
+import { loggedRows, requestDetail, theCursorWalksOntoARequest } from '../logs-drawer';
+import { turnCarryingPrompt } from '../served-traffic';
 import { rowsMatchingTheTurnsSent } from '../telemetry-standing';
 
 /**
@@ -29,10 +29,10 @@ Given(
 );
 
 Given(
-  'the provider refused a request with status {int} and the answer text {string}',
-  async ({ keyProbe, page }, status: number, words: string) => {
+  'the provider refused the prompt {string} with status {int}, saying {string}',
+  async ({ keyProbe, page }, prompt: string, status: number, words: string) => {
     keyProbe.refusesTurnsWith(status, words);
-    await turnThrough(page, 'creative');
+    await turnCarryingPrompt(page, 'creative', prompt);
     await rowsMatchingTheTurnsSent(page);
   },
 );
@@ -41,16 +41,15 @@ When('the person reads the drawer and its rows', async ({ page }) => {
   await expect(loggedRows(page)).not.toHaveCount(0);
 });
 
-When('the person reads the failed row', async ({ page }) => {
+When('the person reads the failed request beside the run', async ({ page }) => {
   await expect(loggedRows(page)).not.toHaveCount(0);
+  await theCursorWalksOntoARequest(page);
+});
+
+Then('the reading quotes {string}', async ({ page }, words: string) => {
+  await expect(requestDetail(page)).toContainText(words);
 });
 
 Then('{string} appears nowhere', async ({ page }, words: string) => {
   expect(await everythingOnScreen(page)).not.toContain(words);
-});
-
-Then('the row carries status {int}', async ({ page }, status: number) => {
-  const cells = await rowCells(loggedRows(page).first());
-
-  expect(cells[ROW_CELLS.status] ?? '').toBe(String(status));
 });

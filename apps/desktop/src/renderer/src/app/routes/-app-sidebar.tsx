@@ -1,3 +1,4 @@
+import type { WindowControls } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -8,12 +9,13 @@ import { useGatewayForgetting } from '../../pages/gateway-canvas';
 import { systemQueryOptions } from '../../shared/api';
 import {
   bandAlignmentFor,
+  bandLeadInsetFor,
   focusDrivenByArrow,
   panelWidth,
   subscribeToPanelWidths,
 } from '../../shared/lib';
-import { AppTitle, Icon } from '../../shared/ui';
-import { UpdateReadyCard } from '../../widgets/app-update';
+import { AppTitle, Icon, RecomposeMark } from '../../shared/ui';
+import { AppUpdateCard } from '../../widgets/app-update';
 import { GatewaySidebar } from '../../widgets/gateway/sidebar';
 import { GetStartedPanel } from '../../widgets/get-started';
 import { ProviderSidebar } from '../../widgets/provider/sidebar';
@@ -77,6 +79,28 @@ function systemGroup(
   );
 }
 
+/**
+ * What the band carries at its leading end, where the platform leaves that end to the app.
+ *
+ * @summary Windows hides its title bar and floats nothing over this corner, so the band owes a
+ * person the whole lockup the bar took away. macOS hides the same bar but keeps the traffic lights
+ * and spells the app's name in its own menu bar, so the mark alone says what is left to say, and
+ * it is the only half that still fits once the controls have taken ninety pixels of a sidebar a
+ * person may have narrowed to two hundred. A platform still drawing its own title bar is told
+ * nothing twice.
+ */
+function brandFor(windowControls: WindowControls): ReactNode {
+  if (windowControls === 'none') {
+    return null;
+  }
+
+  return (
+    <span className={`flex shrink-0 items-center ${bandLeadInsetFor(windowControls)}`}>
+      {windowControls === 'trailing' ? <AppTitle /> : <RecomposeMark className="size-4" />}
+    </span>
+  );
+}
+
 export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
   const systemId = useId();
   const forgetGateway = useGatewayForgetting();
@@ -98,7 +122,7 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
         <div
           className={`flex h-window-controls shrink-0 items-center ${bandAlignmentFor(system.windowControls)}`}
         >
-          {system.windowControls === 'trailing' && <AppTitle />}
+          {brandFor(system.windowControls)}
           <span className="app-no-drag flex">{band}</span>
         </div>
         <nav className="app-no-drag flex flex-1 flex-col overflow-y-auto" data-focus-group="">
@@ -115,7 +139,7 @@ export function AppSidebar({ away, band, onNewGateway }: AppSidebarProps) {
             <GetStartedPanel />
           </Suspense>
           <Suspense fallback={null}>
-            <UpdateReadyCard />
+            <AppUpdateCard />
           </Suspense>
         </div>
       </div>

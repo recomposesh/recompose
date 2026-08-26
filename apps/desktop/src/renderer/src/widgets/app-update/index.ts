@@ -1,1 +1,1 @@
-export { UpdateReadyCard } from './ui/update-ready-card/update-ready-card';
+export { AppUpdateCard } from './ui/app-update-card/app-update-card';

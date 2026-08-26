@@ -55,14 +55,43 @@ test('the menu lists every member with the requests it served', async () => {
   await expect.element(screen.getByText('6,120')).toBeVisible();
 });
 
-test('checking a member narrows the filter onto it', async () => {
+test('a filter standing on everything reads every member as checked', async () => {
+  const screen = await render(menu());
+
+  await screen.getByRole('button', { name: 'Gateways All' }).click();
+
+  await expect.element(screen.getByRole('checkbox', { name: 'claude-code' })).toBeChecked();
+  await expect.element(screen.getByRole('checkbox', { name: 'raycast' })).toBeChecked();
+});
+
+test('a narrowed filter reads the members it let go as unchecked', async () => {
+  const screen = await render(menu({ selected: ['cursor'] }));
+
+  await screen.getByRole('button', { name: 'Gateways 1 of 4' }).click();
+
+  await expect.element(screen.getByRole('checkbox', { name: 'cursor' })).toBeChecked();
+  await expect.element(screen.getByRole('checkbox', { name: 'raycast' })).not.toBeChecked();
+});
+
+test('letting one member go while the filter stands on everything keeps every other one', async () => {
   const onSelectedChange = vi.fn<(next: readonly string[]) => void>();
   const screen = await render(menu({ onSelectedChange }));
 
   await screen.getByRole('button', { name: 'Gateways All' }).click();
   await screen.getByRole('checkbox', { name: 'cursor' }).click();
 
-  expect(onSelectedChange).toHaveBeenCalledWith(['cursor']);
+  expect(onSelectedChange).toHaveBeenCalledWith(['claude-code', 'api-playground', 'raycast']);
+});
+
+test('a member the search hides stays in the selection a person narrows', async () => {
+  const onSelectedChange = vi.fn<(next: readonly string[]) => void>();
+  const screen = await render(menu({ onSelectedChange }));
+
+  await screen.getByRole('button', { name: 'Gateways All' }).click();
+  await screen.getByRole('searchbox', { name: 'Search gateways' }).fill('cur');
+  await screen.getByRole('checkbox', { name: 'cursor' }).click();
+
+  expect(onSelectedChange).toHaveBeenCalledWith(['claude-code', 'api-playground', 'raycast']);
 });
 
 test('unchecking the last standing member stands the filter back on everything', async () => {
@@ -71,6 +100,18 @@ test('unchecking the last standing member stands the filter back on everything',
 
   await screen.getByRole('button', { name: 'Gateways 1 of 4' }).click();
   await screen.getByRole('checkbox', { name: 'cursor' }).click();
+
+  expect(onSelectedChange).toHaveBeenCalledWith([]);
+});
+
+test('checking the last member left stands the filter back on everything', async () => {
+  const onSelectedChange = vi.fn<(next: readonly string[]) => void>();
+  const screen = await render(
+    menu({ selected: ['claude-code', 'cursor', 'api-playground'], onSelectedChange }),
+  );
+
+  await screen.getByRole('button', { name: 'Gateways 3 of 4' }).click();
+  await screen.getByRole('checkbox', { name: 'raycast' }).click();
 
   expect(onSelectedChange).toHaveBeenCalledWith([]);
 });
@@ -90,6 +131,17 @@ test('select all stands the filter back on everything', async () => {
   const screen = await render(menu({ selected: ['cursor'], onSelectedChange }));
 
   await screen.getByRole('button', { name: 'Gateways 1 of 4' }).click();
+  await screen.getByRole('button', { name: 'Select all' }).click();
+
+  expect(onSelectedChange).toHaveBeenCalledWith([]);
+});
+
+test('select all reaches every member rather than the ones the search lists', async () => {
+  const onSelectedChange = vi.fn<(next: readonly string[]) => void>();
+  const screen = await render(menu({ selected: ['cursor'], onSelectedChange }));
+
+  await screen.getByRole('button', { name: 'Gateways 1 of 4' }).click();
+  await screen.getByRole('searchbox', { name: 'Search gateways' }).fill('ray');
   await screen.getByRole('button', { name: 'Select all' }).click();
 
   expect(onSelectedChange).toHaveBeenCalledWith([]);
@@ -125,4 +177,12 @@ test('the footer counts what the filter keeps against what it could keep', async
   await screen.getByRole('button', { name: 'Gateways 2 of 4' }).click();
 
   await expect.element(screen.getByText('2 of 4 selected')).toBeVisible();
+});
+
+test('a filter standing on everything counts every member as selected', async () => {
+  const screen = await render(menu());
+
+  await screen.getByRole('button', { name: 'Gateways All' }).click();
+
+  await expect.element(screen.getByText('All 4 selected')).toBeVisible();
 });

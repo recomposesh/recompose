@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { BrandMarkName } from '../../../../shared/ui';
 
 import { Icon, VendorMark } from '../../../../shared/ui';
+import { keptAfterPick, memberKept } from '../../lib/filter-picks';
 
 export type FilterMember = {
   /** The value the filter carries for this member. */
@@ -45,12 +46,13 @@ type FilterMenuProps = {
 
 type MemberPick = (next: readonly string[]) => void;
 
-function withMember(selected: readonly string[], key: string): readonly string[] {
-  return selected.includes(key) ? selected.filter((held) => held !== key) : [...selected, key];
-}
-
-function memberRow(member: FilterMember, selected: readonly string[], onPick: MemberPick) {
-  const checked = selected.includes(member.key);
+function memberRow(
+  member: FilterMember,
+  selected: readonly string[],
+  every: readonly string[],
+  onPick: MemberPick,
+) {
+  const checked = memberKept(selected, member.key);
 
   return (
     <Checkbox.Root
@@ -59,7 +61,7 @@ function memberRow(member: FilterMember, selected: readonly string[], onPick: Me
       className={`flex w-full items-center gap-2.25 px-2.5 py-1.5 text-start text-detail text-ink focus-ring-wide row-hover ${checked ? 'bg-surface-selected' : ''}`}
       key={member.key}
       onCheckedChange={() => {
-        onPick(withMember(selected, member.key));
+        onPick(keptAfterPick(selected, member.key, every));
       }}
     >
       <span className="flex size-3.5 shrink-0 items-center justify-center rounded-chip border border-line-strong bg-surface-card in-data-checked:border-accent in-data-checked:bg-accent">
@@ -103,7 +105,14 @@ function searchField(searchLabel: string, sought: string, onSought: (next: strin
   );
 }
 
-function standingFooter(selected: readonly string[], total: number, onClear: () => void) {
+/**
+ * The count beside the act, and the act that stands the filter back on every member.
+ *
+ * @summary Select all reaches every member the window served rather than the ones the search
+ * happens to list, because a search narrows what a person can see and never what an act means. It
+ * stands the filter on everything, which is the same empty selection the menu opened on.
+ */
+function standingFooter(selected: readonly string[], total: number, onSelectAll: () => void) {
   if (total === 0) {
     return null;
   }
@@ -118,7 +127,7 @@ function standingFooter(selected: readonly string[], total: number, onClear: () 
       <div className="flex items-center justify-between px-2.5">
         <button
           className="rounded-control focus-ring text-detail text-accent-ink"
-          onClick={onClear}
+          onClick={onSelectAll}
           type="button"
         >
           Select all
@@ -162,11 +171,13 @@ function filterTrigger(label: string, selected: readonly string[], total: number
 /**
  * One dimension's members behind a trigger that reads how many of them the view keeps.
  *
- * @summary The filter stands on everything until a member is checked, which is why the trigger
- * reads All rather than a full count: a person narrowing one member at a time never has to undo a
- * selection they never made. Unchecking the last member stands the filter back on everything. A
- * window that served nobody names its own quiet rather than reading as a search that missed, and
- * counts a standing selection the window never served so no trigger can read one of none.
+ * @summary A filter standing on everything keeps every member, so every row reads checked and
+ * letting one go means every other one: the empty selection is the model's only word for
+ * everything, and a menu of blank rows would tell a person the opposite of what the window shows.
+ * The rows toggle against every member the window served rather than the ones the search lists, so
+ * a member a search hides is never dropped from the selection a person narrows. A window that
+ * served nobody names its own quiet rather than reading as a search that missed, and counts a
+ * standing selection the window never served so no trigger can read one of none.
  */
 export function FilterMenu({
   label,
@@ -176,7 +187,7 @@ export function FilterMenu({
   onSelectedChange,
 }: FilterMenuProps) {
   const [sought, setSought] = useState('');
-  const total = new Set([...members.map((member) => member.key), ...selected]).size;
+  const every = [...new Set([...members.map((member) => member.key), ...selected])];
   const looking = sought.trim().toLowerCase();
   const listed = members.filter((member) =>
     `${member.name} ${member.detail ?? ''}`.toLowerCase().includes(looking),
@@ -185,7 +196,7 @@ export function FilterMenu({
 
   return (
     <Popover.Root>
-      {filterTrigger(label, selected, total)}
+      {filterTrigger(label, selected, every.length)}
       <Popover.Portal>
         <Popover.Positioner align="start" sideOffset={6}>
           <Popover.Popup aria-label={`${label} filter`} className="z-40 w-66 menu-surface">
@@ -195,9 +206,9 @@ export function FilterMenu({
                 {`No ${label.toLowerCase()} ${missing}`}
               </p>
             ) : (
-              listed.map((member) => memberRow(member, selected, onSelectedChange))
+              listed.map((member) => memberRow(member, selected, every, onSelectedChange))
             )}
-            {standingFooter(selected, total, () => {
+            {standingFooter(selected, every.length, () => {
               onSelectedChange([]);
             })}
           </Popover.Popup>

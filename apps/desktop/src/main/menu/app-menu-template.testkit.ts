@@ -41,27 +41,18 @@ function onboardingHandlers(
   };
 }
 
-export function recordingHandlers(taken: string[]): AppMenuHandlers {
+function surfaceHandlers(
+  taken: string[],
+): Pick<
+  AppMenuHandlers,
+  'onOpenSettings' | 'onNewGateway' | 'onOpenGateways' | 'onOpenProviders' | 'onOpenUsage'
+> {
   return {
-    ...onboardingHandlers(taken),
     onOpenSettings: () => {
       taken.push('open-settings');
     },
     onNewGateway: () => {
       taken.push('new-gateway');
-    },
-    onToggleChecklist: (shown) => {
-      taken.push(`show-checklist ${String(shown)}`);
-    },
-
-    onCanvasCommand: (command) => {
-      taken.push(command);
-    },
-    onUsageCommand: (command) => {
-      taken.push(command);
-    },
-    onViewCommand: (command) => {
-      taken.push(command);
     },
     onOpenGateways: () => {
       taken.push('open-gateways');
@@ -72,6 +63,29 @@ export function recordingHandlers(taken: string[]): AppMenuHandlers {
     onOpenUsage: () => {
       taken.push('open-usage');
     },
+  };
+}
+
+function commandHandlers(
+  taken: string[],
+): Pick<AppMenuHandlers, 'onCanvasCommand' | 'onUsageCommand' | 'onViewCommand'> {
+  return {
+    onCanvasCommand: (command) => {
+      taken.push(command);
+    },
+    onUsageCommand: (command) => {
+      taken.push(command);
+    },
+    onViewCommand: (command) => {
+      taken.push(command);
+    },
+  };
+}
+
+function gatewayLifecycleHandlers(
+  taken: string[],
+): Pick<AppMenuHandlers, 'onStartGateway' | 'onStopGateway' | 'onRestartGateway'> {
+  return {
     onStartGateway: (slug) => {
       taken.push(`start ${slug}`);
     },
@@ -81,6 +95,16 @@ export function recordingHandlers(taken: string[]): AppMenuHandlers {
     onRestartGateway: (slug) => {
       taken.push(`restart ${slug}`);
     },
+  };
+}
+
+function helpHandlers(
+  taken: string[],
+): Pick<
+  AppMenuHandlers,
+  'onOpenHelpSite' | 'onOpenConfigFolder' | 'onReportIssue' | 'onCheckForUpdates'
+> {
+  return {
     onOpenHelpSite: () => {
       taken.push('help-site');
     },
@@ -90,6 +114,19 @@ export function recordingHandlers(taken: string[]): AppMenuHandlers {
     onReportIssue: () => {
       taken.push('report-issue');
     },
+    onCheckForUpdates: () => {
+      taken.push('check-for-updates');
+    },
+  };
+}
+
+export function recordingHandlers(taken: string[]): AppMenuHandlers {
+  return {
+    ...onboardingHandlers(taken),
+    ...surfaceHandlers(taken),
+    ...commandHandlers(taken),
+    ...gatewayLifecycleHandlers(taken),
+    ...helpHandlers(taken),
   };
 }
 
@@ -112,6 +149,7 @@ export const atHome: AppMenuView = {
   usageRange: '24h',
   usageMetric: 'requests',
   usageRetentionDays: 30,
+  updateCheck: 'idle',
   development: true,
 };
 

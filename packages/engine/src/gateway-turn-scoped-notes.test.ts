@@ -16,7 +16,7 @@ function rowsNoted(noting: () => void): number {
 describe('a note taken outside any serving turn', () => {
   test('a rejection belongs to no gateway, so it leaves no row', () => {
     const noted = rowsNoted(() => {
-      noteGatewayRow(401, 'The gateway "Codex" requires an API key.');
+      noteGatewayRow({ status: 401, failure: 'The gateway "Codex" requires an API key.' });
     });
 
     expect(noted).toBe(0);

@@ -1,14 +1,8 @@
 import type { SubscriptionAccountView } from '@recompose/contracts';
 import type { ReactNode } from 'react';
 
-import { toolBacked } from '@recompose/contracts';
-
 import { subscriptionMarkFor, subscriptionTitleFor } from '../../../../entities/provider';
-import {
-  useActivateSubscription,
-  useForgetSubscription,
-  useRestoreSubscription,
-} from '../../../../shared/api';
+import { useForgetSubscription, useRestoreSubscription } from '../../../../shared/api';
 import { Badge, BrandMark, CommandLine, OverflowMenu, StatusChip } from '../../../../shared/ui';
 import { AccountRow } from '../account-row/account-row';
 
@@ -19,7 +13,7 @@ type SubscriptionAccountRowProps = {
    * The line that points a person's own shell at whichever account this plan stands on.
    *
    * @summary Absent for a plan no tool signs into, because there is no config home to point and so
-   * nothing an account being the plan's chosen one would change.
+   * no terminal reach for the row to report.
    */
   shellSetupLine?: string | undefined;
 };
@@ -33,23 +27,9 @@ type RowActions = {
   view: SubscriptionAccountView;
   onSignInAgain: () => void;
   onRemove: () => void;
-  onUseThis: () => void;
 };
 
-/**
- * Whether this account can be made the one its plan's own tool reaches.
- *
- * @summary A gateway spends whichever account its canvas names, so this act never moves traffic.
- * What it moves is the config home the plan's tool runs against, which is why a plan with no such
- * tool never offers it: there would be nothing to point, and a chosen account would read as a
- * promise the app cannot keep. The one already chosen has nothing to take over, and a lapsed one
- * has nothing behind it to answer with.
- */
-function couldTakeOver(view: SubscriptionAccountView): boolean {
-  return !view.active && view.standing === 'connected' && toolBacked(view.provider);
-}
-
-function quieterActions({ view, onSignInAgain, onRemove, onUseThis }: RowActions) {
+function quieterActions({ view, onSignInAgain, onRemove }: RowActions) {
   const signInAgain =
     view.standing === 'lapsed' || view.provenance === 'machine'
       ? []
@@ -62,19 +42,7 @@ function quieterActions({ view, onSignInAgain, onRemove, onUseThis }: RowActions
           },
         ];
 
-  const useThis = couldTakeOver(view)
-    ? [
-        {
-          label: 'Use this account',
-          icon: 'check' as const,
-          tone: 'accent' as const,
-          onSelect: onUseThis,
-        },
-      ]
-    : [];
-
   return [
-    ...useThis,
     ...signInAgain,
     { label: 'Remove', icon: 'trash' as const, tone: 'danger' as const, onSelect: onRemove },
   ];
@@ -117,12 +85,11 @@ function accountTitle(view: SubscriptionAccountView): ReactNode {
 }
 
 /**
- * What being the plan's chosen account amounts to, said where the choosing happens.
+ * Which account a person's own terminal reaches, said on the row that answers for it.
  *
- * @summary Architecture Decision Record 0069 asks the interface to say this out loud, because an
- * act whose whole effect is a symlink nobody sees reads as an act that did nothing. It stands only
- * on the chosen row, so which account a person's terminal reaches is read at a glance rather than
- * hunted for behind a badge.
+ * @summary Architecture Decision Record 0069 asks the interface to say this out loud, because a
+ * pointer whose whole shape is a symlink nobody sees is otherwise invisible. It stands on that one
+ * row alone, so the answer is read at a glance rather than hunted for behind a badge.
  */
 function terminalReach(
   view: SubscriptionAccountView,
@@ -168,16 +135,15 @@ function accountIdentity(view: SubscriptionAccountView, refusal: string | undefi
  * it signed in as, because the connect step already taught what the account serves. A lapse puts
  * its remedy on the row rather than behind the overflow, so the standing and the way out of it
  * are read in one glance. The overflow and a right-click on the row read one act list, which is
- * signing in again, choosing this account for the plan, and removal, each standing only where the
- * account's own standing calls for it. The plan's
- * chosen account carries one line more, which is the only place the choosing shows.
+ * signing in again and removal, each standing only where the account's own standing calls for it.
+ * The account a plan's tool currently runs as carries one line more, which reports the pointer
+ * rather than offering to move it.
  */
 export function SubscriptionAccountRow({ view, shellSetupLine }: SubscriptionAccountRowProps) {
   const restore = useRestoreSubscription();
   const forget = useForgetSubscription();
-  const useThis = useActivateSubscription();
 
-  const refusal = firstRefusal([restore.refusal, forget.refusal, useThis.refusal]);
+  const refusal = firstRefusal([restore.refusal, forget.refusal]);
 
   const signInAgain = () => {
     restore.mutate({ id: view.id });
@@ -188,9 +154,6 @@ export function SubscriptionAccountRow({ view, shellSetupLine }: SubscriptionAcc
     onSignInAgain: signInAgain,
     onRemove: () => {
       forget.mutate({ id: view.id });
-    },
-    onUseThis: () => {
-      useThis.mutate({ id: view.id });
     },
   });
 

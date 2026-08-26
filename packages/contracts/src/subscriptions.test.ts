@@ -4,6 +4,7 @@ import {
   browserSignInProviderIdSchema,
   deviceFlowProviderIdSchema,
   signsInByDeviceCode,
+  signsInBothWays,
   signsInThroughTheBrowser,
   subscriptionAccountViewSchema,
   subscriptionProductNameOf,
@@ -66,16 +67,12 @@ describe('the providers a subscription can name', () => {
     }
   });
 
-  test('the plan that redirects a browser is the one the browser channel takes', () => {
-    expect(browserSignInProviderIdSchema.options).toEqual(['antigravity']);
-    expect(signsInThroughTheBrowser('antigravity')).toBe(true);
-    expect(signsInByDeviceCode('antigravity')).toBe(false);
-  });
+  test('the plans that redirect a browser are the ones the browser channel takes', () => {
+    expect(browserSignInProviderIdSchema.options).toEqual(['antigravity', 'openai']);
 
-  test('a plan whose own tool signs it in answers to neither channel', () => {
-    for (const provider of ['anthropic', 'openai'] as const) {
+    for (const provider of ['antigravity', 'openai'] as const) {
+      expect(signsInThroughTheBrowser(provider), provider).toBe(true);
       expect(signsInByDeviceCode(provider), provider).toBe(false);
-      expect(signsInThroughTheBrowser(provider), provider).toBe(false);
     }
   });
 
@@ -86,6 +83,26 @@ describe('the providers a subscription can name', () => {
 
   test('a provider no tool signs in is refused', () => {
     expect(() => subscriptionProviderIdSchema.parse('openrouter')).toThrow();
+  });
+});
+
+describe('how many ways in a plan offers', () => {
+  test('Codex answers both to the tool on the machine and to the browser channel', () => {
+    expect(toolBacked('openai')).toBe(true);
+    expect(signsInThroughTheBrowser('openai')).toBe(true);
+    expect(signsInBothWays('openai')).toBe(true);
+  });
+
+  test('a plan reached only one way answers no to the question of two', () => {
+    for (const provider of ['anthropic', 'antigravity', 'kimi', 'copilot'] as const) {
+      expect(signsInBothWays(provider), provider).toBe(false);
+    }
+  });
+
+  test('Claude answers to its own tool alone, and to neither channel this app runs', () => {
+    expect(toolBacked('anthropic')).toBe(true);
+    expect(signsInByDeviceCode('anthropic')).toBe(false);
+    expect(signsInThroughTheBrowser('anthropic')).toBe(false);
   });
 });
 

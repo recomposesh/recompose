@@ -86,10 +86,10 @@ Claude Code ──▶ http://127.0.0.1:8397
      [ Claude · sonnet ]  [ OpenAI · gpt-5 ]
 ```
 
-Claude Code points at the gateway through an environment variable:
+Claude Code points at the gateway through an environment variable in front of the command:
 
 ```sh
-export ANTHROPIC_BASE_URL=http://127.0.0.1:8397
+ANTHROPIC_BASE_URL="http://127.0.0.1:8397" claude
 ```
 
 Every gateway carries a connect sheet that writes the exact setup for each client it knows. The sheet covers terminal agents such as Codex CLI and opencode, editors such as Cursor and Cline, desktop apps, and a plain curl for everything else.

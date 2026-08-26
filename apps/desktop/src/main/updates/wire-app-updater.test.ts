@@ -1,47 +1,8 @@
-import type { UpdateState } from '@recompose/contracts';
-
-import { EventEmitter } from 'node:events';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { updateLogFor, type UpdaterLogger } from './update-log';
+import { updateLogFor } from './update-log';
 import { wireAppUpdater } from './wire-app-updater';
-
-class FakeUpdater extends EventEmitter {
-  autoInstallOnAppQuit = false;
-
-  logger: UpdaterLogger | null = null;
-
-  checks = 0;
-
-  installs = 0;
-
-  answerCheck: () => Promise<unknown> = async () => Promise.resolve(null);
-
-  async checkForUpdates(): Promise<unknown> {
-    this.checks += 1;
-
-    return this.answerCheck();
-  }
-
-  quitAndInstall(): void {
-    this.installs += 1;
-  }
-}
-
-function wired(intervalMs = 60_000) {
-  const updater = new FakeUpdater();
-  const pushed: UpdateState[] = [];
-  const wiring = wireAppUpdater({
-    updater,
-    log: updateLogFor('https://releases.example'),
-    push: (state) => {
-      pushed.push(state);
-    },
-    intervalMs,
-  });
-
-  return { updater, pushed, wiring };
-}
+import { FakeUpdater, wired } from './wire-app-updater.testkit';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -100,60 +61,6 @@ describe('wiring the updater', () => {
   });
 });
 
-describe('the held state follows the fold and pushes on movement alone', () => {
-  test('an announced then landed version pushes downloading then ready', () => {
-    const { updater, pushed, wiring } = wired();
-
-    updater.emit('update-available', { version: '0.4.0' });
-    updater.emit('update-downloaded', { version: '0.4.0' });
-    updater.emit('update-available', { version: '0.5.0' });
-
-    expect(pushed).toEqual([
-      { standing: 'downloading', version: '0.4.0' },
-      { standing: 'ready', version: '0.4.0' },
-    ]);
-    expect(wiring.state()).toEqual({ standing: 'ready', version: '0.4.0' });
-  });
-});
-
-describe('what pushes and what stays quiet', () => {
-  test('a re-announced version pushes nothing, and a newer one pushes again', () => {
-    const { updater, pushed } = wired();
-
-    updater.emit('update-available', { version: '0.4.0' });
-    updater.emit('update-available', { version: '0.4.0' });
-    updater.emit('update-available', { version: '0.5.0' });
-
-    expect(pushed).toEqual([
-      { standing: 'downloading', version: '0.4.0' },
-      { standing: 'downloading', version: '0.5.0' },
-    ]);
-  });
-
-  test('a failure mid-download settles the card back to quiet', () => {
-    const { updater, pushed } = wired();
-
-    updater.emit('update-available', { version: '0.4.0' });
-    updater.emit('error', new Error('the feed went away'));
-
-    expect(pushed).toEqual([{ standing: 'downloading', version: '0.4.0' }, { standing: 'quiet' }]);
-  });
-
-  test('a cancelled download settles back, and a later find downloads again', () => {
-    const { updater, pushed } = wired();
-
-    updater.emit('update-available', { version: '0.4.0' });
-    updater.emit('update-cancelled', { version: '0.4.0' });
-    updater.emit('update-available', { version: '0.4.0' });
-
-    expect(pushed).toEqual([
-      { standing: 'downloading', version: '0.4.0' },
-      { standing: 'quiet' },
-      { standing: 'downloading', version: '0.4.0' },
-    ]);
-  });
-});
-
 describe('a check the boundary refuses without an Error', () => {
   test('still reaches the log whole', async () => {
     const lines: string[] = [];
@@ -184,21 +91,6 @@ describe('a check the boundary refuses without an Error', () => {
   });
 });
 
-describe('the restart', () => {
-  test('installs only while ready', () => {
-    const { updater, wiring } = wired();
-
-    expect(wiring.restart()).toBe(false);
-    expect(updater.installs).toBe(0);
-
-    updater.emit('update-available', { version: '0.4.0' });
-    updater.emit('update-downloaded', { version: '0.4.0' });
-
-    expect(wiring.restart()).toBe(true);
-    expect(updater.installs).toBe(1);
-  });
-});
-
 describe('the interval', () => {
   test('keeps checking until ready holds, then stops', () => {
     vi.useFakeTimers();
@@ -214,6 +106,22 @@ describe('the interval', () => {
     vi.advanceTimersByTime(5_000);
 
     expect(updater.checks).toBe(4);
+  });
+
+  test('holds while a check the person asked for stands, and resumes once it answers', () => {
+    vi.useFakeTimers();
+
+    const { updater, wiring } = wired(1_000);
+
+    wiring.checkNow();
+    vi.advanceTimersByTime(3_000);
+
+    expect(updater.checks).toBe(2);
+
+    updater.emit('update-not-available', { version: '0.3.0' });
+    vi.advanceTimersByTime(1_000);
+
+    expect(updater.checks).toBe(3);
   });
 
   test('disposal clears it', () => {

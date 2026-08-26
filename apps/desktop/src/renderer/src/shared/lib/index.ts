@@ -46,6 +46,7 @@ export {
 } from './visibility/sidebar-visibility';
 export {
   bandAlignmentFor,
+  bandLeadInsetFor,
   barLeadInsetFor,
   barStandsFor,
   barTailInsetFor,

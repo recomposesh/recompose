@@ -22,11 +22,13 @@ function portIn(address: string): string {
 }
 
 /**
- * The one knob a moved server needs.
+ * The one knob a server that answers somewhere else needs.
  *
- * @summary A server's port is where it answers today rather than a fact about the row, so moving
+ * @summary A server's port is where it answers today rather than a fact about the row, so changing
  * it keeps the row, its name, and everything pointed at it. The field opens on the port the row
- * answers at now, because a move is almost always a small edit to a number a person already knows.
+ * answers at now, because this is almost always a small edit to a number a person already knows.
+ * The heading and the confirming act repeat the words the overflow used, so the dialog reads as
+ * the one that was asked for.
  *
  * Only the port is asked for. The host stays loopback, minted by main the same way an add mints
  * it, so no stored row can ever name anything but this machine.
@@ -43,8 +45,8 @@ export function MoveRuntimeDialog({
 
   return (
     <ConsequenceDialog
-      confirmLabel="Move"
-      heading={`Move ${name}`}
+      confirmLabel="Change port"
+      heading={`Change ${name}'s port`}
       onCancel={onCancel}
       onConfirm={() => {
         if (settled) {

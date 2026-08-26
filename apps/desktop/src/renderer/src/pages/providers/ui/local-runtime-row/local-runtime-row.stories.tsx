@@ -92,24 +92,24 @@ export const Acts = meta.story({
 
     await expect(actions.map((action) => action.textContent)).toEqual([
       'Check again',
-      'Move to another port',
+      'Change port',
       'Remove',
     ]);
   },
 });
 
 /**
- * The move opens on the port the row answers at now, and closes once it is asked for.
+ * The port change opens on the port the row answers at now, and closes once it is asked for.
  *
- * @summary The row reads its address from a prop, so what the move did to the registry shows on
+ * @summary The row reads its address from a prop, so what the change did to the registry shows on
  * the surface that lists rows rather than here. What belongs here is that the act opens the right
- * dialog, prefilled, and that asking for the move leaves no refusal behind.
+ * dialog, prefilled, and that asking for the change leaves no refusal behind.
  */
-export const MovedToAnotherPort = meta.story({
+export const PortChanged = meta.story({
   parameters: { bridge: { accounts: heldRegistry } },
   play: async ({ canvas }) => {
     await userEvent.click(await canvas.findByRole('button', { name: 'Actions for Ollama' }));
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Move to another port' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Change port' }));
 
     const port = await screen.findByRole('textbox', { name: 'Port' });
 
@@ -117,7 +117,7 @@ export const MovedToAnotherPort = meta.story({
 
     await userEvent.clear(port);
     await userEvent.type(port, '11435');
-    await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Change port' }));
 
     await waitFor(() => {
       void expect(screen.queryByRole('textbox', { name: 'Port' })).toBeNull();
