@@ -13,7 +13,7 @@ Feature: What the permanent else branch catches, and what it never does
     When a request arrives under "fast"
     Then no classification call leaves the machine
     And no child of the router receives the request
-    And the caller reads a refusal saying the judge reached no verdict
+    And the caller reads a refusal saying the judge stands cooling
 
   Scenario: A judge that declines to classify lands the request on else
     Given the judge declines to classify any request

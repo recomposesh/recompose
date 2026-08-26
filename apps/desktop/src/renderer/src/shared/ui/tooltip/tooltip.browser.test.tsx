@@ -69,7 +69,7 @@ test('the reading never takes focus from the control it explains', async () => {
   await expect.element(page.getByRole('button', theControl)).toHaveFocus();
 });
 
-test('a control that waits on something unbuilt names it, in the reading and out loud', async () => {
+test('a control that waits on something not built yet names it, in the reading and out loud', async () => {
   await render(
     <Tooltip label="Docs" note="Waits on the guide.">
       <button type="button">

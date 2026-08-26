@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { expect } from '@playwright/test';
 import { declineWordFor } from '@recompose/contracts';
 
@@ -107,11 +109,30 @@ Then('no child of the router receives the request', ({ scriptedProvider }) => {
   expect(scriptedProvider.modelsAsked()).toEqual([]);
 });
 
-Then('the caller reads a refusal saying the judge reached no verdict', ({ page }) => {
+/**
+ * The sentence a router hands a caller when nothing judged the request.
+ *
+ * @summary Every such refusal wears the same status and frame, and parts company over which
+ * trouble it names, so the shared half is asserted here and each scenario pins its own words.
+ */
+function refusalNamingTheTrouble(page: Page): string {
   const answer = lastAnswerFrom(page, focusedGateway(page));
 
   expect(answer.status).toBe(NO_VERDICT);
-  expect(refusalSentence(answer.body)).toContain('got no verdict from its judge');
+
+  return refusalSentence(answer.body);
+}
+
+Then('the caller reads a refusal saying the judge ran past its timeout', ({ page }) => {
+  expect(refusalNamingTheTrouble(page)).toContain(
+    'asked its judge and nothing came back within the judge timeout',
+  );
+});
+
+Then('the caller reads a refusal saying the judge stands cooling', ({ page }) => {
+  expect(refusalNamingTheTrouble(page)).toContain(
+    'did not ask its judge, which stands cooling after failing an earlier request',
+  );
 });
 
 Then("the classification call carries each branch's label beside its rule text", ({ judge }) => {

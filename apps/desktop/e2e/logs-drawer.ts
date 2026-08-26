@@ -24,7 +24,7 @@ function logsDrawer(page: Page): Locator {
 }
 
 export function drawerHeader(page: Page): Locator {
-  return logsDrawer(page).locator('header');
+  return logsDrawer(page).locator(':scope > header');
 }
 
 /** The drawer's own heading, which names the canvas subject currently scoping the rows. */

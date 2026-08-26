@@ -26,8 +26,12 @@ export async function signInThroughTheTool(page: Page, provider: string): Promis
   await openProviderWays(page, provider);
 
   const act = catalog(page)
-    .getByRole('button', { name: 'Sign in with a different account' })
-    .or(catalog(page).getByRole('button', { name: `Sign in to ${provider}` }));
+    .getByRole('button', { exact: true, name: 'Sign in with a different account' })
+    .or(
+      catalog(page).getByRole('button', {
+        name: new RegExp(`^Sign in to ${provider}$`, 'iu'),
+      }),
+    );
 
   await expect(act).toBeEnabled();
   await act.click();

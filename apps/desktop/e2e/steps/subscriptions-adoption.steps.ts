@@ -22,7 +22,7 @@ When('the maintainer connects the account the machine holds', async ({ page }) =
 
 Then('signing in with a different account stays available', async ({ page }) => {
   await expect(
-    catalog(page).getByRole('button', { name: 'Sign in with a different account' }),
+    catalog(page).getByRole('button', { exact: true, name: 'Sign in with a different account' }),
   ).toBeEnabled();
 });
 
