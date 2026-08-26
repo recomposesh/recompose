@@ -1,14 +1,7 @@
 import { mkdir, rm } from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import {
-  anOpenStore,
-  aStoreFile,
-  eventually,
-  NOW,
-  served,
-  storedLedger,
-} from './usage-store.testkit';
+import { anOpenStore, aStoreFile, NOW, served, storedLedger } from './usage-store.testkit';
 
 const HOUR = 3_600_000;
 
@@ -30,15 +23,22 @@ afterEach(() => {
 });
 
 /**
- * The sentence naming this spec's own file, out of everything the console heard.
+ * The refusal this spec is waiting on, settled the moment the console hears it.
  *
- * @summary Another store left standing by an earlier test keeps retrying on the same fake clock, so
- * the first sentence the spy catches is not always the refusal this spec caused. The wait advances
- * the fake clock rather than spinning, because a real write has to reach the disk and refuse before
- * anything is said, and a spin under fake timers never lets it.
+ * @summary Two things made polling wrong here. Another store left standing by an earlier test keeps
+ * retrying on the same fake clock, so the first sentence a spy catches is not always this spec's,
+ * and a real write has to reach the disk and be refused before anything is said at all, which a
+ * loaded runner takes longer over than any fixed number of turns allows. Awaiting the sentence
+ * gives it the whole test budget and names the file it must carry.
  */
-function namingThisFile(said: readonly string[], file: string): string | undefined {
-  return said.find((sentence) => sentence.includes(file));
+async function refusalHeardFor(file: string): Promise<string> {
+  return new Promise<string>((settle) => {
+    vi.spyOn(console, 'error').mockImplementation((sentence: unknown) => {
+      if (typeof sentence === 'string' && sentence.includes(file)) {
+        settle(sentence);
+      }
+    });
+  });
 }
 
 describe('a write the disk refused', () => {
@@ -56,33 +56,14 @@ describe('a write the disk refused', () => {
   });
 
   test('a refused write is said out loud rather than swallowed', async () => {
-    const said: string[] = [];
-    const spoken = vi.spyOn(console, 'error').mockImplementation((sentence: unknown) => {
-      if (typeof sentence === 'string') {
-        said.push(sentence);
-      }
-    });
     const file = await aStoreFile();
+    const spoken = refusalHeardFor(file);
     const store = await anOpenStore(file);
 
     await blocking(file);
     store.accrue(served('one', NOW - 2 * HOUR));
     await vi.advanceTimersByTimeAsync(QUIET_MS);
 
-    const reported = await eventually(async () => {
-      await vi.advanceTimersByTimeAsync(10);
-
-      const mine = namingThisFile(said, file);
-
-      if (mine === undefined) {
-        throw new Error('the refused write has not been reported yet');
-      }
-
-      return mine;
-    });
-
-    expect(reported).toContain(file);
-
-    spoken.mockRestore();
+    await expect(spoken).resolves.toContain(file);
   });
 });
