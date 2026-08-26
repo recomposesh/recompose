@@ -10,14 +10,16 @@ const meta = preview.meta({
   args: { client: clientNamed('claude-code'), facts: servingGateway, answered: 0 },
 });
 
-/** The pane a person lands on: the two variables Claude Code reads, written from this gateway. */
+/** The pane a person lands on: one command carrying what Claude Code reads from this gateway. */
 export const ClaudeCode = meta.story({
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole('heading', { name: 'Claude Code' })).toBeVisible();
-    await expect(
-      await canvas.findByText(/export ANTHROPIC_BASE_URL="http:\/\/127.0.0.1:8397"/),
-    ).toBeVisible();
-    await expect(await canvas.findByText(/export ANTHROPIC_MODEL="creative"/)).toBeVisible();
+
+    const block = await canvas.findByText(/ANTHROPIC_BASE_URL="http:\/\/127.0.0.1:8397"/);
+
+    await expect(block).toBeVisible();
+    await expect(block).toHaveTextContent(/ANTHROPIC_MODEL="creative"/);
+    await expect(block).not.toHaveTextContent(/export /);
   },
 });
 

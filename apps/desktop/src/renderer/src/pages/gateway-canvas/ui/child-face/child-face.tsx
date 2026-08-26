@@ -110,7 +110,7 @@ function ruleLine(child: RouterChild, onEditRule: (() => void) | undefined): Rea
 
   return (
     <button
-      className={`${RULE_LINE_FACE} focus-ring`}
+      className={`${RULE_LINE_FACE} focus-ring hover:bg-surface-hover active:bg-surface-pressed`}
       data-rule-preview=""
       onClick={onEditRule}
       type="button"

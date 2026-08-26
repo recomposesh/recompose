@@ -171,6 +171,6 @@ export function applyModelPolicy(
 
   return {
     standing: 'listed',
-    modelIds: listing.modelIds.filter((model) => !excluded.has(model.trim().toLowerCase())),
+    models: listing.models.filter((model) => !excluded.has(model.id.trim().toLowerCase())),
   };
 }

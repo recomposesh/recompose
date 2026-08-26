@@ -54,6 +54,7 @@ async function conducted(): Promise<Conducted> {
     onOpenHelpSite: () => undefined,
     onOpenConfigFolder: () => undefined,
     onReportIssue: () => undefined,
+    onCheckForUpdates: () => undefined,
     development: true,
     settingsFile: () => settingsFile,
     onCorrupt: () => undefined,

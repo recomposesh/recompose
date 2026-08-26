@@ -27,11 +27,24 @@ export type ProviderAttempt = {
   tokens?: number | undefined;
   usage?: ProviderUsage | undefined;
   failure?: string | undefined;
+  upstreamMessage?: string | undefined;
 };
 
 type AttemptMeasure = { durationMs: number; tokens: number; usage?: ProviderUsage };
 
-export type AttemptInFlight = { answered: (status: number, measure?: AttemptMeasure) => void };
+/**
+ * The two sentences an attempt can carry, which never come from the same author.
+ *
+ * @summary `failure` is the gateway's own reading of what became of the attempt, and
+ * `upstreamMessage` is the provider explaining its refusal in its own words. Keeping them apart is
+ * what lets a row print the gateway's sentence where a reader expects one and still show a person
+ * what the provider actually said.
+ */
+type AttemptWords = { failure?: string | undefined; upstreamMessage?: string | undefined };
+
+export type AttemptInFlight = {
+  answered: (status: number, measure?: AttemptMeasure, upstreamMessage?: string) => void;
+};
 
 type AttemptReader = (attempt: ProviderAttempt) => void;
 
@@ -43,7 +56,7 @@ function attemptRowOf(
   opening: AttemptOpening,
   status: number,
   measure?: AttemptMeasure,
-  failure?: string,
+  words: AttemptWords = {},
 ): ProviderAttempt {
   return {
     id: opening.id,
@@ -55,7 +68,8 @@ function attemptRowOf(
     method: opening.request.method,
     status,
     ...measure,
-    ...(failure === undefined ? {} : { failure }),
+    ...(words.failure === undefined ? {} : { failure: words.failure }),
+    ...(words.upstreamMessage === undefined ? {} : { upstreamMessage: words.upstreamMessage }),
   };
 }
 
@@ -121,11 +135,11 @@ export function attemptFor(
   let interrupted = false;
   let stopListeningForDisconnect: () => void = () => undefined;
 
-  const tell = (status: number, measure?: AttemptMeasure, failure?: string) => {
+  const tell = (status: number, measure?: AttemptMeasure, words?: AttemptWords) => {
     turn.rowPublished = true;
     tellingReaders(
       attemptReaders,
-      () => attemptRowOf(opening, status, measure, failure),
+      () => attemptRowOf(opening, status, measure, words),
       'request row',
     );
   };
@@ -139,12 +153,12 @@ export function attemptFor(
     tell(
       CLIENT_DISCONNECTED_STATUS,
       { durationMs: Math.max(0, wallClock() - opening.at), tokens: 0 },
-      CLIENT_DISCONNECTED_FAILURE,
+      { failure: CLIENT_DISCONNECTED_FAILURE },
     );
   });
 
   return {
-    answered: (status, measure) => {
+    answered: (status, measure, upstreamMessage) => {
       if (interrupted) {
         return;
       }
@@ -154,7 +168,7 @@ export function attemptFor(
         stopListeningForDisconnect();
       }
 
-      tell(status, measure);
+      tell(status, measure, { upstreamMessage });
     },
   };
 }

@@ -1,8 +1,8 @@
 Feature: No prompt or answer ever reaches the surfaces
 
   The footer and the drawer read traffic shape only. Request and response
-  bodies never ride along, and a failure explains itself from the status
-  alone.
+  bodies never ride along. A refused request quotes the one sentence its
+  provider wrote to explain the refusal, and nothing else the provider sent.
 
   Background:
     Given a running gateway "relay" serving the virtual model "creative"
@@ -13,8 +13,9 @@ Feature: No prompt or answer ever reaches the surfaces
     When the person reads the drawer and its rows
     Then "my secret plan" appears nowhere
 
-  Scenario: A failure explains itself from the status alone
-    Given the provider refused a request with status 429 and the answer text "quota exceeded for acme"
-    When the person reads the failed row
-    Then "quota exceeded for acme" appears nowhere
-    And the row carries status 429
+  Scenario: A refusal carries the provider's sentence and nothing around it
+    Given the provider refused the prompt "my secret plan" with status 429, saying "quota exceeded for acme"
+    When the person reads the failed request beside the run
+    Then the reading quotes "quota exceeded for acme"
+    And "my secret plan" appears nowhere
+    And "invalid_request_error" appears nowhere

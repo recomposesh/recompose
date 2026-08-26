@@ -262,6 +262,7 @@ pathspecs
 pgid
 pierrec
 pipx
+PKCE
 pluginhost
 pluginstore
 precheck

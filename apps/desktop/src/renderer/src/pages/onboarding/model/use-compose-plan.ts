@@ -40,10 +40,10 @@ export function useComposePlan(
 
   const { data: port } = useQuery(offeredPortQueryOptions);
   const gatewayName = useFirstGatewayName();
-  const listings = useServedModels(recorded);
+  const { served: listings } = useServedModels(recorded);
 
   const served = recorded.map((source, index) => {
-    const model = pickServedModel(listings[index] ?? []);
+    const model = pickServedModel(listings[index]?.models ?? []);
 
     return {
       kind: kindOf(source),

@@ -143,11 +143,12 @@ export function signsInByDeviceCode(
 /**
  * The plans recompose signs into by handing the account's own browser an address.
  *
- * @summary Google redirects rather than answering, so this sign-in is one act with nothing to show
- * in between. It stays a set rather than a single word because the channel it names is shaped by
- * the redirect, not by the one vendor that currently uses it.
+ * @summary Both vendors redirect rather than answering, so this sign-in is one act with nothing to
+ * show in between. Codex stands here as well as in the tool table, because OpenAI ships the client
+ * that runs this flow as open source under a public identifier, which is what lets a plan be added
+ * on a machine carrying no Codex at all. Anthropic stays out of it, by ADR 0069 and ADR 0204.
  */
-export const browserSignInProviderIdSchema = z.enum(['antigravity']);
+export const browserSignInProviderIdSchema = z.enum(['antigravity', 'openai']);
 
 export type BrowserSignInProviderId = z.infer<typeof browserSignInProviderIdSchema>;
 
@@ -155,6 +156,19 @@ export function signsInThroughTheBrowser(
   provider: SubscriptionProviderId,
 ): provider is BrowserSignInProviderId {
   return browserSignInProviderIdSchema.safeParse(provider).success;
+}
+
+/**
+ * A plan a tool on the machine signs into and recompose signs into as well.
+ *
+ * @summary The intersection is computed rather than listed, so a plan can only stand here by
+ * standing in both tables, and a screen offering two ways can never offer one that does not exist.
+ * Reach for it wherever a surface has to show both ways at once and say which is which.
+ */
+export type BothWaysProviderId = ToolBackedProviderId & BrowserSignInProviderId;
+
+export function signsInBothWays(provider: SubscriptionProviderId): provider is BothWaysProviderId {
+  return toolBacked(provider) && signsInThroughTheBrowser(provider);
 }
 
 export const subscriptionStandingSchema = z.enum(['connected', 'lapsed']);

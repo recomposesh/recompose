@@ -107,6 +107,7 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'engine:stop': refuses,
     'engine:states': refuses,
     'engine:replay-logs': refuses,
+    'engine:replay-traffic': refuses,
     'usage:report': refuses,
     'usage:quota-windows': refuses,
     'usage:balances': refuses,
@@ -124,6 +125,23 @@ export function handlersWith(overrides: Partial<IpcHandlers>): IpcHandlers {
     'subscriptions:detect': refuses,
     'subscriptions:adopt': refuses,
     ...overrides,
+  };
+}
+
+type EngineChannels = Pick<
+  IpcHandlers,
+  'engine:start' | 'engine:stop' | 'engine:states' | 'engine:replay-logs' | 'engine:replay-traffic'
+>;
+
+function succeedingEngine(): EngineChannels {
+  const nothing = async () => Promise.resolve({ ok: true as const, value: undefined });
+
+  return {
+    'engine:start': async () => Promise.resolve({ ok: true, value: { status: 'running' } }),
+    'engine:stop': async () => Promise.resolve({ ok: true, value: { status: 'stopped' } }),
+    'engine:states': async () => Promise.resolve({ ok: true, value: {} }),
+    'engine:replay-logs': nothing,
+    'engine:replay-traffic': nothing,
   };
 }
 
@@ -165,10 +183,7 @@ export function alwaysSucceedingHandlers(): IpcHandlers {
     'system:logs-drawer': nothing,
     'system:surface-toggles': nothing,
     'gateways:offer-port': async () => Promise.resolve({ ok: true, value: 51234 }),
-    'engine:start': async () => Promise.resolve({ ok: true, value: { status: 'running' } }),
-    'engine:stop': async () => Promise.resolve({ ok: true, value: { status: 'stopped' } }),
-    'engine:states': async () => Promise.resolve({ ok: true, value: {} }),
-    'engine:replay-logs': nothing,
+    ...succeedingEngine(),
     'usage:report': async () => Promise.resolve({ ok: true, value: quietReport }),
     'usage:quota-windows': noGateways,
     'usage:balances': noGateways,

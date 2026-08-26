@@ -77,6 +77,14 @@ export type EngineHost = {
    * its own act rather than a side effect of starting.
    */
   replayLogs: () => void;
+  /**
+   * Sends the live traffic snapshot to the windows again, for a renderer that just bound.
+   *
+   * @summary The snapshot crosses only when an outcome changes it, so a request already live when
+   * a window binds would keep its cable dark until it settled. Nothing about a window binding is a
+   * gateway starting, so the ask is its own act rather than a side effect of one.
+   */
+  replayTraffic: () => void;
   /** Forgets every in-memory reading owned by a gateway removed from storage. */
   forget?: ((slug: string) => void) | undefined;
   onStatesChanged: (listener: (states: EngineStates) => void) => () => void;

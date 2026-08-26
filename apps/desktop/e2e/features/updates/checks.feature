@@ -1,9 +1,11 @@
 @update-feed
-Feature: A failed update check stays out of the way
+Feature: An update check answers the person who asked for it
 
-  A check that fails leaves the app running and raises nothing. The failure
-  reaches the log with its reason and the feed it tried, so a maintainer can
-  read what happened. Checking starts at launch and repeats on an interval.
+  A check nobody asked for stays out of the way. It leaves the app running,
+  raises nothing, and reaches the log with its reason and the feed it tried.
+  Checking starts at launch and repeats on an interval. A check a person
+  chose answers back instead, a refusal included, in the sidebar rather than
+  a dialog.
 
   Background:
     Given the app runs on a channel it updates itself
@@ -24,3 +26,14 @@ Feature: A failed update check stays out of the way
     Given the app has run past its launch check
     When the check interval elapses
     Then it checks the release feed again
+
+  Scenario: A person checks and hears that nothing newer waits
+    When the person checks for updates
+    Then the app reports the running version is the newest
+
+  @update-feed-refuses
+  Scenario: A refusal the person asked for says so
+    Given the release feed answers with an error
+    When the person checks for updates
+    Then the app reports the check failed and names the reason
+    And the app keeps running and raises no dialog

@@ -109,16 +109,16 @@ async function storeUnderAFreeName(order: BuildOrder, store: GatewayStore): Prom
  * the write the first one opened. Starting a second would store a gateway nobody asked for and
  * leave the name it took behind.
  */
-export function useBuildRun(order: BuildOrder, recorded: number, running: boolean): BuildRun {
-  const [run, setRun] = useState<RunStanding>({ at: recorded, refusal: undefined });
+export function useBuildRun(order: BuildOrder, opensAt: number, running: boolean): BuildRun {
+  const [run, setRun] = useState<RunStanding>({ at: opensAt, refusal: undefined });
   const [built, setBuilt] = useState<GatewayConfig | undefined>(undefined);
   const settled = built !== undefined;
   const [attempt, setAttempt] = useState(0);
   const save = useSaveGateway();
-  const asked = useRef({ order, recorded, save });
+  const asked = useRef({ order, opensAt, save });
   const writing = useRef<Promise<GatewayConfig> | undefined>(undefined);
 
-  asked.current = { order, recorded, save };
+  asked.current = { order, opensAt, save };
 
   useEffect(() => {
     if (!running || settled) {
@@ -126,7 +126,7 @@ export function useBuildRun(order: BuildOrder, recorded: number, running: boolea
     }
 
     let left = false;
-    const { order: building, recorded: done, save: store } = asked.current;
+    const { order: building, opensAt: done, save: store } = asked.current;
     const written = writing.current ?? storeUnderAFreeName(building, store);
 
     writing.current = written;

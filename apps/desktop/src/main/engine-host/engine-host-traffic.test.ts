@@ -38,6 +38,16 @@ function servedThrough(virtualModel: string): unknown {
   };
 }
 
+function liveThrough(virtualModel: string): unknown {
+  return {
+    kind: 'traffic',
+    slug: 'codex',
+    virtualModel,
+    routeNode: onlyNode,
+    request: { outcome: 'live', at },
+  };
+}
+
 function aHostWatchingTraffic() {
   const scripted = scriptedChild(running);
   const pushed: GatewayTraffic[] = [];
@@ -119,5 +129,29 @@ describe('a gateway starting under a changed set of models', () => {
 
     expect(pushed).toHaveLength(1);
     expect(pushed.at(-1)).toEqual({ codex: { fast: { [onlyNode]: { outcome: 'served', at } } } });
+  });
+});
+
+describe('a window that binds while a request is already in flight', () => {
+  test('asking for the traffic again sends the snapshot the host already holds', async () => {
+    vi.useFakeTimers();
+    const { host, scripted, pushed } = aHostWatchingTraffic();
+
+    await host.start(aGatewayServing('fast'));
+    scripted.send(liveThrough('fast'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    pushed.length = 0;
+
+    host.replayTraffic();
+
+    expect(pushed).toEqual([{ codex: { fast: { [onlyNode]: { outcome: 'live', at } } } }]);
+  });
+
+  test('asking before a gateway has served hands back an empty snapshot rather than nothing', () => {
+    const { host, pushed } = aHostWatchingTraffic();
+
+    host.replayTraffic();
+
+    expect(pushed).toEqual([{}]);
   });
 });

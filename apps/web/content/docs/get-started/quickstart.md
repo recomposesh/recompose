@@ -33,14 +33,13 @@ The preview reads `serves as claude-fast → Anthropic · claude-sonnet-4-5`. Cl
 In the toolbar, click **Connect a client** (the book glyph). The sheet opens on Claude Code. Copy the block under **1. Point it at the gateway and start it** and paste it into a terminal:
 
 ```sh
-export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"
-export ANTHROPIC_AUTH_TOKEN="unused"
-export ANTHROPIC_MODEL="claude-fast"
-export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
-claude
+ANTHROPIC_BASE_URL="http://127.0.0.1:8397" \
+  ANTHROPIC_AUTH_TOKEN="unused" \
+  ANTHROPIC_MODEL="claude-fast" \
+  CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1" claude
 ```
 
-The block above is an example: yours carries your gateway's own port and model id, so copy it from the sheet. `unused` is a stand-in that satisfies the client, because this gateway checks no key.
+The block above is an example: yours carries your gateway's own port and model id, so copy it from the sheet. The four variables stand in front of `claude` rather than in your shell, so they reach that session and nothing later. `unused` is a stand-in that satisfies the client, because this gateway checks no key.
 
 Claude Code starts without asking you to sign in to the gateway. If it refuses with an authentication error, the variables came from another gateway's sheet: copy the block again from this one, or see [authentication errors](/docs/troubleshooting/authentication-errors).
 

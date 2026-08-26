@@ -1,4 +1,7 @@
+import type { AttemptedChild } from '@recompose/contracts';
+
 import type { GeminiRefusal } from './gemini-refusal';
+import type { UnjudgedCause } from './routing/outcome-classification';
 
 export type Dialect = 'anthropic' | 'chat-completions' | 'gemini' | 'interactions' | 'responses';
 
@@ -31,7 +34,14 @@ export type OpenAiCode =
   | 'unjudged_request'
   | 'invalid_json';
 
-export type RouterAttempt = { child: string; why: string };
+/**
+ * One child a router could not use, named the same way for the caller and for the log drawer.
+ *
+ * @summary The refusal a caller reads and the row a person opens carry one shape rather than two
+ * that have to be kept in step, because they carry one fact: which child was reached, and what it
+ * did. The contract owns it, since the row is what crosses a process boundary with it.
+ */
+export type RouterAttempt = AttemptedChild;
 
 export type TranslationRefusal =
   | { reason: 'unknown-model'; model: string }
@@ -53,7 +63,13 @@ export type TranslationRefusal =
       retryAtMs?: number;
     }
   | { reason: 'chained-turn'; displayName: string; model: string; routerName: string }
-  | { reason: 'unjudged-request'; displayName: string; model: string; routerName: string }
+  | {
+      reason: 'unjudged-request';
+      displayName: string;
+      model: string;
+      routerName: string;
+      because: UnjudgedCause;
+    }
   | { reason: 'invalid-json'; message: string };
 
 export type RefusalFacts = {

@@ -47,23 +47,23 @@ export const Empty = meta.story({
 });
 
 /**
- * A moved server keeps its row and reads at the port it moved to.
+ * A server that changed port keeps its row and reads at the port it answers on now.
  *
- * @summary This is where the move can be proved: the surface reads the registry, so a move that
- * stood a second row up, or dropped the one it moved, shows here as a count rather than as a
- * refusal nobody sees.
+ * @summary This is where the change can be proved: the surface reads the registry, so a change
+ * that stood a second row up, or dropped the one it changed, shows here as a count rather than as
+ * a refusal nobody sees.
  */
-export const MovedToAnotherPort = meta.story({
+export const PortChanged = meta.story({
   parameters: { bridge: { accounts: runtimes } },
   play: async ({ canvas }) => {
     await userEvent.click(await canvas.findByRole('button', { name: 'Actions for Ollama' }));
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Move to another port' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Change port' }));
 
     const port = await screen.findByRole('textbox', { name: 'Port' });
 
     await userEvent.clear(port);
     await userEvent.type(port, '11435');
-    await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Change port' }));
 
     await expect(await canvas.findByText('http://127.0.0.1:11435')).toBeVisible();
     await expect(canvas.queryByText('http://127.0.0.1:11434')).toBeNull();

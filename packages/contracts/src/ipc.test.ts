@@ -38,6 +38,7 @@ const channelNames: IpcChannel[] = [
   'gateways:update',
   'gateways:remove',
   'engine:replay-logs',
+  'engine:replay-traffic',
   'system:logs-drawer',
   'system:surface-toggles',
   'usage:report',

@@ -8,6 +8,9 @@ const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 export type UpdatesWiring = {
   state: () => UpdateState;
+  /** Whether this install updates itself, which is what decides the menu offers a check at all. */
+  owned: boolean;
+  checkNow: () => void;
   restart: () => boolean;
   dispose: () => void;
 };
@@ -51,17 +54,22 @@ export function wireUpdatesFor(deps: {
 
     return {
       state: () => ({ standing: 'quiet' }),
+      owned: false,
+      checkNow: () => undefined,
       restart: () => false,
       dispose: () => undefined,
     };
   }
 
-  return wireAppUpdater({
-    updater: deps.openPort(),
-    log,
-    push: deps.push,
-    intervalMs: checkIntervalFrom(deps.env),
-  });
+  return {
+    owned: true,
+    ...wireAppUpdater({
+      updater: deps.openPort(),
+      log,
+      push: deps.push,
+      intervalMs: checkIntervalFrom(deps.env),
+    }),
+  };
 }
 
 function checkIntervalFrom(env: NodeJS.ProcessEnv): number {

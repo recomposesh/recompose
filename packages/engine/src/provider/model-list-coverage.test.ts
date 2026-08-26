@@ -123,7 +123,7 @@ describe('a credentialed catalog is read from whichever shape the provider sent'
       credentialed,
     );
 
-    expect(listing).toEqual({ standing: 'listed', modelIds: ['gpt-5'] });
+    expect(listing).toEqual({ standing: 'listed', models: [{ id: 'gpt-5' }] });
   });
 
   test('a catalog under a models list is read', async () => {
@@ -133,7 +133,7 @@ describe('a credentialed catalog is read from whichever shape the provider sent'
       credentialed,
     );
 
-    expect(listing).toEqual({ standing: 'listed', modelIds: ['gemini-3.6-flash'] });
+    expect(listing).toEqual({ standing: 'listed', models: [{ id: 'gemini-3.6-flash' }] });
   });
 
   test('a body that is not an object is not a catalog', async () => {

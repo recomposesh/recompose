@@ -27,7 +27,12 @@ import { gatewayRequestCrossing } from './gateway-request-crossing';
 import { rotationPins } from './gateway-rotation-pins';
 import { noteGatewayRow } from './gateway-traffic';
 import { answerTheWalkGives } from './gateway-walk-answer';
-import { failedOutcome, notesThatCarriedARequest, nothingAnsweredFor } from './gateway-walk-notes';
+import {
+  attemptsRecorded,
+  failedOutcome,
+  notesThatCarriedARequest,
+  nothingAnsweredFor,
+} from './gateway-walk-notes';
 import { refusalResponse } from './gateway-wire';
 import { missingCredential, missingTarget } from './refusals';
 import { walkAttempts } from './routing/attempt-walk';
@@ -138,6 +143,38 @@ function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): JudgedRe
   });
 }
 
+const DROPPED_ANSWER_SPAN = 64 * 1024;
+
+/**
+ * Reads an answer the walk went past far enough to learn why it failed, then lets it go.
+ *
+ * @summary Cancelling it outright settled the attempt but left it mute: the observation that raises
+ * the row sees only the bytes something actually pulled, so a child a ladder moved on from reported
+ * a status and never the sentence its provider sent alongside it. Every answer reaching here is one
+ * the walk refused, so what gets read is a refusal rather than anybody's completion, and the bound
+ * is what stops a provider that refuses across a long stream from being read without end.
+ */
+async function readWhyItFailed(dropped: Response): Promise<void> {
+  const body = dropped.body;
+
+  if (body === null) return;
+
+  const reader: ReadableStreamDefaultReader<Uint8Array> = body.getReader();
+  let read = 0;
+
+  try {
+    while (read < DROPPED_ANSWER_SPAN) {
+      const next = await reader.read();
+
+      if (next.done) return;
+
+      read += next.value.length;
+    }
+  } finally {
+    void reader.cancel().catch(() => undefined);
+  }
+}
+
 /**
  * Closes an answer the walk went past, so the attempt it opened stops standing in flight.
  *
@@ -149,7 +186,7 @@ function judgingThisRequest(deps: AttemptDeps, serving: RouterServing): JudgedRe
 function closeUnanswered(dropped: Response | undefined, given: Response): void {
   if (dropped === undefined || dropped === given) return;
 
-  void dropped.body?.cancel().catch(() => undefined);
+  void readWhyItFailed(dropped).catch(() => undefined);
 }
 
 async function walkedAnswer(
@@ -194,7 +231,13 @@ async function walkedAnswer(
 
     serving.noteAttempt(note.routeNode, outcome);
 
-    if (nothingAnsweredFor(note)) noteGatewayRow(outcome.status, outcome.detail);
+    if (nothingAnsweredFor(note)) {
+      noteGatewayRow({
+        status: outcome.status,
+        failure: outcome.detail,
+        diagnosis: { tried: attemptsRecorded(routing, [note]) },
+      });
+    }
   }
 
   const given = answerTheWalkGives(scene, result, answerable);

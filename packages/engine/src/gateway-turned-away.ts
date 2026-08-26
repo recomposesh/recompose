@@ -25,7 +25,7 @@ export function turnedAway(
   status: EdgeStatus,
   headers: Record<string, string> = {},
 ): Response {
-  noteGatewayRow(status, refusal.error.message);
+  noteGatewayRow({ status, failure: refusal.error.message });
 
   return c.json(refusal, status, headers);
 }

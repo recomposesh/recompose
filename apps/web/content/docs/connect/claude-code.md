@@ -3,7 +3,7 @@ title: 'Claude Code'
 description: 'Point Claude Code at a gateway with environment variables.'
 ---
 
-Claude Code reads its endpoint once, at startup, and a running session keeps the endpoint it began with. Set the variables first and start it after.
+Claude Code reads its endpoint once, at startup, and a running session keeps the endpoint it began with. The variables ride in front of the command, so they reach that one session and leave your shell as they found it.
 
 - Dialect: Anthropic Messages
 - Address shape: the bare origin, no `/v1`
@@ -13,17 +13,16 @@ Claude Code reads its endpoint once, at startup, and a running session keeps the
 
 In the gateway's toolbar, click **Connect a client**. The sheet opens on Claude Code: copy the first block. The blocks below show the shape with example values, and yours carries your gateway's own port, key, and model id.
 
-## Point it at the gateway
+## Point it at the gateway and start it
 
 ```sh
-export ANTHROPIC_BASE_URL="http://127.0.0.1:8397"
-export ANTHROPIC_AUTH_TOKEN="unused"
-export ANTHROPIC_MODEL="claude-fast"
-export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
-claude
+ANTHROPIC_BASE_URL="http://127.0.0.1:8397" \
+  ANTHROPIC_AUTH_TOKEN="unused" \
+  ANTHROPIC_MODEL="claude-fast" \
+  CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1" claude
 ```
 
-The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same value as `x-api-key` instead, and a gateway reads either one. The last variable puts every model whose id carries `claude` or `anthropic` into the `/model` picker, labelled `From gateway`.
+The backslash continues the line, so those four lines run as one command in bash, zsh, and fish alike. The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same value as `x-api-key` instead, and a gateway reads either one. The discovery variable puts every model whose id carries `claude` or `anthropic` into the `/model` picker, labelled `From gateway`.
 
 ## Or use the settings file
 
@@ -38,16 +37,20 @@ The token rides in `Authorization: Bearer`. `ANTHROPIC_API_KEY` sends the same v
 }
 ```
 
-`~/.claude/settings.json` reaches background agents as well, which a shell export doesn't, so the sheet gives it the same variables rather than a shorter set. When both set the same variable, the settings file wins.
+`~/.claude/settings.json` reaches background agents as well, which variables handed to a single command don't, so the sheet gives it the same set rather than a shorter one. When both set the same variable, the settings file wins.
 
 ## When the picker skips your id
 
 Discovery keeps an id only when it carries `claude` or `anthropic` anywhere in the string. An id outside those words serves every request that names it, and appears in that picker for nobody.
 
-A name typed on the canvas derives an id that carries the word, so a model composed in recompose reaches the picker without anyone thinking about it. You meet this section when you edited the id by hand, or when the model predates that. The sheet adds one more variable to both blocks when your gateway's first model is such an id:
+A name typed on the canvas derives an id that carries the word, so a model composed in recompose reaches the picker without anyone thinking about it. You meet this section when you edited the id by hand, or when the model predates that. The sheet adds one more variable when your gateway's first model is such an id, to the command block and the settings file alike:
 
 ```sh
-export ANTHROPIC_CUSTOM_MODEL_OPTION="fast-sonnet"
+ANTHROPIC_BASE_URL="http://127.0.0.1:8397" \
+  ANTHROPIC_AUTH_TOKEN="unused" \
+  ANTHROPIC_MODEL="fast-sonnet" \
+  CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1" \
+  ANTHROPIC_CUSTOM_MODEL_OPTION="fast-sonnet" claude
 ```
 
 That names the model outright, so it joins the picker as a row of its own and skips the check discovery reads ids through. The other fix is to rename the id: the virtual model's inspector says which ids the picker lists and offers the reshaped one under **Model id**, one press away.

@@ -18,6 +18,16 @@ function servedThrough(slug: string, virtualModel: string, moment = at): unknown
   };
 }
 
+function liveThrough(slug: string, virtualModel: string, moment = at): unknown {
+  return {
+    kind: 'traffic',
+    slug,
+    virtualModel,
+    routeNode: onlyNode,
+    request: { outcome: 'live', at: moment },
+  };
+}
+
 function failedThrough(slug: string, virtualModel: string, status: number): unknown {
   return {
     kind: 'traffic',
@@ -213,5 +223,45 @@ describe('a gateway whose models changed', () => {
     await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
 
     expect(pushed).toHaveLength(1);
+  });
+});
+
+describe('what a window that bound late learns about traffic', () => {
+  test('a request still live when a window binds reaches it, rather than waiting to settle', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    desk.hears(liveThrough('personal', 'fast'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    pushed.length = 0;
+
+    desk.replay();
+
+    expect(pushed).toEqual([{ personal: { fast: { [onlyNode]: { outcome: 'live', at } } } }]);
+  });
+
+  test('a window binding before anything flowed reads an empty snapshot rather than nothing', () => {
+    const { pushed, desk } = aDesk();
+
+    desk.replay();
+
+    expect(pushed).toEqual([{}]);
+  });
+
+  test('asking twice costs nothing, because each answer carries the whole snapshot', async () => {
+    vi.useFakeTimers();
+    const { pushed, desk } = aDesk();
+
+    desk.hears(servedThrough('personal', 'fast'));
+    await vi.advanceTimersByTimeAsync(TRAFFIC_PUSH_MS);
+    pushed.length = 0;
+
+    desk.replay();
+    desk.replay();
+
+    expect(pushed).toEqual([
+      { personal: { fast: { [onlyNode]: { outcome: 'served', at } } } },
+      { personal: { fast: { [onlyNode]: { outcome: 'served', at } } } },
+    ]);
   });
 });

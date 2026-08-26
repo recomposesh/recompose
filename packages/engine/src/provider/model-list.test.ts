@@ -1,12 +1,17 @@
 import { modelListBoundMs, type LookCustody } from '@recompose/contracts';
 import { describe, expect, test, vi } from 'vitest';
 
+import type { SentRequest } from './model-list.testkit';
+
 import { listProviderModels } from './model-list';
+import {
+  credential,
+  credentialed,
+  fetchAnswering,
+  twoModels,
+  vendorOrigin,
+} from './model-list.testkit';
 
-const vendorOrigin = 'https://api.openai.com';
-const credential = 'sk-ant-api03-long-secret-7f2c';
-
-const credentialed = { custody: 'bearer', provider: 'openrouter', credential } as const;
 const anthropicKey = { custody: 'provider-key', provider: 'anthropic', credential } as const;
 const geminiKey = { custody: 'provider-key', provider: 'gemini', credential } as const;
 const interactionsKey: LookCustody = {
@@ -15,38 +20,6 @@ const interactionsKey: LookCustody = {
   credential,
 };
 const open = { custody: 'open' } as const;
-
-const twoModels = JSON.stringify({
-  data: [
-    { id: 'gpt-5', object: 'model' },
-    { id: 'gpt-5-mini', object: 'model' },
-  ],
-});
-
-type SentRequest = { url: string; init: RequestInit };
-
-function urlOf(input: Parameters<typeof fetch>[0]): string {
-  if (typeof input === 'string') {
-    return input;
-  }
-
-  return input instanceof URL ? input.href : input.url;
-}
-
-function fetchAnswering(
-  status: number,
-  body: string | null,
-): { sent: SentRequest[]; fetchLike: typeof fetch } {
-  const sent: SentRequest[] = [];
-
-  const fetchLike: typeof fetch = async (input, init) => {
-    sent.push({ url: urlOf(input), init: init ?? {} });
-
-    return Promise.resolve(new Response(body, { status }));
-  };
-
-  return { sent, fetchLike };
-}
 
 function onlyRequestOf(sent: SentRequest[]): SentRequest {
   const request = sent[0];
@@ -77,7 +50,7 @@ async function verifyGeminiListing(): Promise<void> {
   expect(headersOf(onlyRequestOf(sent)).get('x-goog-api-key')).toBe(credential);
   expect(listing).toEqual({
     standing: 'listed',
-    modelIds: ['gemini-3.1-pro-preview', 'gemini-3-flash'],
+    models: [{ id: 'gemini-3.1-pro-preview' }, { id: 'gemini-3-flash' }],
   });
 }
 
@@ -169,12 +142,12 @@ describe('the Gemini Interactions model look', () => {
 });
 
 describe('a catalog the look could read', () => {
-  test('the ids the vendor named come back in the order the vendor gave them', async () => {
+  test('the models the vendor named come back in the order the vendor gave them', async () => {
     const { fetchLike } = fetchAnswering(200, twoModels);
 
     await expect(listProviderModels(fetchLike, vendorOrigin, credentialed)).resolves.toEqual({
       standing: 'listed',
-      modelIds: ['gpt-5', 'gpt-5-mini'],
+      models: [{ id: 'gpt-5' }, { id: 'gpt-5-mini' }],
     });
   });
 
@@ -183,7 +156,7 @@ describe('a catalog the look could read', () => {
 
     await expect(listProviderModels(fetchLike, vendorOrigin, credentialed)).resolves.toEqual({
       standing: 'listed',
-      modelIds: [],
+      models: [],
     });
   });
 });

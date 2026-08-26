@@ -1,6 +1,7 @@
 import {
   modelListBoundMs,
   nonBlankString,
+  type ListedModel,
   type LookCustody,
   type ModelListing,
   type SubscriptionProviderId,
@@ -84,16 +85,16 @@ function knownSubscriptionListing(
   const carried = carriedSubscriptionModels.get(custody.provider);
 
   if (carried !== undefined) {
-    return { standing: 'listed', modelIds: [...carried] };
+    return { standing: 'listed', models: carried.map((id) => ({ id })) };
   }
 
   if (custody.provider !== 'openai') {
     return null;
   }
 
-  const models = codexPlanIn(custody.credential) === 'free' ? codexFreeModels : codexPaidModels;
+  const served = codexPlanIn(custody.credential) === 'free' ? codexFreeModels : codexPaidModels;
 
-  return { standing: 'listed', modelIds: [...models] };
+  return { standing: 'listed', models: served.map((id) => ({ id })) };
 }
 
 async function answerOrSilence(
@@ -148,18 +149,45 @@ function entriesValue(body: object): unknown {
   return 'models' in body ? body.models : null;
 }
 
-function listedIdsIn(body: unknown, chatOnly: boolean): string[] | null {
+/**
+ * @summary A catalog spelling a shutdown date in anything but a date keeps the model rather than
+ * reading that value as an announcement, because a live model dropped from the offer reads far
+ * worse than a retiring one left on it.
+ */
+function shutdownDateOf(entry: unknown): string | undefined {
+  if (!isJsonObject(entry)) {
+    return undefined;
+  }
+
+  const announced = nonBlankString.safeParse(entry['shutdown_date']);
+
+  return announced.success ? announced.data : undefined;
+}
+
+function listedModelOf(entry: unknown): ListedModel | null {
+  const id = idOf(entry);
+
+  if (id === null) {
+    return null;
+  }
+
+  const shutdownDate = shutdownDateOf(entry);
+
+  return shutdownDate === undefined ? { id } : { id, shutdownDate };
+}
+
+function listedModelsIn(body: unknown, chatOnly: boolean): ListedModel[] | null {
   const entries = catalogEntriesIn(body);
 
   if (entries === null) {
     return null;
   }
 
-  const ids = entries.map(idOf);
+  const models = entries.map(listedModelOf);
 
-  if (!ids.every((id): id is string => id !== null)) return null;
+  if (!models.every((model): model is ListedModel => model !== null)) return null;
 
-  return chatOnly ? ids.filter((_id, at) => holdsAConversation(entries[at])) : ids;
+  return chatOnly ? models.filter((_model, at) => holdsAConversation(entries[at])) : models;
 }
 
 /**
@@ -175,7 +203,7 @@ function holdsAConversation(entry: unknown): boolean {
 }
 
 /**
- * The model ids one account serves, read from the vendor's OpenAI-compatible catalog.
+ * The models one account serves, read from the vendor's OpenAI-compatible catalog.
  *
  * @summary Every way of learning nothing folds to one standing: an origin that answered nothing, a
  * vendor that turned the credential away, a body that is not the catalog it claimed to be. The
@@ -203,7 +231,10 @@ export async function listProviderModels(
     return nothingListed;
   }
 
-  const modelIds = listedIdsIn(await bodyOrNothing(response), namesModelsThatAnswerNoTurn(custody));
+  const models = listedModelsIn(
+    await bodyOrNothing(response),
+    namesModelsThatAnswerNoTurn(custody),
+  );
 
-  return modelIds === null ? nothingListed : { standing: 'listed', modelIds };
+  return models === null ? nothingListed : { standing: 'listed', models };
 }

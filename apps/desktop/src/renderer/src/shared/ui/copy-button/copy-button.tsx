@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { Tooltip } from '../tooltip/tooltip';
 import { COPY_OUTCOME_WORDING } from './copy-outcome-wording';
 
 type CopyButtonProps = {
-  /** Accessible name of the button, naming the value it copies. */
+  /** What the button does, naming the value it copies, printed on hover and read aloud alike. */
   label: string;
   /** Text the button places on the clipboard. */
   value: string;
@@ -72,23 +73,24 @@ export function CopyButton({
 
   return (
     <>
-      <button
-        aria-label={label}
-        className="inline-flex size-4.5 items-center justify-center rounded-chip focus-ring text-ink-secondary hover:text-ink"
-        onClick={() => {
-          void navigator.clipboard
-            .writeText(value)
-            .then(() => {
-              setOutcome('copied');
-            })
-            .catch(() => {
-              setOutcome('refused');
-            });
-        }}
-        type="button"
-      >
-        {outcome === 'copied' ? checkGlyph : copyGlyph}
-      </button>
+      <Tooltip label={label}>
+        <button
+          className="inline-flex size-4.5 items-center justify-center rounded-chip focus-ring text-ink-secondary hover:text-ink"
+          onClick={() => {
+            void navigator.clipboard
+              .writeText(value)
+              .then(() => {
+                setOutcome('copied');
+              })
+              .catch(() => {
+                setOutcome('refused');
+              });
+          }}
+          type="button"
+        >
+          {outcome === 'copied' ? checkGlyph : copyGlyph}
+        </button>
+      </Tooltip>
       <span className="sr-only" role="status">
         {outcome === undefined ? '' : spoken}
       </span>

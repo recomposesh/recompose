@@ -58,7 +58,26 @@ export const ALiveBindingPulsesAlongAWholeLine = meta.story({
     await expect(paintedStyle(traveling).animationName).toBe(
       stilled() ? 'none' : 'cable-pulse-travel',
     );
-    await expect(paintedStyle(traveling).opacity).toBe(stilled() ? '0' : '1');
+  },
+});
+
+/**
+ * A request in flight stays readable on a machine that asked for no motion.
+ *
+ * @summary Travel is the only thing reduced motion may take. The dark scheme paints `live` and
+ * `served` the same green, so a pulse that went transparent left the two standings identical and a
+ * person watching a streaming answer saw a cable that never flowed at all. The whole suite runs
+ * under reduce, so this is the one scenario standing between that reading and the canvas.
+ */
+export const ALiveBindingStaysReadableWhenMotionStandsDown = meta.story({
+  render: () => cabledFlow('live'),
+  play: async ({ canvasElement }) => {
+    await cablesDrawn(canvasElement);
+
+    const traveling = pulseIn(canvasElement);
+
+    await expect(paintedStyle(traveling).opacity).toBe('1');
+    await expect(paintedStyle(traveling).visibility).toBe('visible');
   },
 });
 

@@ -1,4 +1,4 @@
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 
 import preview from '#.storybook/preview';
 
@@ -31,15 +31,21 @@ export const Standing = meta.story({
 /**
  * A control whose machinery has not landed, which names what it waits for in its tooltip.
  *
- * @summary A dead control that says nothing reads as broken, so the title carries the waiting.
+ * @summary A dead control that says nothing reads as broken, so the reading carries the waiting,
+ * and it reads as the control's description rather than as a second name.
  */
 export const Waiting = meta.story({
   args: { waitsFor: 'the guide' },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole('button', { name: 'Docs' })).toHaveAttribute(
-      'title',
-      'Docs. Waits on the guide.',
-    );
+    const asked = await canvas.findByRole('button', { name: 'Docs' });
+
+    await userEvent.hover(asked);
+
+    await expect(asked).toHaveAccessibleDescription('Waits on the guide.');
+
+    await waitFor(async () => {
+      await expect(document.body).toHaveTextContent('Docs. Waits on the guide.');
+    });
   },
 });
 

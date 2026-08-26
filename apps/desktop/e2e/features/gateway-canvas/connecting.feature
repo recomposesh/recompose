@@ -14,6 +14,10 @@ Feature: Reaching a gateway from a client
     When the person opens the connect guide
     Then the Claude Code block names the gateway address and the model id
 
+  Scenario: A block hands over one command rather than settings the shell keeps
+    When the person opens the connect guide
+    Then the Claude Code block sets nothing that outlives the command
+
   Scenario: A client that owns the version segment is handed it
     When the person opens the connect guide and picks "Codex CLI"
     Then the address offered ends in the version segment

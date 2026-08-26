@@ -49,6 +49,15 @@ export const Quiet = meta.story({
   },
 });
 
+/** The menu a filter opens on: every member reads kept, because the view keeps every one. */
+export const OpenedOnEverything = meta.story({
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Gateways All' }));
+
+    await expect(await screen.findByRole('checkbox', { name: 'raycast' })).toBeChecked();
+  },
+});
+
 /** The open menu: every member with what it served, a search field, and the standing count. */
 export const Opened = meta.story({
   args: { selected: ['claude-code', 'cursor'] },

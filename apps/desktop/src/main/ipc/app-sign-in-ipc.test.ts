@@ -161,6 +161,55 @@ describe('a network that never answered at all', () => {
   });
 });
 
+const CODEX_CALLBACK_PORT = 39_766;
+
+function aCodexIdentityToken(): string {
+  const claims = Buffer.from(
+    JSON.stringify({
+      email: 'ada@example.com',
+      'https://api.openai.com/auth': { chatgpt_account_id: 'acct-42' },
+    }),
+    'utf8',
+  ).toString('base64url');
+
+  return `header.${claims}.signature`;
+}
+
+async function handlersSigningCodexIn() {
+  const world = await aFreshWorld();
+  const context = world.contextOn('linux', world.nothingHappens);
+
+  return createSubscriptionsIpcHandlers({
+    ...context,
+    browserSignIn: {
+      ...quietAppSignIns().browserSignIn,
+      boundMs: 2_000,
+      callbackPortFor: () => CODEX_CALLBACK_PORT,
+      openInBrowser: async (url) => {
+        const state = new URL(url).searchParams.get('state') ?? '';
+
+        await fetch(
+          `http://127.0.0.1:${String(CODEX_CALLBACK_PORT)}/auth/callback?code=c&state=${state}`,
+        );
+      },
+      fetchLike: async () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              access_token: 'codex-access',
+              refresh_token: 'codex-refresh',
+              id_token: aCodexIdentityToken(),
+              expires_in: 3_600,
+            }),
+            { headers: { 'content-type': 'application/json' } },
+          ),
+        ),
+    },
+    writeSubscriptionCredential: subscriptionCredentialStore(world.userDataPath, 'linux', null)
+      .write,
+  });
+}
+
 describe('the sign-in that happens in a browser', () => {
   test('the page opens on the provider before anything is waited on', async () => {
     const opened: string[] = [];
@@ -171,6 +220,40 @@ describe('the sign-in that happens in a browser', () => {
     await handlers['subscriptions:browser-sign-in']({ provider: 'antigravity' });
 
     expect(opened[0]).toContain('https://accounts.google.com/o/oauth2/v2/auth');
+  });
+
+  test('a Codex sign-in opens OpenAI’s own page rather than any tool on the machine', async () => {
+    const opened: string[] = [];
+    const handlers = await handlersBrowsing((url) => {
+      opened.push(url);
+    });
+
+    await handlers['subscriptions:browser-sign-in']({ provider: 'openai' });
+
+    expect(opened[0]).toContain('https://auth.openai.com/oauth/authorize');
+  });
+
+  test('given no Codex is installed, a finished sign-in still records the account', async () => {
+    const handlers = await handlersSigningCodexIn();
+
+    const answered = await handlers['subscriptions:browser-sign-in']({ provider: 'openai' });
+
+    expect(answered.ok && answered.value).toMatchObject([
+      {
+        provider: 'openai',
+        label: 'ada@example.com',
+        provenance: 'sign-in',
+        standing: 'connected',
+      },
+    ]);
+  });
+
+  test('the credential a Codex sign-in yielded reaches the store rather than the screen', async () => {
+    const handlers = await handlersSigningCodexIn();
+
+    const answered = await handlers['subscriptions:browser-sign-in']({ provider: 'openai' });
+
+    expect(JSON.stringify(answered)).not.toContain('codex-refresh');
   });
 
   test('a browser that never came back records no account and says so', async () => {

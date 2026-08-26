@@ -1,20 +1,13 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
-
-import {
-  systemQueryOptions,
-  updatesQueryOptions,
-  useRestartForUpdate,
-} from '../../../../shared/api';
+import { useRestartForUpdate } from '../../../../shared/api';
 import { Button, Icon } from '../../../../shared/ui';
 
-export function UpdateReadyCard() {
-  const updates = useSuspenseQuery(updatesQueryOptions);
-  const system = useSuspenseQuery(systemQueryOptions);
-  const { restart, restarting } = useRestartForUpdate();
+type ReadyToRestartProps = {
+  from: string;
+  to: string;
+};
 
-  if (updates.data.standing !== 'ready') {
-    return null;
-  }
+export function ReadyToRestart({ from, to }: ReadyToRestartProps) {
+  const { restart, restarting } = useRestartForUpdate();
 
   return (
     <section
@@ -32,7 +25,7 @@ export function UpdateReadyCard() {
         <div className="flex flex-col items-center gap-0.5">
           <p className="text-body font-semibold">Update ready</p>
           <p className="font-mono text-mono-value text-ink-secondary">
-            {system.data.version} → {updates.data.version}
+            {from} → {to}
           </p>
         </div>
         <Button disabled={restarting} fullWidth onPress={restart} variant="primary">

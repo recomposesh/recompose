@@ -7,7 +7,27 @@ import type { BranchWording } from '../../lib/conditional-policy';
 import { FieldRow, Sheet, TextArea, TextField } from '../../../../shared/ui';
 
 const WHAT_A_RULE_IS =
-  'The judge reads this rule beside the others and answers with one branch label.';
+  "The judge reads this text as its prompt, beside every other branch's, and answers with one branch label.";
+
+/**
+ * What the rule field is headed, which says what the text becomes rather than where it is stored.
+ *
+ * @summary Headed Rule alone, the field read as a matcher the gateway evaluates, so people wrote a
+ * keyword into a slot a model reads in sentences. The heading is the only part of the surface a
+ * person meets before they start typing, so it is where the register has to be settled.
+ */
+const RULE_AS_PROMPT = 'Rule as prompt';
+
+/**
+ * The example an empty field stands, written the way the compiled prompt reads it.
+ *
+ * @summary Every branch reaches the judge as `label: rule`, so the example is a description of the
+ * requests that belong here rather than an instruction about routing. It closes with what the
+ * branch is not, because a classifier reads a boundary as readily as a category and nothing else
+ * on this surface could teach that a rule may hold more than a noun phrase.
+ */
+const AN_EXAMPLE_PROMPT =
+  'Requests about source code, such as reviewing a diff, fixing a failing build, or reading a stack trace. Not general chat about programming.';
 
 const A_RENAME_IS_SEMANTIC =
   'The judge answers with this word, so a rename changes what it reads. Left blank, it fills itself from the rule.';
@@ -92,13 +112,13 @@ function ruleField(
 ): ReactNode {
   return (
     <div className="flex flex-col gap-1.5 py-2.5">
-      <span className="text-body text-ink">Rule</span>
+      <span className="text-body text-ink">{RULE_AS_PROMPT}</span>
       <TextArea
-        label="Rule"
+        label={RULE_AS_PROMPT}
         onChangeValue={(rule) => {
           onDraft({ ...draft, rule });
         }}
-        placeholder="Questions about source code, diffs, and build failures"
+        placeholder={AN_EXAMPLE_PROMPT}
         rows={6}
         value={draft.rule}
       />

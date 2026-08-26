@@ -62,7 +62,7 @@ function actsFor(acts: RowActs) {
       onSelect: acts.onCheckAgain,
     },
     {
-      label: 'Move to another port',
+      label: 'Change port',
       icon: 'network' as const,
       tone: 'accent' as const,
       onSelect: acts.onMove,
@@ -77,8 +77,9 @@ function actsFor(acts: RowActs) {
  * @summary The standing is an observation rather than a stored fact: the row looks again on every
  * mount and on every Check again, and a remount forgets the last answer, so no row carries a claim
  * older than its own screen. All three acts live behind the overflow, because none is part of
- * reading the row, and removing releases nothing since a local account holds no secret. Moving
- * keeps the row, because a port is where a server answers today rather than a fact about the row.
+ * reading the row, and removing releases nothing since a local account holds no secret. Changing
+ * the port keeps the row, because a port is where a server answers today rather than a fact about
+ * the row.
  */
 function useTheMove(account: LocalAccount) {
   const move = withRefusal(useMoveLocalRuntime());

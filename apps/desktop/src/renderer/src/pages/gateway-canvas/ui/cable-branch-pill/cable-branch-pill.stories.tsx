@@ -74,6 +74,21 @@ export const PressingTheLabelAsksToRewordIt = meta.story({
 });
 
 /**
+ * The pill says what pressing it does, so an edit route stops reading as a decorative caption.
+ *
+ * @summary A button carrying a bare word announces a bare word, which is why a person who set a
+ * rule once concluded there was no way back to it. The act rides as the pill's description rather
+ * than as its name, so the word the judge answers with is still the word a reader hears first.
+ */
+export const TheLabelSaysWhatPressingItDoes = meta.story({
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('button', { name: 'code' })).toHaveAccessibleDescription(
+      "Press to edit this branch's prompt.",
+    );
+  },
+});
+
+/**
  * A branch nobody has worded yet wears the attention tint and asks for its name.
  *
  * @summary A child under a judged router that carries no label is a branch the judge can never

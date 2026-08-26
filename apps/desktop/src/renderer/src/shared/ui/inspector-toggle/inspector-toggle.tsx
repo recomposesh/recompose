@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { inspectorOpen, subscribeToInspectorVisibility, toggleInspector } from '../../lib';
 import { Icon } from '../icon/icon';
 import { toolbarShape } from '../toolbar-shape';
+import { Tooltip } from '../tooltip/tooltip';
 
 const STATES =
   'hover:bg-surface-hover active:bg-surface-pressed aria-expanded:bg-surface-pressed aria-expanded:text-ink';
@@ -23,15 +24,16 @@ export function InspectorToggle({ where }: InspectorToggleProps) {
   const open = useSyncExternalStore(subscribeToInspectorVisibility, inspectorOpen);
 
   return (
-    <button
-      data-panel-control=""
-      aria-expanded={open}
-      aria-label="Inspector"
-      className={`app-no-drag flex items-center justify-center focus-ring text-ink-secondary ${STATES} ${toolbarShape[where]}`}
-      onClick={toggleInspector}
-      type="button"
-    >
-      <Icon className="size-4" name="panel-right" />
-    </button>
+    <Tooltip label="Inspector">
+      <button
+        data-panel-control=""
+        aria-expanded={open}
+        className={`app-no-drag flex items-center justify-center focus-ring text-ink-secondary ${STATES} ${toolbarShape[where]}`}
+        onClick={toggleInspector}
+        type="button"
+      >
+        <Icon className="size-4" name="panel-right" />
+      </button>
+    </Tooltip>
   );
 }

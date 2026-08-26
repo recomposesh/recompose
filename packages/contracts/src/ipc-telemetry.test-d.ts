@@ -13,6 +13,16 @@ describe('the channels the request log rides on', () => {
     >();
   });
 
+  test('asking for the live traffic again names nothing, because one desk holds the snapshot', () => {
+    expectTypeOf<IpcRequest<'engine:replay-traffic'>>().toEqualTypeOf<void>();
+  });
+
+  test('the traffic answer carries no snapshot, because it arrives on the push instead', () => {
+    expectTypeOf<IpcResponse<'engine:replay-traffic'>>().toExtend<
+      { ok: true; value: void } | { ok: false }
+    >();
+  });
+
   test('the drawer standing crosses as the one fact the menu tick reads', () => {
     expectTypeOf<IpcRequest<'system:logs-drawer'>>().toEqualTypeOf<{ open: boolean }>();
   });

@@ -1,7 +1,9 @@
-import type { LogRow, RecomposeIpc, RecomposeIpcEvents } from '@recompose/contracts';
+import type { LogRow, RecomposeIpcEvents } from '@recompose/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { queryOptions, skipToken } from '@tanstack/react-query';
+
+import { askMainToResend, type ResendAsk } from './engine';
 
 const NOTHING_HAS_BEEN_SERVED: readonly LogRow[] = [];
 
@@ -74,19 +76,7 @@ function runsByGateway(rows: readonly LogRow[]): Map<string, LogRow[]> {
   return runs;
 }
 
-type AskForHistory = RecomposeIpc['engine:replay-logs'];
-
-function askForTheHistory(ask: AskForHistory): void {
-  const complain = (reason: unknown): void => {
-    console.error('recompose could not ask for the requests a gateway has already served.', reason);
-  };
-
-  void ask().then((answered) => {
-    if (!answered.ok) {
-      complain(answered.error);
-    }
-  }, complain);
-}
+const HISTORY_UNANSWERED = 'recompose could not ask for the requests a gateway has already served.';
 
 /**
  * Points the log push at the query cache and hands back the way to stop listening.
@@ -102,7 +92,7 @@ function askForTheHistory(ask: AskForHistory): void {
 export function bindEngineLogsToCache(
   queryClient: QueryClient,
   subscribe: RecomposeIpcEvents['engine:logs'] = window.recomposeEvents['engine:logs'],
-  ask: AskForHistory = window.recompose['engine:replay-logs'],
+  ask: ResendAsk = window.recompose['engine:replay-logs'],
 ): () => void {
   const letGo = subscribe((batch) => {
     for (const [slug, arriving] of runsByGateway(batch.rows)) {
@@ -112,7 +102,7 @@ export function bindEngineLogsToCache(
     }
   });
 
-  askForTheHistory(ask);
+  askMainToResend(ask, HISTORY_UNANSWERED);
 
   return letGo;
 }

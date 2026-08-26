@@ -1,4 +1,5 @@
 import type { RefusalFacts, RouterAttempt, TranslationRefusal } from './refusal-wire';
+import type { UnjudgedCause } from './routing/outcome-classification';
 
 export type RouterRefusal = Extract<
   TranslationRefusal,
@@ -6,6 +7,8 @@ export type RouterRefusal = Extract<
 >;
 
 type ExhaustedRouter = Extract<RouterRefusal, { reason: 'exhausted-router' }>;
+
+type UnjudgedRouter = Extract<RouterRefusal, { reason: 'unjudged-request' }>;
 
 const ROUTER_REASONS = {
   'empty-router': true,
@@ -85,6 +88,43 @@ function chainedFacts(refusal: RouterRefusal): RefusalFacts {
   };
 }
 
+type NoVerdictReading = { what: string; repair: string };
+
+/**
+ * What each way of reaching no verdict did, and the one repair that cures it.
+ *
+ * @summary Four causes and four repairs, because a person told only that no verdict came back reads
+ * the same sentence whether their judge is unbound, slow, standing down, or never asked at all, and
+ * three of those four repairs then do nothing. The words sit in a record the compiler holds to the
+ * causes, so a cause added later fails the build here rather than quietly printing somebody else's
+ * repair. Nothing the judge itself wrote appears: the cause is a closed word this gateway chose, so
+ * a verdict, which is model output, can never ride out on a refusal.
+ */
+const READINGS_OF_NO_VERDICT: Record<UnjudgedCause, NoVerdictReading> = {
+  'judge-call-failed': {
+    what: 'asked its judge and could not get an answer out of it',
+    repair:
+      'Check that the judge is bound to an account and a model that can answer, and that its account still holds a working credential.',
+  },
+  'judge-timed-out': {
+    what: 'asked its judge and nothing came back within the judge timeout',
+    repair:
+      'Raise the judge timeout on this router, or bind the judge to a model that answers faster.',
+  },
+  'judge-standing-cooling': {
+    what: 'did not ask its judge, which stands cooling after failing an earlier request',
+    repair: 'Fix what stopped the judge answering, or bind this router to a judge that can answer.',
+  },
+  'unpinned-sealed-turn': {
+    what: 'never reached its judge, because this turn resumes server-held state and no branch is pinned to the conversation',
+    repair: 'Start a new conversation, so its opening turn earns a branch this router can keep.',
+  },
+};
+
+function readingOfNoVerdict(refusal: UnjudgedRouter): NoVerdictReading {
+  return READINGS_OF_NO_VERDICT[refusal.because];
+}
+
 /**
  * What a conditional router whose judge reached no verdict tells the caller.
  *
@@ -93,11 +133,15 @@ function chainedFacts(refusal: RouterRefusal): RefusalFacts {
  * request did not take it: the else branch answers a judge that classified and found no branch
  * fitting, never a judge that could not classify at all, and routing every silence there would hand
  * one model's traffic to another for as long as the judge stayed down without anything saying so.
+ * Which of the four ways it reached no verdict is named too, because the row a person opens reads
+ * this very sentence and a router that says only "no verdict" leaves both surfaces equally silent.
  */
-function unjudgedFacts(refusal: RouterRefusal): RefusalFacts {
+function unjudgedFacts(refusal: UnjudgedRouter): RefusalFacts {
+  const reading = readingOfNoVerdict(refusal);
+
   return {
     status: 503,
-    message: `${whereItStood(refusal)} got no verdict from its judge, so the virtual model "${refusal.model}" refused this request rather than sending it to the else child. Check that the judge is bound to an account and a model that can answer.`,
+    message: `${whereItStood(refusal)} ${reading.what}, so the virtual model "${refusal.model}" refused this request rather than sending it to the else child. ${reading.repair}`,
     code: 'unjudged_request',
     anthropicType: 'api_error',
   };

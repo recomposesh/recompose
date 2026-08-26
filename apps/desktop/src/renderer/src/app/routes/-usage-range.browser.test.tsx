@@ -60,13 +60,13 @@ test('other surfaces carry no range control', async () => {
   expect(document.querySelector('[aria-label="Range"]')).toBeNull();
 });
 
-test('picking a gateway in the toolbar filter moves the address', async () => {
+test('letting one gateway go in the toolbar filter keeps the rest, and moves the address', async () => {
   const { router } = mountedAt('/usage?range=7d', { usageReport: servedReport });
 
   await page.getByRole('button', { name: /Gateways/ }).click();
   await page.getByRole('checkbox', { name: 'relay' }).click();
 
   await vi.waitFor(() => {
-    expect(router.state.location.search).toMatchObject({ gateways: ['relay'] });
+    expect(router.state.location.search).toMatchObject({ gateways: ['backup'] });
   });
 });

@@ -22,7 +22,7 @@ import { createProviderModelsIpcHandlers, providerModelsReach } from './provider
 
 type Look = { origin: string; custody: LookCustody };
 
-const gpt5: ModelListing = { standing: 'listed', modelIds: ['gpt-5'] };
+const gpt5: ModelListing = { standing: 'listed', models: [{ id: 'gpt-5' }] };
 
 function deskOver(userDataPath: string, listing: ModelListing = gpt5) {
   const looks: Look[] = [];

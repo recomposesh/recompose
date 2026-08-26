@@ -51,7 +51,7 @@ export function servedByProvider(logged: LoggedRequest): string {
  * @summary An account that has left the registry leaves its raw id standing rather than a blank,
  * because the request did reach something and a person repairing the composition needs to know what.
  */
-function servedBy(logged: LoggedRequest, account: Account | undefined): string {
+export function servedBy(logged: LoggedRequest, account: Account | undefined): string {
   return logged.provider === undefined
     ? ''
     : reading([logged.provider, servedByAccount(logged, account)], ' · ');

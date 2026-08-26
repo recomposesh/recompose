@@ -2,7 +2,8 @@ Feature: A row tells one request's story
 
   Every row carries the request time, the method, the virtual model, the
   provider model it resolved to, the provider, the account, the status, and
-  the duration. A failure reads at a glance.
+  the duration. A failure reads at a glance, and the request the cursor rests
+  on reads in full beside the run.
 
   Background:
     Given a running gateway "relay" serving the virtual model "creative" bound to the Anthropic account "work"
@@ -45,3 +46,14 @@ Feature: A row tells one request's story
     Given the row cursor standing on a row
     When the person copies the focused row
     Then the clipboard holds that row's facts
+
+  Scenario: Walking onto a failed request reads why it failed
+    Given "creative" resolved to "claude-sonnet-5" on a target nothing can reach
+    When the person steps down the list by keyboard
+    Then the reading beside the run says "claude-sonnet-5 could not be reached"
+
+  @one-clipboard
+  Scenario: The reading beside the run copies in one press
+    Given the row cursor standing on a request "claude-sonnet-5" never answered
+    When the person copies the reading beside the run
+    Then the clipboard holds "claude-sonnet-5 could not be reached"

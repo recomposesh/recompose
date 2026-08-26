@@ -762,16 +762,26 @@
   }
 }
 
+/*
+ * The bead that says a request is moving along this cable. Motion is what it prefers to say it
+ * with, and the bead itself is what it says.
+ */
+/*
+ * The opacity is load-bearing: only the travel is allowed to stand down. A pulse that went
+ * transparent where motion stands down would leave a request in flight looking exactly like one
+ * that already finished, because a live cable and a served cable paint the same green. A Linux
+ * desktop can ask for that on its own, since the whole preference rides one toolkit setting there
+ * and a settings portal reporting animations off hands the app a reduce nobody chose.
+ */
 @utility cable-pulse {
   pointer-events: none;
   fill: none;
   stroke-width: var(--spacing-cable-pulse-stroke);
   stroke-linecap: round;
   stroke-dasharray: 0.05 1;
-  opacity: 0;
+  opacity: 1;
 
   @media (prefers-reduced-motion: no-preference) {
-    opacity: 1;
     animation: cable-pulse-travel 1500ms linear infinite;
   }
 }

@@ -1,6 +1,6 @@
 import type { Account, LogRow as LoggedRequest } from '@recompose/contracts';
 import type { VirtualItem } from '@tanstack/react-virtual';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useId, useState } from 'react';
@@ -93,6 +93,30 @@ type Walk = {
   onCursorMoved: (seat: number) => void;
 };
 
+/**
+ * Which request a pointer landed on, read off the run rather than off a handler per row.
+ *
+ * @summary Only the rows in view exist in the page, and they are rebuilt as the run scrolls, so a
+ * handler on each one would be minted and thrown away by the thousand. The run asks the document
+ * what was pressed instead, which costs one listener however long the history grows.
+ */
+function requestPressed(event: MouseEvent<HTMLDivElement>): string | undefined {
+  const pressed =
+    event.target instanceof Element ? event.target.closest('[data-request-id]') : null;
+
+  return pressed?.getAttribute('data-request-id') ?? undefined;
+}
+
+function pickedByPointer(event: MouseEvent<HTMLDivElement>, walk: Walk): void {
+  const pressed = requestPressed(event);
+
+  if (pressed === undefined) return;
+
+  const seat = walk.rows.findIndex((row) => row.id === pressed);
+
+  if (seat >= 0) walk.onCursorMoved(seat);
+}
+
 function copiedByKey(event: KeyboardEvent<HTMLDivElement>, walk: Walk): void {
   const taken = walk.seat === undefined ? undefined : walk.rows[walk.seat];
 
@@ -174,6 +198,9 @@ function requestRun({ drawn, wholeRun, walk, rowId, holdScrolling }: RequestRun)
       aria-activedescendant={cursorRef(drawn, walk, rowId)}
       aria-label="Served requests"
       className="min-h-0 flex-1 overflow-y-auto focus-ring pt-1 outline-none"
+      onClick={(event) => {
+        pickedByPointer(event, walk);
+      }}
       onKeyDown={(event) => {
         walkedByKey(event, walk);
       }}
@@ -204,6 +231,8 @@ type LogListProps = {
   accounts: readonly Account[];
   /** The line standing where the scope on the drawer holds no requests at all. */
   nothingYet: string;
+  /** What to tell when the cursor comes to rest on a request, which is what reads it. */
+  onCursorRests?: (logged: LoggedRequest | undefined) => void;
 };
 
 /**
@@ -217,9 +246,10 @@ type LogListProps = {
  * history unreadable exactly when there is most of it. The whole run is one tab stop with a cursor
  * the arrows walk, and the row under the cursor is what a copy takes, so reading and copying a
  * request never needs a pointer. A scope holding nothing reads its own line, because a filtered-out
- * list and a broken one must never look alike.
+ * list and a broken one must never look alike. The cursor is also the selection, so whatever reads a
+ * request beside the run follows the very arrows that walk it and needs no gesture of its own.
  */
-export function LogList({ rows, scope, accounts, nothingYet }: LogListProps) {
+export function LogList({ rows, scope, accounts, nothingYet, onCursorRests }: LogListProps) {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [scrolling, setScrolling] = useState<HTMLDivElement | null>(null);
   const listId = useId();
@@ -258,6 +288,7 @@ export function LogList({ rows, scope, accounts, nothingYet }: LogListProps) {
           known: new Map(accounts.map((account) => [account.id, account])),
           onCursorMoved: (seat) => {
             setCursor(rows[seat]?.id);
+            onCursorRests?.(rows[seat]);
             virtualizer.scrollToIndex(seat);
           },
         },

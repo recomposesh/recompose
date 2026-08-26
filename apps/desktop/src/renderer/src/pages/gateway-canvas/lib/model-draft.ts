@@ -278,6 +278,6 @@ export function modelListReading(answer: ProviderModelList | undefined): ModelLi
   }
 
   return answer.standing === 'listed'
-    ? { offered: answer.modelIds, refusal: undefined }
+    ? { offered: answer.models.map((model) => model.id), refusal: undefined }
     : { offered: [], refusal: answer.refusal };
 }

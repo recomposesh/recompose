@@ -167,13 +167,17 @@ test('the Errors filter never opens an inspector a person put away', async () =>
   const { screen } = await openedDrawer();
 
   paneClickedOn(screen.container);
-  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('complementary', { exact: true, name: 'Inspector' }))
+    .not.toBeInTheDocument();
   await expect.poll(inspectorOpen).toBe(false);
 
   await userEvent.click(screen.getByRole('radio', { name: 'Errors' }));
 
   await expect.element(screen.getByText(DRAWER_TITLE)).toBeVisible();
-  await expect.element(screen.getByRole('complementary')).not.toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('complementary', { exact: true, name: 'Inspector' }))
+    .not.toBeInTheDocument();
 });
 
 const GRAB_BAND = "[data-panel-control][aria-orientation='horizontal']";
@@ -183,7 +187,9 @@ test('the open drawer and full-height inspector keep separate visible regions', 
   const { screen } = await openedDrawer();
 
   await userEvent.click(screen.getByRole('button', { name: /My Gateway/ }));
-  await expect.element(screen.getByRole('complementary')).toBeVisible();
+  await expect
+    .element(screen.getByRole('complementary', { exact: true, name: 'Inspector' }))
+    .toBeVisible();
 
   const stage = boxOf(screen.container, '[data-canvas-column] > section');
   const strip = boxOf(screen.container, '[data-canvas-column] > footer');

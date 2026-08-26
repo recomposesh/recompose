@@ -13,6 +13,15 @@ export function startStoredGateway(engineHost: EngineHost): StorageIpcContext['s
   };
 }
 
+/**
+ * Serves a rewritten gateway again, and leaves a restart that failed written where a person reads.
+ *
+ * @summary The write that asks for this has already reached the disk, so a restart that never came
+ * back up must not turn the save into a refusal: the composition really was stored. What the
+ * failure changes is what the gateway is doing, and the host writes that down as stopped and
+ * pushes it before this refusal ever arrives here. The line below is the process log for whoever
+ * reads a crash report, never the whole of the handling.
+ */
 export function serveRewrittenGateway(engineHost: EngineHost): StorageIpcContext['restartGateway'] {
   return (gateway) => {
     engineHost.restart(gateway).catch((error: unknown) => {

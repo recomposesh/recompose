@@ -25,6 +25,7 @@ export type EngineIpcHandlers = Pick<
   | 'engine:stop'
   | 'engine:states'
   | 'engine:replay-logs'
+  | 'engine:replay-traffic'
 >;
 
 function noSuchGateway(slug: string) {
@@ -117,6 +118,11 @@ export function createEngineIpcHandlers(ctx: EngineIpcContext): EngineIpcHandler
     'engine:states': async () => Promise.resolve({ ok: true as const, value: ctx.host.states() }),
     'engine:replay-logs': async () => {
       ctx.host.replayLogs();
+
+      return Promise.resolve({ ok: true as const, value: undefined });
+    },
+    'engine:replay-traffic': async () => {
+      ctx.host.replayTraffic();
 
       return Promise.resolve({ ok: true as const, value: undefined });
     },

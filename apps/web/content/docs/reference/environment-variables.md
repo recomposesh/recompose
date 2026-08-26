@@ -1,9 +1,9 @@
 ---
 title: 'Environment variables'
-description: 'What recompose reads, and what you export for clients.'
+description: 'What recompose reads, and what clients read from you.'
 ---
 
-Two unrelated lists share this page. The first changes how recompose itself runs. The second never reaches recompose at all: they're the variables the [connect sheet](/docs/connect) and the provider rows tell you to export so a client finds your gateway.
+Two unrelated lists share this page. The first changes how recompose itself runs. The second never reaches recompose at all. Those are the variables the [connect sheet](/docs/connect) puts in front of a client's command, plus the one the provider rows hand you, so a client finds your gateway.
 
 ## Variables recompose reads
 
@@ -19,7 +19,7 @@ Two unrelated lists share this page. The first changes how recompose itself runs
 
 The origin overrides accept loopback hosts only. Aim one anywhere else and recompose ignores it and logs why, rather than sending traffic off the machine.
 
-## Variables you export for clients
+## Variables clients read
 
 recompose reads none of these. Each connect block fills them with your gateway's values, and the key value is the gateway's key or the stand-in `unused` when it [checks none](/docs/operate/securing-a-gateway).
 
@@ -36,4 +36,4 @@ recompose reads none of these. Each connect block fills them with your gateway's
 
 The slug placeholder follows the gateway's name: a gateway called `my gateway` yields `RECOMPOSE_MY_GATEWAY_API_KEY`.
 
-Two more come from the Providers screen rather than the connect sheet. A Claude or Codex row's **Use this account** act prints an export of `CLAUDE_CONFIG_DIR` or `CODEX_HOME`, pointing the vendor's own tool at the account's config home. Those steer your terminal's tool, not the gateway.
+Two more come from the Providers screen rather than the connect sheet. The Claude or Codex row your terminal reaches prints an export of `CLAUDE_CONFIG_DIR` or `CODEX_HOME`, pointing the vendor's own tool at that account's config home. Those steer your terminal's tool, not the gateway.

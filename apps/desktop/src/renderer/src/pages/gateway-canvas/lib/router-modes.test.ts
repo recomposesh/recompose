@@ -54,6 +54,11 @@ test('re-judging every request says the judge reads every one of them', () => {
   expect(rejudgeSentences['every-request']).toContain('every request');
 });
 
+test('re-judging every request promises no exception, because the toggle overrides the sealed turn', () => {
+  expect(rejudgeSentences['every-request']).not.toContain('unless');
+  expect(rejudgeSentences['every-request']).toContain('including');
+});
+
 test('a conversation that keeps its branch says it stays on the one it earned', () => {
   expect(rejudgeSentences['once-per-conversation']).toContain('first earned');
 });

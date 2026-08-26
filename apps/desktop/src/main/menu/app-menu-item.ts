@@ -34,7 +34,15 @@ export type AppMenuHandlers = {
   onOpenHelpSite: () => void;
   onOpenConfigFolder: () => void;
   onReportIssue: () => void;
+  /** Runs a check the person will hear the outcome of, unlike the hourly one. */
+  onCheckForUpdates: () => void;
 };
+
+/**
+ * @summary 'none' is what a deb or a Store copy stands at, and it removes the item rather than
+ * disarming it: an update control that could never run reads as a defect wherever it appears.
+ */
+export type UpdateCheckStanding = 'none' | 'idle' | 'asking';
 
 /** The words the Usage metric radio speaks, one per series the chart draws. */
 export type UsageMetricWord =
@@ -60,5 +68,6 @@ export type AppMenuView = {
   usageRange: UsageSearchRange;
   usageMetric: UsageMetricWord;
   usageRetentionDays: number;
+  updateCheck: UpdateCheckStanding;
   development: boolean;
 };

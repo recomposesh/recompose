@@ -149,7 +149,7 @@ export function quietAppSignIns() {
       sleep: async () => Promise.resolve(),
       openInBrowser: async () => Promise.resolve(),
       boundMs: 0,
-      callbackPort: 0,
+      callbackPortFor: () => 0,
       mintState: () => 'state-1',
     },
   };

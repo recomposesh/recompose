@@ -2,7 +2,13 @@ import { beforeEach, expect, test } from 'vitest';
 import { userEvent } from 'vitest/browser';
 
 import { logsDrawerOpen, panelWidth } from '../../../../shared/lib';
-import { drawerOn, freshDrawer, listed } from '../../testing/logs-drawer.testkit';
+import {
+  drawerOn,
+  focusTheList,
+  freshDrawer,
+  listed,
+  narrowedToErrors,
+} from '../../testing/logs-drawer.testkit';
 
 beforeEach(freshDrawer);
 
@@ -55,4 +61,48 @@ test('dragging the top edge past the collapse threshold shuts the drawer rather 
   await userEvent.keyboard('{Enter}');
 
   expect(logsDrawerOpen()).toBe(false);
+});
+
+/** The reading beside the run, whichever request the cursor came to rest on. */
+function theJourney(screen: Awaited<ReturnType<typeof drawerOn>>) {
+  return screen.getByRole('complementary', { name: 'Request detail' });
+}
+
+test('the run says nothing beside it until a person walks onto a request', async () => {
+  const screen = await drawerOn();
+
+  await expect
+    .element(theJourney(screen))
+    .toHaveTextContent('Select a request to read what it came to.');
+});
+
+test('walking the run onto a request reads that request in full beside it', async () => {
+  const screen = await drawerOn();
+
+  focusTheList(screen);
+  await userEvent.keyboard('{ArrowDown}');
+
+  await expect.element(theJourney(screen)).toHaveTextContent('Asked for');
+  await expect.element(theJourney(screen)).toHaveTextContent('claude-haiku-4-5');
+});
+
+test('the reading stands inside the drawer, so nothing it opens covers the canvas', async () => {
+  const screen = await drawerOn();
+  const inside = screen.container.querySelector('[data-logs-drawer] [data-request-journey]');
+
+  expect(inside).not.toBeNull();
+});
+
+test('a narrowing that takes the read request away leaves nothing read', async () => {
+  const screen = await drawerOn();
+
+  focusTheList(screen);
+  await userEvent.keyboard('{ArrowDown}');
+  await expect.element(theJourney(screen)).toHaveTextContent('claude-haiku-4-5');
+
+  await narrowedToErrors(screen);
+
+  await expect
+    .element(theJourney(screen))
+    .toHaveTextContent('Select a request to read what it came to.');
 });

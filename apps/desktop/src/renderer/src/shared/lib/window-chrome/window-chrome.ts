@@ -3,16 +3,25 @@ import type { WindowControls } from '@recompose/contracts';
 /**
  * How the sidebar's top band spreads what it carries.
  *
- * @summary The band clears whichever edge the window controls take, so its own contents go to the
- * other one. Where the controls take neither edge the band carries the title the hidden bar took
- * away at its leading end and the control at its trailing end, which is both ends at once.
+ * @summary Wherever the window hides the platform's title bar, the band stands in for it: the brand
+ * at its leading end and the control at its trailing end, which is both ends at once. Only where
+ * the platform keeps drawing its own title bar does the band carry the control alone, and a lone
+ * control belongs at the edge the rest of the sidebar reads from.
  */
 export function bandAlignmentFor(windowControls: WindowControls): string {
-  if (windowControls === 'leading') {
-    return 'justify-end';
-  }
+  return windowControls === 'none' ? 'justify-start' : 'justify-between';
+}
 
-  return windowControls === 'trailing' ? 'justify-between' : 'justify-start';
+/**
+ * How far the sidebar band holds its brand off the leading edge.
+ *
+ * @summary The traffic lights float over that corner of the sidebar itself rather than over a bar
+ * above it, so the clearance stands for as long as the band is drawn. Nothing lifts it: unlike the
+ * toolbar's, this inset never waits on the sidebar going away, because the sidebar is what the
+ * controls are drawn on top of.
+ */
+export function bandLeadInsetFor(windowControls: WindowControls): string {
+  return windowControls === 'leading' ? 'ps-window-controls-width' : 'ps-1';
 }
 
 /**

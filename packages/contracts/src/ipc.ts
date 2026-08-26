@@ -25,15 +25,34 @@ import {
 import { windowControlsSchema } from './window-controls';
 
 /**
- * Where the running app stands against the release feed.
+ * How the check a person asked for is going.
  *
- * @summary A failed check never appears here. The spec keeps failures log-only, so a state the
- * renderer must never render stays out of the contract.
+ * @summary Only a check somebody asked for ever fills this in. The hourly check nobody asked for
+ * leaves it empty and keeps its failures in the log, which is why a refusal can name a reason here
+ * without the background hour ever raising one at anyone (record 0200).
+ */
+export const updateCheckSchema = z.discriminatedUnion('standing', [
+  z.strictObject({ standing: z.literal('asking') }),
+  z.strictObject({ standing: z.literal('current') }),
+  z.strictObject({ standing: z.literal('found'), version: nonBlankString }),
+  z.strictObject({ standing: z.literal('failed'), reason: nonBlankString }),
+]);
+
+export type UpdateCheck = z.infer<typeof updateCheckSchema>;
+
+const askedCheck = { check: updateCheckSchema.optional() };
+
+/**
+ * Where the running app stands against the release feed, and how the last asked-for check went.
+ *
+ * @summary The two answers ride one snapshot because they move together and a window that opens
+ * late has to read both. They stay separate fields because only one of them belongs to a person:
+ * the standing is a fact about the app, and the report exists because somebody asked.
  */
 export const updateStateSchema = z.discriminatedUnion('standing', [
-  z.strictObject({ standing: z.literal('quiet') }),
-  z.strictObject({ standing: z.literal('downloading'), version: nonBlankString }),
-  z.strictObject({ standing: z.literal('ready'), version: nonBlankString }),
+  z.strictObject({ standing: z.literal('quiet'), ...askedCheck }),
+  z.strictObject({ standing: z.literal('downloading'), version: nonBlankString, ...askedCheck }),
+  z.strictObject({ standing: z.literal('ready'), version: nonBlankString, ...askedCheck }),
 ]);
 
 export type UpdateState = z.infer<typeof updateStateSchema>;
@@ -98,6 +117,16 @@ export const ipcChannels = {
    * chunking exists to avoid. Every run merges by row id, so asking twice costs nothing.
    */
   'engine:replay-logs': { request: z.void(), response: ipcResult(z.void()) },
+  /**
+   * Asks main to send the live traffic snapshot again, for a renderer that just bound.
+   *
+   * @summary The snapshot reaches the windows only when an outcome changes it, so a request that
+   * is already live when a window binds would keep its cable dark until it settled, which a
+   * streaming answer can leave for many seconds. The snapshot comes back on `engine:traffic`
+   * rather than in this answer, so both the push and the ask stay one shape, and a push carries
+   * the whole snapshot, so asking twice costs nothing.
+   */
+  'engine:replay-traffic': { request: z.void(), response: ipcResult(z.void()) },
   'system:logs-drawer': {
     request: z.strictObject({ open: z.boolean() }),
     response: ipcResult(z.void()),

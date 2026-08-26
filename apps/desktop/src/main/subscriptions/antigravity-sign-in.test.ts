@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { describe, expect, test } from 'vitest';
 
-import type { AntigravitySignInPort } from './antigravity-sign-in';
+import type { BrowserSignInPort } from './browser-sign-in-port';
 
 import { antigravityVendor, authorizationUrl, signInToAntigravity } from './antigravity-sign-in';
 
@@ -41,13 +41,13 @@ type Answers = Readonly<Record<string, Answer>>;
 function portAnswering(
   answers: Answers,
   visit: (url: string) => Promise<void>,
-): AntigravitySignInPort & { sent: Sent[] } {
+): BrowserSignInPort & { sent: Sent[] } {
   const sent: Sent[] = [];
 
   return {
     sent,
     boundMs: 2_000,
-    callbackPort: readingPort,
+    callbackPortFor: () => readingPort,
     sleep: async () => Promise.resolve(),
     mintState: () => 'state-1',
     openInBrowser: visit,
@@ -177,7 +177,7 @@ describe('the redirect the browser brings back', () => {
 
 describe('a browser that never came back', () => {
   test('the wait gives the port up rather than holding it for the next sign-in', async () => {
-    const quiet: AntigravitySignInPort = {
+    const quiet: BrowserSignInPort = {
       ...portAnswering(signedIn, async () => Promise.resolve()),
       boundMs: 50,
     };

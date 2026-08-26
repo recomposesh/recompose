@@ -1,5 +1,7 @@
 import type { BranchSeat } from '../../lib/route-graph';
 
+import { Tooltip } from '../../../../shared/ui';
+
 type CableBranchPillProps = {
   /** Which branch of a judge's router this cable draws, which is the whole of what the pill says. */
   seat: BranchSeat;
@@ -11,6 +13,16 @@ const pillFrame =
   'inline-flex h-chip max-w-full items-center rounded-chip border border-line-subtle bg-surface-card text-caption font-medium';
 
 const UNWORDED = 'Name this branch';
+
+/**
+ * What pressing a worded pill does, said where a person meets the pill rather than in a menu.
+ *
+ * @summary A button carrying a bare word announces a bare word, and a person who set a rule once
+ * read this pill as a caption and concluded the rule was fixed for good. It rides as the control's
+ * description rather than as its name, because the word the judge answers with is the fact a
+ * reader needs first and a name beginning `Edit` would bury it.
+ */
+const WHAT_A_PRESS_OPENS = "Press to edit this branch's prompt.";
 
 function draftPill(onWord: () => void) {
   return (
@@ -32,13 +44,15 @@ function draftPill(onWord: () => void) {
  */
 function labelPress(label: string, onWord: () => void) {
   return (
-    <button
-      className={`${pillFrame} max-w-24 truncate px-1.5 text-mono-caption text-ink focus-ring-wide`}
-      onClick={onWord}
-      type="button"
-    >
-      {label}
-    </button>
+    <Tooltip label={label} note={WHAT_A_PRESS_OPENS} side="top">
+      <button
+        className={`${pillFrame} max-w-24 truncate px-1.5 text-mono-caption text-ink focus-ring-wide`}
+        onClick={onWord}
+        type="button"
+      >
+        {label}
+      </button>
+    </Tooltip>
   );
 }
 

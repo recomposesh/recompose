@@ -1,16 +1,8 @@
-import type { IpcEventPayload, Settings } from '@recompose/contracts';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { defaultSettings } from '@recompose/contracts';
-import { mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-
-import type { AppMenuConduct } from './app-menu-conductor';
 import type { AppMenuItem } from './app-menu-template';
 
-import { loadSettingsFile } from '../storage/settings-store';
-import { conductAppMenu } from './app-menu-conductor';
+import { conductOver, freshSettingsFile, menuProbe } from './app-menu-conductor.testkit';
 
 const desktop = vi.hoisted((): { installed: AppMenuItem[][] } => ({ installed: [] }));
 
@@ -26,106 +18,10 @@ vi.mock('electron', () => ({
 const CANVAS = 'app://renderer/index.html#/';
 const GATEWAY_DETAIL = 'app://renderer/index.html#/gateways/personal';
 
-type Conducted = {
-  menu: AppMenuConduct;
-  settingsFile: string;
-  pushed: Settings[];
-  commanded: IpcEventPayload<'canvas:command'>[];
-  usageCommanded: IpcEventPayload<'usage:command'>[];
-  asked: ('settings' | 'new-gateway')[];
-};
-
-async function freshSettingsFile(): Promise<string> {
-  return join(await mkdtemp(join(tmpdir(), 'recompose-app-menu-')), 'settings.json');
-}
-
-function conductOver(settingsFile: string): Conducted {
-  const pushed: Settings[] = [];
-  const commanded: IpcEventPayload<'canvas:command'>[] = [];
-  const usageCommanded: IpcEventPayload<'usage:command'>[] = [];
-  const asked: ('settings' | 'new-gateway')[] = [];
-
-  const menu = conductAppMenu({
-    onOpenSettings: () => {
-      asked.push('settings');
-    },
-    onNewGateway: () => {
-      asked.push('new-gateway');
-    },
-    onOpenGateways: () => undefined,
-    onOpenProviders: () => undefined,
-    onOpenUsage: () => undefined,
-    onCanvasCommand: (command) => {
-      commanded.push(command);
-    },
-    onUsageCommand: (command) => {
-      usageCommanded.push(command);
-    },
-    onViewCommand: () => undefined,
-    onOpenSetup: () => undefined,
-    onStartGateway: () => undefined,
-    onStopGateway: () => undefined,
-    onRestartGateway: () => undefined,
-    onOpenHelpSite: () => undefined,
-    onOpenConfigFolder: () => undefined,
-    onReportIssue: () => undefined,
-    development: true,
-    settingsFile: () => settingsFile,
-    onCorrupt: () => undefined,
-    pushSettings: (settings) => {
-      pushed.push(settings);
-    },
-  });
-
-  return { menu, settingsFile, pushed, commanded, usageCommanded, asked };
-}
-
-function installedMenu(): AppMenuItem[] {
-  const painted = desktop.installed.at(-1);
-
-  if (painted === undefined) {
-    throw new Error('the app menu was never installed');
-  }
-
-  return painted;
-}
-
-function findItem(items: AppMenuItem[], label: string): AppMenuItem | undefined {
-  for (const item of items) {
-    if (item.label === label) {
-      return item;
-    }
-
-    const nested = item.submenu === undefined ? undefined : findItem(item.submenu, label);
-
-    if (nested !== undefined) {
-      return nested;
-    }
-  }
-
-  return undefined;
-}
-
-function itemNamed(label: string): AppMenuItem {
-  const found = findItem(installedMenu(), label);
-
-  if (found === undefined) {
-    throw new Error(`the installed menu holds no item named "${label}"`);
-  }
-
-  return found;
-}
-
-function press(label: string): void {
-  itemNamed(label).click?.();
-}
+const { findItem, installedMenu, itemNamed, press } = menuProbe(desktop);
 
 beforeEach(() => {
   desktop.installed = [];
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
 });
 
 describe('the menu the app paints at boot', () => {
@@ -149,15 +45,34 @@ describe('the menu the app paints at boot', () => {
   });
 });
 
-describe('reflecting a stored settings document', () => {
-  test('a document that hides the checklist takes the tick off the menu and reaches every window', async () => {
+describe('reflecting what the updater owns', () => {
+  test('a menu painted before the updater speaks offers no check', async () => {
     const conducted = conductOver(await freshSettingsFile());
-    const hidden: Settings = { ...defaultSettings(), showOnboardingChecklist: false };
 
-    conducted.menu.reflectSettings(hidden);
+    conducted.menu.repaint();
 
-    expect(itemNamed('Show Onboarding Checklist').checked).toBe(false);
-    expect(conducted.pushed).toEqual([hidden]);
+    expect(findItem(installedMenu(), 'Check for Updates…')).toBeUndefined();
+  });
+
+  test('an install that updates itself gains the item, and loses it while a check runs', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.reflectUpdateCheck('idle');
+
+    expect(itemNamed('Check for Updates…').enabled).toBe(true);
+
+    conducted.menu.reflectUpdateCheck('asking');
+
+    expect(itemNamed('Check for Updates…').enabled).toBe(false);
+  });
+
+  test('the same standing twice repaints nothing, because nothing the menu reads moved', async () => {
+    const conducted = conductOver(await freshSettingsFile());
+
+    conducted.menu.reflectUpdateCheck('idle');
+    conducted.menu.reflectUpdateCheck('idle');
+
+    expect(desktop.installed).toHaveLength(1);
   });
 });
 
@@ -230,51 +145,5 @@ describe('the logs drawer tick behind the Gateway menu', () => {
     conducted.menu.standOnUrl(GATEWAY_DETAIL);
 
     expect(itemNamed('Show Logs').checked).toBe(true);
-  });
-});
-
-describe('toggling the onboarding checklist from the menu', () => {
-  test('the choice takes the tick off the menu, lands on disk, and reaches every window', async () => {
-    const conducted = conductOver(await freshSettingsFile());
-
-    conducted.menu.repaint();
-    press('Show Onboarding Checklist');
-
-    await vi.waitFor(() => {
-      expect(conducted.pushed).toHaveLength(1);
-    });
-
-    expect(itemNamed('Show Onboarding Checklist').checked).toBe(false);
-    expect(conducted.pushed[0]?.showOnboardingChecklist).toBe(false);
-    expect(
-      (await loadSettingsFile(conducted.settingsFile, () => undefined)).showOnboardingChecklist,
-    ).toBe(false);
-  });
-
-  test('a choice the disk refuses is written down and the menu stands as it was', async () => {
-    const reported: unknown[][] = [];
-
-    vi.spyOn(console, 'error').mockImplementation((...report: unknown[]) => {
-      reported.push(report);
-    });
-
-    const occupied = join(await mkdtemp(join(tmpdir(), 'recompose-app-menu-')), 'occupied');
-
-    await writeFile(occupied, 'not a folder', 'utf8');
-
-    const conducted = conductOver(join(occupied, 'settings.json'));
-
-    conducted.menu.repaint();
-    press('Show Onboarding Checklist');
-
-    await vi.waitFor(() => {
-      expect(reported).toHaveLength(1);
-    });
-
-    expect(reported[0]?.[0]).toBe(
-      'recompose could not store the checklist choice, so the menu stands.',
-    );
-    expect(itemNamed('Show Onboarding Checklist').checked).toBe(true);
-    expect(conducted.pushed).toEqual([]);
   });
 });

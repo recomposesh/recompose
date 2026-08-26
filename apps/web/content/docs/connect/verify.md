@@ -15,7 +15,7 @@ Click **Request log** in the toolbar. A row shows the time, the method, the mode
 
 ## When nothing lands
 
-- The client started before you set the variables: restart it, since most clients read the endpoint once at launch.
+- The client started without the variables in front of it: start it again with the whole block, since most clients read the endpoint once at launch.
 - The address carries the wrong `/v1` shape: check the client's page for the shape it takes, or copy the block again from the sheet.
 - The gateway answers `401`: the key came from another gateway's sheet. See [authentication errors](/docs/troubleshooting/authentication-errors).
 

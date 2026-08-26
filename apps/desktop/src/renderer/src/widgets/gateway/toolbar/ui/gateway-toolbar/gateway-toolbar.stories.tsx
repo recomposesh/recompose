@@ -115,7 +115,7 @@ export const EveryControl = meta.story({
       'Inspector',
     ]);
 
-    const waiting = controls.filter((control) => control.title.includes('Waits on'));
+    const waiting = controls.filter((control) => control.getAttribute('aria-describedby') !== null);
 
     await expect(waiting).toEqual([]);
   },

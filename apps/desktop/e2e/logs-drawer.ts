@@ -137,6 +137,36 @@ export async function rowUnderCursor(page: Page): Promise<string | null> {
   return servedRequests(page).getAttribute('aria-activedescendant');
 }
 
+/**
+ * Walks the run's cursor onto a request, through the very arrows a person presses.
+ *
+ * @summary The cursor is also what reads a request beside the run, so a scenario about that reading
+ * arrives the way a person does rather than placing a selection from script.
+ */
+export async function theCursorWalksOntoARequest(page: Page): Promise<void> {
+  await servedRequests(page).focus();
+  await page.keyboard.press('ArrowDown');
+
+  await expect.poll(async () => rowUnderCursor(page)).not.toBeNull();
+}
+
+/**
+ * The reading beside the run, standing on whichever request the cursor came to rest on.
+ *
+ * @summary It answers to its role and its name rather than to its marker, because that is how the
+ * panel announces itself to anyone reading by ear: a complementary region called "Request detail".
+ * Scoping it to the drawer is the other half of what the panel promises, since a reading that had
+ * drifted out over the canvas would still answer to that name alone.
+ */
+export function requestDetail(page: Page): Locator {
+  return logsDrawer(page).getByRole('complementary', { exact: true, name: 'Request detail' });
+}
+
+/** The one press that hands the whole reading to whoever a person is about to paste it to. */
+export function copyRequestDetail(page: Page): Locator {
+  return requestDetail(page).getByRole('button', { exact: true, name: 'Copy request detail' });
+}
+
 /** The exclusive outcome filter group in the drawer header. */
 export function logFilters(page: Page): Locator {
   return drawerHeader(page).getByRole('radiogroup', { exact: true, name: 'Log filter' });

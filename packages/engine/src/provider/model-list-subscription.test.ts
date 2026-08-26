@@ -1,6 +1,12 @@
+import type { ModelListing } from '@recompose/contracts';
+
 import { describe, expect, test, vi } from 'vitest';
 
 import { listProviderModels } from './model-list';
+
+function idsOffered(listing: ModelListing): readonly string[] {
+  return listing.standing === 'listed' ? listing.models.map((model) => model.id) : [];
+}
 
 const neverFetches: typeof fetch = async () => {
   await Promise.resolve();
@@ -42,8 +48,8 @@ describe('the model catalog shipped by the provider subscription clients', () =>
     );
 
     expect(listing.standing).toBe('listed');
-    expect(listing.standing === 'listed' ? listing.modelIds : []).toContain('claude-sonnet-4-6');
-    expect(listing.standing === 'listed' ? listing.modelIds : []).toContain('claude-opus-4-8');
+    expect(idsOffered(listing)).toContain('claude-sonnet-4-6');
+    expect(idsOffered(listing)).toContain('claude-opus-4-8');
     expect(fetchLike).not.toHaveBeenCalled();
   });
 
@@ -55,8 +61,8 @@ describe('the model catalog shipped by the provider subscription clients', () =>
     );
 
     expect(listing.standing).toBe('listed');
-    expect(listing.standing === 'listed' ? listing.modelIds : []).toContain('gpt-5.3-codex-spark');
-    expect(listing.standing === 'listed' ? listing.modelIds : []).toContain('gpt-5.6-sol');
+    expect(idsOffered(listing)).toContain('gpt-5.3-codex-spark');
+    expect(idsOffered(listing)).toContain('gpt-5.6-sol');
   });
 
   test('a Codex Free account does not offer a model its plan cannot spend', async () => {
@@ -67,8 +73,6 @@ describe('the model catalog shipped by the provider subscription clients', () =>
     );
 
     expect(listing).toMatchObject({ standing: 'listed' });
-    expect(listing.standing === 'listed' ? listing.modelIds : []).not.toContain(
-      'gpt-5.3-codex-spark',
-    );
+    expect(idsOffered(listing)).not.toContain('gpt-5.3-codex-spark');
   });
 });

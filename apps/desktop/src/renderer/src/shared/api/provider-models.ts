@@ -1,10 +1,12 @@
+import type { ListedModel } from '@recompose/contracts';
+
 import { queryOptions } from '@tanstack/react-query';
 
 import { unwrapIpcResult } from './ipc-result';
 
-/** What one look at a target account's model list answers: the ids it serves, or why not. */
+/** What one look at a target account's model list answers: what it serves, or why not. */
 export type ProviderModelList =
-  | { standing: 'listed'; modelIds: readonly string[] }
+  | { standing: 'listed'; models: readonly ListedModel[] }
   | { standing: 'unlisted'; refusal: string };
 
 const NOTHING_ANSWERED = "recompose couldn't read this account's model list.";
@@ -27,7 +29,7 @@ async function modelsOf(accountId: string): Promise<ProviderModelList> {
   );
 
   return listing.standing === 'listed'
-    ? { standing: 'listed', modelIds: listing.modelIds }
+    ? { standing: 'listed', models: listing.models }
     : unreachableModelList();
 }
 

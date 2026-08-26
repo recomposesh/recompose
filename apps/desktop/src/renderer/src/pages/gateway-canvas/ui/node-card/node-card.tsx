@@ -4,7 +4,7 @@ import { Handle, Position, useConnection } from '@xyflow/react';
 
 import type { IconName } from '../../../../shared/ui';
 
-import { CHAMFERED_CARD, Icon, NodeChamfer } from '../../../../shared/ui';
+import { CHAMFERED_CARD, Icon, NodeChamfer, Tooltip } from '../../../../shared/ui';
 
 /** The port a cable leaves a card by, and the ask a keyboard reaches it with. */
 export type OutgoingPort = {
@@ -124,9 +124,11 @@ function outgoingSide(port: OutgoingPort, dragging: boolean): ReactNode {
         <span aria-hidden className="port-dot" data-bound={bound || undefined} />
       </Handle>
       {dragging ? null : (
-        <button aria-label={ask} className={keyboardAsk} onClick={onAsk} type="button">
-          <Icon className="size-3" name="plus" />
-        </button>
+        <Tooltip label={ask} side="right">
+          <button className={keyboardAsk} onClick={onAsk} type="button">
+            <Icon className="size-3" name="plus" />
+          </button>
+        </Tooltip>
       )}
     </>
   );

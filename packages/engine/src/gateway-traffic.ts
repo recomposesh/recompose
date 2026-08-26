@@ -1,4 +1,4 @@
-import type { LogRow } from '@recompose/contracts';
+import type { FailureDiagnosis, LogRow } from '@recompose/contracts';
 import type { MiddlewareHandler } from 'hono';
 
 import type { SpendGrantFor } from './gateway-spend';
@@ -104,6 +104,19 @@ function measuredSplit(usage: ProviderAttempt['usage']): Pick<LogRow, 'usage'> {
   };
 }
 
+/**
+ * The reading a provider row carries, which is the provider's own sentence and nothing more.
+ *
+ * @summary A provider row already names the child it is about in its own cells, so it enumerates no
+ * children: the ladder's account belongs to the row that stands for the whole turn. What only this
+ * row can say is what the provider said, so that is all it says.
+ */
+function quotedOnTheRow(attempt: ProviderAttempt): Pick<LogRow, 'diagnosis'> {
+  const upstreamMessage = attempt.upstreamMessage;
+
+  return upstreamMessage === undefined ? {} : { diagnosis: { upstreamMessage } };
+}
+
 function attemptRow(attempt: ProviderAttempt): LogRow {
   const { servedFor, status } = attempt;
 
@@ -122,22 +135,29 @@ function attemptRow(attempt: ProviderAttempt): LogRow {
     ...measuredSplit(attempt.usage),
     clientKey: servedFor.clientKey,
     ...(failed(status)
-      ? { failure: attempt.failure ?? detailFor(status), durationMs: attempt.durationMs }
+      ? {
+          failure: attempt.failure ?? detailFor(status),
+          durationMs: attempt.durationMs,
+          ...quotedOnTheRow(attempt),
+        }
       : { durationMs: attempt.durationMs }),
   };
 }
 
-function raisedRow(turn: ServingTurn, status: number, at: number, failure: string): LogRow {
+type RaisedFailure = { status: number; at: number; failure: string; diagnosis?: FailureDiagnosis };
+
+function raisedRow(turn: ServingTurn, raised: RaisedFailure): LogRow {
   return {
     id: crypto.randomUUID(),
-    at,
+    at: raised.at,
     gateway: turn.gateway,
     virtualModel: turn.virtualModel,
     origin: 'gateway',
     method: turn.method,
-    status,
+    status: raised.status,
     clientKey: turn.clientKey,
-    failure,
+    failure: raised.failure,
+    ...(raised.diagnosis === undefined ? {} : { diagnosis: raised.diagnosis }),
   };
 }
 
@@ -178,7 +198,13 @@ export function noteUnreadableRequest(at: number = Date.now()): void {
 
   if (turn === undefined || turn.rowPublished) return;
 
-  publishRow(raisedRow(turn, UNREADABLE_REQUEST_STATUS, at, detailFor(UNREADABLE_REQUEST_STATUS)));
+  publishRow(
+    raisedRow(turn, {
+      status: UNREADABLE_REQUEST_STATUS,
+      at,
+      failure: detailFor(UNREADABLE_REQUEST_STATUS),
+    }),
+  );
 }
 
 /**
@@ -192,12 +218,12 @@ export function noteUnreadableRequest(at: number = Date.now()): void {
  * guard answers before any route is chosen, so no row can be standing yet. A ladder that tried three
  * children owes a person three rows, with the turn's own outcome still owed one on top.
  */
-export function noteGatewayRow(status: number, failure: string, at: number = Date.now()): void {
+export function noteGatewayRow(raised: Omit<RaisedFailure, 'at'> & { at?: number }): void {
   const turn = servingTurn();
 
   if (turn === undefined) return;
 
-  publishRow(raisedRow(turn, status, at, failure));
+  publishRow(raisedRow(turn, { ...raised, at: raised.at ?? Date.now() }));
 }
 
 /**
@@ -231,10 +257,19 @@ export function noteJudgeRow(judged: JudgeNote, at: number = Date.now()): void {
   });
 }
 
+function failureTheTurnRaises(turn: ServingTurn, status: number, at: number): RaisedFailure {
+  return {
+    status,
+    at,
+    failure: turn.refusedWith ?? detailFor(status),
+    ...(turn.diagnosis === undefined ? {} : { diagnosis: turn.diagnosis }),
+  };
+}
+
 function noteRaisedFailure(turn: ServingTurn | undefined, status: number, at: number): void {
   if (turn === undefined || turn.rowPublished || !failed(status)) return;
 
-  publishRow(raisedRow(turn, status, at, turn.refusedWith ?? detailFor(status)));
+  publishRow(raisedRow(turn, failureTheTurnRaises(turn, status, at)));
 }
 
 /**

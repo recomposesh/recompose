@@ -1,18 +1,32 @@
 import { describe, expect, test } from 'vitest';
 
-import { bandAlignmentFor, barLeadInsetFor, barStandsFor, barTailInsetFor } from './window-chrome';
+import {
+  bandAlignmentFor,
+  bandLeadInsetFor,
+  barLeadInsetFor,
+  barStandsFor,
+  barTailInsetFor,
+} from './window-chrome';
 
 describe('how the sidebar band spreads what it carries', () => {
-  test('everything to the trailing edge, where the controls take the leading one', () => {
-    expect(bandAlignmentFor('leading')).toBe('justify-end');
-  });
-
-  test('to both edges, where the band carries the title the hidden bar took away', () => {
+  test('to both edges, wherever the band carries the brand the hidden bar took away', () => {
+    expect(bandAlignmentFor('leading')).toBe('justify-between');
     expect(bandAlignmentFor('trailing')).toBe('justify-between');
   });
 
   test('everything to the leading edge, where the platform draws its own title bar', () => {
     expect(bandAlignmentFor('none')).toBe('justify-start');
+  });
+});
+
+describe('how far the sidebar band holds its brand off the leading edge', () => {
+  test('past the window controls floating over that corner', () => {
+    expect(bandLeadInsetFor('leading')).toBe('ps-window-controls-width');
+  });
+
+  test('the ordinary inset wherever nothing floats over it', () => {
+    expect(bandLeadInsetFor('trailing')).toBe('ps-1');
+    expect(bandLeadInsetFor('none')).toBe('ps-1');
   });
 });
 

@@ -1,4 +1,4 @@
-import type { EngineRouting, RequestOutcome } from '@recompose/contracts';
+import type { EngineRouting, FailureDiagnosis, RequestOutcome } from '@recompose/contracts';
 
 import type { RouterAttempt } from './refusal-wire';
 import type { WalkResult } from './routing/attempt-walk';
@@ -83,6 +83,29 @@ export function attemptsRecorded(
   notes: readonly WalkNote[],
 ): readonly RouterAttempt[] {
   return notes.map((note) => ({ child: childNameOf(routing, note.routeNode), why: whyOf(note) }));
+}
+
+/**
+ * What a walk that served nobody leaves behind for the drawer to explain the failure with.
+ *
+ * @summary It is the very account the caller's own refusal prints, so the row a person reads and the
+ * answer their client holds name the same children in the same words. A walk that touched nothing
+ * under no router leaves nothing rather than an empty reading, because a reading nobody took must
+ * never pose as one that found nothing wrong.
+ */
+export function diagnosisTheWalkLeaves(
+  routing: EngineRouting,
+  notes: readonly WalkNote[],
+  router: string | undefined,
+): FailureDiagnosis | undefined {
+  const tried = attemptsRecorded(routing, notes);
+
+  if (router === undefined && tried.length === 0) return undefined;
+
+  return {
+    ...(router === undefined ? {} : { router }),
+    ...(tried.length === 0 ? {} : { tried }),
+  };
 }
 
 const CARRIED_NO_REQUEST = {

@@ -57,8 +57,15 @@ Then('the guide stands for that gateway', async ({ page }) => {
 Then('the Claude Code block names the gateway address and the model id', async ({ page }) => {
   const address = await gatewayAddress(page, focusedGateway(page));
 
-  await expect(guide(page)).toContainText(`export ANTHROPIC_BASE_URL="${address}"`);
-  await expect(guide(page)).toContainText(`export ANTHROPIC_MODEL="${COMPOSED_MODEL}"`);
+  await expect(guide(page)).toContainText(`ANTHROPIC_BASE_URL="${address}"`);
+  await expect(guide(page)).toContainText(`ANTHROPIC_MODEL="${COMPOSED_MODEL}"`);
+});
+
+Then('the Claude Code block sets nothing that outlives the command', async ({ page }) => {
+  const address = await gatewayAddress(page, focusedGateway(page));
+
+  await expect(guide(page)).toContainText(`ANTHROPIC_BASE_URL="${address}" \\`);
+  await expect(guide(page)).not.toContainText('export ');
 });
 
 Then('the address offered ends in the version segment', async ({ page }) => {
@@ -72,9 +79,11 @@ Then('the clipboard holds every line of that block', async ({ page, electronApp 
 
   await expect
     .poll(async () => clipboardHolds(electronApp))
-    .toContain(`export ANTHROPIC_BASE_URL="${address}"`);
+    .toContain(`ANTHROPIC_BASE_URL="${address}" \\\n`);
 
   const copied = await clipboardHolds(electronApp);
 
-  expect(copied).toContain(`export ANTHROPIC_MODEL="${COMPOSED_MODEL}"`);
+  expect(copied).toContain(`  ANTHROPIC_MODEL="${COMPOSED_MODEL}" \\\n`);
+  expect(copied).toMatch(/ claude$/u);
+  expect(copied).not.toContain('export ');
 });

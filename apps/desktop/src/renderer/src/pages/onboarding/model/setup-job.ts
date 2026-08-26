@@ -38,6 +38,11 @@ function acrossReads(sources: number): string {
  * @summary The accounts stand first and already finished, because marking them on the step before
  * is what recorded them. A run that opened with them still waiting would ask a person to watch
  * work they already did.
+ *
+ * Asking each account what it serves is a row of its own rather than something the run does behind
+ * the first turning ring. It is the one piece of work here that waits on somebody else's answer, so
+ * it is the one that can sit for a long time or never land at all, and a wait nothing accounts for
+ * is a wait a person reads as a broken app.
  */
 export function jobsFor(
   recorded: readonly RecordedAccount[],
@@ -46,6 +51,11 @@ export function jobsFor(
 ): readonly SetupJob[] {
   return [
     ...recorded.map((account) => ({ id: account.id, title: account.title, note: account.note })),
+    {
+      id: 'sources',
+      title: 'Reading what your sources serve',
+      note: 'The models each one offers',
+    },
     { id: 'gateway', title: 'Creating your gateway', note: 'A local address nothing else holds' },
     {
       id: 'virtual-model',

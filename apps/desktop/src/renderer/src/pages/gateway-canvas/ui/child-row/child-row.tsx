@@ -4,7 +4,7 @@ import { ContextMenu } from '@base-ui/react/context-menu';
 
 import type { LadderRow, OpenChild, RouterChild, Toward } from '../router-child-list/router-child';
 
-import { Icon } from '../../../../shared/ui';
+import { Icon, Tooltip } from '../../../../shared/ui';
 import { ChildFace } from '../child-face/child-face';
 import { moveButtonFace, rowShell } from '../router-child-list/router-child';
 
@@ -19,17 +19,18 @@ function moveButton(row: LadderRow, toward: Toward): ReactElement {
   const held = toward === 'up' ? row.rank === 1 : row.rank === row.total;
 
   return (
-    <button
-      aria-disabled={held || undefined}
-      aria-label={`Move ${row.child.name} ${toward}`}
-      className={moveButtonFace}
-      onClick={() => {
-        row.onMove(toward);
-      }}
-      type="button"
-    >
-      <Icon className={`size-3.5 ${toward === 'up' ? 'rotate-180' : ''}`} name="chevron" />
-    </button>
+    <Tooltip label={`Move ${row.child.name} ${toward}`} side="top">
+      <button
+        aria-disabled={held || undefined}
+        className={moveButtonFace}
+        onClick={() => {
+          row.onMove(toward);
+        }}
+        type="button"
+      >
+        <Icon className={`size-3.5 ${toward === 'up' ? 'rotate-180' : ''}`} name="chevron" />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -79,7 +80,7 @@ function branchActs(row: LadderRow): ReactElement | null {
   return (
     <>
       <ContextMenu.Item className="menu-action" onClick={onEditRule}>
-        Edit rule
+        Edit prompt
       </ContextMenu.Item>
       <ContextMenu.Item className="menu-action text-danger-ink" onClick={onDelete}>
         Delete branch

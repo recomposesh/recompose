@@ -5,7 +5,7 @@ import type {
   SubscriptionProviderId,
 } from '@recompose/contracts';
 
-import type { AntigravitySignInPort } from '../subscriptions/antigravity-sign-in';
+import type { BrowserSignInPort } from '../subscriptions/browser-sign-in-port';
 import type { CredentialCustody, CustodyOutcome } from '../subscriptions/credential-custody';
 import type { DeviceSignInPort } from '../subscriptions/device-sign-in-port';
 import type { MachineReach } from '../subscriptions/machine-store';
@@ -35,8 +35,8 @@ export type SubscriptionsIpcContext = {
   onCorrupt: (quarantinedPath: string) => void;
   /** How every plan that shows a person a code reaches its provider, its clock, and its own pace. */
   deviceSignIn: DeviceSignInPort;
-  /** How the one plan that redirects a browser opens the page and hears the redirect back. */
-  browserSignIn: AntigravitySignInPort;
+  /** How every plan that redirects a browser opens the page and hears the redirect back. */
+  browserSignIn: BrowserSignInPort;
   /**
    * Asks the far end which address one Claude access token signed in as.
    *

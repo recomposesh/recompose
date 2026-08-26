@@ -73,6 +73,25 @@ describe('a channel another tool owns', () => {
 
     wiring.dispose();
   });
+
+  test('says it owns no updates, and an asked-for check opens no updater anyway', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+
+    const { opened, wiring } = wiredOn({
+      platform: 'linux',
+      env: {},
+      isPackaged: true,
+      inApplicationsFolder: true,
+    });
+
+    expect(wiring.owned).toBe(false);
+
+    wiring.checkNow();
+
+    expect(opened.count).toBe(0);
+
+    wiring.dispose();
+  });
 });
 
 describe('a marker-armed run', () => {
@@ -109,6 +128,23 @@ describe('a channel the app owns', () => {
 
     expect(opened.count).toBe(1);
     expect(port.checks).toBe(1);
+
+    wiring.dispose();
+  });
+
+  test('says it owns updates, and runs the check a person asks for', () => {
+    const { port, wiring } = wiredOn({
+      platform: 'linux',
+      env: { APPIMAGE: '/opt/Recompose.AppImage' },
+      isPackaged: true,
+      inApplicationsFolder: true,
+    });
+
+    expect(wiring.owned).toBe(true);
+
+    wiring.checkNow();
+
+    expect(port.checks).toBe(2);
 
     wiring.dispose();
   });

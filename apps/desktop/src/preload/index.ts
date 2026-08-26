@@ -57,6 +57,7 @@ const recompose: RecomposeIpc = Object.freeze({
   'engine:stop': bridgeEntry('engine:stop'),
   'engine:states': bridgeEntry('engine:states'),
   'engine:replay-logs': bridgeEntry('engine:replay-logs'),
+  'engine:replay-traffic': bridgeEntry('engine:replay-traffic'),
   'system:logs-drawer': bridgeEntry('system:logs-drawer'),
   'system:surface-toggles': bridgeEntry('system:surface-toggles'),
   'usage:report': bridgeEntry('usage:report'),

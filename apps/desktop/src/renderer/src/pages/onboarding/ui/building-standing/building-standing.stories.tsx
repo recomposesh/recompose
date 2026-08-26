@@ -6,7 +6,7 @@ import { expect, fn, screen, userEvent } from 'storybook/test';
 import preview from '#.storybook/preview';
 
 import { gatewaySeed } from '../../../../shared/testing';
-import { claudePlan, ollama, openrouter } from '../../testing/found-source';
+import { claudePlan, openrouter } from '../../testing/found-source';
 import { onAStepSurface } from '../../testing/on-a-surface';
 import { BuildingStanding } from './building-standing';
 
@@ -55,19 +55,58 @@ const meta = preview.meta({
   decorators: [onAStepSurface],
 });
 
-/** A machine holding nothing reports no accounts, and the run has only its own work left. */
+/**
+ * A machine holding nothing says so, rather than turning on a run it can never open.
+ *
+ * @summary A run with no connected source has nothing to ask and nothing to route to, so the
+ * reading refuses before it asks anything. Left as a wait it turned forever, on a step whose acts
+ * only arrive with an outcome, and the surface offered a person nothing but leaving setup.
+ */
 export const NothingRecorded = meta.story({
   play: async () => {
-    await expect(await screen.findByText(/Composing claude-my-model/u)).toBeVisible();
-    await expect(await screen.findByText('Creating your gateway')).toBeVisible();
+    await expect(
+      await screen.findByText('No source is connected yet. Go back and connect one.'),
+    ).toBeVisible();
+    await expect(await screen.findByRole('button', { name: 'Back' })).toBeVisible();
   },
 });
 
 /** Every account the sources step recorded reads as finished before the run's own work. */
 export const AccountsAlreadyRecorded = meta.story({
-  args: { isMarked: (source) => source.id === claudePlan.id || source.id === ollama.id },
+  args: { isMarked: (source) => source.id === openrouter.id },
+  parameters: overAConnectedAccount([]),
   play: async () => {
+    await expect(await screen.findByText('OpenRouter connected')).toBeVisible();
     await expect(await screen.findByText('Creating your gateway')).toBeVisible();
+  },
+});
+
+/**
+ * An account that answers nothing about its models stops the run and offers the way out.
+ *
+ * @summary Asking an account what it serves is the one piece of this run that leaves the machine,
+ * so it is the one that can go silent. Folded into the wait it left the surface turning forever
+ * with no control to press, and the only way on was to abandon setup. The reason names the account
+ * a person has to go and look at, and both the way back and the way to ask again stand under it.
+ */
+export const ASilentAccountStopsTheRun = meta.story({
+  args: { isMarked: (source) => source.id === openrouter.id },
+  parameters: {
+    bridge: {
+      accounts: { schemaVersion: ACCOUNTS_VERSION, accounts: [connected] },
+      gateways: [],
+      settings: fresh,
+    },
+  },
+  play: async ({ args }) => {
+    await expect(
+      await screen.findByText(
+        "recompose couldn't read the model list for OpenRouter. Check the connection and try again.",
+      ),
+    ).toBeVisible();
+    await expect(await screen.findByRole('button', { name: 'Try again' })).toBeVisible();
+    await expect(await screen.findByRole('button', { name: 'Back' })).toBeVisible();
+    await expect(args.onBuilt).not.toHaveBeenCalled();
   },
 });
 
@@ -115,7 +154,9 @@ export const AMachineRowNeverBecomesATarget = meta.story({
   args: { isMarked: (source) => source.id === claudePlan.id },
   parameters: overAConnectedAccount([]),
   play: async ({ args }) => {
-    await expect(await screen.findByText('Creating your gateway')).toBeVisible();
+    await expect(
+      await screen.findByText('No source is connected yet. Go back and connect one.'),
+    ).toBeVisible();
     await expect(args.onBuilt).not.toHaveBeenCalled();
   },
 });

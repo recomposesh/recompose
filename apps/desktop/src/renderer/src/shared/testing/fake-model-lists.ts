@@ -23,7 +23,7 @@ export function modelListHandlers(seeded: SeededModelLists): ModelListHandlers {
       return Promise.resolve(
         listed === undefined
           ? { ok: true, value: { standing: 'unlisted' } }
-          : { ok: true, value: { standing: 'listed', modelIds: [...listed] } },
+          : { ok: true, value: { standing: 'listed', models: listed.map((id) => ({ id })) } },
       );
     },
   };

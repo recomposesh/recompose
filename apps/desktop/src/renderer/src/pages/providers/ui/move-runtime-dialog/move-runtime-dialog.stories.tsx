@@ -16,23 +16,27 @@ const meta = preview.meta({
 });
 
 /**
- * The one knob a moved server needs, prefilled with where the row answers today.
+ * The one knob a runtime's port change needs, prefilled with where the row answers today.
+ *
+ * @summary The heading and the confirming act say the same words the overflow said, so the person
+ * who picked Change port never has to work out whether the dialog is the one they asked for.
  */
 export const Standing = meta.story({
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('heading', { name: 'Move Ollama' })).toBeVisible();
+    await expect(canvas.getByRole('heading', { name: "Change Ollama's port" })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Change port' })).toBeVisible();
     await expect(canvas.getByRole('textbox', { name: 'Port' })).toHaveValue('11434');
   },
 });
 
 /** A port a person typed lands as a number, not as the text they typed it in. */
-export const MovedToAnotherPort = meta.story({
+export const PortChanged = meta.story({
   play: async ({ args, canvas }) => {
     const port = canvas.getByRole('textbox', { name: 'Port' });
 
     await userEvent.clear(port);
     await userEvent.type(port, '11435');
-    await userEvent.click(canvas.getByRole('button', { name: 'Move' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Change port' }));
 
     await waitFor(() => {
       void expect(args.onMove).toHaveBeenCalledWith(11435);
@@ -40,7 +44,7 @@ export const MovedToAnotherPort = meta.story({
   },
 });
 
-/** A port no server can hold says so, and the move stays where it is. */
+/** A port no server can hold says so, and the row stays where it answered. */
 export const PortOutOfRange = meta.story({
   play: async ({ args, canvas }) => {
     const port = canvas.getByRole('textbox', { name: 'Port' });
@@ -50,7 +54,7 @@ export const PortOutOfRange = meta.story({
 
     await expect(await canvas.findByText(/Accepts 1 through 65535/u)).toBeVisible();
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Move' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Change port' }));
 
     void expect(args.onMove).not.toHaveBeenCalled();
   },

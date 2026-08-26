@@ -118,7 +118,9 @@ describe('what the inspector reads about pinned conversations', () => {
     const traffic = aTrafficLine();
 
     bindEngineBranchPinsToCache(queryClient, pins.subscribe);
-    bindEngineTrafficToCache(queryClient, traffic.subscribe);
+    bindEngineTrafficToCache(queryClient, traffic.subscribe, async () =>
+      Promise.resolve({ ok: true, value: undefined }),
+    );
     pins.push(holding);
     traffic.push(flowed);
 

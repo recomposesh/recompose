@@ -2,7 +2,7 @@ import type { ReactFlowState } from '@xyflow/react';
 
 import { Controls, useReactFlow, useStore } from '@xyflow/react';
 
-import { Icon, type IconName } from '../../../../shared/ui';
+import { Icon, type IconName, Tooltip } from '../../../../shared/ui';
 
 const cluster =
   'm-4 items-center gap-0.5 rounded-canvas-card border border-line-subtle bg-canvas-card p-zoom-tools shadow-canvas-card';
@@ -23,9 +23,11 @@ function pressing(move: () => Promise<boolean>): () => void {
 
 function zoomStep(ask: string, glyph: IconName, onPress: () => void) {
   return (
-    <button aria-label={ask} className={tool} onClick={onPress} type="button">
-      <Icon className="size-3.5" name={glyph} />
-    </button>
+    <Tooltip label={ask} side="top">
+      <button className={tool} onClick={onPress} type="button">
+        <Icon className="size-3.5" name={glyph} />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -52,14 +54,11 @@ export function CanvasZoomControls() {
       showZoom={false}
     >
       {zoomStep('Zoom out', 'minus', pressing(zoomOut))}
-      <button
-        aria-label="Reset zoom"
-        className={readout}
-        onClick={pressing(async () => zoomTo(1))}
-        type="button"
-      >
-        {zoom}
-      </button>
+      <Tooltip label="Reset zoom" side="top">
+        <button className={readout} onClick={pressing(async () => zoomTo(1))} type="button">
+          {zoom}
+        </button>
+      </Tooltip>
       {zoomStep('Zoom in', 'plus', pressing(zoomIn))}
       {zoomStep('Zoom to fit', 'fit', pressing(fitView))}
     </Controls>

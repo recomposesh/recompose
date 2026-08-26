@@ -3,7 +3,7 @@ title: 'Gemini CLI'
 description: 'Point Gemini CLI at a gateway with two variables.'
 ---
 
-Two variables and a launch flag. Plain `http` passes here because the address is loopback.
+Two variables in front of the command, and a launch flag. Plain `http` passes here because the address is loopback.
 
 - Dialect: Gemini
 - Address shape: the bare origin, no `/v1`
@@ -16,12 +16,11 @@ In the gateway's toolbar, click **Connect a client** and pick Gemini CLI. The bl
 ## Point it at the gateway and start it
 
 ```sh
-export GOOGLE_GEMINI_BASE_URL="http://127.0.0.1:8397"
-export GEMINI_API_KEY="unused"
-gemini --model claude-fast
+GOOGLE_GEMINI_BASE_URL="http://127.0.0.1:8397" \
+  GEMINI_API_KEY="unused" gemini --model claude-fast
 ```
 
-The base URL must be `https` unless it names `localhost`, `127.0.0.1`, or `[::1]`, which is exactly what a gateway on this machine is. The key travels as `x-goog-api-key`, one of the four spellings a gateway reads.
+The backslash continues the line, so both lines run as one command and neither variable stays behind in your shell. The base URL must be `https` unless it names `localhost`, `127.0.0.1`, or `[::1]`, which is exactly what a gateway on this machine is. The key travels as `x-goog-api-key`, one of the four spellings a gateway reads.
 
 ## Verify
 

@@ -232,11 +232,21 @@ describe('the judge readings that route a request rather than refuse it', () => 
   });
 
   test('a judge refusal reads as no verdict rather than as a status the caller sees', () => {
-    expect(classifyJudge({ heard: 'refusal' })).toEqual({ verdict: 'no-verdict' });
+    expect(classifyJudge({ heard: 'refusal' })).toEqual({
+      verdict: 'no-verdict',
+      because: 'judge-call-failed',
+    });
   });
 
-  test('a judge past its timeout budget reads as no verdict either', () => {
-    expect(classifyJudge({ heard: 'timeout' })).toEqual({ verdict: 'no-verdict' });
+  test('a judge past its timeout budget reads as no verdict for a reason of its own', () => {
+    expect(classifyJudge({ heard: 'timeout' })).toEqual({
+      verdict: 'no-verdict',
+      because: 'judge-timed-out',
+    });
+  });
+
+  test('the two ways of reaching no verdict are told apart, since they ask for different repairs', () => {
+    expect(classifyJudge({ heard: 'refusal' })).not.toEqual(classifyJudge({ heard: 'timeout' }));
   });
 });
 

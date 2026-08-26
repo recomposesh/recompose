@@ -17,13 +17,13 @@ describe('provider model policy at the account model-list boundary', () => {
     await writePolicy(userDataPath, [' MODEL-B ', 'model-c']);
     const listing: ModelListing = {
       standing: 'listed',
-      modelIds: ['model-a', 'model-b', 'MODEL-C'],
+      models: [{ id: 'model-a' }, { id: 'model-b' }, { id: 'MODEL-C' }],
     };
     const handlers = createProviderModelsIpcHandlers(contextListing(userDataPath, listing));
 
     await expect(handlers['accounts:list-models']({ id: keyRow.id })).resolves.toEqual({
       ok: true,
-      value: { standing: 'listed', modelIds: ['model-a'] },
+      value: { standing: 'listed', models: [{ id: 'model-a' }] },
     });
   });
 
@@ -32,12 +32,28 @@ describe('provider model policy at the account model-list boundary', () => {
 
     await writePolicy(userDataPath, ['model-a']);
     const handlers = createProviderModelsIpcHandlers(
-      contextListing(userDataPath, { standing: 'listed', modelIds: ['model-a'] }),
+      contextListing(userDataPath, { standing: 'listed', models: [{ id: 'model-a' }] }),
     );
 
     await expect(handlers['accounts:list-models']({ id: keyRow.id })).resolves.toEqual({
       ok: true,
-      value: { standing: 'listed', modelIds: [] },
+      value: { standing: 'listed', models: [] },
+    });
+  });
+
+  test('a model kept by the policy keeps the shutdown date its provider announced', async () => {
+    const userDataPath = await storageHolding([], [keyRow]);
+
+    await writePolicy(userDataPath, ['model-b']);
+    const listing: ModelListing = {
+      standing: 'listed',
+      models: [{ id: 'model-a', shutdownDate: '2026-12-11' }, { id: 'model-b' }],
+    };
+    const handlers = createProviderModelsIpcHandlers(contextListing(userDataPath, listing));
+
+    await expect(handlers['accounts:list-models']({ id: keyRow.id })).resolves.toEqual({
+      ok: true,
+      value: { standing: 'listed', models: [{ id: 'model-a', shutdownDate: '2026-12-11' }] },
     });
   });
 });

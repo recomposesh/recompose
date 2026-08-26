@@ -37,7 +37,7 @@ describe('a Copilot catalog naming models that answer no turn', () => {
 
     expect(listing).toEqual({
       standing: 'listed',
-      modelIds: ['gpt-4.1', 'claude-haiku-4.5'],
+      models: [{ id: 'gpt-4.1' }, { id: 'claude-haiku-4.5' }],
     });
   });
 
@@ -47,7 +47,10 @@ describe('a Copilot catalog naming models that answer no turn', () => {
 
     const listing = await listProviderModels(fetchLike, copilotOrigin, copilotCustody);
 
-    expect(listing).toEqual({ standing: 'listed', modelIds: ['gpt-4.1', 'exec-agent-a'] });
+    expect(listing).toEqual({
+      standing: 'listed',
+      models: [{ id: 'gpt-4.1' }, { id: 'exec-agent-a' }],
+    });
   });
 });
 
@@ -60,6 +63,6 @@ describe('a catalog belonging to a vendor that states no such thing', () => {
 
     const listing = await listProviderModels(fetchLike, 'https://api.openai.com/v1', keyedCustody);
 
-    expect(listing).toEqual({ standing: 'listed', modelIds: ['text-embedding-3-large'] });
+    expect(listing).toEqual({ standing: 'listed', models: [{ id: 'text-embedding-3-large' }] });
   });
 });

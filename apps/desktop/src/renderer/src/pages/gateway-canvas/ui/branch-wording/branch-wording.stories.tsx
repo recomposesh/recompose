@@ -43,7 +43,7 @@ export const ABranchStillToBeWorded = meta.story({
       void expect(screen.getByRole('textbox', { name: 'Label' })).toHaveValue('');
     });
 
-    await expect(screen.getByRole('textbox', { name: 'Rule' })).toHaveValue('');
+    await expect(screen.getByRole('textbox', { name: 'Rule as prompt' })).toHaveValue('');
     await expect(screen.getByText('claude-opus-5')).toBeVisible();
   },
 });
@@ -60,7 +60,9 @@ export const ABranchAlreadyWorded = meta.story({
       void expect(screen.getByRole('textbox', { name: 'Label' })).toHaveValue('code');
     });
 
-    await expect(screen.getByRole('textbox', { name: 'Rule' })).toHaveValue('It writes code.');
+    await expect(screen.getByRole('textbox', { name: 'Rule as prompt' })).toHaveValue(
+      'It writes code.',
+    );
   },
 });
 

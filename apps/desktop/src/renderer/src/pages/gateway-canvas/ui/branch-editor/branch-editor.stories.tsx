@@ -76,9 +76,11 @@ export const ConfirmingDropsTheBranch = meta.story({
 /** Editing a rule opens the sheet on that branch, reporting where it routes. */
 export const EditingARuleOpensTheSheet = meta.story({
   play: async ({ canvas }) => {
-    await pickedFromTheRowMenu(await canvas.findByText('chat'), 'Edit rule');
+    await pickedFromTheRowMenu(await canvas.findByText('chat'), 'Edit prompt');
 
-    await expect(await screen.findByLabelText('Rule')).toHaveValue('everyday conversation');
+    await expect(await screen.findByLabelText('Rule as prompt')).toHaveValue(
+      'everyday conversation',
+    );
     await expect(await screen.findByText('Claude Max · claude-opus-5')).toBeVisible();
   },
 });

@@ -7,6 +7,7 @@ import type {
   RouterAttempt,
   TranslationRefusal,
 } from './refusal-wire';
+import type { UnjudgedCause } from './routing/outcome-classification';
 
 import { geminiRefusal } from './gemini-refusal';
 import { bodyInDialect } from './refusal-bodies';
@@ -166,8 +167,9 @@ export function unjudgedRequest(
   displayName: string,
   model: string,
   routerName: string,
+  because: UnjudgedCause,
 ): TranslationRefusal {
-  return { reason: 'unjudged-request', displayName, model, routerName };
+  return { reason: 'unjudged-request', displayName, model, routerName, because };
 }
 
 export function invalidJson(message: string): TranslationRefusal {

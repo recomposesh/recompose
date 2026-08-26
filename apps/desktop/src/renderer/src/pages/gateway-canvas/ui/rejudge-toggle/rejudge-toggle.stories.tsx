@@ -35,7 +35,7 @@ export const RestingSaysTheBranchHolds = meta.story({
   },
 });
 
-/** Switched on, one sentence says the judge reads every request, and names the one exception. */
+/** Switched on, one sentence says the judge reads every request, and names the turn it judges too. */
 export const SwitchedOnSaysTheJudgeReadsEveryRequest = meta.story({
   args: { rejudgeEveryRequest: true },
   play: async ({ canvas }) => {

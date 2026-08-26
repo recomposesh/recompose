@@ -42,6 +42,7 @@ describe('the channel vocabulary', () => {
       | 'engine:stop'
       | 'engine:states'
       | 'engine:replay-logs'
+      | 'engine:replay-traffic'
       | 'system:logs-drawer'
       | 'system:surface-toggles'
       | 'usage:report'

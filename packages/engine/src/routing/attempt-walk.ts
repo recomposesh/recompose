@@ -2,7 +2,7 @@ import type { EngineRouting } from '@recompose/contracts';
 
 import type { CooldownLedger } from './cooldown-ledger';
 import type { JudgedChoice, JudgedRequest, Judging } from './judge-decision';
-import type { AttemptReading } from './outcome-classification';
+import type { AttemptReading, UnjudgedCause } from './outcome-classification';
 import type { RotationCursors } from './rotation-cursors';
 import type { EngineRouter } from './route-table';
 import type { RotationPins, Walking, WalkStep } from './walk-descent';
@@ -19,7 +19,7 @@ type WalkVerdict<TAnswer> =
   | { outcome: 'answered'; routeNode: string; answer: TAnswer }
   | { outcome: 'empty-router'; routeNode: string; router: EngineRouter }
   | { outcome: 'chained-turn'; routeNode: string; router: EngineRouter }
-  | { outcome: 'unjudged'; routeNode: string; router: EngineRouter }
+  | { outcome: 'unjudged'; routeNode: string; router: EngineRouter; because: UnjudgedCause }
   | { outcome: 'exhausted'; retryAtMs?: number };
 
 export type WalkResult<TAnswer> = { notes: readonly WalkNote[]; verdict: WalkVerdict<TAnswer> };
@@ -201,7 +201,12 @@ async function verdictOneStepSettles<TAnswer>(
   }
 
   if (step.at === 'unjudged') {
-    return { outcome: 'unjudged', routeNode: step.routeNode, router: step.router };
+    return {
+      outcome: 'unjudged',
+      routeNode: step.routeNode,
+      router: step.router,
+      because: step.because,
+    };
   }
 
   return step.at === 'target'
