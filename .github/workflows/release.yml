@@ -131,7 +131,20 @@ jobs:
           pattern: release-*
           merge-multiple: true
           path: assets/
-      - run: gh release create "$TAG" assets/* --repo "$REPO" --draft --generate-notes --title "$TAG"
+      - shell: bash
+        run: |
+          gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$REPO" --draft --generate-notes --title "$TAG"
+          for asset in assets/*; do
+            name=$(basename "$asset")
+            for attempt in 1 2 3; do
+              gh release upload "$TAG" "$asset" --repo "$REPO" --clobber && continue 2
+              echo "upload of ${name} refused on attempt ${attempt}"
+              if [ "$attempt" -lt 3 ]; then sleep $((attempt * 15)); fi
+            done
+            echo "release halted: ${name} would not upload in three attempts"
+            exit 1
+          done
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}

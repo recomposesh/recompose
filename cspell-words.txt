@@ -326,6 +326,7 @@ shellcheck
 sjson
 smoothstep
 snapcraft
+softprops
 spinbuttons
 Squarespace
 srvtoolu
