@@ -220,3 +220,4 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0212](0212-a-restart-that-never-comes-back-up-says-so-on-the-canvas.md)                 | A restart that never comes back up says so on the canvas                            | Accepted   | 2026-08-26 |
 | [0213](0213-a-window-that-binds-late-asks-for-the-live-traffic.md)                       | A window that binds late asks for the live traffic                                  | Accepted   | 2026-08-26 |
 | [0214](0214-the-macos-band-leaves-the-corner-to-the-traffic-lights.md)                   | The macOS band leaves the corner to the traffic lights                              | Accepted   | 2026-08-27 |
+| [0215](0215-the-release-tail-finishes-without-a-hand-on-it.md)                           | The release tail finishes without a hand on it                                      | Accepted   | 2026-08-27 |

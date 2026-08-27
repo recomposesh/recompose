@@ -61,20 +61,25 @@ jobs:
             --data "$payload")
           jq -e '.success == true' <<<"$response" > /dev/null \
             || { echo "download redirects halted: ruleset write refused: $(jq -c '.errors' <<<"$response")"; exit 1; }
+          settled() {
+            local url=$1 wanted_status=$2 wanted_location=$3 status location
+            for _ in 1 2 3 4 5 6; do
+              status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+              location=$(curl -sI "$url" | tr -d '\r' | awk 'tolower($1) == "location:" {print $2}')
+              if [ "$status" = "$wanted_status" ] && [ "$location" = "$wanted_location" ]; then
+                echo "verified: ${url} -> ${wanted_location}"
+                return 0
+              fi
+              sleep 10
+            done
+            echo "verification failed: ${url} answered ${status} pointing at ${location} for a minute, not ${wanted_status} pointing at ${wanted_location}"
+            return 1
+          }
           for slug in "${slugs[@]}"; do
-            url="https://recompose.sh/download/${slug}"
-            expected="https://github.com/${REPO}/releases/download/${TAG}/${targets[$slug]}"
-            status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
-            location=$(curl -sI "$url" | tr -d '\r' | awk 'tolower($1) == "location:" {print $2}')
-            [ "$status" = "302" ] || { echo "verification failed: ${url} answered ${status}, not 302"; exit 1; }
-            [ "$location" = "$expected" ] || { echo "verification failed: ${url} points at ${location}, not ${expected}"; exit 1; }
-            echo "verified: ${url} -> ${expected}"
+            settled "https://recompose.sh/download/${slug}" 302 \
+              "https://github.com/${REPO}/releases/download/${TAG}/${targets[$slug]}" || exit 1
           done
-          www_status=$(curl -s -o /dev/null -w '%{http_code}' "https://www.recompose.sh/")
-          www_location=$(curl -sI "https://www.recompose.sh/" | tr -d '\r' | awk 'tolower($1) == "location:" {print $2}')
-          [ "$www_status" = "301" ] || { echo "verification failed: www.recompose.sh answered ${www_status}, not 301"; exit 1; }
-          [ "$www_location" = "https://recompose.sh/" ] || { echo "verification failed: www.recompose.sh points at ${www_location}, not the apex"; exit 1; }
-          echo "verified: www.recompose.sh -> recompose.sh"
+          settled "https://www.recompose.sh/" 301 "https://recompose.sh/" || exit 1
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
@@ -83,7 +88,6 @@ jobs:
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
 
   site-redeploy:
-    needs: download-redirects
     permissions:
       contents: read
     uses: ./.github/workflows/deploy-web.yml
