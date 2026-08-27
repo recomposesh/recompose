@@ -11,6 +11,17 @@ export async function clipboardHolds(app: ElectronApplication): Promise<string> 
   return app.evaluate(({ clipboard }) => clipboard.readText());
 }
 
+/**
+ * The lines a copied block stands as, whatever the machine ends them with.
+ *
+ * @summary Windows hands a clipboard back in its own line endings, so a scenario that reads the
+ * raw text looking for a line feed reads the platform rather than the block. Every clipboard a
+ * person copies from carries the same lines, which is the whole of what a scenario has to say.
+ */
+export function linesHeld(held: string): string[] {
+  return held.split(/\r?\n/u);
+}
+
 /** Empties the clipboard, so what a scenario reads back is what its own copy put there. */
 export async function theClipboardStandsEmpty(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ clipboard }) => {
