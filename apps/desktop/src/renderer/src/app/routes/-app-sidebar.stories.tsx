@@ -23,13 +23,6 @@ function markOf(canvasElement: HTMLElement) {
   return canvasElement.querySelector('svg[viewBox="0 0 1024 1024"]');
 }
 
-function windowControlsWidth(): number {
-  return Number.parseInt(
-    getComputedStyle(document.documentElement).getPropertyValue('--spacing-window-controls-width'),
-    10,
-  );
-}
-
 const meta = preview.meta({
   beforeEach: () => {
     showSidebar();
@@ -114,39 +107,22 @@ export const BandCarriesTheAppTitleOnWindows = meta.story({
 });
 
 /**
- * The same band on macOS, where the mark fills the corner the traffic lights leave over.
+ * The same band on macOS, where the traffic lights already speak for the corner.
  *
- * @summary The band stood empty here while every other platform got a brand in it, which reads as
- * a corner somebody forgot rather than one nothing belongs in. The mark stands past the room the
- * traffic lights take, so the reading measures its leading edge against that clearance rather than
- * trusting the class, and the control keeps the far end it already had.
+ * @summary Neither half of the brand belongs beside them: the window is identified where it stands
+ * and the app is named in the menu bar, so a mark added here repeats one and crowds the other. The
+ * band carries the control alone, and the reading looks for both halves rather than the one that
+ * used to stand there.
  */
-export const BandCarriesTheMarkOnMacOs = meta.story({
+export const MacOsBandCarriesNoBrand = meta.story({
   args: { band: <SidebarToggle where="chrome" /> },
   play: async ({ canvas, canvasElement }) => {
-    const mark = paintedBox(markOf(canvasElement));
     const control = paintedBox(await canvas.findByRole('button', { name: 'Sidebar' }));
     const band = bandOf(canvasElement);
 
-    await expect(mark.left - band.left).toBeGreaterThanOrEqual(windowControlsWidth());
-    await expect(mark.right).toBeLessThan(control.left);
-    await expect((mark.top + mark.bottom) / 2 - band.top).toBeCloseTo(18, 0);
-  },
-});
-
-/**
- * The name stays off the macOS band, where only the mark fits beside the traffic lights.
- *
- * @summary The sidebar narrows to two hundred pixels, and the controls take ninety of them before
- * the band draws anything, so the whole lockup would run under the control at the far end. The
- * mark alone says the same thing in sixteen pixels, and macOS already spells the name in its own
- * menu bar.
- */
-export const MacOsBandCarriesNoWordmark = meta.story({
-  args: { band: <SidebarToggle where="chrome" /> },
-  play: async ({ canvas, canvasElement }) => {
-    await expect(markOf(canvasElement)).not.toBeNull();
+    await expect(markOf(canvasElement)).toBeNull();
     await expect(canvas.queryByRole('img', { name: 'recompose' })).toBeNull();
+    await expect(band.right - control.right).toBeLessThan(16);
   },
 });
 
