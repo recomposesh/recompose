@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 
 import { Then, When } from '../fixtures';
 import { gatewayAddress, openGateway } from '../gateway-screen';
-import { clipboardHolds, theClipboardStandsEmpty } from '../held-clipboard';
+import { clipboardHolds, linesHeld, theClipboardStandsEmpty } from '../held-clipboard';
 import { focusedGateway } from '../scenario-memory';
 
 /** What the toolbar offers for opening the guide, which is the control this feature acts through. */
@@ -78,12 +78,12 @@ Then('the clipboard holds every line of that block', async ({ page, electronApp 
   const address = await gatewayAddress(page, focusedGateway(page));
 
   await expect
-    .poll(async () => clipboardHolds(electronApp))
-    .toContain(`ANTHROPIC_BASE_URL="${address}" \\\n`);
+    .poll(async () => linesHeld(await clipboardHolds(electronApp)))
+    .toContain(`ANTHROPIC_BASE_URL="${address}" \\`);
 
   const copied = await clipboardHolds(electronApp);
 
-  expect(copied).toContain(`  ANTHROPIC_MODEL="${COMPOSED_MODEL}" \\\n`);
+  expect(linesHeld(copied)).toContain(`  ANTHROPIC_MODEL="${COMPOSED_MODEL}" \\`);
   expect(copied).toMatch(/ claude$/u);
   expect(copied).not.toContain('export ');
 });
