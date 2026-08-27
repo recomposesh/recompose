@@ -1,6 +1,6 @@
 # 0210: The sidebar band carries the brand wherever the app draws its own chrome
 
-**Status**: Accepted
+**Status**: Superseded by [0214](0214-the-macos-band-leaves-the-corner-to-the-traffic-lights.md)
 **Date**: 2026-08-26
 
 ## Context

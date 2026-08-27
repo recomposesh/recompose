@@ -1,27 +1,22 @@
 import type { WindowControls } from '@recompose/contracts';
 
+const BAND_ALIGNMENTS: Record<WindowControls, string> = {
+  leading: 'justify-end',
+  none: 'justify-start',
+  trailing: 'justify-between',
+};
+
 /**
  * How the sidebar's top band spreads what it carries.
  *
- * @summary Wherever the window hides the platform's title bar, the band stands in for it: the brand
- * at its leading end and the control at its trailing end, which is both ends at once. Only where
- * the platform keeps drawing its own title bar does the band carry the control alone, and a lone
- * control belongs at the edge the rest of the sidebar reads from.
+ * @summary Only the platform that hides its title bar and floats nothing over the corner it left
+ * carries a brand there, so only that band holds two ends apart. macOS hides the same bar but keeps
+ * the traffic lights on that corner, and the lone control sharing a band with them belongs at the
+ * far end of it. A platform still drawing its own title bar floats nothing anywhere, so its lone
+ * control sits at the edge the rest of the sidebar reads from.
  */
 export function bandAlignmentFor(windowControls: WindowControls): string {
-  return windowControls === 'none' ? 'justify-start' : 'justify-between';
-}
-
-/**
- * How far the sidebar band holds its brand off the leading edge.
- *
- * @summary The traffic lights float over that corner of the sidebar itself rather than over a bar
- * above it, so the clearance stands for as long as the band is drawn. Nothing lifts it: unlike the
- * toolbar's, this inset never waits on the sidebar going away, because the sidebar is what the
- * controls are drawn on top of.
- */
-export function bandLeadInsetFor(windowControls: WindowControls): string {
-  return windowControls === 'leading' ? 'ps-window-controls-width' : 'ps-1';
+  return BAND_ALIGNMENTS[windowControls];
 }
 
 /**

@@ -215,7 +215,8 @@ This index records every technical decision in recompose (see `CLAUDE.md`). For 
 | [0207](0207-the-field-that-writes-a-branch-rule-names-it-a-prompt.md)                    | The field that writes a branch rule names it a prompt                               | Accepted   | 2026-08-26 |
 | [0208](0208-a-request-nothing-judged-names-the-trouble-behind-it.md)                     | A request nothing judged names the trouble behind it                                | Accepted   | 2026-08-26 |
 | [0209](0209-the-provider-says-which-of-its-models-are-going-away.md)                     | The provider says which of its models are going away                                | Accepted   | 2026-08-26 |
-| [0210](0210-the-sidebar-band-carries-the-brand-wherever-the-app-draws-its-own-chrome.md) | The sidebar band carries the brand wherever the app draws its own chrome            | Accepted   | 2026-08-26 |
+| [0210](0210-the-sidebar-band-carries-the-brand-wherever-the-app-draws-its-own-chrome.md) | The sidebar band carries the brand wherever the app draws its own chrome            | Superseded | 2026-08-26 |
 | [0211](0211-a-silent-source-refuses-the-run-rather-than-stalling-it.md)                  | A silent source refuses the run rather than stalling it                             | Accepted   | 2026-08-26 |
 | [0212](0212-a-restart-that-never-comes-back-up-says-so-on-the-canvas.md)                 | A restart that never comes back up says so on the canvas                            | Accepted   | 2026-08-26 |
 | [0213](0213-a-window-that-binds-late-asks-for-the-live-traffic.md)                       | A window that binds late asks for the live traffic                                  | Accepted   | 2026-08-26 |
+| [0214](0214-the-macos-band-leaves-the-corner-to-the-traffic-lights.md)                   | The macOS band leaves the corner to the traffic lights                              | Accepted   | 2026-08-27 |

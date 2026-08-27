@@ -9,12 +9,11 @@ import { useGatewayForgetting } from '../../pages/gateway-canvas';
 import { systemQueryOptions } from '../../shared/api';
 import {
   bandAlignmentFor,
-  bandLeadInsetFor,
   focusDrivenByArrow,
   panelWidth,
   subscribeToPanelWidths,
 } from '../../shared/lib';
-import { AppTitle, Icon, RecomposeMark } from '../../shared/ui';
+import { AppTitle, Icon } from '../../shared/ui';
 import { AppUpdateCard } from '../../widgets/app-update';
 import { GatewaySidebar } from '../../widgets/gateway/sidebar';
 import { GetStartedPanel } from '../../widgets/get-started';
@@ -82,21 +81,20 @@ function systemGroup(
 /**
  * What the band carries at its leading end, where the platform leaves that end to the app.
  *
- * @summary Windows hides its title bar and floats nothing over this corner, so the band owes a
- * person the whole lockup the bar took away. macOS hides the same bar but keeps the traffic lights
- * and spells the app's name in its own menu bar, so the mark alone says what is left to say, and
- * it is the only half that still fits once the controls have taken ninety pixels of a sidebar a
- * person may have narrowed to two hundred. A platform still drawing its own title bar is told
- * nothing twice.
+ * @summary Windows and Linux hide the title bar and float nothing over this corner, so the band
+ * owes a person the whole lockup the bar took away. macOS hides the same bar but keeps the traffic
+ * lights on this corner and spells the app's name in its own menu bar, so anything the band adds
+ * beside them repeats what the window already says and crowds the one corner a person aims at. A
+ * platform still drawing its own title bar is told nothing twice.
  */
 function brandFor(windowControls: WindowControls): ReactNode {
-  if (windowControls === 'none') {
+  if (windowControls !== 'trailing') {
     return null;
   }
 
   return (
-    <span className={`flex shrink-0 items-center ${bandLeadInsetFor(windowControls)}`}>
-      {windowControls === 'trailing' ? <AppTitle /> : <RecomposeMark className="size-4" />}
+    <span className="flex shrink-0 items-center ps-1">
+      <AppTitle />
     </span>
   );
 }
