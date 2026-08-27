@@ -64,15 +64,15 @@ jobs:
           settled() {
             local url=$1 wanted_status=$2 wanted_location=$3 status location
             for _ in 1 2 3 4 5 6; do
-              status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
-              location=$(curl -sI "$url" | tr -d '\r' | awk 'tolower($1) == "location:" {print $2}')
+              read -r status location <<<"$(curl -s -o /dev/null \
+                --connect-timeout 5 --max-time 10 -w '%{http_code} %{redirect_url}' "$url")"
               if [ "$status" = "$wanted_status" ] && [ "$location" = "$wanted_location" ]; then
                 echo "verified: ${url} -> ${wanted_location}"
                 return 0
               fi
               sleep 10
             done
-            echo "verification failed: ${url} answered ${status} pointing at ${location} for a minute, not ${wanted_status} pointing at ${wanted_location}"
+            echo "verification failed: ${url} answered ${status} pointing at ${location} through six reads, not ${wanted_status} pointing at ${wanted_location}"
             return 1
           }
           for slug in "${slugs[@]}"; do

@@ -27,7 +27,9 @@ That red job cost more than a wrong report. `site-redeploy` carries the rebuild 
 
 **Opening the draft became idempotent.** `gh release view` guards the create, so re-running the job after a partial upload finishes the release rather than dying on a tag that already carries one.
 
-**A redirect check waits for the edge.** A `settled` helper reads status and location every 10 seconds for a minute and passes the moment both match. Reading once measures propagation rather than correctness.
+**A redirect check waits for the edge.** A `settled` helper reads six times, 10 seconds apart, and passes the moment status and location both match. Reading once measures propagation rather than correctness.
+
+**One read answers both halves of that check, under a clock.** `%{redirect_url}` hands back the target of a redirect the request didn't follow, so a single `GET` carries the status and the location together. Two requests could land on two edge states and pass a status against a location it never came with. `--connect-timeout` and `--max-time` bound each read, because a helper that promises six tries owes a caller an end even when a name server or a handshake never answers.
 
 **The site redeploy stopped waiting on the redirects.** The two jobs write different things to Cloudflare: one a redirect ruleset, the other a Worker. Neither reads what the other wrote, and a version badge frozen a release behind hurts more than a redirect job reporting late.
 
@@ -35,7 +37,7 @@ That red job cost more than a wrong report. `site-redeploy` carries the rebuild 
 
 **Good**: a green build produces a complete draft on its own, with no person downloading artifacts to upload them again. A publish now updates the download page even when the redirect job has a bad minute.
 
-**Bad**: uploading in turn takes longer than five at once, about a minute more across the 18 assets a release ships. A redirect that's genuinely wrong takes a minute to report rather than a second.
+**Bad**: uploading in turn takes longer than five at once, about a minute more across the 18 assets a release ships. A redirect that's genuinely wrong takes six reads to report rather than one.
 
 ## Alternatives
 
